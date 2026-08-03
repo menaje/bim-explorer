@@ -71,6 +71,22 @@ export function validateViewerCoreManifest(value) {
       throw new Error(`compatibility policy ${key} must be boolean`);
     }
   }
+  const observations = plainRecord(
+    manifest.observations,
+    "compatibility observations",
+  );
+  const localProbe = plainRecord(
+    observations.localWorkspaceProbe,
+    "local workspace probe",
+  );
+  if (
+    localProbe.status !== "passed-local-workspace-only" ||
+    localProbe.admissionEvidence !== false
+  ) {
+    throw new Error(
+      "local workspace probe must remain non-admission evidence",
+    );
+  }
 
   if (manifest.status === "unresolved") {
     if (manifest.pin !== null) {
@@ -100,6 +116,7 @@ export function validateViewerCoreManifest(value) {
     upstreamCommit: upstream.observedCommit,
     blockerCount: manifest.blockers.length,
     passedGates: Object.values(gates).filter(Boolean).length,
+    localProbe: localProbe.status,
   });
 }
 

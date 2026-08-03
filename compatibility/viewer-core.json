@@ -38,6 +38,22 @@
     "vscodeHostLifecycle": false,
     "crossRepositoryCI": false
   },
+  "observations": {
+    "localWorkspaceProbe": {
+      "status": "passed-local-workspace-only",
+      "upstreamCommit": "dce88d3be5d564bc6a2cd31f81ecfcec7e5f59f1",
+      "evidence": "compatibility/evidence/viewer-core-local-probe-2026-08-03.json",
+      "sourceLifecycle": true,
+      "threeDimensionalMount": true,
+      "externalIdentity": true,
+      "orderedDelta": true,
+      "staleRejected": true,
+      "outOfOrderRejected": true,
+      "browserHostDisposal": true,
+      "vscodeHostDisposal": true,
+      "admissionEvidence": false
+    }
+  },
   "blockers": [
     "viewer-core and render-protocol are private workspace-only packages",
     "package and protocol identifiers are still dwg-viewer scoped",

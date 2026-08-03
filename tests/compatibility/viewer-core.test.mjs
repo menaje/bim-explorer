@@ -17,6 +17,16 @@ test("Viewer Core compatibility is explicitly unresolved", async () => {
   assert.equal(report.status, "unresolved");
   assert.equal(report.passedGates, 0);
   assert.ok(report.blockerCount >= 4);
+  assert.equal(report.localProbe, "passed-local-workspace-only");
+});
+
+test("local workspace evidence cannot be promoted to admission evidence", async () => {
+  const value = await manifest();
+  value.observations.localWorkspaceProbe.admissionEvidence = true;
+  assert.throws(
+    () => validateViewerCoreManifest(value),
+    /must remain non-admission evidence/u,
+  );
 });
 
 test("an unresolved manifest rejects an invented version pin", async () => {

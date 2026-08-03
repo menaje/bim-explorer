@@ -17,6 +17,7 @@ last_reviewed: 2026-08-03
 | BE-F-001 | `bim-explorer`는 `menaje/bim-explorer`의 독립 저장소와 `main` branch를 가진다. | repository remote와 Git history | public release를 의미하지 않음 |
 | BE-F-002 | upstream Viewer Core/render protocol은 2026-08-03 기준 `@dwg-viewer/*` 0.1.0, `private`, `workspace-only`, `experimental`이다. | `menaje/dwg-viewer` compatibility manifest와 package metadata | durable external artifact와 3D conformance는 없음 |
 | BE-F-003 | upstream render protocol vocabulary에는 `3d` representation, source/session/snapshot, range, identity와 ordered delta 항목이 있다. | `menaje/dwg-viewer` render protocol source | 실제 BIM 3D consumer를 검증한 것은 아님 |
+| BE-F-004 | exact upstream commit을 명시한 local probe에서 BIM mock source lifecycle, 3D mount, GlobalId external identity, ordered delta, Browser/VS Code disposal와 stale/out-of-order 거부가 공용 runner를 통과했다. | [Local Viewer Core probe](../compatibility/evidence/viewer-core-local-probe-2026-08-03.json) | sibling checkout을 주입한 결과이며 durable artifact, clean install과 production GPU를 검증하지 않음 |
 
 ## 적용 결정
 

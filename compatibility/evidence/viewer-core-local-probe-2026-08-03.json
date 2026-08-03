@@ -1,0 +1,55 @@
+{
+  "schema": "bim-explorer-viewer-core-local-probe/1",
+  "status": "passed-local-workspace-only",
+  "asOf": "2026-08-03T10:59:42.462Z",
+  "upstream": {
+    "repository": "menaje/dwg-viewer",
+    "commit": "dce88d3be5d564bc6a2cd31f81ecfcec7e5f59f1",
+    "viewerCoreModule": "packages/viewer-core/src/index.mjs",
+    "conformanceModule": "packages/viewer-core/src/conformance.mjs",
+    "protocolVersion": "0.1.0"
+  },
+  "consumer": {
+    "repository": "menaje/bim-explorer",
+    "package": "@bim-explorer/viewer-core-consumer",
+    "representation": "3d"
+  },
+  "lifecycle": {
+    "layers": 1,
+    "rangeBytes": 4,
+    "disposed": true
+  },
+  "delta": {
+    "layers": 1,
+    "deltaCount": 2,
+    "operations": 2,
+    "staleReplayRejected": true,
+    "finalRevision": "source-snapshot:sha256:6666666666666666666666666666666666666666666666666666666666666666"
+  },
+  "threeDimensionalRuntime": {
+    "representation": "3d",
+    "cameraProjection": "perspective",
+    "externalIdentityKind": "source-fingerprint-scoped-ifc-globalid",
+    "browser": {
+      "hostEvents": 1,
+      "presentationDisposed": true,
+      "hostDisposed": true,
+      "sourceDisposed": true,
+      "stalePickRejected": "VIEWER_RENDER_STALE_REVISION"
+    },
+    "vscode": {
+      "hostEvents": 1,
+      "presentationDisposed": true,
+      "hostDisposed": true,
+      "sourceDisposed": true,
+      "stalePickRejected": "VIEWER_RENDER_STALE_REVISION"
+    },
+    "outOfOrderSnapshotRejected": "VIEWER_RENDER_OUT_OF_ORDER"
+  },
+  "limitations": [
+    "uses an explicitly supplied sibling-checkout module path",
+    "does not prove a durable package or clean install",
+    "does not qualify production GPU rendering",
+    "does not change unresolved compatibility status"
+  ]
+}

@@ -9,3 +9,9 @@
 
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
+
+Sibling checkout을 이용한 local probe는
+[`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
+기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만
+durable artifact, clean install 또는 public compatibility를 증명하지
+않습니다.

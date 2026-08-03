@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/viewer-core-consumer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pre-conformance BIM 3D consumer probe for an external Viewer Core artifact",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}
