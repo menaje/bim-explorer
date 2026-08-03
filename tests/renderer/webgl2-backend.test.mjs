@@ -43,6 +43,7 @@ class FakeWebGl2Context {
   NO_ERROR = 0;
   RENDERBUFFER = 0x8d41;
   RGBA = 0x1908;
+  SCISSOR_TEST = 0x0c11;
   STATIC_DRAW = 0x88e4;
   TEXTURE_2D = 0x0de1;
   TEXTURE_MAG_FILTER = 0x2800;
@@ -65,6 +66,7 @@ class FakeWebGl2Context {
     this.framebuffer = null;
     this.lost = false;
     this.pickIndex = 0;
+    this.scissors = [];
   }
 
   attachShader() {}
@@ -206,6 +208,9 @@ class FakeWebGl2Context {
     pixels[3] = (packed >>> 24) & 0xff;
   }
   renderbufferStorage() {}
+  scissor(x, y, width, height) {
+    this.scissors.push({ height, width, x, y });
+  }
   shaderSource() {}
   texImage2D() {}
   texParameteri() {}
@@ -362,6 +367,69 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     /mutually exclusive/u,
   );
 
+  const affectedWorldBounds = {
+    min: [0, 0.9, 0],
+    max: [2, 1.1, 3],
+  };
+  const delta = {
+    deltaId: "delta:renderer:presentation:1",
+    sourceId: snapshot.sourceId,
+    fromRevisionId: snapshot.revisionId,
+    toRevisionId: snapshot.revisionId,
+    sequence: 1,
+    operations: [{
+      operationId: "operation:renderer:invalidate:1",
+      kind: "invalidate",
+      aspect: "presentation",
+      layerId: snapshot.layerId,
+      sourceId: snapshot.sourceId,
+      renderIds: [snapshot.entities[0].renderId],
+      affectedWorldBounds,
+    }],
+    affectedWorldBounds,
+    payload: null,
+  };
+  const deltaReceipt = await renderer.applyRenderDelta({
+    delta,
+  });
+  assert.equal(deltaReceipt.status, "applied");
+  assert.equal(deltaReceipt.atomic, true);
+  assert.equal(deltaReceipt.applied, true);
+  assert.equal(deltaReceipt.sequence, 1);
+  assert.equal(deltaReceipt.viewRevision, 5);
+  assert.equal(
+    deltaReceipt.backend.redrawScope,
+    "affected-world-bounds",
+  );
+  assert.ok(deltaReceipt.backend.redrawPixels > 0);
+  assert.ok(deltaReceipt.backend.redrawPixels < 160 * 90);
+  assert.equal(context.scissors.length, 1);
+  assert.equal(renderer.state.deltas, 1);
+  assert.equal(backend.state.frames, 6);
+  assert.equal(context.drawCalls, 10);
+  const unsupportedDelta = structuredClone(delta);
+  unsupportedDelta.deltaId = "delta:renderer:geometry:2";
+  unsupportedDelta.sequence = 2;
+  unsupportedDelta.toRevisionId =
+    `${snapshot.revisionId}:next`;
+  unsupportedDelta.operations[0].kind = "upsert";
+  unsupportedDelta.operations[0].aspect = "geometry";
+  unsupportedDelta.payload = {
+    mediaType: "application/unsupported",
+  };
+  const remount = await renderer.applyRenderDelta({
+    delta: unsupportedDelta,
+  });
+  assert.equal(remount.status, "remount-required");
+  assert.equal(remount.atomic, true);
+  assert.equal(remount.applied, false);
+  assert.equal(remount.backend, null);
+  assert.equal(renderer.state.deltas, 1);
+  await assert.rejects(
+    renderer.applyRenderDelta({ delta }),
+    /stale or out of order/u,
+  );
+
   const picked = await renderer.pick({
     x: 80,
     y: 45,
@@ -383,7 +451,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     camera: fittedView.camera,
     selectedPickIds: [picked.identity.pickId],
   });
-  assert.equal(selectedView.viewRevision, 5);
+  assert.equal(selectedView.viewRevision, 6);
   assert.equal(selectedView.selection.selectedPickIds.length, 1);
   assert.ok(selectedView.selection.selectedInstances >= 1);
   assert.equal(
@@ -395,9 +463,9 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     selectedView.selection.highlightedInstances,
   );
   assert.equal(renderer.state.viewUpdates, 5);
-  assert.equal(backend.state.frames, 6);
+  assert.equal(backend.state.frames, 7);
   assert.equal(backend.state.selectedPickIds, 1);
-  assert.equal(context.drawCalls, 12);
+  assert.equal(context.drawCalls, 14);
 
   const horizontalPick = await renderer.pick({
     x: 60,
@@ -426,7 +494,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(renderer.state.picks, 3);
   assert.equal(renderer.state.measurements, 3);
   assert.equal(backend.state.picks, 3);
-  assert.equal(context.drawCalls, 16);
+  assert.equal(context.drawCalls, 18);
   const stalePick = structuredClone(picked);
   stalePick.source.revisionId += ":stale";
   assert.throws(
@@ -444,7 +512,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
       constant: -2,
     }],
   });
-  assert.equal(clippedView.viewRevision, 6);
+  assert.equal(clippedView.viewRevision, 7);
   assert.equal(clippedView.clipping.activePlanes, 1);
   assert.equal(clippedView.backend.clippingPlanes, 1);
   const sectionView = await renderer.renderView({
@@ -454,18 +522,18 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
       max: [4, 6, 3],
     },
   });
-  assert.equal(sectionView.viewRevision, 7);
+  assert.equal(sectionView.viewRevision, 8);
   assert.equal(sectionView.clipping.activePlanes, 6);
   assert.equal(sectionView.backend.clippingPlanes, 6);
   const restoredAfterSection = await renderer.renderView({
     camera: fittedView.camera,
   });
-  assert.equal(restoredAfterSection.viewRevision, 8);
+  assert.equal(restoredAfterSection.viewRevision, 9);
   assert.equal(restoredAfterSection.clipping.activePlanes, 0);
   assert.equal(renderer.state.viewUpdates, 8);
-  assert.equal(backend.state.frames, 9);
+  assert.equal(backend.state.frames, 10);
   assert.equal(backend.state.clippingPlanes, 0);
-  assert.equal(context.drawCalls, 22);
+  assert.equal(context.drawCalls, 24);
   await assert.rejects(
     renderer.renderView({
       camera: fittedView.camera,

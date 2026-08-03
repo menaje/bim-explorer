@@ -414,6 +414,71 @@ async function run() {
       });
     const backendStateAfterVisibility =
       progressiveBackend.state;
+    const modelBounds = input.snapshot.geometry.bounds;
+    const affectedWorldBounds = {
+      min: modelBounds.min.map(
+        (value, axis) =>
+          value +
+          (modelBounds.max[axis] - value) * 0.25,
+      ),
+      max: modelBounds.min.map(
+        (value, axis) =>
+          value +
+          (modelBounds.max[axis] - value) * 0.5,
+      ),
+    };
+    const presentationDelta = {
+      deltaId: "delta:browser:presentation:1",
+      sourceId: input.snapshot.sourceId,
+      fromRevisionId: input.snapshot.revisionId,
+      toRevisionId: input.snapshot.revisionId,
+      sequence: 1,
+      operations: [{
+        operationId:
+          "operation:browser:presentation-invalidate:1",
+        kind: "invalidate",
+        aspect: "presentation",
+        layerId: input.snapshot.layerId,
+        sourceId: input.snapshot.sourceId,
+        renderIds: [isolateRenderIds[0]],
+        affectedWorldBounds,
+      }],
+      affectedWorldBounds,
+      payload: null,
+    };
+    const appliedDelta =
+      await progressiveRenderer.applyRenderDelta({
+        delta: presentationDelta,
+      });
+    const unsupportedDelta =
+      structuredClone(presentationDelta);
+    unsupportedDelta.deltaId =
+      "delta:browser:geometry:2";
+    unsupportedDelta.sequence = 2;
+    unsupportedDelta.toRevisionId =
+      `${input.snapshot.revisionId}:next`;
+    unsupportedDelta.operations[0].kind = "upsert";
+    unsupportedDelta.operations[0].aspect = "geometry";
+    unsupportedDelta.payload = {
+      mediaType:
+        "application/vnd.bim-explorer.unsupported-delta",
+    };
+    const remountRequiredDelta =
+      await progressiveRenderer.applyRenderDelta({
+        delta: unsupportedDelta,
+      });
+    let staleDeltaRejected = false;
+    try {
+      await progressiveRenderer.applyRenderDelta({
+        delta: presentationDelta,
+      });
+    } catch (error) {
+      staleDeltaRejected =
+        error instanceof RangeError &&
+        /stale or out of order/u.test(error.message);
+    }
+    const backendStateAfterDelta =
+      progressiveBackend.state;
     const [
       firstDeferredRangeId,
       secondDeferredRangeId,
@@ -463,6 +528,13 @@ async function run() {
         isolateView,
         showAllView,
         backendState: backendStateAfterVisibility,
+      },
+      delta: {
+        affectedWorldBounds,
+        applied: appliedDelta,
+        remountRequired: remountRequiredDelta,
+        staleDeltaRejected,
+        backendState: backendStateAfterDelta,
       },
       firstRangeLoad,
       sourceStateAfterFirstRange,
@@ -723,6 +795,25 @@ async function run() {
       backendStateAfterVisibility.activeBytes !==
         progressiveMount.backend.uploadedBytes ||
       backendStateAfterVisibility.frames !== 3 ||
+      appliedDelta.status !== "applied" ||
+      appliedDelta.atomic !== true ||
+      appliedDelta.applied !== true ||
+      appliedDelta.backend.actualGpu !== true ||
+      appliedDelta.backend.redrawScope !==
+        "affected-world-bounds" ||
+      appliedDelta.backend.redrawPixels <= 0 ||
+      appliedDelta.backend.redrawPixels >= 960 * 540 ||
+      appliedDelta.backend.drawCalls !==
+        progressiveMount.metrics.drawCalls ||
+      appliedDelta.backend.glError !== 0 ||
+      remountRequiredDelta.status !== "remount-required" ||
+      remountRequiredDelta.atomic !== true ||
+      remountRequiredDelta.applied !== false ||
+      remountRequiredDelta.backend !== null ||
+      staleDeltaRejected !== true ||
+      backendStateAfterDelta.frames !== 4 ||
+      backendStateAfterDelta.activeBytes !==
+        progressiveMount.backend.uploadedBytes ||
       progressiveBackend.state.activeBytes !== 0 ||
       firstRangeLoad.cacheHit !== false ||
       firstRangeLoad.backend.actualGpu !== true ||

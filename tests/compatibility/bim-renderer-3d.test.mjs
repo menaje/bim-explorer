@@ -44,6 +44,10 @@ async function fixtures() {
       manifest.evidence.browserProgressiveRange,
       "utf8",
     )),
+    browserAtomicDelta: JSON.parse(await readFile(
+      manifest.evidence.browserAtomicDelta,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -70,7 +74,8 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
     1_000_000_001.5,
   ]);
   assert.equal(result.browserProgressiveActiveBytes, 9_674_488);
-  assert.equal(result.passedGates, 16);
+  assert.equal(result.browserDeltaRedrawPixels, 8_888);
+  assert.equal(result.passedGates, 17);
   assert.equal(result.heldGates, 4);
 });
 
@@ -155,6 +160,18 @@ test("Browser progressive evidence pins cache hit and eviction", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /progressive cache hit is invalid/u,
+  );
+});
+
+test("Browser delta evidence pins partial atomic redraw", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserAtomicDelta.representativeReport
+    .redraw.pixels += 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /delta redraw is invalid/u,
   );
 });
 

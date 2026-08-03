@@ -17,6 +17,8 @@ export const BIM_RENDERER_3D_MEASUREMENT_RECEIPT =
   "bim-explorer-bim-renderer-3d-measurement-receipt/0.1";
 export const BIM_RENDERER_3D_RANGE_RECEIPT =
   "bim-explorer-bim-renderer-3d-range-receipt/0.1";
+export const BIM_RENDERER_3D_DELTA_RECEIPT =
+  "bim-explorer-bim-renderer-3d-delta-receipt/0.1";
 export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 
@@ -71,6 +73,16 @@ function finiteVector(value, length, label) {
     throw new TypeError(`${label} must be a finite ${length}D vector`);
   }
   return Object.freeze([...value]);
+}
+
+function worldBounds(value, label) {
+  const bounds = plainRecord(value, label);
+  const min = finiteVector(bounds.min, 3, `${label}.min`);
+  const max = finiteVector(bounds.max, 3, `${label}.max`);
+  if (min.some((value, axis) => value >= max[axis])) {
+    throw new RangeError(`${label} must have positive extent`);
+  }
+  return Object.freeze({ min, max });
 }
 
 function clippingPlane(value, label) {
@@ -884,6 +896,51 @@ function validateBackendRangeEviction(
   return Object.freeze({ ...receipt });
 }
 
+function validateBackendDeltaRedraw(value, affectedBounds) {
+  const receipt = plainRecord(
+    value?.receipt,
+    "renderer backend delta-redraw receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "renderer backend delta-redraw receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "renderer backend delta-redraw receipt.frameId",
+  );
+  if (
+    receipt.rendered !== true ||
+    receipt.atomic !== true ||
+    receipt.redrawScope !== "affected-world-bounds" ||
+    !Number.isSafeInteger(receipt.redrawPixels) ||
+    receipt.redrawPixels <= 0 ||
+    !equalBounds(receipt.affectedWorldBounds, affectedBounds) ||
+    typeof receipt.frameMs !== "number" ||
+    !Number.isFinite(receipt.frameMs) ||
+    receipt.frameMs < 0 ||
+    receipt.glError !== 0
+  ) {
+    throw new Error(
+      "renderer backend delta-redraw receipt is invalid",
+    );
+  }
+  return Object.freeze({ ...receipt });
+}
+
+function equalBounds(left, right) {
+  return (
+    Array.isArray(left?.min) &&
+    Array.isArray(left?.max) &&
+    left.min.length === 3 &&
+    left.max.length === 3 &&
+    left.min.every((value, axis) =>
+      value === right.min[axis]) &&
+    left.max.every((value, axis) =>
+      value === right.max[axis])
+  );
+}
+
 function validateBackendView(
   value,
   {
@@ -1188,6 +1245,7 @@ export class Bounded3dRenderer {
   #active = null;
   #backend;
   #cacheHits = 0;
+  #deltas = 0;
   #disposed = false;
   #mounting = false;
   #mounts = 0;
@@ -1210,6 +1268,7 @@ export class Bounded3dRenderer {
   get state() {
     return Object.freeze({
       disposed: this.#disposed,
+      deltas: this.#deltas,
       mounting: this.#mounting,
       updating: this.#updating,
       mounted: this.#active !== null,
@@ -1337,6 +1396,7 @@ export class Bounded3dRenderer {
       });
       this.#active = {
         activeBackendBytes: backendMount.receipt.uploadedBytes,
+        deltaSequence: 0,
         handleId: backendMount.handleId,
         handles: input.handles,
         initialRangeIds: new Set(
@@ -1640,6 +1700,189 @@ export class Bounded3dRenderer {
         metrics: plan.metrics,
         backend,
         activeBackendBytes: backend.activeBytes,
+      });
+    } finally {
+      this.#updating = false;
+    }
+  }
+
+  async applyRenderDelta({ delta: deltaValue, signal } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    const delta = plainRecord(
+      deltaValue,
+      "renderer delta",
+    );
+    for (const field of [
+      "deltaId",
+      "sourceId",
+      "fromRevisionId",
+      "toRevisionId",
+    ]) {
+      nonEmptyString(delta[field], `renderer delta.${field}`);
+    }
+    if (
+      delta.sourceId !== this.#active.snapshot.sourceId ||
+      delta.fromRevisionId !== this.#active.revisionId
+    ) {
+      throw new RangeError(
+        "renderer delta is outside the active source revision",
+      );
+    }
+    if (
+      !Number.isSafeInteger(delta.sequence) ||
+      delta.sequence !== this.#active.deltaSequence + 1
+    ) {
+      throw new RangeError(
+        "renderer delta sequence is stale or out of order",
+      );
+    }
+    const affectedWorldBounds = worldBounds(
+      delta.affectedWorldBounds,
+      "renderer delta.affectedWorldBounds",
+    );
+    if (
+      !Array.isArray(delta.operations) ||
+      delta.operations.length === 0 ||
+      delta.operations.length > this.limits.maximumInstances
+    ) {
+      throw new RangeError(
+        "renderer delta operations exceed their limit",
+      );
+    }
+    const knownRenderIds = new Set(
+      this.#active.instanceRenderIds,
+    );
+    const operations = delta.operations.map(
+      (operationValue, index) => {
+        const operation = plainRecord(
+          operationValue,
+          `renderer delta operation ${index}`,
+        );
+        nonEmptyString(
+          operation.operationId,
+          `renderer delta operation ${index}.operationId`,
+        );
+        if (
+          !["invalidate", "upsert", "tombstone"]
+            .includes(operation.kind) ||
+          !["presentation", "geometry", "entity"]
+            .includes(operation.aspect) ||
+          operation.sourceId !== this.#active.snapshot.sourceId ||
+          operation.layerId !== this.#active.snapshot.layerId ||
+          !Array.isArray(operation.renderIds) ||
+          new Set(operation.renderIds).size !==
+            operation.renderIds.length ||
+          operation.renderIds.some((renderId) =>
+            typeof renderId !== "string" ||
+            renderId.length === 0)
+        ) {
+          throw new Error(
+            `renderer delta operation ${index} is invalid`,
+          );
+        }
+        const bounds = worldBounds(
+          operation.affectedWorldBounds,
+          `renderer delta operation ${index}.affectedWorldBounds`,
+        );
+        if (
+          bounds.min.some((value, axis) =>
+            value < affectedWorldBounds.min[axis]) ||
+          bounds.max.some((value, axis) =>
+            value > affectedWorldBounds.max[axis])
+        ) {
+          throw new RangeError(
+            "renderer delta operation exceeds affected bounds",
+          );
+        }
+        if (
+          operation.kind === "invalidate" &&
+          operation.aspect === "presentation" &&
+          operation.renderIds.some((renderId) =>
+            !knownRenderIds.has(renderId))
+        ) {
+          throw new RangeError(
+            "renderer presentation delta has an unknown Render ID",
+          );
+        }
+        return Object.freeze({
+          aspect: operation.aspect,
+          bounds,
+          kind: operation.kind,
+        });
+      },
+    );
+    const presentationOnly =
+      delta.fromRevisionId === delta.toRevisionId &&
+      delta.payload === null &&
+      operations.every((operation) =>
+        operation.kind === "invalidate" &&
+        operation.aspect === "presentation");
+    if (!presentationOnly) {
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_DELTA_RECEIPT,
+        status: "remount-required",
+        atomic: true,
+        applied: false,
+        reason: "unsupported-source-mutation",
+        source: this.#active.receipt.source,
+        deltaId: delta.deltaId,
+        sequence: delta.sequence,
+        fromRevisionId: delta.fromRevisionId,
+        toRevisionId: delta.toRevisionId,
+        affectedWorldBounds,
+        operationCount: operations.length,
+        backend: null,
+      });
+    }
+    if (
+      typeof this.#backend.redrawAffectedBounds !== "function"
+    ) {
+      throw new DOMException(
+        "renderer backend does not support delta redraw",
+        "NotSupportedError",
+      );
+    }
+    this.#updating = true;
+    try {
+      aborted(signal);
+      const result =
+        await this.#backend.redrawAffectedBounds(
+          this.#active.handleId,
+          affectedWorldBounds,
+          { signal },
+        );
+      const backend = validateBackendDeltaRedraw(
+        result,
+        affectedWorldBounds,
+      );
+      this.#active.deltaSequence = delta.sequence;
+      this.#active.viewRevision += 1;
+      this.#deltas += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_DELTA_RECEIPT,
+        status: "applied",
+        atomic: true,
+        applied: true,
+        reason: null,
+        source: this.#active.receipt.source,
+        deltaId: delta.deltaId,
+        sequence: delta.sequence,
+        fromRevisionId: delta.fromRevisionId,
+        toRevisionId: delta.toRevisionId,
+        affectedWorldBounds,
+        operationCount: operations.length,
+        viewRevision: this.#active.viewRevision,
+        backend,
       });
     } finally {
       this.#updating = false;

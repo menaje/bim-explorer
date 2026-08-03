@@ -426,6 +426,103 @@ function relativeClippingPlanes(planes, origin) {
   );
 }
 
+function projectedScissorRect(
+  worldToClip,
+  boundsValue,
+  worldOrigin,
+  width,
+  height,
+) {
+  const bounds = plainRecord(
+    boundsValue,
+    "WebGL2 affected bounds",
+  );
+  const min = finiteVector(
+    bounds.min,
+    3,
+    "WebGL2 affected bounds.min",
+  );
+  const max = finiteVector(
+    bounds.max,
+    3,
+    "WebGL2 affected bounds.max",
+  );
+  if (min.some((value, axis) => value >= max[axis])) {
+    throw new RangeError(
+      "WebGL2 affected bounds must have positive extent",
+    );
+  }
+  const projected = [];
+  for (const x of [min[0], max[0]]) {
+    for (const y of [min[1], max[1]]) {
+      for (const z of [min[2], max[2]]) {
+        const point = [
+          x - worldOrigin[0],
+          y - worldOrigin[1],
+          z - worldOrigin[2],
+        ];
+        const clip = [0, 0, 0, 0];
+        for (let row = 0; row < 4; row += 1) {
+          clip[row] =
+            worldToClip[row] * point[0] +
+            worldToClip[4 + row] * point[1] +
+            worldToClip[8 + row] * point[2] +
+            worldToClip[12 + row];
+        }
+        if (clip[3] > 0 && Number.isFinite(clip[3])) {
+          projected.push([
+            clip[0] / clip[3],
+            clip[1] / clip[3],
+          ]);
+        }
+      }
+    }
+  }
+  if (projected.length === 0) {
+    return Object.freeze({
+      height,
+      width,
+      x: 0,
+      y: 0,
+    });
+  }
+  const clamp = (value) => Math.max(-1, Math.min(1, value));
+  const minimumX = clamp(
+    Math.min(...projected.map((point) => point[0])),
+  );
+  const maximumX = clamp(
+    Math.max(...projected.map((point) => point[0])),
+  );
+  const minimumY = clamp(
+    Math.min(...projected.map((point) => point[1])),
+  );
+  const maximumY = clamp(
+    Math.max(...projected.map((point) => point[1])),
+  );
+  const x = Math.max(
+    0,
+    Math.floor((minimumX + 1) * 0.5 * width) - 1,
+  );
+  const y = Math.max(
+    0,
+    Math.floor((minimumY + 1) * 0.5 * height) - 1,
+  );
+  const right = Math.min(
+    width,
+    Math.ceil((maximumX + 1) * 0.5 * width) + 1,
+  );
+  const top = Math.min(
+    height,
+    Math.ceil((maximumY + 1) * 0.5 * height) + 1,
+  );
+  return Object.freeze({
+    height: Math.max(1, top - y),
+    width: Math.max(1, right - x),
+    x: Math.min(x, width - 1),
+    y: Math.min(y, height - 1),
+  });
+}
+
 function packInstances(plan, worldOrigin) {
   const values = new Float32Array(
     plan.instances.length * INSTANCE_FLOATS,
@@ -895,6 +992,7 @@ export class WebGl2Backend {
     clippingPlanesValue,
     signal,
     {
+      affectedWorldBounds = null,
       requireVisiblePixels = true,
     } = {},
   ) {
@@ -941,6 +1039,15 @@ export class WebGl2Backend {
       clippingPlanes,
       state.worldOrigin,
     );
+    const redrawRect = affectedWorldBounds === null
+      ? null
+      : projectedScissorRect(
+        worldToClip,
+        affectedWorldBounds,
+        state.worldOrigin,
+        this.#width,
+        this.#height,
+      );
     const frameStarted = performance.now();
     let drawCalls = 0;
     let highlightedInstances = 0;
@@ -959,6 +1066,17 @@ export class WebGl2Backend {
           aborted(signal);
           gl.bindFramebuffer(gl.FRAMEBUFFER, null);
           gl.viewport(0, 0, this.#width, this.#height);
+          if (redrawRect === null) {
+            gl.disable(gl.SCISSOR_TEST);
+          } else {
+            gl.enable(gl.SCISSOR_TEST);
+            gl.scissor(
+              redrawRect.x,
+              redrawRect.y,
+              redrawRect.width,
+              redrawRect.height,
+            );
+          }
           gl.clearColor(...this.#clearColor);
           gl.clearDepth(1);
           gl.enable(gl.DEPTH_TEST);
@@ -1062,8 +1180,14 @@ export class WebGl2Backend {
               "WebGL2 frame has no visible geometry",
             );
           }
+          if (redrawRect !== null) {
+            gl.disable(gl.SCISSOR_TEST);
+          }
           resolve();
         } catch (error) {
+          if (redrawRect !== null) {
+            gl.disable(gl.SCISSOR_TEST);
+          }
           reject(error);
         }
       });
@@ -1080,6 +1204,10 @@ export class WebGl2Backend {
       highlightPixels,
       hiddenInstances,
       nonBackgroundPixels,
+      redrawPixels: redrawRect === null
+        ? this.#width * this.#height
+        : redrawRect.width * redrawRect.height,
+      redrawRect,
       selectedInstances,
       visibleInstances: drawCalls,
     });
@@ -1551,6 +1679,84 @@ export class WebGl2Backend {
       state.uploadedBytes = priorUploadedBytes;
       throw error;
     }
+  }
+
+  async redrawAffectedBounds(
+    handleId,
+    affectedWorldBounds,
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("WebGL2 mount handle is not active");
+    }
+    const bounds = plainRecord(
+      affectedWorldBounds,
+      "WebGL2 affected bounds",
+    );
+    const validatedBounds = Object.freeze({
+      min: Object.freeze([
+        ...finiteVector(
+          bounds.min,
+          3,
+          "WebGL2 affected bounds.min",
+        ),
+      ]),
+      max: Object.freeze([
+        ...finiteVector(
+          bounds.max,
+          3,
+          "WebGL2 affected bounds.max",
+        ),
+      ]),
+    });
+    if (
+      validatedBounds.min.some((value, axis) =>
+        value >= validatedBounds.max[axis])
+    ) {
+      throw new RangeError(
+        "WebGL2 affected bounds must have positive extent",
+      );
+    }
+    const state = this.#active;
+    const frame = await this.#drawFrame(
+      state,
+      state.camera,
+      state.hiddenRenderIds,
+      state.selectedPickIds,
+      state.clippingPlanes,
+      signal,
+      {
+        affectedWorldBounds: validatedBounds,
+        requireVisiblePixels: false,
+      },
+    );
+    return {
+      receipt: {
+        backendId: "webgl2",
+        frameId:
+          `webgl2-frame:${this.#mounts}:${frame.frameNumber}`,
+        actualGpu: true,
+        rendered: true,
+        atomic: true,
+        redrawScope: "affected-world-bounds",
+        affectedWorldBounds: validatedBounds,
+        redrawRect: frame.redrawRect,
+        redrawPixels: frame.redrawPixels,
+        visibleInstances: frame.visibleInstances,
+        hiddenInstances: frame.hiddenInstances,
+        drawCalls: frame.drawCalls,
+        nonBackgroundPixels: frame.nonBackgroundPixels,
+        frameMs: frame.frameMs,
+        glError: frame.glError,
+      },
+    };
   }
 
   async renderView(

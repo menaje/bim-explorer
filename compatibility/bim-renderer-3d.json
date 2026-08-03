@@ -143,6 +143,7 @@
     "sectionMeasurement": true,
     "largeCoordinatePrecision": true,
     "progressiveRangeCache": true,
+    "affectedBoundsAtomicDelta": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
@@ -157,7 +158,8 @@
     "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json",
     "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json",
     "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json",
-    "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json"
+    "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json",
+    "browserAtomicDelta": "compatibility/evidence/bim-renderer-3d-public-browser-atomic-delta-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",

@@ -20,6 +20,7 @@ const TRUE_GATES = [
   "sectionMeasurement",
   "largeCoordinatePrecision",
   "progressiveRangeCache",
+  "affectedBoundsAtomicDelta",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
@@ -126,6 +127,20 @@ const PROGRESSIVE_CONFORMANCE_ASSERTIONS = [
   "remainingRangesRedraw",
   "isolateHideShowAll",
   "deterministicDispose",
+  "pathFreeReport",
+];
+const DELTA_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "activeRevisionValidated",
+  "orderedSequenceValidated",
+  "operationBoundsContained",
+  "affectedBoundsProjectedToScissor",
+  "partialFramebufferRedraw",
+  "atomicCommitAfterGpuFrame",
+  "staleReplayRejected",
+  "unsupportedMutationRequiresRemount",
+  "unsupportedMutationHasNoBackendCall",
+  "gpuAllocationReused",
   "pathFreeReport",
 ];
 const RENDERER_LIMITS = Object.freeze({
@@ -1742,6 +1757,151 @@ function validateBrowserProgressiveEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserDeltaEvidence(manifest, evidence) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser delta fixture",
+  );
+  const budget = plainRecord(
+    evidence.budget,
+    "Browser delta budget",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser delta representativeReport",
+  );
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-atomic-delta-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !== "experimental-browser-atomic-delta" ||
+    fixture.id !== manifest.fixture.id ||
+    fixture.schema !== manifest.fixture.schema ||
+    fixture.profile !== manifest.fixture.profile ||
+    fixture.byteLength !== manifest.fixture.byteLength ||
+    fixture.sha256 !== manifest.fixture.sha256 ||
+    fixture.artifactCommitted !== false ||
+    fixture.profileAdmission !== false ||
+    budget.maximumFrameMs !== 1_000 ||
+    budget.maximumRedrawPixels !== 518_400 ||
+    budget.maximumOperations !== 100_000
+  ) {
+    throw new Error("Browser delta evidence identity is invalid");
+  }
+  const revisionId =
+    `source-snapshot:sha256:${manifest.fixture.sha256}`;
+  if (
+    report.schema !==
+      "bim-explorer-browser-atomic-delta-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !==
+      `sha256:${manifest.fixture.sha256}` ||
+    report.source?.revisionId !== revisionId ||
+    report.renderer?.contract !== manifest.contract.renderer ||
+    report.renderer?.deltaReceipt !==
+      "bim-explorer-bim-renderer-3d-delta-receipt/0.1" ||
+    report.renderer?.backend !== manifest.browserBackend.id ||
+    report.renderer?.gpuApi !== true ||
+    report.renderer?.physicalGpuClaimed !== false
+  ) {
+    throw new Error("Browser delta renderer identity is invalid");
+  }
+  const delta = report.delta;
+  const expectedBounds = {
+    min: [4.9875, 5.11625, 2.0641220000000002],
+    max: [10.975, 11.2325, 5.828244],
+  };
+  if (
+    delta?.deltaId !== "delta:browser:presentation:1" ||
+    delta?.sequence !== 1 ||
+    delta?.operationCount !== 1 ||
+    delta?.fromRevisionId !== revisionId ||
+    delta?.toRevisionId !== revisionId ||
+    !equalJson(delta?.affectedWorldBounds, expectedBounds) ||
+    delta?.status !== "applied" ||
+    delta?.atomic !== true ||
+    delta?.applied !== true ||
+    delta?.viewRevision !== 3
+  ) {
+    throw new Error("Browser delta receipt is invalid");
+  }
+  const redraw = report.redraw;
+  if (
+    redraw?.scope !== "affected-world-bounds" ||
+    !equalJson(redraw?.rect, {
+      x: 429,
+      y: 230,
+      width: 101,
+      height: 88,
+    }) ||
+    redraw?.pixels !== redraw.rect.width * redraw.rect.height ||
+    redraw?.pixels <= 0 ||
+    redraw?.pixels >= budget.maximumRedrawPixels ||
+    redraw?.visibleInstances !==
+      manifest.expected.metrics.instances ||
+    redraw?.drawCalls !== manifest.expected.metrics.drawCalls ||
+    redraw?.nonBackgroundPixels !== 57_438 ||
+    redraw?.glError !== 0
+  ) {
+    throw new Error("Browser delta redraw is invalid");
+  }
+  boundedMeasurement(
+    redraw.frameMs,
+    budget.maximumFrameMs,
+    "Browser delta redraw frame",
+  );
+  if (
+    report.resourceState?.uploadedBytesBefore !==
+      manifest.expected.browserUploadedBytes ||
+    report.resourceState?.uploadedBytesAfter !==
+      report.resourceState.uploadedBytesBefore ||
+    report.resourceState?.residentRanges !== 1 ||
+    report.resourceState?.frames !== 4 ||
+    report.unsupportedMutation?.deltaId !==
+      "delta:browser:geometry:2" ||
+    report.unsupportedMutation?.sequence !== 2 ||
+    report.unsupportedMutation?.status !== "remount-required" ||
+    report.unsupportedMutation?.atomic !== true ||
+    report.unsupportedMutation?.applied !== false ||
+    report.unsupportedMutation?.reason !==
+      "unsupported-source-mutation" ||
+    report.unsupportedMutation?.backendCall !== false ||
+    report.unsupportedMutation?.activeRevisionUnchanged !== true ||
+    report.staleDeltaRejected !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error("Browser delta atomicity is invalid");
+  }
+  for (const assertion of DELTA_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser delta conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      DELTA_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.affectedBoundsAtomicDelta !== "passed" ||
+    evidence.decision?.geometryDeltaInPlace !==
+      "blocked-remount-required" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser delta decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -1779,6 +1939,10 @@ export function validateBimRenderer3dCompatibility(
   const browserProgressiveEvidence = plainRecord(
     evidenceBundle.browserProgressiveRange,
     "Browser progressive-range BIM renderer evidence",
+  );
+  const browserDeltaEvidence = plainRecord(
+    evidenceBundle.browserAtomicDelta,
+    "Browser atomic-delta BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -1853,7 +2017,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "progressive-range-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 8 ||
+    manifest.evidence?.browserAtomicDelta !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "atomic-delta-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 9 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2109,6 +2277,11 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserProgressiveEvidence,
     );
+  const browserDeltaReport =
+    validateBrowserDeltaEvidence(
+      manifest,
+      browserDeltaEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -2136,6 +2309,8 @@ export function validateBimRenderer3dCompatibility(
       browserPrecisionReport.renderer.precision.worldOrigin,
     browserProgressiveActiveBytes:
       browserProgressiveReport.secondLoad.activeBytes,
+    browserDeltaRedrawPixels:
+      browserDeltaReport.redraw.pixels,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -2189,6 +2364,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserProgressiveRange,
+      ),
+      "utf8",
+    )),
+    browserAtomicDelta: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserAtomicDelta,
       ),
       "utf8",
     )),

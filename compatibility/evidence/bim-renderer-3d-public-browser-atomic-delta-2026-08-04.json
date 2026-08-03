@@ -1,0 +1,116 @@
+{
+  "schema": "bim-explorer-browser-atomic-delta-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-atomic-delta",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumFrameMs": 1000,
+    "maximumRedrawPixels": 518400,
+    "maximumOperations": 100000
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-atomic-delta-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "deltaReceipt": "bim-explorer-bim-renderer-3d-delta-receipt/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false
+    },
+    "delta": {
+      "deltaId": "delta:browser:presentation:1",
+      "sequence": 1,
+      "operationCount": 1,
+      "fromRevisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "toRevisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "affectedWorldBounds": {
+        "min": [
+          4.9875,
+          5.11625,
+          2.0641220000000002
+        ],
+        "max": [
+          10.975,
+          11.2325,
+          5.828244
+        ]
+      },
+      "status": "applied",
+      "atomic": true,
+      "applied": true,
+      "viewRevision": 3
+    },
+    "redraw": {
+      "scope": "affected-world-bounds",
+      "rect": {
+        "x": 429,
+        "y": 230,
+        "width": 101,
+        "height": 88
+      },
+      "pixels": 8888,
+      "visibleInstances": 3182,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 57438,
+      "frameMs": 135.89999997615814,
+      "glError": 0
+    },
+    "resourceState": {
+      "uploadedBytesBefore": 4399252,
+      "uploadedBytesAfter": 4399252,
+      "residentRanges": 1,
+      "frames": 4
+    },
+    "unsupportedMutation": {
+      "deltaId": "delta:browser:geometry:2",
+      "sequence": 2,
+      "status": "remount-required",
+      "atomic": true,
+      "applied": false,
+      "reason": "unsupported-source-mutation",
+      "backendCall": false,
+      "activeRevisionUnchanged": true
+    },
+    "staleDeltaRejected": true,
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "activeRevisionValidated": true,
+    "orderedSequenceValidated": true,
+    "operationBoundsContained": true,
+    "affectedBoundsProjectedToScissor": true,
+    "partialFramebufferRedraw": true,
+    "atomicCommitAfterGpuFrame": true,
+    "staleReplayRejected": true,
+    "unsupportedMutationRequiresRemount": true,
+    "unsupportedMutationHasNoBackendCall": true,
+    "gpuAllocationReused": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "affectedBoundsAtomicDelta": "passed",
+    "geometryDeltaInPlace": "blocked-remount-required",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}
