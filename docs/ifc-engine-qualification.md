@@ -18,17 +18,20 @@ ID identity, relation, quantity, classification, extrusion geometry와 IFC
 world bounds assertion을 통과했습니다. 그러나 첫 engine 선정과 production
 go/no-go는 보류합니다.
 
-다음 Browser/VS Code vertical slice는 `web-ifc` Browser Worker를 우선
-prototype으로 삼는 것이 적절합니다. JavaScript/WASM 경로를 두 surface에서
-공유할 가능성이 있기 때문입니다. 이는 선정 결정이 아닙니다. Browser
-packaging, large model memory, cancellation과 cleanup을 통과하지 못하면
-IfcOpenShell native process를 desktop fallback으로 재평가합니다.
+`web-ifc`는 local Chromium module Worker에서 single-thread WASM으로 base
+fixture를 읽는 첫 smoke를 통과했습니다. JavaScript/WASM 경로를 Browser와
+VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정은 아닙니다.
+실제 file lifecycle, Browser packaging, large model memory, cancellation과
+cleanup을 통과하지 못하면 IfcOpenShell native process를 desktop
+fallback으로 재평가합니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
 실행 관찰값은
 [`base evidence`](../compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json)와
-[`mapped evidence`](../compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json)가
+[`mapped evidence`](../compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json),
+Browser 관찰값은
+[`Worker smoke`](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -80,6 +83,20 @@ child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.
 영향과 실제 첫 화면을 대표하지 않으므로 성능 우열이나 production budget
 근거로 사용하지 않습니다.
 
+## Browser Worker smoke
+
+loopback-only 진단 surface는 exact `web-ifc@0.0.77` ESM과
+`web-ifc.wasm`을 dedicated module Worker에서 single-thread로
+초기화했습니다. generated base fixture는 IFC4, 1 Project, 1 Wall,
+1 geometry product와 12 triangles를 반환했고 model close·engine dispose
+후 main thread가 Worker 종료를 요청했습니다. 콘솔 warning/error는
+관찰되지 않았습니다.
+
+한 번의 small-fixture Chromium smoke이므로 performance 수치는 budget이
+아닙니다. 실제 파일 선택·source switch·취소, negative/large model,
+clean-install bundle과 VS Code isolation을 검증하지 않았으므로
+`packagingBrowser`는 계속 `blocked`입니다.
+
 ## Draft implementation profile
 
 현재 profile은 다음만 `experimental`입니다.
@@ -92,6 +109,7 @@ child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.
 - IfcRepresentationMap/IfcMappedItem 기반 두 occurrence의 shared definition
 - IfcElementQuantity의 length/area/volume과 classification reference
 - local read-only parse/index/geometry report
+- local Chromium module Worker의 small-fixture ESM/WASM smoke
 
 다음은 `blocked`입니다.
 
@@ -99,7 +117,7 @@ child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.
 - connection, system, opening과 broader object/relation corpus
 - corrupt/truncated input, cancellation과 resource exhaustion cleanup
 - large model first-frame/index/RSS budget
-- Browser Worker, Linux와 VS Code packaging
+- production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
 
 따라서 “IFC 지원”이나 “BIM 전체 지원”이라고 표현하지 않습니다. 해당
@@ -152,6 +170,7 @@ web-ifc는 repository lockfile만 사용합니다.
 npm ci
 npm run qualify:ifc:web
 npm run qualify:ifc:mapped
+npm run probe:browser-worker
 ```
 
 두 후보 비교에는 별도 Python environment를 주입합니다.
@@ -180,7 +199,7 @@ corrupt-input cleanup이나 Browser Worker lifecycle을 검증한 것이 아닙�
 1. 각 engine의 cancel과 승인된 negative corpus에서 process cleanup 검증
 2. redistribution 가능한 large performance fixture와 resource budget 고정
 3. connection/system/opening을 포함한 broader semantic corpus
-4. web-ifc Browser Worker prototype과 Linux CI evidence
+4. Browser real-file switch/cancel/dispose와 Linux browser CI evidence
 5. VS Code isolation/package proof
 6. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
 7. 결과를 근거로 engine/profile go/no-go 결정

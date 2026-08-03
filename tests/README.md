@@ -26,3 +26,8 @@ classification fixture까지 검사합니다. IfcOpenShell은 repository depende
 일반 process supervisor test는 harmless Node stub으로 성공, redacted failure,
 timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니다. 특정 IFC
 engine의 손상 입력·취소 또는 Browser Worker cleanup 증거로 승격하지 않습니다.
+
+Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
+Worker client의 report validation, path-free failure, cancel/terminate 요청을
+검사합니다. 실제 Chromium ESM/WASM smoke는 별도 evidence로 기록하며
+production Browser packaging Gate는 계속 분리합니다.

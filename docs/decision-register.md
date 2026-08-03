@@ -20,6 +20,7 @@ last_reviewed: 2026-08-03
 | BE-F-004 | exact upstream commit을 명시한 local probe에서 BIM mock source lifecycle, 3D mount, GlobalId external identity, ordered delta, Browser/VS Code disposal와 stale/out-of-order 거부가 공용 runner를 통과했다. | [Local Viewer Core probe](../compatibility/evidence/viewer-core-local-probe-2026-08-03.json) | sibling checkout을 주입한 결과이며 durable artifact, clean install과 production GPU를 검증하지 않음 |
 | BE-F-005 | web-ifc 0.0.77과 IfcOpenShell 0.8.4.post1이 같은 generated IFC4 base fixture의 semantic, GlobalId/Express ID, relation, 12-triangle geometry와 world bounds assertion을 각각 두 번 통과했다. | [IFC base evidence](../compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json) | 2.9KB synthetic macOS 관찰이며 large/corrupt/Browser/redistribution을 검증하지 않음 |
 | BE-F-006 | 두 engine은 두 Wall이 한 representation map을 재사용하는 fixture에서 occurrence별 placement, Qto, classification, 21개 GlobalId–Express ID map과 24-triangle 결과를 각각 두 번 재현했다. | [IFC mapped evidence](../compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json) | 4KB synthetic wall corpus이며 broader relation, GPU instance memory와 large/corrupt model을 검증하지 않음 |
+| BE-F-007 | web-ifc 0.0.77 single-thread WASM은 local Chromium module Worker에서 base fixture의 IFC4, 1 Project, 1 Wall과 12 triangles를 재현하고 model close·engine dispose 뒤 Worker 종료를 요청했다. | [Browser Worker smoke](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json) | 한 번의 loopback small-fixture 관찰이며 real file lifecycle, large/cancel/negative input, clean package와 VS Code를 검증하지 않음 |
 
 ## 적용 결정
 
@@ -36,7 +37,7 @@ last_reviewed: 2026-08-03
 | ID | 상태 | 질문 | 현재 처리 | 결정 Gate |
 | --- | --- | --- | --- | --- |
 | BE-Q-001 | held | 첫 public Viewer Core package와 neutral namespace는 무엇인가 | upstream `@dwg-viewer/*`를 external compatibility로 주장하지 않음 | durable artifact, 3D consumer와 cross-repository CI |
-| BE-Q-002 | held | 첫 IFC engine과 implementation profile은 무엇인가 | 두 후보의 base/mapped semantic fixture는 통과; web-ifc Browser Worker를 다음 prototype으로 두되 선정은 보류 | #4 large/corrupt/Browser/license qualification |
+| BE-Q-002 | held | 첫 IFC engine과 implementation profile은 무엇인가 | 두 후보의 base/mapped semantic fixture와 web-ifc local Browser Worker smoke는 통과했지만 선정은 보류 | #4 large/negative corpus, real Browser lifecycle/package와 license qualification |
 | BE-Q-003 | held | BIM Explorer와 public protocol의 최종 라이선스는 무엇인가 | MPL-2.0/Apache-2.0 후보, root는 UNLICENSED | dependency 결합·redistribution·법률 검토 |
 | BE-Q-004 | held | Browser와 Desktop의 첫 3D GPU backend는 무엇인가 | renderer contract와 task corpus를 먼저 고정 | #6 prototype과 memory/disposal benchmark |
 | BE-Q-005 | held | optional Spatial handoff payload의 first version은 무엇인가 | source fingerprint/native identity/viewpoint 최소 원칙만 유지 | #9 threat model과 end-to-end fixture |

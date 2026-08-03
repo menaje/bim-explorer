@@ -77,6 +77,15 @@
       "installationSource": "https://docs.ifcopenshell.org/ifcopenshell-python/installation.html"
     }
   },
+  "prototypes": {
+    "webIfcBrowserWorker": {
+      "status": "experimental",
+      "backend": "browser-wasm-worker-prototype",
+      "origin": "loopback-only",
+      "evidence": "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
+      "productionPackaging": false
+    }
+  },
   "operationMatrix": {
     "parse": {
       "web-ifc": "native",
@@ -174,6 +183,7 @@
     "mappedRepresentation": true,
     "sharedGeometryInstances": true,
     "quantitiesAndClassifications": true,
+    "browserWorkerPrototype": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -187,15 +197,15 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "web-ifc-browser-worker",
+    "nextPrototype": "web-ifc-browser-worker-file-lifecycle",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. Browser, large-model, cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, and web-ifc passes one local Browser Worker smoke. Production Browser packaging, large-model, cleanup and redistribution evidence is still missing."
   },
   "blockers": [
     "No large redistributable performance fixture or resource budget",
     "No cancellation and corrupt-input cleanup conformance",
-    "No Browser Worker or VS Code package proof",
+    "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",
     "No broader connection, system, opening or non-wall relation corpus"

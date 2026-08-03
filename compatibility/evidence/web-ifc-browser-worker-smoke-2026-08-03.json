@@ -1,0 +1,72 @@
+{
+  "schema": "bim-explorer-browser-worker-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T21:08:49+09:00",
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "synthetic-small-ifc4",
+    "byteLength": 2855,
+    "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+    "schema": "IFC4",
+    "artifactCommitted": false,
+    "thirdPartyContent": false
+  },
+  "runtime": {
+    "surface": "local Chromium smoke",
+    "origin": "loopback-only",
+    "worker": "dedicated-module-worker",
+    "wasm": "single-thread"
+  },
+  "observations": {
+    "semantics": {
+      "projects": 1,
+      "walls": 1
+    },
+    "geometry": {
+      "products": 1,
+      "triangles": 12
+    },
+    "performanceMs": {
+      "initialization": 27.4,
+      "open": 2,
+      "inspection": 4.3,
+      "workerTotal": 40.7,
+      "clientWallClock": 137
+    }
+  },
+  "cleanup": {
+    "modelClosed": true,
+    "engineDisposed": true,
+    "workerTerminationRequested": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "gates": {
+    "moduleWorkerLoaded": true,
+    "browserWasmInitialized": true,
+    "fixtureAssertionsPassed": true,
+    "engineCleanupReported": true,
+    "workerTerminationRequested": true
+  },
+  "decision": {
+    "prototype": "passed",
+    "browserPackaging": "blocked",
+    "engineSelection": "held",
+    "productionClaims": false
+  },
+  "limits": [
+    "one local Chromium run",
+    "small repository-authored fixture only",
+    "no real file picker or source switching",
+    "no large-model memory budget",
+    "no engine cancellation or negative-input cleanup evidence",
+    "no clean-install Browser or VS Code package proof"
+  ]
+}

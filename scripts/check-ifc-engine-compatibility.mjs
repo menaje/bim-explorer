@@ -37,7 +37,76 @@ function aggregateCapability(values, label) {
   return evidenced[0];
 }
 
-export function validateIfcEngineCompatibility(manifest, evidenceList) {
+function validateBrowserWorkerPrototype(manifest, evidence) {
+  const requiredPrototypeGates = [
+    "moduleWorkerLoaded",
+    "browserWasmInitialized",
+    "fixtureAssertionsPassed",
+    "engineCleanupReported",
+    "workerTerminationRequested",
+  ];
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  if (
+    prototype.status !== "experimental" ||
+    prototype.backend !== "browser-wasm-worker-prototype" ||
+    prototype.origin !== "loopback-only" ||
+    prototype.productionPackaging !== false ||
+    typeof prototype.evidence !== "string" ||
+    prototype.evidence.length === 0
+  ) {
+    throw new Error("Browser Worker prototype must remain experimental");
+  }
+  plainRecord(evidence, "Browser Worker evidence");
+  if (
+    evidence.schema !== "bim-explorer-browser-worker-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== prototype.backend ||
+    evidence.fixture?.id !== "synthetic-small-ifc4" ||
+    evidence.fixture?.schema !== "IFC4" ||
+    evidence.fixture?.byteLength !== 2855 ||
+    evidence.fixture?.sha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.thirdPartyContent !== false
+  ) {
+    throw new Error("Browser Worker evidence identity mismatch");
+  }
+  for (const gate of requiredPrototypeGates) {
+    if (evidence.gates?.[gate] !== true) {
+      throw new Error(`Browser Worker evidence gate ${gate} did not pass`);
+    }
+  }
+  if (
+    Object.keys(evidence.gates ?? {}).length !==
+      requiredPrototypeGates.length ||
+    evidence.observations?.semantics?.projects !== 1 ||
+    evidence.observations?.semantics?.walls !== 1 ||
+    evidence.observations?.geometry?.products !== 1 ||
+    evidence.observations?.geometry?.triangles !== 12 ||
+    evidence.cleanup?.modelClosed !== true ||
+    evidence.cleanup?.engineDisposed !== true ||
+    evidence.cleanup?.workerTerminationRequested !== true ||
+    evidence.diagnostics?.consoleWarnings !== 0 ||
+    evidence.diagnostics?.consoleErrors !== 0 ||
+    evidence.decision?.prototype !== "passed" ||
+    evidence.decision?.browserPackaging !== "blocked" ||
+    evidence.decision?.engineSelection !== "held" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser Worker smoke is incomplete or overclaims support");
+  }
+}
+
+export function validateIfcEngineCompatibility(
+  manifest,
+  evidenceList,
+  browserWorkerEvidence,
+) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
     throw new Error("unsupported IFC engine compatibility schema");
@@ -122,6 +191,13 @@ export function validateIfcEngineCompatibility(manifest, evidenceList) {
   ) {
     throw new Error("experimental compatibility requires blockers");
   }
+  if (
+    gates.browserWorkerPrototype !== true ||
+    gates.browserPackaging !== false
+  ) {
+    throw new Error("Browser Worker prototype Gate must match its evidence");
+  }
+  validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
 
   if (
     !Array.isArray(manifest.fixtures) ||
@@ -237,7 +313,20 @@ async function main() {
     manifest.evidence.map(async (relative) =>
       JSON.parse(await readFile(path.join(root, relative), "utf8"))),
   );
-  const report = validateIfcEngineCompatibility(manifest, evidence);
+  const browserWorkerEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.prototypes.webIfcBrowserWorker.evidence,
+      ),
+      "utf8",
+    ),
+  );
+  const report = validateIfcEngineCompatibility(
+    manifest,
+    evidence,
+    browserWorkerEvidence,
+  );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +
       `${report.candidates} candidates, ${report.fixtures} fixtures, ` +

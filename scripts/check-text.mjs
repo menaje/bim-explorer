@@ -11,6 +11,8 @@ const SKIPPED_DIRECTORIES = new Set([
   "artifacts",
 ]);
 const TEXT_EXTENSIONS = new Set([
+  ".css",
+  ".html",
   ".json",
   ".md",
   ".mjs",

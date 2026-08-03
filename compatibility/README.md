@@ -19,6 +19,11 @@ mapped/shared/Qto/classification 비교는
 기록합니다. 이는 `experimental` evidence이며 engine selection 또는
 production redistribution 승인이 아닙니다.
 
+web-ifc의 local Browser Worker ESM/WASM smoke는
+[`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
+분리해 기록합니다. 작은 fixture 한 번의 prototype 결과이며
+`packagingBrowser` capability를 승격하지 않습니다.
+
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만

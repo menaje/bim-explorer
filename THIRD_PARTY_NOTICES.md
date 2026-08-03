@@ -1,7 +1,7 @@
 # Third-party notices
 
-experimental `web-ifc` qualification adapter는 다음 dependency를 exact
-version으로 사용합니다.
+experimental `web-ifc` qualification adapter와 local Browser Worker probe는
+다음 dependency를 exact version으로 사용합니다.
 
 - `web-ifc@0.0.77`
 - MPL-2.0

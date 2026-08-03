@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BIM Explorer Browser Worker Probe</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">BIM Explorer qualification</p>
+      <h1>web-ifc Browser Worker probe</h1>
+      <p class="summary">
+        Runs a repository-authored IFC fixture in an isolated local Worker.
+        No model bytes leave this loopback origin.
+      </p>
+
+      <div class="actions">
+        <button id="run-probe" type="button">Run synthetic IFC probe</button>
+        <button id="cancel-probe" type="button" disabled>Cancel</button>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite">Ready</p>
+
+      <dl>
+        <div>
+          <dt>Engine</dt>
+          <dd id="engine">—</dd>
+        </div>
+        <div>
+          <dt>Backend</dt>
+          <dd id="backend">—</dd>
+        </div>
+        <div>
+          <dt>Schema</dt>
+          <dd id="schema">—</dd>
+        </div>
+        <div>
+          <dt>Projects / Walls</dt>
+          <dd id="semantics">—</dd>
+        </div>
+        <div>
+          <dt>Products / Triangles</dt>
+          <dd id="geometry">—</dd>
+        </div>
+        <div>
+          <dt>Cleanup</dt>
+          <dd id="cleanup">—</dd>
+        </div>
+      </dl>
+
+      <details>
+        <summary>Path-free receipt</summary>
+        <pre id="receipt">—</pre>
+      </details>
+    </main>
+  </body>
+</html>
