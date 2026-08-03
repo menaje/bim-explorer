@@ -19,6 +19,7 @@ last_reviewed: 2026-08-03
 | [제품과 저장소 경계](product-boundary.md) | `product` · `accepted` | 제품 정의, 책임, identity와 standalone 원칙 |
 | [시스템 아키텍처](system-architecture.md) | `architecture` · `accepted` | source/adapter/runtime/Host 경계 |
 | [오픈소스와 유료 Spatial 경계](open-source-commercial-boundary.md) | `strategy` · `accepted` | 공개 Explorer 가치와 Spatial 상품 가치 |
+| [IFC engine qualification](ifc-engine-qualification.md) | `qualification` · `active` | 후보 측정, draft profile과 선정 Gate |
 | [결정 대장](decision-register.md) | `register` · `active` | 사실, 결정과 열린 질문 |
 | [ADR-0001](adr/ADR-0001-independent-product-boundary.md) | `adr` · `accepted` | 독립 제품·저장소·release 결정 |
 | [ADR-0002](adr/ADR-0002-viewer-core-consumer-admission.md) | `adr` · `accepted` | 공용 Viewer Core consumer admission과 namespace 보류 |

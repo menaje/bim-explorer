@@ -6,8 +6,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 첫 vertical slice는 read-only IFC입니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
-> 현재 상태: architecture와 implementation roadmap 수립 단계입니다.
-> IFC engine, public package와 지원 profile은 아직 확정되지 않았습니다.
+> 현재 상태: architecture와 첫 IFC engine qualification spike 단계입니다.
+> 두 후보는 작은 synthetic fixture를 통과했지만 engine, public package와
+> 지원 profile은 아직 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 
@@ -133,6 +134,8 @@ npm run check
 
 저장소 구조와 authority 문서는 [docs/README.md](docs/README.md), 현재
 Viewer Core admission 상태는
-[compatibility/viewer-core.json](compatibility/viewer-core.json)을
-따릅니다. 실제 IFC, 고객 모델, credential과 generated cache는 Git에
-추적하지 않습니다.
+[compatibility/viewer-core.json](compatibility/viewer-core.json), IFC engine
+후보 상태는
+[compatibility/ifc-engines.json](compatibility/ifc-engines.json)을 따릅니다.
+실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
+않습니다.

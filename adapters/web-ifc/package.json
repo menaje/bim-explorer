@@ -1,0 +1,18 @@
+{
+  "name": "@bim-explorer/adapter-web-ifc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Isolated web-ifc qualification adapter",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "inspect": "node src/inspect.mjs"
+  },
+  "dependencies": {
+    "@bim-explorer/ifc-engine-contract": "0.0.0",
+    "web-ifc": "0.0.77"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/ifc-engine-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Engine-neutral IFC qualification report contract",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}

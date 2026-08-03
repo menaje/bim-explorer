@@ -1,0 +1,588 @@
+{
+  "schema": "bim-explorer-ifc-engine-qualification-evidence/1",
+  "asOf": "2026-08-03",
+  "status": "experimental",
+  "fixture": {
+    "id": "synthetic-small-ifc4",
+    "kind": "repository-authored-generated",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "heldScenarios": [
+      "mapped-representation",
+      "large-model-performance",
+      "corrupt-input-cleanup",
+      "write-roundtrip"
+    ]
+  },
+  "environment": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v24.11.1"
+  },
+  "engines": [
+    {
+      "engine": "web-ifc",
+      "status": "passed-synthetic-small",
+      "deterministicFingerprint": true,
+      "runs": [
+        {
+          "attempt": 1,
+          "report": {
+            "schema": "bim-explorer-ifc-engine-report/0.1",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process",
+              "license": "MPL-2.0"
+            },
+            "fixture": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "capabilities": {
+              "parse": "native",
+              "semanticIndex": "mapped",
+              "geometry": "native",
+              "placements": "mapped",
+              "mappedRepresentations": "blocked",
+              "identity": "native",
+              "typeOccurrence": "mapped",
+              "propertySets": "mapped",
+              "quantities": "blocked",
+              "materials": "mapped",
+              "classifications": "blocked",
+              "relations": "mapped",
+              "sharedGeometryInstances": "blocked",
+              "writeRoundTrip": "blocked",
+              "cancellation": "blocked",
+              "corruptInputCleanup": "blocked",
+              "packagingMacos": "native",
+              "packagingLinux": "blocked",
+              "packagingBrowser": "blocked",
+              "packagingVscode": "blocked"
+            },
+            "semantics": {
+              "entityCounts": {
+                "IfcProject": 1,
+                "IfcSite": 1,
+                "IfcBuilding": 1,
+                "IfcBuildingStorey": 1,
+                "IfcSpace": 1,
+                "IfcWall": 1,
+                "IfcWallType": 1,
+                "IfcPropertySet": 2,
+                "IfcElementQuantity": 0,
+                "IfcMaterial": 1,
+                "IfcClassification": 0
+              },
+              "globalIds": {
+                "count": 17,
+                "duplicates": 0,
+                "missingOnIfcRoot": 0
+              },
+              "spatialHierarchy": [
+                "Synthetic Project",
+                "Synthetic Site",
+                "Synthetic Building",
+                "Level 01"
+              ],
+              "wall": {
+                "name": "Wall-01",
+                "tag": "W-01",
+                "type": "WallType-01",
+                "materials": [
+                  "Concrete"
+                ],
+                "propertySets": [
+                  "Pset_WallCommon",
+                  "Pset_WallTypeCommon"
+                ]
+              }
+            },
+            "relations": {
+              "IfcRelAggregates": 4,
+              "IfcRelContainedInSpatialStructure": 1,
+              "IfcRelDefinesByType": 1,
+              "IfcRelDefinesByProperties": 1,
+              "IfcRelAssociatesMaterial": 1,
+              "IfcRelAssociatesClassification": 0
+            },
+            "geometry": {
+              "products": 1,
+              "geometries": 1,
+              "vertices": 34,
+              "triangles": 12,
+              "coordinateSystem": "ifc-world-z-up",
+              "bounds": {
+                "min": [
+                  0,
+                  0.9,
+                  0
+                ],
+                "max": [
+                  4,
+                  1.1,
+                  3
+                ]
+              }
+            },
+            "performance": {
+              "initializationMs": 8.161374999999992,
+              "openMs": 2.6484590000000026,
+              "semanticMs": 5.298333000000014,
+              "geometryMs": 4.423957999999999,
+              "totalMs": 21.985417000000012,
+              "peakRssBytes": 158859264,
+              "heapUsedBytes": 32096256
+            },
+            "cleanup": {
+              "modelClosed": true,
+              "engineDisposed": true
+            },
+            "diagnostics": [],
+            "fingerprint": {
+              "algorithm": "sha256",
+              "projection": "bim-explorer-ifc-engine-fingerprint/0.1",
+              "value": "f5e1a04cd6635108bdcd4e31e796c43b4b971ba6c7067eeefc95c41c6b0eda46"
+            }
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "processExited": true,
+            "wallClockMs": 214.91870799999998
+          }
+        },
+        {
+          "attempt": 2,
+          "report": {
+            "schema": "bim-explorer-ifc-engine-report/0.1",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process",
+              "license": "MPL-2.0"
+            },
+            "fixture": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "capabilities": {
+              "parse": "native",
+              "semanticIndex": "mapped",
+              "geometry": "native",
+              "placements": "mapped",
+              "mappedRepresentations": "blocked",
+              "identity": "native",
+              "typeOccurrence": "mapped",
+              "propertySets": "mapped",
+              "quantities": "blocked",
+              "materials": "mapped",
+              "classifications": "blocked",
+              "relations": "mapped",
+              "sharedGeometryInstances": "blocked",
+              "writeRoundTrip": "blocked",
+              "cancellation": "blocked",
+              "corruptInputCleanup": "blocked",
+              "packagingMacos": "native",
+              "packagingLinux": "blocked",
+              "packagingBrowser": "blocked",
+              "packagingVscode": "blocked"
+            },
+            "semantics": {
+              "entityCounts": {
+                "IfcProject": 1,
+                "IfcSite": 1,
+                "IfcBuilding": 1,
+                "IfcBuildingStorey": 1,
+                "IfcSpace": 1,
+                "IfcWall": 1,
+                "IfcWallType": 1,
+                "IfcPropertySet": 2,
+                "IfcElementQuantity": 0,
+                "IfcMaterial": 1,
+                "IfcClassification": 0
+              },
+              "globalIds": {
+                "count": 17,
+                "duplicates": 0,
+                "missingOnIfcRoot": 0
+              },
+              "spatialHierarchy": [
+                "Synthetic Project",
+                "Synthetic Site",
+                "Synthetic Building",
+                "Level 01"
+              ],
+              "wall": {
+                "name": "Wall-01",
+                "tag": "W-01",
+                "type": "WallType-01",
+                "materials": [
+                  "Concrete"
+                ],
+                "propertySets": [
+                  "Pset_WallCommon",
+                  "Pset_WallTypeCommon"
+                ]
+              }
+            },
+            "relations": {
+              "IfcRelAggregates": 4,
+              "IfcRelContainedInSpatialStructure": 1,
+              "IfcRelDefinesByType": 1,
+              "IfcRelDefinesByProperties": 1,
+              "IfcRelAssociatesMaterial": 1,
+              "IfcRelAssociatesClassification": 0
+            },
+            "geometry": {
+              "products": 1,
+              "geometries": 1,
+              "vertices": 34,
+              "triangles": 12,
+              "coordinateSystem": "ifc-world-z-up",
+              "bounds": {
+                "min": [
+                  0,
+                  0.9,
+                  0
+                ],
+                "max": [
+                  4,
+                  1.1,
+                  3
+                ]
+              }
+            },
+            "performance": {
+              "initializationMs": 8.312624999999997,
+              "openMs": 2.6225840000000176,
+              "semanticMs": 4.945625000000007,
+              "geometryMs": 5.004916999999978,
+              "totalMs": 22.606167,
+              "peakRssBytes": 158023680,
+              "heapUsedBytes": 32098480
+            },
+            "cleanup": {
+              "modelClosed": true,
+              "engineDisposed": true
+            },
+            "diagnostics": [],
+            "fingerprint": {
+              "algorithm": "sha256",
+              "projection": "bim-explorer-ifc-engine-fingerprint/0.1",
+              "value": "f5e1a04cd6635108bdcd4e31e796c43b4b971ba6c7067eeefc95c41c6b0eda46"
+            }
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "processExited": true,
+            "wallClockMs": 214.780166
+          }
+        }
+      ]
+    },
+    {
+      "engine": "ifcopenshell",
+      "status": "passed-synthetic-small",
+      "deterministicFingerprint": true,
+      "runs": [
+        {
+          "attempt": 1,
+          "report": {
+            "schema": "bim-explorer-ifc-engine-report/0.1",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process",
+              "license": "LGPL-3.0-or-later"
+            },
+            "fixture": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "capabilities": {
+              "parse": "native",
+              "semanticIndex": "native",
+              "geometry": "native",
+              "placements": "mapped",
+              "mappedRepresentations": "blocked",
+              "identity": "native",
+              "typeOccurrence": "mapped",
+              "propertySets": "mapped",
+              "quantities": "blocked",
+              "materials": "mapped",
+              "classifications": "blocked",
+              "relations": "native",
+              "sharedGeometryInstances": "blocked",
+              "writeRoundTrip": "blocked",
+              "cancellation": "blocked",
+              "corruptInputCleanup": "blocked",
+              "packagingMacos": "native",
+              "packagingLinux": "blocked",
+              "packagingBrowser": "blocked",
+              "packagingVscode": "blocked"
+            },
+            "semantics": {
+              "entityCounts": {
+                "IfcProject": 1,
+                "IfcSite": 1,
+                "IfcBuilding": 1,
+                "IfcBuildingStorey": 1,
+                "IfcSpace": 1,
+                "IfcWall": 1,
+                "IfcWallType": 1,
+                "IfcPropertySet": 2,
+                "IfcElementQuantity": 0,
+                "IfcMaterial": 1,
+                "IfcClassification": 0
+              },
+              "globalIds": {
+                "count": 17,
+                "duplicates": 0,
+                "missingOnIfcRoot": 0
+              },
+              "spatialHierarchy": [
+                "Synthetic Project",
+                "Synthetic Site",
+                "Synthetic Building",
+                "Level 01"
+              ],
+              "wall": {
+                "name": "Wall-01",
+                "tag": "W-01",
+                "type": "WallType-01",
+                "materials": [
+                  "Concrete"
+                ],
+                "propertySets": [
+                  "Pset_WallCommon",
+                  "Pset_WallTypeCommon"
+                ]
+              }
+            },
+            "relations": {
+              "IfcRelAggregates": 4,
+              "IfcRelContainedInSpatialStructure": 1,
+              "IfcRelDefinesByType": 1,
+              "IfcRelDefinesByProperties": 1,
+              "IfcRelAssociatesMaterial": 1,
+              "IfcRelAssociatesClassification": 0
+            },
+            "geometry": {
+              "products": 1,
+              "geometries": 1,
+              "vertices": 8,
+              "triangles": 12,
+              "coordinateSystem": "ifc-world-z-up",
+              "bounds": {
+                "min": [
+                  0,
+                  0.9,
+                  0
+                ],
+                "max": [
+                  4,
+                  1.1,
+                  3
+                ]
+              }
+            },
+            "performance": {
+              "initializationMs": 0.0006249174475669861,
+              "openMs": 0.423082965426147,
+              "semanticMs": 1.1906659929081798,
+              "geometryMs": 1.1478329543024302,
+              "totalMs": 2.8455000137910247,
+              "peakRssBytes": 101957632,
+              "heapUsedBytes": 10015
+            },
+            "cleanup": {
+              "modelClosed": false,
+              "engineDisposed": false
+            },
+            "diagnostics": [
+              "cleanup-isolated-to-process-exit"
+            ],
+            "fingerprint": {
+              "algorithm": "sha256",
+              "projection": "bim-explorer-ifc-engine-fingerprint/0.1",
+              "value": "1718ed567a3fc06c994111fac7bf5dc4671a7bc72a544679347067e3d54a6143"
+            }
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "processExited": true,
+            "wallClockMs": 190.328459
+          }
+        },
+        {
+          "attempt": 2,
+          "report": {
+            "schema": "bim-explorer-ifc-engine-report/0.1",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process",
+              "license": "LGPL-3.0-or-later"
+            },
+            "fixture": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "capabilities": {
+              "parse": "native",
+              "semanticIndex": "native",
+              "geometry": "native",
+              "placements": "mapped",
+              "mappedRepresentations": "blocked",
+              "identity": "native",
+              "typeOccurrence": "mapped",
+              "propertySets": "mapped",
+              "quantities": "blocked",
+              "materials": "mapped",
+              "classifications": "blocked",
+              "relations": "native",
+              "sharedGeometryInstances": "blocked",
+              "writeRoundTrip": "blocked",
+              "cancellation": "blocked",
+              "corruptInputCleanup": "blocked",
+              "packagingMacos": "native",
+              "packagingLinux": "blocked",
+              "packagingBrowser": "blocked",
+              "packagingVscode": "blocked"
+            },
+            "semantics": {
+              "entityCounts": {
+                "IfcProject": 1,
+                "IfcSite": 1,
+                "IfcBuilding": 1,
+                "IfcBuildingStorey": 1,
+                "IfcSpace": 1,
+                "IfcWall": 1,
+                "IfcWallType": 1,
+                "IfcPropertySet": 2,
+                "IfcElementQuantity": 0,
+                "IfcMaterial": 1,
+                "IfcClassification": 0
+              },
+              "globalIds": {
+                "count": 17,
+                "duplicates": 0,
+                "missingOnIfcRoot": 0
+              },
+              "spatialHierarchy": [
+                "Synthetic Project",
+                "Synthetic Site",
+                "Synthetic Building",
+                "Level 01"
+              ],
+              "wall": {
+                "name": "Wall-01",
+                "tag": "W-01",
+                "type": "WallType-01",
+                "materials": [
+                  "Concrete"
+                ],
+                "propertySets": [
+                  "Pset_WallCommon",
+                  "Pset_WallTypeCommon"
+                ]
+              }
+            },
+            "relations": {
+              "IfcRelAggregates": 4,
+              "IfcRelContainedInSpatialStructure": 1,
+              "IfcRelDefinesByType": 1,
+              "IfcRelDefinesByProperties": 1,
+              "IfcRelAssociatesMaterial": 1,
+              "IfcRelAssociatesClassification": 0
+            },
+            "geometry": {
+              "products": 1,
+              "geometries": 1,
+              "vertices": 8,
+              "triangles": 12,
+              "coordinateSystem": "ifc-world-z-up",
+              "bounds": {
+                "min": [
+                  0,
+                  0.9,
+                  0
+                ],
+                "max": [
+                  4,
+                  1.1,
+                  3
+                ]
+              }
+            },
+            "performance": {
+              "initializationMs": 0.0006670597940683365,
+              "openMs": 0.40849996730685234,
+              "semanticMs": 1.2097499566152692,
+              "geometryMs": 1.116583007387817,
+              "totalMs": 2.8201250825077295,
+              "peakRssBytes": 102236160,
+              "heapUsedBytes": 10015
+            },
+            "cleanup": {
+              "modelClosed": false,
+              "engineDisposed": false
+            },
+            "diagnostics": [
+              "cleanup-isolated-to-process-exit"
+            ],
+            "fingerprint": {
+              "algorithm": "sha256",
+              "projection": "bim-explorer-ifc-engine-fingerprint/0.1",
+              "value": "1718ed567a3fc06c994111fac7bf5dc4671a7bc72a544679347067e3d54a6143"
+            }
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "processExited": true,
+            "wallClockMs": 190.06324999999993
+          }
+        }
+      ]
+    }
+  ],
+  "crossEngineComparison": {
+    "performed": true,
+    "passed": true,
+    "excludedFromEquality": [
+      "engine metadata",
+      "capability matrix",
+      "vertex expansion count",
+      "performance",
+      "cleanup receipt",
+      "engine-specific fingerprint"
+    ]
+  },
+  "decision": {
+    "goNoGo": "held",
+    "readRender": "experimental-only",
+    "writeRoundTrip": "blocked",
+    "reason": "large-model, mapped representation, cancellation, corrupt input, Browser/VS Code packaging and redistribution gates remain open"
+  }
+}

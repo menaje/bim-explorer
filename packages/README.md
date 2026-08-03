@@ -19,3 +19,7 @@ artifact와 conformance가 제공되기 전에는
 dependency가 없는 pre-conformance probe입니다. external upstream
 conformance module을 명시적으로 주입할 때만 compatibility test를
 실행하며 package 호환성을 주장하지 않습니다.
+
+[`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
+동일 fixture 비교에 사용하는 experimental report validator입니다. public
+package나 accepted IFC profile은 아닙니다.

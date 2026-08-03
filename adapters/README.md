@@ -13,3 +13,13 @@ source-local identity와 diagnostic만 제공합니다.
 
 각 adapter는 engine version, license, source fingerprint, cancellation,
 memory/time budget, crash isolation과 disposal receipt를 증명해야 합니다.
+
+현재 qualification 구현:
+
+- [`web-ifc`](web-ifc/README.md): exact npm/WASM dependency의 Node process probe
+- [`IfcOpenShell`](ifcopenshell/README.md): 주입된 Python environment의 native
+  process probe
+
+둘 다
+[`ifc-engine-contract`](../packages/ifc-engine-contract/README.md)의 같은
+report를 출력합니다.

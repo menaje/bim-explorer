@@ -1,10 +1,21 @@
 # Third-party notices
 
-현재 저장소 기준선에는 runtime third-party dependency가 없습니다.
+experimental `web-ifc` qualification adapter는 다음 dependency를 exact
+version으로 사용합니다.
 
-IfcOpenShell, web-ifc, geometry kernel과 compression/runtime 후보는
-qualification 전까지 제품 dependency로 간주하지 않습니다. 후보를
-추가할 때 다음을 같은 변경에서 기록해야 합니다.
+- `web-ifc@0.0.77`
+- MPL-2.0
+- <https://github.com/ThatOpen/engine_web-ifc>
+- [adapter notice](adapters/web-ifc/THIRD_PARTY_NOTICES.md)
+
+IfcOpenShell은 repository dependency나 distributable bundle에 포함하지 않고,
+qualification 시 외부 Python environment를 주입합니다.
+[candidate notice](adapters/ifcopenshell/THIRD_PARTY_NOTICES.md)는 관찰한
+version과 library license 범위를 기록합니다.
+
+두 후보 모두 public product dependency나 production redistribution 승인을
+받지 않았습니다. 후보를 release dependency로 승격할 때 다음을 같은 변경에서
+기록해야 합니다.
 
 - exact package와 version
 - upstream source와 license

@@ -1,0 +1,189 @@
+{
+  "schema": "bim-explorer-ifc-engine-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-03",
+  "contract": {
+    "reportSchema": "bim-explorer-ifc-engine-report/0.1",
+    "fingerprintProjection": "bim-explorer-ifc-engine-fingerprint/0.1",
+    "package": "@bim-explorer/ifc-engine-contract",
+    "version": "0.0.0"
+  },
+  "profile": {
+    "status": "draft",
+    "schema": "IFC4",
+    "view": "ReferenceView_V1.2",
+    "exchangeScenario": "local read-only semantic and extruded-geometry exploration",
+    "readRender": "experimental",
+    "writeRoundTrip": "blocked",
+    "covered": [
+      "Project/Site/Building/Storey/Space hierarchy",
+      "Wall occurrence and WallType",
+      "occurrence and type property sets",
+      "material association",
+      "GlobalId completeness and duplicate diagnostics",
+      "IfcExtrudedAreaSolid tessellation",
+      "IFC world placement bounds"
+    ],
+    "held": [
+      "IFC2X3 and IFC4.3",
+      "mapped representations and shared instances",
+      "quantities and classifications",
+      "large-model performance",
+      "cancellation and corrupt-input cleanup",
+      "write and round-trip"
+    ]
+  },
+  "fixture": {
+    "id": "synthetic-small-ifc4",
+    "manifest": "fixtures/ifc/synthetic-small/manifest.json",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "performanceFixture": null
+  },
+  "candidates": {
+    "web-ifc": {
+      "status": "experimental",
+      "version": "0.0.77",
+      "backend": "node-wasm-process",
+      "artifact": {
+        "registry": "npm",
+        "package": "web-ifc",
+        "integrity": "sha512-VzQ0W/Iiqbidxn1ECUvz6qJ6p2sXBVNcOsUOBCETzy77psAH6yFLKQm74aXabkx3JH4OvFVHe8k1qS6+Z2zl1w=="
+      },
+      "license": "MPL-2.0",
+      "upstream": "https://github.com/ThatOpen/engine_web-ifc",
+      "licenseSource": "https://github.com/ThatOpen/engine_web-ifc/blob/master/LICENSE.md"
+    },
+    "ifcopenshell": {
+      "status": "experimental",
+      "version": "0.8.4.post1",
+      "backend": "python-native-process",
+      "artifact": {
+        "registry": "PyPI",
+        "package": "ifcopenshell",
+        "integrity": null
+      },
+      "license": "LGPL-3.0-or-later",
+      "upstream": "https://github.com/IfcOpenShell/IfcOpenShell",
+      "installationSource": "https://docs.ifcopenshell.org/ifcopenshell-python/installation.html"
+    }
+  },
+  "operationMatrix": {
+    "parse": {
+      "web-ifc": "native",
+      "ifcopenshell": "native"
+    },
+    "semanticIndex": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "native"
+    },
+    "geometry": {
+      "web-ifc": "native",
+      "ifcopenshell": "native"
+    },
+    "placements": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
+    },
+    "mappedRepresentations": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "identity": {
+      "web-ifc": "native",
+      "ifcopenshell": "native"
+    },
+    "typeOccurrence": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
+    },
+    "propertySets": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
+    },
+    "quantities": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "materials": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
+    },
+    "classifications": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "relations": {
+      "web-ifc": "mapped",
+      "ifcopenshell": "native"
+    },
+    "sharedGeometryInstances": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "writeRoundTrip": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "cancellation": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "corruptInputCleanup": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "packagingMacos": {
+      "web-ifc": "native",
+      "ifcopenshell": "native"
+    },
+    "packagingLinux": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "packagingBrowser": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    },
+    "packagingVscode": {
+      "web-ifc": "blocked",
+      "ifcopenshell": "blocked"
+    }
+  },
+  "evidence": "compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json",
+  "gates": {
+    "commonContract": true,
+    "sameRedistributableFixture": true,
+    "semanticContainment": true,
+    "geometryAndPlacement": true,
+    "globalIdentity": true,
+    "deterministicFingerprint": true,
+    "smallFixtureTimingAndMemory": true,
+    "mappedRepresentation": false,
+    "largeModelPerformance": false,
+    "cancellation": false,
+    "corruptInputCleanup": false,
+    "macosPackaging": true,
+    "linuxPackaging": false,
+    "browserPackaging": false,
+    "vscodePackaging": false,
+    "artifactIntegrity": false,
+    "redistributionReview": false
+  },
+  "decision": {
+    "selection": "held",
+    "goNoGo": "held",
+    "nextPrototype": "web-ifc-browser-worker",
+    "fallbackPrototype": "ifcopenshell-native-process",
+    "productionClaims": false,
+    "rationale": "Both candidates pass the small common read/geometry contract. Browser, large-model, cleanup and redistribution evidence is still missing."
+  },
+  "blockers": [
+    "No mapped-representation or shared-instance fixture",
+    "No large redistributable performance fixture or resource budget",
+    "No cancellation and corrupt-input cleanup conformance",
+    "No Browser Worker or VS Code package proof",
+    "IfcOpenShell wheel integrity and production redistribution review are incomplete",
+    "No write or round-trip qualification"
+  ]
+}

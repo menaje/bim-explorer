@@ -1,0 +1,65 @@
+{
+  "schema": "bim-explorer-ifc-fixture-manifest/1",
+  "fixtureId": "synthetic-small-ifc4",
+  "kind": "repository-authored-generated",
+  "tracking": {
+    "artifactCommitted": false,
+    "generator": "scripts/generate-synthetic-ifc.mjs"
+  },
+  "redistribution": {
+    "thirdPartyContent": false,
+    "status": "project-authored-pending-release-license"
+  },
+  "ifc": {
+    "schema": "IFC4",
+    "view": "ReferenceView_V1.2",
+    "units": "metre"
+  },
+  "expected": {
+    "entities": {
+      "IfcProject": 1,
+      "IfcSite": 1,
+      "IfcBuilding": 1,
+      "IfcBuildingStorey": 1,
+      "IfcSpace": 1,
+      "IfcWall": 1,
+      "IfcWallType": 1,
+      "IfcPropertySet": 2,
+      "IfcMaterial": 1
+    },
+    "spatialPath": [
+      "Synthetic Project",
+      "Synthetic Site",
+      "Synthetic Building",
+      "Level 01"
+    ],
+    "wall": {
+      "name": "Wall-01",
+      "tag": "W-01",
+      "type": "WallType-01",
+      "material": "Concrete",
+      "length": 4,
+      "thickness": 0.2,
+      "height": 3
+    },
+    "globalIds": {
+      "count": 17,
+      "duplicates": 0,
+      "missingOnIfcRoot": 0
+    }
+  },
+  "qualificationUse": [
+    "parse",
+    "semantic-index",
+    "identity",
+    "placement",
+    "extruded-geometry",
+    "deterministic-fingerprint"
+  ],
+  "notQualified": [
+    "mapped-representation",
+    "large-model-performance",
+    "corrupt-input-cleanup",
+    "write-roundtrip"
+  ]
+}
