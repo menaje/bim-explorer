@@ -171,7 +171,11 @@ async function run() {
   let renderer;
   let session;
   let secondarySession;
+  let precisionBackend;
+  let precisionRenderer;
+  let precisionSession;
   let releaseReceipt;
+  let precisionReleaseReceipt;
   try {
     const input = await json("/probe-input.json");
     if (
@@ -324,6 +328,53 @@ async function run() {
     const sessionDisposed = await session.dispose();
     const secondarySessionDisposed =
       await secondarySession.dispose();
+    const precisionInput = await json(
+      "/precision-probe-input.json",
+    );
+    precisionSession = new BrowserGeometryRangeSession(
+      precisionInput.snapshot,
+      {
+        rangeRoute: "/precision-range",
+      },
+    );
+    precisionBackend = createWebGl2Backend({
+      canvas: elements.canvas,
+      height: 540,
+      width: 960,
+    });
+    precisionRenderer = createBounded3dRenderer({
+      backend: precisionBackend,
+    });
+    const precisionReceipt = await precisionRenderer.mount({
+      session: precisionSession,
+      snapshot: precisionInput.snapshot,
+    });
+    const precisionPicking = await pickVisibleInstance(
+      precisionRenderer,
+    );
+    precisionReleaseReceipt =
+      await precisionRenderer.unmount();
+    const precisionRendererDisposed =
+      await precisionRenderer.dispose();
+    const precisionSessionDisposed =
+      await precisionSession.dispose();
+    const precision = {
+      fixture: precisionInput.fixture,
+      source: {
+        fingerprint:
+          precisionInput.snapshot.source.fingerprint,
+        revisionId: precisionInput.snapshot.revisionId,
+        bounds: precisionInput.snapshot.geometry.bounds,
+      },
+      receipt: precisionReceipt,
+      picking: precisionPicking,
+      cleanup: {
+        releaseReceipt: precisionReleaseReceipt,
+        rendererDisposed: precisionRendererDisposed,
+        sessionDisposed: precisionSessionDisposed,
+        backendState: precisionBackend.state,
+      },
+    };
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -384,6 +435,7 @@ async function run() {
         sectionPick,
         restoredView,
       },
+      precision,
       performance: {
         mountMs,
         viewMs,
@@ -397,6 +449,8 @@ async function run() {
         rendererDisposed,
         sessionDisposed,
         secondarySessionDisposed,
+        precisionRendererDisposed,
+        precisionSessionDisposed,
         releasedBytes: releaseReceipt.releasedBytes,
         backendState: backend.state,
       },
@@ -522,6 +576,26 @@ async function run() {
         receipt.backend.uploadedBytes * 2 + 1_120 ||
       session.state.disposed !== true ||
       secondarySession.state.disposed !== true
+      ||
+      precisionReceipt.backend.precision.strategy !==
+        "camera-relative-model-origin" ||
+      precisionReceipt.backend.precision.worldOrigin.some(
+        (value) => value < 999_999_999,
+      ) ||
+      precisionReceipt.backend.precision
+        .maximumRelativeCoordinate > 5 ||
+      precisionReceipt.backend.nonBackgroundPixels <= 0 ||
+      precisionPicking.receipt.status !== "hit" ||
+      precisionPicking.receipt.source.fingerprint !==
+        precisionInput.snapshot.source.fingerprint ||
+      precisionPicking.receipt.worldPosition.some(
+        (value) => value < 999_999_999,
+      ) ||
+      precisionReleaseReceipt.releasedBytes !==
+        precisionReceipt.backend.uploadedBytes ||
+      precisionBackend.state.activeBytes !== 0 ||
+      precisionBackend.state.disposed !== true ||
+      precisionSession.state.disposed !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed: " +
@@ -549,6 +623,8 @@ async function run() {
     let rendererDisposed = false;
     let sessionDisposed = false;
     let secondarySessionDisposed = false;
+    let precisionRendererDisposed = false;
+    let precisionSessionDisposed = false;
     try {
       rendererDisposed = renderer === undefined
         ? false
@@ -571,12 +647,34 @@ async function run() {
     } catch {
       secondarySessionDisposed = false;
     }
+    try {
+      precisionRendererDisposed =
+        precisionRenderer === undefined
+          ? false
+          : await precisionRenderer.dispose();
+    } catch {
+      precisionRendererDisposed = false;
+    }
+    try {
+      precisionSessionDisposed =
+        precisionSession === undefined
+          ? false
+          : await precisionSession.dispose();
+    } catch {
+      precisionSessionDisposed = false;
+    }
     showFailure(error, {
       rendererDisposed,
       sessionDisposed,
       secondarySessionDisposed,
+      precisionRendererDisposed,
+      precisionSessionDisposed,
       releaseReceipt: releaseReceipt ?? null,
+      precisionReleaseReceipt:
+        precisionReleaseReceipt ?? null,
       backendState: backend?.state ?? null,
+      precisionBackendState:
+        precisionBackend?.state ?? null,
     });
   }
 }

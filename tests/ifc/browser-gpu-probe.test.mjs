@@ -178,3 +178,51 @@ test("Browser GPU server isolates source-switch ranges", async () => {
     await close(server);
   }
 });
+
+test("Browser GPU server isolates large-coordinate precision ranges", async () => {
+  const prepared = await fixture();
+  const server = createBrowserGpuProbeServer({
+    ...prepared,
+    precisionInput: prepared.input,
+    precisionRanges: prepared.ranges,
+  });
+  const origin = await listen(server);
+  try {
+    const input = await (
+      await fetch(`${origin}/precision-probe-input.json`)
+    ).json();
+    assert.equal(
+      input.snapshot.source.fingerprint,
+      prepared.input.snapshot.source.fingerprint,
+    );
+    const handle =
+      prepared.input.snapshot.layers[0].rangeHandles[0];
+    const selected = await fetch(
+      `${origin}/precision-range/` +
+        encodeURIComponent(handle.handleId),
+      {
+        headers: {
+          Range: "bytes=0-127",
+        },
+      },
+    );
+    assert.equal(selected.status, 206);
+    const state = await (
+      await fetch(`${origin}/range-state.json`)
+    ).json();
+    assert.equal(state.rangeRequests, 0);
+    assert.equal(state.rangeBytes, 0);
+    assert.deepEqual(state.precision, {
+      rangeBytes: 128,
+      rangeRequests: 1,
+      ranges: {
+        [handle.handleId]: {
+          bytes: 128,
+          requests: 1,
+        },
+      },
+    });
+  } finally {
+    await close(server);
+  }
+});

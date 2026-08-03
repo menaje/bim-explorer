@@ -277,6 +277,11 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(receipt.backend.frameHeight, 90);
   assert.ok(receipt.backend.nonBackgroundPixels > 0);
   assert.equal(receipt.backend.glError, 0);
+  assert.deepEqual(receipt.backend.precision, {
+    strategy: "camera-relative-model-origin",
+    worldOrigin: [2, 3, 1.5],
+    maximumRelativeCoordinate: 2.1,
+  });
   assert.equal(context.drawCalls, receipt.metrics.drawCalls);
   assert.deepEqual(
     context.bufferUploads.map((upload) => upload.byteLength),

@@ -228,6 +228,18 @@ export function syntheticMappedIfc() {
   return lines.join("\n");
 }
 
+export function syntheticLargeCoordinateIfc() {
+  return syntheticMappedIfc()
+    .replace(
+      "#22=IFCCARTESIANPOINT((2.,1.,0.));",
+      "#22=IFCCARTESIANPOINT((1000000002.,1000000001.,1000000000.));",
+    )
+    .replace(
+      "#25=IFCCARTESIANPOINT((2.,5.,0.));",
+      "#25=IFCCARTESIANPOINT((1000000002.,1000000005.,1000000000.));",
+    );
+}
+
 export const SYNTHETIC_PERFORMANCE_WALLS = 1_024;
 
 function stepReal(value) {

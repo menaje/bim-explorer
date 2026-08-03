@@ -36,6 +36,10 @@ async function fixtures() {
       manifest.evidence.browserSectionMeasurement,
       "utf8",
     )),
+    browserLargeCoordinate: JSON.parse(await readFile(
+      manifest.evidence.browserLargeCoordinate,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -56,7 +60,12 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.browserPickHighlightPixels, 7_507);
   assert.equal(result.browserLifecycleMounts, 3);
   assert.equal(result.browserMeasuredDistance, 1.5237454002432795);
-  assert.equal(result.passedGates, 14);
+  assert.deepEqual(result.browserPrecisionWorldOrigin, [
+    1_000_000_002,
+    1_000_000_003,
+    1_000_000_001.5,
+  ]);
+  assert.equal(result.passedGates, 15);
   assert.equal(result.heldGates, 4);
 });
 
@@ -117,6 +126,18 @@ test("Browser section evidence pins clipping and measurement", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /section receipt is invalid/u,
+  );
+});
+
+test("Browser precision evidence pins relative GPU coordinates", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserLargeCoordinate.representativeReport
+    .renderer.precision.maximumRelativeCoordinate = 64;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /precision render receipt is invalid/u,
   );
 });
 

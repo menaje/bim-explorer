@@ -18,6 +18,7 @@ const TRUE_GATES = [
   "pickingSelection",
   "contextLossAndGpuSourceSwitch",
   "sectionMeasurement",
+  "largeCoordinatePrecision",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
@@ -96,6 +97,18 @@ const SECTION_CONFORMANCE_ASSERTIONS = [
   "sectionRestore",
   "gpuAllocationReused",
   "transientPickTargetsReleased",
+  "deterministicDispose",
+  "pathFreeReport",
+];
+const PRECISION_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "largeIfcWorldCoordinates",
+  "doublePrecisionComposition",
+  "cameraRelativeGpuUpload",
+  "boundedRelativeCoordinates",
+  "rasterizedPixels",
+  "revisionBoundWorldPick",
+  "transientPickTargetReleased",
   "deterministicDispose",
   "pathFreeReport",
 ];
@@ -1298,6 +1311,173 @@ function validateBrowserSectionEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserPrecisionEvidence(manifest, evidence) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser precision fixture",
+  );
+  const budget = plainRecord(
+    evidence.budget,
+    "Browser precision budget",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser precision representativeReport",
+  );
+  const expected = plainRecord(
+    manifest.expected.browserLargeCoordinate,
+    "manifest.expected.browserLargeCoordinate",
+  );
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-large-coordinate-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-large-coordinate" ||
+    fixture.id !== "synthetic-ifc4-large-coordinate" ||
+    fixture.schema !== "IFC4" ||
+    fixture.profile !== "synthetic-large-coordinate-precision" ||
+    fixture.byteLength !== 4_082 ||
+    fixture.sha256 !== expected.sha256 ||
+    fixture.artifactCommitted !== true ||
+    fixture.profileAdmission !== false ||
+    budget.maximumFirstFrameMs !== 1_000 ||
+    budget.maximumPickMs !== 1_000 ||
+    budget.maximumUploadedBytes !== 8_388_608 ||
+    budget.maximumTemporaryTargetBytes !== 4_194_304 ||
+    budget.maximumRelativeCoordinate !== 5 ||
+    budget.minimumWorldCoordinate !== 999_999_999 ||
+    budget.frameWidth !== 960 ||
+    budget.frameHeight !== 540
+  ) {
+    throw new Error("Browser precision evidence identity is invalid");
+  }
+  const source = plainRecord(
+    report.source,
+    "Browser precision source",
+  );
+  const renderer = plainRecord(
+    report.renderer,
+    "Browser precision renderer",
+  );
+  const precision = plainRecord(
+    renderer.precision,
+    "Browser precision strategy",
+  );
+  if (
+    report.schema !==
+      "bim-explorer-browser-large-coordinate-report/1" ||
+    report.status !== "passed" ||
+    source.fingerprint !== `sha256:${expected.sha256}` ||
+    source.revisionId !==
+      `source-snapshot:sha256:${expected.sha256}` ||
+    !equalJson(source.bounds, expected.bounds) ||
+    renderer.contract !== manifest.contract.renderer ||
+    renderer.receipt !== manifest.contract.receipt ||
+    renderer.backend !== manifest.browserBackend.id ||
+    renderer.gpuApi !== true ||
+    renderer.physicalGpuClaimed !== false ||
+    precision.strategy !== "camera-relative-model-origin" ||
+    !equalJson(precision.worldOrigin, expected.worldOrigin) ||
+    precision.maximumRelativeCoordinate !==
+      expected.maximumRelativeCoordinate ||
+    precision.maximumRelativeCoordinate >
+      budget.maximumRelativeCoordinate ||
+    renderer.uploadedBytes !== 1_120 ||
+    renderer.uploadedBytes > budget.maximumUploadedBytes ||
+    renderer.drawCalls !== 2 ||
+    renderer.nonBackgroundPixels !==
+      expected.nonBackgroundPixels ||
+    renderer.nonBackgroundPixels <= 0 ||
+    renderer.glError !== 0
+  ) {
+    throw new Error("Browser precision render receipt is invalid");
+  }
+  boundedMeasurement(
+    renderer.firstFrameMs,
+    budget.maximumFirstFrameMs,
+    "Browser precision first frame",
+  );
+  const picking = plainRecord(
+    report.picking,
+    "Browser precision picking",
+  );
+  if (
+    picking.status !== "hit" ||
+    picking.expressId !== 40 ||
+    picking.renderId !==
+      "render:ifc:cc8b296e3ad26cd2:40" ||
+    picking.pickId !==
+      "pick:ifc:cc8b296e3ad26cd2:40" ||
+    !equalJson(picking.coordinates, {
+      x: 480,
+      y: 180,
+      origin: "canvas-top-left",
+    }) ||
+    !Array.isArray(picking.worldPosition) ||
+    picking.worldPosition.length !== 3 ||
+    picking.worldPosition.some(
+      (value, axis) =>
+        typeof value !== "number" ||
+        !Number.isFinite(value) ||
+        value < budget.minimumWorldCoordinate ||
+        value < source.bounds.min[axis] - 1e-3 ||
+        value > source.bounds.max[axis] + 1e-3,
+    ) ||
+    typeof picking.depth !== "number" ||
+    picking.depth <= 0 ||
+    picking.depth >= 1 ||
+    picking.temporaryTargetBytes !== 3_110_400 ||
+    picking.temporaryTargetBytes >
+      budget.maximumTemporaryTargetBytes ||
+    picking.temporaryReleased !== true ||
+    picking.glError !== 0
+  ) {
+    throw new Error("Browser precision pick receipt is invalid");
+  }
+  boundedMeasurement(
+    picking.frameMs,
+    budget.maximumPickMs,
+    "Browser precision pick",
+  );
+  if (
+    report.cleanup?.releasedBytes !== renderer.uploadedBytes ||
+    report.cleanup?.activeBytes !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.sessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error("Browser precision cleanup is invalid");
+  }
+  for (const assertion of PRECISION_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser precision conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      PRECISION_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.largeCoordinatePrecision !== "passed" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser precision decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -1327,6 +1507,10 @@ export function validateBimRenderer3dCompatibility(
   const browserSectionEvidence = plainRecord(
     evidenceBundle.browserSectionMeasurement,
     "Browser section BIM renderer evidence",
+  );
+  const browserPrecisionEvidence = plainRecord(
+    evidenceBundle.browserLargeCoordinate,
+    "Browser large-coordinate BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -1393,7 +1577,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "section-measurement-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 6 ||
+    manifest.evidence?.browserLargeCoordinate !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-browser-" +
+        "large-coordinate-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 7 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -1639,6 +1827,11 @@ export function validateBimRenderer3dCompatibility(
     manifest,
     browserSectionEvidence,
   );
+  const browserPrecisionReport =
+    validateBrowserPrecisionEvidence(
+      manifest,
+      browserPrecisionEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -1662,6 +1855,8 @@ export function validateBimRenderer3dCompatibility(
       browserLifecycleReport.cleanup.mounts,
     browserMeasuredDistance:
       browserSectionReport.measurements.distance.value,
+    browserPrecisionWorldOrigin:
+      browserPrecisionReport.renderer.precision.worldOrigin,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -1701,6 +1896,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserSectionMeasurement,
+      ),
+      "utf8",
+    )),
+    browserLargeCoordinate: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserLargeCoordinate,
       ),
       "utf8",
     )),

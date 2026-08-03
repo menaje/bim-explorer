@@ -15,6 +15,7 @@ import {
   loadPublicIfcFixtureManifest,
 } from "./public-ifc-fixture.mjs";
 import {
+  syntheticLargeCoordinateIfc,
   syntheticMappedIfc,
 } from "./generate-synthetic-ifc.mjs";
 
@@ -216,6 +217,31 @@ export async function preparePublicBrowserGpuProbe() {
   const secondaryProjected = projectedSnapshot(
     secondarySnapshot,
   );
+  const precisionBytes = new TextEncoder().encode(
+    syntheticLargeCoordinateIfc(),
+  );
+  const precisionArtifact = await createWebIfcSourceArtifact(
+    precisionBytes,
+  );
+  const precisionSource = createBimModelSource(
+    precisionArtifact,
+    {
+      maximumRequestBytes: 128,
+    },
+  );
+  const precisionSession = await precisionSource.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  let precisionSnapshot;
+  try {
+    precisionSnapshot = await precisionSession.getSnapshot();
+  } finally {
+    await precisionSession.dispose();
+    await precisionSource.dispose();
+  }
+  const precisionProjected = projectedSnapshot(
+    precisionSnapshot,
+  );
   return {
     input: {
       schema: "bim-explorer-browser-gpu-probe-input/1",
@@ -274,6 +300,30 @@ export async function preparePublicBrowserGpuProbe() {
         ),
       ]),
     ),
+    precisionInput: {
+      schema: "bim-explorer-browser-gpu-probe-input/1",
+      fixture: {
+        id: "synthetic-ifc4-large-coordinate",
+        schema: "IFC4",
+        profile: "synthetic-large-coordinate-precision",
+        byteLength: precisionBytes.byteLength,
+        sha256:
+          precisionSnapshot.source.fingerprint.slice(7),
+        artifactCommitted: true,
+        profileAdmission: false,
+      },
+      snapshot: precisionProjected,
+    },
+    precisionRanges: new Map(
+      precisionArtifact.ranges.map((range) => [
+        range.rangeId,
+        Buffer.from(
+          range.bytes.buffer,
+          range.bytes.byteOffset,
+          range.bytes.byteLength,
+        ),
+      ]),
+    ),
   };
 }
 
@@ -322,6 +372,8 @@ export function createBrowserGpuProbeServer({
   ranges,
   secondaryInput,
   secondaryRanges,
+  precisionInput,
+  precisionRanges,
 } = {}) {
   const probe = validateProbeInput(input, ranges);
   const secondaryProbe =
@@ -329,6 +381,11 @@ export function createBrowserGpuProbeServer({
     secondaryRanges === undefined
       ? null
       : validateProbeInput(secondaryInput, secondaryRanges);
+  const precisionProbe =
+    precisionInput === undefined &&
+    precisionRanges === undefined
+      ? null
+      : validateProbeInput(precisionInput, precisionRanges);
   const inputBytes = Buffer.from(
     JSON.stringify(probe.input),
     "utf8",
@@ -339,6 +396,12 @@ export function createBrowserGpuProbeServer({
       JSON.stringify(secondaryProbe.input),
       "utf8",
     );
+  const precisionInputBytes = precisionProbe === null
+    ? null
+    : Buffer.from(
+      JSON.stringify(precisionProbe.input),
+      "utf8",
+    );
   const state = {
     rangeBytes: 0,
     rangeRequests: 0,
@@ -346,6 +409,13 @@ export function createBrowserGpuProbeServer({
   };
   if (secondaryProbe !== null) {
     state.secondary = {
+      rangeBytes: 0,
+      rangeRequests: 0,
+      ranges: {},
+    };
+  }
+  if (precisionProbe !== null) {
+    state.precision = {
       rangeBytes: 0,
       rangeRequests: 0,
       ranges: {},
@@ -404,6 +474,24 @@ export function createBrowserGpuProbeServer({
       );
       return;
     }
+    if (
+      pathname === "/precision-probe-input.json" &&
+      precisionInputBytes !== null
+    ) {
+      response.writeHead(
+        200,
+        baseHeaders(
+          "application/json; charset=utf-8",
+          precisionInputBytes.byteLength,
+        ),
+      );
+      response.end(
+        request.method === "HEAD"
+          ? undefined
+          : precisionInputBytes,
+      );
+      return;
+    }
     if (pathname === "/range-state.json") {
       const body = Buffer.from(JSON.stringify(state), "utf8");
       response.writeHead(
@@ -418,14 +506,28 @@ export function createBrowserGpuProbeServer({
     }
     const secondaryRange =
       pathname.startsWith("/secondary-range/");
-    if (pathname.startsWith("/range/") || secondaryRange) {
-      const selectedProbe = secondaryRange
-        ? secondaryProbe
-        : probe;
-      const selectedState = secondaryRange
-        ? state.secondary
-        : state;
-      const prefixLength = secondaryRange ? 17 : 7;
+    const precisionRange =
+      pathname.startsWith("/precision-range/");
+    if (
+      pathname.startsWith("/range/") ||
+      secondaryRange ||
+      precisionRange
+    ) {
+      const selectedProbe = precisionRange
+        ? precisionProbe
+        : secondaryRange
+          ? secondaryProbe
+          : probe;
+      const selectedState = precisionRange
+        ? state.precision
+        : secondaryRange
+          ? state.secondary
+          : state;
+      const prefixLength = precisionRange
+        ? 17
+        : secondaryRange
+          ? 17
+          : 7;
       if (
         selectedProbe === null ||
         selectedState === undefined

@@ -96,6 +96,28 @@
       "sectionBoxPixels": 46932,
       "restoredPixels": 64289
     },
+    "browserLargeCoordinate": {
+      "sha256": "cc8b296e3ad26cd2c4c157dc6615c1e3db83c43d684f0f5bdb9245580b26ad5e",
+      "bounds": {
+        "min": [
+          1000000000,
+          1000000000.9,
+          1000000000
+        ],
+        "max": [
+          1000000004,
+          1000000005.1,
+          1000000003
+        ]
+      },
+      "worldOrigin": [
+        1000000002,
+        1000000003,
+        1000000001.5
+      ],
+      "maximumRelativeCoordinate": 2.100000023841858,
+      "nonBackgroundPixels": 82975
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -112,6 +134,7 @@
     "pickingSelection": true,
     "contextLossAndGpuSourceSwitch": true,
     "sectionMeasurement": true,
+    "largeCoordinatePrecision": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
@@ -124,7 +147,8 @@
     "browserViewState": "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json",
     "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json",
     "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json",
-    "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json"
+    "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json",
+    "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",

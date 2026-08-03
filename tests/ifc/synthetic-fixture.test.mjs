@@ -10,6 +10,7 @@ import {
 import {
   SYNTHETIC_PERFORMANCE_WALLS,
   syntheticIfc,
+  syntheticLargeCoordinateIfc,
   syntheticMappedIfc,
   syntheticPerformanceIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
@@ -47,6 +48,24 @@ test("mapped IFC4 fixture reuses one representation deterministically", () => {
   )].map((match) => match[1]);
   assert.equal(globalIds.length, 21);
   assert.equal(new Set(globalIds).size, 21);
+  assert.doesNotMatch(fixture, /\/Volumes\/|\/Users\/|[A-Z]:\\/u);
+});
+
+test("large-coordinate IFC4 fixture preserves metre-scale offsets", () => {
+  const fixture = syntheticLargeCoordinateIfc();
+  assert.equal(fixture, syntheticLargeCoordinateIfc());
+  assert.match(
+    fixture,
+    /IFCCARTESIANPOINT\(\(1000000002\.,1000000001\.,1000000000\.\)\)/u,
+  );
+  assert.match(
+    fixture,
+    /IFCCARTESIANPOINT\(\(1000000002\.,1000000005\.,1000000000\.\)\)/u,
+  );
+  assert.equal(
+    [...fixture.matchAll(/IFCMAPPEDITEM\(/gu)].length,
+    2,
+  );
   assert.doesNotMatch(fixture, /\/Volumes\/|\/Users\/|[A-Z]:\\/u);
 });
 

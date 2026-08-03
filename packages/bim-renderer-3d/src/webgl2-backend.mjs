@@ -388,10 +388,50 @@ function packGeometry(plan) {
   };
 }
 
-function packInstances(plan) {
+function multiplyTransform(left, right) {
+  const result = new Array(16).fill(0);
+  for (let column = 0; column < 4; column += 1) {
+    for (let row = 0; row < 4; row += 1) {
+      for (let index = 0; index < 4; index += 1) {
+        result[column * 4 + row] +=
+          left[index * 4 + row] *
+          right[column * 4 + index];
+      }
+    }
+  }
+  return result;
+}
+
+function rebasedCamera(camera, origin) {
+  return validateCamera3d({
+    ...camera,
+    target: camera.target.map(
+      (value, axis) => value - origin[axis],
+    ),
+  });
+}
+
+function relativeClippingPlanes(planes, origin) {
+  return Object.freeze(
+    planes.map((plane) => Object.freeze({
+      normal: plane.normal,
+      constant:
+        plane.constant +
+        plane.normal.reduce(
+          (sum, value, axis) =>
+            sum + value * origin[axis],
+          0,
+        ),
+    })),
+  );
+}
+
+function packInstances(plan, worldOrigin) {
   const values = new Float32Array(
     plan.instances.length * INSTANCE_FLOATS,
   );
+  const sourceFromStorage =
+    plan.presentation.coordinateSystem.sourceFromStorage;
   for (
     let instanceIndex = 0;
     instanceIndex < plan.instances.length;
@@ -399,7 +439,14 @@ function packInstances(plan) {
   ) {
     const instance = plan.instances[instanceIndex];
     const offset = instanceIndex * INSTANCE_FLOATS;
-    values.set(instance.transform, offset);
+    const transform = multiplyTransform(
+      sourceFromStorage,
+      instance.transform,
+    );
+    transform[12] -= worldOrigin[0];
+    transform[13] -= worldOrigin[1];
+    transform[14] -= worldOrigin[2];
+    values.set(transform, offset);
     values.set(instance.color, offset + 16);
   }
   if (values.byteLength !== plan.metrics.instanceBytes) {
@@ -740,6 +787,8 @@ export class WebGl2Backend {
         this.#active?.hiddenRenderIds.length ?? 0,
       selectedPickIds:
         this.#active?.selectedPickIds.length ?? 0,
+      worldOrigin:
+        this.#active?.worldOrigin ?? null,
     });
   }
 
@@ -815,9 +864,17 @@ export class WebGl2Backend {
     if (gl.isContextLost()) {
       throw invalidState("WebGL2 context is lost");
     }
-    const worldToClip = cameraViewProjectionMatrix(
+    const renderingCamera = rebasedCamera(
       camera,
+      state.worldOrigin,
+    );
+    const worldToClip = cameraViewProjectionMatrix(
+      renderingCamera,
       this.#width / this.#height,
+    );
+    const relativePlanes = relativeClippingPlanes(
+      clippingPlanes,
+      state.worldOrigin,
     );
     const [
       vertexBuffer,
@@ -863,7 +920,7 @@ export class WebGl2Backend {
             gl,
             state.clipCountLocation,
             state.clipPlanesLocation,
-            clippingPlanes,
+            relativePlanes,
           );
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
           for (const location of [0, 1, 2, 3, 4, 5, 6]) {
@@ -1023,7 +1080,16 @@ export class WebGl2Backend {
       resources.pickProgram = pickProgram;
       resources.programs.push(pickProgram);
       geometry = packGeometry(plan);
-      instances = packInstances(plan);
+      const worldOrigin = bounds.min.map(
+        (value, axis) => (value + bounds.max[axis]) / 2,
+      );
+      const maximumRelativeCoordinate = Math.max(
+        ...bounds.min.map((value, axis) =>
+          Math.abs(value - worldOrigin[axis])),
+        ...bounds.max.map((value, axis) =>
+          Math.abs(value - worldOrigin[axis])),
+      );
+      instances = packInstances(plan, worldOrigin);
       const uploadStarted = performance.now();
       const vertexBuffer = buffer(
         gl,
@@ -1048,7 +1114,12 @@ export class WebGl2Backend {
         throw new Error("WebGL2 buffer upload failed");
       }
 
-      const sourceMatrix = new Float32Array(sourceFromStorage);
+      const sourceMatrix = new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+      ]);
       const worldLocation = requireUniform(
         gl,
         frameProgram,
@@ -1128,6 +1199,7 @@ export class WebGl2Backend {
         pickWorldLocation,
         sourceLocation,
         sourceMatrix,
+        worldOrigin: Object.freeze(worldOrigin),
         worldLocation,
       };
       const camera = createFitCamera3d(bounds, {
@@ -1173,6 +1245,11 @@ export class WebGl2Backend {
           frameWidth: this.#width,
           frameHeight: this.#height,
           camera,
+          precision: {
+            strategy: "camera-relative-model-origin",
+            worldOrigin: Object.freeze([...worldOrigin]),
+            maximumRelativeCoordinate,
+          },
           visibleInstances: frame.visibleInstances,
           hiddenInstances: frame.hiddenInstances,
           selectedInstances: frame.selectedInstances,
@@ -1337,9 +1414,17 @@ export class WebGl2Backend {
       throw invalidState("WebGL2 context is lost");
     }
     const hidden = new Set(state.hiddenRenderIds);
-    const worldToClip = cameraViewProjectionMatrix(
+    const renderingCamera = rebasedCamera(
       state.camera,
+      state.worldOrigin,
+    );
+    const worldToClip = cameraViewProjectionMatrix(
+      renderingCamera,
       this.#width / this.#height,
+    );
+    const relativePlanes = relativeClippingPlanes(
+      state.clippingPlanes,
+      state.worldOrigin,
     );
     const [
       vertexBuffer,
@@ -1386,7 +1471,7 @@ export class WebGl2Backend {
               gl,
               state.pickClipCountLocation,
               state.pickClipPlanesLocation,
-              state.clippingPlanes,
+              relativePlanes,
             );
             gl.bindBuffer(
               gl.ELEMENT_ARRAY_BUFFER,
@@ -1461,15 +1546,22 @@ export class WebGl2Backend {
                   pickId: instance.pickId,
                   renderId: instance.renderId,
                 });
-                worldPosition = unprojectCameraPoint3d(
-                  state.camera,
-                  {
-                    depth: decoded.depth,
-                    height: this.#height,
-                    width: this.#width,
-                    x,
-                    y,
-                  },
+                const relativePosition =
+                  unprojectCameraPoint3d(
+                    renderingCamera,
+                    {
+                      depth: decoded.depth,
+                      height: this.#height,
+                      width: this.#width,
+                      x,
+                      y,
+                    },
+                  );
+                worldPosition = Object.freeze(
+                  relativePosition.map(
+                    (value, axis) =>
+                      value + state.worldOrigin[axis],
+                  ),
                 );
                 depth = decoded.depth;
               }

@@ -1,0 +1,117 @@
+{
+  "schema": "bim-explorer-browser-large-coordinate-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-large-coordinate",
+  "fixture": {
+    "id": "synthetic-ifc4-large-coordinate",
+    "schema": "IFC4",
+    "profile": "synthetic-large-coordinate-precision",
+    "byteLength": 4082,
+    "sha256": "cc8b296e3ad26cd2c4c157dc6615c1e3db83c43d684f0f5bdb9245580b26ad5e",
+    "artifactCommitted": true,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumFirstFrameMs": 1000,
+    "maximumPickMs": 1000,
+    "maximumUploadedBytes": 8388608,
+    "maximumTemporaryTargetBytes": 4194304,
+    "maximumRelativeCoordinate": 5,
+    "minimumWorldCoordinate": 999999999,
+    "frameWidth": 960,
+    "frameHeight": 540
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-large-coordinate-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:cc8b296e3ad26cd2c4c157dc6615c1e3db83c43d684f0f5bdb9245580b26ad5e",
+      "revisionId": "source-snapshot:sha256:cc8b296e3ad26cd2c4c157dc6615c1e3db83c43d684f0f5bdb9245580b26ad5e",
+      "bounds": {
+        "min": [
+          1000000000,
+          1000000000.9,
+          1000000000
+        ],
+        "max": [
+          1000000004,
+          1000000005.1,
+          1000000003
+        ]
+      }
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "receipt": "bim-explorer-bim-renderer-3d-receipt/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false,
+      "precision": {
+        "strategy": "camera-relative-model-origin",
+        "worldOrigin": [
+          1000000002,
+          1000000003,
+          1000000001.5
+        ],
+        "maximumRelativeCoordinate": 2.100000023841858
+      },
+      "uploadedBytes": 1120,
+      "drawCalls": 2,
+      "nonBackgroundPixels": 82975,
+      "firstFrameMs": 5.800000071525574,
+      "glError": 0
+    },
+    "picking": {
+      "status": "hit",
+      "expressId": 40,
+      "renderId": "render:ifc:cc8b296e3ad26cd2:40",
+      "pickId": "pick:ifc:cc8b296e3ad26cd2:40",
+      "coordinates": {
+        "x": 480,
+        "y": 180,
+        "origin": "canvas-top-left"
+      },
+      "worldPosition": [
+        1000000000.0875193,
+        1000000001.0999095,
+        1000000001.7543987
+      ],
+      "depth": 0.8760643330179754,
+      "temporaryTargetBytes": 3110400,
+      "temporaryReleased": true,
+      "frameMs": 18,
+      "glError": 0
+    },
+    "cleanup": {
+      "releasedBytes": 1120,
+      "activeBytes": 0,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "largeIfcWorldCoordinates": true,
+    "doublePrecisionComposition": true,
+    "cameraRelativeGpuUpload": true,
+    "boundedRelativeCoordinates": true,
+    "rasterizedPixels": true,
+    "revisionBoundWorldPick": true,
+    "transientPickTargetReleased": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "largeCoordinatePrecision": "passed",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}
