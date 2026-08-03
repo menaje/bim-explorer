@@ -139,7 +139,10 @@ Render ID hide/show는 같은 GPU allocation에서 view revision으로
 Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
 검증했습니다. 실제 context loss 뒤 같은 revision을 remount하고 별도
 IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. pointer
-input, section과 Host conformance는 계속 보류합니다.
+input은 계속 보류합니다. single plane·six-plane section box와 GPU
+depth-backed source-world distance·area·angle도 같은 allocation에서
+검증했지만, source unit 해석은 renderer가 소유하지 않습니다. Host
+conformance는 계속 보류합니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나

@@ -1,6 +1,9 @@
 import {
   validateCamera3d,
 } from "./camera.mjs";
+import {
+  createMeasurement3d,
+} from "./measurement.mjs";
 
 export const BIM_RENDERER_3D_CONTRACT =
   "bim-explorer-bim-renderer-3d/0.1";
@@ -10,11 +13,14 @@ export const BIM_RENDERER_3D_VIEW_RECEIPT =
   "bim-explorer-bim-renderer-3d-view-receipt/0.1";
 export const BIM_RENDERER_3D_PICK_RECEIPT =
   "bim-explorer-bim-renderer-3d-pick-receipt/0.1";
+export const BIM_RENDERER_3D_MEASUREMENT_RECEIPT =
+  "bim-explorer-bim-renderer-3d-measurement-receipt/0.1";
 export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 
 const SHA256 = /^[0-9a-f]{64}$/u;
 const SOURCE_FINGERPRINT = /^sha256:[0-9a-f]{64}$/u;
+const MAXIMUM_CLIPPING_PLANES = 6;
 const DEFAULT_LIMITS = Object.freeze({
   maximumFirstFrameRanges: 1,
   maximumRangeBytes: 4 * 1024 * 1024,
@@ -62,6 +68,97 @@ function finiteVector(value, length, label) {
     throw new TypeError(`${label} must be a finite ${length}D vector`);
   }
   return Object.freeze([...value]);
+}
+
+function clippingPlane(value, label) {
+  const plane = plainRecord(value, label);
+  const normal = finiteVector(
+    plane.normal,
+    3,
+    `${label}.normal`,
+  );
+  if (
+    typeof plane.constant !== "number" ||
+    !Number.isFinite(plane.constant)
+  ) {
+    throw new TypeError(`${label}.constant must be finite`);
+  }
+  const magnitude = Math.hypot(...normal);
+  if (!(magnitude > 0)) {
+    throw new RangeError(`${label}.normal must have length`);
+  }
+  return Object.freeze({
+    normal: Object.freeze(
+      normal.map((component) => component / magnitude),
+    ),
+    constant: plane.constant / magnitude,
+  });
+}
+
+function clippingState(
+  clippingPlanesValue,
+  sectionBoxValue,
+) {
+  if (
+    !Array.isArray(clippingPlanesValue) ||
+    clippingPlanesValue.length > MAXIMUM_CLIPPING_PLANES
+  ) {
+    throw new RangeError(
+      "renderer clipping planes exceed the configured limit",
+    );
+  }
+  const clippingPlanes = Object.freeze(
+    clippingPlanesValue.map((plane, index) =>
+      clippingPlane(plane, `renderer clipping plane ${index}`)),
+  );
+  let sectionBox = null;
+  let activePlanes = [...clippingPlanes];
+  if (sectionBoxValue !== null) {
+    const value = plainRecord(
+      sectionBoxValue,
+      "renderer section box",
+    );
+    const min = finiteVector(
+      value.min,
+      3,
+      "renderer section box.min",
+    );
+    const max = finiteVector(
+      value.max,
+      3,
+      "renderer section box.max",
+    );
+    if (min.some((minimum, axis) =>
+      minimum >= max[axis])) {
+      throw new RangeError("renderer section box is invalid");
+    }
+    sectionBox = Object.freeze({ min, max });
+    activePlanes = [
+      ...activePlanes,
+      { normal: [1, 0, 0], constant: -min[0] },
+      { normal: [-1, 0, 0], constant: max[0] },
+      { normal: [0, 1, 0], constant: -min[1] },
+      { normal: [0, -1, 0], constant: max[1] },
+      { normal: [0, 0, 1], constant: -min[2] },
+      { normal: [0, 0, -1], constant: max[2] },
+    ];
+  }
+  if (activePlanes.length > MAXIMUM_CLIPPING_PLANES) {
+    throw new RangeError(
+      "renderer clipping and section box exceed six planes",
+    );
+  }
+  return Object.freeze({
+    activePlanes: Object.freeze(
+      activePlanes.map((plane, index) =>
+        clippingPlane(
+          plane,
+          `renderer active clipping plane ${index}`,
+        )),
+    ),
+    clippingPlanes,
+    sectionBox,
+  });
 }
 
 function aborted(signal) {
@@ -680,6 +777,7 @@ function validateBackendMount(value, metrics) {
 function validateBackendView(
   value,
   {
+    clippingPlanes,
     highlightedInstances,
     hiddenInstances,
     selectedInstances,
@@ -704,6 +802,7 @@ function validateBackendView(
     receipt.hiddenInstances !== hiddenInstances ||
     receipt.selectedInstances !== selectedInstances ||
     receipt.highlightedInstances !== highlightedInstances ||
+    receipt.clippingPlanes !== clippingPlanes ||
     receipt.drawCalls !== visibleInstances ||
     !Number.isSafeInteger(receipt.nonBackgroundPixels) ||
     receipt.nonBackgroundPixels < 0 ||
@@ -755,8 +854,12 @@ function validateBackendPick(
     throw new Error("renderer backend pick receipt is invalid");
   }
   if (receipt.hit === false) {
-    if (receipt.identity !== null) {
-      throw new Error("renderer backend miss has an identity");
+    if (
+      receipt.identity !== null ||
+      receipt.depth !== null ||
+      receipt.worldPosition !== null
+    ) {
+      throw new Error("renderer backend miss has a surface");
     }
     return Object.freeze({ ...receipt });
   }
@@ -776,9 +879,25 @@ function validateBackendPick(
       "renderer backend pick is outside the active revision",
     );
   }
+  const worldPosition = finiteVector(
+    receipt.worldPosition,
+    3,
+    "renderer backend pick worldPosition",
+  );
+  if (
+    typeof receipt.depth !== "number" ||
+    !Number.isFinite(receipt.depth) ||
+    receipt.depth < 0 ||
+    receipt.depth > 1
+  ) {
+    throw new RangeError(
+      "renderer backend pick depth is invalid",
+    );
+  }
   return Object.freeze({
     ...receipt,
     identity: Object.freeze({ ...identity }),
+    worldPosition,
   });
 }
 
@@ -865,6 +984,7 @@ export class Bounded3dRenderer {
   #disposed = false;
   #mounting = false;
   #mounts = 0;
+  #measurements = 0;
   #picks = 0;
   #unmounts = 0;
   #updating = false;
@@ -885,6 +1005,7 @@ export class Bounded3dRenderer {
       updating: this.#updating,
       mounted: this.#active !== null,
       mounts: this.#mounts,
+      measurements: this.#measurements,
       picks: this.#picks,
       unmounts: this.#unmounts,
       viewUpdates: this.#viewUpdates,
@@ -1016,6 +1137,7 @@ export class Bounded3dRenderer {
           })),
         ),
         camera: backendMount.receipt.camera ?? null,
+        clipping: clippingState([], null),
         hiddenRenderIds: Object.freeze([]),
         selectedPickIds: Object.freeze([]),
         viewRevision: 0,
@@ -1032,8 +1154,10 @@ export class Bounded3dRenderer {
 
   async renderView({
     camera: cameraValue,
+    clippingPlanes = [],
     hiddenRenderIds = [],
     selectedPickIds = [],
+    sectionBox = null,
     signal,
   } = {}) {
     if (this.#disposed) {
@@ -1054,6 +1178,10 @@ export class Bounded3dRenderer {
       );
     }
     const camera = validateCamera3d(cameraValue);
+    const clipping = clippingState(
+      clippingPlanes,
+      sectionBox,
+    );
     if (
       !Array.isArray(hiddenRenderIds) ||
       hiddenRenderIds.length >
@@ -1117,12 +1245,14 @@ export class Bounded3dRenderer {
         this.#active.handleId,
         {
           camera,
+          clippingPlanes: clipping.activePlanes,
           hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
           selectedPickIds: Object.freeze([...selectedPickIds]),
         },
         { signal },
       );
       const backend = validateBackendView(result, {
+        clippingPlanes: clipping.activePlanes.length,
         highlightedInstances,
         hiddenInstances,
         selectedInstances,
@@ -1130,6 +1260,7 @@ export class Bounded3dRenderer {
       });
       this.#active.viewRevision += 1;
       this.#active.camera = camera;
+      this.#active.clipping = clipping;
       this.#active.hiddenRenderIds =
         Object.freeze([...hiddenRenderIds]);
       this.#active.selectedPickIds =
@@ -1141,6 +1272,11 @@ export class Bounded3dRenderer {
         source: this.#active.receipt.source,
         viewRevision: this.#active.viewRevision,
         camera,
+        clipping: Object.freeze({
+          planes: clipping.clippingPlanes,
+          sectionBox: clipping.sectionBox,
+          activePlanes: clipping.activePlanes.length,
+        }),
         visibility: Object.freeze({
           hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
           hiddenInstances,
@@ -1218,11 +1354,89 @@ export class Bounded3dRenderer {
           origin: "canvas-top-left",
         }),
         identity: backend.identity,
+        worldPosition: backend.worldPosition,
         backend,
       });
     } finally {
       this.#updating = false;
     }
+  }
+
+  measure({
+    picks,
+    type,
+  } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    if (!Array.isArray(picks)) {
+      throw new TypeError(
+        "renderer measurement picks must be a list",
+      );
+    }
+    const expectedCount = type === "distance"
+      ? [2]
+      : type === "angle"
+        ? [3]
+        : type === "area"
+          ? [3, 4, 5, 6, 7, 8]
+          : [];
+    if (!expectedCount.includes(picks.length)) {
+      throw new RangeError(
+        "renderer measurement pick count is invalid",
+      );
+    }
+    const knownPickIds = new Set(this.#active.instancePickIds);
+    const points = [];
+    const pickIds = [];
+    for (const [index, pickValue] of picks.entries()) {
+      const pick = plainRecord(
+        pickValue,
+        `renderer measurement pick ${index}`,
+      );
+      if (
+        pick.schema !== BIM_RENDERER_3D_PICK_RECEIPT ||
+        pick.status !== "hit" ||
+        pick.source?.fingerprint !==
+          this.#active.receipt.source.fingerprint ||
+        pick.source?.revisionId !== this.#active.revisionId ||
+        typeof pick.identity?.pickId !== "string" ||
+        !knownPickIds.has(pick.identity.pickId)
+      ) {
+        throw new RangeError(
+          "renderer measurement pick is outside the active revision",
+        );
+      }
+      points.push(
+        finiteVector(
+          pick.worldPosition,
+          3,
+          `renderer measurement pick ${index}.worldPosition`,
+        ),
+      );
+      pickIds.push(pick.identity.pickId);
+    }
+    const measurement = createMeasurement3d({
+      points,
+      type,
+    });
+    this.#measurements += 1;
+    return Object.freeze({
+      schema: BIM_RENDERER_3D_MEASUREMENT_RECEIPT,
+      status: "measured",
+      source: this.#active.receipt.source,
+      viewRevision: this.#active.viewRevision,
+      pickIds: Object.freeze(pickIds),
+      measurement,
+    });
   }
 
   async unmount() {
@@ -1272,6 +1486,15 @@ export {
   createFitCamera3d,
   orbitCamera3d,
   panCamera3d,
+  unprojectCameraPoint3d,
   validateCamera3d,
   zoomCamera3d,
 } from "./camera.mjs";
+
+export {
+  BIM_MEASUREMENT_3D_SCHEMA,
+  createMeasurement3d,
+  measureAngle3d,
+  measureArea3d,
+  measureDistance3d,
+} from "./measurement.mjs";

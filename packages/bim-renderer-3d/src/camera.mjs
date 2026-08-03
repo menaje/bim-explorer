@@ -262,7 +262,7 @@ function normalized(value) {
   return value.map((item) => item / length);
 }
 
-function lookAt(camera) {
+function cameraBasis(camera) {
   const eye = [
     camera.target[0] +
       camera.distance * Math.cos(camera.pitch) *
@@ -278,6 +278,21 @@ function lookAt(camera) {
   );
   const right = normalized(cross(forward, [0, 0, 1]));
   const up = cross(right, forward);
+  return {
+    eye,
+    forward,
+    right,
+    up,
+  };
+}
+
+function lookAt(camera) {
+  const {
+    eye,
+    forward,
+    right,
+    up,
+  } = cameraBasis(camera);
   return new Float32Array([
     right[0],
     up[0],
@@ -364,4 +379,77 @@ export function cameraViewProjectionMatrix(
     ? perspective(camera, aspect)
     : orthographic(camera, aspect);
   return multiply(projection, lookAt(camera));
+}
+
+export function unprojectCameraPoint3d(
+  cameraValue,
+  {
+    depth,
+    height,
+    width,
+    x,
+    y,
+  } = {},
+) {
+  const camera = validateCamera3d(cameraValue);
+  positiveNumber(width, "camera unproject width");
+  positiveNumber(height, "camera unproject height");
+  finiteNumber(x, "camera unproject x");
+  finiteNumber(y, "camera unproject y");
+  finiteNumber(depth, "camera unproject depth");
+  if (
+    x < 0 ||
+    x >= width ||
+    y < 0 ||
+    y >= height ||
+    depth < 0 ||
+    depth > 1
+  ) {
+    throw new RangeError(
+      "camera unproject coordinate is outside the frame",
+    );
+  }
+  const aspect = width / height;
+  const ndcX = ((x + 0.5) / width) * 2 - 1;
+  const ndcY = 1 - ((y + 0.5) / height) * 2;
+  const ndcZ = depth * 2 - 1;
+  let viewX;
+  let viewY;
+  let viewZ;
+  if (camera.projection === "perspective") {
+    const scale = 1 / Math.tan(camera.fieldOfViewY / 2);
+    const depthRange = camera.near - camera.far;
+    const depthScale =
+      (camera.far + camera.near) / depthRange;
+    const depthOffset =
+      2 * camera.far * camera.near / depthRange;
+    viewZ = -depthOffset / (ndcZ + depthScale);
+    viewX = ndcX * -viewZ * aspect / scale;
+    viewY = ndcY * -viewZ / scale;
+  } else {
+    const frustumDepth = camera.far - camera.near;
+    viewX =
+      ndcX * camera.orthographicHeight * aspect / 2;
+    viewY = ndcY * camera.orthographicHeight / 2;
+    viewZ = -(
+      ndcZ * frustumDepth +
+      camera.far +
+      camera.near
+    ) / 2;
+  }
+  const {
+    eye,
+    forward,
+    right,
+    up,
+  } = cameraBasis(camera);
+  return Object.freeze(
+    eye.map(
+      (value, axis) =>
+        value +
+        right[axis] * viewX +
+        up[axis] * viewY -
+        forward[axis] * viewZ,
+    ),
+  );
 }

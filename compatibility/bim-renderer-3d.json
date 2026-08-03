@@ -7,6 +7,8 @@
     "receipt": "bim-explorer-bim-renderer-3d-receipt/0.1",
     "viewReceipt": "bim-explorer-bim-renderer-3d-view-receipt/0.1",
     "pickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+    "measurementReceipt": "bim-explorer-bim-renderer-3d-measurement-receipt/0.1",
+    "measurement": "bim-explorer-measurement-3d/0.1",
     "camera": "bim-explorer-camera-3d/0.1",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
   },
@@ -83,6 +85,17 @@
       "totalUnmounts": 3,
       "totalReleasedBytes": 8799624
     },
+    "browserSectionMeasurement": {
+      "depthEncodingBits": 15,
+      "surfacePoints": 3,
+      "distance": 1.5237454002432795,
+      "angleDegrees": 90.0000000000001,
+      "area": 2.292000650994978,
+      "baselinePixels": 64289,
+      "planePixels": 37717,
+      "sectionBoxPixels": 46932,
+      "restoredPixels": 64289
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -98,10 +111,10 @@
     "renderIdVisibilityState": true,
     "pickingSelection": true,
     "contextLossAndGpuSourceSwitch": true,
+    "sectionMeasurement": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
-    "sectionMeasurement": false,
     "browserVscodeConformance": false,
     "viewerCoreConformance": false
   },
@@ -110,12 +123,12 @@
     "browserWebGl2": "compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json",
     "browserViewState": "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json",
     "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json",
-    "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json"
+    "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json",
+    "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",
     "pointer and gesture input controls are not implemented",
-    "section and measurement are not implemented",
     "Browser and VS Code renderer conformance is not qualified",
     "durable Viewer Core package and 3D conformance remain unresolved"
   ],

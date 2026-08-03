@@ -100,6 +100,65 @@ async function pickVisibleInstance(renderer) {
   throw new Error("Browser GPU probe could not pick visible geometry");
 }
 
+async function measureVisibleSurface(renderer, seedPick) {
+  const coordinates = [
+    [460, 270],
+    [480, 250],
+    [500, 270],
+    [480, 290],
+    [440, 240],
+    [520, 300],
+  ];
+  const picks = [seedPick];
+  const attempts = [];
+  for (const [x, y] of coordinates) {
+    const receipt = await renderer.pick({ x, y });
+    attempts.push(receipt);
+    if (receipt.status !== "hit") {
+      continue;
+    }
+    const distinct = picks.every((pick) =>
+      Math.hypot(
+        ...receipt.worldPosition.map(
+          (value, axis) =>
+            value - pick.worldPosition[axis],
+        ),
+      ) > 1e-4);
+    if (distinct) {
+      picks.push(receipt);
+    }
+    if (picks.length < 3) {
+      continue;
+    }
+    try {
+      return Object.freeze({
+        attempts: Object.freeze(attempts),
+        picks: Object.freeze(picks),
+        distance: renderer.measure({
+          type: "distance",
+          picks: picks.slice(0, 2),
+        }),
+        angle: renderer.measure({
+          type: "angle",
+          picks: [picks[1], picks[0], picks[2]],
+        }),
+        area: renderer.measure({
+          type: "area",
+          picks: picks.slice(0, 3),
+        }),
+      });
+    } catch (error) {
+      if (error?.name !== "RangeError") {
+        throw error;
+      }
+      picks.pop();
+    }
+  }
+  throw new Error(
+    "Browser GPU probe could not measure visible geometry",
+  );
+}
+
 async function run() {
   elements.status.dataset.state = "running";
   elements.status.textContent = "Preparing bounded WebGL2 frame…";
@@ -172,12 +231,55 @@ async function run() {
       camera: fittedView.camera,
       selectedPickIds: [picking.receipt.identity.pickId],
     });
+    const measurement = await measureVisibleSurface(
+      renderer,
+      picking.receipt,
+    );
+    const bounds = input.snapshot.geometry.bounds;
+    const center = bounds.min.map(
+      (value, axis) => (value + bounds.max[axis]) / 2,
+    );
+    const clippedView = await renderer.renderView({
+      camera: fittedView.camera,
+      clippingPlanes: [{
+        normal: [1, 0, 0],
+        constant: -center[0],
+      }],
+    });
+    const clippedPick = await renderer.pick({
+      x: 480,
+      y: 270,
+    });
+    const sectionBox = {
+      min: bounds.min.map(
+        (value, axis) =>
+          value + (bounds.max[axis] - value) * 0.1,
+      ),
+      max: bounds.max.map(
+        (value, axis) =>
+          value - (value - bounds.min[axis]) * 0.1,
+      ),
+    };
+    const sectionView = await renderer.renderView({
+      camera: fittedView.camera,
+      sectionBox,
+    });
+    const sectionPick = await renderer.pick({
+      x: 480,
+      y: 270,
+    });
+    const restoredView = await renderer.renderView({
+      camera: fittedView.camera,
+    });
     const viewMs = performance.now() - viewStarted;
     const viewSequence = [
       movedView,
       hiddenView,
       fittedView,
       selectedView,
+      clippedView,
+      sectionView,
+      restoredView,
     ];
     const rendererStateAfterViews = renderer.state;
     const backendStateAfterViews = backend.state;
@@ -273,6 +375,15 @@ async function run() {
       },
       viewSequence,
       picking,
+      measurement,
+      section: {
+        clippingPlane: clippedView,
+        clippedPick,
+        sectionBox,
+        sectionView,
+        sectionPick,
+        restoredView,
+      },
       performance: {
         mountMs,
         viewMs,
@@ -320,13 +431,49 @@ async function run() {
       selectedView.selection.selectedInstances < 1 ||
       selectedView.selection.highlightedInstances < 1 ||
       selectedView.backend.highlightPixels < 1 ||
+      measurement.picks.length < 3 ||
+      measurement.distance.measurement.value <= 0 ||
+      measurement.angle.measurement.radians <= 0 ||
+      measurement.angle.measurement.radians >= Math.PI ||
+      measurement.area.measurement.value <= 0 ||
+      clippedView.viewRevision !== 5 ||
+      clippedView.clipping.activePlanes !== 1 ||
+      clippedView.backend.clippingPlanes !== 1 ||
+      clippedView.backend.nonBackgroundPixels <= 0 ||
+      clippedView.backend.nonBackgroundPixels >=
+        fittedView.backend.nonBackgroundPixels ||
+      (
+        clippedPick.status === "hit" &&
+        clippedPick.worldPosition[0] < center[0] - 1e-3
+      ) ||
+      sectionView.viewRevision !== 6 ||
+      sectionView.clipping.activePlanes !== 6 ||
+      sectionView.backend.clippingPlanes !== 6 ||
+      sectionView.backend.nonBackgroundPixels <= 0 ||
+      sectionView.backend.nonBackgroundPixels >=
+        fittedView.backend.nonBackgroundPixels ||
+      (
+        sectionPick.status === "hit" &&
+        sectionPick.worldPosition.some((value, axis) =>
+          value < sectionBox.min[axis] - 1e-3 ||
+          value > sectionBox.max[axis] + 1e-3)
+      ) ||
+      restoredView.viewRevision !== 7 ||
+      restoredView.clipping.activePlanes !== 0 ||
+      restoredView.backend.nonBackgroundPixels !==
+        fittedView.backend.nonBackgroundPixels ||
       rendererStateAfterViews.picks !==
-        picking.attempts.length ||
-      rendererStateAfterViews.viewUpdates !== 4 ||
-      backendStateAfterViews.frames !== 5 ||
-      backendStateAfterViews.picks !== picking.attempts.length ||
+        picking.attempts.length +
+          measurement.attempts.length + 2 ||
+      rendererStateAfterViews.measurements !== 3 ||
+      rendererStateAfterViews.viewUpdates !== 7 ||
+      backendStateAfterViews.frames !== 8 ||
+      backendStateAfterViews.picks !==
+        picking.attempts.length +
+          measurement.attempts.length + 2 ||
+      backendStateAfterViews.clippingPlanes !== 0 ||
       backendStateAfterViews.hiddenRenderIds !== 0 ||
-      backendStateAfterViews.selectedPickIds !== 1 ||
+      backendStateAfterViews.selectedPickIds !== 0 ||
       contextLoss.contextLostObserved !== true ||
       contextLoss.contextRestoredObserved !== true ||
       contextLoss.invalidatedBytes !==
@@ -377,7 +524,23 @@ async function run() {
       secondarySession.state.disposed !== true
     ) {
       throw new Error(
-        "Browser GPU probe lifecycle assertion failed",
+        "Browser GPU probe lifecycle assertion failed: " +
+          JSON.stringify({
+            measurementPicks: measurement.picks.length,
+            distance: measurement.distance.measurement.value,
+            angle: measurement.angle.measurement.radians,
+            area: measurement.area.measurement.value,
+            fittedPixels:
+              fittedView.backend.nonBackgroundPixels,
+            clippedPixels:
+              clippedView.backend.nonBackgroundPixels,
+            sectionPixels:
+              sectionView.backend.nonBackgroundPixels,
+            restoredPixels:
+              restoredView.backend.nonBackgroundPixels,
+            rendererStateAfterViews,
+            backendStateAfterViews,
+          }),
       );
     }
     globalThis.__bimGpuProbeReport = Object.freeze(report);

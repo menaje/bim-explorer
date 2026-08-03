@@ -7,6 +7,7 @@ import {
   createFitCamera3d,
   orbitCamera3d,
   panCamera3d,
+  unprojectCameraPoint3d,
   validateCamera3d,
   zoomCamera3d,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
@@ -108,4 +109,34 @@ test("camera validation rejects malformed frustums and bounds", () => {
     () => zoomCamera3d(camera, 0),
     /zoom factor must be positive/u,
   );
+});
+
+test("camera unprojects perspective and orthographic pixels", () => {
+  for (const projection of ["perspective", "orthographic"]) {
+    const camera = createFitCamera3d(BOUNDS, {
+      aspect: 16 / 9,
+      projection,
+    });
+    const matrix = cameraViewProjectionMatrix(camera, 16 / 9);
+    const point = camera.target;
+    const clip = [0, 1, 2, 3].map((row) =>
+      matrix[row] * point[0] +
+      matrix[4 + row] * point[1] +
+      matrix[8 + row] * point[2] +
+      matrix[12 + row]);
+    const ndc = clip.map((value) => value / clip[3]);
+    const x = (ndc[0] + 1) * 480 - 0.5;
+    const y = (1 - ndc[1]) * 270 - 0.5;
+    const depth = (ndc[2] + 1) / 2;
+    const restored = unprojectCameraPoint3d(camera, {
+      depth,
+      height: 540,
+      width: 960,
+      x,
+      y,
+    });
+    for (const [axis, value] of restored.entries()) {
+      assert.ok(Math.abs(value - point[axis]) < 1e-5);
+    }
+  }
 });

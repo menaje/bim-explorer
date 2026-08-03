@@ -64,7 +64,7 @@ class FakeWebGl2Context {
     this.drawCalls = 0;
     this.framebuffer = null;
     this.lost = false;
-    this.pickColor = [0, 0, 0];
+    this.pickIndex = 0;
   }
 
   attachShader() {}
@@ -191,25 +191,29 @@ class FakeWebGl2Context {
     pixels,
   ) {
     pixels.fill(0);
-    pixels[0] = this.framebuffer === null
-      ? 255
-      : Math.round(this.pickColor[0] * 255);
-    pixels[1] = this.framebuffer === null
-      ? 0
-      : Math.round(this.pickColor[1] * 255);
-    pixels[2] = this.framebuffer === null
-      ? 0
-      : Math.round(this.pickColor[2] * 255);
-    pixels[3] = 255;
+    if (this.framebuffer === null) {
+      pixels[0] = 255;
+      pixels[3] = 255;
+      return;
+    }
+    const packed = (
+      (16_384 << 17) |
+      this.pickIndex
+    ) >>> 0;
+    pixels[0] = packed & 0xff;
+    pixels[1] = (packed >>> 8) & 0xff;
+    pixels[2] = (packed >>> 16) & 0xff;
+    pixels[3] = (packed >>> 24) & 0xff;
   }
   renderbufferStorage() {}
   shaderSource() {}
   texImage2D() {}
   texParameteri() {}
   uniform1i() {}
-  uniform3f(location, red, green, blue) {
-    this.pickColor = [red, green, blue];
+  uniform1ui(location, value) {
+    this.pickIndex = value;
   }
+  uniform4fv() {}
   uniformMatrix4fv() {}
   useProgram() {}
   vertexAttribDivisor() {}
@@ -360,6 +364,84 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(backend.state.selectedPickIds, 1);
   assert.equal(context.drawCalls, 9);
 
+  const horizontalPick = await renderer.pick({
+    x: 60,
+    y: 45,
+  });
+  const verticalPick = await renderer.pick({
+    x: 80,
+    y: 25,
+  });
+  const distance = renderer.measure({
+    type: "distance",
+    picks: [picked, horizontalPick],
+  });
+  const angle = renderer.measure({
+    type: "angle",
+    picks: [horizontalPick, picked, verticalPick],
+  });
+  const area = renderer.measure({
+    type: "area",
+    picks: [picked, horizontalPick, verticalPick],
+  });
+  assert.ok(picked.worldPosition.every(Number.isFinite));
+  assert.ok(distance.measurement.value > 0);
+  assert.ok(angle.measurement.degrees > 0);
+  assert.ok(area.measurement.value > 0);
+  assert.equal(renderer.state.picks, 3);
+  assert.equal(renderer.state.measurements, 3);
+  assert.equal(backend.state.picks, 3);
+  assert.equal(context.drawCalls, 13);
+  const stalePick = structuredClone(picked);
+  stalePick.source.revisionId += ":stale";
+  assert.throws(
+    () => renderer.measure({
+      type: "distance",
+      picks: [stalePick, horizontalPick],
+    }),
+    /outside the active revision/u,
+  );
+
+  const clippedView = await renderer.renderView({
+    camera: fittedView.camera,
+    clippingPlanes: [{
+      normal: [1, 0, 0],
+      constant: -2,
+    }],
+  });
+  assert.equal(clippedView.viewRevision, 4);
+  assert.equal(clippedView.clipping.activePlanes, 1);
+  assert.equal(clippedView.backend.clippingPlanes, 1);
+  const sectionView = await renderer.renderView({
+    camera: fittedView.camera,
+    sectionBox: {
+      min: [0, 0, 0],
+      max: [4, 6, 3],
+    },
+  });
+  assert.equal(sectionView.viewRevision, 5);
+  assert.equal(sectionView.clipping.activePlanes, 6);
+  assert.equal(sectionView.backend.clippingPlanes, 6);
+  const restoredAfterSection = await renderer.renderView({
+    camera: fittedView.camera,
+  });
+  assert.equal(restoredAfterSection.viewRevision, 6);
+  assert.equal(restoredAfterSection.clipping.activePlanes, 0);
+  assert.equal(renderer.state.viewUpdates, 6);
+  assert.equal(backend.state.frames, 7);
+  assert.equal(backend.state.clippingPlanes, 0);
+  assert.equal(context.drawCalls, 19);
+  await assert.rejects(
+    renderer.renderView({
+      camera: fittedView.camera,
+      sectionBox: {
+        min: [0, 0, 0],
+        max: [0, 1, 1],
+      },
+    }),
+    /section box is invalid/u,
+  );
+
   const cancelledPick = new AbortController();
   cancelledPick.abort(
     new DOMException("cancelled pick", "AbortError"),
@@ -372,8 +454,8 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     }),
     /cancelled pick/u,
   );
-  assert.equal(renderer.state.picks, 1);
-  assert.equal(backend.state.picks, 1);
+  assert.equal(renderer.state.picks, 3);
+  assert.equal(backend.state.picks, 3);
 
   const contextLoss = await backend.qualifyContextLoss(
     backend.state.activeHandleId,

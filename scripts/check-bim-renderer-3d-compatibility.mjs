@@ -17,11 +17,11 @@ const TRUE_GATES = [
   "renderIdVisibilityState",
   "pickingSelection",
   "contextLossAndGpuSourceSwitch",
+  "sectionMeasurement",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
   "cameraInteraction",
-  "sectionMeasurement",
   "browserVscodeConformance",
   "viewerCoreConformance",
 ];
@@ -81,6 +81,22 @@ const LIFECYCLE_CONFORMANCE_ASSERTIONS = [
   "cancellationFailsClosed",
   "allSessionsDisposed",
   "deterministicBackendDispose",
+  "pathFreeReport",
+];
+const SECTION_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "depthBackedWorldPosition",
+  "revisionBoundMeasurementPoints",
+  "distanceMeasurement",
+  "angleMeasurement",
+  "areaMeasurement",
+  "singleClippingPlane",
+  "sixPlaneSectionBox",
+  "pickRespectsClipping",
+  "sectionRestore",
+  "gpuAllocationReused",
+  "transientPickTargetsReleased",
+  "deterministicDispose",
   "pathFreeReport",
 ];
 const RENDERER_LIMITS = Object.freeze({
@@ -1071,6 +1087,217 @@ function validateBrowserLifecycleEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserSectionEvidence(manifest, evidence) {
+  plainRecord(evidence, "Browser section evidence");
+  const fixture = manifest.fixture;
+  const expected = manifest.expected.browserSectionMeasurement;
+  if (
+    evidence.schema !==
+      "bim-explorer-public-browser-section-measurement-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-section-measurement" ||
+    evidence.fixture?.id !== fixture.id ||
+    evidence.fixture?.schema !== fixture.schema ||
+    evidence.fixture?.profile !== fixture.profile ||
+    evidence.fixture?.byteLength !== fixture.byteLength ||
+    evidence.fixture?.sha256 !== fixture.sha256 ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.profileAdmission !== false
+  ) {
+    throw new Error("Browser section evidence identity is invalid");
+  }
+  const budget = evidence.budget;
+  if (
+    budget?.maximumPickMs !== 1_000 ||
+    budget?.maximumSectionFrameMs !== 1_000 ||
+    budget?.maximumTotalMs !== 3_000 ||
+    budget?.maximumUploadedBytes !== 8_388_608 ||
+    budget?.maximumTemporaryTargetBytes !== 4_194_304 ||
+    budget?.frameWidth !== 960 ||
+    budget?.frameHeight !== 540
+  ) {
+    throw new Error("Browser section evidence budget is invalid");
+  }
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser section representativeReport",
+  );
+  if (
+    report.schema !==
+      "bim-explorer-browser-webgl2-section-measurement-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !== `sha256:${fixture.sha256}` ||
+    report.source?.revisionId !==
+      `source-snapshot:sha256:${fixture.sha256}` ||
+    report.source?.coordinateSpace !== "source-world" ||
+    report.source?.unit !== "source-coordinate-unit"
+  ) {
+    throw new Error("Browser section source is invalid");
+  }
+  const renderer = plainRecord(
+    report.renderer,
+    "Browser section renderer",
+  );
+  if (
+    renderer.contract !== manifest.contract.renderer ||
+    renderer.viewReceipt !== manifest.contract.viewReceipt ||
+    renderer.pickReceipt !== manifest.contract.pickReceipt ||
+    renderer.measurementReceipt !==
+      manifest.contract.measurementReceipt ||
+    renderer.measurementSchema !==
+      manifest.contract.measurement ||
+    renderer.backend !== manifest.browserBackend.id ||
+    renderer.gpuApi !== true ||
+    renderer.physicalGpuClaimed !== false ||
+    renderer.uploadedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    renderer.uploadedBytes > budget.maximumUploadedBytes ||
+    renderer.depthEncodingBits !== expected.depthEncodingBits ||
+    renderer.picks !== 5 ||
+    renderer.measurements !== 3 ||
+    renderer.viewUpdates !== 7 ||
+    renderer.frames !== 8
+  ) {
+    throw new Error("Browser section renderer is invalid");
+  }
+  if (
+    !Array.isArray(report.surfacePoints) ||
+    report.surfacePoints.length !== expected.surfacePoints
+  ) {
+    throw new Error("Browser measurement points are invalid");
+  }
+  for (const point of report.surfacePoints) {
+    if (
+      !Number.isSafeInteger(point.coordinates?.x) ||
+      !Number.isSafeInteger(point.coordinates?.y) ||
+      point.coordinates?.origin !== "canvas-top-left" ||
+      typeof point.pickId !== "string" ||
+      !Array.isArray(point.worldPosition) ||
+      point.worldPosition.length !== 3 ||
+      !point.worldPosition.every(Number.isFinite) ||
+      typeof point.depth !== "number" ||
+      !Number.isFinite(point.depth) ||
+      point.depth < 0 ||
+      point.depth > 1 ||
+      point.glError !== 0
+    ) {
+      throw new Error("Browser measurement point is invalid");
+    }
+    boundedMeasurement(
+      point.frameMs,
+      budget.maximumPickMs,
+      "Browser measurement pick frame",
+    );
+  }
+  if (
+    report.measurements?.distance?.value !==
+      expected.distance ||
+    report.measurements?.distance?.pointCount !== 2 ||
+    report.measurements?.angle?.degrees !==
+      expected.angleDegrees ||
+    report.measurements?.angle?.pointCount !== 3 ||
+    report.measurements?.area?.value !== expected.area ||
+    report.measurements?.area?.pointCount !== 3 ||
+    !Array.isArray(report.measurements?.area?.normal) ||
+    report.measurements.area.normal.length !== 3 ||
+    !report.measurements.area.normal.every(Number.isFinite)
+  ) {
+    throw new Error("Browser measurements are invalid");
+  }
+  const section = plainRecord(
+    report.section,
+    "Browser section receipt",
+  );
+  if (
+    section.baselinePixels !== expected.baselinePixels ||
+    !equalJson(section.plane?.normal, [1, 0, 0]) ||
+    section.plane?.constant !== -10.975 ||
+    section.plane?.activePlanes !== 1 ||
+    section.plane?.pixels !== expected.planePixels ||
+    section.plane?.pixels >= section.baselinePixels ||
+    section.plane?.centerPick !== "miss" ||
+    section.plane?.glError !== 0 ||
+    !Array.isArray(section.box?.min) ||
+    !Array.isArray(section.box?.max) ||
+    section.box.min.length !== 3 ||
+    section.box.max.length !== 3 ||
+    section.box.activePlanes !== 6 ||
+    section.box.pixels !== expected.sectionBoxPixels ||
+    section.box.pixels >= section.baselinePixels ||
+    section.box.centerPick !== "hit-inside-box" ||
+    section.box.glError !== 0 ||
+    section.restored?.activePlanes !== 0 ||
+    section.restored?.pixels !== expected.restoredPixels ||
+    section.restored?.pixels !== section.baselinePixels ||
+    section.restored?.glError !== 0
+  ) {
+    throw new Error("Browser section receipt is invalid");
+  }
+  for (const [value, label] of [
+    [section.plane.frameMs, "plane frame"],
+    [section.box.frameMs, "section-box frame"],
+    [section.restored.frameMs, "restored frame"],
+  ]) {
+    boundedMeasurement(
+      value,
+      budget.maximumSectionFrameMs,
+      `Browser ${label}`,
+    );
+  }
+  if (
+    report.cleanup?.persistentActiveBytesBeforeLifecycle !==
+      manifest.expected.browserUploadedBytes ||
+    report.cleanup?.transientPickTargetBytes !== 3_110_400 ||
+    report.cleanup?.transientPickTargetBytes >
+      budget.maximumTemporaryTargetBytes ||
+    report.cleanup?.transientPickTargetsReleased !== true ||
+    report.cleanup?.finalReleasedBytes !==
+      manifest.expected.browserLifecycle.totalReleasedBytes ||
+    report.cleanup?.finalActiveBytes !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.publicSessionDisposed !== true ||
+    report.cleanup?.switchSessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error("Browser section cleanup is invalid");
+  }
+  boundedMeasurement(
+    report.performance?.totalMs,
+    budget.maximumTotalMs,
+    "Browser section totalMs",
+  );
+  for (const assertion of SECTION_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser section conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      SECTION_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.sectionMeasurement !== "passed" ||
+    evidence.decision?.sourceUnitsResolved !==
+      "blocked-source-coordinate-unit-only" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser section decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -1097,6 +1324,10 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.browserLifecycle,
     "Browser lifecycle BIM renderer evidence",
   );
+  const browserSectionEvidence = plainRecord(
+    evidenceBundle.browserSectionMeasurement,
+    "Browser section BIM renderer evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
@@ -1110,6 +1341,11 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-bim-renderer-3d-view-receipt/0.1" ||
     manifest.contract?.pickReceipt !==
       "bim-explorer-bim-renderer-3d-pick-receipt/0.1" ||
+    manifest.contract?.measurementReceipt !==
+      "bim-explorer-bim-renderer-3d-" +
+        "measurement-receipt/0.1" ||
+    manifest.contract?.measurement !==
+      "bim-explorer-measurement-3d/0.1" ||
     manifest.contract?.camera !==
       "bim-explorer-camera-3d/0.1" ||
     manifest.contract?.geometryMediaType !==
@@ -1153,7 +1389,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "lifecycle-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 5 ||
+    manifest.evidence?.browserSectionMeasurement !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "section-measurement-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 6 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -1395,6 +1635,10 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserLifecycleEvidence,
     );
+  const browserSectionReport = validateBrowserSectionEvidence(
+    manifest,
+    browserSectionEvidence,
+  );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -1416,6 +1660,8 @@ export function validateBimRenderer3dCompatibility(
       browserPickReport.selection.highlightPixels,
     browserLifecycleMounts:
       browserLifecycleReport.cleanup.mounts,
+    browserMeasuredDistance:
+      browserSectionReport.measurements.distance.value,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -1451,6 +1697,13 @@ async function main() {
       path.join(root, manifest.evidence.browserLifecycle),
       "utf8",
     )),
+    browserSectionMeasurement: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserSectionMeasurement,
+      ),
+      "utf8",
+    )),
   };
   const result = validateBimRenderer3dCompatibility(
     manifest,
@@ -1464,6 +1717,7 @@ async function main() {
       `${result.browserViewFrames} view frames, ` +
       `${result.browserPickHighlightPixels} highlight pixels, ` +
       `${result.browserLifecycleMounts} lifecycle mounts, ` +
+      `${result.browserMeasuredDistance.toFixed(3)} measured units, ` +
       `${result.passedGates} passed and ${result.heldGates} held gates`,
   );
 }

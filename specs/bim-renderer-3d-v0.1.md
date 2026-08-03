@@ -154,6 +154,30 @@ Pick ID로 해결됐습니다. 해당 Pick ID를 선택한 다음 frame은 같�
 pixels를 기록했습니다. stale Pick ID와 backend가 반환한 active revision
 밖의 identity는 fail closed로 거부합니다.
 
+pick color의 하위 17 bits는 instance index, 상위 15 bits는 normalized
+depth입니다. depth와 camera를 이용해 canvas pixel center를 source-world
+좌표로 복원합니다. 100,000-instance limit은 17-bit index 범위 안에 있고,
+depth quantization은 renderer receipt에 명시합니다.
+
+## Clipping과 measurement
+
+`renderView()`는 최대 6개의 normalized clipping plane을 받습니다.
+section box는 안쪽 half-space를 유지하는 6 planes로 변환되며 별도 plane과
+합쳐 6개를 넘으면 거부합니다. 화면 shader와 offscreen pick shader는 같은
+planes를 적용하므로 잘린 geometry가 pick authority로 다시 나타나지
+않습니다.
+
+`bim-explorer-bim-renderer-3d-measurement-receipt/0.1`은 active revision의
+hit pick만 받아 source-world distance, planar polygon area와 3-point
+angle을 계산합니다. degenerate distance/angle/area와 non-planar polygon은
+거부합니다. renderer는 IFC unit을 추론하지 않으며 값의 단위는
+`source-coordinate-unit`입니다.
+
+public fixture에서 3개 surface point로 1.523745 distance, 2.292001 triangle
+area와 90-degree angle을 재현했습니다. one-plane clip은 64,289 pixels를
+37,717로, six-plane section box는 46,932로 줄였고 show-all은 64,289로
+복구했습니다.
+
 ## Context loss와 source switch
 
 local Chromium의 `WEBGL_lose_context` qualification에서 loss/restore event와
@@ -171,7 +195,6 @@ source/Host 계층의 별도 책임입니다.
 
 - camera visibility 기반 초기 range와 progressive detail
 - pointer/gesture 기반 camera input과 interaction policy
-- clipping, section과 measurement
 - physical GPU·driver와 GPU memory qualification
 - Browser/VS Code 동일 backend conformance
 - 공용 Viewer Core 3D consumer conformance

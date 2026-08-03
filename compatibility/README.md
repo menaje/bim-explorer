@@ -38,7 +38,8 @@ first frame은
 [`public Browser WebGL2 evidence`](evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json),
 [`public Browser view-state evidence`](evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json),
 [`public Browser picking evidence`](evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json),
-[`public Browser lifecycle evidence`](evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json)가
+[`public Browser lifecycle evidence`](evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json),
+[`public Browser section evidence`](evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json)가
 소유합니다. 공개 모델 첫 range에서 2,458 geometry records, 3,182
 instances와 127,993 instanced triangles를 재현했습니다. 실제 Chromium
 WebGL2 API에 4,399,252 bytes를 upload해 3,182 draws와 67,153
@@ -49,8 +50,10 @@ qualification, visibility 기반 range 계획과 pointer input은 보류합니�
 별도 offscreen WebGL2 pass의 화면 중앙 pick은 active revision의 Pick ID로
 해결됐고, 선택 frame은 7,507 highlight pixels를 만들었습니다. context
 loss를 관찰·복원한 뒤 같은 revision을 다시 upload하고 별도 IFC4 source로
-전환해 세 mount의 allocation을 모두 회수했습니다. section과 Host
-conformance는 계속 보류합니다.
+전환해 세 mount의 allocation을 모두 회수했습니다. section frame은
+single plane과 six-plane box로 pixel을 줄이고 복구했으며, GPU depth로
+복원한 source-world 점에서 distance·area·angle을 계산했습니다. 단위는
+source-coordinate-unit이며 Host conformance는 계속 보류합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에

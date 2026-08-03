@@ -32,6 +32,10 @@ async function fixtures() {
       manifest.evidence.browserLifecycle,
       "utf8",
     )),
+    browserSectionMeasurement: JSON.parse(await readFile(
+      manifest.evidence.browserSectionMeasurement,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -51,8 +55,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.browserViewFrames, 4);
   assert.equal(result.browserPickHighlightPixels, 7_507);
   assert.equal(result.browserLifecycleMounts, 3);
-  assert.equal(result.passedGates, 13);
-  assert.equal(result.heldGates, 5);
+  assert.equal(result.browserMeasuredDistance, 1.5237454002432795);
+  assert.equal(result.passedGates, 14);
+  assert.equal(result.heldGates, 4);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
@@ -100,6 +105,18 @@ test("Browser lifecycle evidence pins context and source cleanup", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /lifecycle cleanup is invalid/u,
+  );
+});
+
+test("Browser section evidence pins clipping and measurement", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserSectionMeasurement.representativeReport
+    .section.restored.pixels -= 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /section receipt is invalid/u,
   );
 });
 

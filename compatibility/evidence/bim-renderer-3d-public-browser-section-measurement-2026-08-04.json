@@ -1,0 +1,203 @@
+{
+  "schema": "bim-explorer-public-browser-section-measurement-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-section-measurement",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumPickMs": 1000,
+    "maximumSectionFrameMs": 1000,
+    "maximumTotalMs": 3000,
+    "maximumUploadedBytes": 8388608,
+    "maximumTemporaryTargetBytes": 4194304,
+    "frameWidth": 960,
+    "frameHeight": 540
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-webgl2-section-measurement-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "coordinateSpace": "source-world",
+      "unit": "source-coordinate-unit"
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "viewReceipt": "bim-explorer-bim-renderer-3d-view-receipt/0.1",
+      "pickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+      "measurementReceipt": "bim-explorer-bim-renderer-3d-measurement-receipt/0.1",
+      "measurementSchema": "bim-explorer-measurement-3d/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false,
+      "uploadedBytes": 4399252,
+      "depthEncodingBits": 15,
+      "picks": 5,
+      "measurements": 3,
+      "viewUpdates": 7,
+      "frames": 8
+    },
+    "surfacePoints": [
+      {
+        "coordinates": {
+          "x": 480,
+          "y": 270,
+          "origin": "canvas-top-left"
+        },
+        "pickId": "pick:ifc:5c73cdd02b3add09:317690",
+        "depth": 0.4903714102603229,
+        "worldPosition": [
+          7.427577681751558,
+          7.7389502170172335,
+          2.9097924356182574
+        ],
+        "frameMs": 14.5,
+        "glError": 0
+      },
+      {
+        "coordinates": {
+          "x": 460,
+          "y": 270,
+          "origin": "canvas-top-left"
+        },
+        "pickId": "pick:ifc:5c73cdd02b3add09:317690",
+        "depth": 0.4903714102603229,
+        "worldPosition": [
+          8.505028387065394,
+          6.661499511703404,
+          2.9097924356182574
+        ],
+        "frameMs": 8.200000047683716,
+        "glError": 0
+      },
+      {
+        "coordinates": {
+          "x": 480,
+          "y": 250,
+          "origin": "canvas-top-left"
+        },
+        "pickId": "pick:ifc:5c73cdd02b3add09:285537",
+        "depth": 0.5226294747764519,
+        "worldPosition": [
+          5.300393779314973,
+          5.611766314580642,
+          2.932423686288118
+        ],
+        "frameMs": 11.300000071525574,
+        "glError": 0
+      }
+    ],
+    "measurements": {
+      "distance": {
+        "value": 1.5237454002432795,
+        "pointCount": 2
+      },
+      "angle": {
+        "radians": 1.5707963267948983,
+        "degrees": 90.0000000000001,
+        "pointCount": 3
+      },
+      "area": {
+        "value": 2.292000650994978,
+        "pointCount": 3,
+        "normal": [
+          -0.005319382650652394,
+          -0.0053193826506528425,
+          -0.9999717037678776
+        ]
+      }
+    },
+    "section": {
+      "baselinePixels": 64289,
+      "plane": {
+        "normal": [
+          1,
+          0,
+          0
+        ],
+        "constant": -10.975,
+        "activePlanes": 1,
+        "pixels": 37717,
+        "frameMs": 18.5,
+        "centerPick": "miss",
+        "glError": 0
+      },
+      "box": {
+        "min": [
+          1.395,
+          1.4465000000000003,
+          -0.19435119999999984
+        ],
+        "max": [
+          20.555,
+          21.0185,
+          11.850839200000001
+        ],
+        "activePlanes": 6,
+        "pixels": 46932,
+        "frameMs": 18.600000023841858,
+        "centerPick": "hit-inside-box",
+        "glError": 0
+      },
+      "restored": {
+        "activePlanes": 0,
+        "pixels": 64289,
+        "frameMs": 19.399999976158142,
+        "glError": 0
+      }
+    },
+    "cleanup": {
+      "persistentActiveBytesBeforeLifecycle": 4399252,
+      "transientPickTargetBytes": 3110400,
+      "transientPickTargetsReleased": true,
+      "finalReleasedBytes": 8799624,
+      "finalActiveBytes": 0,
+      "rendererDisposed": true,
+      "publicSessionDisposed": true,
+      "switchSessionDisposed": true,
+      "backendDisposed": true
+    },
+    "performance": {
+      "initialMountMs": 404.2000000476837,
+      "interactionMs": 360.60000002384186,
+      "totalMs": 1665.8999999761581
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "depthBackedWorldPosition": true,
+    "revisionBoundMeasurementPoints": true,
+    "distanceMeasurement": true,
+    "angleMeasurement": true,
+    "areaMeasurement": true,
+    "singleClippingPlane": true,
+    "sixPlaneSectionBox": true,
+    "pickRespectsClipping": true,
+    "sectionRestore": true,
+    "gpuAllocationReused": true,
+    "transientPickTargetsReleased": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "sectionMeasurement": "passed",
+    "sourceUnitsResolved": "blocked-source-coordinate-unit-only",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}
