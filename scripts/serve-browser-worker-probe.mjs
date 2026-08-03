@@ -20,6 +20,10 @@ const ROUTES = new Map([
     file: path.join(APP, "worker-client.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/source-session.mjs", {
+    file: path.join(APP, "source-session.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
   ["/ifc-worker.mjs", {
     file: path.join(APP, "ifc-worker.mjs"),
     type: "text/javascript; charset=utf-8",

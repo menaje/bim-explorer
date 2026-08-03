@@ -55,7 +55,9 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
     prototype.origin !== "loopback-only" ||
     prototype.productionPackaging !== false ||
     typeof prototype.evidence !== "string" ||
-    prototype.evidence.length === 0
+    prototype.evidence.length === 0 ||
+    typeof prototype.lifecycleEvidence !== "string" ||
+    prototype.lifecycleEvidence.length === 0
   ) {
     throw new Error("Browser Worker prototype must remain experimental");
   }
@@ -102,10 +104,116 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
   }
 }
 
+function validateBrowserFileLifecycle(manifest, evidence) {
+  const requiredConformance = [
+    "sourceLimitBeforeRead",
+    "sourceSizeVerifiedBeforeWorker",
+    "activeReplacementCancels",
+    "staleOutputSuppressed",
+    "explicitCancel",
+    "terminalDispose",
+    "pagehideDisposalWired",
+  ];
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  plainRecord(evidence, "Browser local-file lifecycle evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-file-lifecycle-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.2" ||
+    evidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.2" ||
+    evidence.contract?.maxSourceBytes !== 64 * 1024 * 1024 ||
+    evidence.contract?.fileNameTransmitted !== false ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== prototype.backend ||
+    evidence.engine?.license !== manifest.candidates["web-ifc"].license
+  ) {
+    throw new Error("Browser local-file lifecycle identity mismatch");
+  }
+  if (
+    evidence.provenance?.fixtureId !== "synthetic-mapped-ifc4" ||
+    evidence.provenance?.repositoryGenerated !== true ||
+    evidence.provenance?.artifactCommitted !== false ||
+    evidence.provenance?.thirdPartyContent !== false ||
+    evidence.provenance?.localChooserInvoked !== true
+  ) {
+    throw new Error("Browser local-file lifecycle provenance mismatch");
+  }
+  const observation = plainRecord(
+    evidence.localFileObservation,
+    "localFileObservation",
+  );
+  if (
+    observation.source?.id !== "local-ifc" ||
+    observation.source?.kind !== "local-file" ||
+    observation.source?.byteLength !== 4028 ||
+    observation.source?.sha256 !==
+      "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243" ||
+    observation.source?.schema !== "IFC4" ||
+    observation.semantics?.projects !== 1 ||
+    observation.semantics?.walls !== 2 ||
+    observation.geometry?.products !== 2 ||
+    observation.geometry?.triangles !== 24 ||
+    observation.cleanup?.modelClosed !== true ||
+    observation.cleanup?.engineDisposed !== true ||
+    observation.worker?.outcome !== "completed" ||
+    observation.worker?.workerTerminationRequested !== true ||
+    observation.worker?.timedOut !== false ||
+    observation.worker?.cancelled !== false ||
+    observation.diagnostics?.consoleWarnings !== 0 ||
+    observation.diagnostics?.consoleErrors !== 0 ||
+    observation.diagnostics?.fileNameObservedInReceipt !== false
+  ) {
+    throw new Error("Browser local-file observation is incomplete");
+  }
+  const sourceSwitch = plainRecord(
+    evidence.sourceSwitchObservation,
+    "sourceSwitchObservation",
+  );
+  if (
+    sourceSwitch.from !== "local-ifc" ||
+    sourceSwitch.to !== "synthetic-small-ifc4" ||
+    sourceSwitch.toByteLength !== 2855 ||
+    sourceSwitch.toSha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    sourceSwitch.toSemantics?.projects !== 1 ||
+    sourceSwitch.toSemantics?.walls !== 1 ||
+    sourceSwitch.toGeometry?.products !== 1 ||
+    sourceSwitch.toGeometry?.triangles !== 12 ||
+    sourceSwitch.staleOutputObserved !== false
+  ) {
+    throw new Error("Browser source-switch observation is incomplete");
+  }
+  for (const gate of requiredConformance) {
+    if (evidence.conformance?.[gate] !== true) {
+      throw new Error(`Browser lifecycle conformance ${gate} did not pass`);
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      requiredConformance.length ||
+    evidence.decision?.localFileLifecyclePrototype !== "passed" ||
+    evidence.decision?.engineCancellation !== "blocked" ||
+    evidence.decision?.browserPackaging !== "blocked" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "Browser local-file lifecycle is incomplete or overclaims support",
+    );
+  }
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
   browserWorkerEvidence,
+  browserLifecycleEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -193,11 +301,13 @@ export function validateIfcEngineCompatibility(
   }
   if (
     gates.browserWorkerPrototype !== true ||
+    gates.browserLocalFileLifecycle !== true ||
     gates.browserPackaging !== false
   ) {
     throw new Error("Browser Worker prototype Gate must match its evidence");
   }
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
+  validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
 
   if (
     !Array.isArray(manifest.fixtures) ||
@@ -322,10 +432,20 @@ async function main() {
       "utf8",
     ),
   );
+  const browserLifecycleEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.prototypes.webIfcBrowserWorker.lifecycleEvidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
     browserWorkerEvidence,
+    browserLifecycleEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

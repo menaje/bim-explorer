@@ -29,5 +29,8 @@ engine의 손상 입력·취소 또는 Browser Worker cleanup 증거로 승격�
 
 Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
 Worker client의 report validation, path-free failure, cancel/terminate 요청을
-검사합니다. 실제 Chromium ESM/WASM smoke는 별도 evidence로 기록하며
-production Browser packaging Gate는 계속 분리합니다.
+검사합니다. source-session test는 size-before-read admission, 파일명 비노출,
+active source 교체, stale 결과 억제, 명시적 취소와 terminal disposal을
+검사합니다. 실제 Chromium ESM/WASM과 file chooser 관찰은 별도 evidence로
+기록하며 engine cancellation과 production Browser packaging Gate는 계속
+분리합니다.

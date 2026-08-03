@@ -12,18 +12,30 @@
       <p class="eyebrow">BIM Explorer qualification</p>
       <h1>web-ifc Browser Worker probe</h1>
       <p class="summary">
-        Runs a repository-authored IFC fixture in an isolated local Worker.
-        No model bytes leave this loopback origin.
+        Opens a local IFC Blob or repository-authored fixture in an isolated
+        Worker. No model bytes leave this loopback origin.
       </p>
 
       <div class="actions">
         <button id="run-probe" type="button">Run synthetic IFC probe</button>
+        <label class="file-action" for="local-file">Open local IFC</label>
+        <input
+          id="local-file"
+          class="file-input"
+          type="file"
+          accept=".ifc,model/vnd.ifc"
+        >
         <button id="cancel-probe" type="button" disabled>Cancel</button>
       </div>
+      <p class="budget">Local source limit: 64 MiB. File names are not sent to the Worker.</p>
 
       <p id="status" class="status" role="status" aria-live="polite">Ready</p>
 
       <dl>
+        <div>
+          <dt>Source</dt>
+          <dd id="source">—</dd>
+        </div>
         <div>
           <dt>Engine</dt>
           <dd id="engine">—</dd>

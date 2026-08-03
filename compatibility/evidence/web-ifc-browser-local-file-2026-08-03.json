@@ -1,0 +1,94 @@
+{
+  "schema": "bim-explorer-browser-file-lifecycle-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T21:29:10+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.2",
+    "resultSchema": "bim-explorer-browser-worker-result/0.2",
+    "maxSourceBytes": 67108864,
+    "fileNameTransmitted": false
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "provenance": {
+    "fixtureId": "synthetic-mapped-ifc4",
+    "repositoryGenerated": true,
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "localChooserInvoked": true
+  },
+  "localFileObservation": {
+    "source": {
+      "id": "local-ifc",
+      "kind": "local-file",
+      "byteLength": 4028,
+      "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "schema": "IFC4"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 2
+    },
+    "geometry": {
+      "products": 2,
+      "triangles": 24
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "workerTerminationRequested": true,
+      "timedOut": false,
+      "cancelled": false
+    },
+    "diagnostics": {
+      "consoleWarnings": 0,
+      "consoleErrors": 0,
+      "fileNameObservedInReceipt": false
+    }
+  },
+  "sourceSwitchObservation": {
+    "from": "local-ifc",
+    "to": "synthetic-small-ifc4",
+    "toByteLength": 2855,
+    "toSha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+    "toSemantics": {
+      "projects": 1,
+      "walls": 1
+    },
+    "toGeometry": {
+      "products": 1,
+      "triangles": 12
+    },
+    "staleOutputObserved": false
+  },
+  "conformance": {
+    "sourceLimitBeforeRead": true,
+    "sourceSizeVerifiedBeforeWorker": true,
+    "activeReplacementCancels": true,
+    "staleOutputSuppressed": true,
+    "explicitCancel": true,
+    "terminalDispose": true,
+    "pagehideDisposalWired": true
+  },
+  "decision": {
+    "localFileLifecyclePrototype": "passed",
+    "engineCancellation": "blocked",
+    "browserPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "A repository-authored generated file was selected through the local chooser.",
+    "Interactive source switching was observed after the local run completed.",
+    "Active replacement, cancel and dispose were proven by deterministic client conformance.",
+    "No large-model memory or first-frame budget was measured.",
+    "No engine-cooperative cancellation or negative-input cleanup was evidenced.",
+    "No clean-install Browser or VS Code package was proven."
+  ]
+}

@@ -1,7 +1,12 @@
 import * as WebIFC from "/vendor/web-ifc-api.js";
 
-const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.1";
-const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.1";
+const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.2";
+const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.2";
+const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
+const SOURCE_KINDS = new Set([
+  "local-file",
+  "synthetic",
+]);
 let handled = false;
 
 function entityCount(api, modelId, type) {
@@ -62,6 +67,10 @@ self.addEventListener("message", async (event) => {
     if (
       request?.schema !== REQUEST_SCHEMA ||
       request.type !== "inspect" ||
+      request.source === null ||
+      typeof request.source !== "object" ||
+      !SOURCE_ID.test(request.source.id) ||
+      !SOURCE_KINDS.has(request.source.kind) ||
       !(request.bytes instanceof ArrayBuffer) ||
       request.bytes.byteLength === 0
     ) {
@@ -98,8 +107,9 @@ self.addEventListener("message", async (event) => {
         backend: "browser-wasm-worker-prototype",
         license: "MPL-2.0",
       },
-      fixture: {
-        id: "synthetic-small-ifc4",
+      source: {
+        id: request.source.id,
+        kind: request.source.kind,
         byteLength: bytes.byteLength,
         sha256: digest,
         schema: api.GetModelSchema(modelId),

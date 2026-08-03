@@ -83,6 +83,7 @@
       "backend": "browser-wasm-worker-prototype",
       "origin": "loopback-only",
       "evidence": "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
+      "lifecycleEvidence": "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
       "productionPackaging": false
     }
   },
@@ -184,6 +185,7 @@
     "sharedGeometryInstances": true,
     "quantitiesAndClassifications": true,
     "browserWorkerPrototype": true,
+    "browserLocalFileLifecycle": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -197,10 +199,10 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "web-ifc-browser-worker-file-lifecycle",
+    "nextPrototype": "web-ifc-browser-cancel-negative-cleanup",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, and web-ifc passes one local Browser Worker smoke. Production Browser packaging, large-model, cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker smoke and a bounded local-file/source-switch lifecycle prototype. Production Browser packaging, large-model, engine cancellation, negative cleanup and redistribution evidence is still missing."
   },
   "blockers": [
     "No large redistributable performance fixture or resource budget",

@@ -1,9 +1,14 @@
 export const BROWSER_WORKER_REQUEST_SCHEMA =
-  "bim-explorer-browser-worker-request/0.1";
+  "bim-explorer-browser-worker-request/0.2";
 export const BROWSER_WORKER_RESULT_SCHEMA =
-  "bim-explorer-browser-worker-result/0.1";
+  "bim-explorer-browser-worker-result/0.2";
 
 const SHA256 = /^[0-9a-f]{64}$/u;
+const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
+const SOURCE_KINDS = new Set([
+  "local-file",
+  "synthetic",
+]);
 
 export class BrowserWorkerError extends Error {
   constructor(message, receipt) {
@@ -43,7 +48,20 @@ function nonNegativeInteger(value, label) {
   }
 }
 
-export function validateBrowserWorkerReport(value, expectedByteLength) {
+export function validateBrowserSourceDescriptor(sourceKind, sourceId) {
+  if (!SOURCE_KINDS.has(sourceKind) || !SOURCE_ID.test(sourceId)) {
+    throw new TypeError("invalid Browser Worker source descriptor");
+  }
+}
+
+export function validateBrowserWorkerReport(
+  value,
+  {
+    byteLength,
+    sourceId,
+    sourceKind,
+  },
+) {
   if (
     value === null ||
     typeof value !== "object" ||
@@ -63,12 +81,14 @@ export function validateBrowserWorkerReport(value, expectedByteLength) {
     throw new Error("Browser Worker engine identity mismatch");
   }
   if (
-    value.fixture?.byteLength !== expectedByteLength ||
-    !SHA256.test(value.fixture?.sha256 ?? "") ||
-    typeof value.fixture?.schema !== "string" ||
-    value.fixture.schema.length === 0
+    value.source?.id !== sourceId ||
+    value.source?.kind !== sourceKind ||
+    value.source?.byteLength !== byteLength ||
+    !SHA256.test(value.source?.sha256 ?? "") ||
+    typeof value.source?.schema !== "string" ||
+    value.source.schema.length === 0
   ) {
-    throw new Error("Browser Worker fixture identity mismatch");
+    throw new Error("Browser Worker source identity mismatch");
   }
   for (const [label, count] of Object.entries({
     projects: value.semantics?.projects,
@@ -109,6 +129,8 @@ export async function inspectIfcInBrowserWorker(
   sourceBytes,
   {
     signal,
+    sourceId = "local-ifc",
+    sourceKind = "local-file",
     timeoutMs = 15_000,
     workerFactory = defaultWorkerFactory,
   } = {},
@@ -117,6 +139,7 @@ export async function inspectIfcInBrowserWorker(
     throw new TypeError("sourceBytes must be a non-empty ArrayBuffer");
   }
   validatePositiveBudget(timeoutMs, "timeoutMs");
+  validateBrowserSourceDescriptor(sourceKind, sourceId);
   const started = performance.now();
   if (signal?.aborted) {
     throw new BrowserWorkerError(
@@ -138,7 +161,11 @@ export async function inspectIfcInBrowserWorker(
   }
 
   const requestId = crypto.randomUUID();
-  const expectedByteLength = sourceBytes.byteLength;
+  const expectedSource = {
+    byteLength: sourceBytes.byteLength,
+    sourceId,
+    sourceKind,
+  };
   return await new Promise((resolve, reject) => {
     let settled = false;
     let timeout;
@@ -194,7 +221,7 @@ export async function inspectIfcInBrowserWorker(
       try {
         report = validateBrowserWorkerReport(
           event.data,
-          expectedByteLength,
+          expectedSource,
         );
       } catch {
         fail("invalid-report");
@@ -235,6 +262,10 @@ export async function inspectIfcInBrowserWorker(
           schema: BROWSER_WORKER_REQUEST_SCHEMA,
           requestId,
           type: "inspect",
+          source: {
+            id: sourceId,
+            kind: sourceKind,
+          },
           bytes: sourceBytes,
         },
         [sourceBytes],

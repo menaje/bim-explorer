@@ -52,7 +52,10 @@ h1 {
   gap: 10px;
 }
 
-button {
+button,
+.file-action {
+  display: inline-grid;
+  place-items: center;
   min-height: 42px;
   padding: 0 16px;
   border: 1px solid #255c43;
@@ -69,6 +72,26 @@ button:disabled {
   background: #d7ddd9;
   color: #6a756e;
   cursor: not-allowed;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.file-action:focus-within,
+.file-action:hover {
+  background: #255c43;
+}
+
+.budget {
+  margin: 10px 0 0;
+  color: #68756e;
+  font-size: 0.82rem;
 }
 
 .status {

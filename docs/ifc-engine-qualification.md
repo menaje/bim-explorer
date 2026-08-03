@@ -19,11 +19,12 @@ world bounds assertion을 통과했습니다. 그러나 첫 engine 선정과 pro
 go/no-go는 보류합니다.
 
 `web-ifc`는 local Chromium module Worker에서 single-thread WASM으로 base
-fixture를 읽는 첫 smoke를 통과했습니다. JavaScript/WASM 경로를 Browser와
-VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정은 아닙니다.
-실제 file lifecycle, Browser packaging, large model memory, cancellation과
-cleanup을 통과하지 못하면 IfcOpenShell native process를 desktop
-fallback으로 재평가합니다.
+fixture를 읽는 첫 smoke와 실제 file chooser를 통한 bounded local-file
+lifecycle prototype을 통과했습니다. JavaScript/WASM 경로를 Browser와 VS
+Code surface에서 공유할 가능성을 확인한 것이며 선정 결정은 아닙니다.
+Browser packaging, large model memory, engine cancellation과 negative-input
+cleanup을 통과하지 못하면 IfcOpenShell native process를 desktop fallback으로
+재평가합니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -31,7 +32,8 @@ fallback으로 재평가합니다.
 [`base evidence`](../compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json)와
 [`mapped evidence`](../compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json),
 Browser 관찰값은
-[`Worker smoke`](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json)가
+[`Worker smoke`](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json)와
+[`local-file lifecycle`](../compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json)이
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -83,7 +85,7 @@ child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.
 영향과 실제 첫 화면을 대표하지 않으므로 성능 우열이나 production budget
 근거로 사용하지 않습니다.
 
-## Browser Worker smoke
+## Browser Worker와 local-file lifecycle
 
 loopback-only 진단 surface는 exact `web-ifc@0.0.77` ESM과
 `web-ifc.wasm`을 dedicated module Worker에서 single-thread로
@@ -92,10 +94,19 @@ loopback-only 진단 surface는 exact `web-ifc@0.0.77` ESM과
 후 main thread가 Worker 종료를 요청했습니다. 콘솔 warning/error는
 관찰되지 않았습니다.
 
-한 번의 small-fixture Chromium smoke이므로 performance 수치는 budget이
-아닙니다. 실제 파일 선택·source switch·취소, negative/large model,
-clean-install bundle과 VS Code isolation을 검증하지 않았으므로
-`packagingBrowser`는 계속 `blocked`입니다.
+같은 surface에서 실제 file chooser로 repository-generated mapped fixture를
+선택했을 때 IFC4, 1 Project, 2 Walls, 2 geometry products와 24 triangles를
+재현했습니다. 파일명과 path 없이 safe source descriptor와 bytes만 Worker에
+보냈고, 완료 후 base fixture로 전환했을 때 이전 결과가 다시 나타나지
+않았습니다. source-session conformance는 64 MiB 초과 source의
+size-before-read admission, active source 교체, explicit cancel, stale 억제와
+terminal dispose를 검사합니다.
+
+이는 작은 fixture의 local prototype입니다. 64 MiB admission은 전체
+WASM/GPU memory budget이 아니고 client의 Worker 종료는 engine-cooperative
+cancellation 증거가 아닙니다. negative/large model, clean-install bundle,
+Linux Browser CI와 VS Code isolation을 검증하지 않았으므로 `cancellation`,
+`corruptInputCleanup`과 `packagingBrowser`는 계속 `blocked`입니다.
 
 ## Draft implementation profile
 
@@ -110,6 +121,7 @@ clean-install bundle과 VS Code isolation을 검증하지 않았으므로
 - IfcElementQuantity의 length/area/volume과 classification reference
 - local read-only parse/index/geometry report
 - local Chromium module Worker의 small-fixture ESM/WASM smoke
+- bounded local-file admission과 source-session lifecycle prototype
 
 다음은 `blocked`입니다.
 
@@ -190,7 +202,8 @@ third-party IFC는 저장소와 evidence에 포함하지 않습니다.
 qualification harness는 공통 process supervisor를 사용해 최소 환경,
 stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니다.
 일반 Node stub으로 redaction과 종료 승격을 검증했지만 이는 engine별
-corrupt-input cleanup이나 Browser Worker lifecycle을 검증한 것이 아닙니다.
+corrupt-input cleanup이나 cooperative cancellation을 검증한 것이 아닙니다.
+Browser source-session lifecycle도 client conformance까지만 검증했습니다.
 따라서 compatibility matrix의 cancellation/corrupt cleanup은 계속
 `blocked`입니다.
 
@@ -199,7 +212,7 @@ corrupt-input cleanup이나 Browser Worker lifecycle을 검증한 것이 아닙�
 1. 각 engine의 cancel과 승인된 negative corpus에서 process cleanup 검증
 2. redistribution 가능한 large performance fixture와 resource budget 고정
 3. connection/system/opening을 포함한 broader semantic corpus
-4. Browser real-file switch/cancel/dispose와 Linux browser CI evidence
+4. Browser active engine cancellation, approved negative cleanup과 Linux CI
 5. VS Code isolation/package proof
 6. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
 7. 결과를 근거로 engine/profile go/no-go 결정

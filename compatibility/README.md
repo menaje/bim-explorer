@@ -21,7 +21,10 @@ production redistribution 승인이 아닙니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
-분리해 기록합니다. 작은 fixture 한 번의 prototype 결과이며
+분리해 기록합니다. 실제 file chooser, bounded admission, source switch와
+client lifecycle 결과는
+[`local-file lifecycle evidence`](evidence/web-ifc-browser-local-file-2026-08-03.json)에
+기록합니다. 둘 다 prototype 결과이며 engine cancellation이나
 `packagingBrowser` capability를 승격하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
