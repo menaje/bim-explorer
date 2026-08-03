@@ -10,10 +10,11 @@ node adapters/web-ifc/src/inspect.mjs \
 ```
 
 이 adapter는 현재 실험용입니다. 작은 synthetic fixture의 local Browser
-Worker smoke와 bounded local-file/source-session prototype은 통과했습니다.
-engine-cooperative cancellation, corrupt input, 대형 모델 memory, clean
-package와 production redistribution은 아직 검증하지 않았습니다. engine
-object, source path와 파일명은 report에 포함하지 않습니다.
+Worker smoke, bounded local-file/source-session과 model-opened checkpoint
+cooperative cleanup prototype은 통과했습니다. 실행 중인 synchronous engine
+호출의 선점, corrupt input, 대형 모델 memory, clean package와 production
+redistribution은 아직 검증하지 않았습니다. engine object, source path와
+파일명은 report에 포함하지 않습니다.
 
 Dependency pin과 upstream license는
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)에 기록합니다.

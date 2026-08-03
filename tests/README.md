@@ -28,9 +28,10 @@ timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니�
 engine의 손상 입력·취소 또는 Browser Worker cleanup 증거로 승격하지 않습니다.
 
 Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
-Worker client의 report validation, path-free failure, cancel/terminate 요청을
+Worker client의 report validation, path-free failure, ordered checkpoint,
+model-opened cooperative cleanup과 응답 없는 취소의 bounded 강제 종료를
 검사합니다. source-session test는 size-before-read admission, 파일명 비노출,
-active source 교체, stale 결과 억제, 명시적 취소와 terminal disposal을
-검사합니다. 실제 Chromium ESM/WASM과 file chooser 관찰은 별도 evidence로
-기록하며 engine cancellation과 production Browser packaging Gate는 계속
-분리합니다.
+active source 교체, stale 결과 억제, 중첩 cancellation receipt와 terminal
+disposal을 검사합니다. 실제 Chromium ESM/WASM, file chooser와 checkpoint
+취소 관찰은 별도 evidence로 기록합니다. 실행 중인 동기 engine 호출의 선점,
+손상 입력 cleanup과 production Browser packaging Gate는 계속 분리합니다.

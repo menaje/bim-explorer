@@ -64,11 +64,14 @@ Native와 WASM은 같은 adapter contract를 구현하는 backend 선택입니�
 - Browser/Worker memory와 execution budget을 명시합니다.
 - 전체 model object graph를 main thread로 structured clone하지 않습니다.
 - immutable metadata page와 binary geometry range를 전달합니다.
-- Worker termination을 cleanup receipt로 검증합니다.
+- adapter phase checkpoint에서 `continue`/`cancel`을 handshake하고, 취소 시
+  model close와 engine dispose를 cleanup receipt로 검증합니다.
+- bounded grace 안에 취소 영수증이 없으면 Worker 강제 종료로 승격합니다.
 
 두 backend의 지원 여부는 같은 public IFC fixture와 semantic/geometry
 conformance로 비교합니다. WASM을 위해 source identity나 geometry 의미를
-낮은 공통분모로 축소하지 않습니다.
+낮은 공통분모로 축소하지 않습니다. checkpoint cooperative cleanup은
+실행 중인 동기 engine 호출을 선점한다는 의미가 아닙니다.
 
 현재 공통 report와 capability vocabulary는
 [IFC engine adapter v0.2 draft](../specs/ifc-engine-adapter-v0.2.md)가

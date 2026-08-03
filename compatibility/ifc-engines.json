@@ -84,6 +84,7 @@
       "origin": "loopback-only",
       "evidence": "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
       "lifecycleEvidence": "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
+      "cancellationEvidence": "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
       "productionPackaging": false
     }
   },
@@ -186,6 +187,7 @@
     "quantitiesAndClassifications": true,
     "browserWorkerPrototype": true,
     "browserLocalFileLifecycle": true,
+    "browserCheckpointCancellation": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -199,14 +201,14 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "web-ifc-browser-cancel-negative-cleanup",
+    "nextPrototype": "web-ifc-browser-bounded-performance",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker smoke and a bounded local-file/source-switch lifecycle prototype. Production Browser packaging, large-model, engine cancellation, negative cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker, bounded local-file lifecycle and model-opened checkpoint cancellation prototypes. Production Browser packaging, large-model, in-call cancellation, negative cleanup and redistribution evidence is still missing."
   },
   "blockers": [
     "No large redistributable performance fixture or resource budget",
-    "No cancellation and corrupt-input cleanup conformance",
+    "No synchronous in-call cancellation or corrupt-input cleanup conformance",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",

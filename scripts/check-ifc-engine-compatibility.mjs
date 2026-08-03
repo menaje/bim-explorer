@@ -57,7 +57,9 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
     typeof prototype.evidence !== "string" ||
     prototype.evidence.length === 0 ||
     typeof prototype.lifecycleEvidence !== "string" ||
-    prototype.lifecycleEvidence.length === 0
+    prototype.lifecycleEvidence.length === 0 ||
+    typeof prototype.cancellationEvidence !== "string" ||
+    prototype.cancellationEvidence.length === 0
   ) {
     throw new Error("Browser Worker prototype must remain experimental");
   }
@@ -209,11 +211,135 @@ function validateBrowserFileLifecycle(manifest, evidence) {
   }
 }
 
+function validateBrowserCheckpointCancellation(manifest, evidence) {
+  const requiredConformance = [
+    "orderedProgress",
+    "modelOpenedCheckpoint",
+    "cooperativeCancelRequest",
+    "boundedCancellationGrace",
+    "forcedTerminationFallback",
+    "modelClosed",
+    "engineDisposed",
+    "postCancellationRecovery",
+    "pathFreeReceipt",
+  ];
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  plainRecord(evidence, "Browser checkpoint cancellation evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-checkpoint-cancellation-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.3" ||
+    evidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.3" ||
+    evidence.contract?.progressSchema !==
+      "bim-explorer-browser-worker-progress/0.1" ||
+    evidence.contract?.cancellationGraceMs !== 500 ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== prototype.backend ||
+    evidence.engine?.license !== manifest.candidates["web-ifc"].license
+  ) {
+    throw new Error("Browser checkpoint cancellation identity mismatch");
+  }
+  if (
+    evidence.fixture?.id !== "synthetic-small-ifc4" ||
+    evidence.fixture?.byteLength !== 2855 ||
+    evidence.fixture?.sha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    evidence.fixture?.schema !== "IFC4" ||
+    evidence.fixture?.repositoryGenerated !== true ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.thirdPartyContent !== false
+  ) {
+    throw new Error("Browser checkpoint cancellation fixture mismatch");
+  }
+  const observation = plainRecord(
+    evidence.cancellationObservation,
+    "cancellationObservation",
+  );
+  if (
+    observation.source?.id !== "synthetic-cancel-ifc4" ||
+    observation.source?.kind !== "synthetic" ||
+    observation.source?.byteLength !== 2855 ||
+    JSON.stringify(observation.observedPhases) !==
+      JSON.stringify([
+        "engine-initialized",
+        "model-opened",
+      ]) ||
+    observation.requestedAfterPhase !== "model-opened" ||
+    observation.receipt?.outcome !== "cancelled-cooperative" ||
+    observation.receipt?.cooperativeCancellation !== true ||
+    observation.receipt?.lastPhase !== "model-opened" ||
+    observation.receipt?.cleanup?.modelClosed !== true ||
+    observation.receipt?.cleanup?.engineDisposed !== true ||
+    observation.receipt?.workerTerminationRequested !== true ||
+    observation.sourceSession?.outcome !== "cancelled" ||
+    observation.sourceSession?.workerStarted !== true ||
+    observation.sourceSession?.cancelled !== true ||
+    observation.sourceSession?.disposed !== false ||
+    typeof observation.sourceSession?.wallClockMs !== "number" ||
+    observation.sourceSession.wallClockMs <= 0
+  ) {
+    throw new Error("Browser checkpoint cancellation observation is incomplete");
+  }
+  const recovery = plainRecord(
+    evidence.recoveryObservation,
+    "recoveryObservation",
+  );
+  if (
+    recovery.source?.id !== "synthetic-small-ifc4" ||
+    recovery.source?.kind !== "synthetic" ||
+    recovery.source?.byteLength !== 2855 ||
+    recovery.source?.sha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    recovery.source?.schema !== "IFC4" ||
+    recovery.fixtureAssertionsPassed !== true ||
+    recovery.worker?.outcome !== "completed" ||
+    recovery.worker?.lastPhase !== "inspection-complete" ||
+    recovery.worker?.cleanup?.modelClosed !== true ||
+    recovery.worker?.cleanup?.engineDisposed !== true ||
+    recovery.worker?.workerTerminationRequested !== true ||
+    typeof recovery.worker?.wallClockMs !== "number" ||
+    recovery.worker.wallClockMs <= 0 ||
+    evidence.diagnostics?.consoleWarnings !== 0 ||
+    evidence.diagnostics?.consoleErrors !== 0
+  ) {
+    throw new Error("Browser post-cancellation recovery is incomplete");
+  }
+  for (const gate of requiredConformance) {
+    if (evidence.conformance?.[gate] !== true) {
+      throw new Error(
+        `Browser checkpoint cancellation ${gate} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      requiredConformance.length ||
+    evidence.decision?.browserCheckpointCancellation !== "passed" ||
+    evidence.decision?.engineInCallCancellation !== "blocked" ||
+    evidence.decision?.corruptInputCleanup !== "blocked" ||
+    evidence.decision?.candidateCancellation !== "blocked" ||
+    evidence.decision?.browserPackaging !== "blocked" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "Browser checkpoint cancellation overclaims engine support",
+    );
+  }
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
   browserWorkerEvidence,
   browserLifecycleEvidence,
+  browserCancellationEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -302,12 +428,19 @@ export function validateIfcEngineCompatibility(
   if (
     gates.browserWorkerPrototype !== true ||
     gates.browserLocalFileLifecycle !== true ||
+    gates.browserCheckpointCancellation !== true ||
+    gates.cancellation !== false ||
+    gates.corruptInputCleanup !== false ||
     gates.browserPackaging !== false
   ) {
     throw new Error("Browser Worker prototype Gate must match its evidence");
   }
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
+  validateBrowserCheckpointCancellation(
+    manifest,
+    browserCancellationEvidence,
+  );
 
   if (
     !Array.isArray(manifest.fixtures) ||
@@ -441,11 +574,21 @@ async function main() {
       "utf8",
     ),
   );
+  const browserCancellationEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.prototypes.webIfcBrowserWorker.cancellationEvidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
     browserWorkerEvidence,
     browserLifecycleEvidence,
+    browserCancellationEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

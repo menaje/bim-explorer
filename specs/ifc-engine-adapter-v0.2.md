@@ -33,8 +33,12 @@ invalid-report` 결과와 계측값만 기록합니다.
 
 이 계약의 일반 process supervisor test는 격리·redaction·강제 종료
 mechanism의 증거입니다. 실제 web-ifc/IfcOpenShell 손상 입력 cleanup,
-engine별 cancellation과 Browser Worker termination은 각각 별도 fixture와
-runtime evidence를 통과해야 합니다.
+engine별 cancellation과 Browser Worker cancellation은 각각 별도 fixture와
+runtime evidence를 통과해야 합니다. Browser prototype은
+`engine-initialized`, `model-opened`, `inspection-complete` checkpoint와
+bounded grace를 두고, 유효한 IFC의 `model-opened` 취소에서 model close와
+engine dispose를 확인했습니다. 이는 공통 candidate matrix의 cancellation
+capability나 실행 중 동기 engine 호출의 선점을 승인하지 않습니다.
 
 ## Report
 

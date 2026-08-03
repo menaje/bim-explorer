@@ -1,0 +1,105 @@
+{
+  "schema": "bim-explorer-browser-checkpoint-cancellation-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T21:59:04+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.3",
+    "resultSchema": "bim-explorer-browser-worker-result/0.3",
+    "progressSchema": "bim-explorer-browser-worker-progress/0.1",
+    "cancellationGraceMs": 500
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "synthetic-small-ifc4",
+    "byteLength": 2855,
+    "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+    "schema": "IFC4",
+    "repositoryGenerated": true,
+    "artifactCommitted": false,
+    "thirdPartyContent": false
+  },
+  "cancellationObservation": {
+    "source": {
+      "id": "synthetic-cancel-ifc4",
+      "kind": "synthetic",
+      "byteLength": 2855
+    },
+    "observedPhases": [
+      "engine-initialized",
+      "model-opened"
+    ],
+    "requestedAfterPhase": "model-opened",
+    "receipt": {
+      "outcome": "cancelled-cooperative",
+      "cooperativeCancellation": true,
+      "lastPhase": "model-opened",
+      "cleanup": {
+        "modelClosed": true,
+        "engineDisposed": true
+      },
+      "workerTerminationRequested": true
+    },
+    "sourceSession": {
+      "outcome": "cancelled",
+      "workerStarted": true,
+      "cancelled": true,
+      "disposed": false,
+      "wallClockMs": 109.1
+    }
+  },
+  "recoveryObservation": {
+    "source": {
+      "id": "synthetic-small-ifc4",
+      "kind": "synthetic",
+      "byteLength": 2855,
+      "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+      "schema": "IFC4"
+    },
+    "fixtureAssertionsPassed": true,
+    "worker": {
+      "outcome": "completed",
+      "lastPhase": "inspection-complete",
+      "cleanup": {
+        "modelClosed": true,
+        "engineDisposed": true
+      },
+      "workerTerminationRequested": true,
+      "wallClockMs": 105.3
+    }
+  },
+  "conformance": {
+    "orderedProgress": true,
+    "modelOpenedCheckpoint": true,
+    "cooperativeCancelRequest": true,
+    "boundedCancellationGrace": true,
+    "forcedTerminationFallback": true,
+    "modelClosed": true,
+    "engineDisposed": true,
+    "postCancellationRecovery": true,
+    "pathFreeReceipt": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "decision": {
+    "browserCheckpointCancellation": "passed",
+    "engineInCallCancellation": "blocked",
+    "corruptInputCleanup": "blocked",
+    "candidateCancellation": "blocked",
+    "browserPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "Cancellation was accepted at an adapter phase checkpoint after a valid model opened.",
+    "Synchronous web-ifc calls were not preempted while executing.",
+    "The observation used one 2.9KB repository-generated IFC4 fixture.",
+    "No malformed or corrupt input was submitted.",
+    "No large-model resource budget or production Browser package was proven."
+  ]
+}

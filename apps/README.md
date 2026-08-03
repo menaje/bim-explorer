@@ -12,6 +12,7 @@ App은 IFC parser, source identity authority나 generic 3D implementation을
 주입하고 다른 제품 extension 설치를 요구하지 않습니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
-Browser Worker의 bounded local-file admission과 source-session lifecycle을
-확인하는 experimental surface입니다. 제품 shell 또는 packaging 지원
-약속이 아닙니다.
+Browser Worker의 bounded local-file admission, source-session lifecycle과
+model-opened checkpoint cooperative cleanup을 확인하는 experimental
+surface입니다. 제품 shell, 실행 중 동기 engine 호출의 선점 또는 packaging
+지원 약속이 아닙니다.

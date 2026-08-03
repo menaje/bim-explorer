@@ -30,6 +30,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json",
   "compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json",
   "compatibility/evidence/viewer-core-local-probe-2026-08-03.json",
+  "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
   "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
   "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
   "compatibility/ifc-engines.json",

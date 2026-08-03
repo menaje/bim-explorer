@@ -24,8 +24,12 @@ web-ifc의 local Browser Worker ESM/WASM smoke는
 분리해 기록합니다. 실제 file chooser, bounded admission, source switch와
 client lifecycle 결과는
 [`local-file lifecycle evidence`](evidence/web-ifc-browser-local-file-2026-08-03.json)에
-기록합니다. 둘 다 prototype 결과이며 engine cancellation이나
-`packagingBrowser` capability를 승격하지 않습니다.
+기록합니다. 유효한 IFC가 열린 뒤 checkpoint에서 취소하고 model close와
+engine dispose를 확인한 결과는
+[`checkpoint cancellation evidence`](evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json)에
+기록합니다. 모두 prototype 결과입니다. checkpoint 사이에서 실행 중인
+동기 engine 호출의 선점, 손상 입력 cleanup 또는 `packagingBrowser`
+capability를 승격하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

@@ -84,7 +84,26 @@ function sessionReceipt(outcome, token, overrides = {}) {
     workerStarted: overrides.workerStarted ?? false,
     cancelled: overrides.cancelled ?? false,
     disposed: overrides.disposed ?? false,
+    workerCancellation: overrides.workerCancellation ?? null,
     wallClockMs: performance.now() - token.started,
+  };
+}
+
+function workerCancellationReceipt(error) {
+  if (
+    !(error instanceof BrowserWorkerError) ||
+    error.receipt?.cancelled !== true
+  ) {
+    return null;
+  }
+  return {
+    outcome: error.receipt.outcome,
+    cooperativeCancellation:
+      error.receipt.cooperativeCancellation,
+    lastPhase: error.receipt.lastPhase,
+    cleanup: error.receipt.cleanup,
+    workerTerminationRequested:
+      error.receipt.workerTerminationRequested,
   };
 }
 
@@ -133,6 +152,8 @@ export class BrowserIfcSourceSession {
   async inspect(
     source,
     {
+      cancellationGraceMs,
+      onProgress,
       sourceId = "local-ifc",
       sourceKind = "local-file",
       timeoutMs,
@@ -213,6 +234,8 @@ export class BrowserIfcSourceSession {
       try {
         result = await this.#inspect(bytes, {
           signal: token.controller.signal,
+          cancellationGraceMs,
+          onProgress,
           sourceId,
           sourceKind,
           timeoutMs,
@@ -225,6 +248,8 @@ export class BrowserIfcSourceSession {
               workerStarted: true,
               cancelled: true,
               disposed: token.cancelOutcome === "disposed",
+              workerCancellation:
+                workerCancellationReceipt(error),
             }),
           );
         }

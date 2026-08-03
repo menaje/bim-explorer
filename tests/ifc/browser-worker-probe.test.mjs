@@ -4,6 +4,8 @@ import { once } from "node:events";
 import test from "node:test";
 
 import {
+  BROWSER_WORKER_PHASES,
+  BROWSER_WORKER_PROGRESS_SCHEMA,
   BROWSER_WORKER_RESULT_SCHEMA,
   BrowserWorkerError,
   inspectIfcInBrowserWorker,
@@ -53,10 +55,50 @@ function report(requestId, byteLength, source) {
   };
 }
 
+function progress(requestId, phase) {
+  return {
+    schema: BROWSER_WORKER_PROGRESS_SCHEMA,
+    requestId,
+    status: "progress",
+    phase,
+  };
+}
+
+function cancellationReport(requestId, byteLength, source, phase) {
+  const modelOpened = BROWSER_WORKER_PHASES.indexOf(phase) >=
+    BROWSER_WORKER_PHASES.indexOf("model-opened");
+  return {
+    schema: BROWSER_WORKER_RESULT_SCHEMA,
+    requestId,
+    status: "cancelled",
+    phase,
+    engine: {
+      id: "web-ifc",
+      version: "0.0.77",
+      backend: "browser-wasm-worker-prototype",
+      license: "MPL-2.0",
+    },
+    source: {
+      id: source.id,
+      kind: source.kind,
+      byteLength,
+      sha256: "0".repeat(64),
+      schema: modelOpened ? "IFC4" : null,
+    },
+    cleanup: {
+      modelClosed: modelOpened,
+      engineDisposed: true,
+    },
+    diagnostics: [],
+  };
+}
+
 class FakeWorker {
   constructor(action = "success") {
     this.action = action;
     this.listeners = new Map();
+    this.phaseIndex = -1;
+    this.request = null;
     this.terminated = false;
   }
 
@@ -77,20 +119,91 @@ class FakeWorker {
   }
 
   postMessage(message) {
-    if (this.action === "success") {
+    if (message.type === "inspect") {
+      this.request = message;
+      if (
+        this.action === "success" ||
+        this.action === "cooperative-cancel"
+      ) {
+        this.phaseIndex = 0;
+        queueMicrotask(() => {
+          this.emit("message", {
+            data: progress(
+              message.requestId,
+              BROWSER_WORKER_PHASES[this.phaseIndex],
+            ),
+          });
+        });
+      } else if (this.action === "invalid-progress") {
+        queueMicrotask(() => {
+          this.emit("message", {
+            data: progress(message.requestId, "model-opened"),
+          });
+        });
+      } else if (this.action === "error") {
+        queueMicrotask(() => {
+          this.emit("error", {
+            message: "/private/customer.ifc",
+          });
+        });
+      }
+      return;
+    }
+    if (
+      message.type === "continue" &&
+      this.action === "success"
+    ) {
+      if (this.phaseIndex < BROWSER_WORKER_PHASES.length - 1) {
+        this.phaseIndex += 1;
+        queueMicrotask(() => {
+          this.emit("message", {
+            data: progress(
+              message.requestId,
+              BROWSER_WORKER_PHASES[this.phaseIndex],
+            ),
+          });
+        });
+        return;
+      }
       queueMicrotask(() => {
         this.emit("message", {
           data: report(
             message.requestId,
-            message.bytes.byteLength,
-            message.source,
+            this.request.bytes.byteLength,
+            this.request.source,
           ),
         });
       });
-    } else if (this.action === "error") {
+      return;
+    }
+    if (
+      message.type === "continue" &&
+      this.action === "cooperative-cancel" &&
+      this.phaseIndex < 1
+    ) {
+      this.phaseIndex += 1;
       queueMicrotask(() => {
-        this.emit("error", {
-          message: "/private/customer.ifc",
+        this.emit("message", {
+          data: progress(
+            message.requestId,
+            BROWSER_WORKER_PHASES[this.phaseIndex],
+          ),
+        });
+      });
+      return;
+    }
+    if (
+      message.type === "cancel" &&
+      this.action === "cooperative-cancel"
+    ) {
+      queueMicrotask(() => {
+        this.emit("message", {
+          data: cancellationReport(
+            message.requestId,
+            this.request.bytes.byteLength,
+            this.request.source,
+            BROWSER_WORKER_PHASES[this.phaseIndex],
+          ),
         });
       });
     }
@@ -113,6 +226,11 @@ test("Browser Worker client validates cleanup and terminates the Worker", async 
   assert.equal(result.report.source.kind, "local-file");
   assert.equal(result.report.cleanup.engineDisposed, true);
   assert.equal(result.receipt.outcome, "completed");
+  assert.equal(result.receipt.lastPhase, "inspection-complete");
+  assert.deepEqual(result.receipt.cleanup, {
+    modelClosed: true,
+    engineDisposed: true,
+  });
   assert.equal(result.receipt.workerTerminationRequested, true);
   assert.equal(worker.terminated, true);
 });
@@ -139,24 +257,105 @@ test("Browser Worker client redacts runtime error detail", async () => {
   );
 });
 
-test("Browser Worker client aborts a pending request", async () => {
+test("Browser Worker client force-terminates an unresponsive cancellation", async () => {
   const worker = new FakeWorker("pending");
   const cancellation = new AbortController();
   const running = inspectIfcInBrowserWorker(
     new Uint8Array([1]).buffer,
     {
       signal: cancellation.signal,
+      cancellationGraceMs: 1,
       workerFactory: () => worker,
     },
   );
   cancellation.abort();
   await assert.rejects(running, (error) => {
     assert.ok(error instanceof BrowserWorkerError);
-    assert.equal(error.receipt.outcome, "cancelled");
+    assert.equal(error.receipt.outcome, "cancelled-forced");
     assert.equal(error.receipt.cancelled, true);
+    assert.equal(error.receipt.cooperativeCancellation, false);
     assert.equal(worker.terminated, true);
     return true;
   });
+});
+
+test("Browser Worker cooperatively cancels after model open and cleans up", async () => {
+  const worker = new FakeWorker("cooperative-cancel");
+  const cancellation = new AbortController();
+  const observed = [];
+  const running = inspectIfcInBrowserWorker(
+    new Uint8Array([1, 2, 3]).buffer,
+    {
+      signal: cancellation.signal,
+      onProgress(value) {
+        observed.push(value.phase);
+        if (value.phase === "model-opened") {
+          cancellation.abort();
+        }
+      },
+      workerFactory: () => worker,
+    },
+  );
+  await assert.rejects(running, (error) => {
+    assert.ok(error instanceof BrowserWorkerError);
+    assert.equal(error.receipt.outcome, "cancelled-cooperative");
+    assert.equal(error.receipt.cancelled, true);
+    assert.equal(error.receipt.cooperativeCancellation, true);
+    assert.equal(error.receipt.lastPhase, "model-opened");
+    assert.deepEqual(error.receipt.cleanup, {
+      modelClosed: true,
+      engineDisposed: true,
+    });
+    assert.equal(error.receipt.workerTerminationRequested, true);
+    assert.equal(worker.terminated, true);
+    return true;
+  });
+  assert.deepEqual(observed, [
+    "engine-initialized",
+    "model-opened",
+  ]);
+});
+
+test("Browser Worker cancellation before model open still disposes the engine", async () => {
+  const worker = new FakeWorker("cooperative-cancel");
+  const cancellation = new AbortController();
+  const running = inspectIfcInBrowserWorker(
+    new Uint8Array([1]).buffer,
+    {
+      signal: cancellation.signal,
+      onProgress(value) {
+        if (value.phase === "engine-initialized") {
+          cancellation.abort();
+        }
+      },
+      workerFactory: () => worker,
+    },
+  );
+  await assert.rejects(running, (error) => {
+    assert.ok(error instanceof BrowserWorkerError);
+    assert.equal(error.receipt.outcome, "cancelled-cooperative");
+    assert.equal(error.receipt.lastPhase, "engine-initialized");
+    assert.deepEqual(error.receipt.cleanup, {
+      modelClosed: false,
+      engineDisposed: true,
+    });
+    return true;
+  });
+});
+
+test("Browser Worker rejects out-of-order progress", async () => {
+  const worker = new FakeWorker("invalid-progress");
+  await assert.rejects(
+    inspectIfcInBrowserWorker(new Uint8Array([1]).buffer, {
+      workerFactory: () => worker,
+    }),
+    (error) => {
+      assert.ok(error instanceof BrowserWorkerError);
+      assert.equal(error.receipt.outcome, "invalid-progress");
+      assert.equal(worker.terminated, true);
+      return true;
+    },
+  );
 });
 
 test("Browser source session replaces an active source without stale output", async () => {
@@ -173,7 +372,15 @@ test("Browser source session replaces an active source without stale output", as
         options.signal.addEventListener("abort", () => {
           reject(
             new BrowserWorkerError("cancelled", {
+              cancelled: true,
+              cleanup: {
+                modelClosed: true,
+                engineDisposed: true,
+              },
+              cooperativeCancellation: true,
+              lastPhase: "model-opened",
               outcome: "cancelled",
+              workerTerminationRequested: true,
             }),
           );
         }, {
@@ -208,6 +415,16 @@ test("Browser source session replaces an active source without stale output", as
     assert.equal(error.receipt.outcome, "source-replaced");
     assert.equal(error.receipt.cancelled, true);
     assert.equal(error.receipt.workerStarted, true);
+    assert.deepEqual(error.receipt.workerCancellation, {
+      outcome: "cancelled",
+      cooperativeCancellation: true,
+      lastPhase: "model-opened",
+      cleanup: {
+        modelClosed: true,
+        engineDisposed: true,
+      },
+      workerTerminationRequested: true,
+    });
     return true;
   });
   const result = await second;
@@ -397,6 +614,7 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   );
   const pageHtml = await page.text();
   assert.match(pageHtml, /Run synthetic IFC probe/u);
+  assert.match(pageHtml, /Run cancellation probe/u);
   assert.match(pageHtml, /Open local IFC/u);
 
   const fixture = await fetch(`${origin}/fixture/synthetic-small.ifc`);

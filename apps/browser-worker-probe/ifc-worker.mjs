@@ -1,13 +1,15 @@
 import * as WebIFC from "/vendor/web-ifc-api.js";
 
-const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.2";
-const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.2";
+const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.3";
+const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.3";
+const PROGRESS_SCHEMA = "bim-explorer-browser-worker-progress/0.1";
 const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
 const SOURCE_KINDS = new Set([
   "local-file",
   "synthetic",
 ]);
-let handled = false;
+const CANCELLED = Symbol("cancelled");
+let active = null;
 
 function entityCount(api, modelId, type) {
   return api.GetLineIDsWithType(modelId, type, false).size();
@@ -47,48 +49,85 @@ async function sha256(bytes) {
     value.toString(16).padStart(2, "0")).join("");
 }
 
-self.addEventListener("message", async (event) => {
-  if (handled) {
-    return;
+function engineIdentity() {
+  return {
+    id: "web-ifc",
+    version: "0.0.77",
+    backend: "browser-wasm-worker-prototype",
+    license: "MPL-2.0",
+  };
+}
+
+function validInspectRequest(request) {
+  return (
+    request?.schema === REQUEST_SCHEMA &&
+    request.type === "inspect" &&
+    request.source !== null &&
+    typeof request.source === "object" &&
+    SOURCE_ID.test(request.source.id) &&
+    SOURCE_KINDS.has(request.source.kind) &&
+    request.bytes instanceof ArrayBuffer &&
+    request.bytes.byteLength > 0
+  );
+}
+
+async function checkpoint(state, phase) {
+  state.phase = phase;
+  const waiting = new Promise((resolve) => {
+    state.resume = resolve;
+    state.waitingPhase = phase;
+  });
+  self.postMessage({
+    schema: PROGRESS_SCHEMA,
+    requestId: state.requestId,
+    status: "progress",
+    phase,
+  });
+  if (state.cancelRequested) {
+    state.resume();
   }
-  handled = true;
-  const request = event.data;
+  await waiting;
+  state.resume = null;
+  state.waitingPhase = null;
+  if (state.cancelRequested) {
+    throw CANCELLED;
+  }
+}
+
+async function inspectRequest(request, state) {
   const requestId =
     typeof request?.requestId === "string" ? request.requestId : "invalid";
   const started = performance.now();
   const api = new WebIFC.IfcAPI();
+  let bytes;
+  let digest;
   let initialized = false;
   let modelId = null;
+  let modelSchema = null;
   let report;
   let modelClosed = false;
   let engineDisposed = false;
 
   try {
-    if (
-      request?.schema !== REQUEST_SCHEMA ||
-      request.type !== "inspect" ||
-      request.source === null ||
-      typeof request.source !== "object" ||
-      !SOURCE_ID.test(request.source.id) ||
-      !SOURCE_KINDS.has(request.source.kind) ||
-      !(request.bytes instanceof ArrayBuffer) ||
-      request.bytes.byteLength === 0
-    ) {
+    if (!validInspectRequest(request)) {
       throw new TypeError("invalid request");
     }
-    const bytes = new Uint8Array(request.bytes);
-    const digest = await sha256(bytes);
+    bytes = new Uint8Array(request.bytes);
+    digest = await sha256(bytes);
     const initializationStarted = performance.now();
     api.SetWasmPath(new URL("/vendor/", self.location.origin).href, true);
     await api.Init(undefined, true);
     initialized = true;
     const initializationMs = performance.now() - initializationStarted;
+    await checkpoint(state, "engine-initialized");
 
     const openStarted = performance.now();
     modelId = api.OpenModel(bytes, {
       COORDINATE_TO_ORIGIN: false,
     });
     const openMs = performance.now() - openStarted;
+    modelSchema = api.GetModelSchema(modelId);
+    await checkpoint(state, "model-opened");
 
     const inspectionStarted = performance.now();
     const semantics = {
@@ -97,22 +136,18 @@ self.addEventListener("message", async (event) => {
     };
     const geometry = geometryCounts(api, modelId);
     const inspectionMs = performance.now() - inspectionStarted;
+    await checkpoint(state, "inspection-complete");
     report = {
       schema: RESULT_SCHEMA,
       requestId,
       status: "passed",
-      engine: {
-        id: "web-ifc",
-        version: "0.0.77",
-        backend: "browser-wasm-worker-prototype",
-        license: "MPL-2.0",
-      },
+      engine: engineIdentity(),
       source: {
         id: request.source.id,
         kind: request.source.kind,
         byteLength: bytes.byteLength,
         sha256: digest,
-        schema: api.GetModelSchema(modelId),
+        schema: modelSchema,
       },
       semantics,
       geometry,
@@ -128,19 +163,45 @@ self.addEventListener("message", async (event) => {
       },
       diagnostics: [],
     };
-  } catch {
-    report = {
-      schema: RESULT_SCHEMA,
-      requestId,
-      status: "failed",
-      diagnostic: {
-        code: "BROWSER_IFC_INSPECTION_FAILED",
-      },
-      cleanup: {
-        modelClosed: false,
-        engineDisposed: false,
-      },
-    };
+  } catch (error) {
+    if (
+      error === CANCELLED &&
+      bytes instanceof Uint8Array &&
+      typeof digest === "string"
+    ) {
+      report = {
+        schema: RESULT_SCHEMA,
+        requestId,
+        status: "cancelled",
+        phase: state.phase,
+        engine: engineIdentity(),
+        source: {
+          id: request.source.id,
+          kind: request.source.kind,
+          byteLength: bytes.byteLength,
+          sha256: digest,
+          schema: modelSchema,
+        },
+        cleanup: {
+          modelClosed: false,
+          engineDisposed: false,
+        },
+        diagnostics: [],
+      };
+    } else {
+      report = {
+        schema: RESULT_SCHEMA,
+        requestId,
+        status: "failed",
+        diagnostic: {
+          code: "BROWSER_IFC_INSPECTION_FAILED",
+        },
+        cleanup: {
+          modelClosed: false,
+          engineDisposed: false,
+        },
+      };
+    }
   } finally {
     if (modelId !== null) {
       try {
@@ -165,4 +226,48 @@ self.addEventListener("message", async (event) => {
     engineDisposed,
   };
   self.postMessage(report);
+}
+
+self.addEventListener("message", (event) => {
+  const request = event.data;
+  if (active === null) {
+    if (request?.type !== "inspect") {
+      return;
+    }
+    active = {
+      cancelRequested: false,
+      phase: null,
+      requestId:
+        typeof request.requestId === "string"
+          ? request.requestId
+          : "invalid",
+      resume: null,
+      waitingPhase: null,
+    };
+    const state = active;
+    void inspectRequest(request, state).finally(() => {
+      if (active === state) {
+        active = null;
+      }
+    });
+    return;
+  }
+  if (
+    request?.schema !== REQUEST_SCHEMA ||
+    request.requestId !== active.requestId
+  ) {
+    return;
+  }
+  if (request.type === "cancel") {
+    active.cancelRequested = true;
+    active.resume?.();
+    return;
+  }
+  if (
+    request.type === "continue" &&
+    request.phase === active.waitingPhase &&
+    !active.cancelRequested
+  ) {
+    active.resume?.();
+  }
 });

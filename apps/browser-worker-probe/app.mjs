@@ -8,6 +8,7 @@ import {
 const elements = {
   backend: document.querySelector("#backend"),
   cancel: document.querySelector("#cancel-probe"),
+  cancelProbe: document.querySelector("#run-cancel-probe"),
   cleanup: document.querySelector("#cleanup"),
   engine: document.querySelector("#engine"),
   geometry: document.querySelector("#geometry"),
@@ -72,10 +73,56 @@ function renderFailure(error) {
   elements.receipt.textContent = JSON.stringify(receipt, null, 2);
 }
 
+function renderExpectedCancellation(error) {
+  const receipt = error instanceof BrowserSourceSessionError
+    ? error.receipt
+    : null;
+  const worker = receipt?.workerCancellation;
+  if (
+    receipt?.outcome !== "cancelled" ||
+    receipt.workerStarted !== true ||
+    worker?.outcome !== "cancelled-cooperative" ||
+    worker.cooperativeCancellation !== true ||
+    worker.lastPhase !== "model-opened" ||
+    worker.cleanup?.modelClosed !== true ||
+    worker.cleanup?.engineDisposed !== true ||
+    worker.workerTerminationRequested !== true
+  ) {
+    return false;
+  }
+  elements.source.textContent =
+    `${receipt.sourceKind} · ${receipt.sourceBytes} bytes`;
+  elements.engine.textContent = "web-ifc 0.0.77";
+  elements.backend.textContent = "browser-wasm-worker-prototype";
+  elements.schema.textContent = "IFC4";
+  elements.semantics.textContent = "cancelled before inspection";
+  elements.geometry.textContent = "cancelled before inspection";
+  elements.cleanup.textContent = "model closed, engine disposed";
+  elements.receipt.textContent = JSON.stringify(receipt, null, 2);
+  elements.status.dataset.state = "passed";
+  elements.status.textContent =
+    "Passed: cooperative cancellation after model open";
+  return true;
+}
+
+async function syntheticSource(signal) {
+  const response = await fetch("/fixture/synthetic-small.ifc", {
+    cache: "no-store",
+    credentials: "omit",
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error("fixture unavailable");
+  }
+  return await response.blob();
+}
+
 async function runSource(
   sourceFactory,
   {
+    cancelAfterPhase,
     expected,
+    expectCancellation = false,
     sourceId,
     sourceKind,
     status,
@@ -95,9 +142,22 @@ async function runSource(
       return;
     }
     const result = await sourceSession.inspect(source, {
+      onProgress(progress) {
+        if (run !== currentRun) {
+          return;
+        }
+        elements.status.textContent =
+          `Worker phase: ${progress.phase}`;
+        if (progress.phase === cancelAfterPhase) {
+          sourceSession.cancel();
+        }
+      },
       sourceId,
       sourceKind,
     });
+    if (expectCancellation) {
+      throw new Error("expected Browser Worker cancellation");
+    }
     if (
       expected &&
       (
@@ -114,16 +174,21 @@ async function runSource(
     }
   } catch (error) {
     if (run === currentRun) {
-      renderFailure(
-        sourceCancellation.signal.aborted
-          ? new BrowserSourceSessionError(
-              "Browser IFC source cancelled",
-              {
-                outcome: "cancelled",
-              },
-            )
-          : error,
-      );
+      if (
+        !expectCancellation ||
+        !renderExpectedCancellation(error)
+      ) {
+        renderFailure(
+          sourceCancellation.signal.aborted
+            ? new BrowserSourceSessionError(
+                "Browser IFC source cancelled",
+                {
+                  outcome: "cancelled",
+                },
+              )
+            : error,
+        );
+      }
     }
   } finally {
     if (run === currentRun) {
@@ -134,17 +199,7 @@ async function runSource(
 }
 
 elements.run.addEventListener("click", () => {
-  void runSource(async (signal) => {
-    const response = await fetch("/fixture/synthetic-small.ifc", {
-      cache: "no-store",
-      credentials: "omit",
-      signal,
-    });
-    if (!response.ok) {
-      throw new Error("fixture unavailable");
-    }
-    return await response.blob();
-  }, {
+  void runSource(syntheticSource, {
     expected: {
       products: 1,
       projects: 1,
@@ -154,6 +209,15 @@ elements.run.addEventListener("click", () => {
     sourceId: "synthetic-small-ifc4",
     sourceKind: "synthetic",
     status: "Running synthetic IFC in Browser Worker…",
+  });
+});
+elements.cancelProbe.addEventListener("click", () => {
+  void runSource(syntheticSource, {
+    cancelAfterPhase: "model-opened",
+    expectCancellation: true,
+    sourceId: "synthetic-cancel-ifc4",
+    sourceKind: "synthetic",
+    status: "Opening IFC before cooperative cancellation…",
   });
 });
 elements.localFile.addEventListener("change", () => {
