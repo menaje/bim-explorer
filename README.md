@@ -1,1 +1,1 @@
-# bim-viewer
+# bim-explorer
