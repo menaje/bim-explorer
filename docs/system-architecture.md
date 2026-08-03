@@ -6,7 +6,7 @@ authority:
   - adapter-process-boundary
   - host-runtime-boundary
   - data-lifecycle
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # 시스템 아키텍처
@@ -102,9 +102,12 @@ identity reconciliation 결과가 필요합니다.
 mapped IFC에서 raw source SHA-256, 7-node spatial/product tree, 두 Wall의
 property/type/containment와 한 shared geometry payload를 같은 immutable
 snapshot에 묶습니다. range digest, 최대 단일 read와 session 누적 budget,
-stale context, 중복 identity와 cleanup을 강제합니다. public 대표 모델의
-source-artifact memory/first-frame, multi-range deferred loading과 Viewer
-Core conformance는 아직 보류합니다.
+stale context, 중복 identity와 cleanup을 강제합니다. 고정된 공개 IFC2X3의
+3,569 products는 3개 bounded geometry range로 나뉘며 첫 range만 읽고
+나머지를 미읽기로 유지하는 source 단계도 통과했습니다. 비어 있는
+tessellation은 semantic identity와 diagnostic만 유지합니다. renderer
+first-frame, deferred property range와 Viewer Core conformance는 아직
+보류합니다.
 
 ## Viewer Core와 3D presentation
 

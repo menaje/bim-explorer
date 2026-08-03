@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-bim-model-source-compatibility/1",
-  "asOf": "2026-08-03",
+  "asOf": "2026-08-04",
   "status": "experimental",
   "contract": {
     "artifactSchema": "bim-explorer-bim-source-artifact/0.1",
@@ -20,9 +20,45 @@
     "artifactCommitted": false,
     "thirdPartyContent": false
   },
+  "publicFixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "profileAdmission": false
+  },
   "expected": {
-    "cacheFingerprint": "sha256:54f44d48b19eb1df9cbaf02d83469570878a757b5fd74f0b1fd33b91e27cfb70",
-    "geometryRangeSha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969"
+    "synthetic": {
+      "cacheFingerprint": "sha256:f1e25a17783ead2457d423fd2195e3af21041a6834dec6e6926090eb3c7583d4",
+      "geometryRangeSha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969"
+    },
+    "publicRepresentative": {
+      "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+      "products": 3569,
+      "renderableProducts": 3504,
+      "nonRenderableProducts": 65,
+      "triangles": 261424,
+      "ranges": [
+        {
+          "handleId": "range:ifc:geometry:0",
+          "byteLength": 4193868,
+          "sha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5"
+        },
+        {
+          "handleId": "range:ifc:geometry:1",
+          "byteLength": 4194152,
+          "sha256": "1ecd68a6a01fb40f549cb1e1039a21bc44fdae6d5707caebc0d4777d0a79bd7c"
+        },
+        {
+          "handleId": "range:ifc:geometry:2",
+          "byteLength": 902676,
+          "sha256": "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2"
+        }
+      ]
+    }
   },
   "gates": {
     "rawSourceFingerprint": true,
@@ -31,15 +67,21 @@
     "boundedImmutableGeometryRange": true,
     "staleAndMalformedRejection": true,
     "adapterAndSessionCleanup": true,
-    "publicRepresentativeSourceArtifact": false,
-    "multiRangeDeferredLoading": false,
+    "publicRepresentativeSourceArtifact": true,
+    "multiRangeGeometryDirectory": true,
+    "nonRenderableProductDiagnostic": true,
+    "firstRenderedFrame": false,
+    "deferredPropertyRanges": false,
     "viewerCoreConformance": false,
     "browserWorkerPackaging": false
   },
-  "evidence": "compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-03.json",
+  "evidence": {
+    "syntheticMapped": "compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-04.json",
+    "publicRepresentative": "compatibility/evidence/bim-model-source-public-representative-2026-08-04.json"
+  },
   "blockers": [
-    "public representative IFC source-artifact memory and first-frame evidence is not recorded",
-    "multi-range first-frame and deferred loading is not implemented",
+    "a renderer has not consumed the first geometry range into a measured first frame",
+    "property and relation payloads are not partitioned into deferred ranges",
     "durable Viewer Core package and BIM RenderSource conformance remain unresolved",
     "Browser Worker and VS Code packaging are not qualified"
   ],

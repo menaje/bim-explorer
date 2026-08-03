@@ -12,6 +12,8 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
   maximumProducts: 100_000,
   maximumGeometryBytes: 256 * 1024 * 1024,
+  maximumRangeBytes: 4 * 1024 * 1024,
+  maximumRanges: 4_096,
   maximumRelationEntries: 500_000,
   maximumTreeNodes: 200_000,
   maximumMetadataBytes: 64 * 1024 * 1024,
@@ -409,6 +411,9 @@ function geometryRecord(api, modelId, geometryExpressId) {
       geometry.GetIndexDataSize(),
     );
     const indices = Uint32Array.from(sourceIndices);
+    if (vertices.length === 0 && indices.length === 0) {
+      return null;
+    }
     if (
       vertices.length === 0 ||
       vertices.length % 6 !== 0 ||
@@ -431,22 +436,21 @@ function geometryRecord(api, modelId, geometryExpressId) {
   }
 }
 
-function encodeGeometryRange(records, maximumGeometryBytes) {
+function encodedRecordByteLength(record) {
+  return (
+    20 +
+    record.vertices.byteLength +
+    record.indices.byteLength
+  );
+}
+
+function encodeGeometryRange(records, rangeId) {
   const headerBytes = 16;
   const recordHeaderBytes = 20;
   const totalBytes = records.reduce(
-    (sum, record) =>
-      sum +
-      recordHeaderBytes +
-      record.vertices.byteLength +
-      record.indices.byteLength,
+    (sum, record) => sum + encodedRecordByteLength(record),
     headerBytes,
   );
-  if (totalBytes > maximumGeometryBytes) {
-    throw new RangeError(
-      "encoded IFC geometry exceeds the configured byte limit",
-    );
-  }
   const bytes = new Uint8Array(totalBytes);
   bytes.set(new TextEncoder().encode("BEXGEO01"), 0);
   const view = new DataView(bytes.buffer);
@@ -471,12 +475,96 @@ function encodeGeometryRange(records, maximumGeometryBytes) {
       offset += Uint32Array.BYTES_PER_ELEMENT;
     }
     slices.set(record.geometryExpressId, {
-      rangeId: "range:ifc:geometry:0",
+      rangeId,
       offset: start,
       byteLength: offset - start,
     });
   }
   return { bytes, slices };
+}
+
+function encodeGeometryRanges(
+  records,
+  {
+    maximumGeometryBytes,
+    maximumRangeBytes,
+    maximumRanges,
+  },
+) {
+  const headerBytes = 16;
+  const groups = [];
+  let current = [];
+  let currentBytes = headerBytes;
+  for (const record of records) {
+    const recordBytes = encodedRecordByteLength(record);
+    if (headerBytes + recordBytes > maximumRangeBytes) {
+      throw new RangeError(
+        `geometry ${record.geometryExpressId} exceeds ` +
+          "the configured range byte limit",
+      );
+    }
+    if (
+      current.length > 0 &&
+      currentBytes + recordBytes > maximumRangeBytes
+    ) {
+      groups.push(current);
+      current = [];
+      currentBytes = headerBytes;
+    }
+    current.push(record);
+    currentBytes += recordBytes;
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  if (groups.length === 0) {
+    throw new Error("IFC source has no geometry ranges");
+  }
+  if (groups.length > maximumRanges) {
+    throw new RangeError(
+      "IFC geometry exceeds the configured range count limit",
+    );
+  }
+  const plannedBytes = groups.reduce(
+    (sum, group) =>
+      sum +
+      headerBytes +
+      group.reduce(
+        (groupSum, record) =>
+          groupSum + encodedRecordByteLength(record),
+        0,
+      ),
+    0,
+  );
+  if (plannedBytes > maximumGeometryBytes) {
+    throw new RangeError(
+      "encoded IFC geometry exceeds the configured byte limit",
+    );
+  }
+  const slices = new Map();
+  const ranges = groups.map((group, index) => {
+    const rangeId = `range:ifc:geometry:${index}`;
+    const encoded = encodeGeometryRange(group, rangeId);
+    for (const [geometryExpressId, slice] of encoded.slices) {
+      slices.set(geometryExpressId, slice);
+    }
+    return {
+      rangeId,
+      mediaType: WEB_IFC_GEOMETRY_MEDIA_TYPE,
+      sha256: createHash("sha256")
+        .update(encoded.bytes)
+        .digest("hex"),
+      bytes: encoded.bytes,
+    };
+  });
+  return {
+    ranges,
+    slices,
+    totalBytes: plannedBytes,
+    largestRangeBytes: Math.max(
+      ...ranges.map((range) => range.bytes.byteLength),
+    ),
+  };
 }
 
 function buildTree(
@@ -564,6 +652,8 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   maximumSourceBytes = DEFAULT_LIMITS.maximumSourceBytes,
   maximumProducts = DEFAULT_LIMITS.maximumProducts,
   maximumGeometryBytes = DEFAULT_LIMITS.maximumGeometryBytes,
+  maximumRangeBytes = DEFAULT_LIMITS.maximumRangeBytes,
+  maximumRanges = DEFAULT_LIMITS.maximumRanges,
   maximumRelationEntries = DEFAULT_LIMITS.maximumRelationEntries,
   maximumTreeNodes = DEFAULT_LIMITS.maximumTreeNodes,
   maximumMetadataBytes = DEFAULT_LIMITS.maximumMetadataBytes,
@@ -572,6 +662,8 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
     maximumSourceBytes,
     maximumProducts,
     maximumGeometryBytes,
+    maximumRangeBytes,
+    maximumRanges,
     maximumRelationEntries,
     maximumTreeNodes,
     maximumMetadataBytes,
@@ -612,9 +704,12 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       maximumRelationEntries,
     );
     const uniqueGeometry = new Map();
+    const emptyGeometryIds = new Set();
     const entities = [];
     const modelBounds = emptyBounds();
     let primitiveCount = 0;
+    let placementCount = 0;
+    let skippedEmptyGeometries = 0;
     let instancedVertices = 0;
     let triangleCount = 0;
     let encodedGeometryBytes = 16;
@@ -634,6 +729,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
         );
       }
       const primitives = [];
+      const diagnostics = [];
       const productBounds = emptyBounds();
       let productTriangles = 0;
       for (
@@ -643,9 +739,27 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       ) {
         const placed = mesh.geometries.get(primitiveIndex);
         const geometryExpressId = placed.geometryExpressID;
+        placementCount += 1;
+        if (emptyGeometryIds.has(geometryExpressId)) {
+          skippedEmptyGeometries += 1;
+          diagnostics.push({
+            code: "empty-tessellation",
+            geometryExpressId,
+          });
+          continue;
+        }
         let record = uniqueGeometry.get(geometryExpressId);
         if (record === undefined) {
           record = geometryRecord(api, modelId, geometryExpressId);
+          if (record === null) {
+            emptyGeometryIds.add(geometryExpressId);
+            skippedEmptyGeometries += 1;
+            diagnostics.push({
+              code: "empty-tessellation",
+              geometryExpressId,
+            });
+            continue;
+          }
           encodedGeometryBytes +=
             20 +
             record.vertices.byteLength +
@@ -702,21 +816,21 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           ],
         });
       }
-      if (primitives.length === 0) {
-        throw new Error(
-          `geometry product ${mesh.expressID} has no primitives`,
-        );
+      const renderable = primitives.length > 0;
+      if (renderable) {
+        includeBounds(modelBounds, productBounds);
       }
-      includeBounds(modelBounds, productBounds);
       entities.push({
         expressId: mesh.expressID,
         globalId,
         ifcClass: typeName(api, line),
         name: textValue(line?.Name) || `#${mesh.expressID}`,
         tag: textValue(line?.Tag),
+        renderable,
         triangles: productTriangles,
-        bounds: roundedBounds(productBounds),
+        bounds: renderable ? roundedBounds(productBounds) : null,
         primitives,
+        diagnostics,
         semantics: semanticRecord(
           api,
           modelId,
@@ -733,9 +847,13 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
     if (records.length === 0 || entities.length === 0) {
       throw new Error("IFC source has no renderable geometry products");
     }
-    const encoded = encodeGeometryRange(
+    const encoded = encodeGeometryRanges(
       records,
-      maximumGeometryBytes,
+      {
+        maximumGeometryBytes,
+        maximumRangeBytes,
+        maximumRanges,
+      },
     );
     for (const entity of entities) {
       for (const primitive of entity.primitives) {
@@ -799,6 +917,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           "direct-material-name",
           "classification-reference",
           "shared-geometry-instance",
+          "non-renderable-product-diagnostic",
         ],
         unsupported: [
           "write-mutation",
@@ -811,8 +930,17 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       tree,
       geometry: {
         products: entities.length,
+        renderableProducts: entities.filter(
+          (entity) => entity.renderable,
+        ).length,
+        nonRenderableProducts: entities.filter(
+          (entity) => !entity.renderable,
+        ).length,
+        placements: placementCount,
         primitives: primitiveCount,
         uniqueGeometries: records.length,
+        emptyUniqueGeometries: emptyGeometryIds.size,
+        skippedEmptyGeometries,
         vertices: records.reduce(
           (sum, record) => sum + record.vertices.length / 6,
           0,
@@ -822,28 +950,23 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
         bounds: roundedBounds(modelBounds),
       },
       entities,
-      ranges: [
-        {
-          rangeId: "range:ifc:geometry:0",
-          mediaType: WEB_IFC_GEOMETRY_MEDIA_TYPE,
-          sha256: createHash("sha256")
-            .update(encoded.bytes)
-            .digest("hex"),
-          bytes: encoded.bytes,
-        },
-      ],
+      ranges: encoded.ranges,
       resources: {
         limits: {
           maximumSourceBytes,
           maximumProducts,
           maximumGeometryBytes,
+          maximumRangeBytes,
+          maximumRanges,
           maximumRelationEntries,
           maximumTreeNodes,
           maximumMetadataBytes,
         },
         observed: {
           sourceBytes: bytes.byteLength,
-          geometryBytes: encoded.bytes.byteLength,
+          geometryBytes: encoded.totalBytes,
+          ranges: encoded.ranges.length,
+          largestRangeBytes: encoded.largestRangeBytes,
           metadataBytes: metadataByteLength,
           products: entities.length,
           relationEntries: indexes.relationEntries,

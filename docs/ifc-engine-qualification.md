@@ -5,7 +5,7 @@ authority:
   - ifc-engine-candidate-evidence
   - draft-ifc-implementation-profile
   - engine-selection-gates
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # IFC engine qualification
@@ -30,6 +30,11 @@ IFC2X3 profile 승격은 아닙니다. Browser packaging, GPU upload·render
 first-frame, 실행 중 동기 engine 호출의 취소와 negative-input cleanup을
 통과하지 못하면 IfcOpenShell native process를 desktop fallback으로
 재평가합니다.
+
+같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
+[`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
+소유합니다. 이 결과도 engine selection이 아니라 bounded read-only source
+단계의 입력 증거입니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -245,6 +250,7 @@ npm run qualify:ifc:web
 npm run qualify:ifc:mapped
 npm run fetch:ifc:public
 npm run qualify:ifc:public
+npm run qualify:bim-source:public
 npm run probe:browser-worker
 ```
 

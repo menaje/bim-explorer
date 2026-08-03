@@ -13,9 +13,11 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 취소·정리, 1,024-Wall scale step과 46.77MB CC BY 4.0 공개 IFC의
 > Node CPU/RSS·Browser parse/geometry budget도 통과했습니다. generated
 > mapped IFC에서는 raw fingerprint, spatial tree/property identity, shared
-> binary geometry range와 stale/budget 거부를 통과했습니다. public source
-> artifact first-frame, renderer, engine, public package와 지원 profile은
-> 아직 확정되지 않았습니다.
+> binary geometry range와 stale/budget 거부를 통과했습니다. 같은 공개
+> IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
+> geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 렌더된
+> first-frame, deferred property range, renderer, engine, public package와
+> 지원 profile은 아직 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 

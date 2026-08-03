@@ -5,7 +5,7 @@ authority:
   - fact-register
   - decision-register
   - open-question-register
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # 결정 대장
@@ -26,6 +26,7 @@ last_reviewed: 2026-08-03
 | BE-F-010 | 실제 local Chromium에서 388,316-byte generated IFC4의 1,024 Walls·1,024 products·12,288 triangles를 Worker total 48.3ms, wall clock 149.7ms, 관찰 WASM heap capacity 139,788,288 bytes로 처리하고 cleanup·후속 작은 fixture 복구를 확인했다. | [Browser bounded performance](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json) | 한 번의 synthetic scale-step 관찰이며 대표 대형 모델, live/peak process·GPU memory, first frame, redistribution과 package를 검증하지 않음 |
 | BE-F-011 | CC BY 4.0 Schependomlaan IFC2X3를 고정 commit과 archive/entry SHA-256으로 검증했다. 46,766,968 bytes, 3,569 geometry products·261,424 triangles를 web-ifc Node에서 두 번 약 0.77–0.78초·peak RSS 312–315MB로, 실제 Chromium Worker에서 0.76초·wall clock 0.86초·WASM capacity 140MB로 처리하고 cleanup·복구를 확인했다. | [public Node](../compatibility/evidence/web-ifc-public-representative-node-performance-2026-08-03.json), [public Browser](../compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json) | performance-only IFC2X3이며 draft IFC4 profile, GPU upload, render first-frame, bundling과 production package를 승인하지 않음 |
 | BE-F-012 | 내부 read-only `BimModelSource`가 4,028-byte generated mapped IFC4의 raw fingerprint, 7-node tree, 두 Wall의 semantic/Render/Pick identity와 996-byte shared binary geometry range를 동일 revision에 묶고 deterministic cache, bounded read, stale·malformed 거부와 cleanup을 통과했다. | [source compatibility](../compatibility/bim-model-source.json), [source evidence](../compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-03.json) | synthetic-only 내부 계약이며 public representative source-artifact, multi-range lazy loading과 Viewer Core conformance는 없음 |
+| BE-F-013 | 고정된 46,766,968-byte 공개 IFC2X3를 read-only source artifact로 두 번 투영해 3,569 products·261,424 triangles, 3개 geometry range, 첫 range 단독 bounded read와 동일 cache identity를 재현했다. 65개 empty-tessellation product는 source identity와 diagnostic을 유지하고 Render/Pick ID를 받지 않는다. | [source compatibility](../compatibility/bim-model-source.json), [public source evidence](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json) | performance-only source 단계이며 rendered first-frame, deferred property range, Viewer Core conformance와 IFC2X3 profile admission을 검증하지 않음 |
 
 ## 적용 결정
 

@@ -22,8 +22,9 @@ conformance module을 명시적으로 주입할 때만 compatibility test를
 
 [`bim-model-source`](bim-model-source/README.md)는 web-ifc adapter artifact를
 raw source fingerprint, immutable tree/entity identity와 bounded binary
-range로 투영하는 내부 read-only draft입니다. 공용 Viewer Core package
-호환성은 아직 주장하지 않습니다.
+range directory로 투영하는 내부 read-only draft입니다. 공개 대표 IFC의
+multi-range source artifact까지 통과했지만 공용 Viewer Core package
+호환성과 rendered first-frame은 아직 주장하지 않습니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public

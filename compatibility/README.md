@@ -22,10 +22,13 @@ production redistribution 승인이 아닙니다.
 read-only `BimModelSource`의 raw source fingerprint, deterministic cache,
 tree/property/Render/Pick identity와 bounded immutable geometry range 결과는
 [`bim-model-source.json`](bim-model-source.json)과
-[`synthetic mapped source evidence`](evidence/bim-model-source-synthetic-mapped-2026-08-03.json)가
-소유합니다. 이 결과는 repository-generated 4KB IFC4에 한정합니다. public
-대표 모델 source-artifact, multi-range lazy loading, Browser/VS Code
-packaging과 Viewer Core conformance는 계속 보류합니다.
+[`synthetic mapped source evidence`](evidence/bim-model-source-synthetic-mapped-2026-08-04.json),
+[`public representative source evidence`](evidence/bim-model-source-public-representative-2026-08-04.json)가
+소유합니다. 고정된 46.77MB IFC2X3에서는 3개 bounded geometry range,
+첫 range 단독 read, 3,504 renderable/65 non-renderable product의 identity와
+cleanup을 두 번 재현했습니다. rendered first-frame, deferred property
+range, Browser/VS Code packaging, Viewer Core conformance와 IFC2X3 profile
+admission은 계속 보류합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에

@@ -5,7 +5,7 @@ authority:
   - internal-bim-source-artifact
   - geometry-range-encoding
   - source-local-identity
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # BIM source artifact v0.1
@@ -49,8 +49,10 @@ bytes를 덮어쓰지 않습니다.
 
 - GlobalId는 source fingerprint 범위에서 안정적입니다.
 - Express ID는 정확한 source snapshot에서만 유효합니다.
-- Render ID와 Pick ID는 정확한 source fingerprint와 Express ID에서
-  파생합니다.
+- renderable product의 Render ID와 Pick ID는 정확한 source fingerprint와
+  Express ID에서 파생합니다.
+- engine이 빈 tessellation을 반환한 product는 tree/property/source identity와
+  `empty-tessellation` diagnostic을 유지하지만 Render/Pick ID는 없습니다.
 - tree, property와 3D selection은 같은 `revisionId`, `snapshotId`,
   `layerId`를 사용합니다.
 - 외부 identity token은
@@ -92,9 +94,15 @@ application/vnd.bim-explorer.geometry-range.v1
 metadata에 둡니다. `sourceFromStorage` basis가 web-ifc Y-up storage 좌표를
 IFC world Z-up으로 변환합니다.
 
-range handle은 digest, byte length, 최대 단일 read 크기와 session 누적
-read budget에 묶입니다. 잘못된 offset/length, digest, handle context와
-budget 초과는 거부합니다.
+geometry record는 Express ID 순서로 정렬하며 record 경계를 나누지 않고
+configured `maximumRangeBytes`까지 range를 채웁니다. 첫 range는 초기
+후보이고 나머지는 deferred 후보입니다. 이는 실제 visibility나 renderer
+first-frame 우선순위가 아닙니다.
+
+각 range handle은 digest, byte length, 최대 단일 read 크기와 session 누적
+read budget에 묶입니다. 단일 record가 range limit을 넘거나 range count가
+configured limit을 넘으면 bytes allocation 전에 거부합니다. 잘못된
+offset/length, digest, handle context와 budget 초과도 거부합니다.
 
 artifact는 source, product, geometry, relation-entry, tree-node와 projected
 metadata의 configured limit과 observed value를 함께 기록합니다. adapter는
@@ -103,8 +111,8 @@ relation, tree 또는 metadata limit을 넘으면 snapshot을 공개하지 않�
 
 ## 현재 보류
 
-- public representative IFC의 source-artifact memory/first-frame 측정
-- 여러 range의 first-frame/deferred partition
+- 실제 renderer의 visibility 기반 first-frame range 선택과 GPU 측정
+- property/relation payload의 deferred range partition
 - complex material graph와 connection relation
 - IFC map conversion/georeferencing
 - Browser Worker/VS Code package integration

@@ -40,7 +40,9 @@ fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engin
 분리합니다.
 
 `bim-model-source` test는 generated mapped IFC에서 raw source fingerprint,
-spatial tree와 product semantics, shared geometry payload, Express
-ID/GlobalId/Render/Pick lookup, bounded range read와 stale·malformed artifact
-거부를 검사합니다. 공용 Viewer Core conformance나 representative model
-first-frame test는 아닙니다.
+spatial tree와 product semantics, shared·multi-range geometry payload,
+Express ID/GlobalId/Render/Pick lookup, 비렌더링 product identity,
+bounded range read와 stale·malformed artifact 거부를 검사합니다. 별도 공개
+fixture qualification은 46.77MB IFC2X3의 3개 range와 첫 range 단독 read를
+두 번 확인합니다. 공용 Viewer Core conformance나 rendered first-frame
+test는 아닙니다.

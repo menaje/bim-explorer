@@ -17,6 +17,29 @@ function mappedBytes() {
   return new TextEncoder().encode(syntheticMappedIfc());
 }
 
+function multiGeometryBytes() {
+  const rewrites = [
+    [
+      "#41=IFCMAPPEDITEM(#34,#36);",
+      "#41=IFCEXTRUDEDAREASOLID(#30,#11,#31,2.);",
+    ],
+    [
+      "#42=IFCSHAPEREPRESENTATION(#12,'Body'," +
+        "'MappedRepresentation',(#41));",
+      "#42=IFCSHAPEREPRESENTATION(#12,'Body'," +
+        "'SweptSolid',(#41));",
+    ],
+  ];
+  let fixture = syntheticMappedIfc();
+  for (const [from, to] of rewrites) {
+    if (!fixture.includes(from)) {
+      throw new Error(`multi-geometry rewrite is unavailable: ${from}`);
+    }
+    fixture = fixture.replace(from, to);
+  }
+  return new TextEncoder().encode(fixture);
+}
+
 function requestContext(snapshot) {
   return {
     protocolVersion: snapshot.protocolVersion,
@@ -39,8 +62,13 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
   });
   assert.deepEqual(artifact.geometry, {
     products: 2,
+    renderableProducts: 2,
+    nonRenderableProducts: 0,
+    placements: 2,
     primitives: 2,
     uniqueGeometries: 1,
+    emptyUniqueGeometries: 0,
+    skippedEmptyGeometries: 0,
     vertices: 34,
     instancedVertices: 68,
     triangles: 24,
@@ -54,6 +82,8 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
       maximumSourceBytes: 67_108_864,
       maximumProducts: 100_000,
       maximumGeometryBytes: 268_435_456,
+      maximumRangeBytes: 4_194_304,
+      maximumRanges: 4_096,
       maximumRelationEntries: 500_000,
       maximumTreeNodes: 200_000,
       maximumMetadataBytes: 67_108_864,
@@ -61,7 +91,9 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
     observed: {
       sourceBytes: 4_028,
       geometryBytes: 996,
-      metadataBytes: 2_816,
+      ranges: 1,
+      largestRangeBytes: 996,
+      metadataBytes: 2_886,
       products: 2,
       relationEntries: 12,
       treeNodes: 7,
@@ -123,6 +155,68 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
     new TextDecoder().decode(artifact.ranges[0].bytes.slice(0, 8)),
     "BEXGEO01",
   );
+});
+
+test("web-ifc partitions atomic geometry into first and deferred ranges", async () => {
+  const artifact = await createWebIfcSourceArtifact(
+    multiGeometryBytes(),
+    {
+      maximumRangeBytes: 996,
+      profile: "ReferenceView_V1.2",
+    },
+  );
+  assert.equal(artifact.geometry.products, 2);
+  assert.equal(artifact.geometry.uniqueGeometries, 2);
+  assert.deepEqual(
+    artifact.ranges.map((range) => [
+      range.rangeId,
+      range.bytes.byteLength,
+    ]),
+    [
+      ["range:ifc:geometry:0", 996],
+      ["range:ifc:geometry:1", 996],
+    ],
+  );
+  assert.deepEqual(
+    artifact.entities.map((entity) =>
+      entity.primitives[0].slice.rangeId),
+    [
+      "range:ifc:geometry:0",
+      "range:ifc:geometry:1",
+    ],
+  );
+  assert.equal(artifact.resources.observed.geometryBytes, 1_992);
+  assert.equal(artifact.resources.observed.ranges, 2);
+  assert.equal(artifact.resources.observed.largestRangeBytes, 996);
+
+  const source = createBimModelSource(artifact, {
+    maximumRequestBytes: 996,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  assert.deepEqual(snapshot.loadPlan, {
+    firstFrameRangeIds: ["range:ifc:geometry:0"],
+    deferredRangeIds: ["range:ifc:geometry:1"],
+  });
+  const [first, deferred] = snapshot.layers[0].rangeHandles;
+  assert.equal(
+    (await session.readRange(first, 0, first.byteLength)).byteLength,
+    996,
+  );
+  assert.equal(source.state.remainingReadBytes, 996);
+  assert.equal(
+    (await session.readRange(
+      deferred,
+      0,
+      deferred.byteLength,
+    )).byteLength,
+    996,
+  );
+  assert.equal(source.state.remainingReadBytes, 0);
+  await session.dispose();
+  await source.dispose();
 });
 
 test("BimModelSource binds tree, entity, render, and pick to one revision", async () => {
@@ -273,6 +367,70 @@ test("BimModelSource cache fingerprint is deterministic and path-free", async ()
   await second.dispose();
 });
 
+test("non-renderable products keep semantic identity without Render/Pick IDs", async () => {
+  const artifact = await createWebIfcSourceArtifact(mappedBytes());
+  const entity = artifact.entities[1];
+  entity.renderable = false;
+  entity.triangles = 0;
+  entity.bounds = null;
+  entity.primitives = [];
+  entity.diagnostics = [
+    {
+      code: "empty-tessellation",
+      geometryExpressId: 9_999,
+    },
+  ];
+  Object.assign(artifact.geometry, {
+    renderableProducts: 1,
+    nonRenderableProducts: 1,
+    primitives: 1,
+    emptyUniqueGeometries: 1,
+    skippedEmptyGeometries: 1,
+    instancedVertices: 34,
+    triangles: 12,
+  });
+  artifact.resources.observed.metadataBytes = new TextEncoder()
+    .encode(JSON.stringify({
+      tree: artifact.tree,
+      entities: artifact.entities,
+    }))
+    .byteLength;
+
+  const source = createBimModelSource(artifact);
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = requestContext(snapshot);
+  const nonRenderable = snapshot.entities[1];
+  const treeNode = snapshot.tree.nodes.find(
+    (node) => node.expressId === nonRenderable.expressId,
+  );
+
+  assert.equal(nonRenderable.renderable, false);
+  assert.equal(nonRenderable.renderId, null);
+  assert.equal(nonRenderable.pickId, null);
+  assert.equal(treeNode.renderId, null);
+  assert.equal(treeNode.pickId, null);
+  assert.equal(
+    (await session.getEntity({
+      ...context,
+      globalId: nonRenderable.globalId,
+    })).expressId,
+    nonRenderable.expressId,
+  );
+  await assert.rejects(
+    session.resolvePick({
+      ...context,
+      renderId: null,
+      pickId: null,
+    }),
+    /pick identity is outside the snapshot/u,
+  );
+  await session.dispose();
+  await source.dispose();
+});
+
 test("BIM source admission fails closed on limits and malformed artifacts", async () => {
   const bytes = mappedBytes();
   await assert.rejects(
@@ -286,6 +444,19 @@ test("BIM source admission fails closed on limits and malformed artifacts", asyn
       maximumGeometryBytes: 995,
     }),
     /geometry exceeds the configured byte limit/u,
+  );
+  await assert.rejects(
+    createWebIfcSourceArtifact(bytes, {
+      maximumRangeBytes: 995,
+    }),
+    /exceeds the configured range byte limit/u,
+  );
+  await assert.rejects(
+    createWebIfcSourceArtifact(multiGeometryBytes(), {
+      maximumRangeBytes: 996,
+      maximumRanges: 1,
+    }),
+    /range count limit/u,
   );
   await assert.rejects(
     createWebIfcSourceArtifact(bytes, {

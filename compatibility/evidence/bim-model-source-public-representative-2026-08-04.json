@@ -1,0 +1,289 @@
+{
+  "schema": "bim-explorer-public-bim-model-source-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "profileAdmission": false
+  },
+  "provenance": {
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "attribution": "(C) original authors",
+    "rightsVerified": true,
+    "bundlingApproved": false
+  },
+  "acquisition": {
+    "schema": "bim-explorer-public-ifc-fetch-receipt/1",
+    "outcome": "verified",
+    "fixtureId": "public-schependomlaan-complete-ifc2x3",
+    "cacheHit": true,
+    "source": {
+      "repository": "buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "archiveBytes": 8873221,
+      "archiveSha256": "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb"
+    },
+    "entry": {
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3"
+    },
+    "policy": {
+      "archivePersisted": false,
+      "artifactCommitted": false,
+      "customerContent": false,
+      "bundlingApproved": false
+    }
+  },
+  "environment": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v24.11.1"
+  },
+  "budget": {
+    "timeoutMs": 30000,
+    "maximumArtifactMs": 10000,
+    "maximumSourceMs": 5000,
+    "maximumTotalMs": 15000,
+    "maximumProcessRssBytes": 805306368
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-web-ifc-source-artifact-report/1",
+    "status": "passed",
+    "engine": {
+      "id": "web-ifc",
+      "version": "0.0.77",
+      "backend": "node-wasm-isolated-source-artifact",
+      "license": "MPL-2.0"
+    },
+    "fixture": {
+      "id": "public-schependomlaan-complete-ifc2x3",
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3",
+      "profile": "performance-only-ifc2x3"
+    },
+    "snapshot": {
+      "sourceFingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+      "treeNodes": 3578,
+      "entities": 3569,
+      "geometry": {
+        "products": 3569,
+        "renderableProducts": 3504,
+        "nonRenderableProducts": 65,
+        "placements": 6105,
+        "primitives": 5972,
+        "uniqueGeometries": 4696,
+        "emptyUniqueGeometries": 133,
+        "skippedEmptyGeometries": 133,
+        "vertices": 297126,
+        "instancedVertices": 441206,
+        "triangles": 261424,
+        "bounds": {
+          "min": [
+            -1,
+            -1,
+            -1.7
+          ],
+          "max": [
+            22.95,
+            23.465,
+            13.356488
+          ]
+        }
+      },
+      "resources": {
+        "limits": {
+          "maximumSourceBytes": 67108864,
+          "maximumProducts": 100000,
+          "maximumGeometryBytes": 268435456,
+          "maximumRangeBytes": 4194304,
+          "maximumRanges": 4096,
+          "maximumRelationEntries": 500000,
+          "maximumTreeNodes": 200000,
+          "maximumMetadataBytes": 67108864
+        },
+        "observed": {
+          "sourceBytes": 46766968,
+          "geometryBytes": 9290696,
+          "ranges": 3,
+          "largestRangeBytes": 4194152,
+          "metadataBytes": 10007872,
+          "products": 3569,
+          "relationEntries": 30761,
+          "treeNodes": 3578
+        }
+      },
+      "loadPlan": {
+        "firstRangeIds": [
+          "range:ifc:geometry:0"
+        ],
+        "deferredRangeIds": [
+          "range:ifc:geometry:1",
+          "range:ifc:geometry:2"
+        ]
+      },
+      "ranges": [
+        {
+          "handleId": "range:ifc:geometry:0",
+          "byteLength": 4193868,
+          "maximumRequestBytes": 1048576,
+          "sha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5"
+        },
+        {
+          "handleId": "range:ifc:geometry:1",
+          "byteLength": 4194152,
+          "maximumRequestBytes": 1048576,
+          "sha256": "1ecd68a6a01fb40f549cb1e1039a21bc44fdae6d5707caebc0d4777d0a79bd7c"
+        },
+        {
+          "handleId": "range:ifc:geometry:2",
+          "byteLength": 902676,
+          "maximumRequestBytes": 902676,
+          "sha256": "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2"
+        }
+      ]
+    },
+    "firstRangeRead": {
+      "handleId": "range:ifc:geometry:0",
+      "reads": 4,
+      "bytesRead": 4193868,
+      "sha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5",
+      "digestValidated": true,
+      "deferredRangesUnread": true,
+      "remainingReadBytes": 5096828
+    },
+    "identity": {
+      "expressId": 224,
+      "globalId": "1nOs6Hg0v9fR$sLR1LjIyX",
+      "renderId": "render:ifc:5c73cdd02b3add09:224",
+      "pickId": "pick:ifc:5c73cdd02b3add09:224",
+      "propertySetCount": 4,
+      "hasType": true,
+      "hasContainer": true,
+      "treeEntityMatch": true,
+      "globalIdLookupMatch": true,
+      "pickLookupMatch": true
+    },
+    "nonRenderable": {
+      "count": 65,
+      "samplePresent": true,
+      "sampleExpressId": 49207,
+      "sampleGlobalId": "1A9aTEU4z9SwaqEUwI8Lx4",
+      "renderId": null,
+      "pickId": null,
+      "diagnosticCodes": [
+        "empty-tessellation",
+        "empty-tessellation"
+      ],
+      "sourceIdentityLookup": true
+    },
+    "failClosed": {
+      "staleRevisionRejected": true
+    },
+    "performance": {
+      "readMs": 10.458708000000001,
+      "artifactMs": 2151.843375,
+      "sourceMs": 226.64887499999986,
+      "totalMs": 2410.75025
+    },
+    "processMemoryBytes": {
+      "maximumResidentSetSize": 587628544,
+      "residentSetSizeAfterFirstRange": 577945600,
+      "heapUsedAfterFirstRange": 120814280
+    },
+    "cleanup": {
+      "adapterModelClosed": true,
+      "adapterEngineDisposed": true,
+      "sessionDisposed": true,
+      "sourceDisposed": true
+    },
+    "diagnostics": []
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "deterministicProjectionSha256": "67ffd4a80d3719e7836c3ca61fd27e60409fed0cad23d0848e42e9675ea8413e",
+      "performance": {
+        "readMs": 10.458708000000001,
+        "artifactMs": 2151.843375,
+        "sourceMs": 226.64887499999986,
+        "totalMs": 2410.75025
+      },
+      "processMemoryBytes": {
+        "maximumResidentSetSize": 587628544,
+        "residentSetSizeAfterFirstRange": 577945600,
+        "heapUsedAfterFirstRange": 120814280
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 3295,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 2618.6977500000003
+      }
+    },
+    {
+      "attempt": 2,
+      "deterministicProjectionSha256": "67ffd4a80d3719e7836c3ca61fd27e60409fed0cad23d0848e42e9675ea8413e",
+      "performance": {
+        "readMs": 7.96320799999998,
+        "artifactMs": 2113.046542,
+        "sourceMs": 216.11191700000018,
+        "totalMs": 2357.6998750000002
+      },
+      "processMemoryBytes": {
+        "maximumResidentSetSize": 586579968,
+        "residentSetSizeAfterFirstRange": 577699840,
+        "heapUsedAfterFirstRange": 121348152
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 3301,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 2567.6738329999994
+      }
+    }
+  ],
+  "conformance": {
+    "repeatedSnapshotIdentity": true,
+    "boundedMultiRangeDirectory": true,
+    "firstRangeReadWithoutDeferredRanges": true,
+    "treePropertyRenderPickIdentity": true,
+    "nonRenderableProductDiagnostic": true,
+    "staleRevisionRejected": true,
+    "isolatedCleanup": true,
+    "pathFreeReport": true
+  },
+  "decision": {
+    "publicRepresentativeSourceArtifact": "passed-performance-only",
+    "multiRangeGeometryDirectory": "passed",
+    "firstRenderedFrame": "blocked",
+    "deferredPropertyRanges": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "draftProfileAdmission": "blocked",
+    "productionClaims": false
+  }
+}

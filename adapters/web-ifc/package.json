@@ -7,7 +7,8 @@
   "type": "module",
   "exports": {
     ".": "./src/create-source-artifact.mjs",
-    "./inspect": "./src/inspect.mjs"
+    "./inspect": "./src/inspect.mjs",
+    "./measure-source-artifact": "./src/measure-source-artifact.mjs"
   },
   "scripts": {
     "inspect": "node src/inspect.mjs"

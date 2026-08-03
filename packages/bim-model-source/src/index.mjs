@@ -348,13 +348,12 @@ function validateEntity(value, index, rangeById) {
   }
   nonEmptyString(entity.ifcClass, `${label}.ifcClass`);
   nonEmptyString(entity.name, `${label}.name`);
-  positiveInteger(entity.triangles, `${label}.triangles`);
-  const bounds = boundsValue(entity.bounds, `${label}.bounds`);
-  if (
-    !Array.isArray(entity.primitives) ||
-    entity.primitives.length === 0
-  ) {
-    throw new TypeError(`${label}.primitives must be non-empty`);
+  if (typeof entity.renderable !== "boolean") {
+    throw new TypeError(`${label}.renderable must be boolean`);
+  }
+  nonNegativeInteger(entity.triangles, `${label}.triangles`);
+  if (!Array.isArray(entity.primitives)) {
+    throw new TypeError(`${label}.primitives must be a list`);
   }
   const primitives = entity.primitives.map((primitive, primitiveIndex) =>
     validatePrimitive(
@@ -362,15 +361,62 @@ function validateEntity(value, index, rangeById) {
       `${label}.primitives[${primitiveIndex}]`,
       rangeById,
     ));
+  if (!Array.isArray(entity.diagnostics)) {
+    throw new TypeError(`${label}.diagnostics must be a list`);
+  }
+  const diagnostics = entity.diagnostics.map((value, diagnosticIndex) => {
+    const diagnosticLabel =
+      `${label}.diagnostics[${diagnosticIndex}]`;
+    const diagnostic = plainRecord(value, diagnosticLabel);
+    nonEmptyString(diagnostic.code, `${diagnosticLabel}.code`);
+    if (diagnostic.code !== "empty-tessellation") {
+      throw new Error(`${diagnosticLabel}.code is unsupported`);
+    }
+    positiveInteger(
+      diagnostic.geometryExpressId,
+      `${diagnosticLabel}.geometryExpressId`,
+    );
+    return structuredClone(diagnostic);
+  });
+  if (
+    entity.renderable !== (primitives.length > 0) ||
+    entity.triangles !==
+      primitives.reduce(
+        (sum, primitive) => sum + primitive.triangles,
+        0,
+      ) ||
+    (
+      entity.renderable &&
+      (
+        entity.bounds === null ||
+        entity.triangles === 0
+      )
+    ) ||
+    (
+      !entity.renderable &&
+      (
+        entity.bounds !== null ||
+        entity.triangles !== 0 ||
+        diagnostics.length === 0
+      )
+    )
+  ) {
+    throw new Error(`${label} renderability is inconsistent`);
+  }
+  const bounds = entity.renderable
+    ? boundsValue(entity.bounds, `${label}.bounds`)
+    : null;
   return {
     expressId: entity.expressId,
     globalId: entity.globalId,
     ifcClass: entity.ifcClass,
     name: entity.name,
     tag: typeof entity.tag === "string" ? entity.tag : "",
+    renderable: entity.renderable,
     triangles: entity.triangles,
     bounds,
     primitives,
+    diagnostics,
     semantics: structuredClone(
       plainRecord(entity.semantics, `${label}.semantics`),
     ),
@@ -485,6 +531,8 @@ function validateResources(
     "maximumSourceBytes",
     "maximumProducts",
     "maximumGeometryBytes",
+    "maximumRangeBytes",
+    "maximumRanges",
     "maximumRelationEntries",
     "maximumTreeNodes",
     "maximumMetadataBytes",
@@ -492,6 +540,8 @@ function validateResources(
   const observedFields = [
     "sourceBytes",
     "geometryBytes",
+    "ranges",
+    "largestRangeBytes",
     "metadataBytes",
     "products",
     "relationEntries",
@@ -510,9 +560,17 @@ function validateResources(
     (sum, range) => sum + range.bytes.byteLength,
     0,
   );
+  const metadataBytes = new TextEncoder().encode(
+    JSON.stringify({ tree, entities }),
+  ).byteLength;
   if (
     observed.sourceBytes !== source.byteLength ||
     observed.geometryBytes !== totalGeometryBytes ||
+    observed.ranges !== ranges.length ||
+    observed.largestRangeBytes !== Math.max(
+      ...ranges.map((range) => range.bytes.byteLength),
+    ) ||
+    observed.metadataBytes !== metadataBytes ||
     observed.products !== entities.length ||
     observed.treeNodes !== tree.nodes.length
   ) {
@@ -521,6 +579,8 @@ function validateResources(
   for (const [observedField, limitField] of [
     ["sourceBytes", "maximumSourceBytes"],
     ["geometryBytes", "maximumGeometryBytes"],
+    ["largestRangeBytes", "maximumRangeBytes"],
+    ["ranges", "maximumRanges"],
     ["metadataBytes", "maximumMetadataBytes"],
     ["products", "maximumProducts"],
     ["relationEntries", "maximumRelationEntries"],
@@ -597,6 +657,8 @@ function validateArtifact(value) {
   );
   for (const field of [
     "products",
+    "placements",
+    "renderableProducts",
     "primitives",
     "uniqueGeometries",
     "vertices",
@@ -605,12 +667,35 @@ function validateArtifact(value) {
   ]) {
     positiveInteger(geometry[field], `artifact.geometry.${field}`);
   }
+  for (const field of [
+    "nonRenderableProducts",
+    "emptyUniqueGeometries",
+    "skippedEmptyGeometries",
+  ]) {
+    nonNegativeInteger(geometry[field], `artifact.geometry.${field}`);
+  }
   geometry.bounds = boundsValue(
     geometry.bounds,
     "artifact.geometry.bounds",
   );
   if (
     geometry.products !== entities.length ||
+    geometry.renderableProducts !== entities.filter(
+      (entity) => entity.renderable,
+    ).length ||
+    geometry.nonRenderableProducts !== entities.filter(
+      (entity) => !entity.renderable,
+    ).length ||
+    geometry.products !==
+      geometry.renderableProducts + geometry.nonRenderableProducts ||
+    geometry.placements !==
+      geometry.primitives + geometry.skippedEmptyGeometries ||
+    geometry.skippedEmptyGeometries !== entities.reduce(
+      (sum, entity) => sum + entity.diagnostics.length,
+      0,
+    ) ||
+    geometry.emptyUniqueGeometries >
+      geometry.skippedEmptyGeometries ||
     geometry.primitives !== entities.reduce(
       (sum, entity) => sum + entity.primitives.length,
       0,
@@ -744,8 +829,12 @@ export class BimModelSource {
     const entities = this.#artifact.entities.map((entity) =>
       deepFreeze({
         ...structuredClone(entity),
-        renderId: `render:ifc:${idPrefix}:${entity.expressId}`,
-        pickId: `pick:ifc:${idPrefix}:${entity.expressId}`,
+        renderId: entity.renderable
+          ? `render:ifc:${idPrefix}:${entity.expressId}`
+          : null,
+        pickId: entity.renderable
+          ? `pick:ifc:${idPrefix}:${entity.expressId}`
+          : null,
         externalIdentityToken:
           `ifc-globalid:${this.sourceFingerprint}:${entity.globalId}`,
       }));
@@ -772,10 +861,14 @@ export class BimModelSource {
       entities.map((entity) => [entity.globalId, entity]),
     );
     this.#entityByRenderId = new Map(
-      entities.map((entity) => [entity.renderId, entity]),
+      entities
+        .filter((entity) => entity.renderId !== null)
+        .map((entity) => [entity.renderId, entity]),
     );
     this.#entityByPickId = new Map(
-      entities.map((entity) => [entity.pickId, entity]),
+      entities
+        .filter((entity) => entity.pickId !== null)
+        .map((entity) => [entity.pickId, entity]),
     );
     const baseContext = contextFields(this);
     const rangeHandles = this.#artifact.ranges.map((range) =>

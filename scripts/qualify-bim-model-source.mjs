@@ -11,6 +11,29 @@ import {
   syntheticMappedIfc,
 } from "./generate-synthetic-ifc.mjs";
 
+function multiGeometryBytes() {
+  const rewrites = [
+    [
+      "#41=IFCMAPPEDITEM(#34,#36);",
+      "#41=IFCEXTRUDEDAREASOLID(#30,#11,#31,2.);",
+    ],
+    [
+      "#42=IFCSHAPEREPRESENTATION(#12,'Body'," +
+        "'MappedRepresentation',(#41));",
+      "#42=IFCSHAPEREPRESENTATION(#12,'Body'," +
+        "'SweptSolid',(#41));",
+    ],
+  ];
+  let fixture = syntheticMappedIfc();
+  for (const [from, to] of rewrites) {
+    if (!fixture.includes(from)) {
+      throw new Error(`multi-geometry rewrite is unavailable: ${from}`);
+    }
+    fixture = fixture.replace(from, to);
+  }
+  return new TextEncoder().encode(fixture);
+}
+
 async function rejected(operation, pattern) {
   try {
     await operation();
@@ -149,6 +172,19 @@ async function qualify() {
     }),
     /geometry exceeds the configured byte limit/u,
   );
+  const rangeByteLimitRejected = await rejected(
+    () => createWebIfcSourceArtifact(bytes, {
+      maximumRangeBytes: 995,
+    }),
+    /exceeds the configured range byte limit/u,
+  );
+  const rangeCountLimitRejected = await rejected(
+    () => createWebIfcSourceArtifact(multiGeometryBytes(), {
+      maximumRangeBytes: 996,
+      maximumRanges: 1,
+    }),
+    /range count limit/u,
+  );
   const relationIndexBudgetRejected = await rejected(
     () => createWebIfcSourceArtifact(bytes, {
       maximumRelationEntries: 11,
@@ -198,6 +234,8 @@ async function qualify() {
     !duplicateGlobalIdRejected ||
     !sourceSizeLimitRejected ||
     !geometryBudgetRejected ||
+    !rangeByteLimitRejected ||
+    !rangeCountLimitRejected ||
     !relationIndexBudgetRejected ||
     !treeNodeBudgetRejected ||
     !metadataBudgetRejected ||
@@ -211,7 +249,7 @@ async function qualify() {
 
   return {
     schema: "bim-explorer-bim-model-source-evidence/0.1",
-    asOf: "2026-08-03",
+    asOf: "2026-08-04",
     status: "passed-synthetic-only",
     environment: {
       platform: process.platform,
@@ -276,6 +314,8 @@ async function qualify() {
       sourceSizeLimitConfiguredBytes: 64 * 1024 * 1024,
       sourceSizeLimitRejected,
       geometryBudgetRejected,
+      rangeByteLimitRejected,
+      rangeCountLimitRejected,
       relationIndexBudgetRejected,
       treeNodeBudgetRejected,
       metadataBudgetRejected,

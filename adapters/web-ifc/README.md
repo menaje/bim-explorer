@@ -22,6 +22,7 @@ first-frame, clean package와 production redistribution은 아직 검증하지
 ```sh
 npm run fetch:ifc:public
 npm run qualify:ifc:public
+npm run qualify:bim-source:public
 ```
 
 Dependency pin과 upstream license는
@@ -31,6 +32,9 @@ Dependency pin과 upstream license는
 `bim-explorer-bim-source-artifact/0.1`로 투영합니다. geometry payload는
 shared definition을 한 번 저장하고 occurrence transform을 metadata에
 분리합니다. 호출자는 이 adapter를 isolated process 또는 Worker 경계에
-두어야 합니다. 현재 source-artifact evidence는 generated mapped IFC의
-Node synthetic vertical slice에 한정하며 production Browser packaging을
+두어야 합니다. generated mapped IFC 외에 고정된 46.77MB 공개 IFC2X3
+source artifact도 격리 process에서 두 번 검사합니다. 이 공개 단계는 3개
+bounded geometry range, 첫 range 단독 read, tree/property/Render/Pick
+identity와 empty tessellation diagnostic까지 측정합니다. GPU upload·render
+first-frame, deferred property range와 production Browser packaging을
 의미하지 않습니다.

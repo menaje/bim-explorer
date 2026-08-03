@@ -25,6 +25,7 @@
     "qualify:ifc:web": "node scripts/qualify-ifc-engine.mjs --engine web-ifc",
     "qualify:ifc:mapped": "node scripts/qualify-ifc-engine.mjs --engine web-ifc --fixture mapped",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
+    "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",
     "test": "node --test tests/**/*.test.mjs"
   }
 }
