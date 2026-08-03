@@ -13,7 +13,10 @@ import {
 import {
   BROWSER_PERFORMANCE_BUDGET,
   BROWSER_PERFORMANCE_FIXTURE,
+  PUBLIC_BROWSER_PERFORMANCE_BUDGET,
+  PUBLIC_BROWSER_PERFORMANCE_FIXTURE,
   assessBrowserPerformanceResult,
+  assessPublicBrowserPerformanceResult,
 } from "../../apps/browser-worker-probe/performance-budget.mjs";
 import {
   BrowserIfcSourceSession,
@@ -439,6 +442,45 @@ test("Browser performance budget accepts the bounded fixture only", () => {
   ]);
 });
 
+test("Browser performance budget accepts the public representative fixture", () => {
+  const performanceReport = report(
+    "public-performance-request",
+    PUBLIC_BROWSER_PERFORMANCE_FIXTURE.byteLength,
+    {
+      id: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.id,
+      kind: "public-fixture",
+    },
+  );
+  Object.assign(performanceReport.source, {
+    sha256: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.sha256,
+  });
+  Object.assign(performanceReport.semantics, {
+    projects: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.projects,
+    walls: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.walls,
+  });
+  Object.assign(performanceReport.geometry, {
+    products: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.products,
+    triangles: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.triangles,
+  });
+  const result = {
+    report: performanceReport,
+    receipt: {
+      outcome: "completed",
+      wallClockMs: 100,
+    },
+  };
+  assert.equal(
+    assessPublicBrowserPerformanceResult(result).passed,
+    true,
+  );
+  performanceReport.performance.openMs =
+    PUBLIC_BROWSER_PERFORMANCE_BUDGET.maxOpenMs + 1;
+  assert.deepEqual(
+    assessPublicBrowserPerformanceResult(result).violations,
+    ["open-time"],
+  );
+});
+
 test("Browser source session replaces an active source without stale output", async () => {
   let callCount = 0;
   let firstStartedResolve;
@@ -676,7 +718,13 @@ test("Browser source session disposal is terminal", async () => {
 });
 
 test("loopback probe server exposes only bounded same-origin resources", async (t) => {
-  const server = createBrowserWorkerProbeServer();
+  const publicFixtureBytes = Buffer.from(
+    "ISO-10303-21;\nEND-ISO-10303-21;\n",
+    "utf8",
+  );
+  const server = createBrowserWorkerProbeServer({
+    publicFixtureProvider: async () => publicFixtureBytes,
+  });
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   t.after(async () => {
@@ -697,6 +745,7 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   assert.match(pageHtml, /Run synthetic IFC probe/u);
   assert.match(pageHtml, /Run cancellation probe/u);
   assert.match(pageHtml, /Run performance probe/u);
+  assert.match(pageHtml, /Run public representative probe/u);
   assert.match(pageHtml, /Open local IFC/u);
 
   const fixture = await fetch(`${origin}/fixture/synthetic-small.ifc`);
@@ -724,6 +773,13 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   assert.equal(
     performanceBytes.toString("utf8"),
     syntheticPerformanceIfc(),
+  );
+  const publicFixture = await fetch(
+    `${origin}/fixture/public-representative.ifc`,
+  );
+  assert.deepEqual(
+    Buffer.from(await publicFixture.arrayBuffer()),
+    publicFixtureBytes,
   );
 
   const moduleHead = await fetch(`${origin}/vendor/web-ifc-api.js`, {

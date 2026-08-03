@@ -20,6 +20,28 @@ export const BROWSER_PERFORMANCE_BUDGET = Object.freeze({
   timeoutMs: 15_000,
 });
 
+export const PUBLIC_BROWSER_PERFORMANCE_FIXTURE = Object.freeze({
+  byteLength: 46_766_968,
+  id: "public-schependomlaan-complete-ifc2x3",
+  products: 3_569,
+  projects: 1,
+  route: "/fixture/public-representative.ifc",
+  sha256:
+    "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+  triangles: 261_424,
+  walls: 652,
+});
+
+export const PUBLIC_BROWSER_PERFORMANCE_BUDGET = Object.freeze({
+  maxInitializationMs: 3_000,
+  maxInspectionMs: 15_000,
+  maxOpenMs: 10_000,
+  maxTotalMs: 25_000,
+  maxWallClockMs: 30_000,
+  maxWasmHeapCapacityBytes: 512 * 1024 * 1024,
+  timeoutMs: 30_000,
+});
+
 function finiteNonNegative(value) {
   return (
     typeof value === "number" &&
@@ -32,12 +54,10 @@ function safePositiveInteger(value) {
   return Number.isSafeInteger(value) && value > 0;
 }
 
-export function assessBrowserPerformanceResult(result) {
+function assessPerformanceResult(result, expected, budget) {
   const report = result?.report;
   const receipt = result?.receipt;
   const violations = [];
-  const expected = BROWSER_PERFORMANCE_FIXTURE;
-  const budget = BROWSER_PERFORMANCE_BUDGET;
   const checks = [
     [
       report?.source?.id === expected.id,
@@ -134,4 +154,20 @@ export function assessBrowserPerformanceResult(result) {
     status: violations.length === 0 ? "passed" : "failed",
     violations: Object.freeze(violations),
   });
+}
+
+export function assessBrowserPerformanceResult(result) {
+  return assessPerformanceResult(
+    result,
+    BROWSER_PERFORMANCE_FIXTURE,
+    BROWSER_PERFORMANCE_BUDGET,
+  );
+}
+
+export function assessPublicBrowserPerformanceResult(result) {
+  return assessPerformanceResult(
+    result,
+    PUBLIC_BROWSER_PERFORMANCE_FIXTURE,
+    PUBLIC_BROWSER_PERFORMANCE_BUDGET,
+  );
 }

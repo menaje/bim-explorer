@@ -1,0 +1,239 @@
+{
+  "schema": "bim-explorer-public-ifc-performance-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T14:01:16.883Z",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "manifest": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "kind": "third-party-public-performance",
+    "schema": "IFC2X3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "profileAdmission": false
+  },
+  "provenance": {
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "sourcePage": "https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Schependomlaan/Coordination%20model%20and%20subcontractors%20models/BIMsight%20Projectdata1/ROOT-Compleet.ifczip",
+    "licensePage": "https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/LICENSE",
+    "license": "CC-BY-4.0",
+    "attribution": "(C) original authors",
+    "rightsVerified": true,
+    "bundlingApproved": false
+  },
+  "acquisition": {
+    "schema": "bim-explorer-public-ifc-fetch-receipt/1",
+    "outcome": "verified",
+    "fixtureId": "public-schependomlaan-complete-ifc2x3",
+    "cacheHit": true,
+    "source": {
+      "repository": "buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "archiveBytes": 8873221,
+      "archiveSha256": "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb"
+    },
+    "entry": {
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3"
+    },
+    "policy": {
+      "archivePersisted": false,
+      "artifactCommitted": false,
+      "customerContent": false,
+      "bundlingApproved": false
+    }
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "node-wasm-isolated-performance",
+    "license": "MPL-2.0"
+  },
+  "environment": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v24.11.1"
+  },
+  "budget": {
+    "timeoutMs": 30000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 10000,
+    "maxInspectionMs": 15000,
+    "maxTotalMs": 25000,
+    "maxWallClockMs": 30000,
+    "maxWasmHeapCapacityBytes": 536870912,
+    "maxProcessRssBytes": 805306368
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "report": {
+        "schema": "bim-explorer-web-ifc-performance-report/1",
+        "status": "passed",
+        "engine": {
+          "id": "web-ifc",
+          "version": "0.0.77",
+          "backend": "node-wasm-isolated-performance",
+          "license": "MPL-2.0"
+        },
+        "source": {
+          "id": "public-schependomlaan-complete-ifc2x3",
+          "kind": "third-party-public-performance",
+          "byteLength": 46766968,
+          "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+          "schema": "IFC2X3"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 652,
+          "productsByType": 3708
+        },
+        "geometry": {
+          "products": 3569,
+          "geometries": 6105,
+          "triangles": 261424
+        },
+        "performance": {
+          "readMs": 8.801999999999992,
+          "initializationMs": 9.734708000000012,
+          "openMs": 441.177125,
+          "inspectionMs": 299.5554589999999,
+          "totalMs": 778.2108330000001
+        },
+        "resources": {
+          "inputBytes": 46766968,
+          "wasmHeapCapacityBytes": {
+            "afterInitialization": 16777216,
+            "afterOpen": 139788288,
+            "afterInspection": 139788288,
+            "peakObserved": 139788288
+          },
+          "processMemoryBytes": {
+            "maximumResidentSetSize": 311820288,
+            "residentSetSizeAfterInspection": 311607296,
+            "heapUsedAfterInspection": 35442104
+          }
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "diagnostics": []
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 1055,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 1029.0422090000002
+      }
+    },
+    {
+      "attempt": 2,
+      "report": {
+        "schema": "bim-explorer-web-ifc-performance-report/1",
+        "status": "passed",
+        "engine": {
+          "id": "web-ifc",
+          "version": "0.0.77",
+          "backend": "node-wasm-isolated-performance",
+          "license": "MPL-2.0"
+        },
+        "source": {
+          "id": "public-schependomlaan-complete-ifc2x3",
+          "kind": "third-party-public-performance",
+          "byteLength": 46766968,
+          "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+          "schema": "IFC2X3"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 652,
+          "productsByType": 3708
+        },
+        "geometry": {
+          "products": 3569,
+          "geometries": 6105,
+          "triangles": 261424
+        },
+        "performance": {
+          "readMs": 8.392334000000005,
+          "initializationMs": 8.624750000000006,
+          "openMs": 442.9795,
+          "inspectionMs": 291.83375,
+          "totalMs": 770.9726250000001
+        },
+        "resources": {
+          "inputBytes": 46766968,
+          "wasmHeapCapacityBytes": {
+            "afterInitialization": 16777216,
+            "afterOpen": 139788288,
+            "afterInspection": 139788288,
+            "peakObserved": 139788288
+          },
+          "processMemoryBytes": {
+            "maximumResidentSetSize": 314572800,
+            "residentSetSizeAfterInspection": 314359808,
+            "heapUsedAfterInspection": 35341464
+          }
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "diagnostics": []
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 1045,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 975.603417
+      }
+    }
+  ],
+  "conformance": {
+    "pinnedSource": true,
+    "archiveIdentityVerified": true,
+    "extractedIdentityVerified": true,
+    "boundedAcquisition": true,
+    "repeatedModelIdentity": true,
+    "cpuBudgetEnforced": true,
+    "peakProcessRssObserved": true,
+    "wasmHeapCapacityObserved": true,
+    "isolatedCleanup": true,
+    "pathFreeReport": true
+  },
+  "decision": {
+    "publicFixtureProvenance": "passed",
+    "representativeNodeCpuRss": "passed",
+    "browserRepresentativeParsing": "blocked",
+    "gpuMemory": "blocked",
+    "renderFirstFrame": "blocked",
+    "fixtureBundling": "blocked",
+    "draftProfileAdmission": "blocked",
+    "engineSelection": "held",
+    "productionClaims": false
+  },
+  "limits": [
+    "This IFC2X3 source is performance-only and does not expand the draft IFC4 profile.",
+    "Peak RSS is the isolated Node process maximum, not Browser or GPU memory.",
+    "The upstream archive is downloaded on demand and is not committed or bundled.",
+    "Browser Worker parsing and rendered first-frame remain separate gates."
+  ]
+}

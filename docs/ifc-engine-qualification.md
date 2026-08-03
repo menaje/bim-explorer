@@ -22,11 +22,14 @@ go/no-go는 보류합니다.
 fixture를 읽는 첫 smoke와 실제 file chooser를 통한 bounded local-file
 lifecycle, 유효한 IFC가 열린 뒤 checkpoint 취소·정리 prototype을
 통과했습니다. 1,024-Wall generated fixture의 bounded Browser 시간·WASM
-heap-capacity budget도 통과했습니다. JavaScript/WASM 경로를 Browser와 VS
-Code surface에서 공유할 가능성을 확인한 것이며 선정 결정은 아닙니다.
-Browser packaging, representative large-model CPU/GPU memory, 실행 중 동기
-engine 호출의 취소와 negative-input cleanup을 통과하지 못하면
-IfcOpenShell native process를 desktop fallback으로 재평가합니다.
+heap-capacity budget도 통과했습니다. 이어서 CC BY 4.0 Schependomlaan
+IFC2X3 46.77MB를 고정 digest로 검증하고 Node CPU/RSS와 실제 Chromium
+Worker parse/geometry budget을 통과했습니다. JavaScript/WASM 경로를
+Browser와 VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정이나
+IFC2X3 profile 승격은 아닙니다. Browser packaging, GPU upload·render
+first-frame, 실행 중 동기 engine 호출의 취소와 negative-input cleanup을
+통과하지 못하면 IfcOpenShell native process를 desktop fallback으로
+재평가합니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -37,7 +40,9 @@ Browser 관찰값은
 [`Worker smoke`](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json)와
 [`local-file lifecycle`](../compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json),
 [`checkpoint cancellation`](../compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json),
-[`bounded performance`](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json)가
+[`bounded performance`](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json),
+[`public Node performance`](../compatibility/evidence/web-ifc-public-representative-node-performance-2026-08-03.json)와
+[`public Browser performance`](../compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -123,14 +128,31 @@ open/inspection 뒤 139,788,288 bytes였으며 256 MiB budget 안이었습니다
 model close·engine dispose와 Worker 종료 뒤 새 Worker의 base fixture 처리도
 통과했고 console warning/error는 없었습니다.
 
-이는 local bounded scale-step prototype입니다. 64 MiB admission은 전체
-WASM/GPU memory budget이 아니며 linear-memory capacity는 live bytes나
-process peak RSS가 아닙니다. checkpoint cleanup도 실행 중인 synchronous
-`web-ifc` 호출을 선점하는 증거가 아닙니다. representative large/negative
-model, GPU upload·first frame, clean-install bundle, Linux Browser CI와 VS
-Code isolation을 검증하지 않았으므로 `largeModelPerformance`,
-candidate operation matrix의 `cancellation`, `corruptInputCleanup`과
-`packagingBrowser`는 계속 `blocked`입니다.
+공개 대표 성능 fixture는 buildingSMART Community Sample Test Files의
+Schependomlaan `ROOT-Compleet.ifczip`입니다. 고정 commit의 8,873,221-byte
+archive와 내부 단일 46,766,968-byte IFC를 각각 SHA-256으로 검증하며,
+archive는 보관하지 않고 추출 파일은 ignored local cache에만 둡니다.
+upstream license는 CC BY 4.0이고 attribution은 `(C) original authors`입니다.
+
+web-ifc Node 격리 process 두 번은 IFC2X3, 1 Project, 652 Walls, 3,708
+IfcProduct-derived entities, 3,569 geometry products·6,105 geometries·261,424
+triangles를 동일하게 반환했습니다. adapter total은 약 0.77–0.78초, child
+wall clock은 약 0.98–1.03초, peak RSS는 약 312–315MB였습니다. 실제 local
+Chromium Worker는 같은 source를 init 12.3ms, open 421.8ms, inspection
+297.4ms, total 761.1ms와 wall clock 857.3ms로 처리했습니다. WASM
+linear-memory capacity는 139,788,288 bytes였고 model/engine cleanup,
+Worker 종료와 후속 작은 fixture 복구도 통과했습니다. console
+warning/error는 없었습니다.
+
+공개 대표 source의 Node CPU/RSS와 Browser parse/geometry Gate만
+통과했습니다. 64 MiB admission과 WASM capacity는 Browser live process나
+GPU memory가 아니며 Worker는 mesh를 renderer에 upload하거나 frame을 그리지
+않습니다. checkpoint cleanup도 실행 중인 synchronous `web-ifc` 호출을
+선점하는 증거가 아닙니다. GPU upload·render first-frame, negative model,
+clean-install bundle, Linux Browser CI와 VS Code isolation을 검증하지
+않았으므로 `largeModelPerformance`, candidate operation matrix의
+`cancellation`, `corruptInputCleanup`과 `packagingBrowser`는 계속
+`blocked`입니다.
 
 ## Draft implementation profile
 
@@ -149,13 +171,17 @@ candidate operation matrix의 `cancellation`, `corruptInputCleanup`과
 - 유효한 IFC의 model-opened checkpoint cooperative cleanup prototype
 - generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
+공개 IFC2X3 관찰은 engine의 대표 parse/geometry 성능을 재기 위한
+performance-only Gate입니다. 아래 draft IFC4 profile의 schema나 exchange
+scenario에 포함하지 않습니다.
+
 다음은 `blocked`입니다.
 
 - IFC2X3, IFC4.3와 그 외 exchange scenario
 - connection, system, opening과 broader object/relation corpus
 - corrupt/truncated input과 resource exhaustion cleanup
 - 실행 중 동기 engine 호출의 취소와 candidate-level cancellation 승인
-- representative large model first-frame/index/RSS/GPU budget
+- representative model GPU upload·render first-frame budget
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
 
@@ -193,10 +219,18 @@ evidence는 ephemeral Python 3.12 environment에서 library를 동적으로 호�
 결과입니다. wheel hash, bundle 방식과 source/notice 의무는 확정하지
 않았습니다.
 
+Schependomlaan performance source는
+buildingSMART Community Sample Test Files의 고정 commit에서 내려받습니다.
+저장소 `LICENSE`는 원저작자 표시와 CC BY 4.0을 명시합니다. 현재 command는
+source를 재배포하지 않고 on-demand local cache만 만들며, product bundle
+포함은 별도 release/legal Gate로 유지합니다.
+
 - [web-ifc upstream](https://github.com/ThatOpen/engine_web-ifc)
 - [web-ifc license](https://github.com/ThatOpen/engine_web-ifc/blob/master/LICENSE.md)
 - [IfcOpenShell upstream](https://github.com/IfcOpenShell/IfcOpenShell)
 - [IfcOpenShell Python installation](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html)
+- [Community Sample Test Files](https://github.com/buildingsmart-community/Community-Sample-Test-Files)
+- [Public fixture license](https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/LICENSE)
 
 법률 검토와 public release Gate 전에는 어느 후보도 production
 redistribution 가능하다고 주장하지 않습니다.
@@ -209,13 +243,16 @@ web-ifc는 repository lockfile만 사용합니다.
 npm ci
 npm run qualify:ifc:web
 npm run qualify:ifc:mapped
+npm run fetch:ifc:public
+npm run qualify:ifc:public
 npm run probe:browser-worker
 ```
 
 Browser probe에서는 **Run cancellation probe**로 model-opened checkpoint
 cleanup을 확인합니다. **Run performance probe**로 1,024-Wall budget을
-검사하고, 이어서 **Run synthetic IFC probe**로 새 Worker의 정상 복구를
-확인합니다.
+검사합니다. **Run public representative probe**로 고정 digest의 46.77MB
+IFC2X3 parse/geometry budget을 검사하고, 이어서 **Run synthetic IFC
+probe**로 새 Worker의 정상 복구를 확인합니다.
 
 두 후보 비교에는 별도 Python environment를 주입합니다.
 
@@ -228,8 +265,10 @@ node scripts/qualify-ifc-engine.mjs \
   --python .qualification-venv/bin/python
 ```
 
-command는 매번 임시 `.ifc`를 생성하고 종료 시 제거합니다. 고객 또는
-third-party IFC는 저장소와 evidence에 포함하지 않습니다.
+synthetic qualification command는 매번 임시 `.ifc`를 생성하고 종료 시
+제거합니다. public performance command는 검증한 IFC만 ignored
+`.ifc-cache/public-ifc`에 두며 archive를 보관하지 않습니다. 고객 또는
+third-party IFC bytes는 저장소와 evidence에 포함하지 않습니다.
 
 qualification harness는 공통 process supervisor를 사용해 최소 환경,
 stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니다.
@@ -237,15 +276,16 @@ stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니�
 corrupt-input cleanup이나 cooperative cancellation을 검증한 것이 아닙니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
-time/WASM-capacity budget도 통과했습니다. 다만 동기 engine 호출 중 선점,
-승인된 negative corpus cleanup, representative large model과 GPU/first-frame
+time/WASM-capacity budget도 통과했습니다. 공개 대표 fixture의 Node
+CPU/RSS와 Browser parse/geometry도 분리해 통과했습니다. 다만 동기 engine
+호출 중 선점, 승인된 negative corpus cleanup, GPU upload·render first-frame
 budget을 검증하지 않았으므로 compatibility matrix의 cancellation/corrupt
 cleanup과 large-model Gate는 계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. redistribution 가능한 representative large fixture의 CPU/RSS/GPU와
-   first-frame budget 고정
+1. #6 generic 3D renderer에서 공개 대표 fixture의 GPU upload·render
+   first-frame과 disposal budget 고정
 2. 각 engine의 in-call cancel과 승인된 negative corpus에서 cleanup 검증
 3. connection/system/opening을 포함한 broader semantic corpus
 4. Browser in-call engine cancellation, approved negative cleanup과 Linux CI

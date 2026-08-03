@@ -29,9 +29,14 @@ engine dispose를 확인한 결과는
 [`checkpoint cancellation evidence`](evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json)에
 기록합니다. generated 1,024-Wall fixture의 시간·WASM heap-capacity 예산은
 [`bounded performance evidence`](evidence/web-ifc-browser-bounded-performance-2026-08-03.json)에
-기록합니다. 모두 prototype 결과입니다. 대표 대형 모델, live/peak
-process·GPU memory, checkpoint 사이에서 실행 중인 동기 engine 호출의 선점,
-손상 입력 cleanup 또는 `packagingBrowser` capability를 승격하지 않습니다.
+기록합니다. CC BY 4.0 Schependomlaan IFC2X3의 고정 provenance·Node
+CPU/RSS는
+[`public Node performance`](evidence/web-ifc-public-representative-node-performance-2026-08-03.json),
+실제 Chromium Worker parse/geometry는
+[`public Browser performance`](evidence/web-ifc-browser-public-representative-performance-2026-08-03.json)에
+분리합니다. 모두 prototype 결과입니다. IFC2X3 profile, GPU upload·render
+first-frame, checkpoint 사이에서 실행 중인 동기 engine 호출의 선점, 손상
+입력 cleanup 또는 `packagingBrowser` capability를 승격하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

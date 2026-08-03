@@ -1,0 +1,172 @@
+{
+  "schema": "bim-explorer-browser-public-representative-performance-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T23:08:43+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.4",
+    "resultSchema": "bim-explorer-browser-worker-result/0.4",
+    "progressSchema": "bim-explorer-browser-worker-progress/0.1"
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "manifest": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "schema": "IFC2X3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "archiveByteLength": 8873221,
+    "archiveSha256": "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb",
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "attribution": "(C) original authors",
+    "rightsVerified": true,
+    "artifactCommitted": false,
+    "archivePersisted": false,
+    "thirdPartyContent": true,
+    "bundlingApproved": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "timeoutMs": 30000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 10000,
+    "maxInspectionMs": 15000,
+    "maxTotalMs": 25000,
+    "maxWallClockMs": 30000,
+    "maxWasmHeapCapacityBytes": 536870912
+  },
+  "observation": {
+    "source": {
+      "id": "public-schependomlaan-complete-ifc2x3",
+      "kind": "public-fixture",
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 652
+    },
+    "geometry": {
+      "products": 3569,
+      "triangles": 261424
+    },
+    "performance": {
+      "initializationMs": 12.300000071525574,
+      "openMs": 421.8000000715256,
+      "inspectionMs": 297.40000009536743,
+      "totalMs": 761.1000000238419
+    },
+    "resources": {
+      "inputBytes": 46766968,
+      "wasmHeapCapacityBytes": {
+        "afterInitialization": 16777216,
+        "afterOpen": 139788288,
+        "afterInspection": 139788288,
+        "peakObserved": 139788288
+      }
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "workerTerminationRequested": true,
+      "timedOut": false,
+      "cancelled": false,
+      "cooperativeCancellation": false,
+      "lastPhase": "inspection-complete",
+      "cleanup": {
+        "modelClosed": true,
+        "engineDisposed": true
+      },
+      "wallClockMs": 857.2999999523163
+    },
+    "sourceSession": {
+      "outcome": "completed",
+      "sourceId": "public-schependomlaan-complete-ifc2x3",
+      "sourceKind": "public-fixture",
+      "sourceBytes": 46766968,
+      "workerStarted": true,
+      "cancelled": false,
+      "disposed": false,
+      "workerCancellation": null,
+      "wallClockMs": 884.2999999523163
+    },
+    "performanceAssessment": {
+      "passed": true,
+      "status": "passed",
+      "violations": []
+    }
+  },
+  "recoveryObservation": {
+    "source": {
+      "id": "synthetic-small-ifc4",
+      "kind": "synthetic",
+      "byteLength": 2855,
+      "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+      "schema": "IFC4"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 1
+    },
+    "geometry": {
+      "products": 1,
+      "triangles": 12
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "lastPhase": "inspection-complete",
+      "workerTerminationRequested": true,
+      "wallClockMs": 107.60000002384186
+    }
+  },
+  "conformance": {
+    "publicProvenancePinned": true,
+    "redistributionRightsVerified": true,
+    "boundedAcquisition": true,
+    "fixtureIdentityVerified": true,
+    "sameOriginOnly": true,
+    "fixtureAssertionsPassed": true,
+    "budgetEnforced": true,
+    "wasmHeapCapacityObserved": true,
+    "workerCleanup": true,
+    "postPerformanceRecovery": true,
+    "pathFreeReceipt": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "decision": {
+    "publicFixtureProvenance": "passed",
+    "browserRepresentativeParsing": "passed",
+    "largeModelPerformance": "blocked",
+    "browserPeakProcessMemory": "blocked",
+    "gpuMemory": "blocked",
+    "renderFirstFrame": "blocked",
+    "browserPackaging": "blocked",
+    "fixtureBundling": "blocked",
+    "draftProfileAdmission": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "This IFC2X3 source is performance-only and does not expand the draft IFC4 profile.",
+    "The Worker measures parse and geometry inspection, not GPU upload or rendered first-frame.",
+    "WASM linear-memory capacity is not live Browser process or GPU memory.",
+    "The upstream archive and extracted IFC are fetched on demand and are not committed or bundled.",
+    "This is one local Chromium observation, not production Browser packaging or cross-platform evidence."
+  ]
+}

@@ -2,7 +2,10 @@ import { BrowserWorkerError } from "./worker-client.mjs";
 import {
   BROWSER_PERFORMANCE_BUDGET,
   BROWSER_PERFORMANCE_FIXTURE,
+  PUBLIC_BROWSER_PERFORMANCE_BUDGET,
+  PUBLIC_BROWSER_PERFORMANCE_FIXTURE,
   assessBrowserPerformanceResult,
+  assessPublicBrowserPerformanceResult,
 } from "./performance-budget.mjs";
 import {
   BrowserIfcSourceSession,
@@ -19,6 +22,9 @@ const elements = {
   geometry: document.querySelector("#geometry"),
   localFile: document.querySelector("#local-file"),
   performanceProbe: document.querySelector("#run-performance-probe"),
+  publicPerformanceProbe: document.querySelector(
+    "#run-public-performance-probe",
+  ),
   receipt: document.querySelector("#receipt"),
   run: document.querySelector("#run-probe"),
   schema: document.querySelector("#schema"),
@@ -60,6 +66,8 @@ function renderResult(
   elements.receipt.textContent = JSON.stringify(
     {
       source: report.source,
+      semantics: report.semantics,
+      geometry: report.geometry,
       performance: report.performance,
       resources: report.resources,
       cleanup: report.cleanup,
@@ -137,6 +145,13 @@ function syntheticSource(signal) {
 
 function performanceSource(signal) {
   return fixtureSource(BROWSER_PERFORMANCE_FIXTURE.route, signal);
+}
+
+function publicPerformanceSource(signal) {
+  return fixtureSource(
+    PUBLIC_BROWSER_PERFORMANCE_FIXTURE.route,
+    signal,
+  );
 }
 
 async function runSource(
@@ -275,6 +290,22 @@ elements.performanceProbe.addEventListener("click", () => {
     status: "Running bounded 1,024-wall performance fixture…",
     successStatus: "Passed: bounded performance fixture",
     timeoutMs: BROWSER_PERFORMANCE_BUDGET.timeoutMs,
+  });
+});
+elements.publicPerformanceProbe.addEventListener("click", () => {
+  void runSource(publicPerformanceSource, {
+    assessResult: assessPublicBrowserPerformanceResult,
+    expected: {
+      products: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.products,
+      projects: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.projects,
+      triangles: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.triangles,
+      walls: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.walls,
+    },
+    sourceId: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.id,
+    sourceKind: "public-fixture",
+    status: "Running public representative IFC performance fixture…",
+    successStatus: "Passed: public representative performance fixture",
+    timeoutMs: PUBLIC_BROWSER_PERFORMANCE_BUDGET.timeoutMs,
   });
 });
 elements.localFile.addEventListener("change", () => {

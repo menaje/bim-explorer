@@ -20,6 +20,7 @@ const PROGRESS_KEYS = [
 const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
 const SOURCE_KINDS = new Set([
   "local-file",
+  "public-fixture",
   "synthetic",
 ]);
 

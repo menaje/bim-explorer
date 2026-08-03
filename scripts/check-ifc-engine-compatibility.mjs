@@ -536,6 +536,299 @@ function validateBrowserBoundedPerformance(manifest, evidence) {
   }
 }
 
+function boundedMeasurement(value, maximum, label) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    value > maximum
+  ) {
+    throw new Error(`${label} exceeded its budget`);
+  }
+}
+
+function validatePublicNodePerformance(manifest, evidence) {
+  const fixture = plainRecord(
+    manifest.publicPerformanceFixture,
+    "publicPerformanceFixture",
+  );
+  plainRecord(evidence, "public Node performance evidence");
+  const expectedBudget = {
+    timeoutMs: 30_000,
+    maxInitializationMs: 3_000,
+    maxOpenMs: 10_000,
+    maxInspectionMs: 15_000,
+    maxTotalMs: 25_000,
+    maxWallClockMs: 30_000,
+    maxWasmHeapCapacityBytes: 512 * 1024 * 1024,
+    maxProcessRssBytes: 768 * 1024 * 1024,
+  };
+  if (
+    fixture.id !== "public-schependomlaan-complete-ifc2x3" ||
+    fixture.status !== "experimental" ||
+    fixture.scope !==
+      "representative-node-and-browser-parse-performance" ||
+    fixture.manifest !==
+      "fixtures/ifc/public-schependomlaan/manifest.json" ||
+    fixture.license !== "CC-BY-4.0" ||
+    fixture.rightsVerified !== true ||
+    fixture.artifactCommitted !== false ||
+    fixture.thirdPartyContent !== true ||
+    fixture.bundlingApproved !== false ||
+    fixture.profileAdmission !== false ||
+    evidence.schema !==
+      "bim-explorer-public-ifc-performance-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.fixture?.id !== fixture.id ||
+    evidence.fixture?.manifest !== fixture.manifest ||
+    evidence.fixture?.schema !== "IFC2X3" ||
+    evidence.fixture?.byteLength !== 46_766_968 ||
+    evidence.fixture?.sha256 !==
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.thirdPartyContent !== true ||
+    evidence.fixture?.profileAdmission !== false ||
+    evidence.provenance?.repository !==
+      "buildingsmart-community/Community-Sample-Test-Files" ||
+    evidence.provenance?.commit !==
+      "7ddf57a201f88a0c213d5322b02ed15e94a60a40" ||
+    evidence.provenance?.license !== fixture.license ||
+    evidence.provenance?.rightsVerified !== true ||
+    evidence.provenance?.bundlingApproved !== false ||
+    evidence.acquisition?.outcome !== "verified" ||
+    evidence.acquisition?.source?.archiveBytes !== 8_873_221 ||
+    evidence.acquisition?.source?.archiveSha256 !==
+      "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb" ||
+    evidence.acquisition?.entry?.byteLength !== 46_766_968 ||
+    evidence.acquisition?.entry?.sha256 !==
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+    JSON.stringify(evidence.budget) !== JSON.stringify(expectedBudget) ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== "node-wasm-isolated-performance" ||
+    evidence.engine?.license !== manifest.candidates["web-ifc"].license ||
+    !Array.isArray(evidence.runs) ||
+    evidence.runs.length !== 2
+  ) {
+    throw new Error("public Node performance identity mismatch");
+  }
+  for (const run of evidence.runs) {
+    const report = plainRecord(run.report, "public Node report");
+    if (
+      report.schema !==
+        "bim-explorer-web-ifc-performance-report/1" ||
+      report.status !== "passed" ||
+      report.source?.id !== fixture.id ||
+      report.source?.kind !== "third-party-public-performance" ||
+      report.source?.byteLength !== 46_766_968 ||
+      report.source?.sha256 !==
+        "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+      report.source?.schema !== "IFC2X3" ||
+      report.semantics?.projects !== 1 ||
+      report.semantics?.walls !== 652 ||
+      report.semantics?.productsByType !== 3_708 ||
+      report.geometry?.products !== 3_569 ||
+      report.geometry?.geometries !== 6_105 ||
+      report.geometry?.triangles !== 261_424 ||
+      report.resources?.inputBytes !== 46_766_968 ||
+      report.cleanup?.modelClosed !== true ||
+      report.cleanup?.engineDisposed !== true ||
+      run.process?.outcome !== "completed" ||
+      run.process?.processExited !== true ||
+      run.process?.exitCode !== 0 ||
+      run.process?.timedOut !== false ||
+      run.process?.cancelled !== false ||
+      run.process?.outputLimitExceeded !== false ||
+      run.process?.stderrCaptured !== false
+    ) {
+      throw new Error("public Node performance run is incomplete");
+    }
+    for (const [field, maximum] of Object.entries({
+      initializationMs: expectedBudget.maxInitializationMs,
+      openMs: expectedBudget.maxOpenMs,
+      inspectionMs: expectedBudget.maxInspectionMs,
+      totalMs: expectedBudget.maxTotalMs,
+    })) {
+      boundedMeasurement(
+        report.performance?.[field],
+        maximum,
+        `public Node ${field}`,
+      );
+    }
+    boundedMeasurement(
+      run.process.wallClockMs,
+      expectedBudget.maxWallClockMs,
+      "public Node process wall clock",
+    );
+    const heap = report.resources?.wasmHeapCapacityBytes;
+    const memory = report.resources?.processMemoryBytes;
+    if (
+      !Number.isSafeInteger(heap?.peakObserved) ||
+      heap.peakObserved <= 0 ||
+      heap.peakObserved > expectedBudget.maxWasmHeapCapacityBytes ||
+      !Number.isSafeInteger(memory?.maximumResidentSetSize) ||
+      memory.maximumResidentSetSize <= 0 ||
+      memory.maximumResidentSetSize >
+        expectedBudget.maxProcessRssBytes
+    ) {
+      throw new Error("public Node resource budget is invalid");
+    }
+  }
+  if (
+    !Object.values(evidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(evidence.conformance ?? {}).length !== 10 ||
+    evidence.decision?.publicFixtureProvenance !== "passed" ||
+    evidence.decision?.representativeNodeCpuRss !== "passed" ||
+    evidence.decision?.gpuMemory !== "blocked" ||
+    evidence.decision?.renderFirstFrame !== "blocked" ||
+    evidence.decision?.fixtureBundling !== "blocked" ||
+    evidence.decision?.draftProfileAdmission !== "blocked" ||
+    evidence.decision?.engineSelection !== "held" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("public Node evidence overclaims support");
+  }
+}
+
+function validatePublicBrowserPerformance(manifest, evidence) {
+  const fixture = plainRecord(
+    manifest.publicPerformanceFixture,
+    "publicPerformanceFixture",
+  );
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  plainRecord(evidence, "public Browser performance evidence");
+  const expectedBudget = {
+    timeoutMs: 30_000,
+    maxInitializationMs: 3_000,
+    maxOpenMs: 10_000,
+    maxInspectionMs: 15_000,
+    maxTotalMs: 25_000,
+    maxWallClockMs: 30_000,
+    maxWasmHeapCapacityBytes: 512 * 1024 * 1024,
+  };
+  const observation = plainRecord(
+    evidence.observation,
+    "public Browser observation",
+  );
+  if (
+    prototype.publicPerformanceEvidence !== fixture.browserEvidence ||
+    evidence.schema !==
+      "bim-explorer-browser-public-representative-performance-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.4" ||
+    evidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.4" ||
+    evidence.contract?.progressSchema !==
+      "bim-explorer-browser-worker-progress/0.1" ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== prototype.backend ||
+    evidence.engine?.license !== manifest.candidates["web-ifc"].license ||
+    evidence.fixture?.id !== fixture.id ||
+    evidence.fixture?.manifest !== fixture.manifest ||
+    evidence.fixture?.schema !== "IFC2X3" ||
+    evidence.fixture?.byteLength !== 46_766_968 ||
+    evidence.fixture?.sha256 !==
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+    evidence.fixture?.archiveByteLength !== 8_873_221 ||
+    evidence.fixture?.archiveSha256 !==
+      "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb" ||
+    evidence.fixture?.license !== fixture.license ||
+    evidence.fixture?.rightsVerified !== true ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.archivePersisted !== false ||
+    evidence.fixture?.thirdPartyContent !== true ||
+    evidence.fixture?.bundlingApproved !== false ||
+    evidence.fixture?.profileAdmission !== false ||
+    JSON.stringify(evidence.budget) !== JSON.stringify(expectedBudget) ||
+    observation.source?.id !== fixture.id ||
+    observation.source?.kind !== "public-fixture" ||
+    observation.source?.byteLength !== 46_766_968 ||
+    observation.source?.sha256 !==
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+    observation.source?.schema !== "IFC2X3" ||
+    observation.semantics?.projects !== 1 ||
+    observation.semantics?.walls !== 652 ||
+    observation.geometry?.products !== 3_569 ||
+    observation.geometry?.triangles !== 261_424 ||
+    observation.resources?.inputBytes !== 46_766_968 ||
+    observation.cleanup?.modelClosed !== true ||
+    observation.cleanup?.engineDisposed !== true ||
+    observation.worker?.outcome !== "completed" ||
+    observation.worker?.lastPhase !== "inspection-complete" ||
+    observation.worker?.workerTerminationRequested !== true ||
+    observation.sourceSession?.outcome !== "completed" ||
+    observation.sourceSession?.workerStarted !== true ||
+    observation.sourceSession?.cancelled !== false ||
+    observation.performanceAssessment?.passed !== true ||
+    observation.performanceAssessment?.violations?.length !== 0
+  ) {
+    throw new Error("public Browser performance identity mismatch");
+  }
+  for (const [field, maximum] of Object.entries({
+    initializationMs: expectedBudget.maxInitializationMs,
+    openMs: expectedBudget.maxOpenMs,
+    inspectionMs: expectedBudget.maxInspectionMs,
+    totalMs: expectedBudget.maxTotalMs,
+  })) {
+    boundedMeasurement(
+      observation.performance?.[field],
+      maximum,
+      `public Browser ${field}`,
+    );
+  }
+  boundedMeasurement(
+    observation.worker.wallClockMs,
+    expectedBudget.maxWallClockMs,
+    "public Browser Worker wall clock",
+  );
+  boundedMeasurement(
+    observation.sourceSession.wallClockMs,
+    expectedBudget.maxWallClockMs,
+    "public Browser session wall clock",
+  );
+  const heap = observation.resources?.wasmHeapCapacityBytes;
+  if (
+    !Number.isSafeInteger(heap?.peakObserved) ||
+    heap.peakObserved <= 0 ||
+    heap.peakObserved > expectedBudget.maxWasmHeapCapacityBytes ||
+    evidence.recoveryObservation?.source?.id !==
+      "synthetic-small-ifc4" ||
+    evidence.recoveryObservation?.geometry?.triangles !== 12 ||
+    evidence.recoveryObservation?.cleanup?.modelClosed !== true ||
+    evidence.recoveryObservation?.cleanup?.engineDisposed !== true ||
+    evidence.recoveryObservation?.worker?.outcome !== "completed" ||
+    evidence.diagnostics?.consoleWarnings !== 0 ||
+    evidence.diagnostics?.consoleErrors !== 0
+  ) {
+    throw new Error("public Browser resource or recovery evidence is invalid");
+  }
+  if (
+    !Object.values(evidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(evidence.conformance ?? {}).length !== 11 ||
+    evidence.decision?.publicFixtureProvenance !== "passed" ||
+    evidence.decision?.browserRepresentativeParsing !== "passed" ||
+    evidence.decision?.largeModelPerformance !== "blocked" ||
+    evidence.decision?.browserPeakProcessMemory !== "blocked" ||
+    evidence.decision?.gpuMemory !== "blocked" ||
+    evidence.decision?.renderFirstFrame !== "blocked" ||
+    evidence.decision?.browserPackaging !== "blocked" ||
+    evidence.decision?.fixtureBundling !== "blocked" ||
+    evidence.decision?.draftProfileAdmission !== "blocked" ||
+    evidence.decision?.productionClaims !== false ||
+    !Array.isArray(evidence.limits) ||
+    evidence.limits.length < 5
+  ) {
+    throw new Error("public Browser evidence overclaims support");
+  }
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -543,6 +836,8 @@ export function validateIfcEngineCompatibility(
   browserLifecycleEvidence,
   browserCancellationEvidence,
   browserPerformanceEvidence,
+  publicNodePerformanceEvidence,
+  publicBrowserPerformanceEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -633,6 +928,9 @@ export function validateIfcEngineCompatibility(
     gates.browserLocalFileLifecycle !== true ||
     gates.browserCheckpointCancellation !== true ||
     gates.browserBoundedPerformance !== true ||
+    gates.publicFixtureProvenance !== true ||
+    gates.representativeNodeCpuRss !== true ||
+    gates.browserRepresentativeParsing !== true ||
     gates.largeModelPerformance !== false ||
     gates.cancellation !== false ||
     gates.corruptInputCleanup !== false ||
@@ -649,6 +947,14 @@ export function validateIfcEngineCompatibility(
   validateBrowserBoundedPerformance(
     manifest,
     browserPerformanceEvidence,
+  );
+  validatePublicNodePerformance(
+    manifest,
+    publicNodePerformanceEvidence,
+  );
+  validatePublicBrowserPerformance(
+    manifest,
+    publicBrowserPerformanceEvidence,
   );
 
   if (
@@ -801,6 +1107,24 @@ async function main() {
       "utf8",
     ),
   );
+  const publicNodePerformanceEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.publicPerformanceFixture.nodeEvidence,
+      ),
+      "utf8",
+    ),
+  );
+  const publicBrowserPerformanceEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.publicPerformanceFixture.browserEvidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -808,6 +1132,8 @@ async function main() {
     browserLifecycleEvidence,
     browserCancellationEvidence,
     browserPerformanceEvidence,
+    publicNodePerformanceEvidence,
+    publicBrowserPerformanceEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

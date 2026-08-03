@@ -38,6 +38,18 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const publicNodePerformanceEvidence = JSON.parse(
+    await readFile(
+      manifest.publicPerformanceFixture.nodeEvidence,
+      "utf8",
+    ),
+  );
+  const publicBrowserPerformanceEvidence = JSON.parse(
+    await readFile(
+      manifest.publicPerformanceFixture.browserEvidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -45,26 +57,28 @@ async function fixtures() {
     browserLifecycleEvidence,
     browserCancellationEvidence,
     browserPerformanceEvidence,
+    publicNodePerformanceEvidence,
+    publicBrowserPerformanceEvidence,
   };
 }
 
-test("IFC engine compatibility remains experimental and held", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
-  const result = validateIfcEngineCompatibility(
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
+function validateFixtures(value) {
+  return validateIfcEngineCompatibility(
+    value.manifest,
+    value.evidence,
+    value.browserWorkerEvidence,
+    value.browserLifecycleEvidence,
+    value.browserCancellationEvidence,
+    value.browserPerformanceEvidence,
+    value.publicNodePerformanceEvidence,
+    value.publicBrowserPerformanceEvidence,
   );
+}
+
+test("IFC engine compatibility remains experimental and held", async () => {
+  const fixtureSet = await fixtures();
+  const { manifest } = fixtureSet;
+  const result = validateFixtures(fixtureSet);
   assert.equal(result.status, "experimental");
   assert.equal(result.candidates, 2);
   assert.equal(result.fixtures, 2);
@@ -73,170 +87,92 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.browserLocalFileLifecycle, true);
   assert.equal(manifest.gates.browserCheckpointCancellation, true);
   assert.equal(manifest.gates.browserBoundedPerformance, true);
+  assert.equal(manifest.gates.publicFixtureProvenance, true);
+  assert.equal(manifest.gates.representativeNodeCpuRss, true);
+  assert.equal(manifest.gates.browserRepresentativeParsing, true);
   assert.equal(manifest.gates.largeModelPerformance, false);
   assert.equal(manifest.gates.cancellation, false);
   assert.equal(manifest.gates.browserPackaging, false);
 });
 
 test("IFC engine compatibility rejects an unmeasured pin", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { manifest } = fixtureSet;
   manifest.candidates["web-ifc"].version = "99.0.0";
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /pin changed without new evidence/u,
   );
 });
 
 test("IFC engine compatibility rejects production claims", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { manifest } = fixtureSet;
   manifest.decision.productionClaims = true;
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /must fail closed/u,
   );
 });
 
 test("Browser Worker smoke cannot promote Browser packaging", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { browserWorkerEvidence } = fixtureSet;
   browserWorkerEvidence.decision.browserPackaging = "passed";
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /incomplete or overclaims/u,
   );
 });
 
 test("Browser local-file lifecycle cannot promote engine cancellation", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { browserLifecycleEvidence } = fixtureSet;
   browserLifecycleEvidence.decision.engineCancellation = "passed";
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /incomplete or overclaims/u,
   );
 });
 
 test("Browser checkpoint cancellation cannot promote in-call cancellation", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { browserCancellationEvidence } = fixtureSet;
   browserCancellationEvidence.decision.engineInCallCancellation = "passed";
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /overclaims engine support/u,
   );
 });
 
 test("Browser bounded performance cannot promote large-model support", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { browserPerformanceEvidence } = fixtureSet;
   browserPerformanceEvidence.decision.largeModelPerformance = "passed";
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /overclaims production support/u,
   );
 });
 
 test("Browser bounded performance evidence fails above its budget", async () => {
-  const {
-    manifest,
-    evidence,
-    browserWorkerEvidence,
-    browserLifecycleEvidence,
-    browserCancellationEvidence,
-    browserPerformanceEvidence,
-  } = await fixtures();
+  const fixtureSet = await fixtures();
+  const { browserPerformanceEvidence } = fixtureSet;
   browserPerformanceEvidence.observation.resources
     .wasmHeapCapacityBytes.peakObserved =
       browserPerformanceEvidence.budget.maxWasmHeapCapacityBytes + 1;
   assert.throws(
-    () => validateIfcEngineCompatibility(
-      manifest,
-      evidence,
-      browserWorkerEvidence,
-      browserLifecycleEvidence,
-      browserCancellationEvidence,
-      browserPerformanceEvidence,
-    ),
+    () => validateFixtures(fixtureSet),
     /WASM heap observation is invalid/u,
+  );
+});
+
+test("public Browser parse evidence cannot promote rendered first-frame", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.publicBrowserPerformanceEvidence
+    .decision.renderFirstFrame = "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /public Browser evidence overclaims support/u,
   );
 });

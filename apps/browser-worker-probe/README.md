@@ -10,10 +10,10 @@ npm run probe:browser-worker
 
 브라우저에서 `http://127.0.0.1:4173`을 열고 **Open local IFC**,
 **Run synthetic IFC probe**, **Run cancellation probe** 또는
-**Run performance probe**를 실행합니다. local source는 64 MiB를 넘으면
-읽기 전에 거부합니다. 파일명과 path는 Worker request/result에 넣지 않고,
-선택 직후 input의 파일명도 지웁니다. 외부 upload, 계정 또는 telemetry를
-사용하지 않습니다.
+**Run performance probe**, **Run public representative probe**를
+실행합니다. local source는 64 MiB를 넘으면 읽기 전에 거부합니다. 파일명과
+path는 Worker request/result에 넣지 않고, 선택 직후 input의 파일명도
+지웁니다. 외부 upload, 계정 또는 telemetry를 사용하지 않습니다.
 
 이 probe가 확인하는 범위:
 
@@ -28,6 +28,8 @@ npm run probe:browser-worker
 - 취소 요청 뒤 500ms grace와 응답하지 않는 Worker의 강제 종료 fallback
 - generated 1,024-Wall/12,288-triangle fixture의 시간 budget과 WASM linear
   memory capacity 관찰
+- CC BY 4.0 public Schependomlaan IFC2X3 fixture를 pinned digest로 내려받아
+  46,766,968 bytes, 3,569 geometry products와 261,424 triangles를 검사
 - `pagehide` disposal과 dispose 이후 재사용 거부
 
 64 MiB는 source admission 한도이지 전체 WASM/GPU memory budget이 아닙니다.
@@ -36,8 +38,13 @@ performance probe는 388,316-byte generated scale step을 15초 timeout,
 heap 값은 할당된 linear-memory capacity이지 live bytes나 process peak
 RSS가 아닙니다.
 
+public representative probe는 `npm run fetch:ifc:public`과 같은
+manifest·digest Gate를 거친 ignored cache만 same-origin route로 제공합니다.
+upstream archive나 추출 IFC는 Git 또는 배포 bundle에 포함하지 않습니다.
+30초 timeout, 25초 Worker total과 512 MiB WASM heap capacity를 적용합니다.
+
 checkpoint 취소는 유효한 작은 IFC가 열린 뒤 adapter가 제어권을 돌려준
 지점의 cooperative cleanup만 증명합니다. 실행 중인 synchronous `web-ifc`
 호출을 선점하는 cancellation, 손상 입력 cleanup, production Browser
-packaging, 대표 대형 모델의 CPU/GPU/first-frame budget과 VS Code lifecycle은
-계속 검증 대상입니다.
+packaging, GPU upload·render first-frame과 VS Code lifecycle은 계속 검증
+대상입니다.

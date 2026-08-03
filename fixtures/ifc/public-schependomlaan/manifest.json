@@ -1,0 +1,88 @@
+{
+  "schema": "bim-explorer-public-ifc-fixture-manifest/1",
+  "fixtureId": "public-schependomlaan-complete-ifc2x3",
+  "kind": "third-party-public-performance",
+  "provenance": {
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "sourceUrl": "https://raw.githubusercontent.com/buildingsmart-community/Community-Sample-Test-Files/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Schependomlaan/Coordination%20model%20and%20subcontractors%20models/BIMsight%20Projectdata1/ROOT-Compleet.ifczip",
+    "sourcePage": "https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Schependomlaan/Coordination%20model%20and%20subcontractors%20models/BIMsight%20Projectdata1/ROOT-Compleet.ifczip",
+    "licensePage": "https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/LICENSE",
+    "license": "CC-BY-4.0",
+    "attribution": "(C) original authors",
+    "verifiedAt": "2026-08-03"
+  },
+  "tracking": {
+    "artifactCommitted": false,
+    "downloadOnDemand": true,
+    "archivePersisted": false,
+    "cacheRoot": ".ifc-cache/public-ifc"
+  },
+  "redistribution": {
+    "thirdPartyContent": true,
+    "customerContent": false,
+    "rightsVerified": true,
+    "bundlingApproved": false,
+    "noticeRequired": true
+  },
+  "archive": {
+    "format": "ifczip",
+    "entries": 1,
+    "byteLength": 8873221,
+    "sha256": "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb",
+    "maxDownloadBytes": 16777216
+  },
+  "entry": {
+    "name": "IFC-gebouw.ifc",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "maxExtractedBytes": 67108864
+  },
+  "ifc": {
+    "schema": "IFC2X3",
+    "profileAdmission": false,
+    "scenario": "representative read-only parse and geometry performance"
+  },
+  "expected": {
+    "projects": 1,
+    "walls": 652,
+    "productsByType": 3708,
+    "geometryProducts": 3569,
+    "geometries": 6105,
+    "triangles": 261424
+  },
+  "nodeBudget": {
+    "timeoutMs": 30000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 10000,
+    "maxInspectionMs": 15000,
+    "maxTotalMs": 25000,
+    "maxWallClockMs": 30000,
+    "maxWasmHeapCapacityBytes": 536870912,
+    "maxProcessRssBytes": 805306368
+  },
+  "browserBudget": {
+    "timeoutMs": 30000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 10000,
+    "maxInspectionMs": 15000,
+    "maxTotalMs": 25000,
+    "maxWallClockMs": 30000,
+    "maxWasmHeapCapacityBytes": 536870912
+  },
+  "qualificationUse": [
+    "public-fixture-provenance",
+    "bounded-download-and-extraction",
+    "representative-node-cpu-rss",
+    "representative-browser-worker-parse",
+    "worker-cleanup"
+  ],
+  "notQualified": [
+    "draft-ifc4-profile-conformance",
+    "gpu-memory",
+    "render-first-frame",
+    "production-browser-packaging",
+    "fixture-bundling",
+    "engine-selection"
+  ]
+}

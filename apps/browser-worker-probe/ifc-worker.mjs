@@ -6,6 +6,7 @@ const PROGRESS_SCHEMA = "bim-explorer-browser-worker-progress/0.1";
 const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
 const SOURCE_KINDS = new Set([
   "local-file",
+  "public-fixture",
   "synthetic",
 ]);
 const CANCELLED = Symbol("cancelled");

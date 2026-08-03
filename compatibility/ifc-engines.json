@@ -29,7 +29,7 @@
     ],
     "held": [
       "IFC2X3 and IFC4.3",
-      "large-model performance",
+      "representative rendered first-frame and GPU performance",
       "cancellation and corrupt-input cleanup",
       "write and round-trip"
     ]
@@ -56,6 +56,20 @@
     "artifactCommitted": false,
     "thirdPartyContent": false,
     "redistributionReleaseApproved": false
+  },
+  "publicPerformanceFixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "status": "experimental",
+    "scope": "representative-node-and-browser-parse-performance",
+    "manifest": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "nodeEvidence": "compatibility/evidence/web-ifc-public-representative-node-performance-2026-08-03.json",
+    "browserEvidence": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
+    "license": "CC-BY-4.0",
+    "rightsVerified": true,
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundlingApproved": false,
+    "profileAdmission": false
   },
   "candidates": {
     "web-ifc": {
@@ -94,6 +108,7 @@
       "lifecycleEvidence": "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
       "cancellationEvidence": "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
       "performanceEvidence": "compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json",
+      "publicPerformanceEvidence": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
       "productionPackaging": false
     }
   },
@@ -198,6 +213,9 @@
     "browserLocalFileLifecycle": true,
     "browserCheckpointCancellation": true,
     "browserBoundedPerformance": true,
+    "publicFixtureProvenance": true,
+    "representativeNodeCpuRss": true,
+    "browserRepresentativeParsing": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -211,13 +229,13 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "web-ifc-browser-redistributable-large-performance",
+    "nextPrototype": "generic-3d-render-first-frame-and-gpu-budget",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker, bounded local-file lifecycle, model-opened checkpoint cancellation and 1,024-wall bounded Browser performance prototypes. Representative large-model, production Browser packaging, in-call cancellation, negative cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes local Browser Worker lifecycle/cancellation, a generated 1,024-wall scale step, and pinned CC BY 4.0 representative IFC Node CPU/RSS plus Browser parse/geometry budgets. Rendered first-frame/GPU, production packaging, in-call cancellation, negative cleanup and product redistribution review are still missing."
   },
   "blockers": [
-    "No representative redistributable large-model fixture or production resource budget; the current Browser budget covers only a 388KB generated scale step",
+    "Representative public parse/geometry budgets pass, but no GPU upload or rendered first-frame resource budget exists",
     "No synchronous in-call cancellation or corrupt-input cleanup conformance",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",

@@ -7,6 +7,9 @@ import {
   syntheticIfc,
   syntheticPerformanceIfc,
 } from "./generate-synthetic-ifc.mjs";
+import {
+  ensurePublicIfcFixture,
+} from "./public-ifc-fixture.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const APP = path.join(ROOT, "apps", "browser-worker-probe");
@@ -71,7 +74,12 @@ function headers(type, byteLength) {
   };
 }
 
-async function responseFor(pathname) {
+async function defaultPublicFixtureProvider() {
+  const fixture = await ensurePublicIfcFixture();
+  return await readFile(fixture.input);
+}
+
+async function responseFor(pathname, publicFixtureProvider) {
   if (pathname === "/fixture/synthetic-small.ifc") {
     return {
       body: Buffer.from(syntheticIfc(), "utf8"),
@@ -81,6 +89,20 @@ async function responseFor(pathname) {
   if (pathname === "/fixture/synthetic-performance.ifc") {
     return {
       body: Buffer.from(syntheticPerformanceIfc(), "utf8"),
+      type: "model/vnd.ifc",
+    };
+  }
+  if (pathname === "/fixture/public-representative.ifc") {
+    const body = await publicFixtureProvider();
+    if (
+      !Buffer.isBuffer(body) ||
+      body.byteLength <= 0 ||
+      body.byteLength > 64 * 1024 * 1024
+    ) {
+      throw new Error("public IFC provider returned an invalid body");
+    }
+    return {
+      body,
       type: "model/vnd.ifc",
     };
   }
@@ -94,7 +116,12 @@ async function responseFor(pathname) {
   };
 }
 
-export function createBrowserWorkerProbeServer() {
+export function createBrowserWorkerProbeServer({
+  publicFixtureProvider = defaultPublicFixtureProvider,
+} = {}) {
+  if (typeof publicFixtureProvider !== "function") {
+    throw new TypeError("publicFixtureProvider must be a function");
+  }
   return createServer(async (request, response) => {
     if (!["GET", "HEAD"].includes(request.method ?? "")) {
       response.writeHead(405, {
@@ -118,7 +145,10 @@ export function createBrowserWorkerProbeServer() {
       return;
     }
     try {
-      const representation = await responseFor(pathname);
+      const representation = await responseFor(
+        pathname,
+        publicFixtureProvider,
+      );
       if (representation === null) {
         response.writeHead(404, {
           "Cache-Control": "no-store",
