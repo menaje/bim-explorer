@@ -146,7 +146,7 @@
     "affectedBoundsAtomicDelta": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
-    "cameraInteraction": false,
+    "cameraInteraction": true,
     "browserVscodeConformance": false,
     "viewerCoreConformance": false
   },
@@ -159,11 +159,11 @@
     "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json",
     "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json",
     "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json",
-    "browserAtomicDelta": "compatibility/evidence/bim-renderer-3d-public-browser-atomic-delta-2026-08-04.json"
+    "browserAtomicDelta": "compatibility/evidence/bim-renderer-3d-public-browser-atomic-delta-2026-08-04.json",
+    "browserCameraInput": "compatibility/evidence/bim-renderer-3d-public-browser-camera-input-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",
-    "pointer and gesture input controls are not implemented",
     "Browser and VS Code renderer conformance is not qualified",
     "durable Viewer Core package and 3D conformance remain unresolved"
   ],

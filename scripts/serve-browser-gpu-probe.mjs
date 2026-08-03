@@ -66,6 +66,10 @@ const STATIC_ROUTES = new Map([
     file: path.join(RENDERER, "camera.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/camera-controls.mjs", {
+    file: path.join(RENDERER, "camera-controls.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
   ["/measurement.mjs", {
     file: path.join(RENDERER, "measurement.mjs"),
     type: "text/javascript; charset=utf-8",

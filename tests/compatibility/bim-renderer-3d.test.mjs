@@ -48,6 +48,10 @@ async function fixtures() {
       manifest.evidence.browserAtomicDelta,
       "utf8",
     )),
+    browserCameraInput: JSON.parse(await readFile(
+      manifest.evidence.browserCameraInput,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -75,8 +79,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserProgressiveActiveBytes, 9_674_488);
   assert.equal(result.browserDeltaRedrawPixels, 8_888);
-  assert.equal(result.passedGates, 17);
-  assert.equal(result.heldGates, 4);
+  assert.equal(result.browserCameraInputFrames, 3);
+  assert.equal(result.passedGates, 18);
+  assert.equal(result.heldGates, 3);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
@@ -172,6 +177,18 @@ test("Browser delta evidence pins partial atomic redraw", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /delta redraw is invalid/u,
+  );
+});
+
+test("Browser camera-input evidence pins serialized GPU frames", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserCameraInput.representativeReport
+    .input.serializedUpdates += 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /camera-input frames are invalid/u,
   );
 });
 

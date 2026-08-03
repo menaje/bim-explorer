@@ -1,4 +1,5 @@
 import {
+  attachCameraControls3d,
   createBounded3dRenderer,
   createFitCamera3d,
   createWebGl2Backend,
@@ -177,9 +178,13 @@ async function run() {
   let progressiveBackend;
   let progressiveRenderer;
   let progressiveSession;
+  let interactionBackend;
+  let interactionRenderer;
+  let interactionSession;
   let releaseReceipt;
   let precisionReleaseReceipt;
   let progressiveReleaseReceipt;
+  let interactionReleaseReceipt;
   try {
     const input = await json("/probe-input.json");
     if (
@@ -553,6 +558,99 @@ async function run() {
         backendState: progressiveBackend.state,
       },
     };
+    interactionSession = new BrowserGeometryRangeSession(
+      input.snapshot,
+    );
+    interactionBackend = createWebGl2Backend({
+      canvas: elements.canvas,
+      height: 540,
+      width: 960,
+    });
+    interactionRenderer = createBounded3dRenderer({
+      backend: interactionBackend,
+    });
+    const interactionMount =
+      await interactionRenderer.mount({
+        session: interactionSession,
+        snapshot: input.snapshot,
+      });
+    const interactionViews = [];
+    const controls = attachCameraControls3d({
+      camera: interactionMount.backend.camera,
+      element: elements.canvas,
+      height: 540,
+      width: 960,
+      async onCamera(camera, interactionType) {
+        interactionViews.push({
+          interaction: interactionType,
+          receipt: await interactionRenderer.renderView({
+            camera,
+          }),
+        });
+      },
+    });
+    elements.canvas.dispatchEvent(new PointerEvent(
+      "pointerdown",
+      {
+        bubbles: true,
+        button: 0,
+        clientX: 420,
+        clientY: 280,
+        pointerId: 71,
+      },
+    ));
+    elements.canvas.dispatchEvent(new PointerEvent(
+      "pointermove",
+      {
+        bubbles: true,
+        buttons: 1,
+        clientX: 520,
+        clientY: 220,
+        pointerId: 71,
+      },
+    ));
+    elements.canvas.dispatchEvent(new PointerEvent(
+      "pointerup",
+      {
+        bubbles: true,
+        button: 0,
+        clientX: 520,
+        clientY: 220,
+        pointerId: 71,
+      },
+    ));
+    elements.canvas.dispatchEvent(new WheelEvent(
+      "wheel",
+      {
+        bubbles: true,
+        cancelable: true,
+        deltaY: -120,
+      },
+    ));
+    await controls.whenIdle();
+    const controlsState = controls.state;
+    const controlsDisposed = controls.dispose();
+    const backendStateAfterInteraction =
+      interactionBackend.state;
+    interactionReleaseReceipt =
+      await interactionRenderer.unmount();
+    const interactionRendererDisposed =
+      await interactionRenderer.dispose();
+    const interactionSessionDisposed =
+      await interactionSession.dispose();
+    const interaction = {
+      mount: interactionMount,
+      views: interactionViews,
+      controlsState,
+      controlsDisposed,
+      backendStateAfterInteraction,
+      cleanup: {
+        releaseReceipt: interactionReleaseReceipt,
+        rendererDisposed: interactionRendererDisposed,
+        sessionDisposed: interactionSessionDisposed,
+        backendState: interactionBackend.state,
+      },
+    };
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -615,6 +713,7 @@ async function run() {
       },
       precision,
       progressive,
+      interaction,
       performance: {
         mountMs,
         viewMs,
@@ -632,6 +731,8 @@ async function run() {
         precisionSessionDisposed,
         progressiveRendererDisposed,
         progressiveSessionDisposed,
+        interactionRendererDisposed,
+        interactionSessionDisposed,
         releasedBytes: releaseReceipt.releasedBytes,
         backendState: backend.state,
       },
@@ -853,6 +954,30 @@ async function run() {
       progressiveBackend.state.activeBytes !== 0 ||
       progressiveBackend.state.disposed !== true ||
       progressiveSession.state.disposed !== true
+      ||
+      interactionViews.length !== 2 ||
+      interactionViews[0].interaction.kind !== "orbit" ||
+      interactionViews[1].interaction.kind !== "zoom" ||
+      interactionViews[0].receipt.camera.yaw ===
+        interactionMount.backend.camera.yaw ||
+      interactionViews[1].receipt.camera.distance >=
+        interactionViews[0].receipt.camera.distance ||
+      interactionViews.some((view) =>
+        view.receipt.backend.nonBackgroundPixels <= 0 ||
+        view.receipt.backend.glError !== 0) ||
+      controlsState.events !== 4 ||
+      controlsState.orbitUpdates !== 1 ||
+      controlsState.panUpdates !== 0 ||
+      controlsState.zoomUpdates !== 1 ||
+      controlsDisposed !== true ||
+      backendStateAfterInteraction.frames !== 3 ||
+      backendStateAfterInteraction.activeBytes !==
+        interactionMount.backend.uploadedBytes ||
+      interactionReleaseReceipt.releasedBytes !==
+        interactionMount.backend.uploadedBytes ||
+      interactionBackend.state.activeBytes !== 0 ||
+      interactionBackend.state.disposed !== true ||
+      interactionSession.state.disposed !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed: " +
@@ -884,6 +1009,8 @@ async function run() {
     let precisionSessionDisposed = false;
     let progressiveRendererDisposed = false;
     let progressiveSessionDisposed = false;
+    let interactionRendererDisposed = false;
+    let interactionSessionDisposed = false;
     try {
       rendererDisposed = renderer === undefined
         ? false
@@ -938,6 +1065,22 @@ async function run() {
     } catch {
       progressiveSessionDisposed = false;
     }
+    try {
+      interactionRendererDisposed =
+        interactionRenderer === undefined
+          ? false
+          : await interactionRenderer.dispose();
+    } catch {
+      interactionRendererDisposed = false;
+    }
+    try {
+      interactionSessionDisposed =
+        interactionSession === undefined
+          ? false
+          : await interactionSession.dispose();
+    } catch {
+      interactionSessionDisposed = false;
+    }
     showFailure(error, {
       rendererDisposed,
       sessionDisposed,
@@ -946,16 +1089,22 @@ async function run() {
       precisionSessionDisposed,
       progressiveRendererDisposed,
       progressiveSessionDisposed,
+      interactionRendererDisposed,
+      interactionSessionDisposed,
       releaseReceipt: releaseReceipt ?? null,
       precisionReleaseReceipt:
         precisionReleaseReceipt ?? null,
       progressiveReleaseReceipt:
         progressiveReleaseReceipt ?? null,
+      interactionReleaseReceipt:
+        interactionReleaseReceipt ?? null,
       backendState: backend?.state ?? null,
       precisionBackendState:
         precisionBackend?.state ?? null,
       progressiveBackendState:
         progressiveBackend?.state ?? null,
+      interactionBackendState:
+        interactionBackend?.state ?? null,
     });
   }
 }

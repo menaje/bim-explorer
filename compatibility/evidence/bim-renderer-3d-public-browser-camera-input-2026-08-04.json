@@ -1,0 +1,109 @@
+{
+  "schema": "bim-explorer-browser-camera-input-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-camera-input",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumFrameMs": 1000,
+    "maximumUploadedBytes": 8388608,
+    "frameWidth": 960,
+    "frameHeight": 540
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-camera-input-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "camera": "bim-explorer-camera-3d/0.1",
+      "viewReceipt": "bim-explorer-bim-renderer-3d-view-receipt/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false,
+      "uploadedBytes": 4399252
+    },
+    "input": {
+      "domPointerEvents": 3,
+      "domWheelEvents": 1,
+      "serializedUpdates": 2,
+      "orbitUpdates": 1,
+      "panUpdates": 0,
+      "zoomUpdates": 1,
+      "controlsDisposed": true
+    },
+    "initialCamera": {
+      "yaw": 0.7853981633974492,
+      "pitch": 0.5235987755982988,
+      "distance": 52.77613547014275
+    },
+    "orbitFrame": {
+      "viewRevision": 1,
+      "yaw": 0.4581489286485123,
+      "pitch": 0.8726646259971647,
+      "distance": 52.77613547014275,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 59569,
+      "frameMs": 13.100000023841858,
+      "glError": 0
+    },
+    "zoomFrame": {
+      "viewRevision": 2,
+      "yaw": 0.4581489286485123,
+      "pitch": 0.8726646259971647,
+      "distance": 46.80823311942287,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 75232,
+      "frameMs": 15.600000023841858,
+      "glError": 0
+    },
+    "resourceState": {
+      "uploadedBytesBefore": 4399252,
+      "uploadedBytesAfter": 4399252,
+      "frames": 3
+    },
+    "cleanup": {
+      "releasedBytes": 4399252,
+      "activeBytes": 0,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "domPointerEventPath": true,
+    "domWheelEventPath": true,
+    "immutableCameraUpdates": true,
+    "serializedGpuFrames": true,
+    "orbitApplied": true,
+    "zoomApplied": true,
+    "gpuAllocationReused": true,
+    "controlsDetached": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "cameraInteraction": "passed",
+    "touchGestureQualification": "blocked",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}

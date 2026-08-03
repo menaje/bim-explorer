@@ -2285,6 +2285,12 @@ export {
 } from "./camera.mjs";
 
 export {
+  CameraInteraction3d,
+  attachCameraControls3d,
+  createCameraInteraction3d,
+} from "./camera-controls.mjs";
+
+export {
   BIM_MEASUREMENT_3D_SCHEMA,
   createMeasurement3d,
   measureAngle3d,

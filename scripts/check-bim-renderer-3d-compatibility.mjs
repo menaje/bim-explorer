@@ -21,10 +21,10 @@ const TRUE_GATES = [
   "largeCoordinatePrecision",
   "progressiveRangeCache",
   "affectedBoundsAtomicDelta",
+  "cameraInteraction",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
-  "cameraInteraction",
   "browserVscodeConformance",
   "viewerCoreConformance",
 ];
@@ -141,6 +141,19 @@ const DELTA_CONFORMANCE_ASSERTIONS = [
   "unsupportedMutationRequiresRemount",
   "unsupportedMutationHasNoBackendCall",
   "gpuAllocationReused",
+  "pathFreeReport",
+];
+const CAMERA_INPUT_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "domPointerEventPath",
+  "domWheelEventPath",
+  "immutableCameraUpdates",
+  "serializedGpuFrames",
+  "orbitApplied",
+  "zoomApplied",
+  "gpuAllocationReused",
+  "controlsDetached",
+  "deterministicDispose",
   "pathFreeReport",
 ];
 const RENDERER_LIMITS = Object.freeze({
@@ -1902,6 +1915,143 @@ function validateBrowserDeltaEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserCameraInputEvidence(manifest, evidence) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser camera-input fixture",
+  );
+  const budget = plainRecord(
+    evidence.budget,
+    "Browser camera-input budget",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser camera-input representativeReport",
+  );
+  const revisionId =
+    `source-snapshot:sha256:${manifest.fixture.sha256}`;
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-camera-input-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !== "experimental-browser-camera-input" ||
+    fixture.id !== manifest.fixture.id ||
+    fixture.schema !== manifest.fixture.schema ||
+    fixture.profile !== manifest.fixture.profile ||
+    fixture.byteLength !== manifest.fixture.byteLength ||
+    fixture.sha256 !== manifest.fixture.sha256 ||
+    fixture.artifactCommitted !== false ||
+    fixture.profileAdmission !== false ||
+    budget.maximumFrameMs !== 1_000 ||
+    budget.maximumUploadedBytes !== 8_388_608 ||
+    budget.frameWidth !== 960 ||
+    budget.frameHeight !== 540 ||
+    report.schema !==
+      "bim-explorer-browser-camera-input-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !==
+      `sha256:${manifest.fixture.sha256}` ||
+    report.source?.revisionId !== revisionId ||
+    report.renderer?.contract !== manifest.contract.renderer ||
+    report.renderer?.camera !== manifest.contract.camera ||
+    report.renderer?.viewReceipt !==
+      manifest.contract.viewReceipt ||
+    report.renderer?.backend !== manifest.browserBackend.id ||
+    report.renderer?.gpuApi !== true ||
+    report.renderer?.physicalGpuClaimed !== false ||
+    report.renderer?.uploadedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    report.renderer?.uploadedBytes > budget.maximumUploadedBytes
+  ) {
+    throw new Error(
+      "Browser camera-input evidence identity is invalid",
+    );
+  }
+  if (
+    report.input?.domPointerEvents !== 3 ||
+    report.input?.domWheelEvents !== 1 ||
+    report.input?.serializedUpdates !== 2 ||
+    report.input?.orbitUpdates !== 1 ||
+    report.input?.panUpdates !== 0 ||
+    report.input?.zoomUpdates !== 1 ||
+    report.input?.controlsDisposed !== true ||
+    report.orbitFrame?.viewRevision !== 1 ||
+    report.orbitFrame?.yaw === report.initialCamera?.yaw ||
+    report.orbitFrame?.pitch === report.initialCamera?.pitch ||
+    report.orbitFrame?.distance !==
+      report.initialCamera?.distance ||
+    report.orbitFrame?.drawCalls !==
+      manifest.expected.metrics.drawCalls ||
+    report.orbitFrame?.nonBackgroundPixels <= 0 ||
+    report.orbitFrame?.glError !== 0 ||
+    report.zoomFrame?.viewRevision !== 2 ||
+    report.zoomFrame?.yaw !== report.orbitFrame?.yaw ||
+    report.zoomFrame?.pitch !== report.orbitFrame?.pitch ||
+    report.zoomFrame?.distance >= report.orbitFrame?.distance ||
+    report.zoomFrame?.drawCalls !==
+      manifest.expected.metrics.drawCalls ||
+    report.zoomFrame?.nonBackgroundPixels <= 0 ||
+    report.zoomFrame?.glError !== 0
+  ) {
+    throw new Error("Browser camera-input frames are invalid");
+  }
+  boundedMeasurement(
+    report.orbitFrame.frameMs,
+    budget.maximumFrameMs,
+    "Browser camera orbit frame",
+  );
+  boundedMeasurement(
+    report.zoomFrame.frameMs,
+    budget.maximumFrameMs,
+    "Browser camera zoom frame",
+  );
+  if (
+    report.resourceState?.uploadedBytesBefore !==
+      manifest.expected.browserUploadedBytes ||
+    report.resourceState?.uploadedBytesAfter !==
+      report.resourceState.uploadedBytesBefore ||
+    report.resourceState?.frames !== 3 ||
+    report.cleanup?.releasedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    report.cleanup?.activeBytes !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.sessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error("Browser camera-input cleanup is invalid");
+  }
+  for (
+    const assertion of CAMERA_INPUT_CONFORMANCE_ASSERTIONS
+  ) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser camera-input ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      CAMERA_INPUT_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.cameraInteraction !== "passed" ||
+    evidence.decision?.touchGestureQualification !== "blocked" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser camera-input decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -1943,6 +2093,10 @@ export function validateBimRenderer3dCompatibility(
   const browserDeltaEvidence = plainRecord(
     evidenceBundle.browserAtomicDelta,
     "Browser atomic-delta BIM renderer evidence",
+  );
+  const browserCameraInputEvidence = plainRecord(
+    evidenceBundle.browserCameraInput,
+    "Browser camera-input BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -2021,7 +2175,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "atomic-delta-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 9 ||
+    manifest.evidence?.browserCameraInput !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "camera-input-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 10 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2282,6 +2440,11 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserDeltaEvidence,
     );
+  const browserCameraInputReport =
+    validateBrowserCameraInputEvidence(
+      manifest,
+      browserCameraInputEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -2311,6 +2474,8 @@ export function validateBimRenderer3dCompatibility(
       browserProgressiveReport.secondLoad.activeBytes,
     browserDeltaRedrawPixels:
       browserDeltaReport.redraw.pixels,
+    browserCameraInputFrames:
+      browserCameraInputReport.resourceState.frames,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -2371,6 +2536,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserAtomicDelta,
+      ),
+      "utf8",
+    )),
+    browserCameraInput: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserCameraInput,
       ),
       "utf8",
     )),
