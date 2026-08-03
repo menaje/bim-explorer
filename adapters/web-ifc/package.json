@@ -5,10 +5,15 @@
   "description": "Isolated web-ifc qualification adapter",
   "license": "UNLICENSED",
   "type": "module",
+  "exports": {
+    ".": "./src/create-source-artifact.mjs",
+    "./inspect": "./src/inspect.mjs"
+  },
   "scripts": {
     "inspect": "node src/inspect.mjs"
   },
   "dependencies": {
+    "@bim-explorer/bim-model-source": "0.0.0",
     "@bim-explorer/ifc-engine-contract": "0.1.0",
     "web-ifc": "0.0.77"
   },

@@ -38,3 +38,9 @@ disposal을 검사합니다. 실제 Chromium ESM/WASM, file chooser와 checkpoin
 fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engine 호출의
 선점, 손상 입력 cleanup과 production Browser packaging Gate는 계속
 분리합니다.
+
+`bim-model-source` test는 generated mapped IFC에서 raw source fingerprint,
+spatial tree와 product semantics, shared geometry payload, Express
+ID/GlobalId/Render/Pick lookup, bounded range read와 stale·malformed artifact
+거부를 검사합니다. 공용 Viewer Core conformance나 representative model
+first-frame test는 아닙니다.

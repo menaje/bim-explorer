@@ -26,3 +26,11 @@ npm run qualify:ifc:public
 
 Dependency pin과 upstream license는
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)에 기록합니다.
+
+`createWebIfcSourceArtifact`는 raw bytes를 내부
+`bim-explorer-bim-source-artifact/0.1`로 투영합니다. geometry payload는
+shared definition을 한 번 저장하고 occurrence transform을 metadata에
+분리합니다. 호출자는 이 adapter를 isolated process 또는 Worker 경계에
+두어야 합니다. 현재 source-artifact evidence는 generated mapped IFC의
+Node synthetic vertical slice에 한정하며 production Browser packaging을
+의미하지 않습니다.

@@ -97,6 +97,15 @@ snapshot은 다음 논리 계층을 가집니다.
 snapshot은 Spatial Revision이 아닙니다. source bytes가 달라지면 새 snapshot과
 identity reconciliation 결과가 필요합니다.
 
+현재 내부 draft
+[`bim-source-artifact/0.1`](../specs/bim-source-artifact-v0.1.md)은 generated
+mapped IFC에서 raw source SHA-256, 7-node spatial/product tree, 두 Wall의
+property/type/containment와 한 shared geometry payload를 같은 immutable
+snapshot에 묶습니다. range digest, 최대 단일 read와 session 누적 budget,
+stale context, 중복 identity와 cleanup을 강제합니다. public 대표 모델의
+source-artifact memory/first-frame, multi-range deferred loading과 Viewer
+Core conformance는 아직 보류합니다.
+
 ## Viewer Core와 3D presentation
 
 공용 Viewer Core가 제공해야 하는 최소 계약은 다음입니다.

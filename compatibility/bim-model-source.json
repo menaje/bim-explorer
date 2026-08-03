@@ -1,0 +1,52 @@
+{
+  "schema": "bim-explorer-bim-model-source-compatibility/1",
+  "asOf": "2026-08-03",
+  "status": "experimental",
+  "contract": {
+    "artifactSchema": "bim-explorer-bim-source-artifact/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
+  },
+  "adapter": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "node-wasm-source-artifact",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "synthetic-mapped-ifc4",
+    "byteLength": 4028,
+    "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "artifactCommitted": false,
+    "thirdPartyContent": false
+  },
+  "expected": {
+    "cacheFingerprint": "sha256:54f44d48b19eb1df9cbaf02d83469570878a757b5fd74f0b1fd33b91e27cfb70",
+    "geometryRangeSha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969"
+  },
+  "gates": {
+    "rawSourceFingerprint": true,
+    "deterministicCacheFingerprint": true,
+    "treeEntityRenderPickIdentity": true,
+    "boundedImmutableGeometryRange": true,
+    "staleAndMalformedRejection": true,
+    "adapterAndSessionCleanup": true,
+    "publicRepresentativeSourceArtifact": false,
+    "multiRangeDeferredLoading": false,
+    "viewerCoreConformance": false,
+    "browserWorkerPackaging": false
+  },
+  "evidence": "compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-03.json",
+  "blockers": [
+    "public representative IFC source-artifact memory and first-frame evidence is not recorded",
+    "multi-range first-frame and deferred loading is not implemented",
+    "durable Viewer Core package and BIM RenderSource conformance remain unresolved",
+    "Browser Worker and VS Code packaging are not qualified"
+  ],
+  "policy": {
+    "readOnly": true,
+    "spatialAuthority": false,
+    "claimViewerCoreCompatibility": false,
+    "claimProductionIfcSupport": false
+  }
+}

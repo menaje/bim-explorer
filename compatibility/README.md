@@ -19,6 +19,14 @@ mapped/shared/Qto/classification 비교는
 기록합니다. 이는 `experimental` evidence이며 engine selection 또는
 production redistribution 승인이 아닙니다.
 
+read-only `BimModelSource`의 raw source fingerprint, deterministic cache,
+tree/property/Render/Pick identity와 bounded immutable geometry range 결과는
+[`bim-model-source.json`](bim-model-source.json)과
+[`synthetic mapped source evidence`](evidence/bim-model-source-synthetic-mapped-2026-08-03.json)가
+소유합니다. 이 결과는 repository-generated 4KB IFC4에 한정합니다. public
+대표 모델 source-artifact, multi-range lazy loading, Browser/VS Code
+packaging과 Viewer Core conformance는 계속 보류합니다.
+
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
 분리해 기록합니다. 실제 file chooser, bounded admission, source switch와

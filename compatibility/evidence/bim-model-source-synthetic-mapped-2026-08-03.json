@@ -1,0 +1,167 @@
+{
+  "schema": "bim-explorer-bim-model-source-evidence/0.1",
+  "asOf": "2026-08-03",
+  "status": "passed-synthetic-only",
+  "environment": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v24.11.1"
+  },
+  "fixture": {
+    "id": "synthetic-mapped-ifc4",
+    "kind": "repository-authored-generated",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "byteLength": 4028,
+    "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "ifcSchema": "IFC4",
+    "profile": "ReferenceView_V1.2"
+  },
+  "adapter": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "node-wasm-source-artifact",
+    "license": "MPL-2.0",
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    }
+  },
+  "contract": {
+    "artifactSchema": "bim-explorer-bim-source-artifact/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
+    "viewerCoreConformance": false
+  },
+  "sourceSnapshot": {
+    "sourceFingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "snapshotId": "snapshot:bim-source:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0",
+    "cacheFingerprint": "sha256:54f44d48b19eb1df9cbaf02d83469570878a757b5fd74f0b1fd33b91e27cfb70",
+    "deterministicCacheFingerprint": true,
+    "treeNodes": 7,
+    "geometry": {
+      "products": 2,
+      "primitives": 2,
+      "uniqueGeometries": 1,
+      "vertices": 34,
+      "instancedVertices": 68,
+      "triangles": 24,
+      "bounds": {
+        "min": [
+          0,
+          0.9,
+          0
+        ],
+        "max": [
+          4,
+          5.1,
+          3
+        ]
+      }
+    },
+    "resources": {
+      "limits": {
+        "maximumSourceBytes": 67108864,
+        "maximumProducts": 100000,
+        "maximumGeometryBytes": 268435456,
+        "maximumRelationEntries": 500000,
+        "maximumTreeNodes": 200000,
+        "maximumMetadataBytes": 67108864
+      },
+      "observed": {
+        "sourceBytes": 4028,
+        "geometryBytes": 996,
+        "metadataBytes": 2816,
+        "products": 2,
+        "relationEntries": 12,
+        "treeNodes": 7
+      }
+    }
+  },
+  "geometryRange": {
+    "byteLength": 996,
+    "sha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969",
+    "maximumRequestBytes": 128,
+    "sessionReadBudgetBytes": 996,
+    "rangeReads": 8,
+    "bytesRead": 996,
+    "digestValidated": true,
+    "sharedSliceOffset": 16
+  },
+  "identity": {
+    "expressId": 40,
+    "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+    "renderId": "render:ifc:400071d0a99f14ef:40",
+    "pickId": "pick:ifc:400071d0a99f14ef:40",
+    "externalIdentityToken": "ifc-globalid:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0AAAAAAAAAAAAAAAAAAA16",
+    "lookupModes": [
+      "expressId",
+      "globalId",
+      "renderId",
+      "pickId"
+    ],
+    "lookupsConverged": true,
+    "treeEntityRenderPickIdentity": true
+  },
+  "semantics": {
+    "container": {
+      "expressId": 19,
+      "globalId": "0AAAAAAAAAAAAAAAAAAA14",
+      "ifcClass": "IFCBUILDINGSTOREY",
+      "name": "Level 01"
+    },
+    "type": {
+      "expressId": 55,
+      "globalId": "0AAAAAAAAAAAAAAAAAAA1G",
+      "ifcClass": "IFCWALLTYPE",
+      "name": "MappedWallType-01"
+    },
+    "propertySets": [
+      "Pset_WallCommon",
+      "Pset_WallTypeCommon"
+    ],
+    "quantities": {
+      "GrossSideArea": 12,
+      "GrossVolume": 2.4,
+      "Length": 4
+    },
+    "materials": [
+      "Concrete"
+    ],
+    "classifications": [
+      {
+        "identification": "BE-WALL",
+        "name": "Synthetic Wall Class",
+        "source": "Synthetic Classification"
+      }
+    ]
+  },
+  "failClosed": {
+    "sourceSizeLimitConfiguredBytes": 67108864,
+    "sourceSizeLimitRejected": true,
+    "geometryBudgetRejected": true,
+    "relationIndexBudgetRejected": true,
+    "treeNodeBudgetRejected": true,
+    "metadataBudgetRejected": true,
+    "budgetExhaustionRejected": true,
+    "staleRevisionRejected": true,
+    "mismatchedPickRejected": true,
+    "malformedRangeDigestRejected": true,
+    "malformedRangeStructureRejected": true,
+    "duplicateGlobalIdRejected": true
+  },
+  "cleanup": {
+    "adapterModelClosed": true,
+    "adapterEngineDisposed": true,
+    "sessionDisposed": true,
+    "sourceDisposed": true
+  },
+  "decision": {
+    "internalSourceContract": "passed-synthetic-only",
+    "publicRepresentativeSourceArtifact": "held",
+    "multiRangeDeferredLoading": "held",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}
