@@ -58,6 +58,10 @@ const STATIC_ROUTES = new Map([
     file: path.join(RENDERER, "webgl2-backend.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/camera.mjs", {
+    file: path.join(RENDERER, "camera.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
 ]);
 
 function plainRecord(value, label) {

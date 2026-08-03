@@ -1,3 +1,9 @@
+import {
+  cameraViewProjectionMatrix,
+  createFitCamera3d,
+  validateCamera3d,
+} from "./camera.mjs";
+
 const INSTANCE_FLOATS = 20;
 const INSTANCE_BYTES =
   INSTANCE_FLOATS * Float32Array.BYTES_PER_ELEMENT;
@@ -176,59 +182,6 @@ function deleteResources(gl, resources) {
     gl.deleteBuffer(value);
   }
   gl.deleteProgram(resources.program);
-}
-
-function fitMatrix(bounds, width, height) {
-  const minimum = finiteVector(bounds.min, 3, "renderer bounds.min");
-  const maximum = finiteVector(bounds.max, 3, "renderer bounds.max");
-  const center = minimum.map(
-    (value, axis) => (value + maximum[axis]) / 2,
-  );
-  const diagonal = Math.hypot(
-    maximum[0] - minimum[0],
-    maximum[1] - minimum[1],
-    maximum[2] - minimum[2],
-  );
-  if (!(diagonal > 0)) {
-    throw new RangeError("renderer bounds have no visible extent");
-  }
-  const xAxis = [Math.SQRT1_2, -Math.SQRT1_2, 0];
-  const yAxis = [
-    -1 / Math.sqrt(6),
-    -1 / Math.sqrt(6),
-    2 / Math.sqrt(6),
-  ];
-  const zAxis = [
-    1 / Math.sqrt(3),
-    1 / Math.sqrt(3),
-    1 / Math.sqrt(3),
-  ];
-  const scale = 1.82 / diagonal;
-  const xScale = scale * height / width;
-  const translation = (axis, axisScale) =>
-    -axisScale * (
-      axis[0] * center[0] +
-      axis[1] * center[1] +
-      axis[2] * center[2]
-    );
-  return new Float32Array([
-    xAxis[0] * xScale,
-    yAxis[0] * scale,
-    zAxis[0] * scale,
-    0,
-    xAxis[1] * xScale,
-    yAxis[1] * scale,
-    zAxis[1] * scale,
-    0,
-    xAxis[2] * xScale,
-    yAxis[2] * scale,
-    zAxis[2] * scale,
-    0,
-    translation(xAxis, xScale),
-    translation(yAxis, scale),
-    translation(zAxis, scale),
-    1,
-  ]);
 }
 
 function packGeometry(plan) {
@@ -447,6 +400,11 @@ export class WebGl2Backend {
       contextLost: this.#context?.isContextLost?.() ?? false,
       activeHandleId: this.#active?.handleId ?? null,
       activeBytes: this.#active?.uploadedBytes ?? 0,
+      frames: this.#active?.frames ?? 0,
+      cameraProjection:
+        this.#active?.camera.projection ?? null,
+      hiddenRenderIds:
+        this.#active?.hiddenRenderIds.length ?? 0,
     });
   }
 
@@ -477,6 +435,141 @@ export class WebGl2Backend {
     }
     this.#context = context;
     return context;
+  }
+
+  async #drawFrame(
+    state,
+    cameraValue,
+    hiddenRenderIds,
+    signal,
+    {
+      requireVisiblePixels = true,
+    } = {},
+  ) {
+    const camera = validateCamera3d(cameraValue);
+    if (
+      !Array.isArray(hiddenRenderIds) ||
+      new Set(hiddenRenderIds).size !== hiddenRenderIds.length
+    ) {
+      throw new TypeError(
+        "WebGL2 hidden Render IDs must be a unique list",
+      );
+    }
+    const hidden = new Set(hiddenRenderIds);
+    const gl = this.#getContext();
+    if (gl.isContextLost()) {
+      throw invalidState("WebGL2 context is lost");
+    }
+    const worldToClip = cameraViewProjectionMatrix(
+      camera,
+      this.#width / this.#height,
+    );
+    const [
+      vertexBuffer,
+      indexBuffer,
+      instanceBuffer,
+    ] = state.resources.buffers;
+    const frameStarted = performance.now();
+    let drawCalls = 0;
+    let hiddenInstances = 0;
+    let nonBackgroundPixels = 0;
+    await new Promise((resolve, reject) => {
+      this.#frameScheduler(() => {
+        try {
+          aborted(signal);
+          gl.viewport(0, 0, this.#width, this.#height);
+          gl.clearColor(...this.#clearColor);
+          gl.clearDepth(1);
+          gl.enable(gl.DEPTH_TEST);
+          gl.depthFunc(gl.LEQUAL);
+          gl.disable(gl.CULL_FACE);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+          gl.useProgram(state.resources.program);
+          gl.uniformMatrix4fv(
+            state.worldLocation,
+            false,
+            worldToClip,
+          );
+          gl.uniformMatrix4fv(
+            state.sourceLocation,
+            false,
+            state.sourceMatrix,
+          );
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+          for (const location of [0, 1, 2, 3, 4, 5, 6]) {
+            gl.enableVertexAttribArray(location);
+          }
+          for (
+            let index = 0;
+            index < state.instances.length;
+            index += 1
+          ) {
+            const instance = state.instances[index];
+            if (hidden.has(instance.renderId)) {
+              hiddenInstances += 1;
+              continue;
+            }
+            const record = state.geometryRecords.get(
+              `${instance.rangeId}:${instance.geometryExpressId}`,
+            );
+            if (record === undefined) {
+              throw new Error(
+                "WebGL2 instance geometry is unavailable",
+              );
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            configureGeometryAttributes(gl, record);
+            gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+            configureInstanceAttributes(gl, index);
+            gl.drawElementsInstanced(
+              gl.TRIANGLES,
+              record.indexCount,
+              gl.UNSIGNED_INT,
+              record.indexOffset,
+              1,
+            );
+            drawCalls += 1;
+          }
+          if (drawCalls === 0) {
+            throw new Error(
+              "WebGL2 view has no visible instances",
+            );
+          }
+          gl.finish();
+          if (gl.getError() !== gl.NO_ERROR) {
+            throw new Error("WebGL2 frame failed");
+          }
+          nonBackgroundPixels = changedPixels(
+            gl,
+            this.#width,
+            this.#height,
+            this.#clearColor,
+          );
+          if (
+            requireVisiblePixels &&
+            nonBackgroundPixels === 0
+          ) {
+            throw new Error(
+              "WebGL2 frame has no visible geometry",
+            );
+          }
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+    state.frames += 1;
+    return Object.freeze({
+      camera,
+      drawCalls,
+      frameMs: performance.now() - frameStarted,
+      frameNumber: state.frames,
+      glError: gl.getError(),
+      hiddenInstances,
+      nonBackgroundPixels,
+      visibleInstances: drawCalls,
+    });
   }
 
   async mount(planValue, { signal } = {}) {
@@ -560,11 +653,6 @@ export class WebGl2Backend {
         throw new Error("WebGL2 buffer upload failed");
       }
 
-      const worldToClip = fitMatrix(
-        bounds,
-        this.#width,
-        this.#height,
-      );
       const sourceMatrix = new Float32Array(sourceFromStorage);
       const worldLocation = requireUniform(
         gl,
@@ -576,89 +664,40 @@ export class WebGl2Backend {
         shaderProgram,
         "u_source_from_storage",
       );
-      const frameStarted = performance.now();
-      let nonBackgroundPixels = 0;
-      await new Promise((resolve, reject) => {
-        this.#frameScheduler(() => {
-          try {
-            aborted(signal);
-            gl.viewport(0, 0, this.#width, this.#height);
-            gl.clearColor(...this.#clearColor);
-            gl.clearDepth(1);
-            gl.enable(gl.DEPTH_TEST);
-            gl.depthFunc(gl.LEQUAL);
-            gl.disable(gl.CULL_FACE);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.useProgram(shaderProgram);
-            gl.uniformMatrix4fv(
-              worldLocation,
-              false,
-              worldToClip,
-            );
-            gl.uniformMatrix4fv(
-              sourceLocation,
-              false,
-              sourceMatrix,
-            );
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            for (const location of [0, 1, 2, 3, 4, 5, 6]) {
-              gl.enableVertexAttribArray(location);
-            }
-            for (
-              let index = 0;
-              index < plan.instances.length;
-              index += 1
-            ) {
-              const instance = plan.instances[index];
-              const record = geometry.records.get(
-                `${instance.rangeId}:${instance.geometryExpressId}`,
-              );
-              if (record === undefined) {
-                throw new Error(
-                  "WebGL2 instance geometry is unavailable",
-                );
-              }
-              gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-              configureGeometryAttributes(gl, record);
-              gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
-              configureInstanceAttributes(gl, index);
-              gl.drawElementsInstanced(
-                gl.TRIANGLES,
-                record.indexCount,
-                gl.UNSIGNED_INT,
-                record.indexOffset,
-                1,
-              );
-            }
-            gl.finish();
-            if (gl.getError() !== gl.NO_ERROR) {
-              throw new Error("WebGL2 first frame failed");
-            }
-            nonBackgroundPixels = changedPixels(
-              gl,
-              this.#width,
-              this.#height,
-              this.#clearColor,
-            );
-            if (nonBackgroundPixels === 0) {
-              throw new Error(
-                "WebGL2 first frame has no visible geometry",
-              );
-            }
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
-        });
+      const mountNumber = this.#mounts + 1;
+      const drawState = {
+        frames: 0,
+        geometryRecords: geometry.records,
+        instances: Object.freeze(
+          plan.instances.map((instance) => Object.freeze({
+            geometryExpressId: instance.geometryExpressId,
+            rangeId: instance.rangeId,
+            renderId: instance.renderId,
+          })),
+        ),
+        resources,
+        sourceLocation,
+        sourceMatrix,
+        worldLocation,
+      };
+      const camera = createFitCamera3d(bounds, {
+        aspect: this.#width / this.#height,
       });
-      const firstFrameMs = performance.now() - frameStarted;
+      const frame = await this.#drawFrame(
+        drawState,
+        camera,
+        [],
+        signal,
+      );
       const uploadedBytes =
         metrics.geometryPayloadBytes + metrics.instanceBytes;
-      this.#mounts += 1;
-      const handleId = `webgl2-mount:${this.#mounts}`;
+      this.#mounts = mountNumber;
+      const handleId = `webgl2-mount:${mountNumber}`;
       this.#active = {
+        ...drawState,
+        camera,
         handleId,
-        resources,
+        hiddenRenderIds: Object.freeze([]),
         uploadedBytes,
       };
       resources = null;
@@ -666,7 +705,8 @@ export class WebGl2Backend {
         handleId,
         receipt: {
           backendId: "webgl2",
-          frameId: `webgl2-frame:${this.#mounts}`,
+          frameId:
+            `webgl2-frame:${mountNumber}:${frame.frameNumber}`,
           actualGpu: true,
           rendered: true,
           context: "webgl2",
@@ -678,9 +718,12 @@ export class WebGl2Backend {
           gpuBuffers: 3,
           frameWidth: this.#width,
           frameHeight: this.#height,
-          nonBackgroundPixels,
+          camera,
+          visibleInstances: frame.visibleInstances,
+          hiddenInstances: frame.hiddenInstances,
+          nonBackgroundPixels: frame.nonBackgroundPixels,
           uploadMs,
-          firstFrameMs,
+          firstFrameMs: frame.frameMs,
           mountMs: performance.now() - started,
           glError: gl.getError(),
         },
@@ -693,6 +736,74 @@ export class WebGl2Backend {
       geometry?.indices.fill(0);
       instances?.fill(0);
     }
+  }
+
+  async renderView(
+    handleId,
+    {
+      camera: cameraValue,
+      hiddenRenderIds = [],
+    } = {},
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("WebGL2 mount handle is not active");
+    }
+    const camera = validateCamera3d(cameraValue);
+    if (
+      !Array.isArray(hiddenRenderIds) ||
+      new Set(hiddenRenderIds).size !== hiddenRenderIds.length ||
+      hiddenRenderIds.some((renderId) =>
+        typeof renderId !== "string" || renderId.length === 0)
+    ) {
+      throw new TypeError(
+        "WebGL2 hidden Render IDs must be a unique list",
+      );
+    }
+    const known = new Set(
+      this.#active.instances.map((instance) => instance.renderId),
+    );
+    if (hiddenRenderIds.some((renderId) => !known.has(renderId))) {
+      throw new RangeError(
+        "WebGL2 hidden Render ID is outside the active mount",
+      );
+    }
+    const frame = await this.#drawFrame(
+      this.#active,
+      camera,
+      hiddenRenderIds,
+      signal,
+      {
+        requireVisiblePixels: false,
+      },
+    );
+    this.#active.camera = camera;
+    this.#active.hiddenRenderIds =
+      Object.freeze([...hiddenRenderIds]);
+    return {
+      receipt: {
+        backendId: "webgl2",
+        frameId:
+          `webgl2-frame:${this.#mounts}:${frame.frameNumber}`,
+        actualGpu: true,
+        rendered: true,
+        context: "webgl2",
+        camera,
+        visibleInstances: frame.visibleInstances,
+        hiddenInstances: frame.hiddenInstances,
+        drawCalls: frame.drawCalls,
+        nonBackgroundPixels: frame.nonBackgroundPixels,
+        frameMs: frame.frameMs,
+        glError: frame.glError,
+      },
+    };
   }
 
   async unmount(handleId) {

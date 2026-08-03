@@ -1,7 +1,13 @@
+import {
+  validateCamera3d,
+} from "./camera.mjs";
+
 export const BIM_RENDERER_3D_CONTRACT =
   "bim-explorer-bim-renderer-3d/0.1";
 export const BIM_RENDERER_3D_RECEIPT =
   "bim-explorer-bim-renderer-3d-receipt/0.1";
+export const BIM_RENDERER_3D_VIEW_RECEIPT =
+  "bim-explorer-bim-renderer-3d-view-receipt/0.1";
 export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 
@@ -669,6 +675,42 @@ function validateBackendMount(value, metrics) {
   };
 }
 
+function validateBackendView(
+  value,
+  {
+    hiddenInstances,
+    visibleInstances,
+  },
+) {
+  const receipt = plainRecord(
+    value?.receipt,
+    "renderer backend view receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "renderer backend view receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "renderer backend view receipt.frameId",
+  );
+  if (
+    receipt.rendered !== true ||
+    receipt.visibleInstances !== visibleInstances ||
+    receipt.hiddenInstances !== hiddenInstances ||
+    receipt.drawCalls !== visibleInstances ||
+    !Number.isSafeInteger(receipt.nonBackgroundPixels) ||
+    receipt.nonBackgroundPixels < 0 ||
+    typeof receipt.frameMs !== "number" ||
+    !Number.isFinite(receipt.frameMs) ||
+    receipt.frameMs < 0 ||
+    receipt.glError !== 0
+  ) {
+    throw new Error("renderer backend view receipt is invalid");
+  }
+  return Object.freeze({ ...receipt });
+}
+
 export class Headless3dBackend {
   #active = null;
   #disposed = false;
@@ -753,6 +795,8 @@ export class Bounded3dRenderer {
   #mounting = false;
   #mounts = 0;
   #unmounts = 0;
+  #updating = false;
+  #viewUpdates = 0;
 
   constructor({
     backend = new Headless3dBackend(),
@@ -766,9 +810,11 @@ export class Bounded3dRenderer {
     return Object.freeze({
       disposed: this.#disposed,
       mounting: this.#mounting,
+      updating: this.#updating,
       mounted: this.#active !== null,
       mounts: this.#mounts,
       unmounts: this.#unmounts,
+      viewUpdates: this.#viewUpdates,
       activeRevisionId: this.#active?.revisionId ?? null,
       activeBackendBytes:
         this.#active?.receipt.backend.uploadedBytes ?? 0,
@@ -804,8 +850,10 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting) {
-      throw invalidState("bounded 3D renderer mount is in progress");
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
     }
     this.#mounting = true;
     const rangeResults = [];
@@ -878,6 +926,10 @@ export class Bounded3dRenderer {
         handleId: backendMount.handleId,
         revisionId: snapshot.revisionId,
         receipt,
+        instanceRenderIds: Object.freeze(
+          plan.instances.map((instance) => instance.renderId),
+        ),
+        viewRevision: 0,
       };
       this.#mounts += 1;
       return receipt;
@@ -889,9 +941,98 @@ export class Bounded3dRenderer {
     }
   }
 
+  async renderView({
+    camera: cameraValue,
+    hiddenRenderIds = [],
+    signal,
+  } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    if (typeof this.#backend.renderView !== "function") {
+      throw new DOMException(
+        "renderer backend does not support view updates",
+        "NotSupportedError",
+      );
+    }
+    const camera = validateCamera3d(cameraValue);
+    if (
+      !Array.isArray(hiddenRenderIds) ||
+      hiddenRenderIds.length >
+        this.limits.maximumInstances ||
+      new Set(hiddenRenderIds).size !== hiddenRenderIds.length ||
+      hiddenRenderIds.some((renderId) =>
+        typeof renderId !== "string" || renderId.length === 0)
+    ) {
+      throw new TypeError(
+        "renderer hidden Render IDs must be a unique list",
+      );
+    }
+    const known = new Set(this.#active.instanceRenderIds);
+    if (hiddenRenderIds.some((renderId) => !known.has(renderId))) {
+      throw new RangeError(
+        "renderer hidden Render ID is outside the active revision",
+      );
+    }
+    const hidden = new Set(hiddenRenderIds);
+    const hiddenInstances =
+      this.#active.instanceRenderIds.filter((renderId) =>
+        hidden.has(renderId)).length;
+    const visibleInstances =
+      this.#active.instanceRenderIds.length - hiddenInstances;
+    if (visibleInstances <= 0) {
+      throw new RangeError(
+        "renderer view must keep at least one visible instance",
+      );
+    }
+    this.#updating = true;
+    try {
+      aborted(signal);
+      const result = await this.#backend.renderView(
+        this.#active.handleId,
+        {
+          camera,
+          hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
+        },
+        { signal },
+      );
+      const backend = validateBackendView(result, {
+        hiddenInstances,
+        visibleInstances,
+      });
+      this.#active.viewRevision += 1;
+      this.#viewUpdates += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_VIEW_RECEIPT,
+        status: "rendered",
+        source: this.#active.receipt.source,
+        viewRevision: this.#active.viewRevision,
+        camera,
+        visibility: Object.freeze({
+          hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
+          hiddenInstances,
+          visibleInstances,
+        }),
+        backend,
+      });
+    } finally {
+      this.#updating = false;
+    }
+  }
+
   async unmount() {
-    if (this.#mounting) {
-      throw invalidState("bounded 3D renderer mount is in progress");
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
     }
     return this.#releaseActive();
   }
@@ -900,8 +1041,10 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       return false;
     }
-    if (this.#mounting) {
-      throw invalidState("bounded 3D renderer mount is in progress");
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
     }
     await this.#releaseActive();
     const backendDisposed = await this.#backend.dispose();
@@ -925,3 +1068,13 @@ export {
   WebGl2Backend,
   createWebGl2Backend,
 } from "./webgl2-backend.mjs";
+
+export {
+  BIM_CAMERA_3D_SCHEMA,
+  cameraViewProjectionMatrix,
+  createFitCamera3d,
+  orbitCamera3d,
+  panCamera3d,
+  validateCamera3d,
+  zoomCamera3d,
+} from "./camera.mjs";

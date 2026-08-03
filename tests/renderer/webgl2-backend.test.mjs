@@ -10,7 +10,11 @@ import {
 } from "../../packages/bim-model-source/src/index.mjs";
 import {
   createBounded3dRenderer,
+  createFitCamera3d,
   createWebGl2Backend,
+  orbitCamera3d,
+  panCamera3d,
+  zoomCamera3d,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
   syntheticMappedIfc,
@@ -176,6 +180,57 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     [816, 144, 160],
   );
   assert.equal(backend.state.activeBytes, 1_120);
+  assert.equal(backend.state.frames, 1);
+
+  const movedCamera = panCamera3d(
+    zoomCamera3d(
+      orbitCamera3d(receipt.backend.camera, {
+        pitch: 0.1,
+        yaw: 0.2,
+      }),
+      0.8,
+    ),
+    {
+      right: 0.01,
+      up: -0.02,
+    },
+  );
+  const hiddenRenderId = snapshot.entities[0].renderId;
+  const hiddenView = await renderer.renderView({
+    camera: movedCamera,
+    hiddenRenderIds: [hiddenRenderId],
+  });
+  assert.equal(hiddenView.viewRevision, 1);
+  assert.equal(hiddenView.visibility.hiddenInstances, 1);
+  assert.equal(hiddenView.visibility.visibleInstances, 1);
+  assert.equal(hiddenView.backend.drawCalls, 1);
+  assert.equal(hiddenView.backend.rendered, true);
+  assert.equal(backend.state.frames, 2);
+  assert.equal(backend.state.hiddenRenderIds, 1);
+  assert.equal(context.drawCalls, 3);
+
+  const fittedView = await renderer.renderView({
+    camera: createFitCamera3d(snapshot.geometry.bounds, {
+      aspect: 16 / 9,
+      projection: "orthographic",
+    }),
+  });
+  assert.equal(fittedView.viewRevision, 2);
+  assert.equal(fittedView.camera.projection, "orthographic");
+  assert.equal(fittedView.visibility.hiddenInstances, 0);
+  assert.equal(fittedView.backend.drawCalls, 2);
+  assert.equal(renderer.state.viewUpdates, 2);
+  assert.equal(backend.state.frames, 3);
+  assert.equal(backend.state.hiddenRenderIds, 0);
+  assert.equal(context.drawCalls, 5);
+
+  await assert.rejects(
+    renderer.renderView({
+      camera: fittedView.camera,
+      hiddenRenderIds: ["render:stale"],
+    }),
+    /outside the active revision/u,
+  );
 
   const released = await renderer.unmount();
   assert.equal(released.releasedBytes, 1_120);

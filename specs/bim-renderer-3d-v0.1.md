@@ -100,8 +100,8 @@ shader compilation, rasterization이나 first-frame 시간으로 해석하지
 
 `webgl2` backend는 decoded vertex/index payload와 occurrence
 transform·color instance buffer를 실제 WebGL2 context에 upload합니다.
-source 좌표계 변환과 model bounds 기반 고정 fit matrix를 적용하고
-`drawElementsInstanced` first frame을 그린 뒤 다음을 영수증으로 남깁니다.
+source 좌표계 변환과 camera view-projection matrix를 적용하고
+`drawElementsInstanced` frame을 그린 뒤 다음을 영수증으로 남깁니다.
 
 - geometry, instance와 전체 uploaded bytes
 - draw-call과 GPU buffer 수
@@ -114,10 +114,29 @@ non-background pixels를 만들고 4,399,252 bytes를 전량 회수했습니다.
 이는 실제 Browser GPU API 경로의 증거입니다. masked WebGL context만
 관찰했으므로 physical GPU 종류·전용 memory·driver 성능은 주장하지 않습니다.
 
+## Camera와 visibility view state
+
+`bim-explorer-camera-3d/0.1`은 perspective/orthographic projection, target,
+yaw/pitch, distance, field-of-view와 near/far frustum을 immutable state로
+정의합니다. bounds 기반 fit, orbit, pan과 zoom helper는 매번 전체 camera
+state를 검증해 새 값을 반환합니다.
+
+mounted renderer의 `renderView()`는 camera와 숨길 Render ID 목록만
+받습니다. Render ID가 active source revision의 instance에 없거나 중복이면
+backend 호출 전에 거부합니다. view receipt는 증가하는 view revision,
+camera, hidden/visible instance 수, draw-call, pixel과 frame 시간을
+기록합니다. geometry·instance GPU buffer는 view 사이에 다시 upload하지
+않습니다.
+
+공개 fixture에서는 perspective fit, orbit·pan·zoom, 64개 Render ID hide,
+orthographic show-all fit을 4 frames로 실행했습니다. hide frame의 draw는
+3,182에서 3,118로 줄고 show-all에서 3,182로 복구됐으며 active GPU bytes는
+계속 4,399,252였습니다.
+
 ## 현재 보류
 
 - camera visibility 기반 초기 range와 progressive detail
-- camera/orbit/pan/zoom/fit
+- pointer/gesture 기반 camera input과 interaction policy
 - backend picking, selection과 highlight
 - clipping, section과 measurement
 - physical GPU·driver와 GPU memory qualification

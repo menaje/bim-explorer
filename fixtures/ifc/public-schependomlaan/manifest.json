@@ -78,6 +78,7 @@
     "representative-bim-source-artifact",
     "headless-renderer-resource-accounting",
     "browser-webgl2-first-frame",
+    "browser-camera-visibility-view-state",
     "worker-cleanup"
   ],
   "notQualified": [

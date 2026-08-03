@@ -1,6 +1,10 @@
 import {
   createBounded3dRenderer,
+  createFitCamera3d,
   createWebGl2Backend,
+  orbitCamera3d,
+  panCamera3d,
+  zoomCamera3d,
 } from "./bim-renderer-3d.mjs";
 import {
   BrowserGeometryRangeSession,
@@ -15,6 +19,7 @@ const elements = {
   receipt: document.querySelector("#receipt"),
   status: document.querySelector("#status"),
   upload: document.querySelector("#upload"),
+  view: document.querySelector("#view"),
 };
 
 async function json(route) {
@@ -41,12 +46,16 @@ function showReport(report) {
   elements.frame.textContent =
     `${receipt.backend.nonBackgroundPixels} pixels · ` +
     `${receipt.backend.firstFrameMs.toFixed(1)} ms`;
+  elements.view.textContent =
+    `${report.viewSequence.length + 1} frames · ` +
+    `${report.viewSequence[1].visibility.hiddenInstances} hidden`;
   elements.lifecycle.textContent =
     `${report.cleanup.releasedBytes} bytes released · ` +
     `active ${report.cleanup.backendState.activeBytes}`;
   elements.receipt.textContent = JSON.stringify(report, null, 2);
   elements.status.dataset.state = "passed";
-  elements.status.textContent = "Passed: WebGL2 first frame disposed";
+  elements.status.textContent =
+    "Passed: WebGL2 view sequence disposed";
 }
 
 function showFailure(error, cleanup) {
@@ -100,6 +109,45 @@ async function run() {
     const rendererStateAfterMount = renderer.state;
     const backendStateAfterMount = backend.state;
     const sourceStateAfterMount = session.state;
+    const viewStarted = performance.now();
+    const orbited = orbitCamera3d(receipt.backend.camera, {
+      pitch: 0.08,
+      yaw: 0.28,
+    });
+    const movedCamera = panCamera3d(
+      zoomCamera3d(orbited, 0.82),
+      {
+        right: 0.015,
+        up: 0.01,
+      },
+    );
+    const movedView = await renderer.renderView({
+      camera: movedCamera,
+    });
+    const hiddenRenderIds = input.snapshot.entities
+      .slice(0, 64)
+      .map((entity) => entity.renderId);
+    const hiddenView = await renderer.renderView({
+      camera: movedCamera,
+      hiddenRenderIds,
+    });
+    const fittedView = await renderer.renderView({
+      camera: createFitCamera3d(
+        input.snapshot.geometry.bounds,
+        {
+          aspect: 16 / 9,
+          projection: "orthographic",
+        },
+      ),
+    });
+    const viewMs = performance.now() - viewStarted;
+    const viewSequence = [
+      movedView,
+      hiddenView,
+      fittedView,
+    ];
+    const rendererStateAfterViews = renderer.state;
+    const backendStateAfterViews = backend.state;
     const serverRangeState = await json("/range-state.json");
     releaseReceipt = await renderer.unmount();
     const rendererDisposed = await renderer.dispose();
@@ -130,10 +178,14 @@ async function run() {
         serverRangeState,
         rendererStateAfterMount,
         backendStateAfterMount,
+        rendererStateAfterViews,
+        backendStateAfterViews,
         releaseReceipt,
       },
+      viewSequence,
       performance: {
         mountMs,
+        viewMs,
         totalMs: performance.now() - started,
       },
       environment: {
@@ -155,6 +207,19 @@ async function run() {
       receipt.backend.nonBackgroundPixels <= 0 ||
       receipt.backend.uploadedBytes !==
         releaseReceipt.releasedBytes ||
+      movedView.viewRevision !== 1 ||
+      movedView.backend.rendered !== true ||
+      hiddenView.viewRevision !== 2 ||
+      hiddenView.visibility.hiddenRenderIds.length !== 64 ||
+      hiddenView.visibility.hiddenInstances < 64 ||
+      hiddenView.visibility.visibleInstances >=
+        receipt.metrics.instances ||
+      fittedView.viewRevision !== 3 ||
+      fittedView.camera.projection !== "orthographic" ||
+      fittedView.visibility.hiddenInstances !== 0 ||
+      rendererStateAfterViews.viewUpdates !== 3 ||
+      backendStateAfterViews.frames !== 4 ||
+      backendStateAfterViews.hiddenRenderIds !== 0 ||
       backend.state.activeBytes !== 0 ||
       backend.state.disposed !== true ||
       session.state.disposed !== true

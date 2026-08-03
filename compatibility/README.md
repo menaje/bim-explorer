@@ -35,13 +35,16 @@ Render/Pick revision binding, headless resource lifecycle과 Browser WebGL2
 first frame은
 [`bim-renderer-3d.json`](bim-renderer-3d.json)과
 [`public headless renderer evidence`](evidence/bim-renderer-3d-public-headless-2026-08-04.json),
-[`public Browser WebGL2 evidence`](evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json)가
+[`public Browser WebGL2 evidence`](evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json),
+[`public Browser view-state evidence`](evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json)가
 소유합니다. 공개 모델 첫 range에서 2,458 geometry records, 3,182
 instances와 127,993 instanced triangles를 재현했습니다. 실제 Chromium
 WebGL2 API에 4,399,252 bytes를 upload해 3,182 draws와 67,153
 non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
-physical GPU qualification, visibility 기반 range 계획, camera/picking,
-context loss, section과 Host conformance는 계속 보류합니다.
+같은 allocation으로 perspective fit, orbit·pan·zoom, 64개 Render ID
+hide와 orthographic show-all fit을 4 frames로 검증했습니다. physical GPU
+qualification, visibility 기반 range 계획, pointer input·picking, context
+loss, section과 Host conformance는 계속 보류합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에

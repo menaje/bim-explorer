@@ -30,8 +30,10 @@ multi-range source artifact까지 통과했지만 공용 Viewer Core package
 range decoder, bounded initial-range plan과 headless resource receipt를
 구현합니다. 공개 모델 첫 range의 headless mount와 실제 Chromium WebGL2
 upload·rasterized first frame·dispose를 통과했습니다. visibility 기반
-loading, physical GPU qualification, camera/picking/section과 product
-Host는 아직 없습니다.
+range loading과 pointer/picking/section은 아직 없지만 perspective·
+orthographic fit, orbit·pan·zoom camera state와 revision-bound Render ID
+hide/show core를 검증했습니다. physical GPU qualification과 product Host는
+아직 없습니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public

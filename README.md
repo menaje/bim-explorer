@@ -19,10 +19,11 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 2,458 geometry records·3,182 instances를 bounded headless renderer에
 > mount하고 전량 dispose하는 단계도 통과했습니다. 실제 Chromium
 > WebGL2에서는 같은 첫 range를 4,399,252 bytes로 upload해 3,182 draws와
-> rasterized first frame을 확인하고 전량 회수했습니다. visibility 기반
-> loading, camera/picking/section, physical GPU qualification, deferred
-> property range, engine, public package와 지원 profile은 아직 확정되지
-> 않았습니다.
+> rasterized first frame을 확인하고 전량 회수했습니다. perspective와
+> orthographic fit, orbit·pan·zoom camera state와 revision-bound Render ID
+> hide/show rerender도 통과했습니다. visibility 기반 range loading, pointer
+> input·picking·section, physical GPU qualification, deferred property range,
+> engine, public package와 지원 profile은 아직 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 

@@ -19,5 +19,6 @@ performance budget을 확인하는 experimental surface입니다. 제품 shell,
 
 [`browser-gpu-probe`](browser-gpu-probe/README.md)는 공개 대표 IFC에서
 투영한 첫 geometry range를 실제 Chromium WebGL2 API로 upload·draw하고
-non-background pixel과 disposal을 확인하는 별도 qualification surface입니다.
-physical GPU, interaction이나 production Browser shell을 의미하지 않습니다.
+non-background pixel, camera/visibility view sequence와 disposal을 확인하는
+별도 qualification surface입니다. physical GPU, pointer/picking interaction
+이나 production Browser shell을 의미하지 않습니다.

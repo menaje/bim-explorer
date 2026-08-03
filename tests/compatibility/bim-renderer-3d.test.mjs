@@ -20,6 +20,10 @@ async function fixtures() {
       manifest.evidence.browserWebGl2,
       "utf8",
     )),
+    browserViewState: JSON.parse(await readFile(
+      manifest.evidence.browserViewState,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -36,7 +40,8 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.instancedTriangles, 127_993);
   assert.equal(result.uploadedBytes, 4_399_252);
   assert.equal(result.browserPixels, 67_153);
-  assert.equal(result.passedGates, 9);
+  assert.equal(result.browserViewFrames, 4);
+  assert.equal(result.passedGates, 11);
   assert.equal(result.heldGates, 7);
 });
 
@@ -49,6 +54,18 @@ test("Browser evidence is required for the GPU first-frame gate", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /first frame is invalid/u,
+  );
+});
+
+test("Browser view evidence pins revision-bound visibility", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserViewState.representativeReport
+    .viewSequence[2].visibleInstances += 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /frame is invalid/u,
   );
 });
 
