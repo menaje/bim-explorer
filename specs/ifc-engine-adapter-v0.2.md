@@ -24,6 +24,18 @@ public report에는 source path, engine object, native pointer, credential 또�
 원본 model payload를 포함하지 않습니다. source는 id, byte length, SHA-256,
 detected schema와 exchange view로만 식별합니다.
 
+process supervisor는 허용된 최소 환경 변수만 전달하고 stdout/stderr byte
+budget을 각각 적용합니다. AbortSignal 취소 시 SIGTERM 후 bounded grace
+period 안에 종료되지 않으면 SIGKILL로 승격합니다. error와 receipt에는
+stderr 원문, executable, argument와 working directory를 포함하지 않고
+`completed/cancelled/timeout/output-limit/signal/nonzero-exit/spawn-error/
+invalid-report` 결과와 계측값만 기록합니다.
+
+이 계약의 일반 process supervisor test는 격리·redaction·강제 종료
+mechanism의 증거입니다. 실제 web-ifc/IfcOpenShell 손상 입력 cleanup,
+engine별 cancellation과 Browser Worker termination은 각각 별도 fixture와
+runtime evidence를 통과해야 합니다.
+
 ## Report
 
 필수 top-level field:
@@ -54,7 +66,7 @@ ID와 Spatial Canonical Entity ID는 이 qualification report의 범위가 아�
 
 ## Admission
 
-v0.1 report 통과는 synthetic fixture에 대한 engine 관찰 증거입니다. 다음을
+v0.2 report 통과는 synthetic fixture에 대한 engine 관찰 증거입니다. 다음을
 자동으로 의미하지 않습니다.
 
 - public IFC implementation profile

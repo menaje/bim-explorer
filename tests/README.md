@@ -22,3 +22,7 @@ IFC fixture artifact는
 classification fixture까지 검사합니다. IfcOpenShell은 repository dependency가
 아니므로 별도 Python environment를
 `scripts/qualify-ifc-engine.mjs --python ...`에 주입할 때만 실행합니다.
+
+일반 process supervisor test는 harmless Node stub으로 성공, redacted failure,
+timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니다. 특정 IFC
+engine의 손상 입력·취소 또는 Browser Worker cleanup 증거로 승격하지 않습니다.

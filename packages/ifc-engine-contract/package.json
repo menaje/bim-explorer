@@ -5,7 +5,10 @@
   "description": "Engine-neutral IFC qualification report contract",
   "license": "UNLICENSED",
   "type": "module",
-  "exports": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./process-supervisor": "./src/process-supervisor.mjs"
+  },
   "engines": {
     "node": ">=24"
   }

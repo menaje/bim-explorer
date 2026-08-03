@@ -42,6 +42,7 @@ const REQUIRED_PATHS = [
   "packages/ifc-engine-contract/README.md",
   "packages/ifc-engine-contract/package.json",
   "packages/ifc-engine-contract/src/index.mjs",
+  "packages/ifc-engine-contract/src/process-supervisor.mjs",
   "packages/viewer-core-consumer/README.md",
   "packages/viewer-core-consumer/package.json",
   "packages/viewer-core-consumer/src/bim-mock-delta-source.mjs",
@@ -66,6 +67,7 @@ const REQUIRED_PATHS = [
   "tests/foundation/repository.test.mjs",
   "tests/ifc/engine-compatibility.test.mjs",
   "tests/ifc/engine-contract.test.mjs",
+  "tests/ifc/process-supervisor.test.mjs",
   "tests/ifc/qualification-harness.test.mjs",
   "tests/ifc/synthetic-fixture.test.mjs",
   "tests/ifc/web-ifc-adapter.test.mjs"

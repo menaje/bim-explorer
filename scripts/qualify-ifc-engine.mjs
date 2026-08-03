@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -8,21 +7,12 @@ import {
   validateIfcEngineReport,
 } from "../packages/ifc-engine-contract/src/index.mjs";
 import {
+  runAdapterProcess,
+} from "../packages/ifc-engine-contract/src/process-supervisor.mjs";
+import {
   syntheticIfc,
   syntheticMappedIfc,
 } from "./generate-synthetic-ifc.mjs";
-
-const CHILD_TIMEOUT_MS = 60_000;
-const MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
-const SAFE_ENVIRONMENT_NAMES = [
-  "PATH",
-  "TMPDIR",
-  "TEMP",
-  "TMP",
-  "LANG",
-  "LC_ALL",
-  "SYSTEMROOT",
-];
 
 function parseArguments(values) {
   const options = {
@@ -95,93 +85,6 @@ function engineCommands(options, input, fixtureId) {
     });
   }
   return commands;
-}
-
-async function execute(command) {
-  return await new Promise((resolve, reject) => {
-    const started = performance.now();
-    const environment = Object.fromEntries(
-      SAFE_ENVIRONMENT_NAMES
-        .filter((name) => typeof process.env[name] === "string")
-        .map((name) => [name, process.env[name]]),
-    );
-    const child = spawn(command.executable, command.arguments, {
-      cwd: process.cwd(),
-      env: {
-        ...environment,
-        NO_COLOR: "1",
-        PYTHONDONTWRITEBYTECODE: "1",
-        PYTHONUTF8: "1",
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stdout = "";
-    let stderr = "";
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGKILL");
-    }, CHILD_TIMEOUT_MS);
-
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-      if (Buffer.byteLength(stdout) > MAX_OUTPUT_BYTES) {
-        child.kill("SIGKILL");
-      }
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-      if (Buffer.byteLength(stderr) > MAX_OUTPUT_BYTES) {
-        child.kill("SIGKILL");
-      }
-    });
-    child.on("error", (error) => {
-      clearTimeout(timeout);
-      reject(error);
-    });
-    child.on("close", (exitCode, signal) => {
-      clearTimeout(timeout);
-      if (timedOut) {
-        reject(
-          new Error(`${command.id} qualification exceeded ${CHILD_TIMEOUT_MS}ms`),
-        );
-        return;
-      }
-      if (exitCode !== 0) {
-        reject(
-          new Error(
-            `${command.id} qualification failed with exit ${exitCode}, ` +
-              `signal ${signal ?? "none"}: ${stderr.trim()}`,
-          ),
-        );
-        return;
-      }
-      const lines = stdout.trim().split("\n").filter(Boolean);
-      let report;
-      try {
-        report = JSON.parse(lines.at(-1));
-      } catch (error) {
-        reject(
-          new Error(
-            `${command.id} did not return a JSON report: ${error.message}`,
-          ),
-        );
-        return;
-      }
-      resolve({
-        report,
-        receipt: {
-          exitCode,
-          signal,
-          timedOut,
-          processExited: true,
-          wallClockMs: performance.now() - started,
-        },
-      });
-    });
-  });
 }
 
 function assertEqual(actual, expected, label) {
@@ -356,7 +259,7 @@ async function qualify(options) {
     ) {
       const runs = [];
       for (let attempt = 1; attempt <= 2; attempt += 1) {
-        const result = await execute(command);
+        const result = await runAdapterProcess(command);
         assertFixture(result.report, manifest);
         runs.push({
           attempt,

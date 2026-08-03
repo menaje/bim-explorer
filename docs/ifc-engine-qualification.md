@@ -168,9 +168,16 @@ node scripts/qualify-ifc-engine.mjs \
 command는 매번 임시 `.ifc`를 생성하고 종료 시 제거합니다. 고객 또는
 third-party IFC는 저장소와 evidence에 포함하지 않습니다.
 
+qualification harness는 공통 process supervisor를 사용해 최소 환경,
+stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니다.
+일반 Node stub으로 redaction과 종료 승격을 검증했지만 이는 engine별
+corrupt-input cleanup이나 Browser Worker lifecycle을 검증한 것이 아닙니다.
+따라서 compatibility matrix의 cancellation/corrupt cleanup은 계속
+`blocked`입니다.
+
 ## 다음 Gate
 
-1. timeout/cancel/corrupt fixture에서 process/Worker cleanup 검증
+1. 각 engine의 cancel과 승인된 negative corpus에서 process cleanup 검증
 2. redistribution 가능한 large performance fixture와 resource budget 고정
 3. connection/system/opening을 포함한 broader semantic corpus
 4. web-ifc Browser Worker prototype과 Linux CI evidence

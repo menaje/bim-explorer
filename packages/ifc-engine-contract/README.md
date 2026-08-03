@@ -19,3 +19,11 @@ Fingerprint는 시간·메모리·diagnostic을 제외한 안정 projection으�
 GlobalId–Express ID map digest, mapped representation sharing, semantic
 quantity/classification과 occurrence별 geometry bounds를 포함하므로 같은
 engine/version/options/source 결과의 반복 실행이 동일해야 합니다.
+
+`@bim-explorer/ifc-engine-contract/process-supervisor`는 native/WASM adapter
+probe를 별도 process로 실행합니다. 환경 변수와 출력 크기를 제한하고,
+timeout·취소·signal·비정상 종료를 구분하는 path-free receipt만 반환합니다.
+stderr 내용과 실행 인자는 public error 또는 evidence에 포함하지 않습니다.
+
+이 supervisor의 일반 process lifecycle 검증은 특정 IFC engine의 cancellation,
+손상 입력 cleanup 또는 Browser Worker disposal 합격을 의미하지 않습니다.
