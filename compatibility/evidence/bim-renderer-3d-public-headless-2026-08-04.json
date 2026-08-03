@@ -137,7 +137,8 @@
         "maximumInstances": 100000,
         "maximumInstancedTriangles": 5000000,
         "maximumDrawCalls": 100000,
-        "maximumCpuStagingBytes": 16777216
+        "maximumCpuStagingBytes": 16777216,
+        "maximumGpuCacheBytes": 16777216
       },
       "receipt": {
         "schema": "bim-explorer-bim-renderer-3d-receipt/0.1",
@@ -242,7 +243,7 @@
   "runs": [
     {
       "attempt": 1,
-      "deterministicProjectionSha256": "d382ab6b2ee575eb4470c97a77bde3b1795fbb7f4754263351ff2c0ebf083d57",
+      "deterministicProjectionSha256": "6648f1e4eac4a1e40463cef931bde897cc863c86e9a0f2ce52cc46f3c176c96d",
       "performance": {
         "readMs": 8.283042000000023,
         "artifactMs": 2179.8684160000003,
@@ -271,7 +272,7 @@
     },
     {
       "attempt": 2,
-      "deterministicProjectionSha256": "d382ab6b2ee575eb4470c97a77bde3b1795fbb7f4754263351ff2c0ebf083d57",
+      "deterministicProjectionSha256": "6648f1e4eac4a1e40463cef931bde897cc863c86e9a0f2ce52cc46f3c176c96d",
       "performance": {
         "readMs": 8.105083000000008,
         "artifactMs": 2187.873,

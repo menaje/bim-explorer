@@ -15,6 +15,8 @@ export const BIM_RENDERER_3D_PICK_RECEIPT =
   "bim-explorer-bim-renderer-3d-pick-receipt/0.1";
 export const BIM_RENDERER_3D_MEASUREMENT_RECEIPT =
   "bim-explorer-bim-renderer-3d-measurement-receipt/0.1";
+export const BIM_RENDERER_3D_RANGE_RECEIPT =
+  "bim-explorer-bim-renderer-3d-range-receipt/0.1";
 export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 
@@ -32,6 +34,7 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumInstancedTriangles: 5_000_000,
   maximumDrawCalls: 100_000,
   maximumCpuStagingBytes: 16 * 1024 * 1024,
+  maximumGpuCacheBytes: 16 * 1024 * 1024,
 });
 
 function plainRecord(value, label) {
@@ -510,6 +513,7 @@ function validateMountInput(session, snapshot, limits) {
   return {
     snapshot: value,
     firstHandles,
+    handles,
     totalReadBytes,
     presentation: Object.freeze({
       coordinateSystem: Object.freeze({
@@ -739,6 +743,49 @@ function buildMountPlan(
   });
 }
 
+function activeMetrics(rangePlans) {
+  const fields = [
+    "geometryPayloadBytes",
+    "geometryRecords",
+    "vertices",
+    "indices",
+    "uniqueTriangles",
+    "instances",
+    "instancedTriangles",
+    "drawCalls",
+    "instanceBytes",
+  ];
+  const metrics = Object.fromEntries(
+    fields.map((field) => [
+      field,
+      rangePlans.reduce(
+        (sum, plan) => sum + plan.metrics[field],
+        0,
+      ),
+    ]),
+  );
+  return Object.freeze({
+    ...metrics,
+    uploadedBytes:
+      metrics.geometryPayloadBytes + metrics.instanceBytes,
+  });
+}
+
+function validateActiveMetrics(metrics, limits) {
+  if (
+    metrics.geometryRecords > limits.maximumGeometryRecords ||
+    metrics.instances > limits.maximumInstances ||
+    metrics.instancedTriangles >
+      limits.maximumInstancedTriangles ||
+    metrics.drawCalls > limits.maximumDrawCalls ||
+    metrics.uploadedBytes > limits.maximumGpuCacheBytes
+  ) {
+    throw new RangeError(
+      "renderer resident GPU cache exceeds its configured limit",
+    );
+  }
+}
+
 function validateBackend(value) {
   const backend = plainRecord(value, "renderer backend");
   for (const method of ["mount", "unmount", "dispose"]) {
@@ -772,6 +819,69 @@ function validateBackendMount(value, metrics) {
     handleId: result.handleId,
     receipt: Object.freeze({ ...receipt }),
   };
+}
+
+function validateBackendRangeLoad(
+  value,
+  metrics,
+  activeBytesBefore,
+) {
+  const receipt = plainRecord(
+    value?.receipt,
+    "renderer backend range-load receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "renderer backend range-load receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "renderer backend range-load receipt.frameId",
+  );
+  const addedBytes =
+    metrics.geometryPayloadBytes + metrics.instanceBytes;
+  if (
+    typeof receipt.rendered !== "boolean" ||
+    receipt.cacheHit !== false ||
+    receipt.addedBytes !== addedBytes ||
+    receipt.activeBytes !== activeBytesBefore + addedBytes ||
+    receipt.addedInstances !== metrics.instances ||
+    receipt.addedDrawCalls !== metrics.drawCalls
+  ) {
+    throw new Error(
+      "renderer backend range-load receipt is invalid",
+    );
+  }
+  return Object.freeze({ ...receipt });
+}
+
+function validateBackendRangeEviction(
+  value,
+  expectedBytes,
+  activeBytesBefore,
+) {
+  const receipt = plainRecord(
+    value?.receipt,
+    "renderer backend range-eviction receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "renderer backend range-eviction receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "renderer backend range-eviction receipt.frameId",
+  );
+  if (
+    typeof receipt.rendered !== "boolean" ||
+    receipt.releasedBytes !== expectedBytes ||
+    receipt.activeBytes !== activeBytesBefore - expectedBytes
+  ) {
+    throw new Error(
+      "renderer backend range-eviction receipt is invalid",
+    );
+  }
+  return Object.freeze({ ...receipt });
 }
 
 function validateBackendView(
@@ -905,6 +1015,7 @@ export class Headless3dBackend {
   #active = null;
   #disposed = false;
   #mounts = 0;
+  #rangeUpdates = 0;
   #unmounts = 0;
 
   get state() {
@@ -912,8 +1023,10 @@ export class Headless3dBackend {
       disposed: this.#disposed,
       mounts: this.#mounts,
       unmounts: this.#unmounts,
+      rangeUpdates: this.#rangeUpdates,
       activeHandleId: this.#active?.handleId ?? null,
       activeBytes: this.#active?.uploadedBytes ?? 0,
+      residentRanges: this.#active?.ranges.size ?? 0,
     });
   }
 
@@ -936,6 +1049,12 @@ export class Headless3dBackend {
       metrics.geometryPayloadBytes + metrics.instanceBytes;
     this.#active = {
       handleId,
+      ranges: new Map(
+        plan.ranges.map((range) => [
+          range.handleId,
+          uploadedBytes,
+        ]),
+      ),
       uploadedBytes,
     };
     return {
@@ -948,6 +1067,93 @@ export class Headless3dBackend {
         instanceBytes: metrics.instanceBytes,
         uploadedBytes,
         drawCalls: metrics.drawCalls,
+      },
+    };
+  }
+
+  async appendRange(handleId, plan, { signal } = {}) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("headless 3D backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError(
+        "headless 3D mount handle is not active",
+      );
+    }
+    plainRecord(plan, "headless 3D range plan");
+    const metrics = plainRecord(
+      plan.metrics,
+      "headless 3D range metrics",
+    );
+    if (
+      !Array.isArray(plan.ranges) ||
+      plan.ranges.length !== 1 ||
+      this.#active.ranges.has(plan.ranges[0].handleId)
+    ) {
+      throw new Error("headless 3D range plan is invalid");
+    }
+    const addedBytes =
+      metrics.geometryPayloadBytes + metrics.instanceBytes;
+    this.#active.ranges.set(
+      plan.ranges[0].handleId,
+      addedBytes,
+    );
+    this.#active.uploadedBytes += addedBytes;
+    this.#rangeUpdates += 1;
+    return {
+      receipt: {
+        backendId: "headless",
+        frameId:
+          `headless-3d-range:${this.#mounts}:` +
+          `${this.#rangeUpdates}`,
+        rendered: false,
+        cacheHit: false,
+        addedBytes,
+        activeBytes: this.#active.uploadedBytes,
+        addedInstances: metrics.instances,
+        addedDrawCalls: metrics.drawCalls,
+      },
+    };
+  }
+
+  async evictRange(handleId, rangeId, { signal } = {}) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("headless 3D backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError(
+        "headless 3D mount handle is not active",
+      );
+    }
+    const releasedBytes = this.#active.ranges.get(rangeId);
+    if (
+      releasedBytes === undefined ||
+      this.#active.ranges.size <= 1
+    ) {
+      throw new RangeError(
+        "headless 3D resident range cannot be evicted",
+      );
+    }
+    this.#active.ranges.delete(rangeId);
+    this.#active.uploadedBytes -= releasedBytes;
+    this.#rangeUpdates += 1;
+    return {
+      receipt: {
+        backendId: "headless",
+        frameId:
+          `headless-3d-range:${this.#mounts}:` +
+          `${this.#rangeUpdates}`,
+        rendered: false,
+        releasedBytes,
+        activeBytes: this.#active.uploadedBytes,
       },
     };
   }
@@ -981,11 +1187,14 @@ export class Headless3dBackend {
 export class Bounded3dRenderer {
   #active = null;
   #backend;
+  #cacheHits = 0;
   #disposed = false;
   #mounting = false;
   #mounts = 0;
   #measurements = 0;
   #picks = 0;
+  #rangeEvictions = 0;
+  #rangeLoads = 0;
   #unmounts = 0;
   #updating = false;
   #viewUpdates = 0;
@@ -1007,11 +1216,17 @@ export class Bounded3dRenderer {
       mounts: this.#mounts,
       measurements: this.#measurements,
       picks: this.#picks,
+      rangeCacheHits: this.#cacheHits,
+      rangeEvictions: this.#rangeEvictions,
+      rangeLoads: this.#rangeLoads,
+      residentRangeIds: Object.freeze(
+        [...(this.#active?.rangePlans.keys() ?? [])],
+      ),
       unmounts: this.#unmounts,
       viewUpdates: this.#viewUpdates,
       activeRevisionId: this.#active?.revisionId ?? null,
       activeBackendBytes:
-        this.#active?.receipt.backend.uploadedBytes ?? 0,
+        this.#active?.activeBackendBytes ?? 0,
     });
   }
 
@@ -1027,7 +1242,7 @@ export class Bounded3dRenderer {
     if (
       result.released !== true ||
       result.releasedBytes !==
-        active.receipt.backend.uploadedBytes
+        active.activeBackendBytes
     ) {
       throw new Error("renderer backend did not release its mount");
     }
@@ -1073,6 +1288,10 @@ export class Bounded3dRenderer {
         this.limits,
         input.presentation,
       );
+      validateActiveMetrics(
+        activeMetrics([plan]),
+        this.limits,
+      );
       let backendResult;
       let backendMount;
       try {
@@ -1117,9 +1336,23 @@ export class Bounded3dRenderer {
         cpuRangeStagingReleased: true,
       });
       this.#active = {
+        activeBackendBytes: backendMount.receipt.uploadedBytes,
         handleId: backendMount.handleId,
+        handles: input.handles,
+        initialRangeIds: new Set(
+          plan.ranges.map((range) => range.handleId),
+        ),
+        rangePlans: new Map(
+          plan.ranges.map((range) => [
+            range.handleId,
+            plan,
+          ]),
+        ),
         revisionId: snapshot.revisionId,
         receipt,
+        session,
+        snapshot: input.snapshot,
+        presentation: input.presentation,
         instanceRenderIds: Object.freeze(
           plan.instances.map((instance) => instance.renderId),
         ),
@@ -1132,6 +1365,7 @@ export class Bounded3dRenderer {
             globalId: instance.globalId,
             renderId: instance.renderId,
             pickId: instance.pickId,
+            rangeId: instance.rangeId,
             externalIdentityToken:
               instance.externalIdentityToken,
           })),
@@ -1149,6 +1383,266 @@ export class Bounded3dRenderer {
         result.bytes.fill(0);
       }
       this.#mounting = false;
+    }
+  }
+
+  async loadRange({ rangeId, signal } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    nonEmptyString(rangeId, "renderer rangeId");
+    if (!this.#active.handles.has(rangeId)) {
+      throw new RangeError(
+        "renderer range is outside the active revision",
+      );
+    }
+    if (this.#active.rangePlans.has(rangeId)) {
+      this.#cacheHits += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_RANGE_RECEIPT,
+        status: "resident",
+        operation: "load",
+        cacheHit: true,
+        source: this.#active.receipt.source,
+        rangeId,
+        residentRangeIds: Object.freeze([
+          ...this.#active.rangePlans.keys(),
+        ]),
+        deferredRangeIds: Object.freeze(
+          this.#active.snapshot.loadPlan.deferredRangeIds
+            .filter((id) =>
+              !this.#active.rangePlans.has(id)),
+        ),
+        metrics: null,
+        backend: null,
+        activeBackendBytes: this.#active.activeBackendBytes,
+      });
+    }
+    if (typeof this.#backend.appendRange !== "function") {
+      throw new DOMException(
+        "renderer backend does not support progressive ranges",
+        "NotSupportedError",
+      );
+    }
+    const handle = this.#active.handles.get(rangeId);
+    if (
+      handle.byteLength > this.limits.maximumRangeBytes ||
+      handle.byteLength > this.limits.maximumSourceReadBytes
+    ) {
+      throw new RangeError(
+        "renderer deferred range exceeds its byte limit",
+      );
+    }
+    this.#updating = true;
+    let rangeResult = null;
+    try {
+      rangeResult = await readRange(
+        this.#active.session,
+        handle,
+        this.limits,
+        signal,
+      );
+      aborted(signal);
+      const plan = buildMountPlan(
+        this.#active.snapshot,
+        [rangeResult],
+        this.limits,
+        this.#active.presentation,
+      );
+      const residentPlans = [
+        ...new Set(this.#active.rangePlans.values()),
+        plan,
+      ];
+      validateActiveMetrics(
+        activeMetrics(residentPlans),
+        this.limits,
+      );
+      let backendResult;
+      let backend;
+      try {
+        backendResult = await this.#backend.appendRange(
+          this.#active.handleId,
+          plan,
+          { signal },
+        );
+        backend = validateBackendRangeLoad(
+          backendResult,
+          plan.metrics,
+          this.#active.activeBackendBytes,
+        );
+      } catch (error) {
+        if (
+          typeof backendResult?.receipt?.activeBytes === "number" &&
+          typeof this.#backend.evictRange === "function"
+        ) {
+          try {
+            await this.#backend.evictRange(
+              this.#active.handleId,
+              rangeId,
+            );
+          } catch (cleanupError) {
+            throw new AggregateError(
+              [error, cleanupError],
+              "renderer range load and cleanup failed",
+            );
+          }
+        }
+        throw error;
+      }
+      this.#active.rangePlans.set(rangeId, plan);
+      this.#active.instanceRenderIds = Object.freeze([
+        ...this.#active.instanceRenderIds,
+        ...plan.instances.map((instance) => instance.renderId),
+      ]);
+      this.#active.instancePickIds = Object.freeze([
+        ...this.#active.instancePickIds,
+        ...plan.instances.map((instance) => instance.pickId),
+      ]);
+      this.#active.identities = Object.freeze([
+        ...this.#active.identities,
+        ...plan.instances.map((instance) => Object.freeze({
+          expressId: instance.expressId,
+          globalId: instance.globalId,
+          renderId: instance.renderId,
+          pickId: instance.pickId,
+          rangeId: instance.rangeId,
+          externalIdentityToken:
+            instance.externalIdentityToken,
+        })),
+      ]);
+      this.#active.activeBackendBytes = backend.activeBytes;
+      this.#rangeLoads += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_RANGE_RECEIPT,
+        status: "loaded",
+        operation: "load",
+        cacheHit: false,
+        source: this.#active.receipt.source,
+        rangeId,
+        residentRangeIds: Object.freeze([
+          ...this.#active.rangePlans.keys(),
+        ]),
+        deferredRangeIds: Object.freeze(
+          this.#active.snapshot.loadPlan.deferredRangeIds
+            .filter((id) =>
+              !this.#active.rangePlans.has(id)),
+        ),
+        metrics: plan.metrics,
+        backend,
+        activeBackendBytes: backend.activeBytes,
+        cpuRangeStagingReleased: true,
+      });
+    } finally {
+      rangeResult?.bytes.fill(0);
+      this.#updating = false;
+    }
+  }
+
+  async evictRange({ rangeId, signal } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    nonEmptyString(rangeId, "renderer rangeId");
+    if (this.#active.initialRangeIds.has(rangeId)) {
+      throw new RangeError(
+        "renderer initial range must remain resident",
+      );
+    }
+    const plan = this.#active.rangePlans.get(rangeId);
+    if (plan === undefined) {
+      throw new RangeError("renderer range is not resident");
+    }
+    if (typeof this.#backend.evictRange !== "function") {
+      throw new DOMException(
+        "renderer backend does not support range eviction",
+        "NotSupportedError",
+      );
+    }
+    const expectedBytes =
+      plan.metrics.geometryPayloadBytes +
+      plan.metrics.instanceBytes;
+    this.#updating = true;
+    try {
+      aborted(signal);
+      const result = await this.#backend.evictRange(
+        this.#active.handleId,
+        rangeId,
+        { signal },
+      );
+      const backend = validateBackendRangeEviction(
+        result,
+        expectedBytes,
+        this.#active.activeBackendBytes,
+      );
+      this.#active.rangePlans.delete(rangeId);
+      this.#active.identities = Object.freeze(
+        this.#active.identities.filter(
+          (identity) => identity.rangeId !== rangeId,
+        ),
+      );
+      this.#active.instanceRenderIds = Object.freeze(
+        this.#active.identities.map(
+          (identity) => identity.renderId,
+        ),
+      );
+      this.#active.instancePickIds = Object.freeze(
+        this.#active.identities.map(
+          (identity) => identity.pickId,
+        ),
+      );
+      const knownRenderIds = new Set(
+        this.#active.instanceRenderIds,
+      );
+      const knownPickIds = new Set(
+        this.#active.instancePickIds,
+      );
+      this.#active.hiddenRenderIds = Object.freeze(
+        this.#active.hiddenRenderIds.filter((id) =>
+          knownRenderIds.has(id)),
+      );
+      this.#active.selectedPickIds = Object.freeze(
+        this.#active.selectedPickIds.filter((id) =>
+          knownPickIds.has(id)),
+      );
+      this.#active.activeBackendBytes = backend.activeBytes;
+      this.#rangeEvictions += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_RANGE_RECEIPT,
+        status: "evicted",
+        operation: "evict",
+        cacheHit: false,
+        source: this.#active.receipt.source,
+        rangeId,
+        residentRangeIds: Object.freeze([
+          ...this.#active.rangePlans.keys(),
+        ]),
+        deferredRangeIds: Object.freeze(
+          this.#active.snapshot.loadPlan.deferredRangeIds
+            .filter((id) =>
+              !this.#active.rangePlans.has(id)),
+        ),
+        metrics: plan.metrics,
+        backend,
+        activeBackendBytes: backend.activeBytes,
+      });
+    } finally {
+      this.#updating = false;
     }
   }
 

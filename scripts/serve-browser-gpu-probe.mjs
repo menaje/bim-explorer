@@ -120,9 +120,6 @@ function rangeHeader(value, byteLength, maximumRequestBytes) {
 }
 
 function projectedSnapshot(snapshot) {
-  const firstRangeIds = new Set(
-    snapshot.loadPlan.firstFrameRangeIds,
-  );
   const entities = snapshot.entities
     .map((entity) => ({
       expressId: entity.expressId,
@@ -132,8 +129,6 @@ function projectedSnapshot(snapshot) {
       externalIdentityToken: entity.externalIdentityToken,
       renderable: entity.renderable,
       primitives: entity.primitives
-        .filter((primitive) =>
-          firstRangeIds.has(primitive.slice.rangeId))
         .map((primitive) => ({
           geometryExpressId: primitive.geometryExpressId,
           vertexCount: primitive.vertexCount,

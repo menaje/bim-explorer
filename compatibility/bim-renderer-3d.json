@@ -118,6 +118,13 @@
       "maximumRelativeCoordinate": 2.100000023841858,
       "nonBackgroundPixels": 82975
     },
+    "browserProgressiveRange": {
+      "firstAddedBytes": 4332836,
+      "firstActiveBytes": 8732088,
+      "secondAddedBytes": 942400,
+      "allActiveBytes": 9674488,
+      "evictedActiveBytes": 5341652
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -135,6 +142,7 @@
     "contextLossAndGpuSourceSwitch": true,
     "sectionMeasurement": true,
     "largeCoordinatePrecision": true,
+    "progressiveRangeCache": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
@@ -148,7 +156,8 @@
     "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json",
     "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json",
     "browserSectionMeasurement": "compatibility/evidence/bim-renderer-3d-public-browser-section-measurement-2026-08-04.json",
-    "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json"
+    "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json",
+    "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",

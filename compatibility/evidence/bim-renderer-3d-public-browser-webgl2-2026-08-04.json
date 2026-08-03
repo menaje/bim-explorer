@@ -132,7 +132,8 @@
         "maximumInstances": 100000,
         "maximumInstancedTriangles": 5000000,
         "maximumDrawCalls": 100000,
-        "maximumCpuStagingBytes": 16777216
+        "maximumCpuStagingBytes": 16777216,
+        "maximumGpuCacheBytes": 16777216
       },
       "receipt": {
         "schema": "bim-explorer-bim-renderer-3d-receipt/0.1",

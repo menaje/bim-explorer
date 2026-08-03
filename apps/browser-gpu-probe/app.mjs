@@ -174,8 +174,12 @@ async function run() {
   let precisionBackend;
   let precisionRenderer;
   let precisionSession;
+  let progressiveBackend;
+  let progressiveRenderer;
+  let progressiveSession;
   let releaseReceipt;
   let precisionReleaseReceipt;
+  let progressiveReleaseReceipt;
   try {
     const input = await json("/probe-input.json");
     if (
@@ -375,6 +379,83 @@ async function run() {
         backendState: precisionBackend.state,
       },
     };
+    progressiveSession = new BrowserGeometryRangeSession(
+      input.snapshot,
+    );
+    progressiveBackend = createWebGl2Backend({
+      canvas: elements.canvas,
+      height: 540,
+      width: 960,
+    });
+    progressiveRenderer = createBounded3dRenderer({
+      backend: progressiveBackend,
+    });
+    const progressiveMount =
+      await progressiveRenderer.mount({
+        session: progressiveSession,
+        snapshot: input.snapshot,
+      });
+    const [
+      firstDeferredRangeId,
+      secondDeferredRangeId,
+    ] = input.snapshot.loadPlan.deferredRangeIds;
+    const firstRangeLoad =
+      await progressiveRenderer.loadRange({
+        rangeId: firstDeferredRangeId,
+      });
+    const sourceStateAfterFirstRange =
+      progressiveSession.state;
+    const firstRangeCacheHit =
+      await progressiveRenderer.loadRange({
+        rangeId: firstDeferredRangeId,
+      });
+    const sourceStateAfterCacheHit =
+      progressiveSession.state;
+    const secondRangeLoad =
+      await progressiveRenderer.loadRange({
+        rangeId: secondDeferredRangeId,
+      });
+    const rendererStateAfterAllRanges =
+      progressiveRenderer.state;
+    const backendStateAfterAllRanges =
+      progressiveBackend.state;
+    const firstRangeEviction =
+      await progressiveRenderer.evictRange({
+        rangeId: firstDeferredRangeId,
+      });
+    const rendererStateAfterEviction =
+      progressiveRenderer.state;
+    const backendStateAfterEviction =
+      progressiveBackend.state;
+    progressiveReleaseReceipt =
+      await progressiveRenderer.unmount();
+    const progressiveRendererDisposed =
+      await progressiveRenderer.dispose();
+    const progressiveSessionDisposed =
+      await progressiveSession.dispose();
+    const progressive = {
+      source: {
+        fingerprint: input.snapshot.source.fingerprint,
+        revisionId: input.snapshot.revisionId,
+      },
+      mount: progressiveMount,
+      firstRangeLoad,
+      sourceStateAfterFirstRange,
+      firstRangeCacheHit,
+      sourceStateAfterCacheHit,
+      secondRangeLoad,
+      rendererStateAfterAllRanges,
+      backendStateAfterAllRanges,
+      firstRangeEviction,
+      rendererStateAfterEviction,
+      backendStateAfterEviction,
+      cleanup: {
+        releaseReceipt: progressiveReleaseReceipt,
+        rendererDisposed: progressiveRendererDisposed,
+        sessionDisposed: progressiveSessionDisposed,
+        backendState: progressiveBackend.state,
+      },
+    };
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -436,6 +517,7 @@ async function run() {
         restoredView,
       },
       precision,
+      progressive,
       performance: {
         mountMs,
         viewMs,
@@ -451,6 +533,8 @@ async function run() {
         secondarySessionDisposed,
         precisionRendererDisposed,
         precisionSessionDisposed,
+        progressiveRendererDisposed,
+        progressiveSessionDisposed,
         releasedBytes: releaseReceipt.releasedBytes,
         backendState: backend.state,
       },
@@ -596,6 +680,46 @@ async function run() {
       precisionBackend.state.activeBytes !== 0 ||
       precisionBackend.state.disposed !== true ||
       precisionSession.state.disposed !== true
+      ||
+      firstRangeLoad.status !== "loaded" ||
+      firstRangeLoad.cacheHit !== false ||
+      firstRangeLoad.backend.actualGpu !== true ||
+      firstRangeLoad.backend.nonBackgroundPixels <= 0 ||
+      firstRangeLoad.backend.activeBytes !==
+        progressiveMount.backend.uploadedBytes +
+          firstRangeLoad.backend.addedBytes ||
+      firstRangeCacheHit.status !== "resident" ||
+      firstRangeCacheHit.cacheHit !== true ||
+      firstRangeCacheHit.backend !== null ||
+      sourceStateAfterCacheHit.rangeReads !==
+        sourceStateAfterFirstRange.rangeReads ||
+      sourceStateAfterCacheHit.rangeBytes !==
+        sourceStateAfterFirstRange.rangeBytes ||
+      secondRangeLoad.status !== "loaded" ||
+      secondRangeLoad.deferredRangeIds.length !== 0 ||
+      secondRangeLoad.backend.nonBackgroundPixels <= 0 ||
+      rendererStateAfterAllRanges.residentRangeIds.length !== 3 ||
+      rendererStateAfterAllRanges.rangeLoads !== 2 ||
+      rendererStateAfterAllRanges.rangeCacheHits !== 1 ||
+      rendererStateAfterAllRanges.activeBackendBytes !==
+        secondRangeLoad.backend.activeBytes ||
+      rendererStateAfterAllRanges.activeBackendBytes >
+        progressiveRenderer.limits.maximumGpuCacheBytes ||
+      backendStateAfterAllRanges.residentRanges !== 3 ||
+      backendStateAfterAllRanges.activeBytes !==
+        rendererStateAfterAllRanges.activeBackendBytes ||
+      firstRangeEviction.status !== "evicted" ||
+      firstRangeEviction.backend.releasedBytes !==
+        firstRangeLoad.backend.addedBytes ||
+      firstRangeEviction.backend.nonBackgroundPixels <= 0 ||
+      rendererStateAfterEviction.residentRangeIds.length !== 2 ||
+      rendererStateAfterEviction.rangeEvictions !== 1 ||
+      backendStateAfterEviction.residentRanges !== 2 ||
+      progressiveReleaseReceipt.releasedBytes !==
+        firstRangeEviction.activeBackendBytes ||
+      progressiveBackend.state.activeBytes !== 0 ||
+      progressiveBackend.state.disposed !== true ||
+      progressiveSession.state.disposed !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed: " +
@@ -625,6 +749,8 @@ async function run() {
     let secondarySessionDisposed = false;
     let precisionRendererDisposed = false;
     let precisionSessionDisposed = false;
+    let progressiveRendererDisposed = false;
+    let progressiveSessionDisposed = false;
     try {
       rendererDisposed = renderer === undefined
         ? false
@@ -663,18 +789,40 @@ async function run() {
     } catch {
       precisionSessionDisposed = false;
     }
+    try {
+      progressiveRendererDisposed =
+        progressiveRenderer === undefined
+          ? false
+          : await progressiveRenderer.dispose();
+    } catch {
+      progressiveRendererDisposed = false;
+    }
+    try {
+      progressiveSessionDisposed =
+        progressiveSession === undefined
+          ? false
+          : await progressiveSession.dispose();
+    } catch {
+      progressiveSessionDisposed = false;
+    }
     showFailure(error, {
       rendererDisposed,
       sessionDisposed,
       secondarySessionDisposed,
       precisionRendererDisposed,
       precisionSessionDisposed,
+      progressiveRendererDisposed,
+      progressiveSessionDisposed,
       releaseReceipt: releaseReceipt ?? null,
       precisionReleaseReceipt:
         precisionReleaseReceipt ?? null,
+      progressiveReleaseReceipt:
+        progressiveReleaseReceipt ?? null,
       backendState: backend?.state ?? null,
       precisionBackendState:
         precisionBackend?.state ?? null,
+      progressiveBackendState:
+        progressiveBackend?.state ?? null,
     });
   }
 }

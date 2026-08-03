@@ -148,6 +148,108 @@ test("bounded renderer stages only the first geometry range", async () => {
   assert.equal(await source.dispose(), true);
 });
 
+test("progressive range cache loads, hits, and evicts within its GPU bound", async () => {
+  const {
+    source,
+    session,
+    snapshot,
+  } = await sourceSession(multiGeometryBytes(), {
+    maximumRangeBytes: 996,
+  });
+  const backend = createHeadless3dBackend();
+  const renderer = createBounded3dRenderer({
+    backend,
+    limits: {
+      maximumRangeBytes: 996,
+      maximumSourceReadBytes: 996,
+      maximumGpuCacheBytes: 2_080,
+    },
+  });
+  await renderer.mount({ session, snapshot });
+  const rangeId = snapshot.loadPlan.deferredRangeIds[0];
+  const loaded = await renderer.loadRange({ rangeId });
+
+  assert.equal(loaded.status, "loaded");
+  assert.equal(loaded.cacheHit, false);
+  assert.equal(loaded.metrics.sourceReadBytes, 996);
+  assert.equal(loaded.backend.addedBytes, 1_040);
+  assert.equal(loaded.backend.activeBytes, 2_080);
+  assert.deepEqual(loaded.residentRangeIds, [
+    "range:ifc:geometry:0",
+    "range:ifc:geometry:1",
+  ]);
+  assert.deepEqual(loaded.deferredRangeIds, []);
+  assert.equal(source.state.remainingReadBytes, 0);
+  const readsAfterLoad = source.state.rangeReads;
+
+  const hit = await renderer.loadRange({ rangeId });
+  assert.equal(hit.status, "resident");
+  assert.equal(hit.cacheHit, true);
+  assert.equal(hit.backend, null);
+  assert.equal(source.state.rangeReads, readsAfterLoad);
+
+  const evicted = await renderer.evictRange({ rangeId });
+  assert.equal(evicted.status, "evicted");
+  assert.equal(evicted.backend.releasedBytes, 1_040);
+  assert.equal(evicted.activeBackendBytes, 1_040);
+  assert.deepEqual(evicted.residentRangeIds, [
+    "range:ifc:geometry:0",
+  ]);
+  assert.deepEqual(evicted.deferredRangeIds, [
+    "range:ifc:geometry:1",
+  ]);
+  assert.equal(renderer.state.rangeLoads, 1);
+  assert.equal(renderer.state.rangeCacheHits, 1);
+  assert.equal(renderer.state.rangeEvictions, 1);
+  assert.equal(backend.state.rangeUpdates, 2);
+
+  await assert.rejects(
+    renderer.evictRange({
+      rangeId: "range:ifc:geometry:0",
+    }),
+    /initial range must remain resident/u,
+  );
+  const released = await renderer.unmount();
+  assert.equal(released.releasedBytes, 1_040);
+  await renderer.dispose();
+  await session.dispose();
+  await source.dispose();
+});
+
+test("progressive range cache rejects aggregate GPU overcommit", async () => {
+  const {
+    source,
+    session,
+    snapshot,
+  } = await sourceSession(multiGeometryBytes(), {
+    maximumRangeBytes: 996,
+  });
+  const backend = createHeadless3dBackend();
+  const renderer = createBounded3dRenderer({
+    backend,
+    limits: {
+      maximumRangeBytes: 996,
+      maximumSourceReadBytes: 996,
+      maximumGpuCacheBytes: 2_079,
+    },
+  });
+  await renderer.mount({ session, snapshot });
+
+  await assert.rejects(
+    renderer.loadRange({
+      rangeId: snapshot.loadPlan.deferredRangeIds[0],
+    }),
+    /GPU cache exceeds/u,
+  );
+  assert.equal(renderer.state.activeBackendBytes, 1_040);
+  assert.equal(renderer.state.rangeLoads, 0);
+  assert.equal(backend.state.rangeUpdates, 0);
+
+  await renderer.dispose();
+  await session.dispose();
+  await source.dispose();
+});
+
 test("shared geometry uploads once and keeps two source instances", async () => {
   const {
     source,

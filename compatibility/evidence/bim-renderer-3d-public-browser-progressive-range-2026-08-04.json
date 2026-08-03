@@ -1,0 +1,139 @@
+{
+  "schema": "bim-explorer-browser-progressive-range-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-progressive-range",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumGpuCacheBytes": 16777216,
+    "maximumCpuStagingBytes": 16777216,
+    "maximumRangeBytes": 4194304,
+    "maximumReadBytes": 1048576,
+    "maximumFrameMs": 1000
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-progressive-range-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "rangeReceipt": "bim-explorer-bim-renderer-3d-range-receipt/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false
+    },
+    "initial": {
+      "rangeId": "range:ifc:geometry:0",
+      "sourceReadBytes": 4193868,
+      "sourceReads": 4,
+      "uploadedBytes": 4399252,
+      "instances": 3182,
+      "drawCalls": 3182,
+      "gpuBuffers": 3
+    },
+    "firstLoad": {
+      "rangeId": "range:ifc:geometry:1",
+      "sourceReadBytes": 4194152,
+      "sourceReads": 4,
+      "geometryPayloadBytes": 4158276,
+      "instanceBytes": 174560,
+      "instances": 2182,
+      "addedBytes": 4332836,
+      "activeBytes": 8732088,
+      "residentRanges": 2,
+      "gpuBuffers": 6,
+      "drawCalls": 5364,
+      "nonBackgroundPixels": 72182,
+      "frameMs": 22.399999976158142,
+      "cpuRangeStagingReleased": true,
+      "glError": 0
+    },
+    "cacheHit": {
+      "rangeId": "range:ifc:geometry:1",
+      "cacheHit": true,
+      "sourceReadsBefore": 8,
+      "sourceReadsAfter": 8,
+      "sourceBytesBefore": 8388020,
+      "sourceBytesAfter": 8388020,
+      "activeBytes": 8732088,
+      "backendCall": false
+    },
+    "secondLoad": {
+      "rangeId": "range:ifc:geometry:2",
+      "sourceReadBytes": 902676,
+      "sourceReads": 1,
+      "geometryPayloadBytes": 893760,
+      "instanceBytes": 48640,
+      "instances": 608,
+      "addedBytes": 942400,
+      "activeBytes": 9674488,
+      "residentRanges": 3,
+      "gpuBuffers": 9,
+      "drawCalls": 5972,
+      "nonBackgroundPixels": 72671,
+      "frameMs": 14.700000047683716,
+      "cpuRangeStagingReleased": true,
+      "glError": 0
+    },
+    "eviction": {
+      "rangeId": "range:ifc:geometry:1",
+      "releasedBytes": 4332836,
+      "activeBytes": 5341652,
+      "residentRangeIds": [
+        "range:ifc:geometry:0",
+        "range:ifc:geometry:2"
+      ],
+      "gpuBuffers": 6,
+      "drawCalls": 3790,
+      "nonBackgroundPixels": 70171,
+      "frameMs": 10,
+      "glError": 0
+    },
+    "cleanup": {
+      "unmountReleasedBytes": 5341652,
+      "totalReleasedBytes": 9674488,
+      "activeBytes": 0,
+      "residentRanges": 0,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "boundedInitialRange": true,
+    "incrementalGpuUpload": true,
+    "boundedCpuStagingReleased": true,
+    "revisionBoundRanges": true,
+    "residentCacheHitAvoidsRead": true,
+    "residentCacheHitAvoidsUpload": true,
+    "aggregateGpuCacheBound": true,
+    "rangeEvictionReleasesGpuBytes": true,
+    "remainingRangesRedraw": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "progressiveRangeCache": "passed",
+    "visibilityDrivenFirstFrame": "blocked",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}

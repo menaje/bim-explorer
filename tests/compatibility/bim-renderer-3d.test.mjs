@@ -40,6 +40,10 @@ async function fixtures() {
       manifest.evidence.browserLargeCoordinate,
       "utf8",
     )),
+    browserProgressiveRange: JSON.parse(await readFile(
+      manifest.evidence.browserProgressiveRange,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -65,7 +69,8 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
     1_000_000_003,
     1_000_000_001.5,
   ]);
-  assert.equal(result.passedGates, 15);
+  assert.equal(result.browserProgressiveActiveBytes, 9_674_488);
+  assert.equal(result.passedGates, 16);
   assert.equal(result.heldGates, 4);
 });
 
@@ -138,6 +143,18 @@ test("Browser precision evidence pins relative GPU coordinates", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /precision render receipt is invalid/u,
+  );
+});
+
+test("Browser progressive evidence pins cache hit and eviction", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserProgressiveRange.representativeReport
+    .cacheHit.sourceReadsAfter += 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /progressive cache hit is invalid/u,
   );
 });
 

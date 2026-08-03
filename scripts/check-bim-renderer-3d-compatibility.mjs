@@ -19,6 +19,7 @@ const TRUE_GATES = [
   "contextLossAndGpuSourceSwitch",
   "sectionMeasurement",
   "largeCoordinatePrecision",
+  "progressiveRangeCache",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
@@ -112,6 +113,20 @@ const PRECISION_CONFORMANCE_ASSERTIONS = [
   "deterministicDispose",
   "pathFreeReport",
 ];
+const PROGRESSIVE_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "boundedInitialRange",
+  "incrementalGpuUpload",
+  "boundedCpuStagingReleased",
+  "revisionBoundRanges",
+  "residentCacheHitAvoidsRead",
+  "residentCacheHitAvoidsUpload",
+  "aggregateGpuCacheBound",
+  "rangeEvictionReleasesGpuBytes",
+  "remainingRangesRedraw",
+  "deterministicDispose",
+  "pathFreeReport",
+];
 const RENDERER_LIMITS = Object.freeze({
   maximumFirstFrameRanges: 1,
   maximumRangeBytes: 4_194_304,
@@ -123,6 +138,7 @@ const RENDERER_LIMITS = Object.freeze({
   maximumInstancedTriangles: 5_000_000,
   maximumDrawCalls: 100_000,
   maximumCpuStagingBytes: 16_777_216,
+  maximumGpuCacheBytes: 16_777_216,
 });
 
 function plainRecord(value, label) {
@@ -1478,6 +1494,216 @@ function validateBrowserPrecisionEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserProgressiveEvidence(manifest, evidence) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser progressive fixture",
+  );
+  const budget = plainRecord(
+    evidence.budget,
+    "Browser progressive budget",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser progressive representativeReport",
+  );
+  const expected = plainRecord(
+    manifest.expected.browserProgressiveRange,
+    "manifest.expected.browserProgressiveRange",
+  );
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-progressive-range-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-progressive-range" ||
+    fixture.id !== manifest.fixture.id ||
+    fixture.schema !== manifest.fixture.schema ||
+    fixture.profile !== manifest.fixture.profile ||
+    fixture.byteLength !== manifest.fixture.byteLength ||
+    fixture.sha256 !== manifest.fixture.sha256 ||
+    fixture.artifactCommitted !== false ||
+    fixture.profileAdmission !== false ||
+    budget.maximumGpuCacheBytes !== 16_777_216 ||
+    budget.maximumCpuStagingBytes !== 16_777_216 ||
+    budget.maximumRangeBytes !== 4_194_304 ||
+    budget.maximumReadBytes !== 1_048_576 ||
+    budget.maximumFrameMs !== 1_000
+  ) {
+    throw new Error(
+      "Browser progressive evidence identity is invalid",
+    );
+  }
+  if (
+    report.schema !==
+      "bim-explorer-browser-progressive-range-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !==
+      `sha256:${manifest.fixture.sha256}` ||
+    report.source?.revisionId !==
+      `source-snapshot:sha256:${manifest.fixture.sha256}` ||
+    report.renderer?.contract !== manifest.contract.renderer ||
+    report.renderer?.rangeReceipt !==
+      "bim-explorer-bim-renderer-3d-range-receipt/0.1" ||
+    report.renderer?.backend !== manifest.browserBackend.id ||
+    report.renderer?.gpuApi !== true ||
+    report.renderer?.physicalGpuClaimed !== false
+  ) {
+    throw new Error(
+      "Browser progressive renderer identity is invalid",
+    );
+  }
+  const initial = report.initial;
+  if (
+    initial?.rangeId !== "range:ifc:geometry:0" ||
+    initial?.sourceReadBytes !==
+      manifest.expected.metrics.sourceReadBytes ||
+    initial?.sourceReads !==
+      manifest.expected.metrics.sourceReads ||
+    initial?.uploadedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    initial?.instances !== manifest.expected.metrics.instances ||
+    initial?.drawCalls !== manifest.expected.metrics.drawCalls ||
+    initial?.gpuBuffers !== 3
+  ) {
+    throw new Error(
+      "Browser progressive initial range is invalid",
+    );
+  }
+  const first = report.firstLoad;
+  if (
+    first?.rangeId !== "range:ifc:geometry:1" ||
+    first?.sourceReadBytes !== 4_194_152 ||
+    first?.sourceReads !== 4 ||
+    first?.geometryPayloadBytes !== 4_158_276 ||
+    first?.instanceBytes !== 174_560 ||
+    first?.instances !== 2_182 ||
+    first?.addedBytes !== expected.firstAddedBytes ||
+    first?.activeBytes !== expected.firstActiveBytes ||
+    first?.residentRanges !== 2 ||
+    first?.gpuBuffers !== 6 ||
+    first?.drawCalls !== 5_364 ||
+    first?.nonBackgroundPixels <= 0 ||
+    first?.cpuRangeStagingReleased !== true ||
+    first?.glError !== 0
+  ) {
+    throw new Error(
+      "Browser progressive first load is invalid",
+    );
+  }
+  boundedMeasurement(
+    first.frameMs,
+    budget.maximumFrameMs,
+    "Browser progressive first frame",
+  );
+  const hit = report.cacheHit;
+  if (
+    hit?.rangeId !== first.rangeId ||
+    hit?.cacheHit !== true ||
+    hit?.sourceReadsBefore !== hit?.sourceReadsAfter ||
+    hit?.sourceBytesBefore !== hit?.sourceBytesAfter ||
+    hit?.activeBytes !== first.activeBytes ||
+    hit?.backendCall !== false
+  ) {
+    throw new Error(
+      "Browser progressive cache hit is invalid",
+    );
+  }
+  const second = report.secondLoad;
+  if (
+    second?.rangeId !== "range:ifc:geometry:2" ||
+    second?.sourceReadBytes !== 902_676 ||
+    second?.sourceReads !== 1 ||
+    second?.geometryPayloadBytes !== 893_760 ||
+    second?.instanceBytes !== 48_640 ||
+    second?.instances !== 608 ||
+    second?.addedBytes !== expected.secondAddedBytes ||
+    second?.activeBytes !== expected.allActiveBytes ||
+    second?.activeBytes > budget.maximumGpuCacheBytes ||
+    second?.residentRanges !== 3 ||
+    second?.gpuBuffers !== 9 ||
+    second?.drawCalls !== 5_972 ||
+    second?.nonBackgroundPixels <= 0 ||
+    second?.cpuRangeStagingReleased !== true ||
+    second?.glError !== 0
+  ) {
+    throw new Error(
+      "Browser progressive second load is invalid",
+    );
+  }
+  boundedMeasurement(
+    second.frameMs,
+    budget.maximumFrameMs,
+    "Browser progressive second frame",
+  );
+  const eviction = report.eviction;
+  if (
+    eviction?.rangeId !== first.rangeId ||
+    eviction?.releasedBytes !== first.addedBytes ||
+    eviction?.activeBytes !== expected.evictedActiveBytes ||
+    !equalJson(eviction?.residentRangeIds, [
+      "range:ifc:geometry:0",
+      "range:ifc:geometry:2",
+    ]) ||
+    eviction?.gpuBuffers !== 6 ||
+    eviction?.drawCalls !== 3_790 ||
+    eviction?.nonBackgroundPixels <= 0 ||
+    eviction?.glError !== 0
+  ) {
+    throw new Error(
+      "Browser progressive eviction is invalid",
+    );
+  }
+  boundedMeasurement(
+    eviction.frameMs,
+    budget.maximumFrameMs,
+    "Browser progressive eviction frame",
+  );
+  if (
+    report.cleanup?.unmountReleasedBytes !==
+      eviction.activeBytes ||
+    report.cleanup?.totalReleasedBytes !==
+      expected.allActiveBytes ||
+    report.cleanup?.activeBytes !== 0 ||
+    report.cleanup?.residentRanges !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.sessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error(
+      "Browser progressive cleanup is invalid",
+    );
+  }
+  for (const assertion of PROGRESSIVE_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser progressive conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      PROGRESSIVE_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.progressiveRangeCache !== "passed" ||
+    evidence.decision?.visibilityDrivenFirstFrame !== "blocked" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser progressive decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -1511,6 +1737,10 @@ export function validateBimRenderer3dCompatibility(
   const browserPrecisionEvidence = plainRecord(
     evidenceBundle.browserLargeCoordinate,
     "Browser large-coordinate BIM renderer evidence",
+  );
+  const browserProgressiveEvidence = plainRecord(
+    evidenceBundle.browserProgressiveRange,
+    "Browser progressive-range BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -1581,7 +1811,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-browser-" +
         "large-coordinate-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 7 ||
+    manifest.evidence?.browserProgressiveRange !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "progressive-range-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 8 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -1832,6 +2066,11 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserPrecisionEvidence,
     );
+  const browserProgressiveReport =
+    validateBrowserProgressiveEvidence(
+      manifest,
+      browserProgressiveEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -1857,6 +2096,8 @@ export function validateBimRenderer3dCompatibility(
       browserSectionReport.measurements.distance.value,
     browserPrecisionWorldOrigin:
       browserPrecisionReport.renderer.precision.worldOrigin,
+    browserProgressiveActiveBytes:
+      browserProgressiveReport.secondLoad.activeBytes,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -1903,6 +2144,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserLargeCoordinate,
+      ),
+      "utf8",
+    )),
+    browserProgressiveRange: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserProgressiveRange,
       ),
       "utf8",
     )),
