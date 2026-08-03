@@ -41,6 +41,29 @@
       "drawCalls": 3182,
       "gpuBuffers": 3
     },
+    "visibility": {
+      "isolate": {
+        "isolatedRenderIds": 8,
+        "hiddenInstances": 3174,
+        "visibleInstances": 8,
+        "drawCalls": 8,
+        "nonBackgroundPixels": 3565,
+        "frameMs": 3.399999976158142,
+        "glError": 0
+      },
+      "showAll": {
+        "isolatedRenderIds": 0,
+        "hiddenInstances": 0,
+        "visibleInstances": 3182,
+        "drawCalls": 3182,
+        "nonBackgroundPixels": 57438,
+        "frameMs": 21.100000023841858,
+        "glError": 0
+      },
+      "uploadedBytesBefore": 4399252,
+      "uploadedBytesAfter": 4399252,
+      "frames": 3
+    },
     "firstLoad": {
       "rangeId": "range:ifc:geometry:1",
       "sourceReadBytes": 4194152,
@@ -124,12 +147,14 @@
     "aggregateGpuCacheBound": true,
     "rangeEvictionReleasesGpuBytes": true,
     "remainingRangesRedraw": true,
+    "isolateHideShowAll": true,
     "deterministicDispose": true,
     "pathFreeReport": true,
     "consoleWarningsOrErrors": false
   },
   "decision": {
     "progressiveRangeCache": "passed",
+    "isolateVisibility": "passed",
     "visibilityDrivenFirstFrame": "blocked",
     "physicalGpuQualification": "not-claimed",
     "browserVscodeConformance": "blocked",

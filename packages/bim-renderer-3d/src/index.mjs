@@ -1650,6 +1650,7 @@ export class Bounded3dRenderer {
     camera: cameraValue,
     clippingPlanes = [],
     hiddenRenderIds = [],
+    isolateRenderIds = null,
     selectedPickIds = [],
     sectionBox = null,
     signal,
@@ -1695,6 +1696,40 @@ export class Bounded3dRenderer {
       );
     }
     if (
+      isolateRenderIds !== null &&
+      (
+        !Array.isArray(isolateRenderIds) ||
+        isolateRenderIds.length === 0 ||
+        isolateRenderIds.length >
+          this.limits.maximumInstances ||
+        new Set(isolateRenderIds).size !==
+          isolateRenderIds.length ||
+        isolateRenderIds.some((renderId) =>
+          typeof renderId !== "string" ||
+          renderId.length === 0)
+      )
+    ) {
+      throw new TypeError(
+        "renderer isolate Render IDs must be a non-empty unique list",
+      );
+    }
+    if (
+      isolateRenderIds !== null &&
+      hiddenRenderIds.length > 0
+    ) {
+      throw new RangeError(
+        "renderer isolate and hidden Render IDs are mutually exclusive",
+      );
+    }
+    if (
+      isolateRenderIds?.some((renderId) =>
+        !known.has(renderId))
+    ) {
+      throw new RangeError(
+        "renderer isolate Render ID is outside the active revision",
+      );
+    }
+    if (
       !Array.isArray(selectedPickIds) ||
       selectedPickIds.length >
         this.limits.maximumInstances ||
@@ -1713,7 +1748,14 @@ export class Bounded3dRenderer {
         "renderer selected Pick ID is outside the active revision",
       );
     }
-    const hidden = new Set(hiddenRenderIds);
+    const isolated = isolateRenderIds === null
+      ? null
+      : new Set(isolateRenderIds);
+    const effectiveHiddenRenderIds = isolated === null
+      ? [...hiddenRenderIds]
+      : [...new Set(this.#active.instanceRenderIds)]
+          .filter((renderId) => !isolated.has(renderId));
+    const hidden = new Set(effectiveHiddenRenderIds);
     const selected = new Set(selectedPickIds);
     const hiddenInstances =
       this.#active.instanceRenderIds.filter((renderId) =>
@@ -1740,7 +1782,9 @@ export class Bounded3dRenderer {
         {
           camera,
           clippingPlanes: clipping.activePlanes,
-          hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
+          hiddenRenderIds: Object.freeze([
+            ...effectiveHiddenRenderIds,
+          ]),
           selectedPickIds: Object.freeze([...selectedPickIds]),
         },
         { signal },
@@ -1756,7 +1800,7 @@ export class Bounded3dRenderer {
       this.#active.camera = camera;
       this.#active.clipping = clipping;
       this.#active.hiddenRenderIds =
-        Object.freeze([...hiddenRenderIds]);
+        Object.freeze([...effectiveHiddenRenderIds]);
       this.#active.selectedPickIds =
         Object.freeze([...selectedPickIds]);
       this.#viewUpdates += 1;
@@ -1772,7 +1816,19 @@ export class Bounded3dRenderer {
           activePlanes: clipping.activePlanes.length,
         }),
         visibility: Object.freeze({
-          hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
+          mode: isolated === null
+            ? effectiveHiddenRenderIds.length > 0
+              ? "hide"
+              : "show-all"
+            : "isolate",
+          hiddenRenderIds: Object.freeze([
+            ...effectiveHiddenRenderIds,
+          ]),
+          isolatedRenderIds: Object.freeze(
+            isolateRenderIds === null
+              ? []
+              : [...isolateRenderIds],
+          ),
           hiddenInstances,
           visibleInstances,
         }),

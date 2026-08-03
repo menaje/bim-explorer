@@ -124,6 +124,7 @@ const PROGRESSIVE_CONFORMANCE_ASSERTIONS = [
   "aggregateGpuCacheBound",
   "rangeEvictionReleasesGpuBytes",
   "remainingRangesRedraw",
+  "isolateHideShowAll",
   "deterministicDispose",
   "pathFreeReport",
 ];
@@ -1570,6 +1571,42 @@ function validateBrowserProgressiveEvidence(manifest, evidence) {
       "Browser progressive initial range is invalid",
     );
   }
+  const visibility = report.visibility;
+  if (
+    visibility?.isolate?.isolatedRenderIds !== 8 ||
+    visibility?.isolate?.hiddenInstances !== 3_174 ||
+    visibility?.isolate?.visibleInstances !== 8 ||
+    visibility?.isolate?.drawCalls !== 8 ||
+    visibility?.isolate?.nonBackgroundPixels <= 0 ||
+    visibility?.isolate?.glError !== 0 ||
+    visibility?.showAll?.isolatedRenderIds !== 0 ||
+    visibility?.showAll?.hiddenInstances !== 0 ||
+    visibility?.showAll?.visibleInstances !==
+      manifest.expected.metrics.instances ||
+    visibility?.showAll?.drawCalls !==
+      manifest.expected.metrics.drawCalls ||
+    visibility?.showAll?.nonBackgroundPixels !== 57_438 ||
+    visibility?.showAll?.glError !== 0 ||
+    visibility?.uploadedBytesBefore !==
+      manifest.expected.browserUploadedBytes ||
+    visibility?.uploadedBytesAfter !==
+      visibility.uploadedBytesBefore ||
+    visibility?.frames !== 3
+  ) {
+    throw new Error(
+      "Browser progressive visibility is invalid",
+    );
+  }
+  boundedMeasurement(
+    visibility.isolate.frameMs,
+    budget.maximumFrameMs,
+    "Browser isolate frame",
+  );
+  boundedMeasurement(
+    visibility.showAll.frameMs,
+    budget.maximumFrameMs,
+    "Browser show-all frame",
+  );
   const first = report.firstLoad;
   if (
     first?.rangeId !== "range:ifc:geometry:1" ||
@@ -1691,6 +1728,7 @@ function validateBrowserProgressiveEvidence(manifest, evidence) {
       PROGRESSIVE_CONFORMANCE_ASSERTIONS.length + 1 ||
     evidence.conformance?.consoleWarningsOrErrors !== false ||
     evidence.decision?.progressiveRangeCache !== "passed" ||
+    evidence.decision?.isolateVisibility !== "passed" ||
     evidence.decision?.visibilityDrivenFirstFrame !== "blocked" ||
     evidence.decision?.physicalGpuQualification !==
       "not-claimed" ||

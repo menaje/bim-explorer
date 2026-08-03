@@ -395,6 +395,25 @@ async function run() {
         session: progressiveSession,
         snapshot: input.snapshot,
       });
+    const initialRangeId =
+      input.snapshot.loadPlan.firstFrameRangeIds[0];
+    const isolateRenderIds = input.snapshot.entities
+      .filter((entity) =>
+        entity.primitives.some((primitive) =>
+          primitive.slice.rangeId === initialRangeId))
+      .slice(0, 8)
+      .map((entity) => entity.renderId);
+    const isolateView =
+      await progressiveRenderer.renderView({
+        camera: progressiveMount.backend.camera,
+        isolateRenderIds,
+      });
+    const showAllView =
+      await progressiveRenderer.renderView({
+        camera: progressiveMount.backend.camera,
+      });
+    const backendStateAfterVisibility =
+      progressiveBackend.state;
     const [
       firstDeferredRangeId,
       secondDeferredRangeId,
@@ -439,6 +458,12 @@ async function run() {
         revisionId: input.snapshot.revisionId,
       },
       mount: progressiveMount,
+      visibility: {
+        isolateRenderIds,
+        isolateView,
+        showAllView,
+        backendState: backendStateAfterVisibility,
+      },
       firstRangeLoad,
       sourceStateAfterFirstRange,
       firstRangeCacheHit,
@@ -682,6 +707,23 @@ async function run() {
       precisionSession.state.disposed !== true
       ||
       firstRangeLoad.status !== "loaded" ||
+      isolateRenderIds.length !== 8 ||
+      isolateView.visibility.mode !== "isolate" ||
+      isolateView.visibility.isolatedRenderIds.length !== 8 ||
+      isolateView.visibility.hiddenInstances <= 0 ||
+      isolateView.visibility.visibleInstances >=
+        progressiveMount.metrics.instances ||
+      isolateView.backend.nonBackgroundPixels <= 0 ||
+      showAllView.visibility.mode !== "show-all" ||
+      showAllView.visibility.hiddenInstances !== 0 ||
+      showAllView.visibility.visibleInstances !==
+        progressiveMount.metrics.instances ||
+      showAllView.backend.nonBackgroundPixels !==
+        progressiveMount.backend.nonBackgroundPixels ||
+      backendStateAfterVisibility.activeBytes !==
+        progressiveMount.backend.uploadedBytes ||
+      backendStateAfterVisibility.frames !== 3 ||
+      progressiveBackend.state.activeBytes !== 0 ||
       firstRangeLoad.cacheHit !== false ||
       firstRangeLoad.backend.actualGpu !== true ||
       firstRangeLoad.backend.nonBackgroundPixels <= 0 ||

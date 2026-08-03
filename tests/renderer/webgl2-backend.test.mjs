@@ -332,6 +332,36 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(backend.state.hiddenRenderIds, 0);
   assert.equal(context.drawCalls, 5);
 
+  const isolatedView = await renderer.renderView({
+    camera: fittedView.camera,
+    isolateRenderIds: [snapshot.entities[1].renderId],
+  });
+  assert.equal(isolatedView.viewRevision, 3);
+  assert.equal(isolatedView.visibility.mode, "isolate");
+  assert.deepEqual(isolatedView.visibility.isolatedRenderIds, [
+    snapshot.entities[1].renderId,
+  ]);
+  assert.equal(isolatedView.visibility.hiddenInstances, 1);
+  assert.equal(isolatedView.visibility.visibleInstances, 1);
+  const showAllView = await renderer.renderView({
+    camera: fittedView.camera,
+  });
+  assert.equal(showAllView.viewRevision, 4);
+  assert.equal(showAllView.visibility.mode, "show-all");
+  assert.deepEqual(showAllView.visibility.hiddenRenderIds, []);
+  assert.deepEqual(showAllView.visibility.isolatedRenderIds, []);
+  assert.equal(showAllView.visibility.visibleInstances, 2);
+  assert.equal(backend.state.frames, 5);
+  assert.equal(context.drawCalls, 8);
+  await assert.rejects(
+    renderer.renderView({
+      camera: fittedView.camera,
+      hiddenRenderIds: [snapshot.entities[0].renderId],
+      isolateRenderIds: [snapshot.entities[1].renderId],
+    }),
+    /mutually exclusive/u,
+  );
+
   const picked = await renderer.pick({
     x: 80,
     y: 45,
@@ -353,7 +383,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     camera: fittedView.camera,
     selectedPickIds: [picked.identity.pickId],
   });
-  assert.equal(selectedView.viewRevision, 3);
+  assert.equal(selectedView.viewRevision, 5);
   assert.equal(selectedView.selection.selectedPickIds.length, 1);
   assert.ok(selectedView.selection.selectedInstances >= 1);
   assert.equal(
@@ -364,10 +394,10 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     selectedView.backend.highlightedInstances,
     selectedView.selection.highlightedInstances,
   );
-  assert.equal(renderer.state.viewUpdates, 3);
-  assert.equal(backend.state.frames, 4);
+  assert.equal(renderer.state.viewUpdates, 5);
+  assert.equal(backend.state.frames, 6);
   assert.equal(backend.state.selectedPickIds, 1);
-  assert.equal(context.drawCalls, 9);
+  assert.equal(context.drawCalls, 12);
 
   const horizontalPick = await renderer.pick({
     x: 60,
@@ -396,7 +426,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(renderer.state.picks, 3);
   assert.equal(renderer.state.measurements, 3);
   assert.equal(backend.state.picks, 3);
-  assert.equal(context.drawCalls, 13);
+  assert.equal(context.drawCalls, 16);
   const stalePick = structuredClone(picked);
   stalePick.source.revisionId += ":stale";
   assert.throws(
@@ -414,7 +444,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
       constant: -2,
     }],
   });
-  assert.equal(clippedView.viewRevision, 4);
+  assert.equal(clippedView.viewRevision, 6);
   assert.equal(clippedView.clipping.activePlanes, 1);
   assert.equal(clippedView.backend.clippingPlanes, 1);
   const sectionView = await renderer.renderView({
@@ -424,18 +454,18 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
       max: [4, 6, 3],
     },
   });
-  assert.equal(sectionView.viewRevision, 5);
+  assert.equal(sectionView.viewRevision, 7);
   assert.equal(sectionView.clipping.activePlanes, 6);
   assert.equal(sectionView.backend.clippingPlanes, 6);
   const restoredAfterSection = await renderer.renderView({
     camera: fittedView.camera,
   });
-  assert.equal(restoredAfterSection.viewRevision, 6);
+  assert.equal(restoredAfterSection.viewRevision, 8);
   assert.equal(restoredAfterSection.clipping.activePlanes, 0);
-  assert.equal(renderer.state.viewUpdates, 6);
-  assert.equal(backend.state.frames, 7);
+  assert.equal(renderer.state.viewUpdates, 8);
+  assert.equal(backend.state.frames, 9);
   assert.equal(backend.state.clippingPlanes, 0);
-  assert.equal(context.drawCalls, 19);
+  assert.equal(context.drawCalls, 22);
   await assert.rejects(
     renderer.renderView({
       camera: fittedView.camera,
