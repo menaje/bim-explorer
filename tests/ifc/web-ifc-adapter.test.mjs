@@ -36,6 +36,8 @@ test("web-ifc adapter satisfies the synthetic IFC contract", async () => {
       duplicates: 0,
       missingOnIfcRoot: 0,
     });
+    assert.equal(report.semantics.expressIds.count, 17);
+    assert.equal(report.semantics.expressIds.duplicates, 0);
     assert.equal(report.geometry.triangles, 12);
     assert.deepEqual(report.geometry.bounds, {
       min: [0, 0.9, 0],

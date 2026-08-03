@@ -24,9 +24,22 @@ function plainRecord(value, label) {
   return value;
 }
 
-export function validateIfcEngineCompatibility(manifest, evidence) {
+function aggregateCapability(values, label) {
+  const evidenced = [...new Set(
+    values.filter((value) => value !== "blocked"),
+  )];
+  if (evidenced.length === 0) {
+    return "blocked";
+  }
+  if (evidenced.length > 1) {
+    throw new Error(`${label} has conflicting evidenced statuses`);
+  }
+  return evidenced[0];
+}
+
+export function validateIfcEngineCompatibility(manifest, evidenceList) {
   plainRecord(manifest, "IFC engine compatibility manifest");
-  if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/1") {
+  if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
     throw new Error("unsupported IFC engine compatibility schema");
   }
   if (manifest.status !== "experimental") {
@@ -38,7 +51,8 @@ export function validateIfcEngineCompatibility(manifest, evidence) {
   const contract = plainRecord(manifest.contract, "contract");
   if (
     contract.reportSchema !== REPORT_SCHEMA ||
-    contract.fingerprintProjection !== FINGERPRINT_PROJECTION
+    contract.fingerprintProjection !== FINGERPRINT_PROJECTION ||
+    contract.version !== "0.1.0"
   ) {
     throw new Error("compatibility manifest does not use the current contract");
   }
@@ -109,65 +123,103 @@ export function validateIfcEngineCompatibility(manifest, evidence) {
     throw new Error("experimental compatibility requires blockers");
   }
 
-  plainRecord(evidence, "IFC engine evidence");
   if (
-    evidence.schema !==
-      "bim-explorer-ifc-engine-qualification-evidence/1" ||
-    evidence.status !== "experimental" ||
-    evidence.decision?.goNoGo !== "held" ||
-    evidence.decision?.writeRoundTrip !== "blocked"
+    !Array.isArray(manifest.fixtures) ||
+    !Array.isArray(manifest.evidence) ||
+    !Array.isArray(evidenceList) ||
+    manifest.fixtures.length !== evidenceList.length ||
+    manifest.evidence.length !== evidenceList.length
   ) {
-    throw new Error("IFC engine evidence must remain experimental and held");
+    throw new Error("compatibility requires one evidence file per fixture");
   }
+  const expectedFixtureIds = manifest.fixtures
+    .map((fixture) => plainRecord(fixture, "fixture").id)
+    .sort();
+  const observedFixtureIds = evidenceList
+    .map((evidence) => evidence.fixture?.id)
+    .sort();
   if (
-    evidence.crossEngineComparison?.performed !== true ||
-    evidence.crossEngineComparison?.passed !== true
+    new Set(expectedFixtureIds).size !== expectedFixtureIds.length ||
+    JSON.stringify(expectedFixtureIds) !==
+      JSON.stringify(observedFixtureIds)
   ) {
-    throw new Error("cross-engine synthetic comparison did not pass");
+    throw new Error("fixture manifest and evidence IDs differ");
+  }
+
+  for (const evidence of evidenceList) {
+    plainRecord(evidence, "IFC engine evidence");
+    if (
+      evidence.schema !==
+        "bim-explorer-ifc-engine-qualification-evidence/2" ||
+      evidence.status !== "experimental" ||
+      evidence.decision?.goNoGo !== "held" ||
+      evidence.decision?.writeRoundTrip !== "blocked"
+    ) {
+      throw new Error("IFC engine evidence must remain experimental and held");
+    }
+    if (
+      evidence.crossEngineComparison?.performed !== true ||
+      evidence.crossEngineComparison?.passed !== true
+    ) {
+      throw new Error("cross-engine synthetic comparison did not pass");
+    }
   }
 
   for (const id of CANDIDATES) {
-    const engine = evidence.engines.find((item) => item.engine === id);
-    if (
-      !engine ||
-      engine.status !== "passed-synthetic-small" ||
-      engine.deterministicFingerprint !== true ||
-      engine.runs.length !== 2
-    ) {
-      throw new Error(`${id} requires two deterministic synthetic runs`);
-    }
-    const fingerprints = engine.runs.map((run) => {
-      const report = run.report;
-      validateIfcEngineReport(report);
+    const reports = [];
+    for (const evidence of evidenceList) {
+      const engine = evidence.engines.find((item) => item.engine === id);
       if (
-        report.engine.version !== candidates[id].version ||
-        report.engine.license !== candidates[id].license ||
-        run.process?.processExited !== true ||
-        run.process?.timedOut !== false ||
-        run.process?.exitCode !== 0
+        !engine ||
+        engine.status !== `passed-${evidence.fixture.id}` ||
+        engine.deterministicFingerprint !== true ||
+        engine.runs.length !== 2
       ) {
-        throw new Error(`${id} evidence metadata or process receipt mismatch`);
+        throw new Error(
+          `${id} requires two deterministic runs for ${evidence.fixture.id}`,
+        );
       }
-      for (const capability of CAPABILITY_NAMES) {
+      const fingerprints = engine.runs.map((run) => {
+        const report = run.report;
+        validateIfcEngineReport(report);
         if (
-          report.capabilities[capability] !==
-            matrix[capability][id]
+          report.fixture.id !== evidence.fixture.id ||
+          report.engine.version !== candidates[id].version ||
+          report.engine.license !== candidates[id].license ||
+          run.process?.processExited !== true ||
+          run.process?.timedOut !== false ||
+          run.process?.exitCode !== 0
         ) {
           throw new Error(
-            `${id} capability ${capability} differs from the matrix`,
+            `${id} evidence metadata or process receipt mismatch`,
           );
         }
+        return report.fingerprint.value;
+      });
+      if (new Set(fingerprints).size !== 1) {
+        throw new Error(
+          `${id} deterministic fingerprints differ for ${evidence.fixture.id}`,
+        );
       }
-      return report.fingerprint.value;
-    });
-    if (new Set(fingerprints).size !== 1) {
-      throw new Error(`${id} deterministic fingerprints differ`);
+      reports.push(engine.runs[0].report);
+    }
+    for (const capability of CAPABILITY_NAMES) {
+      const aggregate = aggregateCapability(
+        reports.map((report) => report.capabilities[capability]),
+        `${id}.${capability}`,
+      );
+      if (aggregate !== matrix[capability][id]) {
+        throw new Error(
+          `${id} aggregate capability ${capability} differs from the matrix`,
+        );
+      }
     }
   }
 
   return Object.freeze({
     status: manifest.status,
     candidates: CANDIDATES.length,
+    fixtures: evidenceList.length,
     passedGates: Object.values(gates).filter(Boolean).length,
     heldGates: Object.values(gates).filter((value) => !value).length,
   });
@@ -181,14 +233,15 @@ async function main() {
       "utf8",
     ),
   );
-  const evidence = JSON.parse(
-    await readFile(path.join(root, manifest.evidence), "utf8"),
+  const evidence = await Promise.all(
+    manifest.evidence.map(async (relative) =>
+      JSON.parse(await readFile(path.join(root, relative), "utf8"))),
   );
   const report = validateIfcEngineCompatibility(manifest, evidence);
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +
-      `${report.candidates} candidates, ${report.passedGates} passed and ` +
-      `${report.heldGates} held gates`,
+      `${report.candidates} candidates, ${report.fixtures} fixtures, ` +
+      `${report.passedGates} passed and ${report.heldGates} held gates`,
   );
 }
 

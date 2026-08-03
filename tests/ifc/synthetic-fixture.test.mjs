@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   syntheticIfc,
+  syntheticMappedIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
 
 test("synthetic IFC4 fixture is deterministic and path-free", async () => {
@@ -26,6 +27,23 @@ test("synthetic IFC4 fixture is deterministic and path-free", async () => {
   );
 });
 
+test("mapped IFC4 fixture reuses one representation deterministically", () => {
+  const fixture = syntheticMappedIfc();
+  assert.match(fixture, /IFCREPRESENTATIONMAP\(/u);
+  assert.equal(
+    [...fixture.matchAll(/IFCMAPPEDITEM\(/gu)].length,
+    2,
+  );
+  assert.match(fixture, /IFCELEMENTQUANTITY\(/u);
+  assert.match(fixture, /IFCRELASSOCIATESCLASSIFICATION\(/u);
+  const globalIds = [...fixture.matchAll(
+    /'([0-3][0-9A-Za-z_$]{21})'/gu,
+  )].map((match) => match[1]);
+  assert.equal(globalIds.length, 21);
+  assert.equal(new Set(globalIds).size, 21);
+  assert.doesNotMatch(fixture, /\/Volumes\/|\/Users\/|[A-Z]:\\/u);
+});
+
 test("synthetic fixture manifest separates qualified and held scenarios", async () => {
   const manifest = JSON.parse(
     await readFile(
@@ -40,4 +58,24 @@ test("synthetic fixture manifest separates qualified and held scenarios", async 
   assert.ok(manifest.qualificationUse.includes("extruded-geometry"));
   assert.ok(manifest.notQualified.includes("large-model-performance"));
   assert.ok(manifest.notQualified.includes("write-roundtrip"));
+});
+
+test("mapped fixture manifest declares shared semantic assertions", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      "fixtures/ifc/synthetic-mapped/manifest.json",
+      "utf8",
+    ),
+  );
+  assert.equal(manifest.expected.entities.IfcMappedItem, 2);
+  assert.equal(
+    manifest.expected.representationSharing.distinctMappingSources,
+    1,
+  );
+  assert.equal(manifest.expected.wall.quantities.Length, 4);
+  assert.equal(
+    manifest.expected.wall.classifications[0].identification,
+    "BE-WALL",
+  );
+  assert.ok(manifest.qualificationUse.includes("mapped-representation"));
 });

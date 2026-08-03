@@ -8,4 +8,4 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 
 현재 draft:
 
-- [IFC engine adapter contract v0.1](ifc-engine-adapter-v0.1.md)
+- [IFC engine adapter contract v0.2](ifc-engine-adapter-v0.2.md)

@@ -1,10 +1,10 @@
-# IFC engine adapter contract v0.1 (draft)
+# IFC engine adapter contract v0.2 (draft)
 
 Status: experimental draft
 
-Report schema: `bim-explorer-ifc-engine-report/0.1`
+Report schema: `bim-explorer-ifc-engine-report/0.2`
 
-Fingerprint projection: `bim-explorer-ifc-engine-fingerprint/0.1`
+Fingerprint projection: `bim-explorer-ifc-engine-fingerprint/0.2`
 
 ## Process contract
 
@@ -33,7 +33,9 @@ detected schema와 exchange view로만 식별합니다.
 - `capabilities`: 모든 operation의 `native/mapped/opaque/lossy/blocked` 상태
 - `semantics`: entity counts, GlobalId diagnostic, hierarchy와 selected object
 - `relations`: relation entity counts
-- `geometry`: products/geometries/vertices/triangles, IFC Z-up bounds
+- `representationSharing`: map/item/product/source reuse count
+- `geometry`: products/geometries/vertices/triangles, IFC Z-up aggregate와
+  occurrence별 bounds
 - `performance`: init/open/semantic/geometry/total과 memory 관찰값
 - `cleanup`: explicit model/engine cleanup receipt
 - `diagnostics`: path-free public diagnostic codes
@@ -44,10 +46,11 @@ source digest, capabilities, semantic/relation snapshot과 geometry는 포함합
 
 ## Identity
 
-GlobalId는 IFC source-local native identity입니다. Express ID는 같은 parsed
-snapshot의 lookup key일 뿐 source 변경을 가로지르는 stable identity로
-승격하지 않습니다. Render/Pick ID와 Spatial Canonical Entity ID는 이
-qualification report의 범위가 아닙니다.
+GlobalId는 IFC source-local native identity입니다. report는 IfcRoot의
+GlobalId–Express ID map을 digest로 기록해 같은 source 반복 parse에서의
+결정성을 검사합니다. Express ID는 같은 parsed snapshot의 lookup key일 뿐
+source 변경을 가로지르는 stable identity로 승격하지 않습니다. Render/Pick
+ID와 Spatial Canonical Entity ID는 이 qualification report의 범위가 아닙니다.
 
 ## Admission
 

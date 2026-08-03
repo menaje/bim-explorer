@@ -38,6 +38,13 @@ function report() {
         duplicates: 0,
         missingOnIfcRoot: 0,
       },
+      expressIds: {
+        count: 2,
+        duplicates: 0,
+        minimum: 10,
+        maximum: 20,
+        globalIdMapSha256: "b".repeat(64),
+      },
       spatialHierarchy: [
         "Synthetic Project",
         "Synthetic Site",
@@ -48,10 +55,26 @@ function report() {
         type: "WallType-01",
         materials: ["Concrete"],
         propertySets: ["Pset_WallCommon"],
+        quantities: {
+          Length: 4,
+        },
+        classifications: [
+          {
+            identification: "BE-WALL",
+            name: "Wall",
+            source: "Fixture",
+          },
+        ],
       },
     },
     relations: {
       IfcRelAggregates: 1,
+    },
+    representationSharing: {
+      representationMaps: 0,
+      mappedItems: 0,
+      productsUsingMappedItems: 0,
+      distinctMappingSources: 0,
     },
     geometry: {
       products: 1,
@@ -63,6 +86,17 @@ function report() {
         min: [0, 0.9, 0],
         max: [4, 1.1, 3],
       },
+      instances: [
+        {
+          globalId: "0AAAAAAAAAAAAAAAAAAA01",
+          expressId: 20,
+          triangles: 12,
+          bounds: {
+            min: [0, 0.9, 0],
+            max: [4, 1.1, 3],
+          },
+        },
+      ],
     },
     performance: {
       initializationMs: 1,

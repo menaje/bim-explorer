@@ -3,20 +3,22 @@
   "asOf": "2026-08-03",
   "status": "experimental",
   "fixture": {
-    "id": "synthetic-small-ifc4",
+    "id": "synthetic-mapped-ifc4",
     "kind": "repository-authored-generated",
     "artifactCommitted": false,
     "thirdPartyContent": false,
     "qualificationUse": [
       "parse",
       "semantic-index",
-      "identity",
+      "globalid-expressid-identity",
+      "mapped-representation",
+      "shared-geometry-instance",
+      "quantity",
+      "classification",
       "placement",
-      "extruded-geometry",
       "deterministic-fingerprint"
     ],
     "heldScenarios": [
-      "mapped-representation",
       "large-model-performance",
       "corrupt-input-cleanup",
       "write-roundtrip"
@@ -30,7 +32,7 @@
   "engines": [
     {
       "engine": "web-ifc",
-      "status": "passed-synthetic-small-ifc4",
+      "status": "passed-synthetic-mapped-ifc4",
       "deterministicFingerprint": true,
       "runs": [
         {
@@ -44,26 +46,26 @@
               "license": "MPL-2.0"
             },
             "fixture": {
-              "id": "synthetic-small-ifc4",
+              "id": "synthetic-mapped-ifc4",
               "schema": "IFC4",
               "view": "ReferenceView_V1.2",
-              "byteLength": 2855,
-              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+              "byteLength": 4028,
+              "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243"
             },
             "capabilities": {
               "parse": "native",
               "semanticIndex": "mapped",
               "geometry": "native",
               "placements": "mapped",
-              "mappedRepresentations": "blocked",
+              "mappedRepresentations": "mapped",
               "identity": "native",
               "typeOccurrence": "mapped",
               "propertySets": "mapped",
-              "quantities": "blocked",
+              "quantities": "mapped",
               "materials": "mapped",
-              "classifications": "blocked",
+              "classifications": "mapped",
               "relations": "mapped",
-              "sharedGeometryInstances": "blocked",
+              "sharedGeometryInstances": "mapped",
               "writeRoundTrip": "blocked",
               "cancellation": "blocked",
               "corruptInputCleanup": "blocked",
@@ -79,38 +81,38 @@
                 "IfcBuilding": 1,
                 "IfcBuildingStorey": 1,
                 "IfcSpace": 1,
-                "IfcWall": 1,
+                "IfcWall": 2,
                 "IfcWallType": 1,
                 "IfcPropertySet": 2,
-                "IfcElementQuantity": 0,
+                "IfcElementQuantity": 1,
                 "IfcMaterial": 1,
-                "IfcClassification": 0,
-                "IfcClassificationReference": 0,
-                "IfcRepresentationMap": 0,
-                "IfcMappedItem": 0
+                "IfcClassification": 1,
+                "IfcClassificationReference": 1,
+                "IfcRepresentationMap": 1,
+                "IfcMappedItem": 2
               },
               "globalIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "missingOnIfcRoot": 0
               },
               "expressIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "minimum": 13,
-                "maximum": 46,
-                "globalIdMapSha256": "36ec2cb93bafa602318e943d8465a6f52e3fbd6699b9646be00b2e2383559a6d"
+                "maximum": 66,
+                "globalIdMapSha256": "2e4e09f38b278b6644abb6af29c8d1c7ff649ec6c97f45159855bb2cfd022859"
               },
               "spatialHierarchy": [
-                "Synthetic Project",
+                "Synthetic Mapped Project",
                 "Synthetic Site",
                 "Synthetic Building",
                 "Level 01"
               ],
               "wall": {
-                "name": "Wall-01",
-                "tag": "W-01",
-                "type": "WallType-01",
+                "name": "Mapped Wall-01",
+                "tag": "MW-01",
+                "type": "MappedWallType-01",
                 "materials": [
                   "Concrete"
                 ],
@@ -118,29 +120,39 @@
                   "Pset_WallCommon",
                   "Pset_WallTypeCommon"
                 ],
-                "quantities": {},
-                "classifications": []
+                "quantities": {
+                  "GrossSideArea": 12,
+                  "GrossVolume": 2.4,
+                  "Length": 4
+                },
+                "classifications": [
+                  {
+                    "identification": "BE-WALL",
+                    "name": "Synthetic Wall Class",
+                    "source": "Synthetic Classification"
+                  }
+                ]
               }
             },
             "relations": {
               "IfcRelAggregates": 4,
               "IfcRelContainedInSpatialStructure": 1,
               "IfcRelDefinesByType": 1,
-              "IfcRelDefinesByProperties": 1,
+              "IfcRelDefinesByProperties": 2,
               "IfcRelAssociatesMaterial": 1,
-              "IfcRelAssociatesClassification": 0
+              "IfcRelAssociatesClassification": 1
             },
             "representationSharing": {
-              "representationMaps": 0,
-              "mappedItems": 0,
-              "productsUsingMappedItems": 0,
-              "distinctMappingSources": 0
+              "representationMaps": 1,
+              "mappedItems": 2,
+              "productsUsingMappedItems": 2,
+              "distinctMappingSources": 1
             },
             "geometry": {
-              "products": 1,
-              "geometries": 1,
-              "vertices": 34,
-              "triangles": 12,
+              "products": 2,
+              "geometries": 2,
+              "vertices": 68,
+              "triangles": 24,
               "coordinateSystem": "ifc-world-z-up",
               "bounds": {
                 "min": [
@@ -150,14 +162,14 @@
                 ],
                 "max": [
                   4,
-                  1.1,
+                  5.1,
                   3
                 ]
               },
               "instances": [
                 {
-                  "globalId": "0AAAAAAAAAAAAAAAAAAA06",
-                  "expressId": 32,
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                  "expressId": 40,
                   "triangles": 12,
                   "bounds": {
                     "min": [
@@ -171,17 +183,34 @@
                       3
                     ]
                   }
+                },
+                {
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA17",
+                  "expressId": 44,
+                  "triangles": 12,
+                  "bounds": {
+                    "min": [
+                      0,
+                      4.9,
+                      0
+                    ],
+                    "max": [
+                      4,
+                      5.1,
+                      3
+                    ]
+                  }
                 }
               ]
             },
             "performance": {
-              "initializationMs": 8.182542000000012,
-              "openMs": 3.2338749999999834,
-              "semanticMs": 13.131833,
-              "geometryMs": 4.616708999999986,
-              "totalMs": 30.358458000000013,
-              "peakRssBytes": 160530432,
-              "heapUsedBytes": 32364504
+              "initializationMs": 8.489499999999992,
+              "openMs": 2.5851669999999842,
+              "semanticMs": 14.151290999999986,
+              "geometryMs": 4.438874999999996,
+              "totalMs": 30.881583000000006,
+              "peakRssBytes": 160710656,
+              "heapUsedBytes": 32616112
             },
             "cleanup": {
               "modelClosed": true,
@@ -191,7 +220,7 @@
             "fingerprint": {
               "algorithm": "sha256",
               "projection": "bim-explorer-ifc-engine-fingerprint/0.2",
-              "value": "96c5cb62347a5a1da7f48edb089ad780e35a58d4dd119b9663eb7a5b49e7dddc"
+              "value": "c4468e7735eb0ac4982841c4d4a3a2e22979a40b3fb71258b222f2d5422c8c69"
             }
           },
           "process": {
@@ -199,7 +228,7 @@
             "signal": null,
             "timedOut": false,
             "processExited": true,
-            "wallClockMs": 222.503916
+            "wallClockMs": 225.982375
           }
         },
         {
@@ -213,26 +242,26 @@
               "license": "MPL-2.0"
             },
             "fixture": {
-              "id": "synthetic-small-ifc4",
+              "id": "synthetic-mapped-ifc4",
               "schema": "IFC4",
               "view": "ReferenceView_V1.2",
-              "byteLength": 2855,
-              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+              "byteLength": 4028,
+              "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243"
             },
             "capabilities": {
               "parse": "native",
               "semanticIndex": "mapped",
               "geometry": "native",
               "placements": "mapped",
-              "mappedRepresentations": "blocked",
+              "mappedRepresentations": "mapped",
               "identity": "native",
               "typeOccurrence": "mapped",
               "propertySets": "mapped",
-              "quantities": "blocked",
+              "quantities": "mapped",
               "materials": "mapped",
-              "classifications": "blocked",
+              "classifications": "mapped",
               "relations": "mapped",
-              "sharedGeometryInstances": "blocked",
+              "sharedGeometryInstances": "mapped",
               "writeRoundTrip": "blocked",
               "cancellation": "blocked",
               "corruptInputCleanup": "blocked",
@@ -248,38 +277,38 @@
                 "IfcBuilding": 1,
                 "IfcBuildingStorey": 1,
                 "IfcSpace": 1,
-                "IfcWall": 1,
+                "IfcWall": 2,
                 "IfcWallType": 1,
                 "IfcPropertySet": 2,
-                "IfcElementQuantity": 0,
+                "IfcElementQuantity": 1,
                 "IfcMaterial": 1,
-                "IfcClassification": 0,
-                "IfcClassificationReference": 0,
-                "IfcRepresentationMap": 0,
-                "IfcMappedItem": 0
+                "IfcClassification": 1,
+                "IfcClassificationReference": 1,
+                "IfcRepresentationMap": 1,
+                "IfcMappedItem": 2
               },
               "globalIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "missingOnIfcRoot": 0
               },
               "expressIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "minimum": 13,
-                "maximum": 46,
-                "globalIdMapSha256": "36ec2cb93bafa602318e943d8465a6f52e3fbd6699b9646be00b2e2383559a6d"
+                "maximum": 66,
+                "globalIdMapSha256": "2e4e09f38b278b6644abb6af29c8d1c7ff649ec6c97f45159855bb2cfd022859"
               },
               "spatialHierarchy": [
-                "Synthetic Project",
+                "Synthetic Mapped Project",
                 "Synthetic Site",
                 "Synthetic Building",
                 "Level 01"
               ],
               "wall": {
-                "name": "Wall-01",
-                "tag": "W-01",
-                "type": "WallType-01",
+                "name": "Mapped Wall-01",
+                "tag": "MW-01",
+                "type": "MappedWallType-01",
                 "materials": [
                   "Concrete"
                 ],
@@ -287,29 +316,39 @@
                   "Pset_WallCommon",
                   "Pset_WallTypeCommon"
                 ],
-                "quantities": {},
-                "classifications": []
+                "quantities": {
+                  "GrossSideArea": 12,
+                  "GrossVolume": 2.4,
+                  "Length": 4
+                },
+                "classifications": [
+                  {
+                    "identification": "BE-WALL",
+                    "name": "Synthetic Wall Class",
+                    "source": "Synthetic Classification"
+                  }
+                ]
               }
             },
             "relations": {
               "IfcRelAggregates": 4,
               "IfcRelContainedInSpatialStructure": 1,
               "IfcRelDefinesByType": 1,
-              "IfcRelDefinesByProperties": 1,
+              "IfcRelDefinesByProperties": 2,
               "IfcRelAssociatesMaterial": 1,
-              "IfcRelAssociatesClassification": 0
+              "IfcRelAssociatesClassification": 1
             },
             "representationSharing": {
-              "representationMaps": 0,
-              "mappedItems": 0,
-              "productsUsingMappedItems": 0,
-              "distinctMappingSources": 0
+              "representationMaps": 1,
+              "mappedItems": 2,
+              "productsUsingMappedItems": 2,
+              "distinctMappingSources": 1
             },
             "geometry": {
-              "products": 1,
-              "geometries": 1,
-              "vertices": 34,
-              "triangles": 12,
+              "products": 2,
+              "geometries": 2,
+              "vertices": 68,
+              "triangles": 24,
               "coordinateSystem": "ifc-world-z-up",
               "bounds": {
                 "min": [
@@ -319,14 +358,14 @@
                 ],
                 "max": [
                   4,
-                  1.1,
+                  5.1,
                   3
                 ]
               },
               "instances": [
                 {
-                  "globalId": "0AAAAAAAAAAAAAAAAAAA06",
-                  "expressId": 32,
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                  "expressId": 40,
                   "triangles": 12,
                   "bounds": {
                     "min": [
@@ -340,17 +379,34 @@
                       3
                     ]
                   }
+                },
+                {
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA17",
+                  "expressId": 44,
+                  "triangles": 12,
+                  "bounds": {
+                    "min": [
+                      0,
+                      4.9,
+                      0
+                    ],
+                    "max": [
+                      4,
+                      5.1,
+                      3
+                    ]
+                  }
                 }
               ]
             },
             "performance": {
-              "initializationMs": 8.35091700000001,
-              "openMs": 2.640833999999984,
-              "semanticMs": 13.396417000000014,
-              "geometryMs": 4.289291999999989,
-              "totalMs": 29.87354099999999,
-              "peakRssBytes": 160628736,
-              "heapUsedBytes": 32312840
+              "initializationMs": 8.208165999999977,
+              "openMs": 2.736666999999983,
+              "semanticMs": 14.555417000000006,
+              "geometryMs": 4.731166999999999,
+              "totalMs": 31.540875,
+              "peakRssBytes": 161136640,
+              "heapUsedBytes": 32687752
             },
             "cleanup": {
               "modelClosed": true,
@@ -360,7 +416,7 @@
             "fingerprint": {
               "algorithm": "sha256",
               "projection": "bim-explorer-ifc-engine-fingerprint/0.2",
-              "value": "96c5cb62347a5a1da7f48edb089ad780e35a58d4dd119b9663eb7a5b49e7dddc"
+              "value": "c4468e7735eb0ac4982841c4d4a3a2e22979a40b3fb71258b222f2d5422c8c69"
             }
           },
           "process": {
@@ -368,14 +424,14 @@
             "signal": null,
             "timedOut": false,
             "processExited": true,
-            "wallClockMs": 223.54654200000002
+            "wallClockMs": 225.38687499999997
           }
         }
       ]
     },
     {
       "engine": "ifcopenshell",
-      "status": "passed-synthetic-small-ifc4",
+      "status": "passed-synthetic-mapped-ifc4",
       "deterministicFingerprint": true,
       "runs": [
         {
@@ -389,26 +445,26 @@
               "license": "LGPL-3.0-or-later"
             },
             "fixture": {
-              "id": "synthetic-small-ifc4",
+              "id": "synthetic-mapped-ifc4",
               "schema": "IFC4",
               "view": "ReferenceView_V1.2",
-              "byteLength": 2855,
-              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+              "byteLength": 4028,
+              "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243"
             },
             "capabilities": {
               "parse": "native",
               "semanticIndex": "native",
               "geometry": "native",
               "placements": "mapped",
-              "mappedRepresentations": "blocked",
+              "mappedRepresentations": "mapped",
               "identity": "native",
               "typeOccurrence": "mapped",
               "propertySets": "mapped",
-              "quantities": "blocked",
+              "quantities": "mapped",
               "materials": "mapped",
-              "classifications": "blocked",
+              "classifications": "mapped",
               "relations": "native",
-              "sharedGeometryInstances": "blocked",
+              "sharedGeometryInstances": "mapped",
               "writeRoundTrip": "blocked",
               "cancellation": "blocked",
               "corruptInputCleanup": "blocked",
@@ -424,38 +480,38 @@
                 "IfcBuilding": 1,
                 "IfcBuildingStorey": 1,
                 "IfcSpace": 1,
-                "IfcWall": 1,
+                "IfcWall": 2,
                 "IfcWallType": 1,
                 "IfcPropertySet": 2,
-                "IfcElementQuantity": 0,
+                "IfcElementQuantity": 1,
                 "IfcMaterial": 1,
-                "IfcClassification": 0,
-                "IfcClassificationReference": 0,
-                "IfcRepresentationMap": 0,
-                "IfcMappedItem": 0
+                "IfcClassification": 1,
+                "IfcClassificationReference": 1,
+                "IfcRepresentationMap": 1,
+                "IfcMappedItem": 2
               },
               "globalIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "missingOnIfcRoot": 0
               },
               "expressIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "minimum": 13,
-                "maximum": 46,
-                "globalIdMapSha256": "36ec2cb93bafa602318e943d8465a6f52e3fbd6699b9646be00b2e2383559a6d"
+                "maximum": 66,
+                "globalIdMapSha256": "2e4e09f38b278b6644abb6af29c8d1c7ff649ec6c97f45159855bb2cfd022859"
               },
               "spatialHierarchy": [
-                "Synthetic Project",
+                "Synthetic Mapped Project",
                 "Synthetic Site",
                 "Synthetic Building",
                 "Level 01"
               ],
               "wall": {
-                "name": "Wall-01",
-                "tag": "W-01",
-                "type": "WallType-01",
+                "name": "Mapped Wall-01",
+                "tag": "MW-01",
+                "type": "MappedWallType-01",
                 "materials": [
                   "Concrete"
                 ],
@@ -463,29 +519,39 @@
                   "Pset_WallCommon",
                   "Pset_WallTypeCommon"
                 ],
-                "quantities": {},
-                "classifications": []
+                "quantities": {
+                  "GrossSideArea": 12,
+                  "GrossVolume": 2.4,
+                  "Length": 4
+                },
+                "classifications": [
+                  {
+                    "identification": "BE-WALL",
+                    "name": "Synthetic Wall Class",
+                    "source": "Synthetic Classification"
+                  }
+                ]
               }
             },
             "relations": {
               "IfcRelAggregates": 4,
               "IfcRelContainedInSpatialStructure": 1,
               "IfcRelDefinesByType": 1,
-              "IfcRelDefinesByProperties": 1,
+              "IfcRelDefinesByProperties": 2,
               "IfcRelAssociatesMaterial": 1,
-              "IfcRelAssociatesClassification": 0
+              "IfcRelAssociatesClassification": 1
             },
             "representationSharing": {
-              "representationMaps": 0,
-              "mappedItems": 0,
-              "productsUsingMappedItems": 0,
-              "distinctMappingSources": 0
+              "representationMaps": 1,
+              "mappedItems": 2,
+              "productsUsingMappedItems": 2,
+              "distinctMappingSources": 1
             },
             "geometry": {
-              "products": 1,
-              "geometries": 1,
-              "vertices": 8,
-              "triangles": 12,
+              "products": 2,
+              "geometries": 2,
+              "vertices": 16,
+              "triangles": 24,
               "coordinateSystem": "ifc-world-z-up",
               "bounds": {
                 "min": [
@@ -495,14 +561,14 @@
                 ],
                 "max": [
                   4,
-                  1.1,
+                  5.1,
                   3
                 ]
               },
               "instances": [
                 {
-                  "globalId": "0AAAAAAAAAAAAAAAAAAA06",
-                  "expressId": 32,
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                  "expressId": 40,
                   "triangles": 12,
                   "bounds": {
                     "min": [
@@ -516,17 +582,34 @@
                       3
                     ]
                   }
+                },
+                {
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA17",
+                  "expressId": 44,
+                  "triangles": 12,
+                  "bounds": {
+                    "min": [
+                      0,
+                      4.9,
+                      0
+                    ],
+                    "max": [
+                      4,
+                      5.1,
+                      3
+                    ]
+                  }
                 }
               ]
             },
             "performance": {
-              "initializationMs": 0.0005830079317092896,
-              "openMs": 0.3749999450519681,
-              "semanticMs": 1.5829999465495348,
-              "geometryMs": 1.2216250179335475,
-              "totalMs": 3.257041098549962,
-              "peakRssBytes": 102400000,
-              "heapUsedBytes": 11071
+              "initializationMs": 0.0006658956408500671,
+              "openMs": 0.4727090708911419,
+              "semanticMs": 1.936167012900114,
+              "geometryMs": 2.116624964401126,
+              "totalMs": 4.6084580244496465,
+              "peakRssBytes": 102629376,
+              "heapUsedBytes": 13671
             },
             "cleanup": {
               "modelClosed": false,
@@ -538,7 +621,7 @@
             "fingerprint": {
               "algorithm": "sha256",
               "projection": "bim-explorer-ifc-engine-fingerprint/0.2",
-              "value": "627184c30acd44b2fa3e4f79e17f18f214887965d5a2e2b309a426c102296b8d"
+              "value": "72c7a69e4124325fb37ff69ec557a9a903181a4e216baf06ba522b131a9cb3fc"
             }
           },
           "process": {
@@ -546,7 +629,7 @@
             "signal": null,
             "timedOut": false,
             "processExited": true,
-            "wallClockMs": 194.69
+            "wallClockMs": 194.65141699999998
           }
         },
         {
@@ -560,26 +643,26 @@
               "license": "LGPL-3.0-or-later"
             },
             "fixture": {
-              "id": "synthetic-small-ifc4",
+              "id": "synthetic-mapped-ifc4",
               "schema": "IFC4",
               "view": "ReferenceView_V1.2",
-              "byteLength": 2855,
-              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+              "byteLength": 4028,
+              "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243"
             },
             "capabilities": {
               "parse": "native",
               "semanticIndex": "native",
               "geometry": "native",
               "placements": "mapped",
-              "mappedRepresentations": "blocked",
+              "mappedRepresentations": "mapped",
               "identity": "native",
               "typeOccurrence": "mapped",
               "propertySets": "mapped",
-              "quantities": "blocked",
+              "quantities": "mapped",
               "materials": "mapped",
-              "classifications": "blocked",
+              "classifications": "mapped",
               "relations": "native",
-              "sharedGeometryInstances": "blocked",
+              "sharedGeometryInstances": "mapped",
               "writeRoundTrip": "blocked",
               "cancellation": "blocked",
               "corruptInputCleanup": "blocked",
@@ -595,38 +678,38 @@
                 "IfcBuilding": 1,
                 "IfcBuildingStorey": 1,
                 "IfcSpace": 1,
-                "IfcWall": 1,
+                "IfcWall": 2,
                 "IfcWallType": 1,
                 "IfcPropertySet": 2,
-                "IfcElementQuantity": 0,
+                "IfcElementQuantity": 1,
                 "IfcMaterial": 1,
-                "IfcClassification": 0,
-                "IfcClassificationReference": 0,
-                "IfcRepresentationMap": 0,
-                "IfcMappedItem": 0
+                "IfcClassification": 1,
+                "IfcClassificationReference": 1,
+                "IfcRepresentationMap": 1,
+                "IfcMappedItem": 2
               },
               "globalIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "missingOnIfcRoot": 0
               },
               "expressIds": {
-                "count": 17,
+                "count": 21,
                 "duplicates": 0,
                 "minimum": 13,
-                "maximum": 46,
-                "globalIdMapSha256": "36ec2cb93bafa602318e943d8465a6f52e3fbd6699b9646be00b2e2383559a6d"
+                "maximum": 66,
+                "globalIdMapSha256": "2e4e09f38b278b6644abb6af29c8d1c7ff649ec6c97f45159855bb2cfd022859"
               },
               "spatialHierarchy": [
-                "Synthetic Project",
+                "Synthetic Mapped Project",
                 "Synthetic Site",
                 "Synthetic Building",
                 "Level 01"
               ],
               "wall": {
-                "name": "Wall-01",
-                "tag": "W-01",
-                "type": "WallType-01",
+                "name": "Mapped Wall-01",
+                "tag": "MW-01",
+                "type": "MappedWallType-01",
                 "materials": [
                   "Concrete"
                 ],
@@ -634,29 +717,39 @@
                   "Pset_WallCommon",
                   "Pset_WallTypeCommon"
                 ],
-                "quantities": {},
-                "classifications": []
+                "quantities": {
+                  "GrossSideArea": 12,
+                  "GrossVolume": 2.4,
+                  "Length": 4
+                },
+                "classifications": [
+                  {
+                    "identification": "BE-WALL",
+                    "name": "Synthetic Wall Class",
+                    "source": "Synthetic Classification"
+                  }
+                ]
               }
             },
             "relations": {
               "IfcRelAggregates": 4,
               "IfcRelContainedInSpatialStructure": 1,
               "IfcRelDefinesByType": 1,
-              "IfcRelDefinesByProperties": 1,
+              "IfcRelDefinesByProperties": 2,
               "IfcRelAssociatesMaterial": 1,
-              "IfcRelAssociatesClassification": 0
+              "IfcRelAssociatesClassification": 1
             },
             "representationSharing": {
-              "representationMaps": 0,
-              "mappedItems": 0,
-              "productsUsingMappedItems": 0,
-              "distinctMappingSources": 0
+              "representationMaps": 1,
+              "mappedItems": 2,
+              "productsUsingMappedItems": 2,
+              "distinctMappingSources": 1
             },
             "geometry": {
-              "products": 1,
-              "geometries": 1,
-              "vertices": 8,
-              "triangles": 12,
+              "products": 2,
+              "geometries": 2,
+              "vertices": 16,
+              "triangles": 24,
               "coordinateSystem": "ifc-world-z-up",
               "bounds": {
                 "min": [
@@ -666,14 +759,14 @@
                 ],
                 "max": [
                   4,
-                  1.1,
+                  5.1,
                   3
                 ]
               },
               "instances": [
                 {
-                  "globalId": "0AAAAAAAAAAAAAAAAAAA06",
-                  "expressId": 32,
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                  "expressId": 40,
                   "triangles": 12,
                   "bounds": {
                     "min": [
@@ -687,17 +780,34 @@
                       3
                     ]
                   }
+                },
+                {
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA17",
+                  "expressId": 44,
+                  "triangles": 12,
+                  "bounds": {
+                    "min": [
+                      0,
+                      4.9,
+                      0
+                    ],
+                    "max": [
+                      4,
+                      5.1,
+                      3
+                    ]
+                  }
                 }
               ]
             },
             "performance": {
-              "initializationMs": 0.0007910421118140221,
-              "openMs": 0.5553750088438392,
-              "semanticMs": 1.7800000496208668,
-              "geometryMs": 1.2298750225454569,
-              "totalMs": 3.6500830901786685,
-              "peakRssBytes": 102825984,
-              "heapUsedBytes": 11071
+              "initializationMs": 0.000708969309926033,
+              "openMs": 0.46250002924352884,
+              "semanticMs": 1.8983329646289349,
+              "geometryMs": 1.7824999522417784,
+              "totalMs": 4.225666983984411,
+              "peakRssBytes": 102907904,
+              "heapUsedBytes": 13671
             },
             "cleanup": {
               "modelClosed": false,
@@ -709,7 +819,7 @@
             "fingerprint": {
               "algorithm": "sha256",
               "projection": "bim-explorer-ifc-engine-fingerprint/0.2",
-              "value": "627184c30acd44b2fa3e4f79e17f18f214887965d5a2e2b309a426c102296b8d"
+              "value": "72c7a69e4124325fb37ff69ec557a9a903181a4e216baf06ba522b131a9cb3fc"
             }
           },
           "process": {
@@ -717,7 +827,7 @@
             "signal": null,
             "timedOut": false,
             "processExited": true,
-            "wallClockMs": 192.95162500000004
+            "wallClockMs": 192.30383300000005
           }
         }
       ]
@@ -739,6 +849,6 @@
     "goNoGo": "held",
     "readRender": "experimental-only",
     "writeRoundTrip": "blocked",
-    "reason": "mapped-representation, large-model-performance, corrupt-input-cleanup, write-roundtrip, cancellation, Browser/VS Code packaging and redistribution gates remain open"
+    "reason": "large-model-performance, corrupt-input-cleanup, write-roundtrip, cancellation, Browser/VS Code packaging and redistribution gates remain open"
   }
 }

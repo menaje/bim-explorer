@@ -1,10 +1,11 @@
 {
   "schema": "bim-explorer-ifc-fixture-manifest/1",
-  "fixtureId": "synthetic-small-ifc4",
+  "fixtureId": "synthetic-mapped-ifc4",
   "kind": "repository-authored-generated",
   "tracking": {
     "artifactCommitted": false,
-    "generator": "scripts/generate-synthetic-ifc.mjs"
+    "generator": "scripts/generate-synthetic-ifc.mjs",
+    "generatorFixture": "mapped"
   },
   "redistribution": {
     "thirdPartyContent": false,
@@ -22,26 +23,26 @@
       "IfcBuilding": 1,
       "IfcBuildingStorey": 1,
       "IfcSpace": 1,
-      "IfcWall": 1,
+      "IfcWall": 2,
       "IfcWallType": 1,
       "IfcPropertySet": 2,
-      "IfcElementQuantity": 0,
+      "IfcElementQuantity": 1,
       "IfcMaterial": 1,
-      "IfcClassification": 0,
-      "IfcClassificationReference": 0,
-      "IfcRepresentationMap": 0,
-      "IfcMappedItem": 0
+      "IfcClassification": 1,
+      "IfcClassificationReference": 1,
+      "IfcRepresentationMap": 1,
+      "IfcMappedItem": 2
     },
     "spatialPath": [
-      "Synthetic Project",
+      "Synthetic Mapped Project",
       "Synthetic Site",
       "Synthetic Building",
       "Level 01"
     ],
     "wall": {
-      "name": "Wall-01",
-      "tag": "W-01",
-      "type": "WallType-01",
+      "name": "Mapped Wall-01",
+      "tag": "MW-01",
+      "type": "MappedWallType-01",
       "materials": [
         "Concrete"
       ],
@@ -49,28 +50,35 @@
         "Pset_WallCommon",
         "Pset_WallTypeCommon"
       ],
-      "quantities": {},
-      "classifications": [],
-      "length": 4,
-      "thickness": 0.2,
-      "height": 3
+      "quantities": {
+        "GrossSideArea": 12,
+        "GrossVolume": 2.4,
+        "Length": 4
+      },
+      "classifications": [
+        {
+          "identification": "BE-WALL",
+          "name": "Synthetic Wall Class",
+          "source": "Synthetic Classification"
+        }
+      ]
     },
     "globalIds": {
-      "count": 17,
+      "count": 21,
       "duplicates": 0,
       "missingOnIfcRoot": 0
     },
     "expressIds": {
-      "count": 17,
+      "count": 21,
       "duplicates": 0,
       "minimum": 13,
-      "maximum": 46,
-      "globalIdMapSha256": "36ec2cb93bafa602318e943d8465a6f52e3fbd6699b9646be00b2e2383559a6d"
+      "maximum": 66,
+      "globalIdMapSha256": "2e4e09f38b278b6644abb6af29c8d1c7ff649ec6c97f45159855bb2cfd022859"
     },
     "geometry": {
-      "products": 1,
-      "geometries": 1,
-      "triangles": 12,
+      "products": 2,
+      "geometries": 2,
+      "triangles": 24,
       "coordinateSystem": "ifc-world-z-up",
       "bounds": {
         "min": [
@@ -80,14 +88,14 @@
         ],
         "max": [
           4,
-          1.1,
+          5.1,
           3
         ]
       },
       "instances": [
         {
-          "globalId": "0AAAAAAAAAAAAAAAAAAA06",
-          "expressId": 32,
+          "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+          "expressId": 40,
           "triangles": 12,
           "bounds": {
             "min": [
@@ -101,26 +109,45 @@
               3
             ]
           }
+        },
+        {
+          "globalId": "0AAAAAAAAAAAAAAAAAAA17",
+          "expressId": 44,
+          "triangles": 12,
+          "bounds": {
+            "min": [
+              0,
+              4.9,
+              0
+            ],
+            "max": [
+              4,
+              5.1,
+              3
+            ]
+          }
         }
       ]
     },
     "representationSharing": {
-      "representationMaps": 0,
-      "mappedItems": 0,
-      "productsUsingMappedItems": 0,
-      "distinctMappingSources": 0
+      "representationMaps": 1,
+      "mappedItems": 2,
+      "productsUsingMappedItems": 2,
+      "distinctMappingSources": 1
     }
   },
   "qualificationUse": [
     "parse",
     "semantic-index",
-    "identity",
+    "globalid-expressid-identity",
+    "mapped-representation",
+    "shared-geometry-instance",
+    "quantity",
+    "classification",
     "placement",
-    "extruded-geometry",
     "deterministic-fingerprint"
   ],
   "notQualified": [
-    "mapped-representation",
     "large-model-performance",
     "corrupt-input-cleanup",
     "write-roundtrip"

@@ -22,6 +22,9 @@ const ENTITY_TYPES = Object.freeze({
   IfcElementQuantity: WebIFC.IFCELEMENTQUANTITY,
   IfcMaterial: WebIFC.IFCMATERIAL,
   IfcClassification: WebIFC.IFCCLASSIFICATION,
+  IfcClassificationReference: WebIFC.IFCCLASSIFICATIONREFERENCE,
+  IfcRepresentationMap: WebIFC.IFCREPRESENTATIONMAP,
+  IfcMappedItem: WebIFC.IFCMAPPEDITEM,
 });
 
 const RELATION_TYPES = Object.freeze({
@@ -35,13 +38,35 @@ const RELATION_TYPES = Object.freeze({
     WebIFC.IFCRELASSOCIATESCLASSIFICATION,
 });
 
-function parseInputArgument(values) {
-  if (values.length !== 2 || values[0] !== "--input") {
+function parseInputArguments(values) {
+  if (values.length % 2 !== 0) {
     throw new TypeError(
-      "usage: node adapters/web-ifc/src/inspect.mjs --input <source.ifc>",
+      "usage: node adapters/web-ifc/src/inspect.mjs --input <source.ifc> " +
+        "--fixture-id <id>",
     );
   }
-  return path.resolve(values[1]);
+  const options = {
+    fixtureId: null,
+    input: null,
+  };
+  for (let index = 0; index < values.length; index += 2) {
+    const name = values[index];
+    const value = values[index + 1];
+    if (name === "--input" && value) {
+      options.input = path.resolve(value);
+    } else if (
+      name === "--fixture-id" &&
+      /^[a-z0-9][a-z0-9-]+$/u.test(value)
+    ) {
+      options.fixtureId = value;
+    } else {
+      throw new TypeError(`invalid web-ifc adapter argument ${name}`);
+    }
+  }
+  if (options.input === null || options.fixtureId === null) {
+    throw new TypeError("--input and --fixture-id are required");
+  }
+  return options;
 }
 
 function vectorValues(vector) {
@@ -59,6 +84,13 @@ function scalar(value) {
     Object.hasOwn(value, "value")
   ) {
     return value.value;
+  }
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    Object.hasOwn(value, "_representationValue")
+  ) {
+    return value._representationValue;
   }
   return value;
 }
@@ -80,6 +112,10 @@ function referenceIds(value) {
 function textValue(value) {
   const candidate = scalar(value);
   return typeof candidate === "string" ? candidate : "";
+}
+
+function compareText(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function entityIds(api, modelId, type, includeInherited = false) {
@@ -112,13 +148,24 @@ function lineReferences(line, field) {
 }
 
 function findRelationFor(api, modelId, relationType, field, expressId) {
+  return relationsFor(
+    api,
+    modelId,
+    relationType,
+    field,
+    expressId,
+  )[0] ?? null;
+}
+
+function relationsFor(api, modelId, relationType, field, expressId) {
+  const matches = [];
   for (const relationId of entityIds(api, modelId, relationType)) {
     const relation = api.GetLine(modelId, relationId, false);
     if (lineReferences(relation, field).includes(expressId)) {
-      return relation;
+      matches.push(relation);
     }
   }
-  return null;
+  return matches;
 }
 
 function relatedLine(api, modelId, relation, field) {
@@ -126,29 +173,161 @@ function relatedLine(api, modelId, relation, field) {
   return id === null ? null : api.GetLine(modelId, id, false);
 }
 
-function propertySetNames(api, modelId, wallId, wallType) {
-  const names = [];
-  const occurrenceRelation = findRelationFor(
+function propertyDefinitions(api, modelId, wallId) {
+  return relationsFor(
     api,
     modelId,
     WebIFC.IFCRELDEFINESBYPROPERTIES,
     "RelatedObjects",
     wallId,
-  );
-  const occurrenceSet = relatedLine(
-    api,
-    modelId,
-    occurrenceRelation,
-    "RelatingPropertyDefinition",
-  );
-  if (occurrenceSet) {
-    names.push(textValue(occurrenceSet.Name));
+  )
+    .map((relation) => relatedLine(
+      api,
+      modelId,
+      relation,
+      "RelatingPropertyDefinition",
+    ))
+    .filter(Boolean);
+}
+
+function propertySetNames(api, modelId, wallId, wallType) {
+  const names = [];
+  for (const definition of propertyDefinitions(api, modelId, wallId)) {
+    if (Array.isArray(definition.HasProperties)) {
+      names.push(textValue(definition.Name));
+    }
   }
   for (const propertySetId of referenceIds(wallType?.HasPropertySets)) {
     const propertySet = api.GetLine(modelId, propertySetId, false);
     names.push(textValue(propertySet?.Name));
   }
   return [...new Set(names.filter(Boolean))].sort();
+}
+
+function quantityValues(api, modelId, wallId) {
+  const quantities = {};
+  for (const definition of propertyDefinitions(api, modelId, wallId)) {
+    if (!Array.isArray(definition.Quantities)) {
+      continue;
+    }
+    for (const quantityId of referenceIds(definition.Quantities)) {
+      const quantity = api.GetLine(modelId, quantityId, false);
+      const name = textValue(quantity?.Name);
+      const measurement = [
+        "LengthValue",
+        "AreaValue",
+        "VolumeValue",
+        "WeightValue",
+        "CountValue",
+        "TimeValue",
+      ]
+        .map((field) => scalar(quantity?.[field]))
+        .find((value) => typeof value === "number" && Number.isFinite(value));
+      if (name && measurement !== undefined) {
+        quantities[name] = measurement;
+      }
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(quantities).sort(([left], [right]) =>
+      compareText(left, right)),
+  );
+}
+
+function classifications(api, modelId, wallId) {
+  const values = relationsFor(
+    api,
+    modelId,
+    WebIFC.IFCRELASSOCIATESCLASSIFICATION,
+    "RelatedObjects",
+    wallId,
+  ).map((relation) => {
+    const reference = relatedLine(
+      api,
+      modelId,
+      relation,
+      "RelatingClassification",
+    );
+    const sourceId = referenceId(reference?.ReferencedSource);
+    const source = sourceId === null
+      ? null
+      : api.GetLine(modelId, sourceId, false);
+    return {
+      identification: textValue(reference?.Identification),
+      name: textValue(reference?.Name),
+      source: textValue(source?.Name),
+    };
+  });
+  return values
+    .filter((value) =>
+      value.identification && value.name && value.source)
+    .sort((left, right) =>
+      compareText(left.identification, right.identification));
+}
+
+function expressIdDiagnostics(api, modelId, rootIds) {
+  const pairs = rootIds
+    .map((expressId) => {
+      const line = api.GetLine(modelId, expressId, false);
+      return [textValue(line?.GlobalId), expressId];
+    })
+    .sort(([leftGlobalId, leftExpressId], [rightGlobalId, rightExpressId]) =>
+      compareText(leftGlobalId, rightGlobalId) ||
+      leftExpressId - rightExpressId);
+  return {
+    count: rootIds.length,
+    duplicates: rootIds.length - new Set(rootIds).size,
+    minimum: Math.min(...rootIds),
+    maximum: Math.max(...rootIds),
+    globalIdMapSha256: createHash("sha256")
+      .update(JSON.stringify(pairs))
+      .digest("hex"),
+  };
+}
+
+function representationSharing(api, modelId) {
+  const representationMapIds = entityIds(
+    api,
+    modelId,
+    WebIFC.IFCREPRESENTATIONMAP,
+  );
+  const mappedItemIds = entityIds(api, modelId, WebIFC.IFCMAPPEDITEM);
+  const mappedItemIdSet = new Set(mappedItemIds);
+  const mappingSources = new Set();
+  for (const mappedItemId of mappedItemIds) {
+    const mappedItem = api.GetLine(modelId, mappedItemId, false);
+    const sourceId = referenceId(mappedItem?.MappingSource);
+    if (sourceId !== null) {
+      mappingSources.add(sourceId);
+    }
+  }
+  let productsUsingMappedItems = 0;
+  for (const wallId of entityIds(api, modelId, WebIFC.IFCWALL)) {
+    const wall = api.GetLine(modelId, wallId, false);
+    const productShapeId = referenceId(wall?.Representation);
+    const productShape = productShapeId === null
+      ? null
+      : api.GetLine(modelId, productShapeId, false);
+    const usesMappedItem = referenceIds(productShape?.Representations)
+      .some((representationId) => {
+        const representation = api.GetLine(
+          modelId,
+          representationId,
+          false,
+        );
+        return referenceIds(representation?.Items)
+          .some((itemId) => mappedItemIdSet.has(itemId));
+      });
+    if (usesMappedItem) {
+      productsUsingMappedItems += 1;
+    }
+  }
+  return {
+    representationMaps: representationMapIds.length,
+    mappedItems: mappedItemIds.length,
+    productsUsingMappedItems,
+    distinctMappingSources: mappingSources.size,
+  };
 }
 
 function semanticSnapshot(api, modelId) {
@@ -212,6 +391,7 @@ function semanticSnapshot(api, modelId) {
         duplicates,
         missingOnIfcRoot: globalIds.length - presentIds.length,
       },
+      expressIds: expressIdDiagnostics(api, modelId, rootIds),
       spatialHierarchy,
       wall: {
         name: textValue(wall?.Name),
@@ -220,6 +400,12 @@ function semanticSnapshot(api, modelId) {
         materials: [textValue(material?.Name)].filter(Boolean),
         propertySets: Number.isSafeInteger(wallId)
           ? propertySetNames(api, modelId, wallId, wallType)
+          : [],
+        quantities: Number.isSafeInteger(wallId)
+          ? quantityValues(api, modelId, wallId)
+          : {},
+        classifications: Number.isSafeInteger(wallId)
+          ? classifications(api, modelId, wallId)
           : [],
       },
     },
@@ -232,12 +418,31 @@ function geometrySnapshot(api, modelId) {
   let geometries = 0;
   let vertices = 0;
   let triangles = 0;
-  const minimum = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY,
-    Number.POSITIVE_INFINITY];
-  const maximum = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY,
-    Number.NEGATIVE_INFINITY];
+  const minimum = [
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+  ];
+  const maximum = [
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ];
+  const instances = [];
+  const round = (value) => Number(value.toFixed(6));
   api.StreamAllMeshes(modelId, (mesh) => {
     products += 1;
+    let instanceTriangles = 0;
+    const instanceMinimum = [
+      Number.POSITIVE_INFINITY,
+      Number.POSITIVE_INFINITY,
+      Number.POSITIVE_INFINITY,
+    ];
+    const instanceMaximum = [
+      Number.NEGATIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+    ];
     for (
       let index = 0;
       index < mesh.geometries.size();
@@ -259,7 +464,9 @@ function geometrySnapshot(api, modelId) {
         );
         geometries += 1;
         vertices += Math.floor(vertexData.length / 6);
-        triangles += Math.floor(indexData.length / 3);
+        const geometryTriangles = Math.floor(indexData.length / 3);
+        triangles += geometryTriangles;
+        instanceTriangles += geometryTriangles;
         const transform = placedGeometry.flatTransformation;
         for (
           let vertexIndex = 0;
@@ -288,14 +495,31 @@ function geometrySnapshot(api, modelId) {
           for (let axis = 0; axis < 3; axis += 1) {
             minimum[axis] = Math.min(minimum[axis], ifcWorld[axis]);
             maximum[axis] = Math.max(maximum[axis], ifcWorld[axis]);
+            instanceMinimum[axis] = Math.min(
+              instanceMinimum[axis],
+              ifcWorld[axis],
+            );
+            instanceMaximum[axis] = Math.max(
+              instanceMaximum[axis],
+              ifcWorld[axis],
+            );
           }
         }
       } finally {
         geometry.delete();
       }
     }
+    const product = api.GetLine(modelId, mesh.expressID, false);
+    instances.push({
+      globalId: textValue(product?.GlobalId),
+      expressId: mesh.expressID,
+      triangles: instanceTriangles,
+      bounds: {
+        min: instanceMinimum.map(round),
+        max: instanceMaximum.map(round),
+      },
+    });
   });
-  const round = (value) => Number(value.toFixed(6));
   return {
     products,
     geometries,
@@ -306,10 +530,13 @@ function geometrySnapshot(api, modelId) {
       min: minimum.map(round),
       max: maximum.map(round),
     },
+    instances: instances.sort(
+      (left, right) => left.expressId - right.expressId,
+    ),
   };
 }
 
-function capabilities() {
+function capabilities(semantics, sharing) {
   const result = Object.fromEntries(
     CAPABILITY_NAMES.map((name) => [name, "blocked"]),
   );
@@ -326,10 +553,32 @@ function capabilities() {
     packagingMacos: process.platform === "darwin" ? "native" : "blocked",
     packagingLinux: process.platform === "linux" ? "native" : "blocked",
   });
+  if (Object.keys(semantics.wall.quantities).length > 0) {
+    result.quantities = "mapped";
+  }
+  if (semantics.wall.classifications.length > 0) {
+    result.classifications = "mapped";
+  }
+  if (
+    sharing.representationMaps > 0 &&
+    sharing.mappedItems > 0 &&
+    sharing.productsUsingMappedItems > 0
+  ) {
+    result.mappedRepresentations = "mapped";
+  }
+  if (
+    sharing.mappedItems > sharing.distinctMappingSources &&
+    sharing.productsUsingMappedItems > 1
+  ) {
+    result.sharedGeometryInstances = "mapped";
+  }
   return result;
 }
 
-export async function inspectWebIfc(input) {
+export async function inspectWebIfc(
+  input,
+  fixtureId = "synthetic-small-ifc4",
+) {
   const totalStarted = performance.now();
   const bytes = await readFile(input);
   const api = new WebIFC.IfcAPI();
@@ -351,6 +600,7 @@ export async function inspectWebIfc(input) {
 
     const semanticStarted = performance.now();
     const semantic = semanticSnapshot(api, modelId);
+    const sharing = representationSharing(api, modelId);
     const semanticMs = performance.now() - semanticStarted;
 
     const geometryStarted = performance.now();
@@ -366,14 +616,15 @@ export async function inspectWebIfc(input) {
         license: "MPL-2.0",
       },
       fixture: {
-        id: "synthetic-small-ifc4",
+        id: fixtureId,
         schema: api.GetModelSchema(modelId),
         view: "ReferenceView_V1.2",
         byteLength: bytes.byteLength,
         sha256: createHash("sha256").update(bytes).digest("hex"),
       },
-      capabilities: capabilities(),
+      capabilities: capabilities(semantic.semantics, sharing),
       ...semantic,
+      representationSharing: sharing,
       geometry,
       performance: {
         initializationMs,
@@ -407,8 +658,8 @@ export async function inspectWebIfc(input) {
 }
 
 async function main() {
-  const input = parseInputArgument(process.argv.slice(2));
-  const report = await inspectWebIfc(input);
+  const options = parseInputArguments(process.argv.slice(2));
+  const report = await inspectWebIfc(options.input, options.fixtureId);
   process.stdout.write(`${JSON.stringify(report)}\n`);
 }
 

@@ -10,8 +10,9 @@ async function fixtures() {
   const manifest = JSON.parse(
     await readFile("compatibility/ifc-engines.json", "utf8"),
   );
-  const evidence = JSON.parse(
-    await readFile(manifest.evidence, "utf8"),
+  const evidence = await Promise.all(
+    manifest.evidence.map(async (relative) =>
+      JSON.parse(await readFile(relative, "utf8"))),
   );
   return {
     manifest,
@@ -24,6 +25,7 @@ test("IFC engine compatibility remains experimental and held", async () => {
   const result = validateIfcEngineCompatibility(manifest, evidence);
   assert.equal(result.status, "experimental");
   assert.equal(result.candidates, 2);
+  assert.equal(result.fixtures, 2);
   assert.ok(result.heldGates > 0);
 });
 

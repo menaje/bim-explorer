@@ -1,12 +1,12 @@
 {
-  "schema": "bim-explorer-ifc-engine-compatibility/1",
+  "schema": "bim-explorer-ifc-engine-compatibility/2",
   "status": "experimental",
   "asOf": "2026-08-03",
   "contract": {
-    "reportSchema": "bim-explorer-ifc-engine-report/0.1",
-    "fingerprintProjection": "bim-explorer-ifc-engine-fingerprint/0.1",
+    "reportSchema": "bim-explorer-ifc-engine-report/0.2",
+    "fingerprintProjection": "bim-explorer-ifc-engine-fingerprint/0.2",
     "package": "@bim-explorer/ifc-engine-contract",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "profile": {
     "status": "draft",
@@ -21,25 +21,34 @@
       "occurrence and type property sets",
       "material association",
       "GlobalId completeness and duplicate diagnostics",
+      "GlobalId to Express ID deterministic mapping",
       "IfcExtrudedAreaSolid tessellation",
-      "IFC world placement bounds"
+      "IFC world placement bounds",
+      "mapped representation reuse across two occurrences",
+      "wall base quantities and classification reference"
     ],
     "held": [
       "IFC2X3 and IFC4.3",
-      "mapped representations and shared instances",
-      "quantities and classifications",
       "large-model performance",
       "cancellation and corrupt-input cleanup",
       "write and round-trip"
     ]
   },
-  "fixture": {
-    "id": "synthetic-small-ifc4",
-    "manifest": "fixtures/ifc/synthetic-small/manifest.json",
-    "artifactCommitted": false,
-    "thirdPartyContent": false,
-    "performanceFixture": null
-  },
+  "fixtures": [
+    {
+      "id": "synthetic-small-ifc4",
+      "manifest": "fixtures/ifc/synthetic-small/manifest.json",
+      "artifactCommitted": false,
+      "thirdPartyContent": false
+    },
+    {
+      "id": "synthetic-mapped-ifc4",
+      "manifest": "fixtures/ifc/synthetic-mapped/manifest.json",
+      "artifactCommitted": false,
+      "thirdPartyContent": false
+    }
+  ],
+  "performanceFixture": null,
   "candidates": {
     "web-ifc": {
       "status": "experimental",
@@ -86,8 +95,8 @@
       "ifcopenshell": "mapped"
     },
     "mappedRepresentations": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "identity": {
       "web-ifc": "native",
@@ -102,24 +111,24 @@
       "ifcopenshell": "mapped"
     },
     "quantities": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "materials": {
       "web-ifc": "mapped",
       "ifcopenshell": "mapped"
     },
     "classifications": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "relations": {
       "web-ifc": "mapped",
       "ifcopenshell": "native"
     },
     "sharedGeometryInstances": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "writeRoundTrip": {
       "web-ifc": "blocked",
@@ -150,7 +159,10 @@
       "ifcopenshell": "blocked"
     }
   },
-  "evidence": "compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json",
+  "evidence": [
+    "compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json",
+    "compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json"
+  ],
   "gates": {
     "commonContract": true,
     "sameRedistributableFixture": true,
@@ -159,7 +171,9 @@
     "globalIdentity": true,
     "deterministicFingerprint": true,
     "smallFixtureTimingAndMemory": true,
-    "mappedRepresentation": false,
+    "mappedRepresentation": true,
+    "sharedGeometryInstances": true,
+    "quantitiesAndClassifications": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -176,14 +190,14 @@
     "nextPrototype": "web-ifc-browser-worker",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small common read/geometry contract. Browser, large-model, cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. Browser, large-model, cleanup and redistribution evidence is still missing."
   },
   "blockers": [
-    "No mapped-representation or shared-instance fixture",
     "No large redistributable performance fixture or resource budget",
     "No cancellation and corrupt-input cleanup conformance",
     "No Browser Worker or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
-    "No write or round-trip qualification"
+    "No write or round-trip qualification",
+    "No broader connection, system, opening or non-wall relation corpus"
   ]
 }

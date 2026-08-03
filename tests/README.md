@@ -18,6 +18,7 @@ IFC fixture artifact는
 생성합니다. `.ifc`는 Git에 추적하지 않습니다.
 
 기본 `npm test`는 exact `web-ifc` Node/WASM adapter와 child-process harness를
-실행합니다. IfcOpenShell은 repository dependency가 아니므로 별도 Python
-environment를 `scripts/qualify-ifc-engine.mjs --python ...`에 주입할 때만
-실행합니다.
+실행합니다. child-process harness는 mapped/shared representation, Qto와
+classification fixture까지 검사합니다. IfcOpenShell은 repository dependency가
+아니므로 별도 Python environment를
+`scripts/qualify-ifc-engine.mjs --python ...`에 주입할 때만 실행합니다.

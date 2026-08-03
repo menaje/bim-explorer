@@ -16,4 +16,6 @@ Capability 상태의 의미:
 - `blocked`: 미구현, 미검증 또는 release Gate 때문에 사용하지 않음
 
 Fingerprint는 시간·메모리·diagnostic을 제외한 안정 projection으로 계산합니다.
-따라서 같은 engine/version/options/source 결과의 반복 실행이 동일해야 합니다.
+GlobalId–Express ID map digest, mapped representation sharing, semantic
+quantity/classification과 occurrence별 geometry bounds를 포함하므로 같은
+engine/version/options/source 결과의 반복 실행이 동일해야 합니다.

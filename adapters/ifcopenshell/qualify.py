@@ -14,8 +14,8 @@ import ifcopenshell.geom
 import ifcopenshell.util.element
 
 
-REPORT_SCHEMA = "bim-explorer-ifc-engine-report/0.1"
-FINGERPRINT_PROJECTION = "bim-explorer-ifc-engine-fingerprint/0.1"
+REPORT_SCHEMA = "bim-explorer-ifc-engine-report/0.2"
+FINGERPRINT_PROJECTION = "bim-explorer-ifc-engine-fingerprint/0.2"
 CAPABILITY_NAMES = (
     "parse",
     "semanticIndex",
@@ -50,6 +50,9 @@ ENTITY_TYPES = (
     "IfcElementQuantity",
     "IfcMaterial",
     "IfcClassification",
+    "IfcClassificationReference",
+    "IfcRepresentationMap",
+    "IfcMappedItem",
 )
 RELATION_TYPES = (
     "IfcRelAggregates",
@@ -66,6 +69,7 @@ def arguments():
         description="Inspect one IFC source in an isolated IfcOpenShell process",
     )
     parser.add_argument("--input", required=True)
+    parser.add_argument("--fixture-id", required=True)
     return parser.parse_args()
 
 
@@ -78,7 +82,98 @@ def first_name(model, entity_type):
     return text(entities[0].Name) if entities else ""
 
 
-def capabilities():
+def express_id_diagnostics(roots):
+    express_ids = [entity.id() for entity in roots]
+    pairs = sorted(
+        [
+            [text(getattr(entity, "GlobalId", None)), entity.id()]
+            for entity in roots
+        ],
+        key=lambda pair: (pair[0], pair[1]),
+    )
+    mapping_payload = json.dumps(
+        pairs,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return {
+        "count": len(express_ids),
+        "duplicates": len(express_ids) - len(set(express_ids)),
+        "minimum": min(express_ids),
+        "maximum": max(express_ids),
+        "globalIdMapSha256": hashlib.sha256(mapping_payload).hexdigest(),
+    }
+
+
+def wall_quantities(wall):
+    quantity_sets = ifcopenshell.util.element.get_psets(
+        wall,
+        qtos_only=True,
+        should_inherit=True,
+    )
+    quantities = {}
+    for quantity_set in quantity_sets.values():
+        for name, value in quantity_set.items():
+            if (
+                name != "id"
+                and isinstance(value, (int, float))
+                and not isinstance(value, bool)
+            ):
+                quantities[name] = stable_coordinate(float(value))
+    return dict(sorted(quantities.items()))
+
+
+def wall_classifications(wall):
+    values = []
+    for association in wall.HasAssociations or ():
+        if not association.is_a("IfcRelAssociatesClassification"):
+            continue
+        reference = association.RelatingClassification
+        source = getattr(reference, "ReferencedSource", None)
+        values.append(
+            {
+                "identification": text(
+                    getattr(reference, "Identification", None)
+                ),
+                "name": text(getattr(reference, "Name", None)),
+                "source": text(getattr(source, "Name", None)),
+            }
+        )
+    return sorted(
+        [
+            value
+            for value in values
+            if all(value.values())
+        ],
+        key=lambda value: value["identification"],
+    )
+
+
+def representation_sharing(model):
+    maps = model.by_type("IfcRepresentationMap")
+    mapped_items = model.by_type("IfcMappedItem")
+    mapping_sources = {
+        item.MappingSource.id()
+        for item in mapped_items
+    }
+    products_using_mapped_items = 0
+    for wall in model.by_type("IfcWall"):
+        representation = wall.Representation
+        if representation and any(
+            item.is_a("IfcMappedItem")
+            for shape in representation.Representations
+            for item in shape.Items
+        ):
+            products_using_mapped_items += 1
+    return {
+        "representationMaps": len(maps),
+        "mappedItems": len(mapped_items),
+        "productsUsingMappedItems": products_using_mapped_items,
+        "distinctMappingSources": len(mapping_sources),
+    }
+
+
+def capabilities(semantic_result, sharing):
     result = {name: "blocked" for name in CAPABILITY_NAMES}
     result.update(
         {
@@ -99,6 +194,22 @@ def capabilities():
             ),
         }
     )
+    wall = semantic_result["semantics"]["wall"]
+    if wall["quantities"]:
+        result["quantities"] = "mapped"
+    if wall["classifications"]:
+        result["classifications"] = "mapped"
+    if (
+        sharing["representationMaps"] > 0
+        and sharing["mappedItems"] > 0
+        and sharing["productsUsingMappedItems"] > 0
+    ):
+        result["mappedRepresentations"] = "mapped"
+    if (
+        sharing["mappedItems"] > sharing["distinctMappingSources"]
+        and sharing["productsUsingMappedItems"] > 1
+    ):
+        result["sharedGeometryInstances"] = "mapped"
     return result
 
 
@@ -128,6 +239,7 @@ def semantics(model):
                 "duplicates": len(present_ids) - len(set(present_ids)),
                 "missingOnIfcRoot": len(global_ids) - len(present_ids),
             },
+            "expressIds": express_id_diagnostics(roots),
             "spatialHierarchy": [
                 first_name(model, "IfcProject"),
                 first_name(model, "IfcSite"),
@@ -146,6 +258,8 @@ def semantics(model):
                     }
                 ),
                 "propertySets": sorted(property_sets.keys()),
+                "quantities": wall_quantities(wall),
+                "classifications": wall_classifications(wall),
             },
         },
         "relations": {
@@ -169,6 +283,7 @@ def geometry(model):
     triangles = 0
     minimum = [float("inf"), float("inf"), float("inf")]
     maximum = [float("-inf"), float("-inf"), float("-inf")]
+    instances = []
 
     for product in model.by_type("IfcWall"):
         shape = ifcopenshell.geom.create_shape(settings, product)
@@ -177,12 +292,38 @@ def geometry(model):
         products += 1
         geometries += 1
         vertices += len(product_vertices) // 3
-        triangles += len(product_faces) // 3
+        product_triangles = len(product_faces) // 3
+        triangles += product_triangles
+        instance_minimum = [
+            min(product_vertices[axis::3])
+            for axis in range(3)
+        ]
+        instance_maximum = [
+            max(product_vertices[axis::3])
+            for axis in range(3)
+        ]
         for index in range(0, len(product_vertices), 3):
             for axis in range(3):
                 coordinate = product_vertices[index + axis]
                 minimum[axis] = min(minimum[axis], coordinate)
                 maximum[axis] = max(maximum[axis], coordinate)
+        instances.append(
+            {
+                "globalId": text(product.GlobalId),
+                "expressId": product.id(),
+                "triangles": product_triangles,
+                "bounds": {
+                    "min": [
+                        stable_coordinate(value)
+                        for value in instance_minimum
+                    ],
+                    "max": [
+                        stable_coordinate(value)
+                        for value in instance_maximum
+                    ],
+                },
+            }
+        )
 
     if geometries == 0:
         raise RuntimeError("fixture produced no wall geometry")
@@ -197,6 +338,10 @@ def geometry(model):
             "min": [stable_coordinate(value) for value in minimum],
             "max": [stable_coordinate(value) for value in maximum],
         },
+        "instances": sorted(
+            instances,
+            key=lambda instance: instance["expressId"],
+        ),
     }
 
 
@@ -219,6 +364,7 @@ def fingerprint_projection(report):
         "capabilities": report["capabilities"],
         "semantics": report["semantics"],
         "relations": report["relations"],
+        "representationSharing": report["representationSharing"],
         "geometry": report["geometry"],
     }
 
@@ -233,7 +379,7 @@ def fingerprint(report):
     return hashlib.sha256(payload).hexdigest()
 
 
-def inspect(source):
+def inspect(source, fixture_id):
     total_started = time.perf_counter()
     tracemalloc.start()
     with open(source, "rb") as input_file:
@@ -257,6 +403,7 @@ def inspect(source):
 
     semantic_started = time.perf_counter()
     semantic = semantics(model)
+    sharing = representation_sharing(model)
     semantic_ms = (time.perf_counter() - semantic_started) * 1000
 
     geometry_started = time.perf_counter()
@@ -273,14 +420,15 @@ def inspect(source):
             "license": "LGPL-3.0-or-later",
         },
         "fixture": {
-            "id": "synthetic-small-ifc4",
+            "id": fixture_id,
             "schema": model.schema,
             "view": "ReferenceView_V1.2",
             "byteLength": len(source_bytes),
             "sha256": hashlib.sha256(source_bytes).hexdigest(),
         },
-        "capabilities": capabilities(),
+        "capabilities": capabilities(semantic, sharing),
         **semantic,
+        "representationSharing": sharing,
         "geometry": geometry_result,
         "performance": {
             "initializationMs": initialization_ms,
@@ -308,7 +456,7 @@ def inspect(source):
 
 def main():
     options = arguments()
-    report = inspect(options.input)
+    report = inspect(options.input, options.fixture_id)
     print(
         json.dumps(
             report,

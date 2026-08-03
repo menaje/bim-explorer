@@ -9,7 +9,7 @@
     "inspect": "node src/inspect.mjs"
   },
   "dependencies": {
-    "@bim-explorer/ifc-engine-contract": "0.0.0",
+    "@bim-explorer/ifc-engine-contract": "0.1.0",
     "web-ifc": "0.0.77"
   },
   "engines": {

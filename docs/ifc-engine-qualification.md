@@ -13,9 +13,10 @@ last_reviewed: 2026-08-03
 ## 결론
 
 `web-ifc@0.0.77`과 `ifcopenshell@0.8.4.post1`은 같은 repository-authored
-IFC4 synthetic fixture에서 semantic, identity, relation, extrusion geometry와
-IFC world bounds assertion을 통과했습니다. 그러나 첫 engine 선정과
-production go/no-go는 보류합니다.
+IFC4 base와 mapped/shared synthetic fixture에서 semantic, GlobalId–Express
+ID identity, relation, quantity, classification, extrusion geometry와 IFC
+world bounds assertion을 통과했습니다. 그러나 첫 engine 선정과 production
+go/no-go는 보류합니다.
 
 다음 Browser/VS Code vertical slice는 `web-ifc` Browser Worker를 우선
 prototype으로 삼는 것이 적절합니다. JavaScript/WASM 경로를 두 surface에서
@@ -26,7 +27,8 @@ IfcOpenShell native process를 desktop fallback으로 재평가합니다.
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
 실행 관찰값은
-[`ifc-engine-synthetic-small-2026-08-03.json`](../compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json)이
+[`base evidence`](../compatibility/evidence/ifc-engine-synthetic-small-2026-08-03.json)와
+[`mapped evidence`](../compatibility/evidence/ifc-engine-synthetic-mapped-2026-08-03.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -41,21 +43,42 @@ IfcOpenShell native process를 desktop fallback으로 재평가합니다.
 | 공간 계층 | Project→Site→Building→Storey | 동일 | 일치 |
 | Wall 의미 | type, occurrence/type Pset, Concrete | 동일 | 일치 |
 | GlobalId | 17, duplicate 0, missing 0 | 동일 | 일치 |
+| GlobalId–Express ID | 17-entry map digest | 동일 | 반복·engine 간 일치 |
 | Geometry | 1 product, 12 triangles | 동일 | 일치 |
 | IFC world bounds | `[0,0.9,0]`–`[4,1.1,3]` | 동일 | 일치 |
 | Engine vertex records | 34 | 8 | 비교 기준에서 제외 |
 | 반복 fingerprint | 동일 | 동일 | engine별 deterministic |
 | explicit engine cleanup | close/dispose 확인 | process exit가 cleanup 경계 | 추가 검증 필요 |
 
+mapped fixture는 두 Wall occurrence가 하나의 `IfcRepresentationMap`을 두
+`IfcMappedItem`으로 재사용합니다.
+[buildingSMART의 representation 정의](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/FINAL/HTML/schema/ifcrepresentationresource/lexical/ifcrepresentation.htm)에
+따르면 representation map은 하나의 표현을 여러 product가 공유하는
+경로입니다. Quantity는
+[IfcElementQuantity](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/FINAL/HTML/schema/ifcproductextension/lexical/ifcelementquantity.htm),
+classification은
+[IfcRelAssociatesClassification](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/FINAL/HTML/schema/ifckernel/lexical/ifcrelassociatesclassification.htm)
+관계로 연결합니다.
+
+| 항목 | web-ifc | IfcOpenShell | 공통 판정 |
+| --- | --- | --- | --- |
+| Mapping graph | map 1, item 2, product 2, source 1 | 동일 | 공유 관계 보존 |
+| Occurrence bounds | Y 0.9–1.1 / 4.9–5.1 | 동일 | 개별 placement 일치 |
+| Qto | Length 4, area 12, volume 2.4 | 동일 | 일치 |
+| Classification | `BE-WALL` | 동일 | source/name 포함 일치 |
+| Identity | 21 GlobalId–Express ID entries | 동일 | digest 일치 |
+| Geometry | 2 products, 24 triangles | 동일 | 일치 |
+| Engine vertex records | 68 | 16 | 비교 기준에서 제외 |
+
 정점 record 수는 tessellator의 normal/vertex expansion 전략에 따라 달라질 수
 있으므로 cross-engine correctness 기준이 아닙니다. 이 단계에서는 semantic
 snapshot, triangle count, coordinate basis와 bounds를 비교합니다.
 
-측정된 adapter 내부 total은 web-ifc 약 22ms, IfcOpenShell 약 3ms였고 child
-process wall clock은 양쪽 모두 약 190–215ms였습니다. 이는 2.9KB synthetic
-fixture의 개발 장비 관찰값일 뿐입니다. module import/cache 영향과 실제 첫
-화면을 대표하지 않으므로 성능 우열이나 production budget 근거로 사용하지
-않습니다.
+측정된 adapter 내부 total은 web-ifc 약 30–32ms, IfcOpenShell 약 3–5ms였고
+child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.9KB와
+4KB synthetic fixture의 개발 장비 관찰값일 뿐입니다. module import/cache
+영향과 실제 첫 화면을 대표하지 않으므로 성능 우열이나 production budget
+근거로 사용하지 않습니다.
 
 ## Draft implementation profile
 
@@ -64,15 +87,16 @@ fixture의 개발 장비 관찰값일 뿐입니다. module import/cache 영향�
 - STEP serialization의 IFC4 `ReferenceView_V1.2`
 - Project/Site/Building/BuildingStorey/Space와 aggregation/containment
 - IfcWall occurrence, IfcWallType, occurrence/type property set와 material
-- GlobalId completeness/duplicate diagnostic와 source digest
+- GlobalId completeness/duplicate diagnostic, Express ID map과 source digest
 - IfcExtrudedAreaSolid tessellation과 IFC world Z-up placement bounds
+- IfcRepresentationMap/IfcMappedItem 기반 두 occurrence의 shared definition
+- IfcElementQuantity의 length/area/volume과 classification reference
 - local read-only parse/index/geometry report
 
 다음은 `blocked`입니다.
 
 - IFC2X3, IFC4.3와 그 외 exchange scenario
-- mapped representation와 shared geometry instance
-- Qto, classification, connection과 broader relation corpus
+- connection, system, opening과 broader object/relation corpus
 - corrupt/truncated input, cancellation과 resource exhaustion cleanup
 - large model first-frame/index/RSS budget
 - Browser Worker, Linux와 VS Code packaging
@@ -93,7 +117,7 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 | placement | mapped | mapped |
 | type/Pset/material | mapped | mapped |
 | relations | mapped | native |
-| mapped/shared/Qto/classification | blocked | blocked |
+| mapped/shared/Qto/classification | mapped | mapped |
 | cancellation/corrupt cleanup | blocked | blocked |
 | write/round-trip | blocked | blocked |
 | verified packaging | macOS Node only | macOS Python wheel only |
@@ -127,6 +151,7 @@ web-ifc는 repository lockfile만 사용합니다.
 ```sh
 npm ci
 npm run qualify:ifc:web
+npm run qualify:ifc:mapped
 ```
 
 두 후보 비교에는 별도 Python environment를 주입합니다.
@@ -136,6 +161,7 @@ python3.12 -m venv .qualification-venv
 .qualification-venv/bin/python -m pip install ifcopenshell==0.8.4.post1
 node scripts/qualify-ifc-engine.mjs \
   --engine all \
+  --fixture mapped \
   --python .qualification-venv/bin/python
 ```
 
@@ -144,9 +170,9 @@ third-party IFC는 저장소와 evidence에 포함하지 않습니다.
 
 ## 다음 Gate
 
-1. mapped/shared geometry와 Qto/classification을 포함한 작은 fixture를 추가
+1. timeout/cancel/corrupt fixture에서 process/Worker cleanup 검증
 2. redistribution 가능한 large performance fixture와 resource budget 고정
-3. timeout/cancel/corrupt fixture에서 process/Worker cleanup 검증
+3. connection/system/opening을 포함한 broader semantic corpus
 4. web-ifc Browser Worker prototype과 Linux CI evidence
 5. VS Code isolation/package proof
 6. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토

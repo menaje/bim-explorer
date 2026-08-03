@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 
-export const REPORT_SCHEMA = "bim-explorer-ifc-engine-report/0.1";
+export const REPORT_SCHEMA = "bim-explorer-ifc-engine-report/0.2";
 export const FINGERPRINT_PROJECTION =
-  "bim-explorer-ifc-engine-fingerprint/0.1";
+  "bim-explorer-ifc-engine-fingerprint/0.2";
 
 export const CAPABILITY_NAMES = Object.freeze([
   "parse",
@@ -111,6 +111,34 @@ function validateCountRecord(value, label) {
   }
 }
 
+function validateNumericRecord(value, label) {
+  const record = plainRecord(value, label);
+  for (const [name, measurement] of Object.entries(record)) {
+    nonEmptyString(name, `${label} key`);
+    finiteNumber(measurement, `${label}.${name}`);
+  }
+}
+
+function validateBounds(value, label) {
+  const bounds = plainRecord(value, label);
+  for (const field of ["min", "max"]) {
+    if (
+      !Array.isArray(bounds[field]) ||
+      bounds[field].length !== 3
+    ) {
+      throw new TypeError(`${label}.${field} must be a 3D vector`);
+    }
+    bounds[field].forEach((coordinate, index) => {
+      finiteNumber(coordinate, `${label}.${field}[${index}]`);
+    });
+  }
+  for (let axis = 0; axis < 3; axis += 1) {
+    if (bounds.min[axis] > bounds.max[axis]) {
+      throw new Error(`${label} has an inverted axis ${axis}`);
+    }
+  }
+}
+
 export function canonicalize(value) {
   if (Array.isArray(value)) {
     return value.map(canonicalize);
@@ -141,6 +169,7 @@ export function fingerprintProjection(report) {
     capabilities: report.capabilities,
     semantics: report.semantics,
     relations: report.relations,
+    representationSharing: report.representationSharing,
     geometry: report.geometry,
   };
 }
@@ -205,6 +234,19 @@ export function validateIfcEngineReport(value) {
   for (const field of ["count", "duplicates", "missingOnIfcRoot"]) {
     nonNegativeInteger(globalIds[field], `semantics.globalIds.${field}`);
   }
+  const expressIds = plainRecord(
+    semantics.expressIds,
+    "semantics.expressIds",
+  );
+  for (const field of ["count", "duplicates", "minimum", "maximum"]) {
+    nonNegativeInteger(expressIds[field], `semantics.expressIds.${field}`);
+  }
+  if (
+    expressIds.minimum > expressIds.maximum ||
+    !SHA256.test(expressIds.globalIdMapSha256)
+  ) {
+    throw new Error("invalid Express ID identity diagnostics");
+  }
   stringList(semantics.spatialHierarchy, "semantics.spatialHierarchy");
   const wall = plainRecord(semantics.wall, "semantics.wall");
   for (const field of ["name", "tag", "type"]) {
@@ -212,10 +254,45 @@ export function validateIfcEngineReport(value) {
   }
   stringList(wall.materials, "semantics.wall.materials");
   stringList(wall.propertySets, "semantics.wall.propertySets");
+  validateNumericRecord(wall.quantities, "semantics.wall.quantities");
+  if (!Array.isArray(wall.classifications)) {
+    throw new TypeError("semantics.wall.classifications must be a list");
+  }
+  wall.classifications.forEach((value, index) => {
+    const classification = plainRecord(
+      value,
+      `semantics.wall.classifications[${index}]`,
+    );
+    for (const field of ["identification", "name", "source"]) {
+      nonEmptyString(
+        classification[field],
+        `semantics.wall.classifications[${index}].${field}`,
+      );
+    }
+  });
 
   validateCountRecord(report.relations, "relations");
 
   const geometry = plainRecord(report.geometry, "geometry");
+  const sharing = plainRecord(
+    report.representationSharing,
+    "representationSharing",
+  );
+  for (const field of [
+    "representationMaps",
+    "mappedItems",
+    "productsUsingMappedItems",
+    "distinctMappingSources",
+  ]) {
+    nonNegativeInteger(sharing[field], `representationSharing.${field}`);
+  }
+  if (
+    sharing.distinctMappingSources > sharing.representationMaps ||
+    sharing.productsUsingMappedItems > geometry.products
+  ) {
+    throw new Error("invalid mapped representation sharing counts");
+  }
+
   for (const field of [
     "products",
     "geometries",
@@ -227,20 +304,33 @@ export function validateIfcEngineReport(value) {
   if (geometry.coordinateSystem !== "ifc-world-z-up") {
     throw new Error("geometry.coordinateSystem must be ifc-world-z-up");
   }
-  const bounds = plainRecord(geometry.bounds, "geometry.bounds");
-  for (const field of ["min", "max"]) {
-    if (
-      !Array.isArray(bounds[field]) ||
-      bounds[field].length !== 3
-    ) {
-      throw new TypeError(`geometry.bounds.${field} must be a 3D vector`);
-    }
-    bounds[field].forEach((coordinate, index) => {
-      finiteNumber(
-        coordinate,
-        `geometry.bounds.${field}[${index}]`,
-      );
-    });
+  validateBounds(geometry.bounds, "geometry.bounds");
+  if (!Array.isArray(geometry.instances)) {
+    throw new TypeError("geometry.instances must be a list");
+  }
+  for (const [index, value] of geometry.instances.entries()) {
+    const instance = plainRecord(value, `geometry.instances[${index}]`);
+    nonEmptyString(instance.globalId, `geometry.instances[${index}].globalId`);
+    nonNegativeInteger(
+      instance.expressId,
+      `geometry.instances[${index}].expressId`,
+    );
+    nonNegativeInteger(
+      instance.triangles,
+      `geometry.instances[${index}].triangles`,
+    );
+    validateBounds(
+      instance.bounds,
+      `geometry.instances[${index}].bounds`,
+    );
+  }
+  if (
+    geometry.instances.length !== geometry.products ||
+    new Set(
+      geometry.instances.map((instance) => instance.expressId),
+    ).size !== geometry.instances.length
+  ) {
+    throw new Error("geometry instances must map one-to-one to products");
   }
 
   const performance = plainRecord(report.performance, "performance");

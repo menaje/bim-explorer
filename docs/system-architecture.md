@@ -71,7 +71,7 @@ conformance로 비교합니다. WASM을 위해 source identity나 geometry 의�
 낮은 공통분모로 축소하지 않습니다.
 
 현재 공통 report와 capability vocabulary는
-[IFC engine adapter v0.1 draft](../specs/ifc-engine-adapter-v0.1.md)가
+[IFC engine adapter v0.2 draft](../specs/ifc-engine-adapter-v0.2.md)가
 정의합니다. 두 후보 모두 작은 IFC4 fixture를 통과했지만 selection과
 production admission은
 [qualification Gate](ifc-engine-qualification.md)에 따라 보류합니다.

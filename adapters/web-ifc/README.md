@@ -4,7 +4,9 @@
 qualification report만 stdout으로 반환합니다.
 
 ```sh
-node adapters/web-ifc/src/inspect.mjs --input /temporary/source.ifc
+node adapters/web-ifc/src/inspect.mjs \
+  --input /temporary/source.ifc \
+  --fixture-id synthetic-small-ifc4
 ```
 
 이 adapter는 현재 실험용입니다. Browser Worker, cancellation, corrupt input,

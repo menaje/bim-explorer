@@ -11,9 +11,11 @@
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
 
 IFC engine 후보와 draft profile 상태는
-[`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 같은 synthetic
-fixture 비교는
-[`evidence/ifc-engine-synthetic-small-2026-08-03.json`](evidence/ifc-engine-synthetic-small-2026-08-03.json)에
+[`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
+비교는
+[`synthetic-small evidence`](evidence/ifc-engine-synthetic-small-2026-08-03.json),
+mapped/shared/Qto/classification 비교는
+[`synthetic-mapped evidence`](evidence/ifc-engine-synthetic-mapped-2026-08-03.json)에
 기록합니다. 이는 `experimental` evidence이며 engine selection 또는
 production redistribution 승인이 아닙니다.
 

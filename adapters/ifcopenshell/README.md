@@ -4,7 +4,9 @@ IfcOpenShell Python package를 별도 process에서 실행하고 공통 IFC engi
 qualification report를 stdout으로 반환합니다.
 
 ```sh
-python3 adapters/ifcopenshell/qualify.py --input /temporary/source.ifc
+python3 adapters/ifcopenshell/qualify.py \
+  --input /temporary/source.ifc \
+  --fixture-id synthetic-small-ifc4
 ```
 
 Python environment와 IfcOpenShell wheel은 저장소 package에 포함하지 않습니다.

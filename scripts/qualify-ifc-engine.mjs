@@ -9,6 +9,7 @@ import {
 } from "../packages/ifc-engine-contract/src/index.mjs";
 import {
   syntheticIfc,
+  syntheticMappedIfc,
 } from "./generate-synthetic-ifc.mjs";
 
 const CHILD_TIMEOUT_MS = 60_000;
@@ -26,6 +27,7 @@ const SAFE_ENVIRONMENT_NAMES = [
 function parseArguments(values) {
   const options = {
     engine: "web-ifc",
+    fixture: "small",
     output: null,
     python: null,
   };
@@ -40,6 +42,11 @@ function parseArguments(values) {
         throw new TypeError(`unsupported IFC engine ${value}`);
       }
       options.engine = value;
+    } else if (name === "--fixture") {
+      if (!["small", "mapped"].includes(value)) {
+        throw new TypeError(`unsupported IFC fixture ${value}`);
+      }
+      options.fixture = value;
     } else if (name === "--python") {
       options.python = path.resolve(value);
     } else if (name === "--output") {
@@ -59,7 +66,7 @@ function parseArguments(values) {
   return options;
 }
 
-function engineCommands(options, input) {
+function engineCommands(options, input, fixtureId) {
   const commands = [];
   if (["web-ifc", "all"].includes(options.engine)) {
     commands.push({
@@ -69,6 +76,8 @@ function engineCommands(options, input) {
         path.resolve("adapters/web-ifc/src/inspect.mjs"),
         "--input",
         input,
+        "--fixture-id",
+        fixtureId,
       ],
     });
   }
@@ -80,6 +89,8 @@ function engineCommands(options, input) {
         path.resolve("adapters/ifcopenshell/qualify.py"),
         "--input",
         input,
+        "--fixture-id",
+        fixtureId,
       ],
     });
   }
@@ -187,11 +198,7 @@ function assertFixture(report, manifest) {
   assertEqual(report.fixture.schema, manifest.ifc.schema, "IFC schema");
   assertEqual(
     report.semantics.entityCounts,
-    {
-      ...manifest.expected.entities,
-      IfcElementQuantity: 0,
-      IfcClassification: 0,
-    },
+    manifest.expected.entities,
     "semantic entity counts",
   );
   assertEqual(
@@ -204,6 +211,11 @@ function assertFixture(report, manifest) {
     manifest.expected.globalIds,
     "GlobalId diagnostics",
   );
+  assertEqual(
+    report.semantics.expressIds,
+    manifest.expected.expressIds,
+    "Express ID diagnostics",
+  );
   assertEqual(report.semantics.wall.name, manifest.expected.wall.name, "wall");
   assertEqual(report.semantics.wall.tag, manifest.expected.wall.tag, "wall tag");
   assertEqual(
@@ -213,24 +225,40 @@ function assertFixture(report, manifest) {
   );
   assertEqual(
     report.semantics.wall.materials,
-    [manifest.expected.wall.material],
+    manifest.expected.wall.materials,
     "wall material",
   );
   assertEqual(
     report.semantics.wall.propertySets,
-    ["Pset_WallCommon", "Pset_WallTypeCommon"],
+    manifest.expected.wall.propertySets,
     "wall property sets",
   );
-  assertEqual(report.geometry.products, 1, "geometry product count");
-  assertEqual(report.geometry.geometries, 1, "geometry count");
-  assertEqual(report.geometry.triangles, 12, "triangle count");
   assertEqual(
-    report.geometry.bounds,
+    report.semantics.wall.quantities,
+    manifest.expected.wall.quantities,
+    "wall quantities",
+  );
+  assertEqual(
+    report.semantics.wall.classifications,
+    manifest.expected.wall.classifications,
+    "wall classifications",
+  );
+  assertEqual(
     {
-      min: [0, 0.9, 0],
-      max: [4, 1.1, 3],
+      products: report.geometry.products,
+      geometries: report.geometry.geometries,
+      triangles: report.geometry.triangles,
+      coordinateSystem: report.geometry.coordinateSystem,
+      bounds: report.geometry.bounds,
+      instances: report.geometry.instances,
     },
-    "IFC world bounds",
+    manifest.expected.geometry,
+    "geometry and placement",
+  );
+  assertEqual(
+    report.representationSharing,
+    manifest.expected.representationSharing,
+    "mapped representation sharing",
   );
 }
 
@@ -260,12 +288,18 @@ function compareEngines(engineEvidence) {
       "cross-engine relation counts",
     );
     assertEqual(
+      report.representationSharing,
+      reference.representationSharing,
+      "cross-engine representation sharing",
+    );
+    assertEqual(
       {
         products: report.geometry.products,
         geometries: report.geometry.geometries,
         triangles: report.geometry.triangles,
         coordinateSystem: report.geometry.coordinateSystem,
         bounds: report.geometry.bounds,
+        instances: report.geometry.instances,
       },
       {
         products: reference.geometry.products,
@@ -273,6 +307,7 @@ function compareEngines(engineEvidence) {
         triangles: reference.geometry.triangles,
         coordinateSystem: reference.geometry.coordinateSystem,
         bounds: reference.geometry.bounds,
+        instances: reference.geometry.instances,
       },
       "cross-engine geometry assertion",
     );
@@ -295,20 +330,30 @@ async function qualify(options) {
   const temporary = await mkdtemp(
     path.join(os.tmpdir(), "bim-explorer-ifc-qualification-"),
   );
-  const input = path.join(temporary, "synthetic-small.ifc");
+  const fixture = options.fixture === "mapped"
+    ? {
+      content: syntheticMappedIfc(),
+      filename: "synthetic-mapped.ifc",
+      manifest: "fixtures/ifc/synthetic-mapped/manifest.json",
+    }
+    : {
+      content: syntheticIfc(),
+      filename: "synthetic-small.ifc",
+      manifest: "fixtures/ifc/synthetic-small/manifest.json",
+    };
+  const input = path.join(temporary, fixture.filename);
   try {
-    await writeFile(input, syntheticIfc(), {
+    await writeFile(input, fixture.content, {
       encoding: "utf8",
       flag: "wx",
     });
     const manifest = JSON.parse(
-      await readFile(
-        "fixtures/ifc/synthetic-small/manifest.json",
-        "utf8",
-      ),
+      await readFile(fixture.manifest, "utf8"),
     );
     const engineEvidence = [];
-    for (const command of engineCommands(options, input)) {
+    for (
+      const command of engineCommands(options, input, manifest.fixtureId)
+    ) {
       const runs = [];
       for (let attempt = 1; attempt <= 2; attempt += 1) {
         const result = await execute(command);
@@ -326,14 +371,14 @@ async function qualify(options) {
       );
       engineEvidence.push({
         engine: command.id,
-        status: "passed-synthetic-small",
+        status: `passed-${manifest.fixtureId}`,
         deterministicFingerprint: true,
         runs,
       });
     }
 
     return {
-      schema: "bim-explorer-ifc-engine-qualification-evidence/1",
+      schema: "bim-explorer-ifc-engine-qualification-evidence/2",
       asOf: "2026-08-03",
       status: "experimental",
       fixture: {
@@ -341,6 +386,7 @@ async function qualify(options) {
         kind: manifest.kind,
         artifactCommitted: manifest.tracking.artifactCommitted,
         thirdPartyContent: manifest.redistribution.thirdPartyContent,
+        qualificationUse: manifest.qualificationUse,
         heldScenarios: manifest.notQualified,
       },
       environment: {
@@ -355,7 +401,7 @@ async function qualify(options) {
         readRender: "experimental-only",
         writeRoundTrip: "blocked",
         reason:
-          "large-model, mapped representation, cancellation, corrupt input, " +
+          `${manifest.notQualified.join(", ")}, cancellation, ` +
           "Browser/VS Code packaging and redistribution gates remain open",
       },
     };
