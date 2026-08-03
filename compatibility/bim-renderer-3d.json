@@ -125,6 +125,14 @@
       "allActiveBytes": 9674488,
       "evictedActiveBytes": 5341652
     },
+    "browserVisibilityFirstFrame": {
+      "targetExpressId": 597326,
+      "sourcePlanRangeId": "range:ifc:geometry:0",
+      "selectedRangeId": "range:ifc:geometry:1",
+      "sourceReadBytes": 4194152,
+      "uploadedBytes": 4332836,
+      "nonBackgroundPixels": 292357
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -144,7 +152,7 @@
     "largeCoordinatePrecision": true,
     "progressiveRangeCache": true,
     "affectedBoundsAtomicDelta": true,
-    "visibilityDrivenFirstFrame": false,
+    "visibilityDrivenFirstFrame": true,
     "actualGpuFirstFrame": true,
     "cameraInteraction": true,
     "browserVscodeConformance": false,
@@ -160,10 +168,10 @@
     "browserLargeCoordinate": "compatibility/evidence/bim-renderer-3d-browser-large-coordinate-2026-08-04.json",
     "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json",
     "browserAtomicDelta": "compatibility/evidence/bim-renderer-3d-public-browser-atomic-delta-2026-08-04.json",
-    "browserCameraInput": "compatibility/evidence/bim-renderer-3d-public-browser-camera-input-2026-08-04.json"
+    "browserCameraInput": "compatibility/evidence/bim-renderer-3d-public-browser-camera-input-2026-08-04.json",
+    "browserVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json"
   },
   "blockers": [
-    "initial range order is not a camera-visibility-driven first-frame plan",
     "Browser and VS Code renderer conformance is not qualified",
     "durable Viewer Core package and 3D conformance remain unresolved"
   ],

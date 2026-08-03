@@ -1,0 +1,144 @@
+{
+  "schema": "bim-explorer-browser-visibility-first-frame-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-visibility-first-frame",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumRangeBytes": 4194304,
+    "maximumSourceReadBytes": 4194304,
+    "maximumCpuStagingBytes": 16777216,
+    "maximumUploadedBytes": 8388608,
+    "maximumFrameMs": 1000,
+    "frameWidth": 960,
+    "frameHeight": 540
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-visibility-first-frame-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+    },
+    "target": {
+      "expressId": 597326,
+      "rangeId": "range:ifc:geometry:1",
+      "bounds": {
+        "min": [
+          21.633195,
+          1.25,
+          6
+        ],
+        "max": [
+          21.713195,
+          1.33,
+          6.757307
+        ]
+      }
+    },
+    "selection": {
+      "strategy": "camera-visibility",
+      "cameraDriven": true,
+      "sourcePlanRangeIds": [
+        "range:ifc:geometry:0"
+      ],
+      "selectedRangeIds": [
+        "range:ifc:geometry:1"
+      ],
+      "deferredRangeIds": [
+        "range:ifc:geometry:0",
+        "range:ifc:geometry:2"
+      ],
+      "ranking": [
+        {
+          "rangeId": "range:ifc:geometry:1",
+          "targetGap": 0,
+          "targetDistance": 0,
+          "order": 1
+        },
+        {
+          "rangeId": "range:ifc:geometry:2",
+          "targetGap": 0,
+          "targetDistance": 11.032107749477758,
+          "order": 2
+        },
+        {
+          "rangeId": "range:ifc:geometry:0",
+          "targetGap": 0.09232967771920642,
+          "targetDistance": 15.006655844194176,
+          "order": 0
+        }
+      ]
+    },
+    "camera": {
+      "schema": "bim-explorer-camera-3d/0.1",
+      "projection": "perspective",
+      "target": [
+        21.673195,
+        1.29,
+        6.3786535
+      ]
+    },
+    "firstFrame": {
+      "actualGpu": true,
+      "rendered": true,
+      "sourceReadBytes": 4194152,
+      "sourceReads": 4,
+      "geometryPayloadBytes": 4158276,
+      "instances": 2182,
+      "drawCalls": 2182,
+      "uploadedBytes": 4332836,
+      "nonBackgroundPixels": 292357,
+      "frameMs": 7.199999928474426,
+      "glError": 0,
+      "cpuRangeStagingReleased": true
+    },
+    "resourceState": {
+      "activeBytes": 4332836,
+      "residentRanges": 1,
+      "frames": 1,
+      "sourceReads": 4,
+      "sourceBytes": 4194152
+    },
+    "cleanup": {
+      "releasedBytes": 4332836,
+      "activeBytes": 0,
+      "residentRanges": 0,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "cameraTargetBoundedObject": true,
+    "cameraDrivenRangeSelection": true,
+    "sourcePlanRangeReordered": true,
+    "boundedSingleRangeRead": true,
+    "requestedCameraRendered": true,
+    "rasterizedPixels": true,
+    "revisionBoundRange": true,
+    "boundedCpuStagingReleased": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "visibilityDrivenFirstFrame": "passed",
+    "physicalGpuQualification": "not-claimed",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}

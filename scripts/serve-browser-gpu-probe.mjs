@@ -132,6 +132,7 @@ function projectedSnapshot(snapshot) {
       pickId: entity.pickId,
       externalIdentityToken: entity.externalIdentityToken,
       renderable: entity.renderable,
+      bounds: entity.bounds,
       primitives: entity.primitives
         .map((primitive) => ({
           geometryExpressId: primitive.geometryExpressId,

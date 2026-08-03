@@ -1243,6 +1243,11 @@ export class WebGl2Backend {
       presentation.bounds,
       "WebGL2 bounds",
     );
+    const initialCamera =
+      presentation.initialCamera === null ||
+      presentation.initialCamera === undefined
+        ? null
+        : validateCamera3d(presentation.initialCamera);
     if (
       !Array.isArray(plan.ranges) ||
       !Array.isArray(plan.instances) ||
@@ -1371,9 +1376,10 @@ export class WebGl2Backend {
         worldOrigin: Object.freeze(worldOrigin),
         worldLocation,
       };
-      const camera = createFitCamera3d(bounds, {
-        aspect: this.#width / this.#height,
-      });
+      const camera = initialCamera ??
+        createFitCamera3d(bounds, {
+          aspect: this.#width / this.#height,
+        });
       const frame = await this.#drawFrame(
         drawState,
         camera,

@@ -10,6 +10,7 @@ import {
 } from "../../packages/bim-model-source/src/index.mjs";
 import {
   createBounded3dRenderer,
+  createFitCamera3d,
   createHeadless3dBackend,
   decodeBimGeometryRange,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
@@ -245,6 +246,63 @@ test("progressive range cache rejects aggregate GPU overcommit", async () => {
   assert.equal(renderer.state.rangeLoads, 0);
   assert.equal(backend.state.rangeUpdates, 0);
 
+  await renderer.dispose();
+  await session.dispose();
+  await source.dispose();
+});
+
+test("camera visibility can choose a deferred source range first", async () => {
+  const {
+    source,
+    session,
+    snapshot,
+  } = await sourceSession(multiGeometryBytes(), {
+    maximumRangeBytes: 996,
+  });
+  const selectedRangeId = snapshot.loadPlan.deferredRangeIds[0];
+  const selectedEntity = snapshot.entities.find((entity) =>
+    entity.primitives.some((primitive) =>
+      primitive.slice.rangeId === selectedRangeId));
+  const renderer = createBounded3dRenderer({
+    limits: {
+      maximumRangeBytes: 996,
+      maximumSourceReadBytes: 996,
+    },
+  });
+  const receipt = await renderer.mount({
+    initialCamera: createFitCamera3d(selectedEntity.bounds),
+    initialRangeStrategy: "camera-visibility",
+    session,
+    snapshot,
+  });
+
+  assert.deepEqual(receipt.rangeIds, [selectedRangeId]);
+  assert.deepEqual(receipt.deferredRangeIds, [
+    snapshot.loadPlan.firstFrameRangeIds[0],
+  ]);
+  assert.equal(
+    receipt.initialRangeSelection.strategy,
+    "camera-visibility",
+  );
+  assert.equal(
+    receipt.initialRangeSelection.cameraDriven,
+    true,
+  );
+  assert.deepEqual(
+    receipt.initialRangeSelection.sourcePlanRangeIds,
+    snapshot.loadPlan.firstFrameRangeIds,
+  );
+  assert.equal(
+    receipt.initialRangeSelection.ranking[0].rangeId,
+    selectedRangeId,
+  );
+  assert.equal(source.state.rangeReads, 8);
+  assert.equal(source.state.remainingReadBytes, 996);
+
+  const sourcePlanLoad = await renderer.loadRange({
+    rangeId: snapshot.loadPlan.firstFrameRangeIds[0],
+  });
+  assert.deepEqual(sourcePlanLoad.deferredRangeIds, []);
   await renderer.dispose();
   await session.dispose();
   await source.dispose();

@@ -585,6 +585,129 @@ async function readRange(session, handle, limits, signal) {
   }
 }
 
+function selectVisibilityRange(snapshot, handles, camera) {
+  const ranges = new Map(
+    [...handles.keys()].map((rangeId, order) => [
+      rangeId,
+      {
+        max: [-Infinity, -Infinity, -Infinity],
+        members: [],
+        min: [Infinity, Infinity, Infinity],
+        order,
+        primitives: 0,
+      },
+    ]),
+  );
+  for (const entity of snapshot.entities) {
+    if (!Array.isArray(entity.primitives)) {
+      throw new TypeError(
+        "renderer entity primitives must be a list",
+      );
+    }
+    const candidateIds = new Set(
+      entity.primitives
+        .map((primitive) => primitive.slice?.rangeId)
+        .filter((rangeId) => ranges.has(rangeId)),
+    );
+    if (candidateIds.size === 0) {
+      continue;
+    }
+    const boundsValue = plainRecord(
+      entity.bounds,
+      "renderer visibility entity.bounds",
+    );
+    const min = finiteVector(
+      boundsValue.min,
+      3,
+      "renderer visibility entity.bounds.min",
+    );
+    const max = finiteVector(
+      boundsValue.max,
+      3,
+      "renderer visibility entity.bounds.max",
+    );
+    if (
+      min.some((value, axis) => value > max[axis]) ||
+      min.every((value, axis) => value === max[axis])
+    ) {
+      throw new RangeError(
+        "renderer visibility entity bounds are invalid",
+      );
+    }
+    for (const rangeId of candidateIds) {
+      const range = ranges.get(rangeId);
+      for (let axis = 0; axis < 3; axis += 1) {
+        range.min[axis] = Math.min(range.min[axis], min[axis]);
+        range.max[axis] = Math.max(range.max[axis], max[axis]);
+      }
+      range.members.push(Object.freeze({
+        center: Object.freeze(min.map(
+          (value, axis) => (value + max[axis]) / 2,
+        )),
+        radius: Math.hypot(
+          ...max.map(
+            (value, axis) => (value - min[axis]) / 2,
+          ),
+        ),
+      }));
+      range.primitives += entity.primitives.filter(
+        (primitive) => primitive.slice?.rangeId === rangeId,
+      ).length;
+    }
+  }
+  const ranking = [...ranges.entries()].map(
+    ([rangeId, range]) => {
+      if (
+        range.primitives === 0 ||
+        range.min.some((value) => !Number.isFinite(value)) ||
+        range.max.some((value) => !Number.isFinite(value))
+      ) {
+        throw new Error(
+          "renderer range has no visibility bounds",
+        );
+      }
+      const center = range.min.map(
+        (value, axis) => (value + range.max[axis]) / 2,
+      );
+      const memberDistances = range.members.map((member) => {
+        const targetDistance = Math.hypot(
+          ...member.center.map(
+            (value, axis) => value - camera.target[axis],
+          ),
+        );
+        return Object.freeze({
+          targetDistance,
+          targetGap: Math.max(
+            0,
+            targetDistance - member.radius,
+          ),
+        });
+      }).sort((left, right) =>
+        left.targetGap - right.targetGap ||
+        left.targetDistance - right.targetDistance);
+      return Object.freeze({
+        rangeId,
+        bounds: Object.freeze({
+          min: Object.freeze([...range.min]),
+          max: Object.freeze([...range.max]),
+        }),
+        center: Object.freeze(center),
+        targetDistance: memberDistances[0].targetDistance,
+        targetGap: memberDistances[0].targetGap,
+        primitives: range.primitives,
+        order: range.order,
+      });
+    },
+  ).sort((left, right) =>
+    left.targetGap - right.targetGap ||
+    left.targetDistance - right.targetDistance ||
+    left.order - right.order);
+  return Object.freeze({
+    rangeId: ranking[0].rangeId,
+    ranking: Object.freeze(ranking),
+  });
+}
+
 function buildMountPlan(
   snapshot,
   rangeResults,
@@ -1314,7 +1437,13 @@ export class Bounded3dRenderer {
     });
   }
 
-  async mount({ session, snapshot, signal } = {}) {
+  async mount({
+    initialCamera: initialCameraValue = null,
+    initialRangeStrategy = "source-plan",
+    session,
+    snapshot,
+    signal,
+  } = {}) {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
@@ -1335,7 +1464,50 @@ export class Bounded3dRenderer {
         snapshot,
         this.limits,
       );
-      for (const handle of input.firstHandles) {
+      if (
+        !["source-plan", "camera-visibility"]
+          .includes(initialRangeStrategy)
+      ) {
+        throw new TypeError(
+          "renderer initial range strategy is invalid",
+        );
+      }
+      const initialCamera = initialCameraValue === null
+        ? null
+        : validateCamera3d(initialCameraValue);
+      if (
+        initialRangeStrategy === "camera-visibility" &&
+        initialCamera === null
+      ) {
+        throw new TypeError(
+          "renderer camera-visibility strategy requires a camera",
+        );
+      }
+      const visibilitySelection =
+        initialRangeStrategy === "camera-visibility"
+          ? selectVisibilityRange(
+            input.snapshot,
+            input.handles,
+            initialCamera,
+          )
+          : null;
+      const selectedHandles = visibilitySelection === null
+        ? input.firstHandles
+        : [input.handles.get(visibilitySelection.rangeId)];
+      const selectedReadBytes = selectedHandles.reduce(
+        (sum, handle) => sum + handle.byteLength,
+        0,
+      );
+      if (
+        selectedHandles.some((handle) =>
+          handle.byteLength > this.limits.maximumRangeBytes) ||
+        selectedReadBytes > this.limits.maximumSourceReadBytes
+      ) {
+        throw new RangeError(
+          "renderer selected first range exceeds its byte limit",
+        );
+      }
+      for (const handle of selectedHandles) {
         rangeResults.push(
           await readRange(session, handle, this.limits, signal),
         );
@@ -1345,7 +1517,10 @@ export class Bounded3dRenderer {
         input.snapshot,
         rangeResults,
         this.limits,
-        input.presentation,
+        Object.freeze({
+          ...input.presentation,
+          initialCamera,
+        }),
       );
       validateActiveMetrics(
         activeMetrics([plan]),
@@ -1380,8 +1555,22 @@ export class Bounded3dRenderer {
           plan.ranges.map((range) => range.handleId),
         ),
         deferredRangeIds: Object.freeze([
-          ...(snapshot.loadPlan?.deferredRangeIds ?? []),
-        ]),
+          ...input.handles.keys(),
+        ].filter((rangeId) =>
+          !plan.ranges.some((range) =>
+            range.handleId === rangeId),
+        )),
+        initialRangeSelection: Object.freeze({
+          strategy: initialRangeStrategy,
+          sourcePlanRangeIds: Object.freeze([
+            ...snapshot.loadPlan.firstFrameRangeIds,
+          ]),
+          selectedRangeIds: Object.freeze(
+            plan.ranges.map((range) => range.handleId),
+          ),
+          cameraDriven: visibilitySelection !== null,
+          ranking: visibilitySelection?.ranking ?? null,
+        }),
         metrics: plan.metrics,
         identity: Object.freeze({
           renderPickBoundToRevision: plan.instances.every(
@@ -1399,6 +1588,9 @@ export class Bounded3dRenderer {
         deltaSequence: 0,
         handleId: backendMount.handleId,
         handles: input.handles,
+        allRangeIds: Object.freeze([
+          ...input.handles.keys(),
+        ]),
         initialRangeIds: new Set(
           plan.ranges.map((range) => range.handleId),
         ),
@@ -1412,7 +1604,7 @@ export class Bounded3dRenderer {
         receipt,
         session,
         snapshot: input.snapshot,
-        presentation: input.presentation,
+        presentation: plan.presentation,
         instanceRenderIds: Object.freeze(
           plan.instances.map((instance) => instance.renderId),
         ),
@@ -1477,7 +1669,7 @@ export class Bounded3dRenderer {
           ...this.#active.rangePlans.keys(),
         ]),
         deferredRangeIds: Object.freeze(
-          this.#active.snapshot.loadPlan.deferredRangeIds
+          this.#active.allRangeIds
             .filter((id) =>
               !this.#active.rangePlans.has(id)),
         ),
@@ -1591,7 +1783,7 @@ export class Bounded3dRenderer {
           ...this.#active.rangePlans.keys(),
         ]),
         deferredRangeIds: Object.freeze(
-          this.#active.snapshot.loadPlan.deferredRangeIds
+          this.#active.allRangeIds
             .filter((id) =>
               !this.#active.rangePlans.has(id)),
         ),
@@ -1693,7 +1885,7 @@ export class Bounded3dRenderer {
           ...this.#active.rangePlans.keys(),
         ]),
         deferredRangeIds: Object.freeze(
-          this.#active.snapshot.loadPlan.deferredRangeIds
+          this.#active.allRangeIds
             .filter((id) =>
               !this.#active.rangePlans.has(id)),
         ),

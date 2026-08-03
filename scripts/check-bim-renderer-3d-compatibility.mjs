@@ -22,9 +22,9 @@ const TRUE_GATES = [
   "progressiveRangeCache",
   "affectedBoundsAtomicDelta",
   "cameraInteraction",
+  "visibilityDrivenFirstFrame",
 ];
 const HELD_GATES = [
-  "visibilityDrivenFirstFrame",
   "browserVscodeConformance",
   "viewerCoreConformance",
 ];
@@ -153,6 +153,19 @@ const CAMERA_INPUT_CONFORMANCE_ASSERTIONS = [
   "zoomApplied",
   "gpuAllocationReused",
   "controlsDetached",
+  "deterministicDispose",
+  "pathFreeReport",
+];
+const VISIBILITY_FIRST_FRAME_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "cameraTargetBoundedObject",
+  "cameraDrivenRangeSelection",
+  "sourcePlanRangeReordered",
+  "boundedSingleRangeRead",
+  "requestedCameraRendered",
+  "rasterizedPixels",
+  "revisionBoundRange",
+  "boundedCpuStagingReleased",
   "deterministicDispose",
   "pathFreeReport",
 ];
@@ -2052,6 +2065,202 @@ function validateBrowserCameraInputEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserVisibilityFirstFrameEvidence(
+  manifest,
+  evidence,
+) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser visibility-first-frame fixture",
+  );
+  const budget = plainRecord(
+    evidence.budget,
+    "Browser visibility-first-frame budget",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser visibility-first-frame representativeReport",
+  );
+  const expected = plainRecord(
+    manifest.expected.browserVisibilityFirstFrame,
+    "manifest expected Browser visibility-first-frame",
+  );
+  const revisionId =
+    `source-snapshot:sha256:${manifest.fixture.sha256}`;
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-" +
+        "visibility-first-frame-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-visibility-first-frame" ||
+    fixture.id !== manifest.fixture.id ||
+    fixture.schema !== manifest.fixture.schema ||
+    fixture.profile !== manifest.fixture.profile ||
+    fixture.byteLength !== manifest.fixture.byteLength ||
+    fixture.sha256 !== manifest.fixture.sha256 ||
+    fixture.artifactCommitted !== false ||
+    fixture.profileAdmission !== false ||
+    budget.maximumRangeBytes !==
+      RENDERER_LIMITS.maximumRangeBytes ||
+    budget.maximumSourceReadBytes !==
+      RENDERER_LIMITS.maximumSourceReadBytes ||
+    budget.maximumCpuStagingBytes !==
+      RENDERER_LIMITS.maximumCpuStagingBytes ||
+    budget.maximumUploadedBytes !== 8_388_608 ||
+    budget.maximumFrameMs !== 1_000 ||
+    budget.frameWidth !== 960 ||
+    budget.frameHeight !== 540 ||
+    report.schema !==
+      "bim-explorer-browser-" +
+        "visibility-first-frame-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !==
+      `sha256:${manifest.fixture.sha256}` ||
+    report.source?.revisionId !== revisionId
+  ) {
+    throw new Error(
+      "Browser visibility-first-frame identity is invalid",
+    );
+  }
+  const targetBounds = plainRecord(
+    report.target?.bounds,
+    "Browser visibility-first-frame target bounds",
+  );
+  const targetCenter = targetBounds.min?.map(
+    (value, axis) =>
+      (value + targetBounds.max?.[axis]) / 2,
+  );
+  if (
+    report.target?.expressId !== expected.targetExpressId ||
+    report.target?.rangeId !== expected.selectedRangeId ||
+    !Array.isArray(targetBounds.min) ||
+    !Array.isArray(targetBounds.max) ||
+    targetBounds.min.length !== 3 ||
+    targetBounds.max.length !== 3 ||
+    !targetBounds.min.every((value, axis) =>
+      typeof value === "number" &&
+      Number.isFinite(value) &&
+      value <= targetBounds.max[axis]) ||
+    report.selection?.strategy !== "camera-visibility" ||
+    report.selection?.cameraDriven !== true ||
+    !equalJson(report.selection?.sourcePlanRangeIds, [
+      expected.sourcePlanRangeId,
+    ]) ||
+    !equalJson(report.selection?.selectedRangeIds, [
+      expected.selectedRangeId,
+    ]) ||
+    !equalJson(report.selection?.deferredRangeIds, [
+      expected.sourcePlanRangeId,
+      "range:ifc:geometry:2",
+    ]) ||
+    !Array.isArray(report.selection?.ranking) ||
+    report.selection.ranking.length !== 3 ||
+    report.selection.ranking[0]?.rangeId !==
+      expected.selectedRangeId ||
+    report.selection.ranking.some((entry, index, ranking) =>
+      typeof entry?.targetGap !== "number" ||
+      !Number.isFinite(entry.targetGap) ||
+      typeof entry?.targetDistance !== "number" ||
+      !Number.isFinite(entry.targetDistance) ||
+      (
+        index > 0 &&
+        entry.targetGap < ranking[index - 1].targetGap
+      )) ||
+    report.camera?.schema !== manifest.contract.camera ||
+    report.camera?.projection !== "perspective" ||
+    !equalJson(report.camera?.target, targetCenter)
+  ) {
+    throw new Error(
+      "Browser visibility-first-frame selection is invalid",
+    );
+  }
+  const firstFrame = plainRecord(
+    report.firstFrame,
+    "Browser visibility-first-frame firstFrame",
+  );
+  if (
+    firstFrame.actualGpu !== true ||
+    firstFrame.rendered !== true ||
+    firstFrame.sourceReadBytes !== expected.sourceReadBytes ||
+    firstFrame.sourceReadBytes > budget.maximumSourceReadBytes ||
+    firstFrame.sourceReads !== 4 ||
+    firstFrame.geometryPayloadBytes !== 4_158_276 ||
+    firstFrame.instances !== 2_182 ||
+    firstFrame.drawCalls !== 2_182 ||
+    firstFrame.uploadedBytes !== expected.uploadedBytes ||
+    firstFrame.uploadedBytes > budget.maximumUploadedBytes ||
+    firstFrame.nonBackgroundPixels !==
+      expected.nonBackgroundPixels ||
+    firstFrame.nonBackgroundPixels <= 0 ||
+    firstFrame.glError !== 0 ||
+    firstFrame.cpuRangeStagingReleased !== true
+  ) {
+    throw new Error(
+      "Browser visibility-first-frame rendering is invalid",
+    );
+  }
+  boundedMeasurement(
+    firstFrame.frameMs,
+    budget.maximumFrameMs,
+    "Browser visibility first frame",
+  );
+  if (
+    report.resourceState?.activeBytes !==
+      expected.uploadedBytes ||
+    report.resourceState?.residentRanges !== 1 ||
+    report.resourceState?.frames !== 1 ||
+    report.resourceState?.sourceReads !==
+      firstFrame.sourceReads ||
+    report.resourceState?.sourceBytes !==
+      firstFrame.sourceReadBytes ||
+    report.cleanup?.releasedBytes !==
+      expected.uploadedBytes ||
+    report.cleanup?.activeBytes !== 0 ||
+    report.cleanup?.residentRanges !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.sessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error(
+      "Browser visibility-first-frame cleanup is invalid",
+    );
+  }
+  for (
+    const assertion of
+      VISIBILITY_FIRST_FRAME_CONFORMANCE_ASSERTIONS
+  ) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        "Browser visibility-first-frame " +
+          `${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      VISIBILITY_FIRST_FRAME_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.visibilityDrivenFirstFrame !== "passed" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "Browser visibility-first-frame decision is invalid",
+    );
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -2097,6 +2306,10 @@ export function validateBimRenderer3dCompatibility(
   const browserCameraInputEvidence = plainRecord(
     evidenceBundle.browserCameraInput,
     "Browser camera-input BIM renderer evidence",
+  );
+  const browserVisibilityFirstFrameEvidence = plainRecord(
+    evidenceBundle.browserVisibilityFirstFrame,
+    "Browser visibility-first-frame BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -2179,7 +2392,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "camera-input-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 10 ||
+    manifest.evidence?.browserVisibilityFirstFrame !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "visibility-first-frame-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 11 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2445,6 +2662,11 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserCameraInputEvidence,
     );
+  const browserVisibilityFirstFrameReport =
+    validateBrowserVisibilityFirstFrameEvidence(
+      manifest,
+      browserVisibilityFirstFrameEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -2476,6 +2698,9 @@ export function validateBimRenderer3dCompatibility(
       browserDeltaReport.redraw.pixels,
     browserCameraInputFrames:
       browserCameraInputReport.resourceState.frames,
+    browserVisibilityFirstFrameRange:
+      browserVisibilityFirstFrameReport
+        .selection.selectedRangeIds[0],
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -2543,6 +2768,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserCameraInput,
+      ),
+      "utf8",
+    )),
+    browserVisibilityFirstFrame: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserVisibilityFirstFrame,
       ),
       "utf8",
     )),

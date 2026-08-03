@@ -181,10 +181,14 @@ async function run() {
   let interactionBackend;
   let interactionRenderer;
   let interactionSession;
+  let visibilityBackend;
+  let visibilityRenderer;
+  let visibilitySession;
   let releaseReceipt;
   let precisionReleaseReceipt;
   let progressiveReleaseReceipt;
   let interactionReleaseReceipt;
+  let visibilityReleaseReceipt;
   try {
     const input = await json("/probe-input.json");
     if (
@@ -651,6 +655,69 @@ async function run() {
         backendState: interactionBackend.state,
       },
     };
+    const visibilityTargetRangeId =
+      input.snapshot.loadPlan.deferredRangeIds[0];
+    const visibilityTarget = input.snapshot.entities.find(
+      (entity) =>
+        entity.expressId === 597326 &&
+        entity.primitives.some((primitive) =>
+          primitive.slice.rangeId ===
+            visibilityTargetRangeId),
+    );
+    if (visibilityTarget === undefined) {
+      throw new Error(
+        "Browser GPU visibility target is unavailable",
+      );
+    }
+    const visibilityInitialCamera = createFitCamera3d(
+      visibilityTarget.bounds,
+      {
+        aspect: 16 / 9,
+      },
+    );
+    visibilitySession = new BrowserGeometryRangeSession(
+      input.snapshot,
+    );
+    visibilityBackend = createWebGl2Backend({
+      canvas: elements.canvas,
+      height: 540,
+      width: 960,
+    });
+    visibilityRenderer = createBounded3dRenderer({
+      backend: visibilityBackend,
+    });
+    const visibilityMount =
+      await visibilityRenderer.mount({
+        initialCamera: visibilityInitialCamera,
+        initialRangeStrategy: "camera-visibility",
+        session: visibilitySession,
+        snapshot: input.snapshot,
+      });
+    const visibilitySourceState = visibilitySession.state;
+    const visibilityBackendState = visibilityBackend.state;
+    visibilityReleaseReceipt =
+      await visibilityRenderer.unmount();
+    const visibilityRendererDisposed =
+      await visibilityRenderer.dispose();
+    const visibilitySessionDisposed =
+      await visibilitySession.dispose();
+    const visibilityFirstFrame = {
+      target: {
+        bounds: visibilityTarget.bounds,
+        expressId: visibilityTarget.expressId,
+        rangeId: visibilityTargetRangeId,
+      },
+      initialCamera: visibilityInitialCamera,
+      mount: visibilityMount,
+      sourceState: visibilitySourceState,
+      backendState: visibilityBackendState,
+      cleanup: {
+        releaseReceipt: visibilityReleaseReceipt,
+        rendererDisposed: visibilityRendererDisposed,
+        sessionDisposed: visibilitySessionDisposed,
+        backendState: visibilityBackend.state,
+      },
+    };
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -714,6 +781,7 @@ async function run() {
       precision,
       progressive,
       interaction,
+      visibilityFirstFrame,
       performance: {
         mountMs,
         viewMs,
@@ -733,6 +801,8 @@ async function run() {
         progressiveSessionDisposed,
         interactionRendererDisposed,
         interactionSessionDisposed,
+        visibilityRendererDisposed,
+        visibilitySessionDisposed,
         releasedBytes: releaseReceipt.releasedBytes,
         backendState: backend.state,
       },
@@ -978,6 +1048,35 @@ async function run() {
       interactionBackend.state.activeBytes !== 0 ||
       interactionBackend.state.disposed !== true ||
       interactionSession.state.disposed !== true
+      ||
+      visibilityMount.initialRangeSelection.strategy !==
+        "camera-visibility" ||
+      visibilityMount.initialRangeSelection.cameraDriven !==
+        true ||
+      visibilityMount.rangeIds.length !== 1 ||
+      visibilityMount.rangeIds[0] !==
+        visibilityTargetRangeId ||
+      visibilityMount.rangeIds[0] ===
+        input.snapshot.loadPlan.firstFrameRangeIds[0] ||
+      visibilityMount.initialRangeSelection.ranking[0]
+        .rangeId !== visibilityTargetRangeId ||
+      visibilityMount.backend.actualGpu !== true ||
+      visibilityMount.backend.nonBackgroundPixels <= 0 ||
+      visibilityMount.backend.camera.target.some(
+        (value, axis) =>
+          value !== visibilityInitialCamera.target[axis],
+      ) ||
+      visibilitySourceState.rangeBytes !==
+        visibilityMount.metrics.sourceReadBytes ||
+      visibilitySourceState.rangeReads !==
+        visibilityMount.metrics.sourceReads ||
+      visibilityBackendState.activeBytes !==
+        visibilityMount.backend.uploadedBytes ||
+      visibilityReleaseReceipt.releasedBytes !==
+        visibilityMount.backend.uploadedBytes ||
+      visibilityBackend.state.activeBytes !== 0 ||
+      visibilityBackend.state.disposed !== true ||
+      visibilitySession.state.disposed !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed: " +
@@ -1011,6 +1110,8 @@ async function run() {
     let progressiveSessionDisposed = false;
     let interactionRendererDisposed = false;
     let interactionSessionDisposed = false;
+    let visibilityRendererDisposed = false;
+    let visibilitySessionDisposed = false;
     try {
       rendererDisposed = renderer === undefined
         ? false
@@ -1081,6 +1182,22 @@ async function run() {
     } catch {
       interactionSessionDisposed = false;
     }
+    try {
+      visibilityRendererDisposed =
+        visibilityRenderer === undefined
+          ? false
+          : await visibilityRenderer.dispose();
+    } catch {
+      visibilityRendererDisposed = false;
+    }
+    try {
+      visibilitySessionDisposed =
+        visibilitySession === undefined
+          ? false
+          : await visibilitySession.dispose();
+    } catch {
+      visibilitySessionDisposed = false;
+    }
     showFailure(error, {
       rendererDisposed,
       sessionDisposed,
@@ -1091,6 +1208,8 @@ async function run() {
       progressiveSessionDisposed,
       interactionRendererDisposed,
       interactionSessionDisposed,
+      visibilityRendererDisposed,
+      visibilitySessionDisposed,
       releaseReceipt: releaseReceipt ?? null,
       precisionReleaseReceipt:
         precisionReleaseReceipt ?? null,
@@ -1098,6 +1217,8 @@ async function run() {
         progressiveReleaseReceipt ?? null,
       interactionReleaseReceipt:
         interactionReleaseReceipt ?? null,
+      visibilityReleaseReceipt:
+        visibilityReleaseReceipt ?? null,
       backendState: backend?.state ?? null,
       precisionBackendState:
         precisionBackend?.state ?? null,
@@ -1105,6 +1226,8 @@ async function run() {
         progressiveBackend?.state ?? null,
       interactionBackendState:
         interactionBackend?.state ?? null,
+      visibilityBackendState:
+        visibilityBackend?.state ?? null,
     });
   }
 }

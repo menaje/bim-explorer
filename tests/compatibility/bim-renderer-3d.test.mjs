@@ -52,6 +52,10 @@ async function fixtures() {
       manifest.evidence.browserCameraInput,
       "utf8",
     )),
+    browserVisibilityFirstFrame: JSON.parse(await readFile(
+      manifest.evidence.browserVisibilityFirstFrame,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -80,8 +84,12 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.browserProgressiveActiveBytes, 9_674_488);
   assert.equal(result.browserDeltaRedrawPixels, 8_888);
   assert.equal(result.browserCameraInputFrames, 3);
-  assert.equal(result.passedGates, 18);
-  assert.equal(result.heldGates, 3);
+  assert.equal(
+    result.browserVisibilityFirstFrameRange,
+    "range:ifc:geometry:1",
+  );
+  assert.equal(result.passedGates, 19);
+  assert.equal(result.heldGates, 2);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
