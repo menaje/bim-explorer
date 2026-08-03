@@ -15,7 +15,8 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
 - active revision의 Render ID hide/show와 view revision 영수증
 - offscreen WebGL2 Pick ID pass와 revision-bound selection/highlight
 - pick target의 transient allocation·즉시 회수 영수증
-- source switch, abort, malformed bytes와 disposal의 fail-closed 처리
+- context loss invalidation·복구와 GPU source switch 회수
+- abort, malformed bytes와 disposal의 fail-closed 처리
 
 headless backend의 frame은 실제 GPU render나 화면 표시가 아닙니다.
 WebGL2 backend는 실제 Browser GPU API 경로와 rasterized pixel을 검증하지만

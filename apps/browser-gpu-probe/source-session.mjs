@@ -21,10 +21,16 @@ function positiveInteger(value, label) {
 export class BrowserGeometryRangeSession {
   #disposed = false;
   #handles;
+  #rangeRoute;
   #rangeBytes = 0;
   #rangeReads = 0;
 
-  constructor(snapshot) {
+  constructor(
+    snapshot,
+    {
+      rangeRoute = "/range",
+    } = {},
+  ) {
     const layer = snapshot?.layers?.find(
       (candidate) => candidate.layerId === snapshot.layerId,
     );
@@ -39,6 +45,15 @@ export class BrowserGeometryRangeSession {
         handle,
       ]),
     );
+    if (
+      typeof rangeRoute !== "string" ||
+      !/^\/[a-z-]+$/u.test(rangeRoute)
+    ) {
+      throw new TypeError(
+        "Browser range session route is invalid",
+      );
+    }
+    this.#rangeRoute = rangeRoute;
   }
 
   get state() {
@@ -82,7 +97,8 @@ export class BrowserGeometryRangeSession {
     }
     const end = offset + length - 1;
     const response = await fetch(
-      `/range/${encodeURIComponent(handle.handleId)}`,
+      `${this.#rangeRoute}/` +
+        encodeURIComponent(handle.handleId),
       {
         cache: "no-store",
         credentials: "omit",

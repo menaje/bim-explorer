@@ -71,6 +71,18 @@
       "highlightedInstances": 1,
       "minimumHighlightPixels": 1
     },
+    "browserLifecycle": {
+      "publicMounts": 2,
+      "publicUploadedBytesPerMount": 4399252,
+      "publicRangeBytesPerMount": 4193868,
+      "contextGenerations": 2,
+      "switchFingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "switchUploadedBytes": 1120,
+      "switchRangeBytes": 996,
+      "totalMounts": 3,
+      "totalUnmounts": 3,
+      "totalReleasedBytes": 8799624
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -85,11 +97,11 @@
     "cameraFitViewState": true,
     "renderIdVisibilityState": true,
     "pickingSelection": true,
+    "contextLossAndGpuSourceSwitch": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
     "sectionMeasurement": false,
-    "contextLossAndGpuSourceSwitch": false,
     "browserVscodeConformance": false,
     "viewerCoreConformance": false
   },
@@ -97,13 +109,13 @@
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
     "browserWebGl2": "compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json",
     "browserViewState": "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json",
-    "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json"
+    "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json",
+    "browserLifecycle": "compatibility/evidence/bim-renderer-3d-public-browser-lifecycle-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",
     "pointer and gesture input controls are not implemented",
     "section and measurement are not implemented",
-    "GPU context loss and source-switch recovery are not qualified",
     "Browser and VS Code renderer conformance is not qualified",
     "durable Viewer Core package and 3D conformance remain unresolved"
   ],

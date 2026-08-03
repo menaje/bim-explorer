@@ -517,6 +517,18 @@ function deletePickTarget(gl, target) {
   gl.deleteRenderbuffer(target.depth);
 }
 
+function drainErrors(gl) {
+  const errors = [];
+  for (let index = 0; index < 16; index += 1) {
+    const error = gl.getError();
+    if (error === gl.NO_ERROR) {
+      break;
+    }
+    errors.push(error);
+  }
+  return Object.freeze(errors);
+}
+
 function requireUniform(gl, value, label) {
   const location = gl.getUniformLocation(value, label);
   if (location === null) {
@@ -532,16 +544,41 @@ function defaultFrameScheduler(callback) {
   return globalThis.requestAnimationFrame(callback);
 }
 
+function canvasEvent(canvas, type, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    let timeout;
+    const cleanup = () => {
+      canvas.removeEventListener(type, onEvent);
+      clearTimeout(timeout);
+    };
+    const onEvent = (event) => {
+      if (type === "webglcontextlost") {
+        event.preventDefault();
+      }
+      cleanup();
+      resolve(event);
+    };
+    timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error(`WebGL2 ${type} event timed out`));
+    }, timeoutMs);
+    canvas.addEventListener(type, onEvent);
+  });
+}
+
 export class WebGl2Backend {
   #active = null;
   #canvas;
   #clearColor;
   #context = null;
+  #contextGeneration = 0;
+  #contextLosses = 0;
   #disposed = false;
   #frameScheduler;
   #height;
   #mounts = 0;
   #picks = 0;
+  #releasedBytes = 0;
   #unmounts = 0;
   #width;
 
@@ -581,9 +618,14 @@ export class WebGl2Backend {
       disposed: this.#disposed,
       mounts: this.#mounts,
       picks: this.#picks,
+      releasedBytes: this.#releasedBytes,
       unmounts: this.#unmounts,
       contextInitialized: this.#context !== null,
       contextLost: this.#context?.isContextLost?.() ?? false,
+      contextGeneration: this.#contextGeneration,
+      contextLosses: this.#contextLosses,
+      contextInvalidated:
+        this.#active?.contextInvalidated ?? false,
       activeHandleId: this.#active?.handleId ?? null,
       activeBytes: this.#active?.uploadedBytes ?? 0,
       frames: this.#active?.frames ?? 0,
@@ -622,6 +664,7 @@ export class WebGl2Backend {
       );
     }
     this.#context = context;
+    this.#contextGeneration = 1;
     return context;
   }
 
@@ -655,6 +698,11 @@ export class WebGl2Backend {
     const hidden = new Set(hiddenRenderIds);
     const selected = new Set(selectedPickIds);
     const gl = this.#getContext();
+    if (state.contextInvalidated === true) {
+      throw invalidState(
+        "WebGL2 mount was invalidated by context loss",
+      );
+    }
     if (gl.isContextLost()) {
       throw invalidState("WebGL2 context is lost");
     }
@@ -917,6 +965,8 @@ export class WebGl2Backend {
       );
       const mountNumber = this.#mounts + 1;
       const drawState = {
+        contextGeneration: this.#contextGeneration,
+        contextInvalidated: false,
         frames: 0,
         geometryRecords: geometry.records,
         instances: Object.freeze(
@@ -1127,11 +1177,16 @@ export class WebGl2Backend {
         "WebGL2 pick coordinates are outside the frame",
       );
     }
+    const state = this.#active;
     const gl = this.#getContext();
+    if (state.contextInvalidated === true) {
+      throw invalidState(
+        "WebGL2 mount was invalidated by context loss",
+      );
+    }
     if (gl.isContextLost()) {
       throw invalidState("WebGL2 context is lost");
     }
-    const state = this.#active;
     const hidden = new Set(state.hiddenRenderIds);
     const worldToClip = cameraViewProjectionMatrix(
       state.camera,
@@ -1283,6 +1338,84 @@ export class WebGl2Backend {
     }
   }
 
+  async qualifyContextLoss(
+    handleId,
+    {
+      timeoutMs = 5_000,
+    } = {},
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("WebGL2 mount handle is not active");
+    }
+    if (
+      !Number.isSafeInteger(timeoutMs) ||
+      timeoutMs < 100 ||
+      timeoutMs > 30_000
+    ) {
+      throw new RangeError(
+        "WebGL2 context-loss timeout is out of range",
+      );
+    }
+    const gl = this.#getContext();
+    if (gl.isContextLost()) {
+      throw invalidState("WebGL2 context is already lost");
+    }
+    const extension = gl.getExtension("WEBGL_lose_context");
+    if (
+      typeof extension?.loseContext !== "function" ||
+      typeof extension?.restoreContext !== "function"
+    ) {
+      throw new DOMException(
+        "WEBGL_lose_context is unavailable",
+        "NotSupportedError",
+      );
+    }
+    const priorGeneration = this.#contextGeneration;
+    const lost = canvasEvent(
+      this.#canvas,
+      "webglcontextlost",
+      timeoutMs,
+    );
+    const started = performance.now();
+    extension.loseContext();
+    await lost;
+    const restored = canvasEvent(
+      this.#canvas,
+      "webglcontextrestored",
+      timeoutMs,
+    );
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    extension.restoreContext();
+    await restored;
+    const clearedErrors = drainErrors(gl);
+    this.#contextGeneration += 1;
+    this.#contextLosses += 1;
+    this.#active.contextInvalidated = true;
+    aborted(signal);
+    return Object.freeze({
+      backendId: "webgl2",
+      contextLostObserved: true,
+      contextRestoredObserved: true,
+      invalidatedBytes: this.#active.uploadedBytes,
+      priorGeneration,
+      restoredGeneration: this.#contextGeneration,
+      recoveryRequired: true,
+      clearedErrors,
+      elapsedMs: performance.now() - started,
+      glError: gl.getError(),
+    });
+  }
+
   async unmount(handleId) {
     if (
       this.#active === null ||
@@ -1292,7 +1425,9 @@ export class WebGl2Backend {
     }
     const active = this.#active;
     const gl = this.#getContext();
-    deleteResources(gl, active.resources);
+    if (active.contextInvalidated !== true) {
+      deleteResources(gl, active.resources);
+    }
     if (!gl.isContextLost()) {
       gl.bindBuffer(gl.ARRAY_BUFFER, null);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
@@ -1303,6 +1438,7 @@ export class WebGl2Backend {
     }
     this.#active = null;
     this.#unmounts += 1;
+    this.#releasedBytes += active.uploadedBytes;
     return Object.freeze({
       released: true,
       releasedBytes: active.uploadedBytes,

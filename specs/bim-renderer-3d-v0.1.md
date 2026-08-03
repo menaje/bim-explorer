@@ -82,6 +82,12 @@ receipt도 handle이 반환됐다면 unmount로 정리합니다. AbortSignal은 
 chunk와 backend mount 경계에서 확인합니다. session과 source의 dispose는
 호출자가 소유하고 renderer는 자신의 backend allocation만 소유합니다.
 
+WebGL2 context loss를 관찰하면 해당 mount의 resource object를
+`contextInvalidated`로 표시합니다. restore event 뒤에도 이 mount로
+render/pick하지 않으며, 같은 source revision의 range를 다시 읽어 새
+program/buffer로 remount해야 합니다. context가 파기한 resource는
+중복 delete하지 않고 logical released bytes에만 반영합니다.
+
 ## Headless backend
 
 `headless` backend는 geometry/instance byte와 draw-call accounting을
@@ -148,12 +154,24 @@ Pick ID로 해결됐습니다. 해당 Pick ID를 선택한 다음 frame은 같�
 pixels를 기록했습니다. stale Pick ID와 backend가 반환한 active revision
 밖의 identity는 fail closed로 거부합니다.
 
+## Context loss와 source switch
+
+local Chromium의 `WEBGL_lose_context` qualification에서 loss/restore event와
+context generation 1→2를 관찰했습니다. invalidated 4,399,252-byte mount는
+render를 거부했고, 같은 revision의 첫 range를 다시 4회 읽어 3,182 draws를
+복구했습니다. 이어 fingerprint가 다른 synthetic IFC4 source로 전환해
+996 source bytes, 1,120 uploaded bytes와 2 draws를 만들었습니다.
+
+첫 public mount, recovered public mount와 IFC4 switch mount의 logical
+released bytes 합계는 8,799,624이며 terminal dispose 뒤 active bytes는
+0입니다. 이 probe는 precomputed source를 사용하므로 Worker lifecycle은
+source/Host 계층의 별도 책임입니다.
+
 ## 현재 보류
 
 - camera visibility 기반 초기 range와 progressive detail
 - pointer/gesture 기반 camera input과 interaction policy
 - clipping, section과 measurement
 - physical GPU·driver와 GPU memory qualification
-- GPU context loss와 source-switch recovery
 - Browser/VS Code 동일 backend conformance
 - 공용 Viewer Core 3D consumer conformance

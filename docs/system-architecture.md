@@ -137,8 +137,9 @@ perspective/orthographic fit, orbit·pan·zoom camera state와 active revision�
 Render ID hide/show는 같은 GPU allocation에서 view revision으로
 검증했습니다. offscreen WebGL2 pick pass는 화면 좌표를 active revision의
 Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
-검증했습니다. pointer input, section, context loss와 Host conformance는
-계속 보류합니다.
+검증했습니다. 실제 context loss 뒤 같은 revision을 remount하고 별도
+IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. pointer
+input, section과 Host conformance는 계속 보류합니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나

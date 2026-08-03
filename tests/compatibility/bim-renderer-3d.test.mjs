@@ -28,6 +28,10 @@ async function fixtures() {
       manifest.evidence.browserPickingSelection,
       "utf8",
     )),
+    browserLifecycle: JSON.parse(await readFile(
+      manifest.evidence.browserLifecycle,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -46,8 +50,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.browserPixels, 67_153);
   assert.equal(result.browserViewFrames, 4);
   assert.equal(result.browserPickHighlightPixels, 7_507);
-  assert.equal(result.passedGates, 12);
-  assert.equal(result.heldGates, 6);
+  assert.equal(result.browserLifecycleMounts, 3);
+  assert.equal(result.passedGates, 13);
+  assert.equal(result.heldGates, 5);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
@@ -83,6 +88,18 @@ test("Browser pick evidence pins active revision identity", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /pick receipt is invalid/u,
+  );
+});
+
+test("Browser lifecycle evidence pins context and source cleanup", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserLifecycle.representativeReport
+    .cleanup.activeBytes = 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /lifecycle cleanup is invalid/u,
   );
 });
 

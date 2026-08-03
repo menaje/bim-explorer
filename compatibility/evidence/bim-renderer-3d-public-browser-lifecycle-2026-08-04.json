@@ -1,0 +1,137 @@
+{
+  "schema": "bim-explorer-public-browser-renderer-lifecycle-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-renderer-lifecycle",
+  "publicFixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "switchFixture": {
+    "id": "synthetic-ifc4-mapped",
+    "schema": "IFC4",
+    "profile": "synthetic-source-switch",
+    "byteLength": 4028,
+    "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "artifactCommitted": true,
+    "profileAdmission": false
+  },
+  "budget": {
+    "maximumContextCycleMs": 1000,
+    "maximumRecoveryFrameMs": 1000,
+    "maximumSourceSwitchFrameMs": 1000,
+    "maximumTotalMs": 3000,
+    "maximumPublicRangeBytesPerMount": 4194304,
+    "maximumPublicUploadedBytes": 8388608,
+    "maximumSwitchRangeBytes": 1024,
+    "maximumSwitchUploadedBytes": 2048
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-webgl2-renderer-lifecycle-report/1",
+    "status": "passed",
+    "publicSource": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "rangeReadsAfterRecovery": 8,
+      "rangeBytesAfterRecovery": 8387736,
+      "uploadedBytesPerMount": 4399252
+    },
+    "contextLoss": {
+      "contextLostObserved": true,
+      "contextRestoredObserved": true,
+      "priorGeneration": 1,
+      "restoredGeneration": 2,
+      "invalidatedBytes": 4399252,
+      "recoveryRequired": true,
+      "invalidatedRenderRejected": true,
+      "clearedErrors": [],
+      "elapsedMs": 3.5,
+      "glError": 0
+    },
+    "recovery": {
+      "mount": 2,
+      "unmount": 1,
+      "sourceRevisionPreserved": true,
+      "sourceReadBytes": 4193868,
+      "sourceReads": 4,
+      "uploadedBytes": 4399252,
+      "releasedInvalidatedBytes": 4399252,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 57438,
+      "firstFrameMs": 10.400000095367432,
+      "activeBytes": 4399252,
+      "contextInvalidated": false,
+      "glError": 0
+    },
+    "sourceSwitch": {
+      "fingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "mount": 3,
+      "unmount": 2,
+      "sourceReadBytes": 996,
+      "sourceReads": 8,
+      "geometryRecords": 1,
+      "instances": 2,
+      "drawCalls": 2,
+      "uploadedBytes": 1120,
+      "releasedBeforeSwitchBytes": 8798504,
+      "nonBackgroundPixels": 82975,
+      "firstFrameMs": 18.699999928474426,
+      "activeBytes": 1120,
+      "glError": 0
+    },
+    "cancellation": {
+      "preAbortedMount": "passed-local-contract-test",
+      "preAbortedPick": "passed-local-contract-test",
+      "contextCycleAtomicAfterStart": true
+    },
+    "cleanup": {
+      "mounts": 3,
+      "unmounts": 3,
+      "contextLosses": 1,
+      "releasedBytes": 8799624,
+      "activeBytes": 0,
+      "rendererDisposed": true,
+      "publicSessionDisposed": true,
+      "switchSessionDisposed": true,
+      "backendDisposed": true
+    },
+    "performance": {
+      "initialMountMs": 42.300000071525574,
+      "initialInteractionMs": 62.799999952316284,
+      "totalMs": 177.60000002384186
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "webglContextLossObserved": true,
+    "webglContextRestoreObserved": true,
+    "invalidatedMountFailsClosed": true,
+    "sameRevisionRemount": true,
+    "differentRevisionSourceSwitch": true,
+    "priorGpuAllocationReleased": true,
+    "boundedRangeReread": true,
+    "cancellationFailsClosed": true,
+    "allSessionsDisposed": true,
+    "deterministicBackendDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "contextLossAndGpuSourceSwitch": "passed",
+    "workerLifecycle": "not-applicable-precomputed-source",
+    "physicalGpuQualification": "not-claimed",
+    "sectionMeasurement": "blocked",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}

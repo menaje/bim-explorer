@@ -16,12 +16,12 @@ const TRUE_GATES = [
   "cameraFitViewState",
   "renderIdVisibilityState",
   "pickingSelection",
+  "contextLossAndGpuSourceSwitch",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
   "cameraInteraction",
   "sectionMeasurement",
-  "contextLossAndGpuSourceSwitch",
   "browserVscodeConformance",
   "viewerCoreConformance",
 ];
@@ -67,6 +67,20 @@ const PICK_CONFORMANCE_ASSERTIONS = [
   "gpuAllocationReusedAcrossSelection",
   "boundedRangeReadsUnchanged",
   "deterministicDispose",
+  "pathFreeReport",
+];
+const LIFECYCLE_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "webglContextLossObserved",
+  "webglContextRestoreObserved",
+  "invalidatedMountFailsClosed",
+  "sameRevisionRemount",
+  "differentRevisionSourceSwitch",
+  "priorGpuAllocationReleased",
+  "boundedRangeReread",
+  "cancellationFailsClosed",
+  "allSessionsDisposed",
+  "deterministicBackendDispose",
   "pathFreeReport",
 ];
 const RENDERER_LIMITS = Object.freeze({
@@ -833,6 +847,230 @@ function validateBrowserPickEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserLifecycleEvidence(manifest, evidence) {
+  plainRecord(evidence, "Browser renderer lifecycle evidence");
+  const fixture = manifest.fixture;
+  const expected = manifest.expected.browserLifecycle;
+  if (
+    evidence.schema !==
+      "bim-explorer-public-browser-renderer-lifecycle-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-renderer-lifecycle" ||
+    evidence.publicFixture?.id !== fixture.id ||
+    evidence.publicFixture?.schema !== fixture.schema ||
+    evidence.publicFixture?.profile !== fixture.profile ||
+    evidence.publicFixture?.byteLength !== fixture.byteLength ||
+    evidence.publicFixture?.sha256 !== fixture.sha256 ||
+    evidence.publicFixture?.artifactCommitted !== false ||
+    evidence.publicFixture?.profileAdmission !== false ||
+    evidence.switchFixture?.id !== "synthetic-ifc4-mapped" ||
+    evidence.switchFixture?.schema !== "IFC4" ||
+    evidence.switchFixture?.profile !==
+      "synthetic-source-switch" ||
+    evidence.switchFixture?.byteLength !== 4_028 ||
+    evidence.switchFixture?.sha256 !==
+      expected.switchFingerprint.slice(7) ||
+    evidence.switchFixture?.artifactCommitted !== true ||
+    evidence.switchFixture?.profileAdmission !== false
+  ) {
+    throw new Error(
+      "Browser renderer lifecycle identity is invalid",
+    );
+  }
+  const budget = evidence.budget;
+  if (
+    budget?.maximumContextCycleMs !== 1_000 ||
+    budget?.maximumRecoveryFrameMs !== 1_000 ||
+    budget?.maximumSourceSwitchFrameMs !== 1_000 ||
+    budget?.maximumTotalMs !== 3_000 ||
+    budget?.maximumPublicRangeBytesPerMount !== 4_194_304 ||
+    budget?.maximumPublicUploadedBytes !== 8_388_608 ||
+    budget?.maximumSwitchRangeBytes !== 1_024 ||
+    budget?.maximumSwitchUploadedBytes !== 2_048
+  ) {
+    throw new Error(
+      "Browser renderer lifecycle budget is invalid",
+    );
+  }
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser renderer lifecycle report",
+  );
+  if (
+    report.schema !==
+      "bim-explorer-browser-webgl2-renderer-lifecycle-report/1" ||
+    report.status !== "passed" ||
+    report.publicSource?.fingerprint !==
+      `sha256:${fixture.sha256}` ||
+    report.publicSource?.revisionId !==
+      `source-snapshot:sha256:${fixture.sha256}` ||
+    report.publicSource?.rangeReadsAfterRecovery !==
+      manifest.expected.metrics.sourceReads *
+        expected.publicMounts ||
+    report.publicSource?.rangeBytesAfterRecovery !==
+      expected.publicRangeBytesPerMount *
+        expected.publicMounts ||
+    report.publicSource?.uploadedBytesPerMount !==
+      expected.publicUploadedBytesPerMount
+  ) {
+    throw new Error(
+      "Browser renderer lifecycle public source is invalid",
+    );
+  }
+  const context = plainRecord(
+    report.contextLoss,
+    "Browser context-loss receipt",
+  );
+  if (
+    context.contextLostObserved !== true ||
+    context.contextRestoredObserved !== true ||
+    context.priorGeneration !== 1 ||
+    context.restoredGeneration !==
+      expected.contextGenerations ||
+    context.invalidatedBytes !==
+      expected.publicUploadedBytesPerMount ||
+    context.recoveryRequired !== true ||
+    context.invalidatedRenderRejected !== true ||
+    !Array.isArray(context.clearedErrors) ||
+    context.glError !== 0
+  ) {
+    throw new Error("Browser context-loss receipt is invalid");
+  }
+  boundedMeasurement(
+    context.elapsedMs,
+    budget.maximumContextCycleMs,
+    "Browser context cycle",
+  );
+  const recovery = plainRecord(
+    report.recovery,
+    "Browser context recovery receipt",
+  );
+  if (
+    recovery.mount !== 2 ||
+    recovery.unmount !== 1 ||
+    recovery.sourceRevisionPreserved !== true ||
+    recovery.sourceReadBytes !==
+      expected.publicRangeBytesPerMount ||
+    recovery.sourceReads !==
+      manifest.expected.metrics.sourceReads ||
+    recovery.uploadedBytes !==
+      expected.publicUploadedBytesPerMount ||
+    recovery.uploadedBytes > budget.maximumPublicUploadedBytes ||
+    recovery.releasedInvalidatedBytes !==
+      expected.publicUploadedBytesPerMount ||
+    recovery.drawCalls !== manifest.expected.metrics.instances ||
+    !Number.isSafeInteger(recovery.nonBackgroundPixels) ||
+    recovery.nonBackgroundPixels <= 0 ||
+    recovery.activeBytes !==
+      expected.publicUploadedBytesPerMount ||
+    recovery.contextInvalidated !== false ||
+    recovery.glError !== 0
+  ) {
+    throw new Error(
+      "Browser context recovery receipt is invalid",
+    );
+  }
+  boundedMeasurement(
+    recovery.firstFrameMs,
+    budget.maximumRecoveryFrameMs,
+    "Browser recovery frame",
+  );
+  const sourceSwitch = plainRecord(
+    report.sourceSwitch,
+    "Browser source-switch receipt",
+  );
+  if (
+    sourceSwitch.fingerprint !== expected.switchFingerprint ||
+    sourceSwitch.revisionId !==
+      `source-snapshot:${expected.switchFingerprint}` ||
+    sourceSwitch.mount !== expected.totalMounts ||
+    sourceSwitch.unmount !== 2 ||
+    sourceSwitch.sourceReadBytes !==
+      expected.switchRangeBytes ||
+    sourceSwitch.sourceReadBytes >
+      budget.maximumSwitchRangeBytes ||
+    sourceSwitch.sourceReads !== 8 ||
+    sourceSwitch.geometryRecords !== 1 ||
+    sourceSwitch.instances !== 2 ||
+    sourceSwitch.drawCalls !== 2 ||
+    sourceSwitch.uploadedBytes !== expected.switchUploadedBytes ||
+    sourceSwitch.uploadedBytes >
+      budget.maximumSwitchUploadedBytes ||
+    sourceSwitch.releasedBeforeSwitchBytes !==
+      expected.publicUploadedBytesPerMount *
+        expected.publicMounts ||
+    !Number.isSafeInteger(sourceSwitch.nonBackgroundPixels) ||
+    sourceSwitch.nonBackgroundPixels <= 0 ||
+    sourceSwitch.activeBytes !== expected.switchUploadedBytes ||
+    sourceSwitch.glError !== 0
+  ) {
+    throw new Error("Browser source-switch receipt is invalid");
+  }
+  boundedMeasurement(
+    sourceSwitch.firstFrameMs,
+    budget.maximumSourceSwitchFrameMs,
+    "Browser source-switch frame",
+  );
+  if (
+    report.cancellation?.preAbortedMount !==
+      "passed-local-contract-test" ||
+    report.cancellation?.preAbortedPick !==
+      "passed-local-contract-test" ||
+    report.cancellation?.contextCycleAtomicAfterStart !== true ||
+    report.cleanup?.mounts !== expected.totalMounts ||
+    report.cleanup?.unmounts !== expected.totalUnmounts ||
+    report.cleanup?.contextLosses !== 1 ||
+    report.cleanup?.releasedBytes !==
+      expected.totalReleasedBytes ||
+    report.cleanup?.activeBytes !== 0 ||
+    report.cleanup?.rendererDisposed !== true ||
+    report.cleanup?.publicSessionDisposed !== true ||
+    report.cleanup?.switchSessionDisposed !== true ||
+    report.cleanup?.backendDisposed !== true ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error(
+      "Browser renderer lifecycle cleanup is invalid",
+    );
+  }
+  boundedMeasurement(
+    report.performance?.totalMs,
+    budget.maximumTotalMs,
+    "Browser renderer lifecycle totalMs",
+  );
+  for (const assertion of LIFECYCLE_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser lifecycle conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      LIFECYCLE_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.contextLossAndGpuSourceSwitch !==
+      "passed" ||
+    evidence.decision?.workerLifecycle !==
+      "not-applicable-precomputed-source" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.sectionMeasurement !== "blocked" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser renderer lifecycle decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -854,6 +1092,10 @@ export function validateBimRenderer3dCompatibility(
   const browserPickEvidence = plainRecord(
     evidenceBundle.browserPickingSelection,
     "Browser picking BIM renderer evidence",
+  );
+  const browserLifecycleEvidence = plainRecord(
+    evidenceBundle.browserLifecycle,
+    "Browser lifecycle BIM renderer evidence",
   );
   if (
     manifest.schema !==
@@ -907,7 +1149,11 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "picking-selection-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 4 ||
+    manifest.evidence?.browserLifecycle !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "lifecycle-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 5 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -1144,6 +1390,11 @@ export function validateBimRenderer3dCompatibility(
     manifest,
     browserPickEvidence,
   );
+  const browserLifecycleReport =
+    validateBrowserLifecycleEvidence(
+      manifest,
+      browserLifecycleEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -1163,6 +1414,8 @@ export function validateBimRenderer3dCompatibility(
       browserViewReport.renderer.frames,
     browserPickHighlightPixels:
       browserPickReport.selection.highlightPixels,
+    browserLifecycleMounts:
+      browserLifecycleReport.cleanup.mounts,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -1194,6 +1447,10 @@ async function main() {
       ),
       "utf8",
     )),
+    browserLifecycle: JSON.parse(await readFile(
+      path.join(root, manifest.evidence.browserLifecycle),
+      "utf8",
+    )),
   };
   const result = validateBimRenderer3dCompatibility(
     manifest,
@@ -1206,6 +1463,7 @@ async function main() {
       `${result.browserPixels} Browser pixels, ` +
       `${result.browserViewFrames} view frames, ` +
       `${result.browserPickHighlightPixels} highlight pixels, ` +
+      `${result.browserLifecycleMounts} lifecycle mounts, ` +
       `${result.passedGates} passed and ${result.heldGates} held gates`,
   );
 }

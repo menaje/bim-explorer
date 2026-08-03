@@ -111,6 +111,7 @@ async function run() {
   let backend;
   let renderer;
   let session;
+  let secondarySession;
   let releaseReceipt;
   try {
     const input = await json("/probe-input.json");
@@ -180,10 +181,47 @@ async function run() {
     ];
     const rendererStateAfterViews = renderer.state;
     const backendStateAfterViews = backend.state;
+    const contextLoss = await backend.qualifyContextLoss(
+      backend.state.activeHandleId,
+    );
+    const backendStateAfterContextRestore = backend.state;
+    let invalidatedRenderRejected = false;
+    try {
+      await renderer.renderView({
+        camera: selectedView.camera,
+      });
+    } catch (error) {
+      invalidatedRenderRejected =
+        error?.name === "InvalidStateError";
+    }
+    const recoveryReceipt = await renderer.mount({
+      session,
+      snapshot: input.snapshot,
+    });
+    const sourceStateAfterRecovery = session.state;
+    const rendererStateAfterRecovery = renderer.state;
+    const backendStateAfterRecovery = backend.state;
+    const secondaryInput = await json(
+      "/secondary-probe-input.json",
+    );
+    secondarySession = new BrowserGeometryRangeSession(
+      secondaryInput.snapshot,
+      {
+        rangeRoute: "/secondary-range",
+      },
+    );
+    const sourceSwitchReceipt = await renderer.mount({
+      session: secondarySession,
+      snapshot: secondaryInput.snapshot,
+    });
+    const rendererStateAfterSourceSwitch = renderer.state;
+    const backendStateAfterSourceSwitch = backend.state;
     const serverRangeState = await json("/range-state.json");
     releaseReceipt = await renderer.unmount();
     const rendererDisposed = await renderer.dispose();
     const sessionDisposed = await session.dispose();
+    const secondarySessionDisposed =
+      await secondarySession.dispose();
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -212,6 +250,25 @@ async function run() {
         backendStateAfterMount,
         rendererStateAfterViews,
         backendStateAfterViews,
+        contextLoss,
+        backendStateAfterContextRestore,
+        invalidatedRenderRejected,
+        recoveryReceipt,
+        sourceStateAfterRecovery,
+        rendererStateAfterRecovery,
+        backendStateAfterRecovery,
+        sourceSwitch: {
+          fixture: secondaryInput.fixture,
+          source: {
+            fingerprint:
+              secondaryInput.snapshot.source.fingerprint,
+            revisionId: secondaryInput.snapshot.revisionId,
+          },
+          receipt: sourceSwitchReceipt,
+          sourceState: secondarySession.state,
+          rendererState: rendererStateAfterSourceSwitch,
+          backendState: backendStateAfterSourceSwitch,
+        },
         releaseReceipt,
       },
       viewSequence,
@@ -228,6 +285,7 @@ async function run() {
       cleanup: {
         rendererDisposed,
         sessionDisposed,
+        secondarySessionDisposed,
         releasedBytes: releaseReceipt.releasedBytes,
         backendState: backend.state,
       },
@@ -238,8 +296,6 @@ async function run() {
       receipt.backend.rendered !== true ||
       receipt.backend.glError !== 0 ||
       receipt.backend.nonBackgroundPixels <= 0 ||
-      receipt.backend.uploadedBytes !==
-        releaseReceipt.releasedBytes ||
       movedView.viewRevision !== 1 ||
       movedView.backend.rendered !== true ||
       hiddenView.viewRevision !== 2 ||
@@ -271,9 +327,54 @@ async function run() {
       backendStateAfterViews.picks !== picking.attempts.length ||
       backendStateAfterViews.hiddenRenderIds !== 0 ||
       backendStateAfterViews.selectedPickIds !== 1 ||
+      contextLoss.contextLostObserved !== true ||
+      contextLoss.contextRestoredObserved !== true ||
+      contextLoss.invalidatedBytes !==
+        receipt.backend.uploadedBytes ||
+      contextLoss.priorGeneration !== 1 ||
+      contextLoss.restoredGeneration !== 2 ||
+      !Array.isArray(contextLoss.clearedErrors) ||
+      contextLoss.glError !== 0 ||
+      backendStateAfterContextRestore.contextInvalidated !==
+        true ||
+      invalidatedRenderRejected !== true ||
+      recoveryReceipt.source.fingerprint !==
+        receipt.source.fingerprint ||
+      recoveryReceipt.backend.uploadedBytes !==
+        receipt.backend.uploadedBytes ||
+      rendererStateAfterRecovery.mounts !== 2 ||
+      rendererStateAfterRecovery.unmounts !== 1 ||
+      backendStateAfterRecovery.mounts !== 2 ||
+      backendStateAfterRecovery.unmounts !== 1 ||
+      backendStateAfterRecovery.contextInvalidated !== false ||
+      backendStateAfterRecovery.activeBytes !==
+        receipt.backend.uploadedBytes ||
+      sourceStateAfterRecovery.rangeReads !== 8 ||
+      sourceStateAfterRecovery.rangeBytes !==
+        receipt.metrics.sourceReadBytes * 2 ||
+      sourceSwitchReceipt.source.fingerprint ===
+        receipt.source.fingerprint ||
+      sourceSwitchReceipt.source.revisionId ===
+        receipt.source.revisionId ||
+      sourceSwitchReceipt.backend.uploadedBytes !== 1_120 ||
+      rendererStateAfterSourceSwitch.mounts !== 3 ||
+      rendererStateAfterSourceSwitch.unmounts !== 2 ||
+      rendererStateAfterSourceSwitch.activeBackendBytes !== 1_120 ||
+      backendStateAfterSourceSwitch.mounts !== 3 ||
+      backendStateAfterSourceSwitch.unmounts !== 2 ||
+      backendStateAfterSourceSwitch.activeBytes !== 1_120 ||
+      backendStateAfterSourceSwitch.releasedBytes !==
+        receipt.backend.uploadedBytes * 2 ||
+      releaseReceipt.releasedBytes !== 1_120 ||
       backend.state.activeBytes !== 0 ||
       backend.state.disposed !== true ||
-      session.state.disposed !== true
+      backend.state.mounts !== 3 ||
+      backend.state.unmounts !== 3 ||
+      backend.state.contextLosses !== 1 ||
+      backend.state.releasedBytes !==
+        receipt.backend.uploadedBytes * 2 + 1_120 ||
+      session.state.disposed !== true ||
+      secondarySession.state.disposed !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed",
@@ -284,6 +385,7 @@ async function run() {
   } catch (error) {
     let rendererDisposed = false;
     let sessionDisposed = false;
+    let secondarySessionDisposed = false;
     try {
       rendererDisposed = renderer === undefined
         ? false
@@ -298,9 +400,18 @@ async function run() {
     } catch {
       sessionDisposed = false;
     }
+    try {
+      secondarySessionDisposed =
+        secondarySession === undefined
+          ? false
+          : await secondarySession.dispose();
+    } catch {
+      secondarySessionDisposed = false;
+    }
     showFailure(error, {
       rendererDisposed,
       sessionDisposed,
+      secondarySessionDisposed,
       releaseReceipt: releaseReceipt ?? null,
       backendState: backend?.state ?? null,
     });

@@ -14,6 +14,9 @@ import {
   ensurePublicIfcFixture,
   loadPublicIfcFixtureManifest,
 } from "./public-ifc-fixture.mjs";
+import {
+  syntheticMappedIfc,
+} from "./generate-synthetic-ifc.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const APP = path.join(ROOT, "apps", "browser-gpu-probe");
@@ -184,6 +187,31 @@ export async function preparePublicBrowserGpuProbe() {
     await source.dispose();
   }
   const projected = projectedSnapshot(snapshot);
+  const secondaryBytes = new TextEncoder().encode(
+    syntheticMappedIfc(),
+  );
+  const secondaryArtifact = await createWebIfcSourceArtifact(
+    secondaryBytes,
+  );
+  const secondarySource = createBimModelSource(
+    secondaryArtifact,
+    {
+      maximumRequestBytes: 128,
+    },
+  );
+  const secondarySession = await secondarySource.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  let secondarySnapshot;
+  try {
+    secondarySnapshot = await secondarySession.getSnapshot();
+  } finally {
+    await secondarySession.dispose();
+    await secondarySource.dispose();
+  }
+  const secondaryProjected = projectedSnapshot(
+    secondarySnapshot,
+  );
   return {
     input: {
       schema: "bim-explorer-browser-gpu-probe-input/1",
@@ -210,6 +238,30 @@ export async function preparePublicBrowserGpuProbe() {
     },
     ranges: new Map(
       artifact.ranges.map((range) => [
+        range.rangeId,
+        Buffer.from(
+          range.bytes.buffer,
+          range.bytes.byteOffset,
+          range.bytes.byteLength,
+        ),
+      ]),
+    ),
+    secondaryInput: {
+      schema: "bim-explorer-browser-gpu-probe-input/1",
+      fixture: {
+        id: "synthetic-ifc4-mapped",
+        schema: "IFC4",
+        profile: "synthetic-source-switch",
+        byteLength: secondaryBytes.byteLength,
+        sha256:
+          secondarySnapshot.source.fingerprint.slice(7),
+        artifactCommitted: true,
+        profileAdmission: false,
+      },
+      snapshot: secondaryProjected,
+    },
+    secondaryRanges: new Map(
+      secondaryArtifact.ranges.map((range) => [
         range.rangeId,
         Buffer.from(
           range.bytes.buffer,
@@ -264,17 +316,37 @@ function validateProbeInput(inputValue, rangesValue) {
 export function createBrowserGpuProbeServer({
   input,
   ranges,
+  secondaryInput,
+  secondaryRanges,
 } = {}) {
   const probe = validateProbeInput(input, ranges);
+  const secondaryProbe =
+    secondaryInput === undefined &&
+    secondaryRanges === undefined
+      ? null
+      : validateProbeInput(secondaryInput, secondaryRanges);
   const inputBytes = Buffer.from(
     JSON.stringify(probe.input),
     "utf8",
   );
+  const secondaryInputBytes = secondaryProbe === null
+    ? null
+    : Buffer.from(
+      JSON.stringify(secondaryProbe.input),
+      "utf8",
+    );
   const state = {
     rangeBytes: 0,
     rangeRequests: 0,
     ranges: {},
   };
+  if (secondaryProbe !== null) {
+    state.secondary = {
+      rangeBytes: 0,
+      rangeRequests: 0,
+      ranges: {},
+    };
+  }
   return createServer(async (request, response) => {
     if (!["GET", "HEAD"].includes(request.method ?? "")) {
       response.writeHead(405, {
@@ -310,6 +382,24 @@ export function createBrowserGpuProbeServer({
       );
       return;
     }
+    if (
+      pathname === "/secondary-probe-input.json" &&
+      secondaryInputBytes !== null
+    ) {
+      response.writeHead(
+        200,
+        baseHeaders(
+          "application/json; charset=utf-8",
+          secondaryInputBytes.byteLength,
+        ),
+      );
+      response.end(
+        request.method === "HEAD"
+          ? undefined
+          : secondaryInputBytes,
+      );
+      return;
+    }
     if (pathname === "/range-state.json") {
       const body = Buffer.from(JSON.stringify(state), "utf8");
       response.writeHead(
@@ -322,10 +412,31 @@ export function createBrowserGpuProbeServer({
       response.end(request.method === "HEAD" ? undefined : body);
       return;
     }
-    if (pathname.startsWith("/range/")) {
+    const secondaryRange =
+      pathname.startsWith("/secondary-range/");
+    if (pathname.startsWith("/range/") || secondaryRange) {
+      const selectedProbe = secondaryRange
+        ? secondaryProbe
+        : probe;
+      const selectedState = secondaryRange
+        ? state.secondary
+        : state;
+      const prefixLength = secondaryRange ? 17 : 7;
+      if (
+        selectedProbe === null ||
+        selectedState === undefined
+      ) {
+        response.writeHead(404, {
+          "Cache-Control": "no-store",
+        });
+        response.end();
+        return;
+      }
       let rangeId;
       try {
-        rangeId = decodeURIComponent(pathname.slice(7));
+        rangeId = decodeURIComponent(
+          pathname.slice(prefixLength),
+        );
       } catch {
         response.writeHead(400, {
           "Cache-Control": "no-store",
@@ -333,8 +444,8 @@ export function createBrowserGpuProbeServer({
         response.end();
         return;
       }
-      const handle = probe.handles.get(rangeId);
-      const bytes = probe.ranges.get(rangeId);
+      const handle = selectedProbe.handles.get(rangeId);
+      const bytes = selectedProbe.ranges.get(rangeId);
       if (handle === undefined || bytes === undefined) {
         response.writeHead(404, {
           "Cache-Control": "no-store",
@@ -361,13 +472,13 @@ export function createBrowserGpuProbeServer({
         selected.end + 1,
       );
       if (request.method === "GET") {
-        state.rangeRequests += 1;
-        state.rangeBytes += body.byteLength;
-        const prior = state.ranges[rangeId] ?? {
+        selectedState.rangeRequests += 1;
+        selectedState.rangeBytes += body.byteLength;
+        const prior = selectedState.ranges[rangeId] ?? {
           bytes: 0,
           requests: 0,
         };
-        state.ranges[rangeId] = {
+        selectedState.ranges[rangeId] = {
           bytes: prior.bytes + body.byteLength,
           requests: prior.requests + 1,
         };

@@ -63,6 +63,7 @@ class FakeWebGl2Context {
     this.deletedTextures = 0;
     this.drawCalls = 0;
     this.framebuffer = null;
+    this.lost = false;
     this.pickColor = [0, 0, 0];
   }
 
@@ -130,6 +131,25 @@ class FakeWebGl2Context {
   getError() {
     return this.NO_ERROR;
   }
+  getExtension(name) {
+    if (name !== "WEBGL_lose_context") {
+      return null;
+    }
+    return {
+      loseContext: () => {
+        this.lost = true;
+        queueMicrotask(() => {
+          this.canvas.dispatch("webglcontextlost");
+        });
+      },
+      restoreContext: () => {
+        this.lost = false;
+        queueMicrotask(() => {
+          this.canvas.dispatch("webglcontextrestored");
+        });
+      },
+    };
+  }
   getParameter(name) {
     if (name === this.MAX_VERTEX_ATTRIBS) {
       return 16;
@@ -158,7 +178,7 @@ class FakeWebGl2Context {
     return {};
   }
   isContextLost() {
-    return false;
+    return this.lost;
   }
   linkProgram() {}
   readPixels(
@@ -208,15 +228,33 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   });
   const snapshot = await session.getSnapshot();
   const context = new FakeWebGl2Context();
+  const listeners = new Map();
   const canvas = {
     height: 0,
     width: 0,
+    addEventListener(type, listener) {
+      const values = listeners.get(type) ?? new Set();
+      values.add(listener);
+      listeners.set(type, values);
+    },
+    dispatch(type) {
+      for (const listener of listeners.get(type) ?? []) {
+        listener({
+          preventDefault() {},
+          type,
+        });
+      }
+    },
     getContext(name, options) {
       assert.equal(name, "webgl2");
       assert.equal(options.preserveDrawingBuffer, true);
       return context;
     },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
   };
+  context.canvas = canvas;
   const backend = createWebGl2Backend({
     canvas,
     frameScheduler(callback) {
@@ -322,6 +360,42 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(backend.state.selectedPickIds, 1);
   assert.equal(context.drawCalls, 9);
 
+  const cancelledPick = new AbortController();
+  cancelledPick.abort(
+    new DOMException("cancelled pick", "AbortError"),
+  );
+  await assert.rejects(
+    renderer.pick({
+      x: 80,
+      y: 45,
+      signal: cancelledPick.signal,
+    }),
+    /cancelled pick/u,
+  );
+  assert.equal(renderer.state.picks, 1);
+  assert.equal(backend.state.picks, 1);
+
+  const contextLoss = await backend.qualifyContextLoss(
+    backend.state.activeHandleId,
+  );
+  assert.equal(contextLoss.contextLostObserved, true);
+  assert.equal(contextLoss.contextRestoredObserved, true);
+  assert.equal(contextLoss.priorGeneration, 1);
+  assert.equal(contextLoss.restoredGeneration, 2);
+  assert.equal(contextLoss.invalidatedBytes, 1_120);
+  assert.equal(contextLoss.recoveryRequired, true);
+  assert.deepEqual(contextLoss.clearedErrors, []);
+  assert.equal(contextLoss.glError, 0);
+  assert.equal(backend.state.contextLosses, 1);
+  assert.equal(backend.state.contextGeneration, 2);
+  assert.equal(backend.state.contextInvalidated, true);
+  await assert.rejects(
+    renderer.renderView({
+      camera: fittedView.camera,
+    }),
+    /invalidated by context loss/u,
+  );
+
   await assert.rejects(
     renderer.renderView({
       camera: fittedView.camera,
@@ -339,9 +413,10 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
 
   const released = await renderer.unmount();
   assert.equal(released.releasedBytes, 1_120);
-  assert.equal(context.deletedBuffers, 3);
-  assert.equal(context.deletedPrograms, 2);
+  assert.equal(context.deletedBuffers, 0);
+  assert.equal(context.deletedPrograms, 0);
   assert.equal(backend.state.activeBytes, 0);
+  assert.equal(backend.state.releasedBytes, 1_120);
   assert.equal(await renderer.dispose(), true);
   assert.equal(backend.state.disposed, true);
   assert.equal(await session.dispose(), true);
