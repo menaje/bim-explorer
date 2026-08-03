@@ -1,0 +1,106 @@
+---
+type: product
+status: accepted
+authority:
+  - product-definition
+  - product-responsibility
+  - source-identity-boundary
+  - standalone-product-invariants
+last_reviewed: 2026-08-03
+---
+
+# 제품과 저장소 경계
+
+## 제품 정의
+
+BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조,
+속성과 관계를 탐색하는 독립 제품입니다. 첫 vertical slice는 read-only
+IFC입니다.
+
+제품 성공의 최소 기준은 다음과 같습니다.
+
+- 계정과 Coni Spatial 없이 local IFC를 연다.
+- model tree와 3D selection이 같은 immutable source snapshot을 가리킨다.
+- 선택한 객체의 property, type, containment와 relation을 bounded query로
+  탐색한다.
+- section, isolate와 measure가 parser 내부 object를 직접 다루지 않는다.
+- source 전환이나 종료 후 Worker, range와 GPU resource가 정리된다.
+- 지원하지 않는 schema, operation과 stale identity를 명시적으로 거부한다.
+
+## 세 제품의 책임
+
+| 책임 | DWG Viewer | BIM Explorer | Coni Spatial |
+| --- | --- | --- | --- |
+| raw source | DWG | BIM/IFC | registered multi-source |
+| 기본 표현 | 2D drawing review | generic 3D/BIM exploration | 2D/3D revision review |
+| source adapter | DWG Scene Cache | BIM source snapshot | native change/reconcile adapter |
+| source-local identity | DWG handle | GlobalId·snapshot-scoped Express ID | native reference mapping |
+| Canonical Entity ID | 없음 | 없음 | authority |
+| Agent change | 없음 | 없음 | query/proposal/build/check |
+| revision/diff | 없음 | source snapshot만 | authority |
+| accept/publish/export | 없음 | 없음 | human-only authority |
+
+Viewer Core와 render protocol은 source-neutral public contract가 준비되면 세
+제품이 공유합니다. 상대 제품의 설치된 extension, process 또는 private
+message를 기본 integration으로 사용하지 않습니다.
+
+## Identity 경계
+
+```text
+source bytes
+-> source fingerprint
+-> native identity
+   - IFC GlobalId: profile이 허용하는 durable source identity
+   - Express ID: exact source snapshot 안에서만 유효
+-> Render/Pick ID: exact snapshot/layer에 묶인 projection
+-> optional Spatial mapping
+   -> Workspace + Spatial Revision + Canonical Entity ID
+```
+
+BIM Explorer는 source fingerprint에서 Render/Pick ID까지 소유합니다.
+GlobalId가 존재하더라도 source fingerprint 없이 전역 identity로
+사용하지 않습니다. Express ID는 rewrite·reopen 뒤 안정적이라고 가정하지
+않습니다.
+
+Coni Spatial만 native identity를 Canonical Entity ID에 연결합니다. 이
+mapping은 Workspace와 Spatial Revision에 묶이며 Explorer cache나 Viewer
+selection이 authority가 되지 않습니다.
+
+## Runtime과 release 독립성
+
+- BIM Explorer는 자체 Browser/VS Code shell과 version을 가집니다.
+- Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
+  않습니다.
+- Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는
+  public package를 bundle합니다.
+- 세 저장소는 독립 tag와 release cadence를 사용합니다.
+- cross-product compatibility는 exact artifact, version과 conformance
+  result로만 주장합니다.
+
+## Optional handoff
+
+제품이 함께 설치된 경우 public payload로 다음 편의를 제공할 수 있습니다.
+
+```text
+BIM Explorer selection
+-> Open in Spatial Workspace
+-> protocol version
+ + source fingerprint
+ + native identity
+ + bounded selection
+ + viewpoint
+```
+
+payload에 credential, parser pointer, arbitrary local path, Workspace
+capability 또는 acceptance token을 넣지 않습니다. 수신 제품이 source,
+version과 identity를 다시 검증하며 stale/unsupported payload는
+fail-closed합니다.
+
+## 비목표
+
+- production IFC/RVT write를 첫 제품 범위로 주장하지 않습니다.
+- 모든 BIM format을 하나의 in-memory object graph로 정규화하지 않습니다.
+- 범용 solid/CAD authoring kernel을 구현하지 않습니다.
+- Viewer UI와 event로 Spatial authority를 판정하지 않습니다.
+- Viewer Core, parser 또는 Spatial service 구현을 이 저장소에 복사하지
+  않습니다.

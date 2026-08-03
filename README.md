@@ -9,6 +9,22 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 현재 상태: architecture와 implementation roadmap 수립 단계입니다.
 > IFC engine, public package와 지원 profile은 아직 확정되지 않았습니다.
 
+## 첫 사용자 흐름
+
+```text
+local IFC 선택
+-> isolated adapter가 immutable source snapshot 생성
+-> model tree와 3D overview 표시
+-> 객체 선택
+-> property·type·containment·relation 탐색
+-> section/isolate/measure
+-> viewpoint 또는 선택 가능한 handoff descriptor 저장
+```
+
+파일과 모델 데이터는 사용자가 명시적으로 선택한 local runtime 안에서
+처리합니다. 계정, cloud upload 또는 Coni Spatial 설치는 기본 흐름의
+선행조건이 아닙니다.
+
 ## 제품 경계
 
 ```text
@@ -44,6 +60,16 @@ BIM Explorer는 Spatial authoring authority를 복제하지 않습니다. Coni
 Spatial도 설치된 BIM Explorer extension/process를 필수 dependency로
 호출하지 않고, public compatibility가 검증된 package만 자신의 bundle에
 포함합니다.
+
+## 비목표
+
+- IFC/RVT authoring과 production write 지원을 미리 주장하지 않습니다.
+- 범용 CAD/BIM authoring kernel을 만들지 않습니다.
+- Viewer event만으로 Spatial revision을 accept/publish하지 않습니다.
+- IFC parser object, native pointer, 실제 path나 credential을 Viewer Core에
+  전달하지 않습니다.
+- `dwg-viewer`의 Viewer Core나 Coni Spatial authority 코드를 fork하거나
+  복사하지 않습니다.
 
 ## 구현 순서
 
@@ -95,3 +121,18 @@ license와 packaging Gate를 통과한 profile만 지원 대상으로 올립니�
   Viewer Core/render protocol과 독립 raw DWG 제품
 - [coni-spatial](https://github.com/menaje/coni-spatial):
   Workspace, revision, Agent change, reconcile와 product authority
+
+## 개발 기준선
+
+Node.js 24가 필요합니다.
+
+```bash
+npm ci
+npm run check
+```
+
+저장소 구조와 authority 문서는 [docs/README.md](docs/README.md), 현재
+Viewer Core admission 상태는
+[compatibility/viewer-core.json](compatibility/viewer-core.json)을
+따릅니다. 실제 IFC, 고객 모델, credential과 generated cache는 Git에
+추적하지 않습니다.

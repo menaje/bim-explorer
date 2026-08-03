@@ -1,0 +1,57 @@
+{
+  "schema": "bim-explorer-viewer-core-compatibility/1",
+  "status": "unresolved",
+  "asOf": "2026-08-03",
+  "consumer": {
+    "repository": "menaje/bim-explorer",
+    "product": "BIM Explorer",
+    "representation": "3d"
+  },
+  "upstream": {
+    "repository": "menaje/dwg-viewer",
+    "observedCommit": "dce88d3be5d564bc6a2cd31f81ecfcec7e5f59f1",
+    "viewerCore": {
+      "package": "@dwg-viewer/viewer-core",
+      "version": "0.1.0",
+      "api": "dwg-viewer-core/0.1",
+      "private": true
+    },
+    "renderProtocol": {
+      "package": "@dwg-viewer/render-protocol",
+      "version": "0.1.0",
+      "protocol": "dwg-viewer-render-protocol/0.1.0",
+      "private": true
+    },
+    "distribution": {
+      "kind": "workspace-only",
+      "published": false
+    }
+  },
+  "pin": null,
+  "admissionGates": {
+    "durableArtifact": false,
+    "licenseMetadata": false,
+    "neutralNamespaceDecision": false,
+    "bimRenderSourceConformance": false,
+    "threeDimensionalRendererConformance": false,
+    "browserHostLifecycle": false,
+    "vscodeHostLifecycle": false,
+    "crossRepositoryCI": false
+  },
+  "blockers": [
+    "viewer-core and render-protocol are private workspace-only packages",
+    "package and protocol identifiers are still dwg-viewer scoped",
+    "no reusable external artifact or consumer install path exists",
+    "no BIM 3D RenderSource, renderer, host, delta, or disposal conformance exists"
+  ],
+  "policy": {
+    "allowRelativeCheckoutDependency": false,
+    "allowCopiedViewerCore": false,
+    "claimCompatibility": false
+  },
+  "tracking": [
+    "https://github.com/menaje/dwg-viewer/issues/26",
+    "https://github.com/menaje/dwg-viewer/issues/30",
+    "https://github.com/menaje/bim-explorer/issues/3"
+  ]
+}
