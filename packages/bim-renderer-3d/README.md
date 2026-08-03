@@ -13,13 +13,15 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
 - WebGL2 backend의 geometry·instance upload, first-frame pixel 영수증
 - perspective/orthographic fit과 orbit·pan·zoom camera state
 - active revision의 Render ID hide/show와 view revision 영수증
+- offscreen WebGL2 Pick ID pass와 revision-bound selection/highlight
+- pick target의 transient allocation·즉시 회수 영수증
 - source switch, abort, malformed bytes와 disposal의 fail-closed 처리
 
 headless backend의 frame은 실제 GPU render나 화면 표시가 아닙니다.
 WebGL2 backend는 실제 Browser GPU API 경로와 rasterized pixel을 검증하지만
 physical GPU를 식별하거나 보장하지 않습니다. 이 package는 아직 pointer
-input, visibility-driven range loading, picking, section, measurement 또는
-Viewer Core conformance를 주장하지 않습니다.
+input, visibility-driven range loading, section, measurement 또는 Viewer
+Core conformance를 주장하지 않습니다.
 
 session/source lifecycle은 호출자가 소유합니다. renderer는 자신이 만든
 backend allocation과 임시 range staging만 정리합니다.

@@ -54,11 +54,52 @@ precision highp float;
 in vec4 v_color;
 in float v_light;
 
+uniform bool u_highlight;
+
 out vec4 out_color;
 
 void main() {
+  if (u_highlight) {
+    out_color = vec4(1.0, 0.42, 0.04, 1.0);
+    return;
+  }
   vec3 base = clamp(v_color.rgb, vec3(0.08), vec3(1.0));
   out_color = vec4(base * v_light, max(v_color.a, 0.2));
+}
+`;
+
+const PICK_VERTEX_SHADER = `#version 300 es
+layout(location = 0) in vec3 a_position;
+layout(location = 2) in vec4 a_model_0;
+layout(location = 3) in vec4 a_model_1;
+layout(location = 4) in vec4 a_model_2;
+layout(location = 5) in vec4 a_model_3;
+
+uniform mat4 u_source_from_storage;
+uniform mat4 u_world_to_clip;
+
+void main() {
+  mat4 model = mat4(
+    a_model_0,
+    a_model_1,
+    a_model_2,
+    a_model_3
+  );
+  vec4 world =
+    u_source_from_storage * model * vec4(a_position, 1.0);
+  gl_Position = u_world_to_clip * world;
+}
+`;
+
+const PICK_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec3 u_pick_color;
+
+out vec4 out_color;
+
+void main() {
+  out_color = vec4(u_pick_color, 1.0);
 }
 `;
 
@@ -125,18 +166,25 @@ function shader(gl, type, source, label) {
   return value;
 }
 
-function program(gl) {
+function program(
+  gl,
+  {
+    fragmentSource = FRAGMENT_SHADER,
+    label = "frame",
+    vertexSource = VERTEX_SHADER,
+  } = {},
+) {
   const vertex = shader(
     gl,
     gl.VERTEX_SHADER,
-    VERTEX_SHADER,
-    "vertex",
+    vertexSource,
+    `${label} vertex`,
   );
   const fragment = shader(
     gl,
     gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER,
-    "fragment",
+    fragmentSource,
+    `${label} fragment`,
   );
   const value = gl.createProgram();
   if (value === null) {
@@ -181,7 +229,9 @@ function deleteResources(gl, resources) {
   for (const value of resources.buffers) {
     gl.deleteBuffer(value);
   }
-  gl.deleteProgram(resources.program);
+  for (const value of resources.programs) {
+    gl.deleteProgram(value);
+  }
 }
 
 function packGeometry(plan) {
@@ -319,18 +369,152 @@ function changedPixels(gl, width, height, clearColor) {
   const clear = clearColor
     .slice(0, 3)
     .map((value) => Math.round(value * 255));
-  let count = 0;
+  let highlightPixels = 0;
+  let nonBackgroundPixels = 0;
   for (let offset = 0; offset < pixels.length; offset += 4) {
     if (
       Math.abs(pixels[offset] - clear[0]) > 1 ||
       Math.abs(pixels[offset + 1] - clear[1]) > 1 ||
       Math.abs(pixels[offset + 2] - clear[2]) > 1
     ) {
-      count += 1;
+      nonBackgroundPixels += 1;
+    }
+    if (
+      pixels[offset] >= 250 &&
+      pixels[offset + 1] >= 100 &&
+      pixels[offset + 1] <= 120 &&
+      pixels[offset + 2] <= 16
+    ) {
+      highlightPixels += 1;
     }
   }
   pixels.fill(0);
-  return count;
+  return Object.freeze({
+    highlightPixels,
+    nonBackgroundPixels,
+  });
+}
+
+function pickColor(index) {
+  if (
+    !Number.isSafeInteger(index) ||
+    index <= 0 ||
+    index > 0xff_ff_ff
+  ) {
+    throw new RangeError("WebGL2 pick index is out of range");
+  }
+  return Object.freeze([
+    (index & 0xff) / 255,
+    ((index >> 8) & 0xff) / 255,
+    ((index >> 16) & 0xff) / 255,
+  ]);
+}
+
+function decodedPickIndex(bytes) {
+  return bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
+}
+
+function pickTarget(gl, width, height) {
+  const framebuffer = gl.createFramebuffer();
+  const color = gl.createTexture();
+  const depth = gl.createRenderbuffer();
+  if (
+    framebuffer === null ||
+    color === null ||
+    depth === null
+  ) {
+    if (framebuffer !== null) {
+      gl.deleteFramebuffer(framebuffer);
+    }
+    if (color !== null) {
+      gl.deleteTexture(color);
+    }
+    if (depth !== null) {
+      gl.deleteRenderbuffer(depth);
+    }
+    throw new Error("WebGL2 could not allocate a pick target");
+  }
+  gl.bindTexture(gl.TEXTURE_2D, color);
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    gl.NEAREST,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MAG_FILTER,
+    gl.NEAREST,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_S,
+    gl.CLAMP_TO_EDGE,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_T,
+    gl.CLAMP_TO_EDGE,
+  );
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    width,
+    height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    null,
+  );
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+  gl.renderbufferStorage(
+    gl.RENDERBUFFER,
+    gl.DEPTH_COMPONENT16,
+    width,
+    height,
+  );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    color,
+    0,
+  );
+  gl.framebufferRenderbuffer(
+    gl.FRAMEBUFFER,
+    gl.DEPTH_ATTACHMENT,
+    gl.RENDERBUFFER,
+    depth,
+  );
+  if (
+    gl.checkFramebufferStatus(gl.FRAMEBUFFER) !==
+      gl.FRAMEBUFFER_COMPLETE
+  ) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(framebuffer);
+    gl.deleteTexture(color);
+    gl.deleteRenderbuffer(depth);
+    throw new Error("WebGL2 pick framebuffer is incomplete");
+  }
+  return Object.freeze({
+    bytes: width * height * 6,
+    color,
+    depth,
+    framebuffer,
+  });
+}
+
+function deletePickTarget(gl, target) {
+  if (target === null) {
+    return;
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  gl.deleteFramebuffer(target.framebuffer);
+  gl.deleteTexture(target.color);
+  gl.deleteRenderbuffer(target.depth);
 }
 
 function requireUniform(gl, value, label) {
@@ -357,6 +541,7 @@ export class WebGl2Backend {
   #frameScheduler;
   #height;
   #mounts = 0;
+  #picks = 0;
   #unmounts = 0;
   #width;
 
@@ -395,6 +580,7 @@ export class WebGl2Backend {
     return Object.freeze({
       disposed: this.#disposed,
       mounts: this.#mounts,
+      picks: this.#picks,
       unmounts: this.#unmounts,
       contextInitialized: this.#context !== null,
       contextLost: this.#context?.isContextLost?.() ?? false,
@@ -405,6 +591,8 @@ export class WebGl2Backend {
         this.#active?.camera.projection ?? null,
       hiddenRenderIds:
         this.#active?.hiddenRenderIds.length ?? 0,
+      selectedPickIds:
+        this.#active?.selectedPickIds.length ?? 0,
     });
   }
 
@@ -441,6 +629,7 @@ export class WebGl2Backend {
     state,
     cameraValue,
     hiddenRenderIds,
+    selectedPickIds,
     signal,
     {
       requireVisiblePixels = true,
@@ -455,7 +644,16 @@ export class WebGl2Backend {
         "WebGL2 hidden Render IDs must be a unique list",
       );
     }
+    if (
+      !Array.isArray(selectedPickIds) ||
+      new Set(selectedPickIds).size !== selectedPickIds.length
+    ) {
+      throw new TypeError(
+        "WebGL2 selected Pick IDs must be a unique list",
+      );
+    }
     const hidden = new Set(hiddenRenderIds);
+    const selected = new Set(selectedPickIds);
     const gl = this.#getContext();
     if (gl.isContextLost()) {
       throw invalidState("WebGL2 context is lost");
@@ -471,12 +669,21 @@ export class WebGl2Backend {
     ] = state.resources.buffers;
     const frameStarted = performance.now();
     let drawCalls = 0;
+    let highlightedInstances = 0;
+    let highlightPixels = 0;
     let hiddenInstances = 0;
     let nonBackgroundPixels = 0;
+    let selectedInstances = 0;
+    for (const instance of state.instances) {
+      if (selected.has(instance.pickId)) {
+        selectedInstances += 1;
+      }
+    }
     await new Promise((resolve, reject) => {
       this.#frameScheduler(() => {
         try {
           aborted(signal);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
           gl.viewport(0, 0, this.#width, this.#height);
           gl.clearColor(...this.#clearColor);
           gl.clearDepth(1);
@@ -484,7 +691,7 @@ export class WebGl2Backend {
           gl.depthFunc(gl.LEQUAL);
           gl.disable(gl.CULL_FACE);
           gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-          gl.useProgram(state.resources.program);
+          gl.useProgram(state.resources.frameProgram);
           gl.uniformMatrix4fv(
             state.worldLocation,
             false,
@@ -509,6 +716,14 @@ export class WebGl2Backend {
               hiddenInstances += 1;
               continue;
             }
+            const highlighted = selected.has(instance.pickId);
+            if (highlighted) {
+              highlightedInstances += 1;
+            }
+            gl.uniform1i(
+              state.highlightLocation,
+              highlighted ? 1 : 0,
+            );
             const record = state.geometryRecords.get(
               `${instance.rangeId}:${instance.geometryExpressId}`,
             );
@@ -539,12 +754,14 @@ export class WebGl2Backend {
           if (gl.getError() !== gl.NO_ERROR) {
             throw new Error("WebGL2 frame failed");
           }
-          nonBackgroundPixels = changedPixels(
+          const pixels = changedPixels(
             gl,
             this.#width,
             this.#height,
             this.#clearColor,
           );
+          highlightPixels = pixels.highlightPixels;
+          nonBackgroundPixels = pixels.nonBackgroundPixels;
           if (
             requireVisiblePixels &&
             nonBackgroundPixels === 0
@@ -566,8 +783,11 @@ export class WebGl2Backend {
       frameMs: performance.now() - frameStarted,
       frameNumber: state.frames,
       glError: gl.getError(),
+      highlightedInstances,
+      highlightPixels,
       hiddenInstances,
       nonBackgroundPixels,
+      selectedInstances,
       visibleInstances: drawCalls,
     });
   }
@@ -622,11 +842,22 @@ export class WebGl2Backend {
     let instances = null;
     let resources = null;
     try {
-      const shaderProgram = program(gl);
+      const frameProgram = program(gl, {
+        label: "frame",
+      });
       resources = {
         buffers: [],
-        program: shaderProgram,
+        frameProgram,
+        pickProgram: null,
+        programs: [frameProgram],
       };
+      const pickProgram = program(gl, {
+        fragmentSource: PICK_FRAGMENT_SHADER,
+        label: "pick",
+        vertexSource: PICK_VERTEX_SHADER,
+      });
+      resources.pickProgram = pickProgram;
+      resources.programs.push(pickProgram);
       geometry = packGeometry(plan);
       instances = packInstances(plan);
       const uploadStarted = performance.now();
@@ -656,13 +887,33 @@ export class WebGl2Backend {
       const sourceMatrix = new Float32Array(sourceFromStorage);
       const worldLocation = requireUniform(
         gl,
-        shaderProgram,
+        frameProgram,
         "u_world_to_clip",
       );
       const sourceLocation = requireUniform(
         gl,
-        shaderProgram,
+        frameProgram,
         "u_source_from_storage",
+      );
+      const highlightLocation = requireUniform(
+        gl,
+        frameProgram,
+        "u_highlight",
+      );
+      const pickWorldLocation = requireUniform(
+        gl,
+        pickProgram,
+        "u_world_to_clip",
+      );
+      const pickSourceLocation = requireUniform(
+        gl,
+        pickProgram,
+        "u_source_from_storage",
+      );
+      const pickColorLocation = requireUniform(
+        gl,
+        pickProgram,
+        "u_pick_color",
       );
       const mountNumber = this.#mounts + 1;
       const drawState = {
@@ -671,11 +922,20 @@ export class WebGl2Backend {
         instances: Object.freeze(
           plan.instances.map((instance) => Object.freeze({
             geometryExpressId: instance.geometryExpressId,
+            expressId: instance.expressId,
+            externalIdentityToken:
+              instance.externalIdentityToken,
+            globalId: instance.globalId,
+            pickId: instance.pickId,
             rangeId: instance.rangeId,
             renderId: instance.renderId,
           })),
         ),
         resources,
+        highlightLocation,
+        pickColorLocation,
+        pickSourceLocation,
+        pickWorldLocation,
         sourceLocation,
         sourceMatrix,
         worldLocation,
@@ -686,6 +946,7 @@ export class WebGl2Backend {
       const frame = await this.#drawFrame(
         drawState,
         camera,
+        [],
         [],
         signal,
       );
@@ -698,6 +959,7 @@ export class WebGl2Backend {
         camera,
         handleId,
         hiddenRenderIds: Object.freeze([]),
+        selectedPickIds: Object.freeze([]),
         uploadedBytes,
       };
       resources = null;
@@ -721,7 +983,10 @@ export class WebGl2Backend {
           camera,
           visibleInstances: frame.visibleInstances,
           hiddenInstances: frame.hiddenInstances,
+          selectedInstances: frame.selectedInstances,
+          highlightedInstances: frame.highlightedInstances,
           nonBackgroundPixels: frame.nonBackgroundPixels,
+          highlightPixels: frame.highlightPixels,
           uploadMs,
           firstFrameMs: frame.frameMs,
           mountMs: performance.now() - started,
@@ -743,6 +1008,7 @@ export class WebGl2Backend {
     {
       camera: cameraValue,
       hiddenRenderIds = [],
+      selectedPickIds = [],
     } = {},
     { signal } = {},
   ) {
@@ -775,10 +1041,30 @@ export class WebGl2Backend {
         "WebGL2 hidden Render ID is outside the active mount",
       );
     }
+    if (
+      !Array.isArray(selectedPickIds) ||
+      new Set(selectedPickIds).size !== selectedPickIds.length ||
+      selectedPickIds.some((pickId) =>
+        typeof pickId !== "string" || pickId.length === 0)
+    ) {
+      throw new TypeError(
+        "WebGL2 selected Pick IDs must be a unique list",
+      );
+    }
+    const knownPickIds = new Set(
+      this.#active.instances.map((instance) => instance.pickId),
+    );
+    if (selectedPickIds.some((pickId) =>
+      !knownPickIds.has(pickId))) {
+      throw new RangeError(
+        "WebGL2 selected Pick ID is outside the active mount",
+      );
+    }
     const frame = await this.#drawFrame(
       this.#active,
       camera,
       hiddenRenderIds,
+      selectedPickIds,
       signal,
       {
         requireVisiblePixels: false,
@@ -787,6 +1073,8 @@ export class WebGl2Backend {
     this.#active.camera = camera;
     this.#active.hiddenRenderIds =
       Object.freeze([...hiddenRenderIds]);
+    this.#active.selectedPickIds =
+      Object.freeze([...selectedPickIds]);
     return {
       receipt: {
         backendId: "webgl2",
@@ -798,12 +1086,201 @@ export class WebGl2Backend {
         camera,
         visibleInstances: frame.visibleInstances,
         hiddenInstances: frame.hiddenInstances,
+        selectedInstances: frame.selectedInstances,
+        highlightedInstances: frame.highlightedInstances,
         drawCalls: frame.drawCalls,
         nonBackgroundPixels: frame.nonBackgroundPixels,
+        highlightPixels: frame.highlightPixels,
         frameMs: frame.frameMs,
         glError: frame.glError,
       },
     };
+  }
+
+  async pick(
+    handleId,
+    {
+      x,
+      y,
+    } = {},
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("WebGL2 mount handle is not active");
+    }
+    if (
+      !Number.isSafeInteger(x) ||
+      !Number.isSafeInteger(y) ||
+      x < 0 ||
+      x >= this.#width ||
+      y < 0 ||
+      y >= this.#height
+    ) {
+      throw new RangeError(
+        "WebGL2 pick coordinates are outside the frame",
+      );
+    }
+    const gl = this.#getContext();
+    if (gl.isContextLost()) {
+      throw invalidState("WebGL2 context is lost");
+    }
+    const state = this.#active;
+    const hidden = new Set(state.hiddenRenderIds);
+    const worldToClip = cameraViewProjectionMatrix(
+      state.camera,
+      this.#width / this.#height,
+    );
+    const [
+      vertexBuffer,
+      indexBuffer,
+      instanceBuffer,
+    ] = state.resources.buffers;
+    const started = performance.now();
+    let drawCalls = 0;
+    let identity = null;
+    let target = null;
+    try {
+      target = pickTarget(gl, this.#width, this.#height);
+      await new Promise((resolve, reject) => {
+        this.#frameScheduler(() => {
+          try {
+            aborted(signal);
+            gl.bindFramebuffer(
+              gl.FRAMEBUFFER,
+              target.framebuffer,
+            );
+            gl.viewport(0, 0, this.#width, this.#height);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clearDepth(1);
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+            gl.disable(gl.CULL_FACE);
+            gl.clear(
+              gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
+            );
+            gl.useProgram(state.resources.pickProgram);
+            gl.uniformMatrix4fv(
+              state.pickWorldLocation,
+              false,
+              worldToClip,
+            );
+            gl.uniformMatrix4fv(
+              state.pickSourceLocation,
+              false,
+              state.sourceMatrix,
+            );
+            gl.bindBuffer(
+              gl.ELEMENT_ARRAY_BUFFER,
+              indexBuffer,
+            );
+            for (const location of [0, 2, 3, 4, 5]) {
+              gl.enableVertexAttribArray(location);
+            }
+            for (
+              let index = 0;
+              index < state.instances.length;
+              index += 1
+            ) {
+              const instance = state.instances[index];
+              if (hidden.has(instance.renderId)) {
+                continue;
+              }
+              const record = state.geometryRecords.get(
+                `${instance.rangeId}:` +
+                  `${instance.geometryExpressId}`,
+              );
+              if (record === undefined) {
+                throw new Error(
+                  "WebGL2 instance geometry is unavailable",
+                );
+              }
+              const color = pickColor(index + 1);
+              gl.uniform3f(
+                state.pickColorLocation,
+                color[0],
+                color[1],
+                color[2],
+              );
+              gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+              configureGeometryAttributes(gl, record);
+              gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+              configureInstanceAttributes(gl, index);
+              gl.drawElementsInstanced(
+                gl.TRIANGLES,
+                record.indexCount,
+                gl.UNSIGNED_INT,
+                record.indexOffset,
+                1,
+              );
+              drawCalls += 1;
+            }
+            const pixel = new Uint8Array(4);
+            gl.finish();
+            if (gl.getError() !== gl.NO_ERROR) {
+              throw new Error("WebGL2 pick frame failed");
+            }
+            gl.readPixels(
+              x,
+              this.#height - y - 1,
+              1,
+              1,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              pixel,
+            );
+            const pickIndex = decodedPickIndex(pixel);
+            pixel.fill(0);
+            if (
+              pickIndex > 0 &&
+              pickIndex <= state.instances.length
+            ) {
+              const instance = state.instances[pickIndex - 1];
+              if (!hidden.has(instance.renderId)) {
+                identity = Object.freeze({
+                  expressId: instance.expressId,
+                  externalIdentityToken:
+                    instance.externalIdentityToken,
+                  globalId: instance.globalId,
+                  pickId: instance.pickId,
+                  renderId: instance.renderId,
+                });
+              }
+            }
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      this.#picks += 1;
+      return {
+        receipt: {
+          backendId: "webgl2",
+          frameId:
+            `webgl2-pick:${this.#mounts}:${this.#picks}`,
+          actualGpu: true,
+          context: "webgl2",
+          hit: identity !== null,
+          identity,
+          x,
+          y,
+          drawCalls,
+          temporaryTargetBytes: target.bytes,
+          temporaryReleased: true,
+          frameMs: performance.now() - started,
+          glError: gl.NO_ERROR,
+        },
+      };
+    } finally {
+      deletePickTarget(gl, target);
+    }
   }
 
   async unmount(handleId) {

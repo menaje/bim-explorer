@@ -15,11 +15,11 @@ const TRUE_GATES = [
   "actualGpuFirstFrame",
   "cameraFitViewState",
   "renderIdVisibilityState",
+  "pickingSelection",
 ];
 const HELD_GATES = [
   "visibilityDrivenFirstFrame",
   "cameraInteraction",
-  "pickingSelection",
   "sectionMeasurement",
   "contextLossAndGpuSourceSwitch",
   "browserVscodeConformance",
@@ -52,6 +52,19 @@ const VIEW_CONFORMANCE_ASSERTIONS = [
   "revisionBoundRenderIdVisibility",
   "hideShowDrawAccounting",
   "gpuAllocationReusedAcrossViews",
+  "boundedRangeReadsUnchanged",
+  "deterministicDispose",
+  "pathFreeReport",
+];
+const PICK_CONFORMANCE_ASSERTIONS = [
+  "actualBrowser",
+  "webgl2OffscreenPickPass",
+  "topLeftCanvasCoordinates",
+  "revisionBoundPickIdentity",
+  "pickIdSelection",
+  "selectionHighlightPixels",
+  "transientPickTargetReleased",
+  "gpuAllocationReusedAcrossSelection",
   "boundedRangeReadsUnchanged",
   "deterministicDispose",
   "pathFreeReport",
@@ -632,6 +645,194 @@ function validateBrowserViewEvidence(manifest, evidence) {
   return report;
 }
 
+function validateBrowserPickEvidence(manifest, evidence) {
+  plainRecord(evidence, "Browser picking evidence");
+  const fixture = manifest.fixture;
+  if (
+    evidence.schema !==
+      "bim-explorer-public-browser-picking-selection-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-browser-picking-selection" ||
+    evidence.fixture?.id !== fixture.id ||
+    evidence.fixture?.schema !== fixture.schema ||
+    evidence.fixture?.profile !== fixture.profile ||
+    evidence.fixture?.byteLength !== fixture.byteLength ||
+    evidence.fixture?.sha256 !== fixture.sha256 ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.profileAdmission !== false ||
+    evidence.provenance?.repository !==
+      "buildingsmart-community/Community-Sample-Test-Files" ||
+    evidence.provenance?.commit !==
+      "7ddf57a201f88a0c213d5322b02ed15e94a60a40" ||
+    evidence.provenance?.license !== "CC-BY-4.0" ||
+    evidence.provenance?.rightsVerified !== true ||
+    evidence.provenance?.bundlingApproved !== false
+  ) {
+    throw new Error("Browser picking evidence identity is invalid");
+  }
+  const budget = evidence.budget;
+  if (
+    budget?.maximumPickMs !== 1_000 ||
+    budget?.maximumSelectionFrameMs !== 1_000 ||
+    budget?.maximumTotalMs !== 3_000 ||
+    budget?.maximumSourceReadBytes !== 4_194_304 ||
+    budget?.maximumUploadedBytes !== 8_388_608 ||
+    budget?.maximumTemporaryTargetBytes !== 4_194_304 ||
+    budget?.frameWidth !== 960 ||
+    budget?.frameHeight !== 540 ||
+    budget?.minimumHighlightPixels !== 1
+  ) {
+    throw new Error("Browser picking evidence budget is invalid");
+  }
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser picking representativeReport",
+  );
+  const expected = manifest.expected.browserPickingSelection;
+  if (
+    report.schema !==
+      "bim-explorer-browser-webgl2-picking-selection-report/1" ||
+    report.status !== "passed" ||
+    report.source?.fingerprint !== `sha256:${fixture.sha256}` ||
+    report.source?.revisionId !==
+      `source-snapshot:sha256:${fixture.sha256}` ||
+    report.source?.rangeReads !==
+      manifest.expected.metrics.sourceReads ||
+    report.source?.rangeBytes !==
+      manifest.expected.metrics.sourceReadBytes ||
+    report.source.rangeBytes > budget.maximumSourceReadBytes
+  ) {
+    throw new Error("Browser picking source is invalid");
+  }
+  const renderer = plainRecord(
+    report.renderer,
+    "Browser picking renderer",
+  );
+  if (
+    renderer.contract !== manifest.contract.renderer ||
+    renderer.mountReceipt !== manifest.contract.receipt ||
+    renderer.viewReceipt !== manifest.contract.viewReceipt ||
+    renderer.pickReceipt !== manifest.contract.pickReceipt ||
+    renderer.backend !== manifest.browserBackend.id ||
+    renderer.gpuApi !== true ||
+    renderer.physicalGpuClaimed !== false ||
+    renderer.uploadedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    renderer.uploadedBytes > budget.maximumUploadedBytes ||
+    renderer.instances !== manifest.expected.metrics.instances ||
+    renderer.picks !== 1 ||
+    renderer.viewUpdates !== 4 ||
+    renderer.frames !== 5
+  ) {
+    throw new Error("Browser picking renderer is invalid");
+  }
+  const pick = plainRecord(report.pick, "Browser pick receipt");
+  if (
+    pick.status !== "hit" ||
+    pick.viewRevision !== 3 ||
+    !equalJson(pick.coordinates, {
+      x: expected.x,
+      y: expected.y,
+      origin: "canvas-top-left",
+    }) ||
+    pick.identity?.expressId !== expected.expressId ||
+    pick.identity?.renderId !== expected.renderId ||
+    pick.identity?.pickId !== expected.pickId ||
+    typeof pick.identity?.globalId !== "string" ||
+    pick.identity.globalId.length === 0 ||
+    typeof pick.identity?.externalIdentityToken !== "string" ||
+    !pick.identity.externalIdentityToken.endsWith(
+      `:${pick.identity.globalId}`,
+    ) ||
+    pick.drawCalls !== manifest.expected.metrics.instances ||
+    pick.temporaryTargetBytes !== expected.temporaryTargetBytes ||
+    pick.temporaryTargetBytes >
+      budget.maximumTemporaryTargetBytes ||
+    pick.temporaryReleased !== true ||
+    pick.glError !== 0
+  ) {
+    throw new Error("Browser pick receipt is invalid");
+  }
+  boundedMeasurement(
+    pick.frameMs,
+    budget.maximumPickMs,
+    "Browser pick frameMs",
+  );
+  const selection = plainRecord(
+    report.selection,
+    "Browser selection receipt",
+  );
+  if (
+    selection.viewRevision !== 4 ||
+    selection.selectedPickId !== expected.pickId ||
+    selection.selectedInstances !== expected.selectedInstances ||
+    selection.highlightedInstances !==
+      expected.highlightedInstances ||
+    selection.drawCalls !== manifest.expected.metrics.instances ||
+    !Number.isSafeInteger(selection.nonBackgroundPixels) ||
+    selection.nonBackgroundPixels <= 0 ||
+    selection.nonBackgroundPixels >
+      budget.frameWidth * budget.frameHeight ||
+    !Number.isSafeInteger(selection.highlightPixels) ||
+    selection.highlightPixels <
+      expected.minimumHighlightPixels ||
+    selection.glError !== 0
+  ) {
+    throw new Error("Browser selection receipt is invalid");
+  }
+  boundedMeasurement(
+    selection.frameMs,
+    budget.maximumSelectionFrameMs,
+    "Browser selection frameMs",
+  );
+  if (
+    report.lifecycle?.activeBytesAfterSelection !==
+      manifest.expected.browserUploadedBytes ||
+    report.lifecycle?.releasedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    report.lifecycle?.rendererDisposed !== true ||
+    report.lifecycle?.sessionDisposed !== true ||
+    report.lifecycle?.backendDisposed !== true ||
+    report.lifecycle?.activeBytesAfterDispose !== 0 ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error("Browser picking lifecycle is invalid");
+  }
+  boundedMeasurement(
+    report.performance?.totalMs,
+    budget.maximumTotalMs,
+    "Browser picking totalMs",
+  );
+  for (const assertion of PICK_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser picking conformance ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      PICK_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.pickingSelection !== "passed" ||
+    evidence.decision?.pointerInputControls !== "blocked" ||
+    evidence.decision?.sectionMeasurement !== "blocked" ||
+    evidence.decision?.contextLossAndGpuSourceSwitch !== "blocked" ||
+    evidence.decision?.browserVscodeConformance !== "blocked" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("Browser picking decision is invalid");
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -650,6 +851,10 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.browserViewState,
     "Browser view-state BIM renderer evidence",
   );
+  const browserPickEvidence = plainRecord(
+    evidenceBundle.browserPickingSelection,
+    "Browser picking BIM renderer evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
@@ -661,6 +866,8 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-bim-renderer-3d-receipt/0.1" ||
     manifest.contract?.viewReceipt !==
       "bim-explorer-bim-renderer-3d-view-receipt/0.1" ||
+    manifest.contract?.pickReceipt !==
+      "bim-explorer-bim-renderer-3d-pick-receipt/0.1" ||
     manifest.contract?.camera !==
       "bim-explorer-camera-3d/0.1" ||
     manifest.contract?.geometryMediaType !==
@@ -696,7 +903,11 @@ export function validateBimRenderer3dCompatibility(
     manifest.evidence?.browserViewState !==
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-view-state-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 3 ||
+    manifest.evidence?.browserPickingSelection !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-" +
+        "picking-selection-2026-08-04.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 4 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -929,6 +1140,10 @@ export function validateBimRenderer3dCompatibility(
     manifest,
     browserViewEvidence,
   );
+  const browserPickReport = validateBrowserPickEvidence(
+    manifest,
+    browserPickEvidence,
+  );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -946,6 +1161,8 @@ export function validateBimRenderer3dCompatibility(
       browserReport.renderer.receipt.backend.nonBackgroundPixels,
     browserViewFrames:
       browserViewReport.renderer.frames,
+    browserPickHighlightPixels:
+      browserPickReport.selection.highlightPixels,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -970,6 +1187,13 @@ async function main() {
       path.join(root, manifest.evidence.browserViewState),
       "utf8",
     )),
+    browserPickingSelection: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserPickingSelection,
+      ),
+      "utf8",
+    )),
   };
   const result = validateBimRenderer3dCompatibility(
     manifest,
@@ -981,6 +1205,7 @@ async function main() {
       `${result.instancedTriangles} instanced triangles, ` +
       `${result.browserPixels} Browser pixels, ` +
       `${result.browserViewFrames} view frames, ` +
+      `${result.browserPickHighlightPixels} highlight pixels, ` +
       `${result.passedGates} passed and ${result.heldGates} held gates`,
   );
 }

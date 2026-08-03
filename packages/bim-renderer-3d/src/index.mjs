@@ -8,6 +8,8 @@ export const BIM_RENDERER_3D_RECEIPT =
   "bim-explorer-bim-renderer-3d-receipt/0.1";
 export const BIM_RENDERER_3D_VIEW_RECEIPT =
   "bim-explorer-bim-renderer-3d-view-receipt/0.1";
+export const BIM_RENDERER_3D_PICK_RECEIPT =
+  "bim-explorer-bim-renderer-3d-pick-receipt/0.1";
 export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 
@@ -678,7 +680,9 @@ function validateBackendMount(value, metrics) {
 function validateBackendView(
   value,
   {
+    highlightedInstances,
     hiddenInstances,
+    selectedInstances,
     visibleInstances,
   },
 ) {
@@ -698,9 +702,13 @@ function validateBackendView(
     receipt.rendered !== true ||
     receipt.visibleInstances !== visibleInstances ||
     receipt.hiddenInstances !== hiddenInstances ||
+    receipt.selectedInstances !== selectedInstances ||
+    receipt.highlightedInstances !== highlightedInstances ||
     receipt.drawCalls !== visibleInstances ||
     !Number.isSafeInteger(receipt.nonBackgroundPixels) ||
     receipt.nonBackgroundPixels < 0 ||
+    !Number.isSafeInteger(receipt.highlightPixels) ||
+    receipt.highlightPixels < 0 ||
     typeof receipt.frameMs !== "number" ||
     !Number.isFinite(receipt.frameMs) ||
     receipt.frameMs < 0 ||
@@ -709,6 +717,69 @@ function validateBackendView(
     throw new Error("renderer backend view receipt is invalid");
   }
   return Object.freeze({ ...receipt });
+}
+
+function validateBackendPick(
+  value,
+  {
+    coordinates,
+    identities,
+    visibleInstances,
+  },
+) {
+  const receipt = plainRecord(
+    value?.receipt,
+    "renderer backend pick receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "renderer backend pick receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "renderer backend pick receipt.frameId",
+  );
+  if (
+    typeof receipt.hit !== "boolean" ||
+    receipt.x !== coordinates.x ||
+    receipt.y !== coordinates.y ||
+    receipt.drawCalls !== visibleInstances ||
+    !Number.isSafeInteger(receipt.temporaryTargetBytes) ||
+    receipt.temporaryTargetBytes <= 0 ||
+    receipt.temporaryReleased !== true ||
+    typeof receipt.frameMs !== "number" ||
+    !Number.isFinite(receipt.frameMs) ||
+    receipt.frameMs < 0 ||
+    receipt.glError !== 0
+  ) {
+    throw new Error("renderer backend pick receipt is invalid");
+  }
+  if (receipt.hit === false) {
+    if (receipt.identity !== null) {
+      throw new Error("renderer backend miss has an identity");
+    }
+    return Object.freeze({ ...receipt });
+  }
+  const identity = plainRecord(
+    receipt.identity,
+    "renderer backend pick identity",
+  );
+  const match = identities.some((candidate) =>
+    candidate.expressId === identity.expressId &&
+    candidate.globalId === identity.globalId &&
+    candidate.renderId === identity.renderId &&
+    candidate.pickId === identity.pickId &&
+    candidate.externalIdentityToken ===
+      identity.externalIdentityToken);
+  if (!match) {
+    throw new RangeError(
+      "renderer backend pick is outside the active revision",
+    );
+  }
+  return Object.freeze({
+    ...receipt,
+    identity: Object.freeze({ ...identity }),
+  });
 }
 
 export class Headless3dBackend {
@@ -794,6 +865,7 @@ export class Bounded3dRenderer {
   #disposed = false;
   #mounting = false;
   #mounts = 0;
+  #picks = 0;
   #unmounts = 0;
   #updating = false;
   #viewUpdates = 0;
@@ -813,6 +885,7 @@ export class Bounded3dRenderer {
       updating: this.#updating,
       mounted: this.#active !== null,
       mounts: this.#mounts,
+      picks: this.#picks,
       unmounts: this.#unmounts,
       viewUpdates: this.#viewUpdates,
       activeRevisionId: this.#active?.revisionId ?? null,
@@ -929,6 +1002,22 @@ export class Bounded3dRenderer {
         instanceRenderIds: Object.freeze(
           plan.instances.map((instance) => instance.renderId),
         ),
+        instancePickIds: Object.freeze(
+          plan.instances.map((instance) => instance.pickId),
+        ),
+        identities: Object.freeze(
+          plan.instances.map((instance) => Object.freeze({
+            expressId: instance.expressId,
+            globalId: instance.globalId,
+            renderId: instance.renderId,
+            pickId: instance.pickId,
+            externalIdentityToken:
+              instance.externalIdentityToken,
+          })),
+        ),
+        camera: backendMount.receipt.camera ?? null,
+        hiddenRenderIds: Object.freeze([]),
+        selectedPickIds: Object.freeze([]),
         viewRevision: 0,
       };
       this.#mounts += 1;
@@ -944,6 +1033,7 @@ export class Bounded3dRenderer {
   async renderView({
     camera: cameraValue,
     hiddenRenderIds = [],
+    selectedPickIds = [],
     signal,
   } = {}) {
     if (this.#disposed) {
@@ -982,10 +1072,37 @@ export class Bounded3dRenderer {
         "renderer hidden Render ID is outside the active revision",
       );
     }
+    if (
+      !Array.isArray(selectedPickIds) ||
+      selectedPickIds.length >
+        this.limits.maximumInstances ||
+      new Set(selectedPickIds).size !== selectedPickIds.length ||
+      selectedPickIds.some((pickId) =>
+        typeof pickId !== "string" || pickId.length === 0)
+    ) {
+      throw new TypeError(
+        "renderer selected Pick IDs must be a unique list",
+      );
+    }
+    const knownPickIds = new Set(this.#active.instancePickIds);
+    if (selectedPickIds.some((pickId) =>
+      !knownPickIds.has(pickId))) {
+      throw new RangeError(
+        "renderer selected Pick ID is outside the active revision",
+      );
+    }
     const hidden = new Set(hiddenRenderIds);
+    const selected = new Set(selectedPickIds);
     const hiddenInstances =
       this.#active.instanceRenderIds.filter((renderId) =>
         hidden.has(renderId)).length;
+    const selectedInstances =
+      this.#active.instancePickIds.filter((pickId) =>
+        selected.has(pickId)).length;
+    const highlightedInstances =
+      this.#active.identities.filter((identity) =>
+        selected.has(identity.pickId) &&
+        !hidden.has(identity.renderId)).length;
     const visibleInstances =
       this.#active.instanceRenderIds.length - hiddenInstances;
     if (visibleInstances <= 0) {
@@ -1001,14 +1118,22 @@ export class Bounded3dRenderer {
         {
           camera,
           hiddenRenderIds: Object.freeze([...hiddenRenderIds]),
+          selectedPickIds: Object.freeze([...selectedPickIds]),
         },
         { signal },
       );
       const backend = validateBackendView(result, {
+        highlightedInstances,
         hiddenInstances,
+        selectedInstances,
         visibleInstances,
       });
       this.#active.viewRevision += 1;
+      this.#active.camera = camera;
+      this.#active.hiddenRenderIds =
+        Object.freeze([...hiddenRenderIds]);
+      this.#active.selectedPickIds =
+        Object.freeze([...selectedPickIds]);
       this.#viewUpdates += 1;
       return Object.freeze({
         schema: BIM_RENDERER_3D_VIEW_RECEIPT,
@@ -1021,6 +1146,78 @@ export class Bounded3dRenderer {
           hiddenInstances,
           visibleInstances,
         }),
+        selection: Object.freeze({
+          selectedPickIds: Object.freeze([...selectedPickIds]),
+          selectedInstances,
+          highlightedInstances,
+        }),
+        backend,
+      });
+    } finally {
+      this.#updating = false;
+    }
+  }
+
+  async pick({ x, y, signal } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    if (typeof this.#backend.pick !== "function") {
+      throw new DOMException(
+        "renderer backend does not support picking",
+        "NotSupportedError",
+      );
+    }
+    if (
+      !Number.isSafeInteger(x) ||
+      !Number.isSafeInteger(y) ||
+      x < 0 ||
+      y < 0
+    ) {
+      throw new TypeError(
+        "renderer pick coordinates must be non-negative integers",
+      );
+    }
+    const hidden = new Set(this.#active.hiddenRenderIds);
+    const visibleInstances =
+      this.#active.identities.filter((identity) =>
+        !hidden.has(identity.renderId)).length;
+    this.#updating = true;
+    try {
+      aborted(signal);
+      const result = await this.#backend.pick(
+        this.#active.handleId,
+        {
+          x,
+          y,
+        },
+        { signal },
+      );
+      const backend = validateBackendPick(result, {
+        coordinates: { x, y },
+        identities: this.#active.identities,
+        visibleInstances,
+      });
+      this.#picks += 1;
+      return Object.freeze({
+        schema: BIM_RENDERER_3D_PICK_RECEIPT,
+        status: backend.hit ? "hit" : "miss",
+        source: this.#active.receipt.source,
+        viewRevision: this.#active.viewRevision,
+        coordinates: Object.freeze({
+          x,
+          y,
+          origin: "canvas-top-left",
+        }),
+        identity: backend.identity,
         backend,
       });
     } finally {

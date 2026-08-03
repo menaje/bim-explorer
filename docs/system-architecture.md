@@ -135,8 +135,10 @@ first frame을 확인하고 active allocation을 0으로 회수했습니다. 이
 physical GPU qualification이나 visibility 기반 loading이 아닙니다.
 perspective/orthographic fit, orbit·pan·zoom camera state와 active revision의
 Render ID hide/show는 같은 GPU allocation에서 view revision으로
-검증했습니다. pointer input·picking, section, context loss와 Host
-conformance는 계속 보류합니다.
+검증했습니다. offscreen WebGL2 pick pass는 화면 좌표를 active revision의
+Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
+검증했습니다. pointer input, section, context loss와 Host conformance는
+계속 보류합니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나

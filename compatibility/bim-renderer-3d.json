@@ -6,6 +6,7 @@
     "renderer": "bim-explorer-bim-renderer-3d/0.1",
     "receipt": "bim-explorer-bim-renderer-3d-receipt/0.1",
     "viewReceipt": "bim-explorer-bim-renderer-3d-view-receipt/0.1",
+    "pickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
     "camera": "bim-explorer-camera-3d/0.1",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
   },
@@ -59,6 +60,17 @@
       "hiddenInstances": 64,
       "visibleInstancesAfterHide": 3118
     },
+    "browserPickingSelection": {
+      "x": 480,
+      "y": 270,
+      "expressId": 317690,
+      "renderId": "render:ifc:5c73cdd02b3add09:317690",
+      "pickId": "pick:ifc:5c73cdd02b3add09:317690",
+      "temporaryTargetBytes": 3110400,
+      "selectedInstances": 1,
+      "highlightedInstances": 1,
+      "minimumHighlightPixels": 1
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -72,10 +84,10 @@
     "publicRepresentativeBrowserWebGl2Mount": true,
     "cameraFitViewState": true,
     "renderIdVisibilityState": true,
+    "pickingSelection": true,
     "visibilityDrivenFirstFrame": false,
     "actualGpuFirstFrame": true,
     "cameraInteraction": false,
-    "pickingSelection": false,
     "sectionMeasurement": false,
     "contextLossAndGpuSourceSwitch": false,
     "browserVscodeConformance": false,
@@ -84,12 +96,12 @@
   "evidence": {
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
     "browserWebGl2": "compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json",
-    "browserViewState": "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json"
+    "browserViewState": "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json",
+    "browserPickingSelection": "compatibility/evidence/bim-renderer-3d-public-browser-picking-selection-2026-08-04.json"
   },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",
-    "pointer input controls and revision-bound picking are not implemented",
-    "backend picking and selection highlight are not implemented",
+    "pointer and gesture input controls are not implemented",
     "section and measurement are not implemented",
     "GPU context loss and source-switch recovery are not qualified",
     "Browser and VS Code renderer conformance is not qualified",

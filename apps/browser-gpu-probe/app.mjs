@@ -74,6 +74,32 @@ function showFailure(error, cleanup) {
   elements.status.textContent = "Failed: Browser GPU probe";
 }
 
+async function pickVisibleInstance(renderer) {
+  const coordinates = [
+    [480, 270],
+    [480, 180],
+    [480, 360],
+    [320, 270],
+    [640, 270],
+    [320, 180],
+    [640, 180],
+    [320, 360],
+    [640, 360],
+  ];
+  const attempts = [];
+  for (const [x, y] of coordinates) {
+    const receipt = await renderer.pick({ x, y });
+    attempts.push(receipt);
+    if (receipt.status === "hit") {
+      return Object.freeze({
+        attempts: Object.freeze(attempts),
+        receipt,
+      });
+    }
+  }
+  throw new Error("Browser GPU probe could not pick visible geometry");
+}
+
 async function run() {
   elements.status.dataset.state = "running";
   elements.status.textContent = "Preparing bounded WebGL2 frame…";
@@ -140,11 +166,17 @@ async function run() {
         },
       ),
     });
+    const picking = await pickVisibleInstance(renderer);
+    const selectedView = await renderer.renderView({
+      camera: fittedView.camera,
+      selectedPickIds: [picking.receipt.identity.pickId],
+    });
     const viewMs = performance.now() - viewStarted;
     const viewSequence = [
       movedView,
       hiddenView,
       fittedView,
+      selectedView,
     ];
     const rendererStateAfterViews = renderer.state;
     const backendStateAfterViews = backend.state;
@@ -183,6 +215,7 @@ async function run() {
         releaseReceipt,
       },
       viewSequence,
+      picking,
       performance: {
         mountMs,
         viewMs,
@@ -217,9 +250,27 @@ async function run() {
       fittedView.viewRevision !== 3 ||
       fittedView.camera.projection !== "orthographic" ||
       fittedView.visibility.hiddenInstances !== 0 ||
-      rendererStateAfterViews.viewUpdates !== 3 ||
-      backendStateAfterViews.frames !== 4 ||
+      picking.receipt.status !== "hit" ||
+      picking.receipt.source.revisionId !==
+        input.snapshot.revisionId ||
+      picking.receipt.source.fingerprint !==
+        input.snapshot.source.fingerprint ||
+      picking.receipt.backend.actualGpu !== true ||
+      picking.receipt.backend.temporaryReleased !== true ||
+      picking.receipt.backend.temporaryTargetBytes !==
+        960 * 540 * 6 ||
+      selectedView.viewRevision !== 4 ||
+      selectedView.selection.selectedPickIds.length !== 1 ||
+      selectedView.selection.selectedInstances < 1 ||
+      selectedView.selection.highlightedInstances < 1 ||
+      selectedView.backend.highlightPixels < 1 ||
+      rendererStateAfterViews.picks !==
+        picking.attempts.length ||
+      rendererStateAfterViews.viewUpdates !== 4 ||
+      backendStateAfterViews.frames !== 5 ||
+      backendStateAfterViews.picks !== picking.attempts.length ||
       backendStateAfterViews.hiddenRenderIds !== 0 ||
+      backendStateAfterViews.selectedPickIds !== 1 ||
       backend.state.activeBytes !== 0 ||
       backend.state.disposed !== true ||
       session.state.disposed !== true

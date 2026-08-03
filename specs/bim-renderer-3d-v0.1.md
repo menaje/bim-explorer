@@ -121,23 +121,37 @@ yaw/pitch, distance, field-of-view와 near/far frustum을 immutable state로
 정의합니다. bounds 기반 fit, orbit, pan과 zoom helper는 매번 전체 camera
 state를 검증해 새 값을 반환합니다.
 
-mounted renderer의 `renderView()`는 camera와 숨길 Render ID 목록만
-받습니다. Render ID가 active source revision의 instance에 없거나 중복이면
-backend 호출 전에 거부합니다. view receipt는 증가하는 view revision,
-camera, hidden/visible instance 수, draw-call, pixel과 frame 시간을
-기록합니다. geometry·instance GPU buffer는 view 사이에 다시 upload하지
-않습니다.
+mounted renderer의 `renderView()`는 camera, 숨길 Render ID와 선택할 Pick
+ID 목록을 받습니다. ID가 active source revision의 instance에 없거나
+중복이면 backend 호출 전에 거부합니다. view receipt는 증가하는 view
+revision, camera, hidden/visible/selected/highlighted instance 수,
+draw-call, pixel과 frame 시간을 기록합니다. geometry·instance GPU
+buffer는 view 사이에 다시 upload하지 않습니다.
 
 공개 fixture에서는 perspective fit, orbit·pan·zoom, 64개 Render ID hide,
 orthographic show-all fit을 4 frames로 실행했습니다. hide frame의 draw는
 3,182에서 3,118로 줄고 show-all에서 3,182로 복구됐으며 active GPU bytes는
 계속 4,399,252였습니다.
 
+## Picking과 selection
+
+`bim-explorer-bim-renderer-3d-pick-receipt/0.1`은 canvas top-left 기준의
+정수 화면 좌표를 active source/revision에 묶인 identity로 해결합니다.
+WebGL2 backend는 RGBA8 color와 16-bit depth를 가진 transient offscreen
+target을 만들고, visible instance마다 24-bit index를 그린 뒤 한 pixel만
+읽습니다. target의 3,110,400 bytes는 pick이 끝날 때 즉시 회수하며
+geometry·instance allocation에는 포함하지 않습니다.
+
+public fixture의 960x540 orthographic frame 중앙은 Express ID 317690의
+Pick ID로 해결됐습니다. 해당 Pick ID를 선택한 다음 frame은 같은
+4,399,252-byte persistent allocation에서 한 instance와 7,507 highlight
+pixels를 기록했습니다. stale Pick ID와 backend가 반환한 active revision
+밖의 identity는 fail closed로 거부합니다.
+
 ## 현재 보류
 
 - camera visibility 기반 초기 range와 progressive detail
 - pointer/gesture 기반 camera input과 interaction policy
-- backend picking, selection과 highlight
 - clipping, section과 measurement
 - physical GPU·driver와 GPU memory qualification
 - GPU context loss와 source-switch recovery

@@ -24,6 +24,10 @@ async function fixtures() {
       manifest.evidence.browserViewState,
       "utf8",
     )),
+    browserPickingSelection: JSON.parse(await readFile(
+      manifest.evidence.browserPickingSelection,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -41,8 +45,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   assert.equal(result.uploadedBytes, 4_399_252);
   assert.equal(result.browserPixels, 67_153);
   assert.equal(result.browserViewFrames, 4);
-  assert.equal(result.passedGates, 11);
-  assert.equal(result.heldGates, 7);
+  assert.equal(result.browserPickHighlightPixels, 7_507);
+  assert.equal(result.passedGates, 12);
+  assert.equal(result.heldGates, 6);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
@@ -66,6 +71,18 @@ test("Browser view evidence pins revision-bound visibility", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /frame is invalid/u,
+  );
+});
+
+test("Browser pick evidence pins active revision identity", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserPickingSelection.representativeReport
+    .pick.identity.pickId = "pick:stale";
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /pick receipt is invalid/u,
   );
 });
 

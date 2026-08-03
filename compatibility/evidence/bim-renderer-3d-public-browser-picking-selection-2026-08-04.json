@@ -1,0 +1,128 @@
+{
+  "schema": "bim-explorer-public-browser-picking-selection-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-browser-picking-selection",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "provenance": {
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "rightsVerified": true,
+    "bundlingApproved": false
+  },
+  "budget": {
+    "maximumPickMs": 1000,
+    "maximumSelectionFrameMs": 1000,
+    "maximumTotalMs": 3000,
+    "maximumSourceReadBytes": 4194304,
+    "maximumUploadedBytes": 8388608,
+    "maximumTemporaryTargetBytes": 4194304,
+    "frameWidth": 960,
+    "frameHeight": 540,
+    "minimumHighlightPixels": 1
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-webgl2-picking-selection-report/1",
+    "status": "passed",
+    "source": {
+      "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "rangeReads": 4,
+      "rangeBytes": 4193868
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d/0.1",
+      "mountReceipt": "bim-explorer-bim-renderer-3d-receipt/0.1",
+      "viewReceipt": "bim-explorer-bim-renderer-3d-view-receipt/0.1",
+      "pickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+      "backend": "webgl2",
+      "gpuApi": true,
+      "physicalGpuClaimed": false,
+      "uploadedBytes": 4399252,
+      "instances": 3182,
+      "picks": 1,
+      "viewUpdates": 4,
+      "frames": 5
+    },
+    "pick": {
+      "status": "hit",
+      "viewRevision": 3,
+      "coordinates": {
+        "x": 480,
+        "y": 270,
+        "origin": "canvas-top-left"
+      },
+      "identity": {
+        "expressId": 317690,
+        "globalId": "0QMRbnWY93Av6dpvLwMXTd",
+        "renderId": "render:ifc:5c73cdd02b3add09:317690",
+        "pickId": "pick:ifc:5c73cdd02b3add09:317690",
+        "externalIdentityToken": "ifc-globalid:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4:0QMRbnWY93Av6dpvLwMXTd"
+      },
+      "drawCalls": 3182,
+      "temporaryTargetBytes": 3110400,
+      "temporaryReleased": true,
+      "frameMs": 29.200000047683716,
+      "glError": 0
+    },
+    "selection": {
+      "viewRevision": 4,
+      "selectedPickId": "pick:ifc:5c73cdd02b3add09:317690",
+      "selectedInstances": 1,
+      "highlightedInstances": 1,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 64289,
+      "highlightPixels": 7507,
+      "frameMs": 9.399999976158142,
+      "glError": 0
+    },
+    "lifecycle": {
+      "activeBytesAfterSelection": 4399252,
+      "releasedBytes": 4399252,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true,
+      "activeBytesAfterDispose": 0
+    },
+    "performance": {
+      "mountMs": 163.89999997615814,
+      "interactionMs": 77.89999997615814,
+      "totalMs": 252.5
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowser": true,
+    "webgl2OffscreenPickPass": true,
+    "topLeftCanvasCoordinates": true,
+    "revisionBoundPickIdentity": true,
+    "pickIdSelection": true,
+    "selectionHighlightPixels": true,
+    "transientPickTargetReleased": true,
+    "gpuAllocationReusedAcrossSelection": true,
+    "boundedRangeReadsUnchanged": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "pickingSelection": "passed",
+    "pointerInputControls": "blocked",
+    "sectionMeasurement": "blocked",
+    "contextLossAndGpuSourceSwitch": "blocked",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}
