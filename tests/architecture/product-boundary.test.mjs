@@ -29,3 +29,43 @@ test("optional handoff carries identity but not authority", async () => {
   assert.match(product, /viewpoint/u);
   assert.match(product, /acceptance token을 넣지 않습니다/u);
 });
+
+test("3D renderer stays independent from the DWG renderer", async () => {
+  const [rootManifest, rendererManifest, rendererIndex, hostAdapter] =
+    await Promise.all([
+      readFile("package.json", "utf8"),
+      readFile(
+        "packages/bim-renderer-3d/package.json",
+        "utf8",
+      ),
+      readFile(
+        "packages/bim-renderer-3d/src/index.mjs",
+        "utf8",
+      ),
+      readFile(
+        "packages/bim-renderer-3d/src/host-adapter.mjs",
+        "utf8",
+      ),
+    ]);
+  const manifests = [
+    JSON.parse(rootManifest),
+    JSON.parse(rendererManifest),
+  ];
+  const dependencyNames = manifests.flatMap((manifest) =>
+    Object.keys({
+      ...(manifest.dependencies ?? {}),
+      ...(manifest.devDependencies ?? {}),
+      ...(manifest.optionalDependencies ?? {}),
+      ...(manifest.peerDependencies ?? {}),
+    }),
+  );
+
+  assert.equal(
+    dependencyNames.some((name) => /dwg/u.test(name)),
+    false,
+  );
+  assert.doesNotMatch(
+    `${rendererIndex}\n${hostAdapter}`,
+    /from\s+["'][^"']*dwg[^"']*["']/iu,
+  );
+});

@@ -131,18 +131,29 @@ Render/Pick revision identity를 mount plan으로 묶습니다. 공개 fixture�
 2,458 geometry records·3,182 instances를 headless backend에 올리고
 allocation을 회수했습니다. 이어 실제 Chromium WebGL2 API에 같은
 4,399,252-byte geometry·instance payload를 올려 3,182 draws와 rasterized
-first frame을 확인하고 active allocation을 0으로 회수했습니다. 이는
-physical GPU qualification이나 visibility 기반 loading이 아닙니다.
+first frame을 확인하고 active allocation을 0으로 회수했습니다.
 perspective/orthographic fit, orbit·pan·zoom camera state와 active revision의
 Render ID hide/show는 같은 GPU allocation에서 view revision으로
 검증했습니다. offscreen WebGL2 pick pass는 화면 좌표를 active revision의
 Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
 검증했습니다. 실제 context loss 뒤 같은 revision을 remount하고 별도
-IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. pointer
-input은 계속 보류합니다. single plane·six-plane section box와 GPU
+IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. DOM
+pointer/wheel input은 camera update를 직렬화합니다. single
+plane·six-plane section box와 GPU
 depth-backed source-world distance·area·angle도 같은 allocation에서
-검증했지만, source unit 해석은 renderer가 소유하지 않습니다. Host
-conformance는 계속 보류합니다.
+검증했지만, source unit 해석은 renderer가 소유하지 않습니다.
+
+deferred range는 bounded append/cache/eviction으로 관리하고 isolate/show-all
+사이에서 GPU allocation을 재사용합니다. camera target과 entity bounds로
+기존 source plan과 다른 first range를 선택할 수 있습니다. 10억 단위 world
+coordinate는 camera-relative origin으로 GPU에 투영하고, presentation delta는
+affected bounds만 scissor redraw한 뒤 atomic commit합니다.
+
+내부 3D host contract는 Browser와 `vscode-webview` kind에 같은 renderer
+경로를 제공합니다. 실제 Chromium에서 양쪽 모두 mount, view, pick, source
+switch와 editor-exit cleanup의 normalized 결과가 같았고 GPU, range session,
+Worker lease가 정리됐습니다. 이는 실제 VS Code extension shell이나 upstream
+Viewer Core compatibility 주장이 아닙니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나

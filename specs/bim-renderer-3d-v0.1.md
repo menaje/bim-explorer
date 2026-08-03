@@ -49,9 +49,11 @@ instance, triangle, draw-call과 CPU staging limit은 backend 호출 전에
 
 ## Mount plan과 identity
 
-초기 plan은 `firstFrameRangeIds`로 명시된 range만 포함합니다. 현재
-Express ID 순서의 첫 range이며 camera visibility 기반 first-frame plan은
-아닙니다.
+기본 초기 plan은 `firstFrameRangeIds`로 명시된 range만 포함합니다.
+`camera-visibility` 전략과 초기 camera를 함께 주면 camera target에서 각
+entity bounds까지의 gap/distance를 range별로 순위화해 한 range만 먼저
+읽습니다. 원래 source plan range가 선택되지 않으면 deferred로 남으며,
+선택 range에도 같은 byte/read/CPU/GPU 한도를 적용합니다.
 
 각 draw instance는 다음 source-local identity를 유지합니다.
 
@@ -81,6 +83,8 @@ source switch는 이전 backend handle을 먼저 unmount합니다. invalid backe
 receipt도 handle이 반환됐다면 unmount로 정리합니다. AbortSignal은 range
 chunk와 backend mount 경계에서 확인합니다. session과 source의 dispose는
 호출자가 소유하고 renderer는 자신의 backend allocation만 소유합니다.
+내부 host adapter를 사용한 경우에는 host가 active range session과 Worker
+lease를 소스 교체와 종료 시 회수합니다.
 
 WebGL2 context loss를 관찰하면 해당 mount의 resource object를
 `contextInvalidated`로 표시합니다. restore event 뒤에도 이 mount로
@@ -139,6 +143,28 @@ orthographic show-all fit을 4 frames로 실행했습니다. hide frame의 draw�
 3,182에서 3,118로 줄고 show-all에서 3,182로 복구됐으며 active GPU bytes는
 계속 4,399,252였습니다.
 
+DOM camera control은 primary pointer drag를 orbit, middle/right drag를 pan,
+wheel을 zoom으로 변환하고 GPU frame을 직렬화합니다. 실제 Chromium
+PointerEvent/WheelEvent 경로에서 orbit과 zoom frame을 재현하고 listener
+detach 뒤 allocation을 전량 회수했습니다.
+
+## Progressive range와 visibility
+
+`loadRange()`는 deferred range를 digest 검증한 뒤 기존 mount에 추가하고,
+resident range 재요청은 source read와 backend upload 없이 cache hit으로
+응답합니다. `evictRange()`는 적어도 한 range를 남긴 채 해당 GPU buffer만
+회수하고 남은 range를 다시 그립니다. aggregate GPU bytes는
+`maximumGpuCacheBytes`를 넘지 않습니다.
+
+공개 fixture의 세 range를 순차 추가했을 때 active bytes는
+4,399,252→8,732,088→9,674,488이었고, 두 번째 range를 제거한 뒤
+5,341,652 bytes가 남았습니다. isolate 8개는 3,174 instances를 숨겼으며
+show-all은 upload 없이 3,182 instances로 복구했습니다.
+
+camera visibility first-frame은 source plan의 `geometry:0` 대신 camera가
+바라보는 `geometry:1`을 먼저 선택해 4,194,152 source bytes와 4,332,836
+uploaded bytes만 사용하고 292,357 pixels를 그렸습니다.
+
 ## Picking과 selection
 
 `bim-explorer-bim-renderer-3d-pick-receipt/0.1`은 canvas top-left 기준의
@@ -191,10 +217,39 @@ released bytes 합계는 8,799,624이며 terminal dispose 뒤 active bytes는
 0입니다. 이 probe는 precomputed source를 사용하므로 Worker lifecycle은
 source/Host 계층의 별도 책임입니다.
 
+## Precision과 atomic delta
+
+GPU vertex는 model bounds 중심을 world origin으로 빼서 Float32 buffer에
+올리고 source/world composition은 JavaScript number로 유지합니다. 10억
+단위 좌표 fixture에서 상대 좌표는 약 2.1 이내였고 pick은 원래 10억 단위
+world position을 복원했습니다.
+
+presentation-only ordered delta는 active revision, sequence, operation
+bounds를 검증한 뒤 affected world bounds를 framebuffer scissor로 투영해
+한 frame으로 commit합니다. 공개 fixture probe는 101×88, 8,888 pixels만
+다시 그렸습니다. stale replay는 거부하고 지원하지 않는 geometry mutation은
+backend를 호출하지 않은 채 `remount-required`를 반환합니다.
+
+## Browser와 VS Code Webview host
+
+`bim-explorer-bim-renderer-3d-host/0.1`은 Browser와 `vscode-webview`에 같은
+renderer method와 resource lifecycle을 제공합니다. 실제 Chromium에서 두
+kind 모두 공개 IFC mount, view, revision-bound pick, 다른 IFC source
+전환과 `editor-exit` dispose를 같은 normalized projection으로 재현했습니다.
+
+source 전환은 이전 GPU 4,399,252 bytes, range session과 Worker lease를
+회수하고 새 1,120-byte mount만 유지했습니다. editor 종료 뒤 두 kind 모두
+renderer/backend, 두 range session과 두 Worker lease가 정리되고 active GPU
+bytes와 resident range는 0이었습니다. 실제 Browser Worker의 model
+close·engine dispose·termination evidence도 별도 qualification에서
+교차 확인합니다.
+
+이 결과는 내부 host contract conformance입니다. 실제 VS Code extension
+shell integration, upstream Viewer Core package나 cross-repository
+compatibility를 승인하지 않습니다.
+
 ## 현재 보류
 
-- camera visibility 기반 초기 range와 progressive detail
-- pointer/gesture 기반 camera input과 interaction policy
 - physical GPU·driver와 GPU memory qualification
-- Browser/VS Code 동일 backend conformance
+- touch gesture와 실제 VS Code extension shell integration
 - 공용 Viewer Core 3D consumer conformance

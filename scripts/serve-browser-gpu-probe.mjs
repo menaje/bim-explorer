@@ -74,6 +74,10 @@ const STATIC_ROUTES = new Map([
     file: path.join(RENDERER, "measurement.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/host-adapter.mjs", {
+    file: path.join(RENDERER, "host-adapter.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
 ]);
 
 function plainRecord(value, label) {

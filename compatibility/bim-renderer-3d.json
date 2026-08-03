@@ -10,6 +10,8 @@
     "measurementReceipt": "bim-explorer-bim-renderer-3d-measurement-receipt/0.1",
     "measurement": "bim-explorer-measurement-3d/0.1",
     "camera": "bim-explorer-camera-3d/0.1",
+    "host": "bim-explorer-bim-renderer-3d-host/0.1",
+    "hostReceipt": "bim-explorer-bim-renderer-3d-host-receipt/0.1",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
   },
   "backend": {
@@ -155,7 +157,7 @@
     "visibilityDrivenFirstFrame": true,
     "actualGpuFirstFrame": true,
     "cameraInteraction": true,
-    "browserVscodeConformance": false,
+    "browserVscodeConformance": true,
     "viewerCoreConformance": false
   },
   "evidence": {
@@ -169,10 +171,11 @@
     "browserProgressiveRange": "compatibility/evidence/bim-renderer-3d-public-browser-progressive-range-2026-08-04.json",
     "browserAtomicDelta": "compatibility/evidence/bim-renderer-3d-public-browser-atomic-delta-2026-08-04.json",
     "browserCameraInput": "compatibility/evidence/bim-renderer-3d-public-browser-camera-input-2026-08-04.json",
-    "browserVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json"
+    "browserVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json",
+    "browserVscodeHost": "compatibility/evidence/bim-renderer-3d-browser-vscode-host-2026-08-04.json",
+    "browserWorkerLifecycle": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json"
   },
   "blockers": [
-    "Browser and VS Code renderer conformance is not qualified",
     "durable Viewer Core package and 3D conformance remain unresolved"
   ],
   "policy": {

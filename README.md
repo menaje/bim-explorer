@@ -16,14 +16,15 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > binary geometry range와 stale/budget 거부를 통과했습니다. 같은 공개
 > IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
 > geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 첫 range의
-> 2,458 geometry records·3,182 instances를 bounded headless renderer에
-> mount하고 전량 dispose하는 단계도 통과했습니다. 실제 Chromium
-> WebGL2에서는 같은 첫 range를 4,399,252 bytes로 upload해 3,182 draws와
-> rasterized first frame을 확인하고 전량 회수했습니다. perspective와
-> orthographic fit, orbit·pan·zoom camera state와 revision-bound Render ID
-> hide/show rerender도 통과했습니다. visibility 기반 range loading, pointer
-> input·picking·section, physical GPU qualification, deferred property range,
-> engine, public package와 지원 profile은 아직 확정되지 않았습니다.
+> 2,458 geometry records·3,182 instances를 bounded headless renderer와 실제
+> Chromium WebGL2에 mount하고 전량 회수했습니다. camera/view/pointer input,
+> revision-bound pick/highlight, section/measurement, large-coordinate origin,
+> progressive range cache, isolate/show-all, affected-bounds atomic redraw와
+> visibility-first range도 실제 Browser에서 재현했습니다. Browser와
+> VS Code Webview용 내부 host contract는 같은 renderer 결과와 source
+> switch/editor-exit cleanup을 통과했습니다. physical GPU qualification,
+> 실제 VS Code extension shell, deferred property range, engine 선정, 공용
+> Viewer Core package와 지원 profile은 아직 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 

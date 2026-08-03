@@ -56,6 +56,14 @@ async function fixtures() {
       manifest.evidence.browserVisibilityFirstFrame,
       "utf8",
     )),
+    browserVscodeHost: JSON.parse(await readFile(
+      manifest.evidence.browserVscodeHost,
+      "utf8",
+    )),
+    browserWorkerLifecycle: JSON.parse(await readFile(
+      manifest.evidence.browserWorkerLifecycle,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -88,8 +96,12 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
     result.browserVisibilityFirstFrameRange,
     "range:ifc:geometry:1",
   );
-  assert.equal(result.passedGates, 19);
-  assert.equal(result.heldGates, 2);
+  assert.deepEqual(result.browserVscodeHostKinds, [
+    "browser",
+    "vscode-webview",
+  ]);
+  assert.equal(result.passedGates, 20);
+  assert.equal(result.heldGates, 1);
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {
@@ -197,6 +209,18 @@ test("Browser camera-input evidence pins serialized GPU frames", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /camera-input frames are invalid/u,
+  );
+});
+
+test("Browser and VS Code host evidence pins editor cleanup", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserVscodeHost.representativeReport
+    .runs[1].backendActiveBytes = 1;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /host lifecycle is invalid/u,
   );
 });
 

@@ -23,9 +23,9 @@ const TRUE_GATES = [
   "affectedBoundsAtomicDelta",
   "cameraInteraction",
   "visibilityDrivenFirstFrame",
+  "browserVscodeConformance",
 ];
 const HELD_GATES = [
-  "browserVscodeConformance",
   "viewerCoreConformance",
 ];
 const CONFORMANCE_ASSERTIONS = [
@@ -166,6 +166,23 @@ const VISIBILITY_FIRST_FRAME_CONFORMANCE_ASSERTIONS = [
   "rasterizedPixels",
   "revisionBoundRange",
   "boundedCpuStagingReleased",
+  "deterministicDispose",
+  "pathFreeReport",
+];
+const HOST_CONFORMANCE_ASSERTIONS = [
+  "actualBrowserWebGl2",
+  "browserHostContract",
+  "vscodeWebviewHostContract",
+  "identicalRendererProjection",
+  "sourceRevisionPickIdentity",
+  "sourceSwitchReleasesPriorGpu",
+  "sourceSwitchDisposesPriorRange",
+  "sourceSwitchTerminatesPriorWorkerLease",
+  "editorExitReleasesGpu",
+  "editorExitDisposesRange",
+  "editorExitTerminatesWorkerLease",
+  "actualBrowserWorkerTerminationEvidence",
+  "standaloneNoDwgRendererDependency",
   "deterministicDispose",
   "pathFreeReport",
 ];
@@ -2261,6 +2278,220 @@ function validateBrowserVisibilityFirstFrameEvidence(
   return report;
 }
 
+function validateBrowserVscodeHostEvidence(
+  manifest,
+  evidence,
+  workerEvidence,
+) {
+  const fixture = plainRecord(
+    evidence.fixture,
+    "Browser VS Code host fixture",
+  );
+  const report = plainRecord(
+    evidence.representativeReport,
+    "Browser VS Code host representativeReport",
+  );
+  const revisionId =
+    `source-snapshot:sha256:${manifest.fixture.sha256}`;
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-vscode-" +
+        "renderer-host-evidence/0.1" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.status !==
+      "experimental-internal-host-contract" ||
+    fixture.id !== manifest.fixture.id ||
+    fixture.schema !== manifest.fixture.schema ||
+    fixture.profile !== manifest.fixture.profile ||
+    fixture.byteLength !== manifest.fixture.byteLength ||
+    fixture.sha256 !== manifest.fixture.sha256 ||
+    fixture.artifactCommitted !== false ||
+    fixture.profileAdmission !== false ||
+    report.schema !==
+      "bim-explorer-browser-vscode-" +
+        "renderer-host-report/1" ||
+    report.status !== "passed" ||
+    report.contract !== manifest.contract.host ||
+    report.hostReceipt !== manifest.contract.hostReceipt ||
+    report.actualBrowser !== true ||
+    report.actualVscodeShellClaimed !== false ||
+    report.sameRendererProjection !== true
+  ) {
+    throw new Error(
+      "Browser VS Code host identity is invalid",
+    );
+  }
+  if (
+    report.primary?.sourceFingerprint !==
+      `sha256:${manifest.fixture.sha256}` ||
+    report.primary?.revisionId !== revisionId ||
+    report.primary?.rangeId !==
+      "range:ifc:geometry:0" ||
+    report.primary?.sourceReads !==
+      manifest.expected.metrics.sourceReads ||
+    report.primary?.sourceReadBytes !==
+      manifest.expected.metrics.sourceReadBytes ||
+    report.primary?.uploadedBytes !==
+      manifest.expected.browserUploadedBytes ||
+    report.primary?.actualGpu !== true ||
+    report.primary?.instances !==
+      manifest.expected.metrics.instances ||
+    report.primary?.drawCalls !==
+      manifest.expected.metrics.drawCalls ||
+    report.primary?.nonBackgroundPixels !== 57_438 ||
+    report.view?.viewRevision !== 1 ||
+    report.view?.visibleInstances !==
+      manifest.expected.metrics.instances ||
+    report.view?.drawCalls !==
+      manifest.expected.metrics.drawCalls ||
+    report.view?.nonBackgroundPixels !==
+      report.primary.nonBackgroundPixels ||
+    report.pick?.status !== "hit" ||
+    report.pick?.expressId !==
+      manifest.expected.browserPickingSelection.expressId ||
+    report.pick?.renderId !==
+      manifest.expected.browserPickingSelection.renderId ||
+    report.pick?.pickId !==
+      manifest.expected.browserPickingSelection.pickId ||
+    report.pick?.revisionId !== revisionId
+  ) {
+    throw new Error(
+      "Browser VS Code host renderer projection is invalid",
+    );
+  }
+  const expectedPriorResources = [
+    {
+      role: "range-session",
+      method: "dispose",
+      released: true,
+    },
+    {
+      role: "worker",
+      method: "terminate",
+      released: true,
+    },
+  ];
+  if (
+    report.sourceSwitch?.fingerprint !==
+      manifest.expected.browserLifecycle.switchFingerprint ||
+    report.sourceSwitch?.revisionId !==
+      "source-snapshot:" +
+        manifest.expected.browserLifecycle.switchFingerprint ||
+    report.sourceSwitch?.uploadedBytes !==
+      manifest.expected.browserLifecycle.switchUploadedBytes ||
+    !equalJson(
+      report.sourceSwitch?.priorResources,
+      expectedPriorResources,
+    ) ||
+    !Array.isArray(report.runs) ||
+    report.runs.length !== 2 ||
+    !equalJson(
+      report.runs.map((run) => run.kind),
+      ["browser", "vscode-webview"],
+    ) ||
+    report.runs.some((run) =>
+      run.commands !== 5 ||
+      run.mounts !== 2 ||
+      run.sourceSwitches !== 1 ||
+      run.viewUpdates !== 1 ||
+      run.picks !== 1 ||
+      run.unmounts !== 2 ||
+      run.releasedBytes !==
+        manifest.expected.browserUploadedBytes +
+          manifest.expected.browserLifecycle.switchUploadedBytes ||
+      run.resourceReleases !== 4 ||
+      run.editorExitReason !== "editor-exit" ||
+      run.rendererDisposed !== true ||
+      run.backendDisposed !== true ||
+      run.backendActiveBytes !== 0 ||
+      run.residentRanges !== 0 ||
+      run.primarySessionDisposed !== true ||
+      run.secondarySessionDisposed !== true ||
+      run.primaryWorkerLeaseTerminated !== true ||
+      run.secondaryWorkerLeaseTerminated !== true)
+  ) {
+    throw new Error(
+      "Browser VS Code host lifecycle is invalid",
+    );
+  }
+  const workerPath =
+    "compatibility/evidence/" +
+      "web-ifc-browser-public-representative-" +
+      "performance-2026-08-03.json";
+  if (
+    report.workerLifecycle?.evidence !== workerPath ||
+    report.workerLifecycle?.outcome !== "completed" ||
+    report.workerLifecycle?.workerTerminationRequested !== true ||
+    report.workerLifecycle?.modelClosed !== true ||
+    report.workerLifecycle?.engineDisposed !== true ||
+    report.workerLifecycle
+      ?.recoveryWorkerTerminationRequested !== true ||
+    report.workerLifecycle?.recoveryModelClosed !== true ||
+    report.workerLifecycle?.recoveryEngineDisposed !== true ||
+    workerEvidence?.schema !==
+      "bim-explorer-browser-public-" +
+        "representative-performance-evidence/0.1" ||
+    workerEvidence?.fixture?.sha256 !== manifest.fixture.sha256 ||
+    workerEvidence?.observation?.worker?.outcome !== "completed" ||
+    workerEvidence?.observation?.worker
+      ?.workerTerminationRequested !== true ||
+    workerEvidence?.observation?.cleanup?.modelClosed !== true ||
+    workerEvidence?.observation?.cleanup?.engineDisposed !== true ||
+    workerEvidence?.recoveryObservation?.worker
+      ?.workerTerminationRequested !== true ||
+    workerEvidence?.recoveryObservation?.cleanup?.modelClosed !==
+      true ||
+    workerEvidence?.recoveryObservation?.cleanup?.engineDisposed !==
+      true ||
+    workerEvidence?.conformance?.workerCleanup !== true
+  ) {
+    throw new Error(
+      "Browser VS Code host Worker lifecycle is invalid",
+    );
+  }
+  if (
+    report.boundary?.internalHostContract !== true ||
+    report.boundary?.upstreamViewerCoreClaimed !== false ||
+    report.boundary?.actualVscodeShellClaimed !== false ||
+    report.boundary?.dwgRendererDependency !== false ||
+    !/Chrome\/[0-9.]+/u.test(
+      report.environment?.userAgent ?? "",
+    ) ||
+    !Array.isArray(report.diagnostics) ||
+    report.diagnostics.length !== 0
+  ) {
+    throw new Error(
+      "Browser VS Code host boundary is invalid",
+    );
+  }
+  for (const assertion of HOST_CONFORMANCE_ASSERTIONS) {
+    if (evidence.conformance?.[assertion] !== true) {
+      throw new Error(
+        `Browser VS Code host ${assertion} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      HOST_CONFORMANCE_ASSERTIONS.length + 1 ||
+    evidence.conformance?.consoleWarningsOrErrors !== false ||
+    evidence.decision?.browserVscodeConformance !==
+      "passed-internal-host-contract" ||
+    evidence.decision?.actualVscodeExtensionIntegration !==
+      "not-claimed" ||
+    evidence.decision?.viewerCoreConformance !==
+      "blocked-unresolved-upstream" ||
+    evidence.decision?.physicalGpuQualification !==
+      "not-claimed" ||
+    evidence.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "Browser VS Code host decision is invalid",
+    );
+  }
+  return report;
+}
+
 export function validateBimRenderer3dCompatibility(
   manifest,
   evidenceBundle,
@@ -2311,6 +2542,14 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.browserVisibilityFirstFrame,
     "Browser visibility-first-frame BIM renderer evidence",
   );
+  const browserVscodeHostEvidence = plainRecord(
+    evidenceBundle.browserVscodeHost,
+    "Browser VS Code host BIM renderer evidence",
+  );
+  const browserWorkerLifecycleEvidence = plainRecord(
+    evidenceBundle.browserWorkerLifecycle,
+    "Browser Worker lifecycle evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
@@ -2331,6 +2570,10 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-measurement-3d/0.1" ||
     manifest.contract?.camera !==
       "bim-explorer-camera-3d/0.1" ||
+    manifest.contract?.host !==
+      "bim-explorer-bim-renderer-3d-host/0.1" ||
+    manifest.contract?.hostReceipt !==
+      "bim-explorer-bim-renderer-3d-host-receipt/0.1" ||
     manifest.contract?.geometryMediaType !==
       "application/vnd.bim-explorer.geometry-range.v1" ||
     manifest.backend?.id !== "headless" ||
@@ -2396,7 +2639,15 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "bim-renderer-3d-public-browser-" +
         "visibility-first-frame-2026-08-04.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 11 ||
+    manifest.evidence?.browserVscodeHost !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-browser-vscode-" +
+        "host-2026-08-04.json" ||
+    manifest.evidence?.browserWorkerLifecycle !==
+      "compatibility/evidence/" +
+        "web-ifc-browser-public-representative-" +
+        "performance-2026-08-03.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 13 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2667,6 +2918,12 @@ export function validateBimRenderer3dCompatibility(
       manifest,
       browserVisibilityFirstFrameEvidence,
     );
+  const browserVscodeHostReport =
+    validateBrowserVscodeHostEvidence(
+      manifest,
+      browserVscodeHostEvidence,
+      browserWorkerLifecycleEvidence,
+    );
   const serialized = JSON.stringify({
     manifest,
     evidenceBundle,
@@ -2701,6 +2958,8 @@ export function validateBimRenderer3dCompatibility(
     browserVisibilityFirstFrameRange:
       browserVisibilityFirstFrameReport
         .selection.selectedRangeIds[0],
+    browserVscodeHostKinds:
+      browserVscodeHostReport.runs.map((run) => run.kind),
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -2775,6 +3034,20 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserVisibilityFirstFrame,
+      ),
+      "utf8",
+    )),
+    browserVscodeHost: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserVscodeHost,
+      ),
+      "utf8",
+    )),
+    browserWorkerLifecycle: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserWorkerLifecycle,
       ),
       "utf8",
     )),

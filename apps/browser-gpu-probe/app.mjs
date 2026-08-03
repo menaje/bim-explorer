@@ -1,5 +1,6 @@
 import {
   attachCameraControls3d,
+  createBimRenderer3dHost,
   createBounded3dRenderer,
   createFitCamera3d,
   createWebGl2Backend,
@@ -158,6 +159,158 @@ async function measureVisibleSurface(renderer, seedPick) {
   throw new Error(
     "Browser GPU probe could not measure visible geometry",
   );
+}
+
+class ProbeWorkerLease {
+  #terminated = false;
+
+  get terminated() {
+    return this.#terminated;
+  }
+
+  terminate() {
+    if (this.#terminated) {
+      return false;
+    }
+    this.#terminated = true;
+    return true;
+  }
+}
+
+function hostRendererProjection(run) {
+  return Object.freeze({
+    primary: Object.freeze({
+      source: run.primary.source,
+      rangeIds: run.primary.renderer.rangeIds,
+      metrics: run.primary.renderer.metrics,
+      uploadedBytes:
+        run.primary.renderer.backend.uploadedBytes,
+      actualGpu:
+        run.primary.renderer.backend.actualGpu,
+      nonBackgroundPixels:
+        run.primary.renderer.backend.nonBackgroundPixels,
+    }),
+    view: Object.freeze({
+      source: run.view.source,
+      viewRevision: run.view.viewRevision,
+      visibleInstances: run.view.visibility.visibleInstances,
+      drawCalls: run.view.backend.drawCalls,
+      nonBackgroundPixels:
+        run.view.backend.nonBackgroundPixels,
+    }),
+    pick: Object.freeze({
+      source: run.pick.source,
+      status: run.pick.status,
+      identity: run.pick.identity,
+    }),
+    sourceSwitch: Object.freeze({
+      source: run.sourceSwitch.source,
+      sourceSwitch: run.sourceSwitch.sourceSwitch,
+      priorResources: run.sourceSwitch.priorResources,
+      uploadedBytes:
+        run.sourceSwitch.renderer.backend.uploadedBytes,
+    }),
+    cleanup: Object.freeze({
+      reason: run.cleanup.receipt.reason,
+      rendererDisposed:
+        run.cleanup.receipt.rendererDisposed,
+      resources: run.cleanup.receipt.resources,
+      backendActiveBytes:
+        run.cleanup.backendState.activeBytes,
+      backendDisposed:
+        run.cleanup.backendState.disposed,
+      primarySessionDisposed:
+        run.cleanup.primarySessionState.disposed,
+      secondarySessionDisposed:
+        run.cleanup.secondarySessionState.disposed,
+      primaryWorkerTerminated:
+        run.cleanup.primaryWorkerTerminated,
+      secondaryWorkerTerminated:
+        run.cleanup.secondaryWorkerTerminated,
+    }),
+  });
+}
+
+async function runRendererHostProbe({
+  canvas,
+  input,
+  kind,
+  secondaryInput,
+}) {
+  const primarySession = new BrowserGeometryRangeSession(
+    input.snapshot,
+  );
+  const secondarySession = new BrowserGeometryRangeSession(
+    secondaryInput.snapshot,
+    {
+      rangeRoute: "/secondary-range",
+    },
+  );
+  const primaryWorker = new ProbeWorkerLease();
+  const secondaryWorker = new ProbeWorkerLease();
+  const backend = createWebGl2Backend({
+    canvas,
+    height: 540,
+    width: 960,
+  });
+  const renderer = createBounded3dRenderer({ backend });
+  const host = createBimRenderer3dHost({
+    kind,
+    renderer,
+  });
+  try {
+    const primary = await host.mount({
+      session: primarySession,
+      snapshot: input.snapshot,
+      workerLease: primaryWorker,
+    });
+    const view = await host.renderView({
+      camera: primary.renderer.backend.camera,
+    });
+    const pick = await host.pick({
+      x: 480,
+      y: 270,
+    });
+    const sourceSwitch = await host.mount({
+      session: secondarySession,
+      snapshot: secondaryInput.snapshot,
+      workerLease: secondaryWorker,
+    });
+    const stateAfterSourceSwitch = host.state;
+    const backendStateAfterSourceSwitch = backend.state;
+    const receipt = await host.dispose({
+      reason: "editor-exit",
+    });
+    const cleanup = Object.freeze({
+      receipt,
+      hostState: host.state,
+      backendState: backend.state,
+      primarySessionState: primarySession.state,
+      secondarySessionState: secondarySession.state,
+      primaryWorkerTerminated: primaryWorker.terminated,
+      secondaryWorkerTerminated: secondaryWorker.terminated,
+    });
+    return Object.freeze({
+      kind,
+      primary,
+      view,
+      pick,
+      sourceSwitch,
+      stateAfterSourceSwitch,
+      backendStateAfterSourceSwitch,
+      cleanup,
+    });
+  } catch (error) {
+    try {
+      await host.dispose({
+        reason: "probe-failure",
+      });
+    } catch {
+      await primarySession.dispose();
+      await secondarySession.dispose();
+    }
+    throw error;
+  }
 }
 
 async function run() {
@@ -718,6 +871,43 @@ async function run() {
         backendState: visibilityBackend.state,
       },
     };
+    const browserHost = await runRendererHostProbe({
+      canvas: elements.canvas,
+      input,
+      kind: "browser",
+      secondaryInput,
+    });
+    const vscodeWebviewHost = await runRendererHostProbe({
+      canvas: elements.canvas,
+      input,
+      kind: "vscode-webview",
+      secondaryInput,
+    });
+    const browserHostProjection =
+      hostRendererProjection(browserHost);
+    const vscodeWebviewHostProjection =
+      hostRendererProjection(vscodeWebviewHost);
+    const hostConformance = {
+      schema: "bim-explorer-browser-vscode-" +
+        "renderer-host-report/1",
+      status: "passed",
+      actualBrowser: true,
+      actualVscodeShellClaimed: false,
+      contract:
+        "bim-explorer-bim-renderer-3d-host/0.1",
+      runs: {
+        browser: browserHost,
+        vscodeWebview: vscodeWebviewHost,
+      },
+      normalizedProjection: browserHostProjection,
+      sameRendererProjection:
+        JSON.stringify(browserHostProjection) ===
+        JSON.stringify(vscodeWebviewHostProjection),
+      workerLifecycleEvidence:
+        "compatibility/evidence/" +
+        "web-ifc-browser-public-representative-" +
+        "performance-2026-08-03.json",
+    };
     const report = {
       schema: "bim-explorer-browser-webgl2-report/1",
       status: "passed",
@@ -782,6 +972,7 @@ async function run() {
       progressive,
       interaction,
       visibilityFirstFrame,
+      hostConformance,
       performance: {
         mountMs,
         viewMs,
@@ -1077,6 +1268,51 @@ async function run() {
       visibilityBackend.state.activeBytes !== 0 ||
       visibilityBackend.state.disposed !== true ||
       visibilitySession.state.disposed !== true
+      ||
+      hostConformance.sameRendererProjection !== true ||
+      browserHost.kind !== "browser" ||
+      vscodeWebviewHost.kind !== "vscode-webview" ||
+      browserHost.primary.host.contract !==
+        hostConformance.contract ||
+      vscodeWebviewHost.primary.host.contract !==
+        hostConformance.contract ||
+      browserHost.pick.status !== "hit" ||
+      vscodeWebviewHost.pick.status !== "hit" ||
+      browserHost.pick.source.revisionId !==
+        input.snapshot.revisionId ||
+      vscodeWebviewHost.pick.source.revisionId !==
+        input.snapshot.revisionId ||
+      browserHost.sourceSwitch.sourceSwitch !== true ||
+      vscodeWebviewHost.sourceSwitch.sourceSwitch !== true ||
+      browserHost.sourceSwitch.priorResources.length !== 2 ||
+      vscodeWebviewHost.sourceSwitch.priorResources.length !== 2 ||
+      browserHost.stateAfterSourceSwitch.sourceSwitches !== 1 ||
+      vscodeWebviewHost.stateAfterSourceSwitch.sourceSwitches !== 1 ||
+      browserHost.backendStateAfterSourceSwitch.activeBytes !==
+        1_120 ||
+      vscodeWebviewHost.backendStateAfterSourceSwitch
+        .activeBytes !== 1_120 ||
+      browserHost.cleanup.receipt.reason !== "editor-exit" ||
+      vscodeWebviewHost.cleanup.receipt.reason !==
+        "editor-exit" ||
+      browserHost.cleanup.hostState.commands !== 5 ||
+      vscodeWebviewHost.cleanup.hostState.commands !== 5 ||
+      browserHost.cleanup.hostState.releases.length !== 4 ||
+      vscodeWebviewHost.cleanup.hostState.releases.length !== 4 ||
+      browserHost.cleanup.backendState.activeBytes !== 0 ||
+      vscodeWebviewHost.cleanup.backendState.activeBytes !== 0 ||
+      browserHost.cleanup.backendState.disposed !== true ||
+      vscodeWebviewHost.cleanup.backendState.disposed !== true ||
+      browserHost.cleanup.primarySessionState.disposed !== true ||
+      browserHost.cleanup.secondarySessionState.disposed !== true ||
+      vscodeWebviewHost.cleanup.primarySessionState.disposed !==
+        true ||
+      vscodeWebviewHost.cleanup.secondarySessionState.disposed !==
+        true ||
+      browserHost.cleanup.primaryWorkerTerminated !== true ||
+      browserHost.cleanup.secondaryWorkerTerminated !== true ||
+      vscodeWebviewHost.cleanup.primaryWorkerTerminated !== true ||
+      vscodeWebviewHost.cleanup.secondaryWorkerTerminated !== true
     ) {
       throw new Error(
         "Browser GPU probe lifecycle assertion failed: " +

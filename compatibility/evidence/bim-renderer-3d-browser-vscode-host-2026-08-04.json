@@ -1,0 +1,152 @@
+{
+  "schema": "bim-explorer-browser-vscode-renderer-host-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-internal-host-contract",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-browser-vscode-renderer-host-report/1",
+    "status": "passed",
+    "contract": "bim-explorer-bim-renderer-3d-host/0.1",
+    "hostReceipt": "bim-explorer-bim-renderer-3d-host-receipt/0.1",
+    "actualBrowser": true,
+    "actualVscodeShellClaimed": false,
+    "sameRendererProjection": true,
+    "primary": {
+      "sourceFingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "rangeId": "range:ifc:geometry:0",
+      "sourceReads": 4,
+      "sourceReadBytes": 4193868,
+      "uploadedBytes": 4399252,
+      "actualGpu": true,
+      "instances": 3182,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 57438
+    },
+    "view": {
+      "viewRevision": 1,
+      "visibleInstances": 3182,
+      "drawCalls": 3182,
+      "nonBackgroundPixels": 57438
+    },
+    "pick": {
+      "status": "hit",
+      "expressId": 317690,
+      "renderId": "render:ifc:5c73cdd02b3add09:317690",
+      "pickId": "pick:ifc:5c73cdd02b3add09:317690",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+    },
+    "sourceSwitch": {
+      "fingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "uploadedBytes": 1120,
+      "priorResources": [
+        {
+          "role": "range-session",
+          "method": "dispose",
+          "released": true
+        },
+        {
+          "role": "worker",
+          "method": "terminate",
+          "released": true
+        }
+      ]
+    },
+    "runs": [
+      {
+        "kind": "browser",
+        "commands": 5,
+        "mounts": 2,
+        "sourceSwitches": 1,
+        "viewUpdates": 1,
+        "picks": 1,
+        "unmounts": 2,
+        "releasedBytes": 4400372,
+        "resourceReleases": 4,
+        "editorExitReason": "editor-exit",
+        "rendererDisposed": true,
+        "backendDisposed": true,
+        "backendActiveBytes": 0,
+        "residentRanges": 0,
+        "primarySessionDisposed": true,
+        "secondarySessionDisposed": true,
+        "primaryWorkerLeaseTerminated": true,
+        "secondaryWorkerLeaseTerminated": true
+      },
+      {
+        "kind": "vscode-webview",
+        "commands": 5,
+        "mounts": 2,
+        "sourceSwitches": 1,
+        "viewUpdates": 1,
+        "picks": 1,
+        "unmounts": 2,
+        "releasedBytes": 4400372,
+        "resourceReleases": 4,
+        "editorExitReason": "editor-exit",
+        "rendererDisposed": true,
+        "backendDisposed": true,
+        "backendActiveBytes": 0,
+        "residentRanges": 0,
+        "primarySessionDisposed": true,
+        "secondarySessionDisposed": true,
+        "primaryWorkerLeaseTerminated": true,
+        "secondaryWorkerLeaseTerminated": true
+      }
+    ],
+    "workerLifecycle": {
+      "evidence": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
+      "outcome": "completed",
+      "workerTerminationRequested": true,
+      "modelClosed": true,
+      "engineDisposed": true,
+      "recoveryWorkerTerminationRequested": true,
+      "recoveryModelClosed": true,
+      "recoveryEngineDisposed": true
+    },
+    "boundary": {
+      "internalHostContract": true,
+      "upstreamViewerCoreClaimed": false,
+      "actualVscodeShellClaimed": false,
+      "dwgRendererDependency": false
+    },
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+    },
+    "diagnostics": []
+  },
+  "conformance": {
+    "actualBrowserWebGl2": true,
+    "browserHostContract": true,
+    "vscodeWebviewHostContract": true,
+    "identicalRendererProjection": true,
+    "sourceRevisionPickIdentity": true,
+    "sourceSwitchReleasesPriorGpu": true,
+    "sourceSwitchDisposesPriorRange": true,
+    "sourceSwitchTerminatesPriorWorkerLease": true,
+    "editorExitReleasesGpu": true,
+    "editorExitDisposesRange": true,
+    "editorExitTerminatesWorkerLease": true,
+    "actualBrowserWorkerTerminationEvidence": true,
+    "standaloneNoDwgRendererDependency": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true,
+    "consoleWarningsOrErrors": false
+  },
+  "decision": {
+    "browserVscodeConformance": "passed-internal-host-contract",
+    "actualVscodeExtensionIntegration": "not-claimed",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "physicalGpuQualification": "not-claimed",
+    "productionClaims": false
+  }
+}

@@ -2466,6 +2466,13 @@ export {
 } from "./webgl2-backend.mjs";
 
 export {
+  BIM_RENDERER_3D_HOST_CONTRACT,
+  BIM_RENDERER_3D_HOST_RECEIPT,
+  BimRenderer3dHost,
+  createBimRenderer3dHost,
+} from "./host-adapter.mjs";
+
+export {
   BIM_CAMERA_3D_SCHEMA,
   cameraViewProjectionMatrix,
   createFitCamera3d,
