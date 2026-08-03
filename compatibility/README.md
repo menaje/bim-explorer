@@ -3,7 +3,7 @@
 외부 package, engine과 format 지원 상태를 사실 기반 manifest로 관리합니다.
 
 - `unresolved`: artifact/version/conformance가 없어 호환성을 주장하지 않음
-- `experimental`: exact artifact와 synthetic fixture만 검증
+- `experimental`: exact artifact와 제한된 fixture/evidence만 검증
 - `qualified`: 공개 profile과 release Gate를 통과
 - `blocked`: 필수 license, safety 또는 conformance Gate 실패
 
@@ -29,6 +29,15 @@ tree/property/Render/Pick identity와 bounded immutable geometry range 결과는
 cleanup을 두 번 재현했습니다. rendered first-frame, deferred property
 range, Browser/VS Code packaging, Viewer Core conformance와 IFC2X3 profile
 admission은 계속 보류합니다.
+
+내부 3D renderer draft의 source-neutral decode, bounded initial range,
+Render/Pick revision binding과 headless resource lifecycle은
+[`bim-renderer-3d.json`](bim-renderer-3d.json)과
+[`public headless renderer evidence`](evidence/bim-renderer-3d-public-headless-2026-08-04.json)가
+소유합니다. 공개 모델 첫 range에서 2,458 geometry records, 3,182
+instances와 127,993 instanced triangles를 재현하고 4,399,252-byte headless
+allocation을 회수했습니다. 이는 visibility 기반 first frame이나 실제 GPU
+upload/render 결과가 아닙니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에

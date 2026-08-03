@@ -23,6 +23,7 @@ first-frame, clean package와 production redistribution은 아직 검증하지
 npm run fetch:ifc:public
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
+npm run qualify:renderer:public
 ```
 
 Dependency pin과 upstream license는
@@ -38,3 +39,8 @@ bounded geometry range, 첫 range 단독 read, tree/property/Render/Pick
 identity와 empty tessellation diagnostic까지 측정합니다. GPU upload·render
 first-frame, deferred property range와 production Browser packaging을
 의미하지 않습니다.
+
+`qualify:renderer:public`은 같은 source snapshot의 첫 range를 별도
+consumer decoder와 headless backend에 mount해 geometry/instance/draw-call
+accounting과 dispose를 확인합니다. `rendered: false`, `actualGpu: false`이며
+GPU 성능 evidence가 아닙니다.

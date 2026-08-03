@@ -124,6 +124,14 @@ generic 3D package는 camera, fit, picking, section, isolate, measurement와 GPU
 resource를 소유합니다. IFC parsing, product DOM, Spatial Workspace와
 accept/publish capability는 소유하지 않습니다.
 
+현재 내부
+[`bim-renderer-3d/0.1`](../specs/bim-renderer-3d-v0.1.md)은 geometry range를
+독립적으로 재검사하고 첫 range만 bounded read해 primitive/record와
+Render/Pick revision identity를 mount plan으로 묶습니다. 공개 fixture의
+2,458 geometry records·3,182 instances를 headless backend에 올리고
+allocation을 회수했습니다. headless receipt는 GPU upload나 rendered frame이
+아니며 camera, picking, section과 실제 Browser backend는 계속 보류합니다.
+
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나
 상대 checkout에 대한 `file:` dependency로 이 상태를 우회하지 않습니다.

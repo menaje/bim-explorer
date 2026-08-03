@@ -15,9 +15,11 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > mapped IFC에서는 raw fingerprint, spatial tree/property identity, shared
 > binary geometry range와 stale/budget 거부를 통과했습니다. 같은 공개
 > IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
-> geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 렌더된
-> first-frame, deferred property range, renderer, engine, public package와
-> 지원 profile은 아직 확정되지 않았습니다.
+> geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 첫 range의
+> 2,458 geometry records·3,182 instances를 bounded headless renderer에
+> mount하고 전량 dispose하는 단계도 통과했습니다. 실제 GPU first-frame,
+> deferred property range, engine, public package와 지원 profile은 아직
+> 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 
@@ -148,6 +150,9 @@ Viewer Core admission 상태는
 [compatibility/ifc-engines.json](compatibility/ifc-engines.json)을 따릅니다.
 내부 read-only source 계약의 상태는
 [compatibility/bim-model-source.json](compatibility/bim-model-source.json)을
+따릅니다.
+내부 3D renderer 계약의 상태는
+[compatibility/bim-renderer-3d.json](compatibility/bim-renderer-3d.json)을
 따릅니다.
 실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
 않습니다.

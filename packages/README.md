@@ -6,7 +6,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 예정 경계:
 
 - `bim-model-source`: bounded source snapshot, range와 source-local identity
-- `bim-renderer-3d`: generic 3D camera/render/picking/section/measurement
+- `bim-renderer-3d`: bounded geometry staging과 generic 3D backend lifecycle
 - `bim-explorer-ui`: model tree, property/relation/search composition
 - `host-contracts`: Browser/VS Code Host adapter contract
 - `spatial-integration`: optional public handoff와 Spatial overlay bridge
@@ -25,6 +25,11 @@ raw source fingerprint, immutable tree/entity identity와 bounded binary
 range directory로 투영하는 내부 read-only draft입니다. 공개 대표 IFC의
 multi-range source artifact까지 통과했지만 공용 Viewer Core package
 호환성과 rendered first-frame은 아직 주장하지 않습니다.
+
+[`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
+range decoder, bounded initial-range plan과 headless resource receipt를
+구현합니다. 공개 모델의 첫 range mount는 통과했지만 실제 GPU render,
+camera/picking/section과 product Host는 아직 없습니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public

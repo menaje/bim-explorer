@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/create-source-artifact.mjs",
     "./inspect": "./src/inspect.mjs",
+    "./measure-headless-renderer": "./src/measure-headless-renderer.mjs",
     "./measure-source-artifact": "./src/measure-source-artifact.mjs"
   },
   "scripts": {
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "@bim-explorer/bim-model-source": "0.0.0",
+    "@bim-explorer/bim-renderer-3d": "0.0.0",
     "@bim-explorer/ifc-engine-contract": "0.1.0",
     "web-ifc": "0.0.77"
   },

@@ -36,6 +36,11 @@ first-frame, 실행 중 동기 engine 호출의 취소와 negative-input cleanup
 소유합니다. 이 결과도 engine selection이 아니라 bounded read-only source
 단계의 입력 증거입니다.
 
+이 source의 첫 geometry range를 headless 3D backend에 연결한 결과는
+[`renderer evidence`](../compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json)가
+소유합니다. mount/dispose accounting만 통과했으며 `actualGpu:false`,
+`rendered:false`이므로 engine의 GPU/first-frame Gate를 승격하지 않습니다.
+
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
 실행 관찰값은
@@ -251,6 +256,7 @@ npm run qualify:ifc:mapped
 npm run fetch:ifc:public
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
+npm run qualify:renderer:public
 npm run probe:browser-worker
 ```
 
@@ -290,8 +296,8 @@ cleanup과 large-model Gate는 계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. #6 generic 3D renderer에서 공개 대표 fixture의 GPU upload·render
-   first-frame과 disposal budget 고정
+1. #6 generic 3D renderer에서 headless mount 다음 실제 Browser GPU
+   upload·render first-frame과 disposal budget 고정
 2. 각 engine의 in-call cancel과 승인된 negative corpus에서 cleanup 검증
 3. connection/system/opening을 포함한 broader semantic corpus
 4. Browser in-call engine cancellation, approved negative cleanup과 Linux CI

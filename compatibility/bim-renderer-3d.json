@@ -1,0 +1,79 @@
+{
+  "schema": "bim-explorer-bim-renderer-3d-compatibility/1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "contract": {
+    "renderer": "bim-explorer-bim-renderer-3d/0.1",
+    "receipt": "bim-explorer-bim-renderer-3d-receipt/0.1",
+    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
+  },
+  "backend": {
+    "id": "headless",
+    "actualGpu": false
+  },
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "profileAdmission": false
+  },
+  "expected": {
+    "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+    "firstRangeSha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5",
+    "metrics": {
+      "sourceReadBytes": 4193868,
+      "sourceReads": 4,
+      "geometryPayloadBytes": 4144692,
+      "geometryRecords": 2458,
+      "vertices": 134895,
+      "indices": 226803,
+      "uniqueTriangles": 75601,
+      "instances": 3182,
+      "instancedTriangles": 127993,
+      "drawCalls": 3182,
+      "instanceBytes": 254560,
+      "cpuStagingBytes": 4448428
+    },
+    "headlessUploadedBytes": 4399252,
+    "deferredBytes": 5096828
+  },
+  "gates": {
+    "sourceNeutralGeometryDecoder": true,
+    "boundedInitialRangeRead": true,
+    "primitiveRecordConformance": true,
+    "renderPickRevisionIdentity": true,
+    "headlessResourceAccounting": true,
+    "deterministicDispose": true,
+    "publicRepresentativeHeadlessMount": true,
+    "visibilityDrivenFirstFrame": false,
+    "actualGpuFirstFrame": false,
+    "cameraInteraction": false,
+    "pickingSelection": false,
+    "sectionMeasurement": false,
+    "contextLossAndGpuSourceSwitch": false,
+    "browserVscodeConformance": false,
+    "viewerCoreConformance": false
+  },
+  "evidence": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
+  "blockers": [
+    "initial range order is not a camera-visibility-driven first-frame plan",
+    "no actual GPU backend has uploaded or rendered the model",
+    "camera and interaction controls are not implemented",
+    "backend picking and selection highlight are not implemented",
+    "section and measurement are not implemented",
+    "GPU context loss and source-switch recovery are not qualified",
+    "Browser and VS Code renderer conformance is not qualified",
+    "durable Viewer Core package and 3D conformance remain unresolved"
+  ],
+  "policy": {
+    "sourceNeutral": true,
+    "readOnly": true,
+    "spatialAuthority": false,
+    "claimRenderedFirstFrame": false,
+    "claimViewerCoreCompatibility": false,
+    "claimProductionRenderer": false
+  }
+}

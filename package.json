@@ -18,7 +18,7 @@
     "check:text": "node scripts/check-text.mjs",
     "check:repository": "node scripts/check-repository.mjs",
     "check:docs": "node scripts/check-docs.mjs",
-    "check:compatibility": "node scripts/check-viewer-core-compatibility.mjs && node scripts/check-ifc-engine-compatibility.mjs && node scripts/check-bim-model-source-compatibility.mjs",
+    "check:compatibility": "node scripts/check-viewer-core-compatibility.mjs && node scripts/check-ifc-engine-compatibility.mjs && node scripts/check-bim-model-source-compatibility.mjs && node scripts/check-bim-renderer-3d-compatibility.mjs",
     "fetch:ifc:public": "node scripts/fetch-public-ifc-fixture.mjs",
     "probe:browser-worker": "node scripts/serve-browser-worker-probe.mjs",
     "qualify:ifc:public": "node scripts/qualify-public-ifc-performance.mjs",
@@ -26,6 +26,7 @@
     "qualify:ifc:mapped": "node scripts/qualify-ifc-engine.mjs --engine web-ifc --fixture mapped",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
     "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",
+    "qualify:renderer:public": "node scripts/qualify-public-bim-renderer-3d.mjs",
     "test": "node --test tests/**/*.test.mjs"
   }
 }

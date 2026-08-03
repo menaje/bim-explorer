@@ -46,3 +46,10 @@ bounded range read와 stale·malformed artifact 거부를 검사합니다. 별�
 fixture qualification은 46.77MB IFC2X3의 3개 range와 첫 range 단독 read를
 두 번 확인합니다. 공용 Viewer Core conformance나 rendered first-frame
 test는 아닙니다.
+
+`renderer` test는 geometry range의 독립 decode, primitive slice/count
+conformance, initial-range budget, shared geometry instance, Render/Pick
+revision binding, source switch, abort, invalid backend cleanup과 deterministic
+dispose를 headless backend로 검사합니다. 공개 qualification은 첫 range의
+geometry/instance/draw-call accounting을 두 번 재현하지만 실제 GPU frame
+test는 아닙니다.

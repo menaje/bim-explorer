@@ -41,7 +41,7 @@
   "ifc": {
     "schema": "IFC2X3",
     "profileAdmission": false,
-    "scenario": "representative read-only parse and geometry performance"
+    "scenario": "representative read-only parse, source artifact and headless renderer performance"
   },
   "expected": {
     "projects": 1,
@@ -75,6 +75,8 @@
     "bounded-download-and-extraction",
     "representative-node-cpu-rss",
     "representative-browser-worker-parse",
+    "representative-bim-source-artifact",
+    "headless-renderer-resource-accounting",
     "worker-cleanup"
   ],
   "notQualified": [

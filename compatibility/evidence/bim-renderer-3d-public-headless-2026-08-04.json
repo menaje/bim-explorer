@@ -1,0 +1,322 @@
+{
+  "schema": "bim-explorer-public-bim-renderer-3d-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental-headless-only",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "schema": "IFC2X3",
+    "profile": "performance-only-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "artifactCommitted": false,
+    "actualGpu": false,
+    "profileAdmission": false
+  },
+  "provenance": {
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "attribution": "(C) original authors",
+    "rightsVerified": true,
+    "bundlingApproved": false
+  },
+  "acquisition": {
+    "schema": "bim-explorer-public-ifc-fetch-receipt/1",
+    "outcome": "verified",
+    "fixtureId": "public-schependomlaan-complete-ifc2x3",
+    "cacheHit": true,
+    "source": {
+      "repository": "buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "archiveBytes": 8873221,
+      "archiveSha256": "cc79df850d6bb38d1853b22a91ce602c1d743c1be02a8d742a1e4a2e4f4350fb"
+    },
+    "entry": {
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3"
+    },
+    "policy": {
+      "archivePersisted": false,
+      "artifactCommitted": false,
+      "customerContent": false,
+      "bundlingApproved": false
+    }
+  },
+  "budget": {
+    "timeoutMs": 30000,
+    "maximumArtifactMs": 10000,
+    "maximumSourceMs": 5000,
+    "maximumMountMs": 2000,
+    "maximumTotalMs": 15000,
+    "maximumProcessRssBytes": 805306368
+  },
+  "representativeReport": {
+    "schema": "bim-explorer-web-ifc-headless-renderer-report/1",
+    "status": "passed",
+    "fixture": {
+      "id": "public-schependomlaan-complete-ifc2x3",
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3",
+      "profile": "performance-only-ifc2x3"
+    },
+    "adapter": {
+      "id": "web-ifc",
+      "version": "0.0.77",
+      "backend": "node-wasm-isolated-headless-renderer",
+      "license": "MPL-2.0"
+    },
+    "snapshot": {
+      "sourceFingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+      "geometry": {
+        "products": 3569,
+        "renderableProducts": 3504,
+        "nonRenderableProducts": 65,
+        "placements": 6105,
+        "primitives": 5972,
+        "uniqueGeometries": 4696,
+        "emptyUniqueGeometries": 133,
+        "skippedEmptyGeometries": 133,
+        "vertices": 297126,
+        "instancedVertices": 441206,
+        "triangles": 261424,
+        "bounds": {
+          "min": [
+            -1,
+            -1,
+            -1.7
+          ],
+          "max": [
+            22.95,
+            23.465,
+            13.356488
+          ]
+        }
+      },
+      "loadPlan": {
+        "firstRangeIds": [
+          "range:ifc:geometry:0"
+        ],
+        "deferredRangeIds": [
+          "range:ifc:geometry:1",
+          "range:ifc:geometry:2"
+        ]
+      },
+      "ranges": [
+        {
+          "handleId": "range:ifc:geometry:0",
+          "byteLength": 4193868,
+          "sha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5"
+        },
+        {
+          "handleId": "range:ifc:geometry:1",
+          "byteLength": 4194152,
+          "sha256": "1ecd68a6a01fb40f549cb1e1039a21bc44fdae6d5707caebc0d4777d0a79bd7c"
+        },
+        {
+          "handleId": "range:ifc:geometry:2",
+          "byteLength": 902676,
+          "sha256": "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2"
+        }
+      ]
+    },
+    "renderer": {
+      "contract": "bim-explorer-bim-renderer-3d-receipt/0.1",
+      "backend": "headless",
+      "actualGpu": false,
+      "limits": {
+        "maximumFirstFrameRanges": 1,
+        "maximumRangeBytes": 4194304,
+        "maximumSourceReadBytes": 4194304,
+        "maximumReadBytes": 1048576,
+        "maximumGeometryRecords": 100000,
+        "maximumGeometryPayloadBytes": 8388608,
+        "maximumInstances": 100000,
+        "maximumInstancedTriangles": 5000000,
+        "maximumDrawCalls": 100000,
+        "maximumCpuStagingBytes": 16777216
+      },
+      "receipt": {
+        "schema": "bim-explorer-bim-renderer-3d-receipt/0.1",
+        "status": "mounted",
+        "source": {
+          "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+          "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+          "snapshotId": "snapshot:bim-source:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4:0",
+          "layerId": "layer:bim-source:base-3d"
+        },
+        "rangeIds": [
+          "range:ifc:geometry:0"
+        ],
+        "deferredRangeIds": [
+          "range:ifc:geometry:1",
+          "range:ifc:geometry:2"
+        ],
+        "metrics": {
+          "sourceReadBytes": 4193868,
+          "sourceReads": 4,
+          "geometryPayloadBytes": 4144692,
+          "geometryRecords": 2458,
+          "vertices": 134895,
+          "indices": 226803,
+          "uniqueTriangles": 75601,
+          "instances": 3182,
+          "instancedTriangles": 127993,
+          "drawCalls": 3182,
+          "instanceBytes": 254560,
+          "cpuStagingBytes": 4448428
+        },
+        "identity": {
+          "renderPickBoundToRevision": true,
+          "nonRenderableInstances": 0
+        },
+        "backend": {
+          "backendId": "headless",
+          "frameId": "headless-3d-frame:1",
+          "rendered": false,
+          "geometryBytes": 4144692,
+          "instanceBytes": 254560,
+          "uploadedBytes": 4399252,
+          "drawCalls": 3182
+        },
+        "cpuRangeStagingReleased": true
+      },
+      "sourceStateAfterMount": {
+        "opened": true,
+        "sessionDisposed": false,
+        "disposed": false,
+        "rangeReads": 4,
+        "rangeBytesRead": 4193868,
+        "remainingReadBytes": 5096828,
+        "entityReads": 0,
+        "pickResolutions": 0
+      },
+      "rendererStateAfterMount": {
+        "disposed": false,
+        "mounting": false,
+        "mounted": true,
+        "mounts": 1,
+        "unmounts": 0,
+        "activeRevisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+        "activeBackendBytes": 4399252
+      },
+      "backendStateAfterMount": {
+        "disposed": false,
+        "mounts": 1,
+        "unmounts": 0,
+        "activeHandleId": "headless-3d-mount:1",
+        "activeBytes": 4399252
+      },
+      "unmountReceipt": {
+        "released": true,
+        "releasedBytes": 4399252,
+        "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+      }
+    },
+    "performance": {
+      "readMs": 8.283042000000023,
+      "artifactMs": 2179.8684160000003,
+      "sourceMs": 228.322541,
+      "mountMs": 28.154250000000047,
+      "totalMs": 2445.24075
+    },
+    "processMemoryBytes": {
+      "maximumResidentSetSize": 586039296,
+      "residentSetSizeAfterMount": 581419008,
+      "heapUsedAfterMount": 75991992
+    },
+    "cleanup": {
+      "adapterModelClosed": true,
+      "adapterEngineDisposed": true,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "sourceDisposed": true,
+      "backendDisposed": true,
+      "backendActiveBytes": 0
+    },
+    "diagnostics": []
+  },
+  "runs": [
+    {
+      "attempt": 1,
+      "deterministicProjectionSha256": "d382ab6b2ee575eb4470c97a77bde3b1795fbb7f4754263351ff2c0ebf083d57",
+      "performance": {
+        "readMs": 8.283042000000023,
+        "artifactMs": 2179.8684160000003,
+        "sourceMs": 228.322541,
+        "mountMs": 28.154250000000047,
+        "totalMs": 2445.24075
+      },
+      "processMemoryBytes": {
+        "maximumResidentSetSize": 586039296,
+        "residentSetSizeAfterMount": 581419008,
+        "heapUsedAfterMount": 75991992
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 4254,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 2653.538042
+      }
+    },
+    {
+      "attempt": 2,
+      "deterministicProjectionSha256": "d382ab6b2ee575eb4470c97a77bde3b1795fbb7f4754263351ff2c0ebf083d57",
+      "performance": {
+        "readMs": 8.105083000000008,
+        "artifactMs": 2187.873,
+        "sourceMs": 224.09629099999984,
+        "mountMs": 28.61133299999983,
+        "totalMs": 2449.174625
+      },
+      "processMemoryBytes": {
+        "maximumResidentSetSize": 586137600,
+        "residentSetSizeAfterMount": 580927488,
+        "heapUsedAfterMount": 76129560
+      },
+      "process": {
+        "outcome": "completed",
+        "exitCode": 0,
+        "signal": null,
+        "processExited": true,
+        "timedOut": false,
+        "cancelled": false,
+        "outputLimitExceeded": false,
+        "stdoutBytes": 4252,
+        "stderrBytes": 0,
+        "stderrCaptured": false,
+        "wallClockMs": 2654.6715000000004
+      }
+    }
+  ],
+  "conformance": {
+    "repeatedMountIdentity": true,
+    "boundedInitialRangeRead": true,
+    "geometryPrimitiveConformance": true,
+    "renderPickRevisionIdentity": true,
+    "nonRenderableInstancesExcluded": true,
+    "headlessResourceAccounting": true,
+    "deterministicDispose": true,
+    "pathFreeReport": true
+  },
+  "decision": {
+    "publicRepresentativeHeadlessMount": "passed",
+    "visibilityDrivenFirstFrame": "blocked",
+    "actualGpuFirstFrame": "blocked",
+    "cameraInteractionPicking": "blocked",
+    "sectionMeasurement": "blocked",
+    "browserVscodeConformance": "blocked",
+    "viewerCoreConformance": "blocked-unresolved-upstream",
+    "productionClaims": false
+  }
+}

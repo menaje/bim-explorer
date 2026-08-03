@@ -16,7 +16,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
 - `ifc/synthetic-performance`: 1,024 Wall이 하나의 representation map을
   사용하는 388,316-byte bounded Browser scale step
 - `ifc/public-schependomlaan`: buildingSMART Community Sample Test Files의
-  46,766,968-byte IFC2X3를 성능 전용으로 사용하는 CC BY 4.0 manifest
+  46,766,968-byte IFC2X3를 parse/source/headless-renderer 성능에 사용하는
+  CC BY 4.0 manifest
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로
@@ -26,4 +27,6 @@ fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
 ```sh
 npm run fetch:ifc:public
 npm run qualify:ifc:public
+npm run qualify:bim-source:public
+npm run qualify:renderer:public
 ```
