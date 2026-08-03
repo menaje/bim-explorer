@@ -106,8 +106,8 @@ stale context, 중복 identity와 cleanup을 강제합니다. 고정된 공개 I
 3,569 products는 3개 bounded geometry range로 나뉘며 첫 range만 읽고
 나머지를 미읽기로 유지하는 source 단계도 통과했습니다. 비어 있는
 tessellation은 semantic identity와 diagnostic만 유지합니다. renderer
-first-frame, deferred property range와 Viewer Core conformance는 아직
-보류합니다.
+first-frame은 별도 renderer evidence에서 검증하고, deferred property
+range와 Viewer Core conformance는 아직 보류합니다.
 
 ## Viewer Core와 3D presentation
 
@@ -129,8 +129,11 @@ accept/publish capability는 소유하지 않습니다.
 독립적으로 재검사하고 첫 range만 bounded read해 primitive/record와
 Render/Pick revision identity를 mount plan으로 묶습니다. 공개 fixture의
 2,458 geometry records·3,182 instances를 headless backend에 올리고
-allocation을 회수했습니다. headless receipt는 GPU upload나 rendered frame이
-아니며 camera, picking, section과 실제 Browser backend는 계속 보류합니다.
+allocation을 회수했습니다. 이어 실제 Chromium WebGL2 API에 같은
+4,399,252-byte geometry·instance payload를 올려 3,182 draws와 rasterized
+first frame을 확인하고 active allocation을 0으로 회수했습니다. 이는
+physical GPU qualification이나 visibility 기반 loading이 아니며 camera,
+picking, section, context loss와 Host conformance는 계속 보류합니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나

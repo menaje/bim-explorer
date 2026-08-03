@@ -31,13 +31,17 @@ range, Browser/VS Code packaging, Viewer Core conformance와 IFC2X3 profile
 admission은 계속 보류합니다.
 
 내부 3D renderer draft의 source-neutral decode, bounded initial range,
-Render/Pick revision binding과 headless resource lifecycle은
+Render/Pick revision binding, headless resource lifecycle과 Browser WebGL2
+first frame은
 [`bim-renderer-3d.json`](bim-renderer-3d.json)과
-[`public headless renderer evidence`](evidence/bim-renderer-3d-public-headless-2026-08-04.json)가
+[`public headless renderer evidence`](evidence/bim-renderer-3d-public-headless-2026-08-04.json),
+[`public Browser WebGL2 evidence`](evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json)가
 소유합니다. 공개 모델 첫 range에서 2,458 geometry records, 3,182
-instances와 127,993 instanced triangles를 재현하고 4,399,252-byte headless
-allocation을 회수했습니다. 이는 visibility 기반 first frame이나 실제 GPU
-upload/render 결과가 아닙니다.
+instances와 127,993 instanced triangles를 재현했습니다. 실제 Chromium
+WebGL2 API에 4,399,252 bytes를 upload해 3,182 draws와 67,153
+non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
+physical GPU qualification, visibility 기반 range 계획, camera/picking,
+context loss, section과 Host conformance는 계속 보류합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
@@ -57,6 +61,8 @@ CPU/RSS는
 분리합니다. 모두 prototype 결과입니다. IFC2X3 profile, GPU upload·render
 first-frame, checkpoint 사이에서 실행 중인 동기 engine 호출의 선점, 손상
 입력 cleanup 또는 `packagingBrowser` capability를 승격하지 않습니다.
+renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
+production GPU memory 보장을 뜻하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

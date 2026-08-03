@@ -11,6 +11,12 @@
     "id": "headless",
     "actualGpu": false
   },
+  "browserBackend": {
+    "id": "webgl2",
+    "actualBrowser": true,
+    "gpuApi": true,
+    "physicalGpuClaimed": false
+  },
   "fixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
     "schema": "IFC2X3",
@@ -38,6 +44,12 @@
       "cpuStagingBytes": 4448428
     },
     "headlessUploadedBytes": 4399252,
+    "browserUploadedBytes": 4399252,
+    "browserFrame": {
+      "width": 960,
+      "height": 540,
+      "minimumNonBackgroundPixels": 1
+    },
     "deferredBytes": 5096828
   },
   "gates": {
@@ -48,8 +60,9 @@
     "headlessResourceAccounting": true,
     "deterministicDispose": true,
     "publicRepresentativeHeadlessMount": true,
+    "publicRepresentativeBrowserWebGl2Mount": true,
     "visibilityDrivenFirstFrame": false,
-    "actualGpuFirstFrame": false,
+    "actualGpuFirstFrame": true,
     "cameraInteraction": false,
     "pickingSelection": false,
     "sectionMeasurement": false,
@@ -57,10 +70,12 @@
     "browserVscodeConformance": false,
     "viewerCoreConformance": false
   },
-  "evidence": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
+  "evidence": {
+    "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
+    "browserWebGl2": "compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json"
+  },
   "blockers": [
     "initial range order is not a camera-visibility-driven first-frame plan",
-    "no actual GPU backend has uploaded or rendered the model",
     "camera and interaction controls are not implemented",
     "backend picking and selection highlight are not implemented",
     "section and measurement are not implemented",
@@ -72,7 +87,8 @@
     "sourceNeutral": true,
     "readOnly": true,
     "spatialAuthority": false,
-    "claimRenderedFirstFrame": false,
+    "claimRenderedFirstFrame": true,
+    "claimPhysicalGpuQualification": false,
     "claimViewerCoreCompatibility": false,
     "claimProductionRenderer": false
   }

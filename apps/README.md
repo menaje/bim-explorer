@@ -16,3 +16,8 @@ Browser Worker의 bounded local-file admission, source-session lifecycle과
 model-opened checkpoint cooperative cleanup, generated 1,024-Wall
 performance budget을 확인하는 experimental surface입니다. 제품 shell,
 대표 대형 모델 또는 packaging 지원 약속이 아닙니다.
+
+[`browser-gpu-probe`](browser-gpu-probe/README.md)는 공개 대표 IFC에서
+투영한 첫 geometry range를 실제 Chromium WebGL2 API로 upload·draw하고
+non-background pixel과 disposal을 확인하는 별도 qualification surface입니다.
+physical GPU, interaction이나 production Browser shell을 의미하지 않습니다.

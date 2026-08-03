@@ -26,20 +26,22 @@ heap-capacity budget도 통과했습니다. 이어서 CC BY 4.0 Schependomlaan
 IFC2X3 46.77MB를 고정 digest로 검증하고 Node CPU/RSS와 실제 Chromium
 Worker parse/geometry budget을 통과했습니다. JavaScript/WASM 경로를
 Browser와 VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정이나
-IFC2X3 profile 승격은 아닙니다. Browser packaging, GPU upload·render
-first-frame, 실행 중 동기 engine 호출의 취소와 negative-input cleanup을
-통과하지 못하면 IfcOpenShell native process를 desktop fallback으로
-재평가합니다.
+IFC2X3 profile 승격은 아닙니다. Browser WebGL2 first-frame prototype도
+통과했지만 Browser packaging, visibility·interaction, 실행 중 동기 engine
+호출의 취소와 negative-input cleanup을 통과하지 못하면 IfcOpenShell
+native process를 desktop fallback으로 재평가합니다.
 
 같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
 [`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
 소유합니다. 이 결과도 engine selection이 아니라 bounded read-only source
 단계의 입력 증거입니다.
 
-이 source의 첫 geometry range를 headless 3D backend에 연결한 결과는
-[`renderer evidence`](../compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json)가
-소유합니다. mount/dispose accounting만 통과했으며 `actualGpu:false`,
-`rendered:false`이므로 engine의 GPU/first-frame Gate를 승격하지 않습니다.
+이 source의 첫 geometry range를 headless와 실제 Browser WebGL2 backend에
+연결한 결과는
+[`headless renderer evidence`](../compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json)와
+[`Browser WebGL2 evidence`](../compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json)가
+소유합니다. WebGL2 GPU API upload·rasterized first frame·dispose Gate는
+통과했지만 physical GPU·memory나 engine/profile 선정을 의미하지 않습니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -158,9 +160,10 @@ warning/error는 없었습니다.
 통과했습니다. 64 MiB admission과 WASM capacity는 Browser live process나
 GPU memory가 아니며 Worker는 mesh를 renderer에 upload하거나 frame을 그리지
 않습니다. checkpoint cleanup도 실행 중인 synchronous `web-ifc` 호출을
-선점하는 증거가 아닙니다. GPU upload·render first-frame, negative model,
-clean-install bundle, Linux Browser CI와 VS Code isolation을 검증하지
-않았으므로 `largeModelPerformance`, candidate operation matrix의
+선점하는 증거가 아닙니다. 별도 WebGL2 renderer evidence가 GPU API
+first-frame을 검증했지만 physical GPU memory, visibility·interaction,
+negative model, clean-install bundle, Linux Browser CI와 VS Code isolation을
+검증하지 않았으므로 `largeModelPerformance`, candidate operation matrix의
 `cancellation`, `corruptInputCleanup`과 `packagingBrowser`는 계속
 `blocked`입니다.
 
@@ -191,7 +194,7 @@ scenario에 포함하지 않습니다.
 - connection, system, opening과 broader object/relation corpus
 - corrupt/truncated input과 resource exhaustion cleanup
 - 실행 중 동기 engine 호출의 취소와 candidate-level cancellation 승인
-- representative model GPU upload·render first-frame budget
+- visibility 기반 first frame, physical GPU memory와 context-loss recovery
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
 
@@ -290,17 +293,16 @@ Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
 time/WASM-capacity budget도 통과했습니다. 공개 대표 fixture의 Node
 CPU/RSS와 Browser parse/geometry도 분리해 통과했습니다. 다만 동기 engine
-호출 중 선점, 승인된 negative corpus cleanup, GPU upload·render first-frame
-budget을 검증하지 않았으므로 compatibility matrix의 cancellation/corrupt
-cleanup과 large-model Gate는 계속 `blocked`입니다.
+호출 중 선점, 승인된 negative corpus cleanup, visibility·physical GPU
+memory와 cross-Host budget을 검증하지 않았으므로 compatibility matrix의
+cancellation/corrupt cleanup과 large-model Gate는 계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. #6 generic 3D renderer에서 headless mount 다음 실제 Browser GPU
-   upload·render first-frame과 disposal budget 고정
+1. #6 generic 3D renderer의 visibility, camera와 picking vertical slice
 2. 각 engine의 in-call cancel과 승인된 negative corpus에서 cleanup 검증
 3. connection/system/opening을 포함한 broader semantic corpus
 4. Browser in-call engine cancellation, approved negative cleanup과 Linux CI
-5. VS Code isolation/package proof
+5. VS Code isolation/package와 WebGL2 cross-Host proof
 6. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
 7. 결과를 근거로 engine/profile go/no-go 결정

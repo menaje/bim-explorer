@@ -28,8 +28,10 @@ multi-range source artifact까지 통과했지만 공용 Viewer Core package
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를
-구현합니다. 공개 모델의 첫 range mount는 통과했지만 실제 GPU render,
-camera/picking/section과 product Host는 아직 없습니다.
+구현합니다. 공개 모델 첫 range의 headless mount와 실제 Chromium WebGL2
+upload·rasterized first frame·dispose를 통과했습니다. visibility 기반
+loading, physical GPU qualification, camera/picking/section과 product
+Host는 아직 없습니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public

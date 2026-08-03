@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+    <title>BIM Explorer · Browser GPU probe</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">BIM Explorer · qualification surface</p>
+        <h1>Bounded Browser GPU first frame</h1>
+        <p id="status" class="status" data-state="running">
+          Loading probe…
+        </p>
+      </header>
+
+      <section class="viewport" aria-label="Rendered BIM model">
+        <canvas
+          id="model-canvas"
+          width="960"
+          height="540"
+          aria-label="WebGL2 BIM first frame"
+        ></canvas>
+      </section>
+
+      <section class="metrics" aria-label="Probe measurements">
+        <article>
+          <span>Fixture</span>
+          <strong id="fixture">Pending</strong>
+        </article>
+        <article>
+          <span>Bounded source</span>
+          <strong id="ranges">Pending</strong>
+        </article>
+        <article>
+          <span>GPU upload</span>
+          <strong id="upload">Pending</strong>
+        </article>
+        <article>
+          <span>First frame</span>
+          <strong id="frame">Pending</strong>
+        </article>
+        <article>
+          <span>Dispose</span>
+          <strong id="lifecycle">Pending</strong>
+        </article>
+      </section>
+
+      <details>
+        <summary>Qualification receipt</summary>
+        <pre id="receipt">Waiting for Browser GPU receipt…</pre>
+      </details>
+    </main>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

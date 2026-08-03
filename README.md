@@ -17,9 +17,12 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
 > geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 첫 range의
 > 2,458 geometry records·3,182 instances를 bounded headless renderer에
-> mount하고 전량 dispose하는 단계도 통과했습니다. 실제 GPU first-frame,
-> deferred property range, engine, public package와 지원 profile은 아직
-> 확정되지 않았습니다.
+> mount하고 전량 dispose하는 단계도 통과했습니다. 실제 Chromium
+> WebGL2에서는 같은 첫 range를 4,399,252 bytes로 upload해 3,182 draws와
+> rasterized first frame을 확인하고 전량 회수했습니다. visibility 기반
+> loading, camera/picking/section, physical GPU qualification, deferred
+> property range, engine, public package와 지원 profile은 아직 확정되지
+> 않았습니다.
 
 ## 첫 사용자 흐름
 

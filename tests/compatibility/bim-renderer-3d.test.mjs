@@ -11,14 +11,20 @@ async function fixtures() {
     "compatibility/bim-renderer-3d.json",
     "utf8",
   ));
-  const evidence = JSON.parse(await readFile(
-    manifest.evidence,
-    "utf8",
-  ));
+  const evidence = {
+    headless: JSON.parse(await readFile(
+      manifest.evidence.headless,
+      "utf8",
+    )),
+    browserWebGl2: JSON.parse(await readFile(
+      manifest.evidence.browserWebGl2,
+      "utf8",
+    )),
+  };
   return { manifest, evidence };
 }
 
-test("BIM renderer records a bounded public headless mount", async () => {
+test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   const { manifest, evidence } = await fixtures();
   const result = validateBimRenderer3dCompatibility(
     manifest,
@@ -29,18 +35,20 @@ test("BIM renderer records a bounded public headless mount", async () => {
   assert.equal(result.instances, 3_182);
   assert.equal(result.instancedTriangles, 127_993);
   assert.equal(result.uploadedBytes, 4_399_252);
-  assert.equal(result.passedGates, 7);
-  assert.equal(result.heldGates, 8);
+  assert.equal(result.browserPixels, 67_153);
+  assert.equal(result.passedGates, 9);
+  assert.equal(result.heldGates, 7);
 });
 
-test("headless evidence cannot promote an actual GPU frame", async () => {
+test("Browser evidence is required for the GPU first-frame gate", async () => {
   const { manifest, evidence } = await fixtures();
-  const promoted = structuredClone(manifest);
-  promoted.gates.actualGpuFirstFrame = true;
+  const corrupted = structuredClone(evidence);
+  corrupted.browserWebGl2.representativeReport
+    .renderer.receipt.backend.rendered = false;
 
   assert.throws(
-    () => validateBimRenderer3dCompatibility(promoted, evidence),
-    /actualGpuFirstFrame must remain held/u,
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /first frame is invalid/u,
   );
 });
 
@@ -58,7 +66,7 @@ test("BIM renderer rejects production claims", async () => {
 test("BIM renderer evidence pins initial range accounting", async () => {
   const { manifest, evidence } = await fixtures();
   const corrupted = structuredClone(evidence);
-  corrupted.representativeReport.renderer.receipt
+  corrupted.headless.representativeReport.renderer.receipt
     .metrics.instances += 1;
 
   assert.throws(

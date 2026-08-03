@@ -14,7 +14,8 @@ last_reviewed: 2026-08-04
 
 `bim-explorer-bim-renderer-3d/0.1`은 source-neutral 3D snapshot을 bounded
 geometry staging과 backend lifecycle에 연결하는 내부 draft입니다. 공용
-Viewer Core protocol, 실제 GPU backend나 production renderer가 아닙니다.
+Viewer Core protocol이나 production renderer가 아닙니다. 실제 Browser
+WebGL2 backend는 experimental qualification surface에서만 검증했습니다.
 
 첫 vertical slice는 다음 입력만 소비합니다.
 
@@ -95,13 +96,31 @@ rendered: false
 shader compilation, rasterization이나 first-frame 시간으로 해석하지
 않습니다.
 
+## Browser WebGL2 backend
+
+`webgl2` backend는 decoded vertex/index payload와 occurrence
+transform·color instance buffer를 실제 WebGL2 context에 upload합니다.
+source 좌표계 변환과 model bounds 기반 고정 fit matrix를 적용하고
+`drawElementsInstanced` first frame을 그린 뒤 다음을 영수증으로 남깁니다.
+
+- geometry, instance와 전체 uploaded bytes
+- draw-call과 GPU buffer 수
+- frame 크기, WebGL version과 GL error
+- non-background pixel, upload와 first-frame 시간
+- unmount의 released bytes와 terminal dispose 상태
+
+공개 fixture의 첫 range는 local Chromium에서 3,182 draws와 67,153
+non-background pixels를 만들고 4,399,252 bytes를 전량 회수했습니다.
+이는 실제 Browser GPU API 경로의 증거입니다. masked WebGL context만
+관찰했으므로 physical GPU 종류·전용 memory·driver 성능은 주장하지 않습니다.
+
 ## 현재 보류
 
 - camera visibility 기반 초기 range와 progressive detail
-- 실제 Browser GPU upload와 rendered first frame
 - camera/orbit/pan/zoom/fit
 - backend picking, selection과 highlight
 - clipping, section과 measurement
+- physical GPU·driver와 GPU memory qualification
 - GPU context loss와 source-switch recovery
 - Browser/VS Code 동일 backend conformance
 - 공용 Viewer Core 3D consumer conformance

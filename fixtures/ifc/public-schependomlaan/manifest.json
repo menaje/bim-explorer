@@ -41,7 +41,7 @@
   "ifc": {
     "schema": "IFC2X3",
     "profileAdmission": false,
-    "scenario": "representative read-only parse, source artifact and headless renderer performance"
+    "scenario": "representative read-only parse, source artifact, headless accounting and Browser WebGL2 first frame"
   },
   "expected": {
     "projects": 1,
@@ -77,12 +77,14 @@
     "representative-browser-worker-parse",
     "representative-bim-source-artifact",
     "headless-renderer-resource-accounting",
+    "browser-webgl2-first-frame",
     "worker-cleanup"
   ],
   "notQualified": [
     "draft-ifc4-profile-conformance",
     "gpu-memory",
-    "render-first-frame",
+    "visibility-driven-first-frame",
+    "physical-gpu-qualification",
     "production-browser-packaging",
     "fixture-bundling",
     "engine-selection"

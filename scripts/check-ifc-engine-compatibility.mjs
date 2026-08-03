@@ -570,6 +570,9 @@ function validatePublicNodePerformance(manifest, evidence) {
       "representative-node-and-browser-parse-performance" ||
     fixture.manifest !==
       "fixtures/ifc/public-schependomlaan/manifest.json" ||
+    fixture.rendererEvidence !==
+      "compatibility/evidence/" +
+        "bim-renderer-3d-public-browser-webgl2-2026-08-04.json" ||
     fixture.license !== "CC-BY-4.0" ||
     fixture.rightsVerified !== true ||
     fixture.artifactCommitted !== false ||
@@ -931,6 +934,7 @@ export function validateIfcEngineCompatibility(
     gates.publicFixtureProvenance !== true ||
     gates.representativeNodeCpuRss !== true ||
     gates.browserRepresentativeParsing !== true ||
+    gates.browserRepresentativeWebGl2FirstFrame !== true ||
     gates.largeModelPerformance !== false ||
     gates.cancellation !== false ||
     gates.corruptInputCleanup !== false ||

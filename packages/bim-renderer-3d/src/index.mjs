@@ -266,6 +266,51 @@ function validateMountInput(session, snapshot, limits) {
       "renderer snapshot source fingerprint is invalid",
     );
   }
+  const coordinateSystem = plainRecord(
+    value.coordinateSystem,
+    "renderer snapshot coordinateSystem",
+  );
+  nonEmptyString(
+    coordinateSystem.storage,
+    "renderer snapshot coordinateSystem.storage",
+  );
+  nonEmptyString(
+    coordinateSystem.source,
+    "renderer snapshot coordinateSystem.source",
+  );
+  const sourceFromStorage = finiteVector(
+    coordinateSystem.sourceFromStorage,
+    16,
+    "renderer snapshot coordinateSystem.sourceFromStorage",
+  );
+  const geometry = plainRecord(
+    value.geometry,
+    "renderer snapshot geometry",
+  );
+  const geometryBounds = plainRecord(
+    geometry.bounds,
+    "renderer snapshot geometry.bounds",
+  );
+  const bounds = Object.freeze({
+    min: finiteVector(
+      geometryBounds.min,
+      3,
+      "renderer snapshot geometry.bounds.min",
+    ),
+    max: finiteVector(
+      geometryBounds.max,
+      3,
+      "renderer snapshot geometry.bounds.max",
+    ),
+  });
+  if (
+    bounds.min.some((minimum, axis) =>
+      minimum > bounds.max[axis]) ||
+    bounds.min.every((minimum, axis) =>
+      minimum === bounds.max[axis])
+  ) {
+    throw new RangeError("renderer snapshot bounds are invalid");
+  }
   if (!Array.isArray(value.layers)) {
     throw new TypeError("renderer snapshot layers must be a list");
   }
@@ -361,6 +406,14 @@ function validateMountInput(session, snapshot, limits) {
     snapshot: value,
     firstHandles,
     totalReadBytes,
+    presentation: Object.freeze({
+      coordinateSystem: Object.freeze({
+        storage: coordinateSystem.storage,
+        source: coordinateSystem.source,
+        sourceFromStorage,
+      }),
+      bounds,
+    }),
   };
 }
 
@@ -411,7 +464,12 @@ async function readRange(session, handle, limits, signal) {
   }
 }
 
-function buildMountPlan(snapshot, rangeResults, limits) {
+function buildMountPlan(
+  snapshot,
+  rangeResults,
+  limits,
+  presentation,
+) {
   const byGeometry = new Map();
   const ranges = rangeResults.map((result) => {
     for (const record of result.decoded.records) {
@@ -556,6 +614,7 @@ function buildMountPlan(snapshot, rangeResults, limits) {
       snapshotId: snapshot.snapshotId,
       layerId: snapshot.layerId,
     }),
+    presentation,
     ranges: Object.freeze(ranges),
     instances: Object.freeze(instances),
     metrics: Object.freeze({
@@ -770,6 +829,7 @@ export class Bounded3dRenderer {
         input.snapshot,
         rangeResults,
         this.limits,
+        input.presentation,
       );
       let backendResult;
       let backendMount;
@@ -860,3 +920,8 @@ export function createBounded3dRenderer(options) {
 export function createHeadless3dBackend() {
   return new Headless3dBackend();
 }
+
+export {
+  WebGl2Backend,
+  createWebGl2Backend,
+} from "./webgl2-backend.mjs";
