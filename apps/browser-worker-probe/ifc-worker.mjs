@@ -1,7 +1,7 @@
 import * as WebIFC from "/vendor/web-ifc-api.js";
 
-const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.3";
-const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.3";
+const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.4";
+const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.4";
 const PROGRESS_SCHEMA = "bim-explorer-browser-worker-progress/0.1";
 const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
 const SOURCE_KINDS = new Set([
@@ -58,6 +58,14 @@ function engineIdentity() {
   };
 }
 
+function wasmHeapCapacity(api) {
+  const value = api.wasmModule?.HEAPU8?.buffer?.byteLength;
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new Error("web-ifc WASM heap capacity is unavailable");
+  }
+  return value;
+}
+
 function validInspectRequest(request) {
   return (
     request?.schema === REQUEST_SCHEMA &&
@@ -104,6 +112,9 @@ async function inspectRequest(request, state) {
   let initialized = false;
   let modelId = null;
   let modelSchema = null;
+  let wasmHeapAfterInitialization = null;
+  let wasmHeapAfterInspection = null;
+  let wasmHeapAfterOpen = null;
   let report;
   let modelClosed = false;
   let engineDisposed = false;
@@ -118,6 +129,7 @@ async function inspectRequest(request, state) {
     api.SetWasmPath(new URL("/vendor/", self.location.origin).href, true);
     await api.Init(undefined, true);
     initialized = true;
+    wasmHeapAfterInitialization = wasmHeapCapacity(api);
     const initializationMs = performance.now() - initializationStarted;
     await checkpoint(state, "engine-initialized");
 
@@ -127,6 +139,7 @@ async function inspectRequest(request, state) {
     });
     const openMs = performance.now() - openStarted;
     modelSchema = api.GetModelSchema(modelId);
+    wasmHeapAfterOpen = wasmHeapCapacity(api);
     await checkpoint(state, "model-opened");
 
     const inspectionStarted = performance.now();
@@ -136,6 +149,7 @@ async function inspectRequest(request, state) {
     };
     const geometry = geometryCounts(api, modelId);
     const inspectionMs = performance.now() - inspectionStarted;
+    wasmHeapAfterInspection = wasmHeapCapacity(api);
     await checkpoint(state, "inspection-complete");
     report = {
       schema: RESULT_SCHEMA,
@@ -156,6 +170,19 @@ async function inspectRequest(request, state) {
         openMs,
         inspectionMs,
         totalMs: performance.now() - started,
+      },
+      resources: {
+        inputBytes: bytes.byteLength,
+        wasmHeapCapacityBytes: {
+          afterInitialization: wasmHeapAfterInitialization,
+          afterInspection: wasmHeapAfterInspection,
+          afterOpen: wasmHeapAfterOpen,
+          peakObserved: Math.max(
+            wasmHeapAfterInitialization,
+            wasmHeapAfterOpen,
+            wasmHeapAfterInspection,
+          ),
+        },
       },
       cleanup: {
         modelClosed: false,

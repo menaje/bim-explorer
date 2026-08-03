@@ -48,7 +48,15 @@
       "thirdPartyContent": false
     }
   ],
-  "performanceFixture": null,
+  "performanceFixture": {
+    "id": "synthetic-performance-1024-ifc4",
+    "status": "experimental",
+    "scope": "bounded-browser-scale-step",
+    "manifest": "fixtures/ifc/synthetic-performance/manifest.json",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "redistributionReleaseApproved": false
+  },
   "candidates": {
     "web-ifc": {
       "status": "experimental",
@@ -85,6 +93,7 @@
       "evidence": "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
       "lifecycleEvidence": "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
       "cancellationEvidence": "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
+      "performanceEvidence": "compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json",
       "productionPackaging": false
     }
   },
@@ -188,6 +197,7 @@
     "browserWorkerPrototype": true,
     "browserLocalFileLifecycle": true,
     "browserCheckpointCancellation": true,
+    "browserBoundedPerformance": true,
     "largeModelPerformance": false,
     "cancellation": false,
     "corruptInputCleanup": false,
@@ -201,13 +211,13 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "web-ifc-browser-bounded-performance",
+    "nextPrototype": "web-ifc-browser-redistributable-large-performance",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker, bounded local-file lifecycle and model-opened checkpoint cancellation prototypes. Production Browser packaging, large-model, in-call cancellation, negative cleanup and redistribution evidence is still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes the local Browser Worker, bounded local-file lifecycle, model-opened checkpoint cancellation and 1,024-wall bounded Browser performance prototypes. Representative large-model, production Browser packaging, in-call cancellation, negative cleanup and redistribution evidence is still missing."
   },
   "blockers": [
-    "No large redistributable performance fixture or resource budget",
+    "No representative redistributable large-model fixture or production resource budget; the current Browser budget covers only a 388KB generated scale step",
     "No synchronous in-call cancellation or corrupt-input cleanup conformance",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",

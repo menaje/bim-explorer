@@ -228,11 +228,184 @@ export function syntheticMappedIfc() {
   return lines.join("\n");
 }
 
+export const SYNTHETIC_PERFORMANCE_WALLS = 1_024;
+
+function stepReal(value) {
+  if (!Number.isSafeInteger(value)) {
+    throw new TypeError("synthetic STEP coordinate must be an integer");
+  }
+  return `${value}.`;
+}
+
+export function syntheticPerformanceIfc() {
+  const lines = [
+    "ISO-10303-21;",
+    "HEADER;",
+    "FILE_DESCRIPTION(('ViewDefinition [ReferenceView_V1.2]'),'2;1');",
+    "FILE_NAME('synthetic-performance.ifc','2026-08-03T00:00:00',('BIM Explorer'),(''),'BIM Explorer fixture generator','BIM Explorer','');",
+    "FILE_SCHEMA(('IFC4'));",
+    "ENDSEC;",
+    "DATA;",
+  ];
+  let nextEntityId = 1;
+  let nextGlobalId = 1_025;
+  const entity = (expression) => {
+    const id = nextEntityId;
+    nextEntityId += 1;
+    lines.push(`#${id}=${expression};`);
+    return id;
+  };
+  const guid = () => {
+    const value = assertGlobalId(globalId(nextGlobalId));
+    nextGlobalId += 1;
+    return value;
+  };
+
+  const person = entity("IFCPERSON($,$,'BIM Explorer',$,$,$,$,$)");
+  const organization = entity(
+    "IFCORGANIZATION($,'BIM Explorer',$,$,$)",
+  );
+  const personAndOrganization = entity(
+    `IFCPERSONANDORGANIZATION(#${person},#${organization},$)`,
+  );
+  const application = entity(
+    `IFCAPPLICATION(#${organization},'0.0.0',` +
+      "'BIM Explorer Fixture Generator','BIMEXPLORER')",
+  );
+  const ownerHistory = entity(
+    `IFCOWNERHISTORY(#${personAndOrganization},#${application},` +
+      "$,.ADDED.,$,$,$,1785715200)",
+  );
+  const lengthUnit = entity("IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.)");
+  const areaUnit = entity("IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.)");
+  const volumeUnit = entity("IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.)");
+  const units = entity(
+    `IFCUNITASSIGNMENT((#${lengthUnit},#${areaUnit},#${volumeUnit}))`,
+  );
+  const origin = entity("IFCCARTESIANPOINT((0.,0.,0.))");
+  const worldAxis = entity(`IFCAXIS2PLACEMENT3D(#${origin},$,$)`);
+  const context = entity(
+    `IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.E-05,` +
+      `#${worldAxis},$)`,
+  );
+  const project = entity(
+    `IFCPROJECT('${guid()}',#${ownerHistory},` +
+      "'Synthetic Performance Project',$,$,$,$," +
+      `(#${context}),#${units})`,
+  );
+  const sitePlacement = entity(`IFCLOCALPLACEMENT($,#${worldAxis})`);
+  const site = entity(
+    `IFCSITE('${guid()}',#${ownerHistory},'Synthetic Site',$,$,` +
+      `#${sitePlacement},$,$,.ELEMENT.,$,$,$,$,$)`,
+  );
+  const buildingPlacement = entity(
+    `IFCLOCALPLACEMENT(#${sitePlacement},#${worldAxis})`,
+  );
+  const building = entity(
+    `IFCBUILDING('${guid()}',#${ownerHistory},` +
+      "'Synthetic Performance Building',$,$," +
+      `#${buildingPlacement},$,$,.ELEMENT.,$,$,$)`,
+  );
+  const storeyPlacement = entity(
+    `IFCLOCALPLACEMENT(#${buildingPlacement},#${worldAxis})`,
+  );
+  const storey = entity(
+    `IFCBUILDINGSTOREY('${guid()}',#${ownerHistory},` +
+      "'Performance Level',$,$," +
+      `#${storeyPlacement},$,$,.ELEMENT.,0.)`,
+  );
+  const profileOrigin = entity("IFCCARTESIANPOINT((0.,0.))");
+  const profileAxis = entity(`IFCAXIS2PLACEMENT2D(#${profileOrigin},$)`);
+  const profile = entity(
+    `IFCRECTANGLEPROFILEDEF(.AREA.,'PerformanceWallProfile',` +
+      `#${profileAxis},4.,0.2)`,
+  );
+  const extrusionDirection = entity("IFCDIRECTION((0.,0.,1.))");
+  const extrusion = entity(
+    `IFCEXTRUDEDAREASOLID(#${profile},#${worldAxis},` +
+      `#${extrusionDirection},3.)`,
+  );
+  const mappedRepresentation = entity(
+    `IFCSHAPEREPRESENTATION(#${context},'Body','SweptSolid',` +
+      `(#${extrusion}))`,
+  );
+  const representationMap = entity(
+    `IFCREPRESENTATIONMAP(#${worldAxis},#${mappedRepresentation})`,
+  );
+  const mappingOrigin = entity("IFCCARTESIANPOINT((0.,0.,0.))");
+  const mappingTarget = entity(
+    `IFCCARTESIANTRANSFORMATIONOPERATOR3D($,$,#${mappingOrigin},1.,$)`,
+  );
+  const wallType = entity(
+    `IFCWALLTYPE('${guid()}',#${ownerHistory},` +
+      "'PerformanceWallType',$,$,$," +
+      `(#${representationMap}),$,$,.STANDARD.)`,
+  );
+  const wallIds = [];
+
+  for (let index = 0; index < SYNTHETIC_PERFORMANCE_WALLS; index += 1) {
+    const column = index % 32;
+    const row = Math.floor(index / 32);
+    const location = entity(
+      `IFCCARTESIANPOINT((${stepReal(column * 6)},` +
+        `${stepReal(row * 3)},0.))`,
+    );
+    const axis = entity(`IFCAXIS2PLACEMENT3D(#${location},$,$)`);
+    const placement = entity(
+      `IFCLOCALPLACEMENT(#${storeyPlacement},#${axis})`,
+    );
+    const mappedItem = entity(
+      `IFCMAPPEDITEM(#${representationMap},#${mappingTarget})`,
+    );
+    const shape = entity(
+      `IFCSHAPEREPRESENTATION(#${context},'Body',` +
+        `'MappedRepresentation',(#${mappedItem}))`,
+    );
+    const productShape = entity(
+      `IFCPRODUCTDEFINITIONSHAPE($,$,(#${shape}))`,
+    );
+    const sequence = String(index + 1).padStart(4, "0");
+    wallIds.push(entity(
+      `IFCWALL('${guid()}',#${ownerHistory},` +
+        `'Performance Wall-${sequence}',$,$,#${placement},` +
+        `#${productShape},'PW-${sequence}',.STANDARD.)`,
+    ));
+  }
+
+  entity(
+    `IFCRELAGGREGATES('${guid()}',#${ownerHistory},$,$,` +
+      `#${project},(#${site}))`,
+  );
+  entity(
+    `IFCRELAGGREGATES('${guid()}',#${ownerHistory},$,$,` +
+      `#${site},(#${building}))`,
+  );
+  entity(
+    `IFCRELAGGREGATES('${guid()}',#${ownerHistory},$,$,` +
+      `#${building},(#${storey}))`,
+  );
+  const relatedWalls = wallIds.map((id) => `#${id}`).join(",");
+  entity(
+    `IFCRELCONTAINEDINSPATIALSTRUCTURE('${guid()}',` +
+      `#${ownerHistory},$,$,(${relatedWalls}),#${storey})`,
+  );
+  entity(
+    `IFCRELDEFINESBYTYPE('${guid()}',#${ownerHistory},$,$,` +
+      `(${relatedWalls}),#${wallType})`,
+  );
+  lines.push(
+    "ENDSEC;",
+    "END-ISO-10303-21;",
+    "",
+  );
+  return lines.join("\n");
+}
+
 function outputArguments(values) {
   if (values.length % 2 !== 0) {
     throw new TypeError(
       "usage: node scripts/generate-synthetic-ifc.mjs " +
-        "[--fixture small|mapped] --output <path>",
+        "[--fixture small|mapped|performance] --output <path>",
     );
   }
   const options = {
@@ -242,7 +415,10 @@ function outputArguments(values) {
   for (let index = 0; index < values.length; index += 2) {
     const name = values[index];
     const value = values[index + 1];
-    if (name === "--fixture" && ["small", "mapped"].includes(value)) {
+    if (
+      name === "--fixture" &&
+      ["small", "mapped", "performance"].includes(value)
+    ) {
       options.fixture = value;
     } else if (name === "--output" && value) {
       options.output = path.resolve(value);
@@ -264,7 +440,11 @@ if (
   await mkdir(path.dirname(options.output), { recursive: true });
   await writeFile(
     options.output,
-    options.fixture === "mapped" ? syntheticMappedIfc() : syntheticIfc(),
+    options.fixture === "mapped"
+      ? syntheticMappedIfc()
+      : options.fixture === "performance"
+        ? syntheticPerformanceIfc()
+        : syntheticIfc(),
     {
       encoding: "utf8",
       flag: "wx",

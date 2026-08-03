@@ -1,7 +1,7 @@
 export const BROWSER_WORKER_REQUEST_SCHEMA =
-  "bim-explorer-browser-worker-request/0.3";
+  "bim-explorer-browser-worker-request/0.4";
 export const BROWSER_WORKER_RESULT_SCHEMA =
-  "bim-explorer-browser-worker-result/0.3";
+  "bim-explorer-browser-worker-result/0.4";
 export const BROWSER_WORKER_PROGRESS_SCHEMA =
   "bim-explorer-browser-worker-progress/0.1";
 export const BROWSER_WORKER_PHASES = Object.freeze([
@@ -67,6 +67,16 @@ function nonNegativeInteger(value, label) {
   }
 }
 
+function nonNegativeNumber(value, label) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new TypeError(`${label} must be a non-negative finite number`);
+  }
+}
+
 export function validateBrowserSourceDescriptor(sourceKind, sourceId) {
   if (!SOURCE_KINDS.has(sourceKind) || !SOURCE_ID.test(sourceId)) {
     throw new TypeError("invalid Browser Worker source descriptor");
@@ -116,6 +126,37 @@ export function validateBrowserWorkerReport(
     triangles: value.geometry?.triangles,
   })) {
     nonNegativeInteger(count, label);
+  }
+  for (const [label, measurement] of Object.entries({
+    initializationMs: value.performance?.initializationMs,
+    inspectionMs: value.performance?.inspectionMs,
+    openMs: value.performance?.openMs,
+    totalMs: value.performance?.totalMs,
+  })) {
+    nonNegativeNumber(measurement, label);
+  }
+  const heap = value.resources?.wasmHeapCapacityBytes;
+  for (const [label, capacity] of Object.entries({
+    afterInitialization: heap?.afterInitialization,
+    afterInspection: heap?.afterInspection,
+    afterOpen: heap?.afterOpen,
+    peakObserved: heap?.peakObserved,
+  })) {
+    if (!Number.isSafeInteger(capacity) || capacity <= 0) {
+      throw new TypeError(`${label} must be a positive safe integer`);
+    }
+  }
+  if (
+    value.resources?.inputBytes !== byteLength ||
+    heap.afterInitialization > heap.afterOpen ||
+    heap.afterOpen > heap.afterInspection ||
+    heap.peakObserved !== Math.max(
+      heap.afterInitialization,
+      heap.afterOpen,
+      heap.afterInspection,
+    )
+  ) {
+    throw new Error("Browser Worker resource observation is invalid");
   }
   if (
     value.cleanup?.modelClosed !== true ||

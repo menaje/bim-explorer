@@ -23,6 +23,7 @@ last_reviewed: 2026-08-03
 | BE-F-007 | web-ifc 0.0.77 single-thread WASM은 local Chromium module Worker에서 base fixture의 IFC4, 1 Project, 1 Wall과 12 triangles를 재현하고 model close·engine dispose 뒤 Worker 종료를 요청했다. | [Browser Worker smoke](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json) | 한 번의 loopback small-fixture 관찰이며 real file lifecycle, large/cancel/negative input, clean package와 VS Code를 검증하지 않음 |
 | BE-F-008 | 실제 Browser file chooser로 repository-generated mapped IFC를 선택해 IFC4, 1 Project, 2 Walls와 24 triangles를 재현했다. 64 MiB size-before-read, 파일명 비전송, source 교체·stale 억제·cancel·terminal dispose 계약도 통과했다. | [Browser local-file lifecycle](../compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json) | active 교체와 취소는 client conformance이며 engine-cooperative cancellation, negative/large model과 production package를 검증하지 않음 |
 | BE-F-009 | 실제 local Chromium에서 유효한 generated IFC4를 연 뒤 `model-opened` checkpoint 취소가 model close·engine dispose 영수증을 반환했고, 이어진 새 Worker parse도 통과했다. | [Browser checkpoint cancellation](../compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json) | 2.9KB fixture의 adapter checkpoint 관찰이며 실행 중 동기 engine 호출의 선점, negative/large model과 production package를 검증하지 않음 |
+| BE-F-010 | 실제 local Chromium에서 388,316-byte generated IFC4의 1,024 Walls·1,024 products·12,288 triangles를 Worker total 48.3ms, wall clock 149.7ms, 관찰 WASM heap capacity 139,788,288 bytes로 처리하고 cleanup·후속 작은 fixture 복구를 확인했다. | [Browser bounded performance](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json) | 한 번의 synthetic scale-step 관찰이며 대표 대형 모델, live/peak process·GPU memory, first frame, redistribution과 package를 검증하지 않음 |
 
 ## 적용 결정
 
@@ -39,7 +40,7 @@ last_reviewed: 2026-08-03
 | ID | 상태 | 질문 | 현재 처리 | 결정 Gate |
 | --- | --- | --- | --- | --- |
 | BE-Q-001 | held | 첫 public Viewer Core package와 neutral namespace는 무엇인가 | upstream `@dwg-viewer/*`를 external compatibility로 주장하지 않음 | durable artifact, 3D consumer와 cross-repository CI |
-| BE-Q-002 | held | 첫 IFC engine과 implementation profile은 무엇인가 | 두 후보의 base/mapped fixture와 web-ifc Browser Worker·local-file·checkpoint cancellation prototype은 통과했지만 선정은 보류 | #4 large/negative corpus, in-call engine cancellation, Browser package와 license qualification |
+| BE-Q-002 | held | 첫 IFC engine과 implementation profile은 무엇인가 | 두 후보의 base/mapped fixture와 web-ifc Browser Worker·local-file·checkpoint cancellation·bounded performance prototype은 통과했지만 선정은 보류 | #4 representative large/negative corpus, in-call engine cancellation, Browser package와 license qualification |
 | BE-Q-003 | held | BIM Explorer와 public protocol의 최종 라이선스는 무엇인가 | MPL-2.0/Apache-2.0 후보, root는 UNLICENSED | dependency 결합·redistribution·법률 검토 |
 | BE-Q-004 | held | Browser와 Desktop의 첫 3D GPU backend는 무엇인가 | renderer contract와 task corpus를 먼저 고정 | #6 prototype과 memory/disposal benchmark |
 | BE-Q-005 | held | optional Spatial handoff payload의 first version은 무엇인가 | source fingerprint/native identity/viewpoint 최소 원칙만 유지 | #9 threat model과 end-to-end fixture |

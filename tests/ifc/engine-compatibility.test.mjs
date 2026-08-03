@@ -32,12 +32,19 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const browserPerformanceEvidence = JSON.parse(
+    await readFile(
+      manifest.prototypes.webIfcBrowserWorker.performanceEvidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   };
 }
 
@@ -48,6 +55,7 @@ test("IFC engine compatibility remains experimental and held", async () => {
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   const result = validateIfcEngineCompatibility(
     manifest,
@@ -55,6 +63,7 @@ test("IFC engine compatibility remains experimental and held", async () => {
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   );
   assert.equal(result.status, "experimental");
   assert.equal(result.candidates, 2);
@@ -63,6 +72,8 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.browserWorkerPrototype, true);
   assert.equal(manifest.gates.browserLocalFileLifecycle, true);
   assert.equal(manifest.gates.browserCheckpointCancellation, true);
+  assert.equal(manifest.gates.browserBoundedPerformance, true);
+  assert.equal(manifest.gates.largeModelPerformance, false);
   assert.equal(manifest.gates.cancellation, false);
   assert.equal(manifest.gates.browserPackaging, false);
 });
@@ -74,6 +85,7 @@ test("IFC engine compatibility rejects an unmeasured pin", async () => {
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   manifest.candidates["web-ifc"].version = "99.0.0";
   assert.throws(
@@ -83,6 +95,7 @@ test("IFC engine compatibility rejects an unmeasured pin", async () => {
       browserWorkerEvidence,
       browserLifecycleEvidence,
       browserCancellationEvidence,
+      browserPerformanceEvidence,
     ),
     /pin changed without new evidence/u,
   );
@@ -95,6 +108,7 @@ test("IFC engine compatibility rejects production claims", async () => {
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   manifest.decision.productionClaims = true;
   assert.throws(
@@ -104,6 +118,7 @@ test("IFC engine compatibility rejects production claims", async () => {
       browserWorkerEvidence,
       browserLifecycleEvidence,
       browserCancellationEvidence,
+      browserPerformanceEvidence,
     ),
     /must fail closed/u,
   );
@@ -116,6 +131,7 @@ test("Browser Worker smoke cannot promote Browser packaging", async () => {
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   browserWorkerEvidence.decision.browserPackaging = "passed";
   assert.throws(
@@ -125,6 +141,7 @@ test("Browser Worker smoke cannot promote Browser packaging", async () => {
       browserWorkerEvidence,
       browserLifecycleEvidence,
       browserCancellationEvidence,
+      browserPerformanceEvidence,
     ),
     /incomplete or overclaims/u,
   );
@@ -137,6 +154,7 @@ test("Browser local-file lifecycle cannot promote engine cancellation", async ()
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   browserLifecycleEvidence.decision.engineCancellation = "passed";
   assert.throws(
@@ -146,6 +164,7 @@ test("Browser local-file lifecycle cannot promote engine cancellation", async ()
       browserWorkerEvidence,
       browserLifecycleEvidence,
       browserCancellationEvidence,
+      browserPerformanceEvidence,
     ),
     /incomplete or overclaims/u,
   );
@@ -158,6 +177,7 @@ test("Browser checkpoint cancellation cannot promote in-call cancellation", asyn
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   } = await fixtures();
   browserCancellationEvidence.decision.engineInCallCancellation = "passed";
   assert.throws(
@@ -167,7 +187,56 @@ test("Browser checkpoint cancellation cannot promote in-call cancellation", asyn
       browserWorkerEvidence,
       browserLifecycleEvidence,
       browserCancellationEvidence,
+      browserPerformanceEvidence,
     ),
     /overclaims engine support/u,
+  );
+});
+
+test("Browser bounded performance cannot promote large-model support", async () => {
+  const {
+    manifest,
+    evidence,
+    browserWorkerEvidence,
+    browserLifecycleEvidence,
+    browserCancellationEvidence,
+    browserPerformanceEvidence,
+  } = await fixtures();
+  browserPerformanceEvidence.decision.largeModelPerformance = "passed";
+  assert.throws(
+    () => validateIfcEngineCompatibility(
+      manifest,
+      evidence,
+      browserWorkerEvidence,
+      browserLifecycleEvidence,
+      browserCancellationEvidence,
+      browserPerformanceEvidence,
+    ),
+    /overclaims production support/u,
+  );
+});
+
+test("Browser bounded performance evidence fails above its budget", async () => {
+  const {
+    manifest,
+    evidence,
+    browserWorkerEvidence,
+    browserLifecycleEvidence,
+    browserCancellationEvidence,
+    browserPerformanceEvidence,
+  } = await fixtures();
+  browserPerformanceEvidence.observation.resources
+    .wasmHeapCapacityBytes.peakObserved =
+      browserPerformanceEvidence.budget.maxWasmHeapCapacityBytes + 1;
+  assert.throws(
+    () => validateIfcEngineCompatibility(
+      manifest,
+      evidence,
+      browserWorkerEvidence,
+      browserLifecycleEvidence,
+      browserCancellationEvidence,
+      browserPerformanceEvidence,
+    ),
+    /WASM heap observation is invalid/u,
   );
 });

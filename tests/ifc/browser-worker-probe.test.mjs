@@ -11,12 +11,20 @@ import {
   inspectIfcInBrowserWorker,
 } from "../../apps/browser-worker-probe/worker-client.mjs";
 import {
+  BROWSER_PERFORMANCE_BUDGET,
+  BROWSER_PERFORMANCE_FIXTURE,
+  assessBrowserPerformanceResult,
+} from "../../apps/browser-worker-probe/performance-budget.mjs";
+import {
   BrowserIfcSourceSession,
   BrowserSourceSessionError,
 } from "../../apps/browser-worker-probe/source-session.mjs";
 import { createBrowserWorkerProbeServer } from
   "../../scripts/serve-browser-worker-probe.mjs";
-import { syntheticIfc } from "../../scripts/generate-synthetic-ifc.mjs";
+import {
+  syntheticIfc,
+  syntheticPerformanceIfc,
+} from "../../scripts/generate-synthetic-ifc.mjs";
 
 function report(requestId, byteLength, source) {
   return {
@@ -45,7 +53,19 @@ function report(requestId, byteLength, source) {
       triangles: 12,
     },
     performance: {
+      initializationMs: 1,
+      inspectionMs: 1,
+      openMs: 1,
       totalMs: 1,
+    },
+    resources: {
+      inputBytes: byteLength,
+      wasmHeapCapacityBytes: {
+        afterInitialization: 16 * 1024 * 1024,
+        afterInspection: 128 * 1024 * 1024,
+        afterOpen: 128 * 1024 * 1024,
+        peakObserved: 128 * 1024 * 1024,
+      },
     },
     cleanup: {
       modelClosed: true,
@@ -123,6 +143,7 @@ class FakeWorker {
       this.request = message;
       if (
         this.action === "success" ||
+        this.action === "invalid-resource" ||
         this.action === "cooperative-cancel"
       ) {
         this.phaseIndex = 0;
@@ -151,7 +172,10 @@ class FakeWorker {
     }
     if (
       message.type === "continue" &&
-      this.action === "success"
+      (
+        this.action === "success" ||
+        this.action === "invalid-resource"
+      )
     ) {
       if (this.phaseIndex < BROWSER_WORKER_PHASES.length - 1) {
         this.phaseIndex += 1;
@@ -166,12 +190,16 @@ class FakeWorker {
         return;
       }
       queueMicrotask(() => {
+        const completed = report(
+          message.requestId,
+          this.request.bytes.byteLength,
+          this.request.source,
+        );
+        if (this.action === "invalid-resource") {
+          completed.resources.inputBytes += 1;
+        }
         this.emit("message", {
-          data: report(
-            message.requestId,
-            this.request.bytes.byteLength,
-            this.request.source,
-          ),
+          data: completed,
         });
       });
       return;
@@ -356,6 +384,59 @@ test("Browser Worker rejects out-of-order progress", async () => {
       return true;
     },
   );
+});
+
+test("Browser Worker rejects an invalid resource receipt", async () => {
+  const worker = new FakeWorker("invalid-resource");
+  await assert.rejects(
+    inspectIfcInBrowserWorker(new Uint8Array([1]).buffer, {
+      workerFactory: () => worker,
+    }),
+    (error) => {
+      assert.ok(error instanceof BrowserWorkerError);
+      assert.equal(error.receipt.outcome, "invalid-report");
+      assert.equal(worker.terminated, true);
+      return true;
+    },
+  );
+});
+
+test("Browser performance budget accepts the bounded fixture only", () => {
+  const performanceReport = report(
+    "performance-request",
+    BROWSER_PERFORMANCE_FIXTURE.byteLength,
+    {
+      id: BROWSER_PERFORMANCE_FIXTURE.id,
+      kind: "synthetic",
+    },
+  );
+  Object.assign(performanceReport.source, {
+    sha256: BROWSER_PERFORMANCE_FIXTURE.sha256,
+  });
+  Object.assign(performanceReport.semantics, {
+    projects: BROWSER_PERFORMANCE_FIXTURE.projects,
+    walls: BROWSER_PERFORMANCE_FIXTURE.walls,
+  });
+  Object.assign(performanceReport.geometry, {
+    products: BROWSER_PERFORMANCE_FIXTURE.products,
+    triangles: BROWSER_PERFORMANCE_FIXTURE.triangles,
+  });
+  const result = {
+    report: performanceReport,
+    receipt: {
+      outcome: "completed",
+      wallClockMs: 100,
+    },
+  };
+  assert.equal(assessBrowserPerformanceResult(result).passed, true);
+
+  performanceReport.resources.wasmHeapCapacityBytes.peakObserved =
+    BROWSER_PERFORMANCE_BUDGET.maxWasmHeapCapacityBytes + 1;
+  const assessment = assessBrowserPerformanceResult(result);
+  assert.equal(assessment.passed, false);
+  assert.deepEqual(assessment.violations, [
+    "wasm-heap-capacity",
+  ]);
 });
 
 test("Browser source session replaces an active source without stale output", async () => {
@@ -615,6 +696,7 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   const pageHtml = await page.text();
   assert.match(pageHtml, /Run synthetic IFC probe/u);
   assert.match(pageHtml, /Run cancellation probe/u);
+  assert.match(pageHtml, /Run performance probe/u);
   assert.match(pageHtml, /Open local IFC/u);
 
   const fixture = await fetch(`${origin}/fixture/synthetic-small.ifc`);
@@ -624,6 +706,24 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   assert.equal(
     createHash("sha256").update(bytes).digest("hex"),
     createHash("sha256").update(expected).digest("hex"),
+  );
+  const performanceFixture = await fetch(
+    `${origin}/fixture/synthetic-performance.ifc`,
+  );
+  const performanceBytes = Buffer.from(
+    await performanceFixture.arrayBuffer(),
+  );
+  assert.equal(
+    performanceBytes.byteLength,
+    BROWSER_PERFORMANCE_FIXTURE.byteLength,
+  );
+  assert.equal(
+    createHash("sha256").update(performanceBytes).digest("hex"),
+    BROWSER_PERFORMANCE_FIXTURE.sha256,
+  );
+  assert.equal(
+    performanceBytes.toString("utf8"),
+    syntheticPerformanceIfc(),
   );
 
   const moduleHead = await fetch(`${origin}/vendor/web-ifc-api.js`, {
@@ -635,6 +735,12 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   assert.equal(moduleHead.status, 200);
   assert.equal(
     (await fetch(`${origin}/source-session.mjs`, {
+      method: "HEAD",
+    })).status,
+    200,
+  );
+  assert.equal(
+    (await fetch(`${origin}/performance-budget.mjs`, {
       method: "HEAD",
     })).status,
     200,

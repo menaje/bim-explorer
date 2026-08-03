@@ -59,7 +59,9 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
     typeof prototype.lifecycleEvidence !== "string" ||
     prototype.lifecycleEvidence.length === 0 ||
     typeof prototype.cancellationEvidence !== "string" ||
-    prototype.cancellationEvidence.length === 0
+    prototype.cancellationEvidence.length === 0 ||
+    typeof prototype.performanceEvidence !== "string" ||
+    prototype.performanceEvidence.length === 0
   ) {
     throw new Error("Browser Worker prototype must remain experimental");
   }
@@ -334,12 +336,213 @@ function validateBrowserCheckpointCancellation(manifest, evidence) {
   }
 }
 
+function validateBrowserBoundedPerformance(manifest, evidence) {
+  const requiredConformance = [
+    "deterministicGeneratedFixture",
+    "fixtureIdentityVerified",
+    "orderedProgress",
+    "budgetEnforced",
+    "wasmHeapCapacityObserved",
+    "workerCleanup",
+    "postPerformanceRecovery",
+    "pathFreeReceipt",
+  ];
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  const performanceFixture = plainRecord(
+    manifest.performanceFixture,
+    "performanceFixture",
+  );
+  plainRecord(evidence, "Browser bounded performance evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-browser-bounded-performance-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.4" ||
+    evidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.4" ||
+    evidence.contract?.progressSchema !==
+      "bim-explorer-browser-worker-progress/0.1" ||
+    evidence.engine?.id !== "web-ifc" ||
+    evidence.engine?.version !== manifest.candidates["web-ifc"].version ||
+    evidence.engine?.backend !== prototype.backend ||
+    evidence.engine?.license !== manifest.candidates["web-ifc"].license
+  ) {
+    throw new Error("Browser bounded performance identity mismatch");
+  }
+  if (
+    performanceFixture.id !== "synthetic-performance-1024-ifc4" ||
+    performanceFixture.status !== "experimental" ||
+    performanceFixture.scope !== "bounded-browser-scale-step" ||
+    performanceFixture.manifest !==
+      "fixtures/ifc/synthetic-performance/manifest.json" ||
+    performanceFixture.artifactCommitted !== false ||
+    performanceFixture.thirdPartyContent !== false ||
+    performanceFixture.redistributionReleaseApproved !== false ||
+    evidence.fixture?.id !== performanceFixture.id ||
+    evidence.fixture?.manifest !== performanceFixture.manifest ||
+    evidence.fixture?.byteLength !== 388316 ||
+    evidence.fixture?.sha256 !==
+      "45bafaeb7aac9a5a15f5996598977c662c2add4bf0123106b0ac20457daa78d3" ||
+    evidence.fixture?.schema !== "IFC4" ||
+    evidence.fixture?.walls !== 1024 ||
+    evidence.fixture?.repositoryGenerated !== true ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.thirdPartyContent !== false ||
+    evidence.fixture?.redistributionReleaseApproved !== false
+  ) {
+    throw new Error("Browser bounded performance fixture mismatch");
+  }
+  const expectedBudget = {
+    timeoutMs: 15_000,
+    maxInitializationMs: 3_000,
+    maxOpenMs: 3_000,
+    maxInspectionMs: 5_000,
+    maxTotalMs: 8_000,
+    maxWallClockMs: 10_000,
+    maxWasmHeapCapacityBytes: 256 * 1024 * 1024,
+  };
+  if (
+    JSON.stringify(evidence.budget) !==
+      JSON.stringify(expectedBudget)
+  ) {
+    throw new Error("Browser bounded performance budget mismatch");
+  }
+  const observation = plainRecord(
+    evidence.observation,
+    "Browser bounded performance observation",
+  );
+  if (
+    observation.source?.id !== performanceFixture.id ||
+    observation.source?.kind !== "synthetic" ||
+    observation.source?.byteLength !== 388316 ||
+    observation.source?.sha256 !==
+      "45bafaeb7aac9a5a15f5996598977c662c2add4bf0123106b0ac20457daa78d3" ||
+    observation.source?.schema !== "IFC4" ||
+    observation.semantics?.projects !== 1 ||
+    observation.semantics?.walls !== 1024 ||
+    observation.geometry?.products !== 1024 ||
+    observation.geometry?.triangles !== 12288 ||
+    observation.resources?.inputBytes !== 388316 ||
+    observation.cleanup?.modelClosed !== true ||
+    observation.cleanup?.engineDisposed !== true ||
+    observation.worker?.outcome !== "completed" ||
+    observation.worker?.lastPhase !== "inspection-complete" ||
+    observation.worker?.workerTerminationRequested !== true ||
+    observation.sourceSession?.outcome !== "completed" ||
+    observation.sourceSession?.workerStarted !== true ||
+    observation.sourceSession?.cancelled !== false ||
+    observation.sourceSession?.disposed !== false
+  ) {
+    throw new Error("Browser bounded performance observation is incomplete");
+  }
+  for (const [field, maximum] of Object.entries({
+    initializationMs: expectedBudget.maxInitializationMs,
+    openMs: expectedBudget.maxOpenMs,
+    inspectionMs: expectedBudget.maxInspectionMs,
+    totalMs: expectedBudget.maxTotalMs,
+  })) {
+    const value = observation.performance?.[field];
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value < 0 ||
+      value > maximum
+    ) {
+      throw new Error(`Browser bounded performance ${field} exceeded`);
+    }
+  }
+  for (const [value, maximum, label] of [
+    [
+      observation.worker?.wallClockMs,
+      expectedBudget.maxWallClockMs,
+      "worker wall clock",
+    ],
+    [
+      observation.sourceSession?.wallClockMs,
+      expectedBudget.maxWallClockMs,
+      "source-session wall clock",
+    ],
+  ]) {
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value <= 0 ||
+      value > maximum
+    ) {
+      throw new Error(`Browser bounded performance ${label} exceeded`);
+    }
+  }
+  const heap = observation.resources?.wasmHeapCapacityBytes;
+  if (
+    !Number.isSafeInteger(heap?.afterInitialization) ||
+    !Number.isSafeInteger(heap?.afterOpen) ||
+    !Number.isSafeInteger(heap?.afterInspection) ||
+    !Number.isSafeInteger(heap?.peakObserved) ||
+    heap.afterInitialization <= 0 ||
+    heap.afterInitialization > heap.afterOpen ||
+    heap.afterOpen > heap.afterInspection ||
+    heap.peakObserved !== Math.max(
+      heap.afterInitialization,
+      heap.afterOpen,
+      heap.afterInspection,
+    ) ||
+    heap.peakObserved > expectedBudget.maxWasmHeapCapacityBytes
+  ) {
+    throw new Error(
+      "Browser bounded performance WASM heap observation is invalid",
+    );
+  }
+  if (
+    evidence.recoveryObservation?.sourceId !== "synthetic-small-ifc4" ||
+    evidence.recoveryObservation?.byteLength !== 2855 ||
+    evidence.recoveryObservation?.sha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    evidence.recoveryObservation?.fixtureAssertionsPassed !== true ||
+    evidence.recoveryObservation?.cleanup?.modelClosed !== true ||
+    evidence.recoveryObservation?.cleanup?.engineDisposed !== true ||
+    evidence.recoveryObservation?.workerTerminationRequested !== true ||
+    evidence.diagnostics?.consoleWarnings !== 0 ||
+    evidence.diagnostics?.consoleErrors !== 0
+  ) {
+    throw new Error("Browser post-performance recovery is incomplete");
+  }
+  for (const gate of requiredConformance) {
+    if (evidence.conformance?.[gate] !== true) {
+      throw new Error(
+        `Browser bounded performance ${gate} did not pass`,
+      );
+    }
+  }
+  if (
+    Object.keys(evidence.conformance ?? {}).length !==
+      requiredConformance.length ||
+    evidence.decision?.browserBoundedPerformance !== "passed" ||
+    evidence.decision?.largeModelPerformance !== "blocked" ||
+    evidence.decision?.peakProcessMemory !== "blocked" ||
+    evidence.decision?.gpuMemory !== "blocked" ||
+    evidence.decision?.browserPackaging !== "blocked" ||
+    evidence.decision?.redistributionRelease !== "blocked" ||
+    evidence.decision?.productionClaims !== false ||
+    !Array.isArray(evidence.limits) ||
+    evidence.limits.length < 5
+  ) {
+    throw new Error(
+      "Browser bounded performance overclaims production support",
+    );
+  }
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
   browserWorkerEvidence,
   browserLifecycleEvidence,
   browserCancellationEvidence,
+  browserPerformanceEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -429,6 +632,8 @@ export function validateIfcEngineCompatibility(
     gates.browserWorkerPrototype !== true ||
     gates.browserLocalFileLifecycle !== true ||
     gates.browserCheckpointCancellation !== true ||
+    gates.browserBoundedPerformance !== true ||
+    gates.largeModelPerformance !== false ||
     gates.cancellation !== false ||
     gates.corruptInputCleanup !== false ||
     gates.browserPackaging !== false
@@ -440,6 +645,10 @@ export function validateIfcEngineCompatibility(
   validateBrowserCheckpointCancellation(
     manifest,
     browserCancellationEvidence,
+  );
+  validateBrowserBoundedPerformance(
+    manifest,
+    browserPerformanceEvidence,
   );
 
   if (
@@ -583,12 +792,22 @@ async function main() {
       "utf8",
     ),
   );
+  const browserPerformanceEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.prototypes.webIfcBrowserWorker.performanceEvidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
     browserWorkerEvidence,
     browserLifecycleEvidence,
     browserCancellationEvidence,
+    browserPerformanceEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

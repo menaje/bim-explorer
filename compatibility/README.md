@@ -27,9 +27,11 @@ client lifecycle 결과는
 기록합니다. 유효한 IFC가 열린 뒤 checkpoint에서 취소하고 model close와
 engine dispose를 확인한 결과는
 [`checkpoint cancellation evidence`](evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json)에
-기록합니다. 모두 prototype 결과입니다. checkpoint 사이에서 실행 중인
-동기 engine 호출의 선점, 손상 입력 cleanup 또는 `packagingBrowser`
-capability를 승격하지 않습니다.
+기록합니다. generated 1,024-Wall fixture의 시간·WASM heap-capacity 예산은
+[`bounded performance evidence`](evidence/web-ifc-browser-bounded-performance-2026-08-03.json)에
+기록합니다. 모두 prototype 결과입니다. 대표 대형 모델, live/peak
+process·GPU memory, checkpoint 사이에서 실행 중인 동기 engine 호출의 선점,
+손상 입력 cleanup 또는 `packagingBrowser` capability를 승격하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

@@ -9,8 +9,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 현재 상태: architecture와 첫 IFC engine qualification spike 단계입니다.
 > 두 후보는 base·mapped synthetic fixture를 통과했고 web-ifc local Browser
 > Worker smoke, bounded local-file/source-session과 model-opened checkpoint
-> 취소·정리 prototype도 통과했지만 engine, public package와 지원 profile은
-> 아직 확정되지 않았습니다.
+> 취소·정리, 1,024-Wall bounded performance prototype도 통과했지만 engine,
+> public package와 지원 profile은 아직 확정되지 않았습니다.
 
 ## 첫 사용자 흐름
 

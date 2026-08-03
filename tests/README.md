@@ -13,9 +13,9 @@
 실제 고객 BIM과 redistribution 권한이 불분명한 파일은 test fixture로
 추적하지 않습니다.
 
-IFC fixture artifact는
-`node scripts/generate-synthetic-ifc.mjs --output <temporary.ifc>`로
-생성합니다. `.ifc`는 Git에 추적하지 않습니다.
+IFC fixture artifact는 `node scripts/generate-synthetic-ifc.mjs --fixture
+small|mapped|performance --output <temporary.ifc>`로 생성합니다. `.ifc`는
+Git에 추적하지 않습니다.
 
 기본 `npm test`는 exact `web-ifc` Node/WASM adapter와 child-process harness를
 실행합니다. child-process harness는 mapped/shared representation, Qto와
@@ -33,5 +33,8 @@ model-opened cooperative cleanup과 응답 없는 취소의 bounded 강제 종�
 검사합니다. source-session test는 size-before-read admission, 파일명 비노출,
 active source 교체, stale 결과 억제, 중첩 cancellation receipt와 terminal
 disposal을 검사합니다. 실제 Chromium ESM/WASM, file chooser와 checkpoint
-취소 관찰은 별도 evidence로 기록합니다. 실행 중인 동기 engine 호출의 선점,
-손상 입력 cleanup과 production Browser packaging Gate는 계속 분리합니다.
+취소, 1,024-Wall bounded performance 관찰은 별도 evidence로 기록합니다.
+성능 test는 fixture identity, 시간 budget, WASM heap capacity와 cleanup을
+fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engine 호출의
+선점, 손상 입력 cleanup과 production Browser packaging Gate는 계속
+분리합니다.

@@ -40,6 +40,12 @@ bounded grace를 두고, 유효한 IFC의 `model-opened` 취소에서 model clos
 engine dispose를 확인했습니다. 이는 공통 candidate matrix의 cancellation
 capability나 실행 중 동기 engine 호출의 선점을 승인하지 않습니다.
 
+Browser Worker result `0.4` prototype은 init/open/inspection/total 시간과
+init/open/inspection 뒤 WASM linear-memory capacity를 별도 `resources`
+영수증으로 기록합니다. generated 1,024-Wall fixture의 budget 통과는 bounded
+scale-step 증거이며 공통 report의 large-model, process peak memory나 GPU
+capability를 승인하지 않습니다.
+
 ## Report
 
 필수 top-level field:

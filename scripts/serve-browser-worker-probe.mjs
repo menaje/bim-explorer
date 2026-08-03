@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { syntheticIfc } from "./generate-synthetic-ifc.mjs";
+import {
+  syntheticIfc,
+  syntheticPerformanceIfc,
+} from "./generate-synthetic-ifc.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const APP = path.join(ROOT, "apps", "browser-worker-probe");
@@ -22,6 +25,10 @@ const ROUTES = new Map([
   }],
   ["/source-session.mjs", {
     file: path.join(APP, "source-session.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
+  ["/performance-budget.mjs", {
+    file: path.join(APP, "performance-budget.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
   ["/ifc-worker.mjs", {
@@ -68,6 +75,12 @@ async function responseFor(pathname) {
   if (pathname === "/fixture/synthetic-small.ifc") {
     return {
       body: Buffer.from(syntheticIfc(), "utf8"),
+      type: "model/vnd.ifc",
+    };
+  }
+  if (pathname === "/fixture/synthetic-performance.ifc") {
+    return {
+      body: Buffer.from(syntheticPerformanceIfc(), "utf8"),
       type: "model/vnd.ifc",
     };
   }

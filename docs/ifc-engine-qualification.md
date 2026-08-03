@@ -21,11 +21,12 @@ go/no-go는 보류합니다.
 `web-ifc`는 local Chromium module Worker에서 single-thread WASM으로 base
 fixture를 읽는 첫 smoke와 실제 file chooser를 통한 bounded local-file
 lifecycle, 유효한 IFC가 열린 뒤 checkpoint 취소·정리 prototype을
-통과했습니다. JavaScript/WASM 경로를 Browser와 VS Code surface에서 공유할
-가능성을 확인한 것이며 선정 결정은 아닙니다. Browser packaging, large
-model memory, 실행 중 동기 engine 호출의 취소와 negative-input cleanup을
-통과하지 못하면 IfcOpenShell native process를 desktop fallback으로
-재평가합니다.
+통과했습니다. 1,024-Wall generated fixture의 bounded Browser 시간·WASM
+heap-capacity budget도 통과했습니다. JavaScript/WASM 경로를 Browser와 VS
+Code surface에서 공유할 가능성을 확인한 것이며 선정 결정은 아닙니다.
+Browser packaging, representative large-model CPU/GPU memory, 실행 중 동기
+engine 호출의 취소와 negative-input cleanup을 통과하지 못하면
+IfcOpenShell native process를 desktop fallback으로 재평가합니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -35,7 +36,8 @@ model memory, 실행 중 동기 engine 호출의 취소와 negative-input cleanu
 Browser 관찰값은
 [`Worker smoke`](../compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json)와
 [`local-file lifecycle`](../compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json),
-[`checkpoint cancellation`](../compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json)이
+[`checkpoint cancellation`](../compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json),
+[`bounded performance`](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -87,7 +89,7 @@ child process wall clock은 양쪽 모두 약 192–226ms였습니다. 이는 2.
 영향과 실제 첫 화면을 대표하지 않으므로 성능 우열이나 production budget
 근거로 사용하지 않습니다.
 
-## Browser Worker, local-file과 checkpoint cancellation
+## Browser Worker, local-file, cancellation과 bounded performance
 
 loopback-only 진단 surface는 exact `web-ifc@0.0.77` ESM과
 `web-ifc.wasm`을 dedicated module Worker에서 single-thread로
@@ -112,12 +114,23 @@ Worker는 model close와 engine dispose를 수행한 뒤
 않는 Worker는 강제 종료하며, 취소 뒤 새 Worker로 같은 fixture를 정상
 처리했습니다. 두 실행 모두 콘솔 warning/error가 없었습니다.
 
-이는 작은 fixture의 local checkpoint prototype입니다. 64 MiB admission은
-전체 WASM/GPU memory budget이 아니고 checkpoint cleanup은 실행 중인
-synchronous `web-ifc` 호출을 선점하는 증거가 아닙니다. negative/large
-model, clean-install bundle, Linux Browser CI와 VS Code isolation을
-검증하지 않았으므로 candidate operation matrix의 `cancellation`,
-`corruptInputCleanup`과 `packagingBrowser`는 계속 `blocked`입니다.
+별도 performance probe는 하나의 representation map을 사용하는 generated
+IFC4 1,024 Walls·1,024 products·12,288 triangles를 실제 local Chromium에서
+처리했습니다. source는 388,316 bytes였고 Worker 내부 init 12.7ms, open
+7.1ms, inspection 27.6ms, total 48.3ms, main-thread 관찰 wall clock 149.7ms를
+기록했습니다. WASM linear-memory capacity는 init 뒤 16,777,216 bytes,
+open/inspection 뒤 139,788,288 bytes였으며 256 MiB budget 안이었습니다.
+model close·engine dispose와 Worker 종료 뒤 새 Worker의 base fixture 처리도
+통과했고 console warning/error는 없었습니다.
+
+이는 local bounded scale-step prototype입니다. 64 MiB admission은 전체
+WASM/GPU memory budget이 아니며 linear-memory capacity는 live bytes나
+process peak RSS가 아닙니다. checkpoint cleanup도 실행 중인 synchronous
+`web-ifc` 호출을 선점하는 증거가 아닙니다. representative large/negative
+model, GPU upload·first frame, clean-install bundle, Linux Browser CI와 VS
+Code isolation을 검증하지 않았으므로 `largeModelPerformance`,
+candidate operation matrix의 `cancellation`, `corruptInputCleanup`과
+`packagingBrowser`는 계속 `blocked`입니다.
 
 ## Draft implementation profile
 
@@ -134,6 +147,7 @@ model, clean-install bundle, Linux Browser CI와 VS Code isolation을
 - local Chromium module Worker의 small-fixture ESM/WASM smoke
 - bounded local-file admission과 source-session lifecycle prototype
 - 유효한 IFC의 model-opened checkpoint cooperative cleanup prototype
+- generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
 다음은 `blocked`입니다.
 
@@ -141,7 +155,7 @@ model, clean-install bundle, Linux Browser CI와 VS Code isolation을
 - connection, system, opening과 broader object/relation corpus
 - corrupt/truncated input과 resource exhaustion cleanup
 - 실행 중 동기 engine 호출의 취소와 candidate-level cancellation 승인
-- large model first-frame/index/RSS budget
+- representative large model first-frame/index/RSS/GPU budget
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
 
@@ -199,7 +213,8 @@ npm run probe:browser-worker
 ```
 
 Browser probe에서는 **Run cancellation probe**로 model-opened checkpoint
-cleanup을, 이어서 **Run synthetic IFC probe**로 새 Worker의 정상 복구를
+cleanup을 확인합니다. **Run performance probe**로 1,024-Wall budget을
+검사하고, 이어서 **Run synthetic IFC probe**로 새 Worker의 정상 복구를
 확인합니다.
 
 두 후보 비교에는 별도 Python environment를 주입합니다.
@@ -221,13 +236,16 @@ stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니�
 일반 Node stub으로 redaction과 종료 승격을 검증했지만 이는 engine별
 corrupt-input cleanup이나 cooperative cancellation을 검증한 것이 아닙니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
-별도 actual-browser evidence로 검증했습니다. 다만 동기 engine 호출 중
-선점과 승인된 negative corpus cleanup을 검증하지 않았으므로 compatibility
-matrix의 cancellation/corrupt cleanup은 계속 `blocked`입니다.
+별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
+time/WASM-capacity budget도 통과했습니다. 다만 동기 engine 호출 중 선점,
+승인된 negative corpus cleanup, representative large model과 GPU/first-frame
+budget을 검증하지 않았으므로 compatibility matrix의 cancellation/corrupt
+cleanup과 large-model Gate는 계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. redistribution 가능한 large performance fixture와 resource budget 고정
+1. redistribution 가능한 representative large fixture의 CPU/RSS/GPU와
+   first-frame budget 고정
 2. 각 engine의 in-call cancel과 승인된 negative corpus에서 cleanup 검증
 3. connection/system/opening을 포함한 broader semantic corpus
 4. Browser in-call engine cancellation, approved negative cleanup과 Linux CI

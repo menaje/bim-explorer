@@ -1,0 +1,56 @@
+{
+  "schema": "bim-explorer-ifc-performance-fixture-manifest/1",
+  "fixtureId": "synthetic-performance-1024-ifc4",
+  "kind": "repository-authored-generated",
+  "tracking": {
+    "artifactCommitted": false,
+    "generator": "scripts/generate-synthetic-ifc.mjs",
+    "generatorFixture": "performance"
+  },
+  "redistribution": {
+    "thirdPartyContent": false,
+    "status": "project-authored-pending-release-license"
+  },
+  "ifc": {
+    "schema": "IFC4",
+    "view": "ReferenceView_V1.2",
+    "units": "metre"
+  },
+  "parameters": {
+    "walls": 1024,
+    "gridColumns": 32,
+    "sharedRepresentationMaps": 1
+  },
+  "expected": {
+    "byteLength": 388316,
+    "sha256": "45bafaeb7aac9a5a15f5996598977c662c2add4bf0123106b0ac20457daa78d3",
+    "projects": 1,
+    "walls": 1024,
+    "products": 1024,
+    "triangles": 12288,
+    "globalIds": 1034,
+    "duplicateGlobalIds": 0
+  },
+  "browserBudget": {
+    "timeoutMs": 15000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 3000,
+    "maxInspectionMs": 5000,
+    "maxTotalMs": 8000,
+    "maxWallClockMs": 10000,
+    "maxWasmHeapCapacityBytes": 268435456
+  },
+  "qualificationUse": [
+    "bounded-browser-performance",
+    "wasm-heap-capacity-observation",
+    "mapped-geometry-scale-step",
+    "worker-cleanup"
+  ],
+  "notQualified": [
+    "production-large-model-performance",
+    "peak-process-memory",
+    "gpu-memory",
+    "browser-packaging",
+    "redistribution-release"
+  ]
+}

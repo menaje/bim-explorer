@@ -1,5 +1,10 @@
 import { BrowserWorkerError } from "./worker-client.mjs";
 import {
+  BROWSER_PERFORMANCE_BUDGET,
+  BROWSER_PERFORMANCE_FIXTURE,
+  assessBrowserPerformanceResult,
+} from "./performance-budget.mjs";
+import {
   BrowserIfcSourceSession,
   BrowserSourceSessionError,
   MAX_LOCAL_IFC_BYTES,
@@ -13,6 +18,7 @@ const elements = {
   engine: document.querySelector("#engine"),
   geometry: document.querySelector("#geometry"),
   localFile: document.querySelector("#local-file"),
+  performanceProbe: document.querySelector("#run-performance-probe"),
   receipt: document.querySelector("#receipt"),
   run: document.querySelector("#run-probe"),
   schema: document.querySelector("#schema"),
@@ -30,7 +36,13 @@ function setRunning(running) {
   document.querySelector("main").ariaBusy = String(running);
 }
 
-function renderResult(result) {
+function renderResult(
+  result,
+  {
+    assessment,
+    successStatus = "Passed",
+  } = {},
+) {
   const { report, receipt } = result;
   elements.source.textContent =
     `${report.source.kind} · ${report.source.byteLength} bytes`;
@@ -49,15 +61,17 @@ function renderResult(result) {
     {
       source: report.source,
       performance: report.performance,
+      resources: report.resources,
       cleanup: report.cleanup,
       worker: receipt,
       sourceSession: result.sourceSession,
+      performanceAssessment: assessment,
     },
     null,
     2,
   );
   elements.status.dataset.state = "passed";
-  elements.status.textContent = "Passed";
+  elements.status.textContent = successStatus;
 }
 
 function renderFailure(error) {
@@ -105,8 +119,8 @@ function renderExpectedCancellation(error) {
   return true;
 }
 
-async function syntheticSource(signal) {
-  const response = await fetch("/fixture/synthetic-small.ifc", {
+async function fixtureSource(route, signal) {
+  const response = await fetch(route, {
     cache: "no-store",
     credentials: "omit",
     signal,
@@ -117,15 +131,26 @@ async function syntheticSource(signal) {
   return await response.blob();
 }
 
+function syntheticSource(signal) {
+  return fixtureSource("/fixture/synthetic-small.ifc", signal);
+}
+
+function performanceSource(signal) {
+  return fixtureSource(BROWSER_PERFORMANCE_FIXTURE.route, signal);
+}
+
 async function runSource(
   sourceFactory,
   {
+    assessResult,
     cancelAfterPhase,
     expected,
     expectCancellation = false,
     sourceId,
     sourceKind,
     status,
+    successStatus,
+    timeoutMs,
   },
 ) {
   const run = ++currentRun;
@@ -154,6 +179,7 @@ async function runSource(
       },
       sourceId,
       sourceKind,
+      timeoutMs,
     });
     if (expectCancellation) {
       throw new Error("expected Browser Worker cancellation");
@@ -169,8 +195,23 @@ async function runSource(
     ) {
       throw new Error("fixture assertion failed");
     }
+    const assessment = assessResult?.(result);
+    if (assessment && !assessment.passed) {
+      throw new BrowserSourceSessionError(
+        "Browser IFC performance budget exceeded",
+        {
+          budget: assessment.budget,
+          fixture: assessment.fixture,
+          outcome: "performance-budget-exceeded",
+          violations: assessment.violations,
+        },
+      );
+    }
     if (run === currentRun) {
-      renderResult(result);
+      renderResult(result, {
+        assessment,
+        successStatus,
+      });
     }
   } catch (error) {
     if (run === currentRun) {
@@ -218,6 +259,22 @@ elements.cancelProbe.addEventListener("click", () => {
     sourceId: "synthetic-cancel-ifc4",
     sourceKind: "synthetic",
     status: "Opening IFC before cooperative cancellation…",
+  });
+});
+elements.performanceProbe.addEventListener("click", () => {
+  void runSource(performanceSource, {
+    assessResult: assessBrowserPerformanceResult,
+    expected: {
+      products: BROWSER_PERFORMANCE_FIXTURE.products,
+      projects: BROWSER_PERFORMANCE_FIXTURE.projects,
+      triangles: BROWSER_PERFORMANCE_FIXTURE.triangles,
+      walls: BROWSER_PERFORMANCE_FIXTURE.walls,
+    },
+    sourceId: BROWSER_PERFORMANCE_FIXTURE.id,
+    sourceKind: "synthetic",
+    status: "Running bounded 1,024-wall performance fixture…",
+    successStatus: "Passed: bounded performance fixture",
+    timeoutMs: BROWSER_PERFORMANCE_BUDGET.timeoutMs,
   });
 });
 elements.localFile.addEventListener("change", () => {

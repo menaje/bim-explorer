@@ -1,0 +1,127 @@
+{
+  "schema": "bim-explorer-browser-bounded-performance-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-03T22:32:14+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.4",
+    "resultSchema": "bim-explorer-browser-worker-result/0.4",
+    "progressSchema": "bim-explorer-browser-worker-progress/0.1"
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "synthetic-performance-1024-ifc4",
+    "manifest": "fixtures/ifc/synthetic-performance/manifest.json",
+    "byteLength": 388316,
+    "sha256": "45bafaeb7aac9a5a15f5996598977c662c2add4bf0123106b0ac20457daa78d3",
+    "schema": "IFC4",
+    "walls": 1024,
+    "repositoryGenerated": true,
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "redistributionReleaseApproved": false
+  },
+  "budget": {
+    "timeoutMs": 15000,
+    "maxInitializationMs": 3000,
+    "maxOpenMs": 3000,
+    "maxInspectionMs": 5000,
+    "maxTotalMs": 8000,
+    "maxWallClockMs": 10000,
+    "maxWasmHeapCapacityBytes": 268435456
+  },
+  "observation": {
+    "source": {
+      "id": "synthetic-performance-1024-ifc4",
+      "kind": "synthetic",
+      "byteLength": 388316,
+      "sha256": "45bafaeb7aac9a5a15f5996598977c662c2add4bf0123106b0ac20457daa78d3",
+      "schema": "IFC4"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 1024
+    },
+    "geometry": {
+      "products": 1024,
+      "triangles": 12288
+    },
+    "performance": {
+      "initializationMs": 12.7,
+      "openMs": 7.1,
+      "inspectionMs": 27.6,
+      "totalMs": 48.3
+    },
+    "resources": {
+      "inputBytes": 388316,
+      "wasmHeapCapacityBytes": {
+        "afterInitialization": 16777216,
+        "afterOpen": 139788288,
+        "afterInspection": 139788288,
+        "peakObserved": 139788288
+      }
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "lastPhase": "inspection-complete",
+      "workerTerminationRequested": true,
+      "wallClockMs": 149.7
+    },
+    "sourceSession": {
+      "outcome": "completed",
+      "workerStarted": true,
+      "cancelled": false,
+      "disposed": false,
+      "wallClockMs": 150.4
+    }
+  },
+  "recoveryObservation": {
+    "sourceId": "synthetic-small-ifc4",
+    "byteLength": 2855,
+    "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+    "fixtureAssertionsPassed": true,
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "workerTerminationRequested": true
+  },
+  "conformance": {
+    "deterministicGeneratedFixture": true,
+    "fixtureIdentityVerified": true,
+    "orderedProgress": true,
+    "budgetEnforced": true,
+    "wasmHeapCapacityObserved": true,
+    "workerCleanup": true,
+    "postPerformanceRecovery": true,
+    "pathFreeReceipt": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "decision": {
+    "browserBoundedPerformance": "passed",
+    "largeModelPerformance": "blocked",
+    "peakProcessMemory": "blocked",
+    "gpuMemory": "blocked",
+    "browserPackaging": "blocked",
+    "redistributionRelease": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "The fixture is a 388KB project-authored scale step with 1,024 mapped walls, not a representative production large model.",
+    "WASM heap capacity is allocated linear-memory capacity, not live bytes or process peak RSS.",
+    "GPU upload, rendering and first-frame time were not measured.",
+    "The project-authored fixture has no third-party content, but public redistribution is not approved until the repository license Gate passes.",
+    "The observation is one local Chromium run and is not a Browser packaging or cross-platform performance claim."
+  ]
+}

@@ -64,6 +64,8 @@ Native와 WASM은 같은 adapter contract를 구현하는 backend 선택입니�
 - Browser/Worker memory와 execution budget을 명시합니다.
 - 전체 model object graph를 main thread로 structured clone하지 않습니다.
 - immutable metadata page와 binary geometry range를 전달합니다.
+- WASM linear-memory capacity와 phase별 시간을 관찰하되 live bytes, process
+  peak RSS나 GPU memory로 오해하지 않습니다.
 - adapter phase checkpoint에서 `continue`/`cancel`을 handshake하고, 취소 시
   model close와 engine dispose를 cleanup receipt로 검증합니다.
 - bounded grace 안에 취소 영수증이 없으면 Worker 강제 종료로 승격합니다.
