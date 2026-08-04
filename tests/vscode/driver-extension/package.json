@@ -1,0 +1,15 @@
+{
+  "name": "bim-explorer-test-driver",
+  "displayName": "BIM Explorer Test Driver",
+  "description": "Private qualification driver for an installed BIM Explorer VSIX",
+  "version": "0.0.0",
+  "publisher": "menaje-test",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "main": "./extension.cjs",
+  "activationEvents": []
+}

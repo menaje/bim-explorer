@@ -79,8 +79,10 @@ blob은 서로 다른 capability이며 source path는 blob에 포함되지 않�
 third-party notice와 Worker bundle을 독립 staging한 뒤 VSIX를 생성합니다.
 package manifest는 Coni Spatial이나 sibling checkout dependency를
 포함하지 않습니다. `npm run qualify:product:vscode-install`은 빈 user data와
-extension directory에 VSIX를 설치해 association과 runtime 파일 digest를
-확인합니다.
+extension directory에 VSIX를 설치한 뒤 설치본 Custom Editor로 generated
+IFC를 엽니다. association과 runtime digest뿐 아니라 동일 source/render
+projection, 실제 VS Code Chromium WebGL2, path-free bridge와 editor close
+cleanup을 확인합니다.
 
 ## 현재 보류
 

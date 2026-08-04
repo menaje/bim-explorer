@@ -63,7 +63,9 @@ admission, path-free report와 독립 package staging을 검사합니다.
 search, 3D pick과 cleanup을 실행합니다. `npm run qualify:product:vscode`는
 독립 staging을 실제 VS Code Custom Editor로 열고 같은 source/render
 projection과 editor close를 확인합니다. `npm run
-qualify:product:vscode-install`은 생성한 VSIX를 빈 profile에 설치합니다.
+qualify:product:vscode-install`은 생성한 VSIX를 빈 profile에 설치한 뒤
+설치본 Custom Editor로 같은 fixture를 열어 WebGL2, path-free bridge와
+editor close를 다시 확인합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

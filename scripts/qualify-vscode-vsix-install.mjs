@@ -12,6 +12,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  runTests,
+} from "@vscode/test-electron";
+
+import {
   packageVscodeExtension,
 } from "./package-vscode-extension.mjs";
 
@@ -30,6 +34,23 @@ function codeCli() {
   }
   throw new Error(
     "Set BIM_EXPLORER_VSCODE_CLI to qualify VSIX install",
+  );
+}
+
+function codeExecutable() {
+  if (
+    typeof process.env.BIM_EXPLORER_VSCODE_EXECUTABLE ===
+      "string" &&
+    process.env.BIM_EXPLORER_VSCODE_EXECUTABLE.length > 0
+  ) {
+    return process.env.BIM_EXPLORER_VSCODE_EXECUTABLE;
+  }
+  if (process.platform === "darwin") {
+    return "/Applications/Visual Studio Code.app/" +
+      "Contents/MacOS/Code";
+  }
+  throw new Error(
+    "Set BIM_EXPLORER_VSCODE_EXECUTABLE to qualify VSIX runtime",
   );
 }
 
@@ -64,6 +85,10 @@ export async function qualifyVscodeVsixInstall() {
   );
   const extensions = path.join(temporary, "extensions");
   const userData = path.join(temporary, "user-data");
+  const runtimeEvidencePath = path.join(
+    temporary,
+    "runtime-evidence.json",
+  );
   try {
     const packaged = await packageVscodeExtension(output);
     const common = [
@@ -139,6 +164,38 @@ export async function qualifyVscodeVsixInstall() {
           "source-worker.bundle.mjs",
         )),
       ]);
+    await runTests({
+      vscodeExecutablePath: codeExecutable(),
+      extensionDevelopmentPath: path.join(
+        ROOT,
+        "tests",
+        "vscode",
+        "driver-extension",
+      ),
+      extensionTestsPath: path.join(
+        ROOT,
+        "tests",
+        "vscode",
+        "suite",
+        "index.cjs",
+      ),
+      launchArgs: [
+        `--user-data-dir=${userData}`,
+        `--extensions-dir=${extensions}`,
+        "--disable-telemetry",
+        "--enable-unsafe-swiftshader",
+        "--use-angle=swiftshader",
+      ],
+      extensionTestsEnv: {
+        BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
+        BIM_EXPLORER_ROOT: ROOT,
+        BIM_EXPLORER_VSCODE_EVIDENCE:
+          runtimeEvidencePath,
+      },
+    });
+    const runtime = JSON.parse(
+      await readFile(runtimeEvidencePath, "utf8"),
+    );
     const assertions = {
       cliAcceptedPackage:
         /successfully installed/iu.test(installOutput),
@@ -155,6 +212,15 @@ export async function qualifyVscodeVsixInstall() {
       readOnlyIfcAssociation:
         manifest.contributes.customEditors[0]
           .selector[0].filenamePattern === "*.ifc",
+      installedPackageOpensFixture:
+        runtime.assertions?.localSourceOpened === true,
+      installedPackageUsesWebGl2:
+        runtime.assertions
+          ?.actualVscodeChromiumWebGl2 === true,
+      installedPackageBridgeIsPathFree:
+        runtime.assertions?.pathFreeHostBridge === true,
+      installedPackageClosesCleanly:
+        runtime.assertions?.editorCloseObserved === true,
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -182,6 +248,14 @@ export async function qualifyVscodeVsixInstall() {
         association:
           manifest.contributes.customEditors[0],
         dependencies: manifest.dependencies,
+        runtime: {
+          environment: runtime.environment,
+          fixture: runtime.fixture,
+          hostKind: runtime.observation?.hostKind,
+          model: runtime.observation?.model,
+          renderer: runtime.observation?.renderer,
+          lifecycle: runtime.observation?.lifecycle,
+        },
       },
       assertions,
       decision: {

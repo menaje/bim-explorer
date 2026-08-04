@@ -17,4 +17,6 @@ Custom Editor host입니다.
 
 개발 소스는 저장소 공용 runtime을 직접 사용합니다. `npm run
 package:vscode`는 동일 파일을 staging한 뒤 독립 설치 가능한 VSIX를
-생성하며, package 검증 전에는 release하지 않습니다.
+생성합니다. clean-install 검증은 빈 profile에 설치된 확장 자체로 generated
+IFC를 다시 열어 source/render projection과 close cleanup까지 확인하며,
+package 검증 전에는 release하지 않습니다.

@@ -16,8 +16,9 @@ App은 IFC parser, source identity authority나 generic 3D implementation을
 두 제품 Host는 같은 generated IFC fingerprint, `BimModelSource`, semantic
 explorer와 WebGL2 projection을 실제 Chrome/VS Code Chromium에서
 재현했습니다. VSIX는 빈 user data/extension directory에 clean install
-검증했습니다. public Viewer Core conformance와 public representative
-product scale은 별도 Gate입니다.
+한 뒤 설치본 Custom Editor에서 같은 fixture와 WebGL2 projection, path-free
+bridge와 close cleanup까지 재검증했습니다. public Viewer Core conformance와
+public representative product scale은 별도 Gate입니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과

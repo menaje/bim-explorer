@@ -1,10 +1,10 @@
 {
   "schema": "bim-explorer-vscode-custom-editor-evidence/1",
-  "capturedAt": "2026-08-04T01:30:20.662Z",
+  "capturedAt": "2026-08-04T01:46:55.571Z",
   "environment": {
     "vscode": "1.131.0",
     "platform": "darwin-arm64",
-    "stagedPackageLayout": true
+    "runtimeLayout": "staged"
   },
   "fixture": {
     "id": "synthetic-semantic-ifc4",
@@ -22,9 +22,9 @@
       "ranges": 1
     },
     "performance": {
-      "artifactMs": 108.5,
-      "sourceMs": 3.799999952316284,
-      "totalMs": 112.29999995231628
+      "artifactMs": 109.10000002384186,
+      "sourceMs": 4,
+      "totalMs": 113.20000004768372
     },
     "resources": {
       "sourceBytes": 4030,

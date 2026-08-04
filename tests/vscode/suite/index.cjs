@@ -36,8 +36,15 @@ async function run() {
   const root = process.env.BIM_EXPLORER_ROOT;
   const evidencePath =
     process.env.BIM_EXPLORER_VSCODE_EVIDENCE;
+  const runtimeLayout =
+    process.env.BIM_EXPLORER_PACKAGE_RUNTIME;
+  const packagedRuntime = [
+    "installed-vsix",
+    "staged",
+  ].includes(runtimeLayout);
   assert.equal(typeof root, "string");
   assert.equal(typeof evidencePath, "string");
+  assert.equal(packagedRuntime, true);
   const generated = await import(
     pathToFileURL(
       path.join(
@@ -122,8 +129,7 @@ async function run() {
         vscode: vscode.version,
         platform: `${process.platform}-${process.arch}`,
         extensionMode: extension.extensionMode,
-        stagedPackageLayout:
-          process.env.BIM_EXPLORER_STAGED_EXTENSION === "true",
+        runtimeLayout,
       },
       fixture: {
         id: "synthetic-semantic-ifc4",
@@ -159,8 +165,7 @@ async function run() {
           serialized.includes("qualification-source") === false,
         commandsRegistered: true,
         editorCloseObserved: disposed.status === "disposed",
-        packagedRuntimeIndependent:
-          process.env.BIM_EXPLORER_STAGED_EXTENSION === "true",
+        packagedRuntimeIndependent: packagedRuntime,
         spatialIndependent: true,
       },
       decision: {

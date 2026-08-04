@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-vsix-install-evidence/1",
-  "capturedAt": "2026-08-04T01:31:45.033Z",
+  "capturedAt": "2026-08-04T01:46:43.585Z",
   "environment": {
     "platform": "darwin-arm64",
     "cleanUserData": true,
@@ -29,6 +29,37 @@
     },
     "dependencies": {
       "web-ifc": "0.0.77"
+    },
+    "runtime": {
+      "environment": {
+        "vscode": "1.131.0",
+        "platform": "darwin-arm64",
+        "runtimeLayout": "installed-vsix"
+      },
+      "fixture": {
+        "id": "synthetic-semantic-ifc4",
+        "committed": false,
+        "sourceBytes": 4030,
+        "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+        "ifcSchema": "IFC4"
+      },
+      "hostKind": "vscode-webview",
+      "model": {
+        "products": 2,
+        "treeNodes": 7,
+        "triangles": 24,
+        "ranges": 1
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 57585,
+        "sourceReadBytes": 996,
+        "uploadedBytes": 1120
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      }
     }
   },
   "assertions": {
@@ -37,7 +68,11 @@
     "requiredRuntimeComplete": true,
     "workerBundleExact": true,
     "noSpatialDependency": true,
-    "readOnlyIfcAssociation": true
+    "readOnlyIfcAssociation": true,
+    "installedPackageOpensFixture": true,
+    "installedPackageUsesWebGl2": true,
+    "installedPackageBridgeIsPathFree": true,
+    "installedPackageClosesCleanly": true
   },
   "decision": {
     "cleanInstall": "passed",

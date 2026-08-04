@@ -24,7 +24,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > shell과 staged VS Code `.ifc` read-only Custom Editor는 같은 source
 > fingerprint, model/renderer projection, 실제 Chromium WebGL2와
 > source switch/editor-exit cleanup을 통과했습니다. 독립 VSIX도 빈
-> profile에 clean install했습니다. physical GPU qualification, deferred
+> profile에 clean install한 뒤 설치본으로 같은 fixture, WebGL2와 close
+> cleanup을 다시 통과했습니다. physical GPU qualification, deferred
 > property range, engine 선정, 공용 Viewer Core package와 지원 profile은
 > 아직 확정되지 않았습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall

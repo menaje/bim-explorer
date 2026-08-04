@@ -93,3 +93,32 @@ test("product shells require a clean read-only VSIX install", async () => {
     /runtime evidence is incomplete/u,
   );
 });
+
+test("product shells require the installed VSIX runtime projection", async () => {
+  const values = await fixtures();
+  values.installation.observation.runtime.model.products += 1;
+  assert.throws(
+    () => validateBimProductShellCompatibility(
+      values.manifest,
+      values.browser,
+      values.vscode,
+      values.installation,
+    ),
+    /host projections diverge/u,
+  );
+});
+
+test("product shells reject a staged-only clean install claim", async () => {
+  const values = await fixtures();
+  values.installation.observation.runtime.environment.runtimeLayout =
+    "staged";
+  assert.throws(
+    () => validateBimProductShellCompatibility(
+      values.manifest,
+      values.browser,
+      values.vscode,
+      values.installation,
+    ),
+    /runtime evidence is incomplete/u,
+  );
+});

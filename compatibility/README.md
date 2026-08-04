@@ -19,9 +19,11 @@ path-free host bridge와 clean VSIX install 결과는
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
 24 triangles, 57,585 non-background pixels와 1,120 uploaded bytes를
-재현했습니다. 계정·upload·telemetry·Coni Spatial 의존성은 없으며,
-public Viewer Core conformance, 대표 공개 모델 product scale, physical
-GPU와 marketplace release는 계속 보류합니다.
+재현했습니다. 빈 profile의 설치된 VSIX runtime도 같은 fixture와
+model/renderer projection, path-free bridge와 close cleanup을 다시
+통과했습니다. 계정·upload·telemetry·Coni Spatial 의존성은 없으며, public
+Viewer Core conformance, 대표 공개 모델 product scale, physical GPU와
+marketplace release는 계속 보류합니다.
 
 IFC engine 후보와 draft profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture

@@ -178,6 +178,8 @@ const REQUIRED_PATHS = [
   "tests/product/worker-source-client.test.mjs",
   "tests/semantic/semantic-explorer-probe.test.mjs",
   "tests/semantic/semantic-explorer.test.mjs",
+  "tests/vscode/driver-extension/extension.cjs",
+  "tests/vscode/driver-extension/package.json",
   "tests/vscode/suite/index.cjs",
 ];
 const FORBIDDEN_TRACKED_PATTERNS = [
@@ -210,6 +212,7 @@ const PACKAGE_MANIFESTS = [
   "package.json",
   "adapters/web-ifc/package.json",
   "apps/bim-explorer-vscode/package.json",
+  "tests/vscode/driver-extension/package.json",
   "packages/bim-model-source/package.json",
   "packages/bim-renderer-3d/package.json",
   "packages/bim-semantic-explorer/package.json",

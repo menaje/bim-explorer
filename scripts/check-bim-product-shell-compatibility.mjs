@@ -65,6 +65,18 @@ function equalProjection(left, right) {
   return true;
 }
 
+function equalInstalledProjection(installedRuntime, vscode) {
+  for (const field of ["model", "renderer"]) {
+    if (
+      JSON.stringify(installedRuntime?.[field]) !==
+      JSON.stringify(vscode.observation?.[field])
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
@@ -114,13 +126,18 @@ export function validateBimProductShellCompatibility(
   }
   const fixture = manifest.fixture;
   const expectedFingerprint = `sha256:${fixture?.sha256}`;
-  for (const evidence of [browser, vscode]) {
+  const installedRuntime = installation.observation?.runtime;
+  for (const evidenceFixture of [
+    browser.fixture,
+    vscode.fixture,
+    installedRuntime?.fixture,
+  ]) {
     if (
-      evidence.fixture?.id !== fixture.id ||
-      evidence.fixture?.sourceBytes !== fixture.byteLength ||
-      evidence.fixture?.fingerprint !== expectedFingerprint ||
-      evidence.fixture?.ifcSchema !== fixture.schema ||
-      evidence.fixture?.committed !== false
+      evidenceFixture?.id !== fixture.id ||
+      evidenceFixture?.sourceBytes !== fixture.byteLength ||
+      evidenceFixture?.fingerprint !== expectedFingerprint ||
+      evidenceFixture?.ifcSchema !== fixture.schema ||
+      evidenceFixture?.committed !== false
     ) {
       throw new Error(
         "BIM product shell fixture identity is invalid",
@@ -183,12 +200,20 @@ export function validateBimProductShellCompatibility(
     !everyTrue(installation.assertions) ||
     browser.observation?.hostKind !== "browser" ||
     vscode.observation?.hostKind !== "vscode-webview" ||
+    vscode.environment?.runtimeLayout !== "staged" ||
+    installedRuntime?.environment?.runtimeLayout !==
+      "installed-vsix" ||
+    installedRuntime?.hostKind !== "vscode-webview" ||
     browser.observation?.renderer?.actualGpu !== true ||
     vscode.observation?.renderer?.actualGpu !== true ||
-    browser.observation.renderer.nonBackgroundPixels <= 0 ||
-    vscode.observation.renderer.nonBackgroundPixels <= 0 ||
+    installedRuntime?.renderer?.actualGpu !== true ||
+    !(browser.observation.renderer.nonBackgroundPixels > 0) ||
+    !(vscode.observation.renderer.nonBackgroundPixels > 0) ||
+    !(installedRuntime.renderer.nonBackgroundPixels > 0) ||
     browser.observation?.lifecycle?.closed !== "disposed" ||
-    vscode.observation?.lifecycle?.closed !== "disposed"
+    vscode.observation?.lifecycle?.closed !== "disposed" ||
+    installedRuntime?.lifecycle?.opened !== "ready" ||
+    installedRuntime?.lifecycle?.closed !== "disposed"
   ) {
     throw new Error(
       "BIM product shell runtime evidence is incomplete",
@@ -196,6 +221,7 @@ export function validateBimProductShellCompatibility(
   }
   if (
     !equalProjection(browser, vscode) ||
+    !equalInstalledProjection(installedRuntime, vscode) ||
     browser.fixture.fingerprint !== vscode.fixture.fingerprint ||
     browser.observation?.interaction?.selectionOrigin !== "3d" ||
     browser.observation.interaction.selectedExpressId !==
@@ -213,10 +239,23 @@ export function validateBimProductShellCompatibility(
     installation.package?.id !== "menaje.bim-explorer" ||
     installation.package?.version !== "0.0.0" ||
     installation.package?.byteLength <= 0 ||
+    installation.package?.installedRuntimeFiles !== 6 ||
+    !/^[0-9a-f]{64}$/u.test(
+      installation.package?.workerBundleSha256 ?? "",
+    ) ||
+    installation.environment?.cleanUserData !== true ||
+    installation.environment?.cleanExtensionsDirectory !== true ||
     installation.observation?.installedExtensions?.[0] !==
       "menaje.bim-explorer@0.0.0" ||
+    installation.observation?.association?.viewType !==
+      "bimExplorer.ifcEditor" ||
     installation.observation?.association?.selector?.[0]
-      ?.filenamePattern !== "*.ifc"
+      ?.filenamePattern !== "*.ifc" ||
+    installation.observation?.association?.priority !== "default" ||
+    installation.observation?.dependencies?.["web-ifc"] !==
+      "0.0.77" ||
+    installation.decision?.cleanInstall !== "passed" ||
+    installation.decision?.marketplaceRelease !== "held"
   ) {
     throw new Error(
       "BIM product shell local package evidence is invalid",

@@ -70,7 +70,7 @@ export async function qualifyVscodeCustomEditor() {
       ],
       extensionTestsEnv: {
         BIM_EXPLORER_ROOT: ROOT,
-        BIM_EXPLORER_STAGED_EXTENSION: "true",
+        BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
         BIM_EXPLORER_VSCODE_EVIDENCE: evidencePath,
       },
     });
