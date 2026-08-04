@@ -745,10 +745,19 @@ function buildMountPlan(
       if (!selectedRangeIds.has(primitive.slice?.rangeId)) {
         continue;
       }
+      const globalId =
+        typeof entity.globalId === "string" &&
+        entity.globalId.length > 0
+          ? entity.globalId
+          : null;
+      const nativeId =
+        typeof entity.nativeId === "string" &&
+        entity.nativeId.length > 0
+          ? entity.nativeId
+          : globalId;
       if (
         entity.renderable !== true ||
-        typeof entity.globalId !== "string" ||
-        entity.globalId.length === 0 ||
+        nativeId === null ||
         typeof entity.renderId !== "string" ||
         entity.renderId.length === 0 ||
         typeof entity.pickId !== "string" ||
@@ -777,7 +786,8 @@ function buildMountPlan(
       }
       instances.push(Object.freeze({
         expressId: entity.expressId,
-        globalId: entity.globalId,
+        globalId,
+        nativeId,
         renderId: entity.renderId,
         pickId: entity.pickId,
         externalIdentityToken: entity.externalIdentityToken,
@@ -1160,6 +1170,7 @@ function validateBackendPick(
   const match = identities.some((candidate) =>
     candidate.expressId === identity.expressId &&
     candidate.globalId === identity.globalId &&
+    candidate.nativeId === identity.nativeId &&
     candidate.renderId === identity.renderId &&
     candidate.pickId === identity.pickId &&
     candidate.externalIdentityToken ===
@@ -1615,6 +1626,7 @@ export class Bounded3dRenderer {
           plan.instances.map((instance) => Object.freeze({
             expressId: instance.expressId,
             globalId: instance.globalId,
+            nativeId: instance.nativeId,
             renderId: instance.renderId,
             pickId: instance.pickId,
             rangeId: instance.rangeId,
@@ -1763,6 +1775,7 @@ export class Bounded3dRenderer {
         ...plan.instances.map((instance) => Object.freeze({
           expressId: instance.expressId,
           globalId: instance.globalId,
+          nativeId: instance.nativeId,
           renderId: instance.renderId,
           pickId: instance.pickId,
           rangeId: instance.rangeId,

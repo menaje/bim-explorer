@@ -7,12 +7,18 @@
 - `foundation/`: repository, documentation와 privacy boundary
 - `conformance/`: Viewer Core, source, Host와 identity contract
 - `ifc/`: engine/profile/geometry/semantic qualification
+- `gltf/`: bounded glTF/GLB reference source와 generic renderer 연결
 - `renderer/`: 3D lifecycle, picking, section과 disposal
 - `product/`: Browser/VS Code standalone behavior
 - `vscode/`: staged Custom Editor의 실제 VS Code Chromium qualification
 
 실제 고객 BIM과 redistribution 권한이 불분명한 파일은 test fixture로
 추적하지 않습니다.
+
+`gltf` test는 binary artifact를 추적하지 않고 deterministic generator가
+만든 JSON data URI와 GLB를 메모리에서 검사합니다. external URI, required
+extension, malformed length를 거부하고 source-native identity가 IFC
+GlobalId를 합성하지 않는지 확인합니다.
 
 IFC fixture artifact는 `node scripts/generate-synthetic-ifc.mjs --fixture
 small|mapped|performance --output <temporary.ifc>`로 생성합니다. `.ifc`는

@@ -1,0 +1,116 @@
+---
+type: specification
+status: draft
+authority:
+  - internal-gltf-reference-source
+  - mesh-reference-admission
+  - bounded-source-lifecycle
+last_reviewed: 2026-08-04
+---
+
+# glTF reference source v0.1
+
+## 상태와 역할
+
+`bim-explorer-gltf-reference-source/0.1`은 glTF 2.0과 GLB를 read-only
+reference mesh로 투영하는 내부 draft입니다. BIM semantic source, 원본
+authoring document, geometry 변환 authority 또는 round-trip codec이
+아닙니다.
+
+source descriptor는 다음 경계를 명시합니다.
+
+```text
+sourceRole: derived-or-reference-mesh
+semanticAuthority: false
+writeAuthority: false
+roundTripAuthority: false
+```
+
+## 입력 profile
+
+첫 profile은 다음 입력만 허용합니다.
+
+- 정확한 GLB 2.0 header와 JSON 뒤 optional BIN chunk
+- glTF 2.0 JSON의 base64 `application/octet-stream` 또는
+  `application/gltf-buffer` data URI
+- 하나의 default scene과 bounded node hierarchy
+- node의 column-major matrix 또는 translation/rotation/scale
+- indexed `TRIANGLES`
+- Float32 `POSITION`과 `NORMAL`
+- unsigned byte, unsigned short 또는 unsigned int index
+- material `baseColorFactor`
+
+외부 HTTP, file 및 path URI를 fetch하지 않고 `NotSupportedError`로
+거부합니다. required extension, primitive extension, animation, skin,
+morph target, sparse accessor와 collapsed transform도 first profile 밖입니다.
+optional texture/image metadata는 geometry 입출력이나 network authority를
+부여하지 않습니다.
+
+## 상한
+
+기본 parser 상한은 다음과 같습니다.
+
+| 자원 | 상한 |
+| --- | ---: |
+| source bytes | 64 MiB |
+| JSON bytes | 4 MiB |
+| decoded aggregate buffer | 64 MiB |
+| node | 4,096 |
+| node depth | 256 |
+| mesh | 4,096 |
+| primitive/accessor/bufferView | 16,384 |
+| unique vertex | 2,000,000 |
+| unique triangle | 4,000,000 |
+| rendered occurrence | 100,000 |
+
+호출자는 각 상한을 더 작게 설정할 수 있습니다. range read는 handle의
+`maximumRequestBytes`와 session 전체 byte budget을 동시에 적용합니다.
+
+## Geometry와 좌표
+
+glTF의 meter, right-handed, Y-up local coordinates를
+`gltf-local-meter-y-up`으로 명시합니다. node hierarchy의 world transform은
+Float64 JavaScript number metadata로 계산하고, geometry range는
+Float32 position/normal과 Uint32 index인 lossy display cache로 인코딩합니다.
+
+같은 mesh primitive를 여러 node가 참조하면 geometry record는 한 번만
+인코딩하고 occurrence transform을 각각 유지합니다. 전체 bounds는 active
+default scene occurrence의 transformed bounds 합집합입니다.
+
+v0.1 geometry range의 `geometryExpressId`는 binary 호환용 unsigned record
+key입니다. glTF source에서는 IFC Express ID가 아닙니다.
+
+## Identity
+
+각 occurrence는 다음 source-local identity를 가집니다.
+
+```text
+nativeId = node:<node-index>/mesh:<mesh-index>/primitive:<primitive-index>
+globalId = null
+localNumericId = positive range-local integer
+```
+
+Render/Pick ID와 external identity token은 source fingerprint와 exact
+revision에 묶입니다. glTF source가 IFC GlobalId를 합성하거나 서로 다른
+source의 native ID를 자동 병합해서는 안 됩니다.
+
+## Lifecycle과 cleanup
+
+source는 단일 immutable session만 엽니다. 모든 range handle은 protocol,
+session, source, revision, snapshot과 layer context를 포함하며 stale
+context를 거부합니다.
+
+parser가 소유한 source/buffer 복사본과 intermediate accessor array는
+projection 뒤 지웁니다. terminal source dispose는 retained geometry range를
+0으로 덮고 identity index를 비웁니다. caller-owned input bytes와 renderer
+GPU allocation은 source가 소유하지 않습니다.
+
+## 보류
+
+- Draco, meshopt와 기타 required extension
+- external relative resource bundle
+- texture/image decode와 material fidelity
+- animation, skin과 morph target
+- source write, conversion과 round-trip
+- BIM property/classification authority
+- product-scale Browser/VS Code surface admission

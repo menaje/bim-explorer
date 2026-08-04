@@ -42,7 +42,8 @@ void main() {
   );
   mat4 source_model = u_source_from_storage * model;
   vec4 world = source_model * vec4(a_position, 1.0);
-  vec3 normal = normalize(mat3(source_model) * a_normal);
+  mat3 normal_matrix = transpose(inverse(mat3(source_model)));
+  vec3 normal = normalize(normal_matrix * a_normal);
   vec3 light_direction = normalize(vec3(0.35, -0.45, 0.82));
   v_light = 0.32 + 0.68 * abs(dot(normal, light_direction));
   v_color = a_color;
@@ -590,6 +591,7 @@ function uploadBufferGroup(gl, plan, worldOrigin) {
             externalIdentityToken:
               instance.externalIdentityToken,
             globalId: instance.globalId,
+            nativeId: instance.nativeId,
             localIndex,
             pickId: instance.pickId,
             rangeId: instance.rangeId,
@@ -2039,6 +2041,7 @@ export class WebGl2Backend {
                   externalIdentityToken:
                     instance.externalIdentityToken,
                   globalId: instance.globalId,
+                  nativeId: instance.nativeId,
                   pickId: instance.pickId,
                   renderId: instance.renderId,
                 });

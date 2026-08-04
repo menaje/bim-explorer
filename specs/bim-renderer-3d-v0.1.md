@@ -58,10 +58,19 @@ entity bounds까지의 gap/distance를 range별로 순위화해 한 range만 먼
 각 draw instance는 다음 source-local identity를 유지합니다.
 
 - source fingerprint, revision, snapshot과 layer
-- GlobalId/Express ID
+- source-native ID
+- format이 제공할 때만 GlobalId/Express ID
 - Render/Pick ID
 - geometry Express ID와 range ID
 - 4x4 occurrence transform과 RGBA
+
+`nativeId`는 모든 renderable reference source가 제공하는 source-local
+식별자입니다. IFC source는 기존 GlobalId를 fallback으로 사용할 수 있지만,
+mesh reference source가 IFC GlobalId를 합성해서는 안 됩니다. `globalId`는
+IFC에서만 의미가 있으며 다른 format에서는 `null`입니다. geometry range의
+기존 `geometryExpressId` 필드명은 v0.1 binary 호환을 위해 유지한 unsigned
+record key일 뿐, 비 IFC source에서는 IFC Express ID authority를 뜻하지
+않습니다.
 
 non-renderable product는 geometry instance를 만들지 않습니다. semantic
 identity와 diagnostic은 source/tree/property 계층에 남습니다.
@@ -112,6 +121,8 @@ shader compilation, rasterization이나 first-frame 시간으로 해석하지
 transform·color instance buffer를 실제 WebGL2 context에 upload합니다.
 source 좌표계 변환과 camera view-projection matrix를 적용하고
 `drawElementsInstanced` frame을 그린 뒤 다음을 영수증으로 남깁니다.
+normal은 composed source/model matrix의 inverse-transpose로 변환해
+non-uniform scale에서도 lighting 방향을 유지합니다.
 
 - geometry, instance와 전체 uploaded bytes
 - draw-call과 GPU buffer 수

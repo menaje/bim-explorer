@@ -12,6 +12,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `spatial-integration`: optional public handoff와 Spatial overlay bridge
 - `openbim-explorer`: source-bound BCF·IDS·bSDD read-only exploration
 - `bim-federation`: multi-source identity·alignment·reference-format Gate
+- `gltf-reference-source`: bounded glTF/GLB read-only reference mesh
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
@@ -63,3 +64,8 @@ Spatial Revision이나 acceptance authority는 소유하지 않습니다.
 partial/stale 상태, Float64 alignment, cross-source saved view를 제공합니다.
 후속 format은 view/query/write/round-trip Gate만 등록하며 codec이 없는
 format을 지원 대상으로 표현하지 않습니다.
+
+[`gltf-reference-source`](gltf-reference-source/README.md)는 glTF 2.0/GLB의
+embedded geometry를 bounded generic 3D range로 투영합니다. 이 source는
+mesh reference일 뿐 BIM semantics, write 또는 round-trip authority가
+아닙니다.
