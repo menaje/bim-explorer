@@ -1,0 +1,129 @@
+name: Community Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: community-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout exact tag history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Verify tag and package version
+        run: >-
+          node --input-type=module --eval
+          'import manifest from "./package.json" with {type:"json"};
+          if (process.env.GITHUB_REF_NAME !== `v${manifest.version}`)
+          throw new Error("tag and package version differ");'
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Full conformance
+        run: npm run check
+
+      - name: Runtime dependency audit
+        run: npm audit --omit=dev
+
+      - name: Build deterministic release bundle
+        run: npm run release:bundle
+
+      - name: Upload platform release bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: community-release-${{ runner.os }}
+          path: dist/community-release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout exact tag history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install release comparison dependencies
+        run: npm ci
+
+      - name: Download platform bundles
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: community-release-*
+          path: dist/platforms
+          merge-multiple: false
+
+      - name: Compare macOS and Linux bytes
+        run: >-
+          node scripts/compare-community-release.mjs
+          --left dist/platforms/community-release-Linux
+          --right dist/platforms/community-release-macOS
+
+      - name: Select verified release bundle
+        run: >-
+          cp -R
+          dist/platforms/community-release-Linux
+          dist/release
+
+      - name: Attest release artifacts
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        with:
+          subject-path: dist/release/*
+
+      - name: Create complete draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          dist/release/*
+          --draft
+          --verify-tag
+          --title "BIM Explorer Community $GITHUB_REF_NAME"
+          --notes-file dist/release/RELEASE_NOTES.md
+
+      - name: Publish immutable-ready release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release edit "$GITHUB_REF_NAME"
+          --draft=false
+          --latest

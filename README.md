@@ -213,7 +213,9 @@ npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core
 npm run qualify:openbim
+npm run qualify:community-release
 npm run package:vscode
+npm run release:bundle
 ```
 
 저장소 구조와 authority 문서는 [docs/README.md](docs/README.md), 현재
