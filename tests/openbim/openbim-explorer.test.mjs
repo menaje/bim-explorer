@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 import { zipSync } from "fflate";
@@ -237,6 +238,51 @@ test("BCF XML 3.0 round-trips deterministically and stays source-bound", async (
   );
   assert.equal(explorer.dispose(), true);
   assert.equal(explorer.dispose(), false);
+});
+
+test("BCF XML 3.0 export is deterministic across host timezones", () => {
+  const input = JSON.stringify({
+    snapshot: snapshot(),
+    request: bcfExportRequest(),
+  });
+  const script = `
+    import { createOpenBimExplorer } from "./packages/openbim-explorer/src/index.mjs";
+    const input = ${input};
+    const explorer = createOpenBimExplorer({
+      snapshot: input.snapshot,
+      fetcher: undefined,
+    });
+    const result = await explorer.exportBcf(input.request);
+    process.stdout.write(JSON.stringify({
+      documentId: result.documentId,
+      archiveBytes: result.bytes.byteLength,
+    }));
+  `;
+  const qualify = (timezone) => {
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "--eval", script],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TZ: timezone,
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout);
+  };
+
+  const utc = qualify("UTC");
+  const seoul = qualify("Asia/Seoul");
+  assert.deepEqual(seoul, utc);
+  assert.deepEqual(utc, {
+    documentId:
+      "sha256:dca2859077ef0bb399ebfea438411d6e36f1924b776e56d249644a6a6d400081",
+    archiveBytes: 1261,
+  });
 });
 
 test("BCF import rejects unsafe and over-budget archives", async () => {

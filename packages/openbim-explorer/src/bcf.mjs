@@ -45,6 +45,10 @@ const ZIP_CENTRAL = 0x02014b50;
 const ZIP_LOCAL = 0x04034b50;
 const UTF8 = new TextEncoder();
 
+function deterministicZipDate() {
+  return new Date(1980, 0, 1, 0, 0, 0, 0);
+}
+
 function limitsFrom(overrides = {}) {
   plainRecord(overrides, "BCF limits");
   for (const key of Object.keys(overrides)) {
@@ -1280,21 +1284,21 @@ export async function exportBcfArchive({
       ),
       {
         level: 0,
-        mtime: new Date("1980-01-01T00:00:00.000Z"),
+        mtime: deterministicZipDate(),
       },
     ],
     [`${topic.guid}/markup.bcf`]: [
       UTF8.encode(markupXml(topic, viewpoint)),
       {
         level: 6,
-        mtime: new Date("1980-01-01T00:00:00.000Z"),
+        mtime: deterministicZipDate(),
       },
     ],
     [`${topic.guid}/viewpoint.bcfv`]: [
       UTF8.encode(viewpointXml(viewpoint)),
       {
         level: 6,
-        mtime: new Date("1980-01-01T00:00:00.000Z"),
+        mtime: deterministicZipDate(),
       },
     ],
   };
