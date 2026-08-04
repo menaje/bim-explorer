@@ -7,9 +7,18 @@ const REQUIRED_PATHS = [
   ".github/workflows/ci.yml",
   ".gitignore",
   ".node-version",
+  "CHANGELOG.md",
+  "CONTRIBUTING.md",
+  "LICENSE",
+  "LICENSES/fflate-MIT.txt",
+  "LICENSES/saxes-ISC.txt",
+  "LICENSES/xmlchars-MIT.txt",
+  "NOTICE",
   "README.md",
   "SECURITY.md",
+  "SOURCE_OFFER.md",
   "THIRD_PARTY_NOTICES.md",
+  "TRADEMARKS.md",
   "adapters/README.md",
   "adapters/ifcopenshell/README.md",
   "adapters/ifcopenshell/THIRD_PARTY_NOTICES.md",
@@ -100,6 +109,7 @@ const REQUIRED_PATHS = [
   "docs/README.md",
   "docs/adr/ADR-0001-independent-product-boundary.md",
   "docs/adr/ADR-0002-viewer-core-consumer-admission.md",
+  "docs/community-release.md",
   "docs/decision-register.md",
   "docs/ifc-engine-qualification.md",
   "docs/openbim-exploration.md",
@@ -195,6 +205,7 @@ const REQUIRED_PATHS = [
   "scripts/serve-browser-gpu-probe.mjs",
   "scripts/serve-semantic-explorer-probe.mjs",
   "specs/README.md",
+  "specs/LICENSE",
   "specs/bim-source-artifact-v0.1.md",
   "specs/bim-source-artifact-v0.2.md",
   "specs/bim-renderer-3d-v0.1.md",
@@ -288,12 +299,12 @@ for (const manifestPath of PACKAGE_MANIFESTS) {
   );
   if (packageJson.private !== true) {
     failures.push(
-      `${manifestPath}: package must remain private before release Gate`,
+      `${manifestPath}: npm publication must remain disabled`,
     );
   }
-  if (packageJson.license !== "UNLICENSED") {
+  if (packageJson.license !== "MPL-2.0") {
     failures.push(
-      `${manifestPath}: license must remain UNLICENSED before legal release Gate`,
+      `${manifestPath}: first-party package must declare MPL-2.0`,
     );
   }
   for (const field of [

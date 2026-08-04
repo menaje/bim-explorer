@@ -4,7 +4,7 @@ status: active
 authority:
   - documentation-navigation
   - documentation-governance
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # BIM Explorer 문서
@@ -19,6 +19,7 @@ last_reviewed: 2026-08-03
 | [제품과 저장소 경계](product-boundary.md) | `product` · `accepted` | 제품 정의, 책임, identity와 standalone 원칙 |
 | [시스템 아키텍처](system-architecture.md) | `architecture` · `accepted` | source/adapter/runtime/Host 경계 |
 | [오픈소스와 유료 Spatial 경계](open-source-commercial-boundary.md) | `strategy` · `accepted` | 공개 Explorer 가치와 Spatial 상품 가치 |
+| [Community release](community-release.md) | `release-policy` · `accepted` | 공식 배포 채널, 지원 범위, 재현 빌드와 migration |
 | [IFC engine qualification](ifc-engine-qualification.md) | `qualification` · `active` | 후보 측정, experimental profile과 production Gate |
 | [openBIM 탐색 경계](openbim-exploration.md) | `architecture` · `accepted` | BCF·IDS·bSDD profile, source binding과 network 경계 |
 | [결정 대장](decision-register.md) | `register` · `active` | 사실, 결정과 열린 질문 |

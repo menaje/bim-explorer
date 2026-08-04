@@ -2,10 +2,10 @@
   "name": "bim-explorer",
   "displayName": "BIM Explorer",
   "description": "Local-first read-only IFC structure, semantics, and 3D exploration",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "publisher": "menaje",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MPL-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/menaje/bim-explorer.git"

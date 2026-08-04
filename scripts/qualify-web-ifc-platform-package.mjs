@@ -369,7 +369,7 @@ export async function qualifyWebIfcPlatformPackage(options = {}) {
         name: PACKAGE_NAME,
         version: PACKAGE_VERSION,
         private: true,
-        license: "UNLICENSED",
+        license: "MPL-2.0",
         dependency: {
           name: "web-ifc",
           version: "0.0.77",

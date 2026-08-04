@@ -20,4 +20,5 @@ package:vscode`는 동일 파일을 staging한 뒤 독립 설치 가능한 VSIX�
 생성합니다. clean-install 검증은 빈 profile에 설치된 확장 자체로 generated
 IFC와 on-demand 공개 IFC를 다시 열어 source/render projection과 close
 cleanup까지 확인하며, 공개 fixture를 VSIX에 포함하지 않습니다. package
-검증 전에는 release하지 않습니다.
+안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
+검증 정책이 포함됩니다.

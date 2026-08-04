@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Isolated web-ifc qualification adapter",
-  "license": "UNLICENSED",
+  "license": "MPL-2.0",
   "type": "module",
   "exports": {
     ".": "./src/create-source-artifact.mjs",

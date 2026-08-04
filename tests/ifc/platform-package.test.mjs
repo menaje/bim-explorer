@@ -30,7 +30,7 @@ test("web-ifc stage packs, installs offline, and runs cleanly", async () => {
     assert.equal(evidence.status, "experimental");
     assert.equal(evidence.package.name, "@bim-explorer/web-ifc-platform-stage");
     assert.equal(evidence.package.private, true);
-    assert.equal(evidence.package.license, "UNLICENSED");
+    assert.equal(evidence.package.license, "MPL-2.0");
     assert.equal(evidence.package.dependency.version, "0.0.77");
     assert.equal(evidence.stage.fileCount, 10);
     assert.match(evidence.stage.sha256, /^[0-9a-f]{64}$/u);

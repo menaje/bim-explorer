@@ -56,7 +56,7 @@
     "the bSDD network path is deterministic with an injected response; the live service is not a CI dependency",
     "Spatial-owned IDS validation-to-revision diagnostic linkage remains tracked in menaje/coni-spatial#12",
     "BCF API server, authentication, comments and collaboration mutation are outside the local Explorer boundary",
-    "the package remains private and UNLICENSED until the Community release Gate"
+    "the source package is MPL-2.0 but npm publication and product-entrypoint admission remain outside this qualification"
   ],
   "policy": {
     "readOnly": true,

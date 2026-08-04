@@ -15,6 +15,10 @@ import { fileURLToPath } from "node:url";
 import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
+import {
+  unzipSync,
+  zipSync,
+} from "fflate";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EXTENSION = path.join(
@@ -54,6 +58,18 @@ const EXTENSION_FILES = Object.freeze([
   "src/provider.js",
   "src/webview-html.js",
 ]);
+const RELEASE_FILES = Object.freeze([
+  "CHANGELOG.md",
+  "LICENSE",
+  "NOTICE",
+  "SECURITY.md",
+  "SOURCE_OFFER.md",
+  "THIRD_PARTY_NOTICES.md",
+  "TRADEMARKS.md",
+]);
+const EXTENSION_VERSION = JSON.parse(
+  await readFile(path.join(EXTENSION, "package.json"), "utf8"),
+).version;
 
 async function copyRelative(sourceRoot, destinationRoot, relative) {
   const destination = path.join(destinationRoot, relative);
@@ -79,10 +95,9 @@ export async function prepareVscodeExtensionStage(destination) {
   for (const [relative] of COPY_FILES) {
     await copyRelative(ROOT, destination, relative);
   }
-  await copyFile(
-    path.join(ROOT, "THIRD_PARTY_NOTICES.md"),
-    path.join(destination, "THIRD_PARTY_NOTICES.md"),
-  );
+  for (const relative of RELEASE_FILES) {
+    await copyRelative(ROOT, destination, relative);
+  }
   const manifestPath = path.join(destination, "package.json");
   const manifest = JSON.parse(
     await readFile(manifestPath, "utf8"),
@@ -98,7 +113,7 @@ export async function prepareVscodeExtensionStage(destination) {
     files: Object.freeze([
       ...EXTENSION_FILES,
       ...COPY_FILES.map(([relative]) => relative),
-      "THIRD_PARTY_NOTICES.md",
+      ...RELEASE_FILES,
     ].sort()),
   });
 }
@@ -108,7 +123,7 @@ function parseArguments(values) {
     return path.join(
       ROOT,
       "dist",
-      "bim-explorer-0.0.0.vsix",
+      `bim-explorer-${EXTENSION_VERSION}.vsix`,
     );
   }
   if (
@@ -119,10 +134,26 @@ function parseArguments(values) {
   ) {
     throw new TypeError(
       "usage: node scripts/package-vscode-extension.mjs " +
-        "[--out dist/bim-explorer-0.0.0.vsix]",
+        `[--out dist/bim-explorer-${EXTENSION_VERSION}.vsix]`,
     );
   }
   return path.resolve(ROOT, values[1]);
+}
+
+async function normalizeVsix(output) {
+  const unpacked = unzipSync(await readFile(output));
+  const entries = {};
+  for (const name of Object.keys(unpacked).sort()) {
+    entries[name] = [
+      unpacked[name],
+      {
+        mtime: new Date(1980, 0, 1, 0, 0, 0, 0),
+      },
+    ];
+  }
+  await writeFile(output, zipSync(entries, {
+    level: 9,
+  }));
 }
 
 export async function packageVscodeExtension(output) {
@@ -153,7 +184,6 @@ export async function packageVscodeExtension(output) {
         output,
         "--no-yarn",
         "--dependencies",
-        "--skip-license",
       ],
       {
         cwd: stage,
@@ -166,6 +196,7 @@ export async function packageVscodeExtension(output) {
           `${result.stderr || result.stdout}`,
       );
     }
+    await normalizeVsix(output);
     const metadata = await stat(output);
     if (!metadata.isFile() || metadata.size <= 0) {
       throw new Error(

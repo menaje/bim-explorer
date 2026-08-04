@@ -14,8 +14,8 @@
   },
   "repository": {
     "private": true,
-    "license": "UNLICENSED",
-    "publicOpenSourceLicense": "held-release-gate"
+    "license": "MPL-2.0",
+    "publicOpenSourceLicense": "MPL-2.0"
   },
   "selectedEngine": {
     "id": "web-ifc",
@@ -82,8 +82,8 @@
     "exactNotices": [
       {
         "path": "THIRD_PARTY_NOTICES.md",
-        "bytes": 3210,
-        "sha256": "108e296e1005012190b2514d7e8407a18a39f5a8aecea10ea5ec62e524b32e70",
+        "bytes": 3953,
+        "sha256": "b23566d229ecda9da1f6898a76ccdf3559c1633ca1321abdb03f9b7ff18aed08",
         "exactVersion": true,
         "exactSource": true,
         "legalApprovalDisclaimed": true

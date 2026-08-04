@@ -23,6 +23,7 @@ bSDD lookup도 import 중 자동으로 발생하지 않습니다. 이 package의
 source baseline, Spatial Revision, acceptance 또는 publish 권한을
 변경하지 않습니다.
 
-package는 Community release Gate 전까지 `private: true`,
-`UNLICENSED`입니다. `fflate@0.8.3`과 `saxes@6.0.0`을 exact registry
-version으로 사용하며 공개 배포 여부와 notice는 release Gate가 결정합니다.
+package는 npm 오게시를 막기 위해 `private: true`이며 source는
+`MPL-2.0`입니다. `fflate@0.8.3`과 `saxes@6.0.0`을 exact registry
+version으로 사용하고 integrity, license와 source/runtime SBOM을 Community
+release Gate에서 검증합니다.

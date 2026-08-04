@@ -1,0 +1,11 @@
+BIM Explorer
+Copyright 2026 BIM Explorer contributors
+
+The BIM Explorer implementation is available under the Mozilla Public
+License, version 2.0. The public specifications under the specs/ directory
+are available under the Apache License, version 2.0. Fixtures and third-party
+components retain the licenses identified in their manifests and in
+THIRD_PARTY_NOTICES.md.
+
+The licenses do not grant trademark rights. See TRADEMARKS.md for the project
+and commercial-product naming boundary.

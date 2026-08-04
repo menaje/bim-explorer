@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("foundation remains standalone and release-gated", async () => {
+test("foundation remains standalone and MPL licensed", async () => {
   const packageJson = JSON.parse(await readFile("package.json", "utf8"));
   assert.equal(packageJson.name, "bim-explorer");
   assert.equal(packageJson.private, true);
-  assert.equal(packageJson.license, "UNLICENSED");
+  assert.equal(packageJson.version, "0.1.0");
+  assert.equal(packageJson.license, "MPL-2.0");
 
   for (const field of [
     "dependencies",

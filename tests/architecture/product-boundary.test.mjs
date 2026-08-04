@@ -19,7 +19,10 @@ test("authority documents preserve the three-product boundary", async () => {
   assert.match(architecture, /WASM Worker/u);
   assert.match(architecture, /Browser Host/u);
   assert.match(architecture, /VS Code Host/u);
-  assert.match(strategy, /root package는 `private: true`, `UNLICENSED`/u);
+  assert.match(
+    strategy,
+    /source license는 MPL-2\.0/u,
+  );
 });
 
 test("optional handoff carries identity but not authority", async () => {

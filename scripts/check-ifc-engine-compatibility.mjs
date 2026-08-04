@@ -1887,7 +1887,7 @@ function validateIfcLicenseProfile(manifest, evidence) {
     qualification.productionRedistributionApproved !== false ||
     qualification.exactSourceAvailabilityRecorded !== true ||
     qualification.thirdPartyNoticesRecorded !== true ||
-    qualification.rootOpenSourceLicense !== "held-release-gate"
+    qualification.rootOpenSourceLicense !== "MPL-2.0"
   ) {
     throw new Error(
       "IFC technical license qualification is incomplete or overclaims",
@@ -1909,9 +1909,9 @@ function validateIfcLicenseProfile(manifest, evidence) {
     evidence.scope.legalAdvice !== false ||
     evidence.scope.productionRedistributionApproval !== false ||
     evidence.repository?.private !== true ||
-    evidence.repository.license !== "UNLICENSED" ||
+    evidence.repository.license !== "MPL-2.0" ||
     evidence.repository.publicOpenSourceLicense !==
-      "held-release-gate" ||
+      "MPL-2.0" ||
     evidence.selectedEngine?.id !== "web-ifc" ||
     evidence.selectedEngine.version !== selected.version ||
     evidence.selectedEngine.role !==

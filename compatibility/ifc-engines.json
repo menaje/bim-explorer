@@ -115,7 +115,7 @@
     "productionRedistributionApproved": false,
     "exactSourceAvailabilityRecorded": true,
     "thirdPartyNoticesRecorded": true,
-    "rootOpenSourceLicense": "held-release-gate"
+    "rootOpenSourceLicense": "MPL-2.0"
   },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",

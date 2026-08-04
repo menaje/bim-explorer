@@ -167,7 +167,7 @@ export async function qualifyIfcLicenseProfile() {
   );
 
   assert.equal(rootManifest.private, true);
-  assert.equal(rootManifest.license, "UNLICENSED");
+  assert.equal(rootManifest.license, "MPL-2.0");
   assert.equal(adapterManifest.dependencies["web-ifc"], WEB_IFC.version);
   assert.equal(packageManifest.name, WEB_IFC.package);
   assert.equal(packageManifest.version, WEB_IFC.version);
@@ -222,7 +222,7 @@ export async function qualifyIfcLicenseProfile() {
     repository: {
       private: rootManifest.private,
       license: rootManifest.license,
-      publicOpenSourceLicense: "held-release-gate",
+      publicOpenSourceLicense: "MPL-2.0",
     },
     selectedEngine: {
       id: "web-ifc",

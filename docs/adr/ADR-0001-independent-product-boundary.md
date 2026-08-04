@@ -66,8 +66,8 @@ Explorer selection이 Spatial revision authority로 오인될 위험이 있습�
 
 - `docs/`, `specs/`, `packages/`, `apps/`, `adapters/`, `tests/`와
   `compatibility/`를 독립적으로 관리합니다.
-- root package는 public release Gate 전 `private`와 `UNLICENSED`를
-  유지합니다.
+- root와 first-party package는 npm publication 차단을 위해 `private`를
+  유지하고 source는 MPL-2.0으로 공개합니다. `specs/`는 Apache-2.0입니다.
 - Viewer Core와 IFC engine은 exact compatibility manifest 없이 dependency로
   추가하지 않습니다.
 - Browser/VS Code Host는 source capability만 제공하고 parser/authority를

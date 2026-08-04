@@ -396,7 +396,11 @@ test("extension staging is complete and independently path-safe", async () => {
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",
+      "LICENSE",
+      "NOTICE",
+      "SOURCE_OFFER.md",
       "THIRD_PARTY_NOTICES.md",
+      "TRADEMARKS.md",
     ]) {
       assert.equal(
         (await stat(path.join(destination, relative))).isFile(),

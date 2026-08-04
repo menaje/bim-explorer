@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "BIM 3D consumer for the public Viewer Core artifact",
-  "license": "UNLICENSED",
+  "license": "MPL-2.0",
   "type": "module",
   "exports": "./src/index.mjs",
   "dependencies": {

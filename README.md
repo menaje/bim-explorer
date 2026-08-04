@@ -6,7 +6,7 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 첫 vertical slice는 read-only IFC입니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
-> 현재 상태: architecture, IFC engine qualification과 read-only
+> 현재 상태: v0.1.0 Community release candidate와 read-only
 > source·3D·semantic explorer vertical slice 단계입니다.
 > 두 후보는 base·mapped synthetic fixture를 통과했고 web-ifc local Browser
 > Worker smoke, bounded local-file/source-session과 model-opened checkpoint
@@ -53,9 +53,10 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 아직 검증되지 않았습니다. exact web-ifc Node/WASM private stage는
 > macOS arm64와 Linux x64에서 offline clean install·실행을 통과했고,
 > 두 CI가 만든 989,965-byte tgz도 byte-identical이었습니다. 이는
-> exact npm artifact, MPL-2.0 text, source commit과 notice plan까지
-> 기술 검토했다는 뜻이며 production Browser/VS Code package, BIM Explorer
-> 자체 license, SBOM/signing 또는 redistribution 승인은 아닙니다.
+> exact npm artifact, MPL-2.0 text, source commit과 notice를 기술
+> 검토했습니다. Community VSIX는 MPL-2.0 source offer, SPDX SBOM,
+> SHA-256 manifest와 GitHub build provenance를 함께 배포합니다. 이는
+> 법률 자문, production write, SLA 또는 Coni Spatial 지원 승인이 아닙니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
@@ -175,14 +176,21 @@ Context Reference를 발급합니다. 현재 synthetic provider conformance는
 
 ## 오픈소스 방향
 
-BIM Explorer 구현은 MPL-2.0, protocol·schema는 Apache-2.0을 우선
-검토합니다. 이는 현재 후보이며 실제 IFC/geometry dependency의 결합 방식,
-redistribution 조건과 법률 검토를 통과하기 전에는 최종 라이선스로
-주장하지 않습니다.
+BIM Explorer 구현은 [MPL-2.0](LICENSE), `specs/`의 공개
+protocol·schema·normative example은
+[Apache-2.0](specs/LICENSE)입니다. package의 `private: true`는 npm 오게시
+차단이며 공개 source license를 제한하지 않습니다. executable의 exact
+source와 dependency notice는 [SOURCE_OFFER.md](SOURCE_OFFER.md)와
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)를 따릅니다.
 
 engine과 format 지원도 미리 약속하지 않습니다. IfcOpenShell, web-ifc 등
 후보를 동일 fixture로 비교하고 identity, geometry, memory, startup,
 license와 packaging Gate를 통과한 profile만 지원 대상으로 올립니다.
+
+공식 Community asset, 지원/비지원 범위, clean build와 migration 정책은
+[Community release 문서](docs/community-release.md)를 따릅니다. `Coni`,
+`Coni Spatial`과 official `menaje` build 표시는 별도
+[상표·배포 정책](TRADEMARKS.md)을 따릅니다.
 
 ## 관련 저장소
 

@@ -31,32 +31,30 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 | public source/renderer conformance | human accept/publish |
 | local Browser/VS Code shell | verified native delivery와 support |
 
-## 라이선스 검토안
+## 라이선스 결정
 
-- BIM Explorer 구현: MPL-2.0 후보
-- public protocol/schema/examples: Apache-2.0 후보
-- synthetic conformance fixture: 공개 후보
+- BIM Explorer 구현: MPL-2.0
+- `specs/`의 public protocol/schema/normative example: Apache-2.0
+- synthetic conformance fixture generator와 manifest: MPL-2.0
 - third-party native/commercial adapter: 별도 package와 해당 권리
 - 고객 BIM/corpus: 비공개·접근 통제
 
-현재 root package는 `private: true`, `UNLICENSED`입니다. 이는 제품의
-오픈소스 방향을 철회한 것이 아니라 dependency 결합, redistribution과 법률
-검토 전에 라이선스를 확정한 것처럼 보이지 않기 위한 release Gate입니다.
+root와 first-party package의 npm publish는 `private: true`로 차단하지만
+source license는 MPL-2.0입니다. `private`는 공개 소스 권리를 제한하지
+않으며 실수로 npm registry에 게시하지 않기 위한 공급망 통제입니다.
 
-## 공개 전 Gate
+## Community 공개 Gate
 
-- exact Viewer Core dependency 고정
-  (`@menaje/*` 0.1.2 prerelease Gate 통과)
-- exact IFC engine dependency와 production package 고정
-- static/dynamic/WASM/process 결합 방식 기록
-- LICENSE, NOTICE와 source 제공 의무 검토
-- synthetic fixture redistribution 확인
-- SBOM과 artifact provenance
-- macOS/Linux/Browser package 검증
-  (`web-ifc` private Node/WASM macOS/Linux stage만 통과)
-- security/privacy review
-- standalone clean install과 uninstall/cleanup
+- exact Viewer Core `@menaje/*@0.1.2` release asset 고정
+- exact `web-ifc@0.0.77`와 브라우저 Worker/WASM 결합 방식 기록
+- MPL-2.0 `LICENSE`, `NOTICE`, exact corresponding source 제공
+- public fixture는 on-demand cache로만 사용하고 제품 bundle에서 제외
+- source/runtime SPDX SBOM, SHA-256 manifest와 GitHub build provenance
+- macOS/Linux clean CI와 Browser/clean-installed VSIX qualification
+- 전체 Git 이력의 고객 format·credential pattern 검사
+- standalone 계정 없는 흐름과 source/Worker/GPU cleanup
 
-저장소 visibility 변경은 위 Gate와
-[Release issue #11](https://github.com/menaje/bim-explorer/issues/11)의
-명시적 승인 뒤 수행합니다.
+상세 산출물과 재현 명령은 [Community release](community-release.md)와
+[Release issue #11](https://github.com/menaje/bim-explorer/issues/11)이
+소유합니다. 이 기술·공급망 검토는 법률 자문이나 유료 지원 보장이
+아닙니다.

@@ -24,6 +24,17 @@ import {
 } from "./public-ifc-fixture.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
+const EXTENSION_VERSION = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      "apps",
+      "bim-explorer-vscode",
+      "package.json",
+    ),
+    "utf8",
+  ),
+).version;
 
 function codeCli() {
   if (
@@ -89,7 +100,7 @@ export async function qualifyVscodeVsixInstall() {
   );
   const output = path.join(
     temporary,
-    "bim-explorer-0.0.0.vsix",
+    `bim-explorer-${EXTENSION_VERSION}.vsix`,
   );
   const extensions = path.join(temporary, "extensions");
   const userData = path.join(temporary, "user-data");
@@ -116,7 +127,11 @@ export async function qualifyVscodeVsixInstall() {
       "--list-extensions",
       "--show-versions",
     ]).trim().split(/\r?\n/u).filter(Boolean);
-    if (!installedList.includes("menaje.bim-explorer@0.0.0")) {
+    if (
+      !installedList.includes(
+        `menaje.bim-explorer@${EXTENSION_VERSION}`,
+      )
+    ) {
       throw new Error(
         "Clean VSIX install did not register menaje.bim-explorer",
       );
@@ -126,7 +141,9 @@ export async function qualifyVscodeVsixInstall() {
     });
     const installedEntry = entries.find((entry) =>
       entry.isDirectory() &&
-      entry.name.startsWith("menaje.bim-explorer-0.0.0"));
+      entry.name.startsWith(
+        `menaje.bim-explorer-${EXTENSION_VERSION}`,
+      ));
     if (installedEntry === undefined) {
       throw new Error(
         "Clean VSIX install directory is unavailable",
@@ -211,7 +228,7 @@ export async function qualifyVscodeVsixInstall() {
         /successfully installed/iu.test(installOutput),
       extensionRegistered:
         installedList.includes(
-          "menaje.bim-explorer@0.0.0",
+          `menaje.bim-explorer@${EXTENSION_VERSION}`,
         ),
       requiredRuntimeComplete: true,
       workerBundleExact:

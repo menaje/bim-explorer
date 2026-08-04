@@ -49,7 +49,7 @@
   "blockers": [
     "Coni Spatial must run the bridge contract against its actual service-owned identity, Context Reference and diff implementation",
     "standalone Spatial bundle qualification remains owned by menaje/coni-spatial#8 and #16",
-    "the BIM integration package remains private and UNLICENSED until the Community release Gate"
+    "the source package is MPL-2.0 but npm publication remains disabled and actual consumer admission is Spatial-owned"
   ],
   "limitations": [
     "the current bridge evidence uses generated IFC4 and a deterministic synthetic Spatial service",

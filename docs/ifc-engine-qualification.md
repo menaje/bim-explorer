@@ -277,10 +277,12 @@ byte-identical이었습니다. OS별 report fingerprint는 packaging capability�
 projection은 동일합니다.
 
 따라서 web-ifc의 `packagingMacos`와 `packagingLinux`는 experimental
-Node/WASM stage 범위에서 `native`입니다. package는 `private: true`,
-`UNLICENSED`이고 CI artifact retention도 임시이므로 production release,
-Browser/VS Code bundle, IfcOpenShell Linux wheel, public license, SBOM,
-signing과 redistribution을 승인하지 않습니다.
+Node/WASM stage 범위에서 `native`입니다. 이 historical evidence의 package는
+당시 `private: true`, `UNLICENSED`였고 CI artifact retention도 임시였으므로
+그 자체가 production release, Browser/VS Code bundle, IfcOpenShell Linux
+wheel, SBOM, signing과 redistribution 승인을 뜻하지 않습니다. 현재
+first-party source license와 공식 Community artifact는 별도 release Gate가
+소유합니다.
 
 ## Admitted experimental implementation profile
 
@@ -363,9 +365,9 @@ source를 받을 수 있는 합리적인 경로를 알리고, MPL file 수정분
 source에 포함해야 합니다. 별도 BIM Explorer/Spatial 파일은 분리된 Larger
 Work 경계를 유지할 수 있습니다. 현재 npm artifact는 수정하지 않았고 exact
 source commit을 세 notice에 기록했습니다. 이 기술 체크리스트는 법률
-자문이 아니며 BIM Explorer 자체 public license, 실제 배포본의 source
-제공 절차, SBOM, signing 또는 production redistribution 승인을 대신하지
-않습니다.
+자문이 아닙니다. BIM Explorer 자체 MPL-2.0, 실제 배포본의 source 제공,
+SBOM, provenance와 Community redistribution 승인은
+[Community release](community-release.md)가 별도로 검증합니다.
 
 IfcOpenShell은 공식 설치 문서가 Python package 설치를 안내하고, upstream
 repository는 library와 executable의 license 범위를 구분합니다. 이번
@@ -389,8 +391,9 @@ source를 재배포하지 않고 on-demand local cache만 만들며, product bun
 - [Community Sample Test Files](https://github.com/buildingsmart-community/Community-Sample-Test-Files)
 - [Public fixture license](https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/LICENSE)
 
-engine/profile 선정은 완료했지만 법률 검토와 public release Gate 전에는
-production redistribution 가능하다고 주장하지 않습니다.
+engine/profile 선정과 Community read-only redistribution은 분리합니다.
+Community release는 exact Browser JS/WASM만 승인하며 production write,
+IfcOpenShell bundle, broader profile이나 법률 자문을 주장하지 않습니다.
 
 ## 재현
 

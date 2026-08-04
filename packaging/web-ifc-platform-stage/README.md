@@ -11,7 +11,6 @@ stage입니다.
 - `web-ifc@0.0.77` Node API와 Node single-thread WASM
 - package metadata, third-party notice와 MPL-2.0 license text
 
-생성한 tgz는 public release package가 아닙니다. BIM Explorer 자체 license,
-artifact signing, SBOM, MPL source 제공 방식과 production redistribution
-review가 완료될 때까지 `UNLICENSED`, `private`와 experimental 상태를
-유지합니다.
+생성한 tgz는 public release package가 아닙니다. source는 MPL-2.0이고 npm
+오게시는 `private`로 차단합니다. 공식 Community 배포는 별도 VSIX/source
+bundle, SBOM, signing/provenance와 redistribution Gate를 통과해야 합니다.
