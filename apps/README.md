@@ -40,3 +40,8 @@ semantic IFC의 같은 source session을 bounded semantic query와 WebGL2
 renderer에 연결합니다. spatial hierarchy, property/relation/search,
 실제 3D pick selection sync, 키보드·ARIA, DOM bound와 cleanup을 검증하는
 qualification surface이며 제품 shell은 아닙니다.
+
+[`gltf-browser-probe`](gltf-browser-probe/README.md)는 Khronos Box GLB에서
+투영한 generic geometry range를 실제 Chrome WebGL2로 render하고
+source-native pick과 cleanup을 확인합니다. 원본 GLB나 제품 file-open
+surface를 Browser에 노출하지 않습니다.

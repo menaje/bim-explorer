@@ -15,6 +15,10 @@ const evidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.publicKhronosBox),
   "utf8",
 ));
+const browserEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.browserWebGl2),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -36,9 +40,9 @@ const trueGates = [
   "publicKhronosFixture",
   "dependencyLicenseAndIntegrity",
   "deterministicCleanup",
+  "browserWebGl2",
 ];
 const heldGates = [
-  "browserWebGl2",
   "federationReferenceAdmission",
   "browserProductOpen",
   "vscodeProductOpen",
@@ -80,7 +84,7 @@ if (
   manifest.policy.claimProductSupport !== false ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
-  manifest.blockers.length !== 5 ||
+  manifest.blockers.length !== 4 ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -120,13 +124,61 @@ if (
   evidence.cleanup.activeBackendBytes !== 0 ||
   evidence.cleanup.residentRanges !== 0 ||
   assertions.some((name) =>
-    evidence.assertions[name] !== true)
+    evidence.assertions[name] !== true) ||
+  browserEvidence.schema !==
+    "bim-explorer-gltf-browser-webgl2-qualification/1" ||
+  browserEvidence.contract !== manifest.contract ||
+  browserEvidence.fixture.sha256 !== fixture.entry.sha256 ||
+  browserEvidence.fixture.license !== fixture.license.spdx ||
+  browserEvidence.fixture.artifactTracked !== false ||
+  browserEvidence.fixture.releaseBundled !== false ||
+  browserEvidence.environment.headless !== true ||
+  browserEvidence.environment.physicalGpuClaimed !== false ||
+  browserEvidence.source.format !== "glb" ||
+  browserEvidence.source.semanticAuthority !== false ||
+  browserEvidence.identity.globalId !== null ||
+  browserEvidence.identity.pickedGlobalId !== null ||
+  browserEvidence.identity.nativeId !==
+    browserEvidence.identity.pickedNativeId ||
+  browserEvidence.renderer.backend !== "webgl2" ||
+  browserEvidence.renderer.actualGpu !== true ||
+  browserEvidence.renderer.rendered !== true ||
+  browserEvidence.renderer.glError !== 0 ||
+  browserEvidence.renderer.nonBackgroundPixels <= 0 ||
+  browserEvidence.renderer.uploadedBytes !== 800 ||
+  browserEvidence.renderer.drawCalls !== 1 ||
+  browserEvidence.renderer.instances !== 1 ||
+  browserEvidence.renderer.triangles !== 12 ||
+  browserEvidence.renderer.sourceReadBytes !== 756 ||
+  browserEvidence.renderer.sourceReads !== 3 ||
+  browserEvidence.renderer.selectedInstances !== 1 ||
+  browserEvidence.renderer.highlightPixels <= 0 ||
+  browserEvidence.picking.status !== "hit" ||
+  browserEvidence.picking.actualGpu !== true ||
+  browserEvidence.picking.temporaryReleased !== true ||
+  browserEvidence.range.clientReads !== 3 ||
+  browserEvidence.range.clientBytes !== 756 ||
+  browserEvidence.range.serverRequests !== 3 ||
+  browserEvidence.range.serverBytes !== 756 ||
+  browserEvidence.cleanup.releasedBytes !== 800 ||
+  browserEvidence.cleanup.rendererDisposed !== true ||
+  browserEvidence.cleanup.sessionDisposed !== true ||
+  browserEvidence.cleanup.backendDisposed !== true ||
+  browserEvidence.cleanup.activeBackendBytes !== 0 ||
+  browserEvidence.cleanup.residentRanges !== 0 ||
+  browserEvidence.network.externalOrigins.length !== 0 ||
+  browserEvidence.network.runtimeErrors.length !== 0 ||
+  Object.values(browserEvidence.assertions)
+    .some((value) => value !== true)
 ) {
   throw new Error(
     "glTF reference source compatibility check failed",
   );
 }
-const serialized = JSON.stringify(evidence);
+const serialized = JSON.stringify({
+  evidence,
+  browserEvidence,
+});
 if (
   serialized.includes("/Users/") ||
   serialized.includes("/Volumes/") ||

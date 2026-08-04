@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+    <title>BIM Explorer · glTF Browser probe</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">BIM Explorer qualification surface</p>
+      <h1>glTF reference mesh · WebGL2</h1>
+      <p id="status">Preparing bounded reference range…</p>
+      <canvas
+        id="model-canvas"
+        width="640"
+        height="480"
+        aria-label="Rendered glTF reference mesh"
+      ></canvas>
+      <pre id="receipt">Waiting for Browser receipt…</pre>
+    </main>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

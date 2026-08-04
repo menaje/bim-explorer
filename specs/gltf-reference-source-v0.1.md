@@ -114,3 +114,12 @@ GPU allocation은 source가 소유하지 않습니다.
 - source write, conversion과 round-trip
 - BIM property/classification authority
 - product-scale Browser/VS Code surface admission
+
+## 현재 conformance evidence
+
+고정된 Khronos Box GLB는 공식 `gltf-validator@2.0.0-dev.3.10`에서
+error, warning, info와 hint가 모두 0입니다. 같은 source projection을 실제
+headless Chrome WebGL2에 올려 98,412 non-background pixels, source-native
+pick, selection highlight와 800-byte persistent allocation 전량 회수를
+확인했습니다. SwiftShader API 경로만 관찰했으므로 physical GPU를
+주장하지 않습니다.

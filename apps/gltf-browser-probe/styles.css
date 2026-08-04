@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #07101f;
+  color: #e5edf8;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(720px, calc(100vw - 32px));
+  margin: 24px auto;
+}
+
+.eyebrow {
+  color: #66d9c8;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+canvas {
+  display: block;
+  width: 640px;
+  max-width: 100%;
+  background: #07101f;
+  border: 1px solid #29405e;
+}
+
+pre {
+  overflow: auto;
+  padding: 16px;
+  background: #0b1729;
+  border: 1px solid #203754;
+  font-size: 11px;
+}

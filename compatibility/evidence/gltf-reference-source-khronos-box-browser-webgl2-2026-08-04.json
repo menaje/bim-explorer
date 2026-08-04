@@ -1,0 +1,114 @@
+{
+  "schema": "bim-explorer-gltf-browser-webgl2-qualification/1",
+  "asOf": "2026-08-04",
+  "contract": "bim-explorer-gltf-reference-source/0.1",
+  "environment": {
+    "browser": "Google Chrome 150.0.7871.187",
+    "platform": "darwin-arm64",
+    "headless": true,
+    "webgl2": "actual Browser API via SwiftShader",
+    "physicalGpuClaimed": false
+  },
+  "fixture": {
+    "fixtureId": "khronos-gltf-sample-assets-box-glb",
+    "byteLength": 1664,
+    "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "license": "CC-BY-4.0",
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "source": {
+    "format": "glb",
+    "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "revisionId": "source-snapshot:sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "sourceRole": "derived-or-reference-mesh",
+    "semanticAuthority": false,
+    "bounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "identity": {
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "globalId": null,
+    "pickedNativeId": "node:1/mesh:0/primitive:0",
+    "pickedGlobalId": null,
+    "renderId": "render:glb:ed52f7192b8311d7:1",
+    "pickId": "pick:glb:ed52f7192b8311d7:1"
+  },
+  "renderer": {
+    "backend": "webgl2",
+    "actualGpu": true,
+    "rendered": true,
+    "glError": 0,
+    "nonBackgroundPixels": 98412,
+    "uploadedBytes": 800,
+    "drawCalls": 1,
+    "instances": 1,
+    "triangles": 12,
+    "geometryRecords": 1,
+    "sourceReadBytes": 756,
+    "sourceReads": 3,
+    "selectedInstances": 1,
+    "highlightPixels": 98412
+  },
+  "picking": {
+    "status": "hit",
+    "actualGpu": true,
+    "temporaryTargetBytes": 1843200,
+    "temporaryReleased": true,
+    "worldPosition": [
+      0.49800681829942406,
+      0.49999607859172646,
+      0.40580875230655544
+    ]
+  },
+  "range": {
+    "clientReads": 3,
+    "clientBytes": 756,
+    "serverRequests": 3,
+    "serverBytes": 756
+  },
+  "cleanup": {
+    "releasedBytes": 800,
+    "rendererDisposed": true,
+    "sessionDisposed": true,
+    "backendDisposed": true,
+    "activeBackendBytes": 0,
+    "residentRanges": 0
+  },
+  "network": {
+    "externalOrigins": [],
+    "requestCount": 15,
+    "runtimeErrors": []
+  },
+  "assertions": {
+    "actualBrowser": true,
+    "webgl2Context": true,
+    "rasterizedPixels": true,
+    "boundedRangeReads": true,
+    "geometryAndInstanceUpload": true,
+    "sourceNativePick": true,
+    "selectedHighlight": true,
+    "transientPickReleased": true,
+    "deterministicCleanup": true,
+    "localOnly": true,
+    "noRuntimeErrors": true,
+    "pathFreeEvidence": true,
+    "physicalGpuNotClaimed": true
+  },
+  "limitations": [
+    "SwiftShader proves the Browser WebGL2 API path, not physical GPU hardware",
+    "the public Box GLB is not product-scale geometry",
+    "Browser and VS Code product file-open surfaces remain separate gates",
+    "write, round-trip and BIM semantic authority remain blocked"
+  ]
+}

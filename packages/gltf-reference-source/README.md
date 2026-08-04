@@ -16,3 +16,8 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 sparse accessor, write와 round-trip은 거부합니다. 출력 geometry는
 `application/vnd.bim-explorer.geometry-range.v1` display cache이며 원본
 glTF/GLB의 source authority가 아닙니다.
+
+Khronos Box GLB는 공식 Validator의 issue 0개와 실제 headless Chrome
+WebGL2의 98,412 rasterized pixels, revision-bound native pick 및 800-byte
+GPU allocation 전량 회수로 검증했습니다. 이는 SwiftShader Browser API
+evidence이며 physical GPU나 제품 file-open 지원을 뜻하지 않습니다.
