@@ -58,3 +58,9 @@ source license는 MPL-2.0입니다. `private`는 공개 소스 권리를 제한�
 [Release issue #11](https://github.com/menaje/bim-explorer/issues/11)이
 소유합니다. 이 기술·공급망 검토는 법률 자문이나 유료 지원 보장이
 아닙니다.
+
+v0.1.0은 위 Gate를 통과해 공개됐습니다. macOS/Linux build, release
+integrity, checksum과 signed provenance의 고정 결과는
+[release evidence](../compatibility/evidence/community-release-v0.1.0-2026-08-04.json)에
+기록합니다. 이 승격은 native write, Spatial authority, SLA나 유료 지원을
+추가하지 않습니다.

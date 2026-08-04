@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-community-release-compatibility/1",
-  "status": "release-candidate",
+  "status": "qualified",
   "asOf": "2026-08-04",
   "release": {
     "product": "BIM Explorer Community",
@@ -27,30 +27,22 @@
     "securityReportingDocumented": true,
     "trademarkAndOfficialBuildPolicy": true,
     "deterministicLocalReleaseBundle": true,
-    "macosTagBuild": false,
-    "linuxTagBuild": false,
-    "crossPlatformByteIdentity": false,
-    "publicRepository": false,
-    "privateVulnerabilityReporting": false,
-    "taggedRelease": false,
-    "artifactAttestation": false,
-    "publishedAssetsVerified": false
+    "macosTagBuild": true,
+    "linuxTagBuild": true,
+    "crossPlatformByteIdentity": true,
+    "publicRepository": true,
+    "privateVulnerabilityReporting": true,
+    "taggedRelease": true,
+    "artifactAttestation": true,
+    "publishedAssetsVerified": true
   },
   "evidence": {
     "qualificationCommand": "npm run qualify:community-release",
     "releaseWorkflow": ".github/workflows/release.yml",
     "releasePolicy": "docs/community-release.md",
-    "releaseEvidence": null
+    "releaseEvidence": "compatibility/evidence/community-release-v0.1.0-2026-08-04.json"
   },
-  "held": [
-    "public repository visibility",
-    "private vulnerability reporting enablement",
-    "v0.1.0 annotated tag",
-    "macOS tag build",
-    "Linux tag build",
-    "cross-platform byte identity in tag workflow",
-    "GitHub artifact attestations and published asset verification"
-  ],
+  "held": [],
   "policy": {
     "readOnly": true,
     "localFirst": true,

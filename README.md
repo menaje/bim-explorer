@@ -6,7 +6,7 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 첫 vertical slice는 read-only IFC입니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
-> 현재 상태: v0.1.0 Community release candidate와 read-only
+> 현재 상태: 공개·immutable v0.1.0 Community release와 read-only
 > source·3D·semantic explorer vertical slice 단계입니다.
 > 두 후보는 base·mapped synthetic fixture를 통과했고 web-ifc local Browser
 > Worker smoke, bounded local-file/source-session과 model-opened checkpoint
@@ -191,6 +191,11 @@ license와 packaging Gate를 통과한 profile만 지원 대상으로 올립니�
 [Community release 문서](docs/community-release.md)를 따릅니다. `Coni`,
 `Coni Spatial`과 official `menaje` build 표시는 별도
 [상표·배포 정책](TRADEMARKS.md)을 따릅니다.
+릴리스 asset과 검증 가능한 provenance는
+[v0.1.0 공식 릴리스](https://github.com/menaje/bim-explorer/releases/tag/v0.1.0),
+고정된 검증 결과는
+[release evidence](compatibility/evidence/community-release-v0.1.0-2026-08-04.json)에
+기록합니다.
 
 ## 관련 저장소
 

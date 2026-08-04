@@ -20,6 +20,14 @@ source, VSIX, SBOM, checksums, and provenance are published together on
 The release is a local-first, read-only exploration product. It does not
 require a Coni Spatial account, installation, service, or telemetry endpoint.
 
+The immutable v0.1.0 release is available at
+<https://github.com/menaje/bim-explorer/releases/tag/v0.1.0>. Its 12 assets,
+macOS/Linux byte identity, checksums, SBOM counts, repository privacy review,
+and signed GitHub provenance are fixed in
+[`community-release-v0.1.0-2026-08-04.json`](../compatibility/evidence/community-release-v0.1.0-2026-08-04.json).
+The annotated Git tag is not cryptographically signed; the published build and
+release asset provenance is signed and independently verifiable.
+
 ## Supported flow
 
 The admitted flow is:

@@ -1,0 +1,154 @@
+{
+  "schema": "bim-explorer-community-release-evidence/1",
+  "capturedAt": "2026-08-04T06:12:54Z",
+  "source": {
+    "repository": "menaje/bim-explorer",
+    "commit": "c6978e1516a993fa4443e24d9ebe5a64ce540104",
+    "tag": "v0.1.0",
+    "annotatedTagObject": "1718eb4268ee2b9954960b40b515d35add45a46e",
+    "tagSignature": "unsigned-annotated",
+    "releaseProvenanceSigned": true
+  },
+  "repository": {
+    "visibility": "public",
+    "license": "MPL-2.0",
+    "privateVulnerabilityReporting": true,
+    "immutableReleases": true
+  },
+  "workflow": {
+    "name": "Community Release",
+    "runId": 30883173341,
+    "runUrl": "https://github.com/menaje/bim-explorer/actions/runs/30883173341",
+    "conclusion": "success",
+    "event": "push",
+    "sourceRef": "refs/tags/v0.1.0",
+    "linuxJob": {
+      "id": 91908656875,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/30883173341/job/91908656875",
+      "conclusion": "success"
+    },
+    "macosJob": {
+      "id": 91908656894,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/30883173341/job/91908656894",
+      "conclusion": "success"
+    },
+    "publishJob": {
+      "id": 91908749836,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/30883173341/job/91908749836",
+      "conclusion": "success"
+    },
+    "node": "24",
+    "npm": "11.6.2",
+    "fullConformanceTests": 193,
+    "runtimeAuditVulnerabilities": 0,
+    "crossPlatformByteIdentity": true
+  },
+  "release": {
+    "url": "https://github.com/menaje/bim-explorer/releases/tag/v0.1.0",
+    "name": "BIM Explorer Community v0.1.0",
+    "version": "0.1.0",
+    "draft": false,
+    "prerelease": false,
+    "immutable": true,
+    "assets": 12,
+    "releaseIntegrityVerified": true,
+    "downloadedChecksumsVerified": true
+  },
+  "supplyChain": {
+    "runtimeSpdxPackages": 6,
+    "sourceSpdxPackages": 362,
+    "unknownRuntimeLicenses": 0,
+    "exactNpmLock": true,
+    "buildProvenanceAttested": true,
+    "releaseAttestationVerified": true,
+    "vsixAttestationVerified": true,
+    "sourceArchiveAttestationVerified": true,
+    "runtimeSbomAttestationVerified": true,
+    "signerWorkflow": "menaje/bim-explorer/.github/workflows/release.yml",
+    "sigstorePublicTransparencyLog": true
+  },
+  "privacy": {
+    "historyCommits": 48,
+    "historyUniquePaths": 279,
+    "customerOrModelArtifacts": 0,
+    "credentialPatternFiles": 0
+  },
+  "artifacts": [
+    {
+      "name": "LICENSE",
+      "byteLength": 16725,
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+    },
+    {
+      "name": "NOTICE",
+      "byteLength": 489,
+      "sha256": "e14dfca45b0329948c16a3fdcc1f9cd6f9777f17825a359a14729b1d05735cf5"
+    },
+    {
+      "name": "RELEASE_NOTES.md",
+      "byteLength": 1419,
+      "sha256": "8bbf7bea3ac992e8bca3b09fd26bb2b6bb6cc1b63ae5297f597f24221d38cecf"
+    },
+    {
+      "name": "SHA256SUMS",
+      "byteLength": 955,
+      "sha256": "9f99809de6fe863f56da7a6224fd9a3d976592d80683d5923380e9cb0ebe8eca"
+    },
+    {
+      "name": "SOURCE_OFFER.md",
+      "byteLength": 1166,
+      "sha256": "18039249e4c957724978f2e4743607148276533dabc8c6897d3e5d8e3add1f14"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "byteLength": 3953,
+      "sha256": "b23566d229ecda9da1f6898a76ccdf3559c1633ca1321abdb03f9b7ff18aed08"
+    },
+    {
+      "name": "TRADEMARKS.md",
+      "byteLength": 878,
+      "sha256": "10907d65e6bdf5e8e69c9d484c3e0ff24451f9dc62bd5d05329028670746531d"
+    },
+    {
+      "name": "bim-explorer-0.1.0-source.spdx.json",
+      "byteLength": 415147,
+      "sha256": "a936db4851644a071cf4f44c7f7575de29d2e7642c4dd7e548222a1cbd9c314e"
+    },
+    {
+      "name": "bim-explorer-0.1.0-source.tar.gz",
+      "byteLength": 567619,
+      "sha256": "19830938650ebb049b2a470143968cd7a5e5635ce01f75c7b3a1c70d21d0fa8e"
+    },
+    {
+      "name": "bim-explorer-0.1.0.spdx.json",
+      "byteLength": 5851,
+      "sha256": "3d4671a2ff349a85560254359527922e16d901d199176a8be3ef553a35037429"
+    },
+    {
+      "name": "bim-explorer-0.1.0.vsix",
+      "byteLength": 1138792,
+      "sha256": "b8ab966b28f5ecdfcf3941930b53bb68287bbaacce0c52ad252132789b9e9d56"
+    },
+    {
+      "name": "release-manifest.json",
+      "byteLength": 2713,
+      "sha256": "7bd7369558d98e298b5695d474d2ea372b798ca7f28e316b670a9ef71a52fb3a"
+    }
+  ],
+  "assertions": {
+    "repositoryPublic": true,
+    "privateVulnerabilityReportingEnabled": true,
+    "releaseImmutable": true,
+    "annotatedTagExact": true,
+    "macosBuildPassed": true,
+    "linuxBuildPassed": true,
+    "crossPlatformByteIdentical": true,
+    "runtimeAuditClean": true,
+    "fullConformancePassed": true,
+    "allReleaseAssetsAttested": true,
+    "releaseIntegrityVerified": true,
+    "downloadedAssetsMatchChecksums": true,
+    "sourceAndNoticesPublished": true,
+    "accountFreeReadOnlyBoundaryPreserved": true
+  }
+}

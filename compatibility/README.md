@@ -10,6 +10,12 @@
 Community 제품 공개 상태는
 [`community-release.json`](community-release.json)이 license, privacy,
 SBOM, reproducibility와 remote publication Gate를 분리해 소유합니다.
+v0.1.0은 macOS/Linux byte-identical build, 12개 asset checksum과
+GitHub provenance 검증을 통과한 `qualified` 상태입니다. immutable release
+결과는
+[`release evidence`](evidence/community-release-v0.1.0-2026-08-04.json)에
+고정합니다. annotated Git tag 자체는 서명되지 않았으며, 공식 asset의
+build/release provenance가 서명돼 있습니다.
 
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
