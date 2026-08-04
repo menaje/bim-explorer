@@ -37,6 +37,19 @@ engine으로 선정했습니다. 하지만 두 후보 모두 public product depe
 production redistribution 승인을 받지 않았습니다. 후보를 release
 dependency로 승격할 때 다음을 같은 변경에서 기록해야 합니다.
 
+internal `openbim-explorer` package는 bounded BCFZIP/XML 처리를 위해 다음
+exact registry dependency를 사용합니다.
+
+- `fflate@0.8.3`, MIT,
+  <https://github.com/101arrowz/fflate>
+- `saxes@6.0.0`, ISC,
+  <https://github.com/lddubeau/saxes>
+
+두 dependency는 Community release Gate 전까지 private `UNLICENSED`
+package에서만 사용합니다. public artifact에 포함할 때 exact registry
+integrity, license text, SBOM과 redistribution notice를 다시 검증해야
+합니다.
+
 `packaging/web-ifc-platform-stage`는 exact Node API/WASM, MPL-2.0 text와
 notice를 포함해 macOS/Linux의 offline clean install과 byte identity만
 검증하는 private qualification package입니다. public release, SBOM,

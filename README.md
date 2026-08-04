@@ -61,7 +61,14 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
 > Chromium에서 검증했습니다. source session과 제품 UI는 선택 entity의
 > bounded primitive property value도 lazy load합니다. public semantic
-> scale과 advanced relation graph는 아직 보류합니다.
+> scale과 advanced relation graph는 아직 보류합니다. 같은 generated
+> source에 BCF XML 3.0 archive를 bounded deterministic round-trip하고
+> camera·clipping·visibility·selection을 GlobalId로 적용했습니다. IDS 1.0
+> document와 external `pass`·`fail`·`not-evaluated` result, failing entity
+> selection과 bSDD URI/version도 탐색합니다. import는 network 없이
+> 동작하며 bSDD는 explicit lookup만 bounded cache를 사용합니다. full BCF
+> XSD, native IDS validation, live bSDD와 Spatial revision diagnostic linkage는
+> 보류합니다.
 
 ## 첫 사용자 흐름
 
@@ -197,6 +204,7 @@ npm run qualify:product:vscode-install
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core
+npm run qualify:openbim
 npm run package:vscode
 ```
 
@@ -216,6 +224,9 @@ Viewer Core admission 상태는
 따릅니다.
 Browser/VS Code 제품 Host 계약의 상태는
 [compatibility/bim-product-shells.json](compatibility/bim-product-shells.json)을
+따릅니다.
+BCF·IDS·bSDD 탐색 계약의 상태는
+[compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을
 따릅니다.
 실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
 않습니다.

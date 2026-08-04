@@ -10,6 +10,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `bim-semantic-explorer`: model tree, property/relation/search composition
 - `host-contracts`: Browser/VS Code Host adapter contract
 - `spatial-integration`: optional public handoff와 Spatial overlay bridge
+- `openbim-explorer`: source-bound BCF·IDS·bSDD read-only exploration
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
@@ -50,3 +51,8 @@ selection을 service-owned Canonical mapping, synchronized 2D/3D identity,
 opaque Context Reference와 BIM base + Spatial diff review로 연결하는 optional
 bridge입니다. Spatial private package나 설치된 extension에 의존하지
 않습니다.
+
+[`openbim-explorer`](openbim-explorer/README.md)는 bounded BCF XML 3.0
+local import/export, IDS 1.0 document/result와 explicit bSDD lookup을 같은
+source fingerprint/revision에 묶습니다. full IDS validator, 자동 network,
+Spatial Revision이나 acceptance authority는 소유하지 않습니다.

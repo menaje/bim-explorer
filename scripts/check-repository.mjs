@@ -63,12 +63,14 @@ const REQUIRED_PATHS = [
   "compatibility/bim-renderer-3d.json",
   "compatibility/bim-model-source.json",
   "compatibility/bim-semantic-explorer.json",
+  "compatibility/openbim-explorer.json",
   "compatibility/evidence/bim-semantic-explorer-browser-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-browser-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
   "compatibility/evidence/spatial-integration-synthetic-2026-08-04.json",
+  "compatibility/evidence/openbim-explorer-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
   "compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json",
   "compatibility/evidence/bim-renderer-3d-public-browser-view-state-2026-08-04.json",
@@ -100,6 +102,7 @@ const REQUIRED_PATHS = [
   "docs/adr/ADR-0002-viewer-core-consumer-admission.md",
   "docs/decision-register.md",
   "docs/ifc-engine-qualification.md",
+  "docs/openbim-exploration.md",
   "docs/open-source-commercial-boundary.md",
   "docs/product-boundary.md",
   "docs/system-architecture.md",
@@ -124,6 +127,14 @@ const REQUIRED_PATHS = [
   "packages/spatial-integration/README.md",
   "packages/spatial-integration/package.json",
   "packages/spatial-integration/src/index.mjs",
+  "packages/openbim-explorer/README.md",
+  "packages/openbim-explorer/package.json",
+  "packages/openbim-explorer/src/bcf.mjs",
+  "packages/openbim-explorer/src/bsdd.mjs",
+  "packages/openbim-explorer/src/common.mjs",
+  "packages/openbim-explorer/src/ids.mjs",
+  "packages/openbim-explorer/src/index.mjs",
+  "packages/openbim-explorer/src/xml.mjs",
   "packages/bim-renderer-3d/README.md",
   "packages/bim-renderer-3d/package.json",
   "packages/bim-renderer-3d/src/camera.mjs",
@@ -147,6 +158,7 @@ const REQUIRED_PATHS = [
   "scripts/check-bim-model-source-compatibility.mjs",
   "scripts/check-bim-product-shell-compatibility.mjs",
   "scripts/check-spatial-integration-compatibility.mjs",
+  "scripts/check-openbim-compatibility.mjs",
   "scripts/check-bim-renderer-3d-compatibility.mjs",
   "scripts/check-bim-semantic-explorer-compatibility.mjs",
   "scripts/check-docs.mjs",
@@ -164,6 +176,7 @@ const REQUIRED_PATHS = [
   "scripts/qualify-bim-model-source.mjs",
   "scripts/qualify-bim-source-metadata.mjs",
   "scripts/qualify-spatial-integration.mjs",
+  "scripts/qualify-openbim-explorer.mjs",
   "scripts/qualify-public-bim-renderer-3d.mjs",
   "scripts/qualify-public-bim-model-source.mjs",
   "scripts/qualify-ifc-engine.mjs",
@@ -188,6 +201,7 @@ const REQUIRED_PATHS = [
   "specs/bim-semantic-explorer-v0.1.md",
   "specs/bim-product-hosts-v0.1.md",
   "specs/bim-spatial-integration-v0.1.md",
+  "specs/openbim-explorer-v0.1.md",
   "specs/ifc-engine-adapter-v0.2.md",
   "tests/README.md",
   "tests/architecture/product-boundary.test.mjs",
@@ -197,6 +211,7 @@ const REQUIRED_PATHS = [
   "tests/compatibility/bim-semantic-explorer.test.mjs",
   "tests/compatibility/bim-product-shells.test.mjs",
   "tests/compatibility/spatial-integration.test.mjs",
+  "tests/compatibility/openbim-explorer.test.mjs",
   "tests/compatibility/viewer-core-consumer.test.mjs",
   "tests/compatibility/viewer-core-release.test.mjs",
   "tests/foundation/repository.test.mjs",
@@ -205,6 +220,8 @@ const REQUIRED_PATHS = [
   "tests/ifc/source-metadata.test.mjs",
   "tests/integration/spatial-integration.test.mjs",
   "tests/integration/spatial-qualification.test.mjs",
+  "tests/openbim/openbim-explorer.test.mjs",
+  "tests/openbim/openbim-qualification.test.mjs",
   "tests/ifc/engine-compatibility.test.mjs",
   "tests/ifc/engine-contract.test.mjs",
   "tests/ifc/browser-worker-probe.test.mjs",
@@ -260,6 +277,7 @@ const PACKAGE_MANIFESTS = [
   "packages/bim-renderer-3d/package.json",
   "packages/bim-semantic-explorer/package.json",
   "packages/spatial-integration/package.json",
+  "packages/openbim-explorer/package.json",
   "packages/ifc-engine-contract/package.json",
   "packages/viewer-core-consumer/package.json",
   "packaging/web-ifc-platform-stage/package.json",
@@ -311,6 +329,22 @@ if (
   failures.push(
     "package-lock.json: web-ifc 0.0.77 requires exact registry integrity",
   );
+}
+for (const [name, version] of [
+  ["fflate", "0.8.3"],
+  ["saxes", "6.0.0"],
+]) {
+  const dependency = lockfile.packages?.[`node_modules/${name}`];
+  if (
+    dependency?.version !== version ||
+    typeof dependency.integrity !== "string" ||
+    !dependency.integrity.startsWith("sha512-")
+  ) {
+    failures.push(
+      `package-lock.json: ${name} ${version} requires ` +
+        "exact registry integrity",
+    );
+  }
 }
 
 const git = spawnSync("git", ["ls-files", "-z"], {

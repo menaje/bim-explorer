@@ -92,3 +92,10 @@ revision binding, source switch, abort, invalid backend cleanup과 deterministic
 dispose를 headless backend로 검사합니다. 공개 qualification은 첫 range의
 geometry/instance/draw-call accounting을 두 번 재현하지만 실제 GPU frame
 test는 아닙니다.
+
+`openbim` test는 BCF XML 3.0 deterministic local round-trip, bounded ZIP/XML,
+camera/clipping/visibility/selection의 source-bound projection, IDS 1.0
+requirement와 3-state result provenance, failing entity selection을
+검사합니다. bSDD는 import 중 offline이며 explicit lookup에서만 injected
+network와 bounded cache를 사용합니다. full XSD/IDS validator나 live
+service test가 아닙니다.

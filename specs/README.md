@@ -15,3 +15,4 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 - [BIM semantic explorer v0.1](bim-semantic-explorer-v0.1.md)
 - [BIM product hosts v0.1](bim-product-hosts-v0.1.md)
 - [BIM Spatial integration v0.1](bim-spatial-integration-v0.1.md)
+- [openBIM Explorer v0.1](openbim-explorer-v0.1.md)

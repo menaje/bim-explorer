@@ -1,0 +1,183 @@
+{
+  "schema": "bim-explorer-openbim-qualification/1",
+  "status": "passed-experimental",
+  "asOf": "2026-08-04",
+  "contract": {
+    "explorer": "bim-explorer-openbim-explorer/0.1",
+    "bcfDocument": "bim-explorer-bcf-document/0.1",
+    "bcfResolution": "bim-explorer-bcf-viewpoint-resolution/0.1",
+    "idsDocument": "bim-explorer-ids-document/0.1",
+    "idsResult": "bim-explorer-ids-result/0.1",
+    "idsResolution": "bim-explorer-ids-result-resolution/0.1",
+    "bsddReference": "bim-explorer-bsdd-reference/0.1",
+    "bsddLookup": "bim-explorer-bsdd-lookup/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.2"
+  },
+  "standards": {
+    "bcf": {
+      "profile": "BCF XML 3.0",
+      "buildingSmartBranch": "release_3_0",
+      "buildingSmartCommit": "bc48611d0d7a1587f028a2b69677a1aafd5cd0a8"
+    },
+    "ids": {
+      "profile": "IDS 1.0",
+      "buildingSmartRelease": "v1.0.0",
+      "publishedAt": "2024-06-03T15:52:52Z"
+    },
+    "bsdd": {
+      "apiHost": "api.bsdd.buildingsmart.org",
+      "identifierHost": "identifier.buildingsmart.org",
+      "apiProfile": "Class/Property REST v1"
+    }
+  },
+  "dependencies": {
+    "fflate": {
+      "version": "0.8.3",
+      "license": "MIT"
+    },
+    "saxes": {
+      "version": "6.0.0",
+      "license": "ISC"
+    }
+  },
+  "source": {
+    "fingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "schema": "IFC4",
+    "profile": "ReferenceView_V1.2",
+    "products": 2
+  },
+  "bcf": {
+    "documentId": "sha256:f6f0291e3d34dbb94d207da717ea4c101c3eb8becd83f71b2df4b49220450c62",
+    "archiveBytes": 1233,
+    "entries": 3,
+    "uncompressedBytes": 1591,
+    "topics": 1,
+    "viewpoints": 1,
+    "deterministicExport": true,
+    "camera": {
+      "projection": "perspective",
+      "position": [
+        4,
+        5,
+        6
+      ],
+      "target": [
+        2,
+        3,
+        1.5
+      ],
+      "fieldOfView": 60
+    },
+    "clippingPlanes": 1,
+    "selected": [
+      40
+    ],
+    "visibilityExceptions": [
+      40
+    ],
+    "diagnostics": [
+      "component-global-id-not-found"
+    ],
+    "canApply": false,
+    "networkRequests": 0,
+    "staleSourceRejected": true,
+    "unsafeArchiveRejected": true
+  },
+  "ids": {
+    "documentId": "sha256:6febbad1e6b29a358782da979c5ede3eb614af04cecdc5cf4664efe4f2d4e58f",
+    "title": "Envelope requirements",
+    "specifications": 1,
+    "applicability": [
+      "entity"
+    ],
+    "requirements": [
+      "classification",
+      "property"
+    ],
+    "vocabularyReferences": [
+      {
+        "kind": "class",
+        "version": "4.3",
+        "code": "IfcWall"
+      },
+      {
+        "kind": "property",
+        "version": "4.3",
+        "code": "FireRating"
+      }
+    ],
+    "schemaValidated": false,
+    "evaluatesIfcRequirements": false,
+    "resultStatus": "fail",
+    "resultCounts": {
+      "pass": 1,
+      "fail": 2,
+      "not-evaluated": 1
+    },
+    "provenance": {
+      "kind": "external",
+      "producer": "synthetic-validator/1.0",
+      "runId": "run:1",
+      "validatorProfile": null,
+      "spatialRevisionId": null
+    },
+    "selected": [
+      40
+    ],
+    "diagnostics": [
+      "failing-entity-global-id-not-found"
+    ],
+    "completeResolution": false,
+    "networkRequests": 0,
+    "staleSourceRejected": true,
+    "doctypeRejected": true
+  },
+  "bsdd": {
+    "reference": {
+      "uri": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcWall",
+      "kind": "class",
+      "dictionary": "ifc",
+      "version": "4.3",
+      "code": "IfcWall"
+    },
+    "offlineStatus": "offline-missing",
+    "explicitLookupStatus": "resolved",
+    "cachedStatus": "cached",
+    "endpoint": "https://api.bsdd.buildingsmart.org/api/Class/v1?Uri=https%3A%2F%2Fidentifier.buildingsmart.org%2Furi%2Fbuildingsmart%2Fifc%2F4.3%2Fclass%2FIfcWall",
+    "responseBytes": 103,
+    "request": {
+      "url": "https://api.bsdd.buildingsmart.org/api/Class/v1?Uri=https%3A%2F%2Fidentifier.buildingsmart.org%2Furi%2Fbuildingsmart%2Fifc%2F4.3%2Fclass%2FIfcWall",
+      "credentials": "omit",
+      "accept": "application/json"
+    },
+    "networkRequests": 1,
+    "cacheEntries": 1
+  },
+  "lifecycle": {
+    "beforeDispose": {
+      "bcfImports": 1,
+      "bcfExports": 2,
+      "idsImports": 1,
+      "idsResultImports": 1
+    },
+    "explorerDisposed": true,
+    "sessionDisposed": true,
+    "sourceDisposed": true
+  },
+  "authority": {
+    "sourceMutation": false,
+    "acceptance": false,
+    "publish": false,
+    "spatialRevision": false
+  },
+  "decision": {
+    "localReadOnlyExploration": "passed-synthetic-source",
+    "fullBcfSchemaValidation": "held",
+    "nativeIdsValidation": "held",
+    "automaticBsddLookup": "prohibited",
+    "spatialRevisionDiagnosticLinkage": "held-spatial-owned",
+    "publicPackage": "held-community-release",
+    "productionClaims": false
+  }
+}

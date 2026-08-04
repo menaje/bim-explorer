@@ -1,0 +1,74 @@
+{
+  "schema": "bim-explorer-openbim-compatibility/1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "contract": {
+    "explorer": "bim-explorer-openbim-explorer/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
+    "bcfProfile": "BCF XML 3.0",
+    "idsProfile": "IDS 1.0",
+    "bsddApiProfile": "Class/Property REST v1"
+  },
+  "limits": {
+    "maximumBcfArchiveBytes": 8388608,
+    "maximumBcfUncompressedBytes": 16777216,
+    "maximumBcfEntryBytes": 2097152,
+    "maximumBcfEntries": 128,
+    "maximumBcfTopics": 64,
+    "maximumBcfViewpoints": 256,
+    "maximumBcfComponents": 5000,
+    "maximumBcfClippingPlanes": 6,
+    "maximumIdsBytes": 2097152,
+    "maximumIdsSpecifications": 1000,
+    "maximumIdsResultEntities": 20000,
+    "maximumBsddResponseBytes": 524288,
+    "maximumBsddCacheEntries": 128
+  },
+  "gates": {
+    "bcfXml30BoundedLocalImport": true,
+    "bcfXml30DeterministicLocalExport": true,
+    "bcfIssueMetadata": true,
+    "bcfCameraClippingVisibilitySelection": true,
+    "sourceBoundBcfResolution": true,
+    "missingBcfComponentDiagnostics": true,
+    "ids10DocumentExploration": true,
+    "idsTriStateResult": true,
+    "idsProvenanceBoundary": true,
+    "idsFailingEntitySelection": true,
+    "bsddUriVersionPreservation": true,
+    "explicitBsddNetworkLookup": true,
+    "offlineMissingVocabulary": true,
+    "staleSourceRejection": true,
+    "authorityFreeExploration": true,
+    "fullBcfXsdValidation": false,
+    "nativeIdsIfcValidation": false,
+    "liveBsddServiceQualification": false,
+    "spatialRevisionDiagnosticLinkage": false,
+    "bcfCollaborationApi": false,
+    "publicOpenBimPackage": false
+  },
+  "evidence": {
+    "synthetic": "compatibility/evidence/openbim-explorer-synthetic-2026-08-04.json"
+  },
+  "blockers": [
+    "BCF XML is parsed as a strict bounded exploration subset but is not validated against the complete buildingSMART XSD set",
+    "IDS XML is explored and external results are resolved, but this package does not evaluate IDS requirements against IFC",
+    "the bSDD network path is deterministic with an injected response; the live service is not a CI dependency",
+    "Spatial-owned IDS validation-to-revision diagnostic linkage remains tracked in menaje/coni-spatial#12",
+    "BCF API server, authentication, comments and collaboration mutation are outside the local Explorer boundary",
+    "the package remains private and UNLICENSED until the Community release Gate"
+  ],
+  "policy": {
+    "readOnly": true,
+    "localFirst": true,
+    "automaticNetwork": false,
+    "sourceMutation": false,
+    "spatialAuthority": false,
+    "acceptance": false,
+    "publish": false,
+    "claimFullBcfValidation": false,
+    "claimNativeIdsValidation": false,
+    "claimLiveBsddQualification": false,
+    "claimProductionOpenBim": false
+  }
+}

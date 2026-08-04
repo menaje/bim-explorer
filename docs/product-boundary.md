@@ -105,6 +105,12 @@ Reference 요청에는 bridge가 반환한 Render/Pick ID와 viewport만 넣습�
 BIM base와 Spatial live/diff layer는 owner와 revision을 유지한 채
 composition하고 accept/publish authority는 발급하지 않습니다.
 
+BCF/IDS도 같은 원칙을 따릅니다.
+[`openbim-explorer/0.1`](../specs/openbim-explorer-v0.1.md)은 viewpoint와
+validation result를 active source fingerprint/revision에 묶어 탐색하지만
+source baseline을 바꾸지 않습니다. `spatial` provenance가 있는 IDS
+result도 Spatial Revision reference일 뿐 acceptance capability가 아닙니다.
+
 ## 비목표
 
 - production IFC/RVT write를 첫 제품 범위로 주장하지 않습니다.

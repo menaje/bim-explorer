@@ -163,6 +163,16 @@ Context Reference, BIM base + Spatial live/diff layer와 authority-free handoff�
 consumer, standalone Spatial bundle과 public integration package는
 consumer/release-owned Gate로 계속 보류합니다.
 
+BCF XML 3.0 local archive, IDS 1.0 document/result와 bSDD URI의 source-bound
+read-only 탐색은
+[`openbim-explorer.json`](openbim-explorer.json)과
+[`synthetic openBIM evidence`](evidence/openbim-explorer-synthetic-2026-08-04.json)가
+소유합니다. BCFZIP bounded admission·deterministic export,
+camera/clipping/visibility/selection, IDS 3-state provenance와 failing entity
+highlight, bSDD offline-default·explicit cached lookup을 통과했습니다. full
+BCF XSD, native IDS IFC validation, live bSDD와 Spatial revision diagnostic
+linkage는 보류합니다.
+
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만

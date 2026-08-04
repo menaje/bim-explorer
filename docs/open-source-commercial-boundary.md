@@ -27,6 +27,7 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 | tree/property/relation/search | Agent query/change/build/check |
 | section/isolate/measure | semantic/geometry/render/export diff |
 | source-local viewpoint | refresh/reconcile/conflict |
+| BCF·IDS·bSDD read-only exploration | validation-to-revision diagnostics |
 | public source/renderer conformance | human accept/publish |
 | local Browser/VS Code shell | verified native delivery와 support |
 

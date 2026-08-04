@@ -1,0 +1,16 @@
+{
+  "name": "@bim-explorer/openbim-explorer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bounded source-bound BCF, IDS, and bSDD exploration",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "dependencies": {
+    "fflate": "0.8.3",
+    "saxes": "6.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

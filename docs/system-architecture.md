@@ -249,6 +249,32 @@ Host의 결과는
 [product shell compatibility](../compatibility/bim-product-shells.json)가
 같은 fingerprint와 projection으로 비교합니다.
 
+## openBIM exploration
+
+[`openbim-explorer/0.1`](../specs/openbim-explorer-v0.1.md)은 active
+`BimModelSource` snapshot에 BCF XML 3.0, IDS 1.0 result와 bSDD URI를 묶는
+read-only boundary입니다.
+
+```text
+BCFZIP / IDS XML / IDS result
+  -> bounded archive/XML admission
+  -> source fingerprint + revision binding
+  -> GlobalId resolution
+  -> camera/selection or failing-entity projection
+  -> explicit diagnostic for missing/stale identity
+```
+
+BCFZIP은 inflate 전에 central/local directory와 선언 size를 검사합니다.
+BCF viewpoint와 IDS fail result는 active source의 Render/Pick ID로만
+projection하며 stale source를 거부합니다. IDS XML import는 requirement
+탐색이지 native validator가 아닙니다.
+
+bSDD reference는 import 중 offline 상태로 유지합니다. explicit
+`allowNetwork: true` 호출만 credential 없이 official Class/Property API를
+조회하고 bounded response/cache를 사용합니다. Spatial
+validation-to-revision diagnostic linkage는 Spatial authority이며 Explorer
+결과는 source baseline, acceptance나 publish를 변경하지 않습니다.
+
 ## Spatial integration
 
 [`bim-spatial-integration/0.1`](../specs/bim-spatial-integration-v0.1.md)은
