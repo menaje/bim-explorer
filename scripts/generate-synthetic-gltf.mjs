@@ -28,7 +28,7 @@ function binaryPayload() {
   return bytes;
 }
 
-function documentFor(uri) {
+function documentFor(uri, secondNodeX = 3) {
   const buffer = { byteLength: 80 };
   if (uri !== null) {
     buffer.uri = uri;
@@ -45,7 +45,7 @@ function documentFor(uri) {
       {
         name: "Reference triangle B",
         mesh: 0,
-        translation: [3, 0, 1],
+        translation: [secondNodeX, 0, 1],
       },
     ],
     meshes: [{
@@ -106,10 +106,12 @@ export function syntheticGltfJsonBytes() {
   );
 }
 
-export function syntheticGlbBytes() {
+export function syntheticGlbBytes({
+  secondNodeX = 3,
+} = {}) {
   const binary = binaryPayload();
   const json = new TextEncoder().encode(
-    JSON.stringify(documentFor(null)),
+    JSON.stringify(documentFor(null, secondNodeX)),
   );
   const jsonLength = aligned(json.byteLength);
   const binaryLength = aligned(binary.byteLength);

@@ -25,7 +25,9 @@ const TRUE_GATES = Object.freeze([
   "crossSourceSavedView",
   "staleRevisionFailClosed",
   "referenceFormatCapabilityMatrix",
-  "ifcOnlyAdmission",
+  "ifcAndGltfReferenceAdmission",
+  "referenceNativeIdentityIsolation",
+  "gltfGlbCodec",
   "boundedLifecycle",
 ]);
 const HELD_GATES = Object.freeze([
@@ -34,13 +36,10 @@ const HELD_GATES = Object.freeze([
   "surveyedCoordinateDatumEvidence",
   "productScaleFederationPerformance",
   "pointCloudCodec",
-  "gltfGlbCodec",
   "gis3dTilesEngine",
   "rvtDgnNativeBridge",
 ]);
 const HELD_FORMATS = Object.freeze([
-  "gltf",
-  "glb",
   "las",
   "laz",
   "e57",
@@ -88,21 +87,27 @@ export function validateBimFederationEvidence(evidence) {
       "federation:synthetic-campus" ||
     !equalJson(evidence.federation.sourceSlots, [
       "source-slot:architecture",
+      "source-slot:glb-reference",
       "source-slot:mep",
     ]) ||
     !equalJson(evidence.federation.disciplines, [
       "architecture",
+      "reference",
       "mep",
     ]) ||
-    evidence.federation.initialSources !== 2 ||
+    evidence.federation.initialSources !== 3 ||
     evidence.federation.sourceIdentityMerged !== false ||
     evidence.federation.duplicateGlobalId !==
       "0AAAAAAAAAAAAAAAAAAA16" ||
     evidence.federation.duplicateGlobalIdOccurrences !== 2 ||
-    evidence.federation.distinctSelectionKeys !== 2 ||
+    evidence.federation.distinctSelectionKeys !== 3 ||
     !equalJson(evidence.federation.sourceVisibility, [
       {
         federationSourceId: "source-slot:architecture",
+        visible: true,
+      },
+      {
+        federationSourceId: "source-slot:glb-reference",
         visible: true,
       },
       {
@@ -113,6 +118,29 @@ export function validateBimFederationEvidence(evidence) {
   ) {
     throw new Error(
       "BIM federation source identity evidence is invalid",
+    );
+  }
+  if (
+    evidence.referenceMesh?.federationSourceId !==
+      "source-slot:glb-reference" ||
+    evidence.referenceMesh.format !== "glb" ||
+    evidence.referenceMesh.sourceRole !==
+      "derived-or-reference-mesh" ||
+    evidence.referenceMesh.semanticAuthority !==
+      "not-bim-authority" ||
+    evidence.referenceMesh.nativeAuthority !==
+      "external-reference-mesh" ||
+    evidence.referenceMesh.nativeId !==
+      "node:0/mesh:0/primitive:0" ||
+    evidence.referenceMesh.globalId !== null ||
+    evidence.referenceMesh.selected !== true ||
+    evidence.referenceMesh.alignment !== "unaligned" ||
+    evidence.referenceMesh.write !== "blocked-read-only" ||
+    evidence.referenceMesh.roundTrip !==
+      "blocked-not-source-authority"
+  ) {
+    throw new Error(
+      "BIM federation reference mesh evidence is invalid",
     );
   }
   if (
@@ -149,7 +177,7 @@ export function validateBimFederationEvidence(evidence) {
     !sourceRevision(evidence.refresh.currentRevisionId) ||
     evidence.refresh.previousRevisionId ===
       evidence.refresh.currentRevisionId ||
-    evidence.refresh.unchangedFederationSources !== 1 ||
+    evidence.refresh.unchangedFederationSources !== 2 ||
     !sourceRevision(
       evidence.refresh.architectureRevisionPreserved,
     ) ||
@@ -162,8 +190,8 @@ export function validateBimFederationEvidence(evidence) {
   }
   if (
     evidence.savedView?.schema !== CONTRACT.savedView ||
-    evidence.savedView.selectedSources !== 2 ||
-    evidence.savedView.sourceStates !== 2 ||
+    evidence.savedView.selectedSources !== 3 ||
+    evidence.savedView.sourceStates !== 3 ||
     evidence.savedView.crossSource !== true
   ) {
     throw new Error(
@@ -172,7 +200,10 @@ export function validateBimFederationEvidence(evidence) {
   }
   if (
     evidence.referenceFormats?.registered !== 9 ||
-    !equalJson(evidence.referenceFormats.admitted, ["ifc"]) ||
+    !equalJson(
+      evidence.referenceFormats.admitted,
+      ["ifc", "gltf", "glb"],
+    ) ||
     !equalJson(
       evidence.referenceFormats.held,
       HELD_FORMATS,
@@ -191,10 +222,10 @@ export function validateBimFederationEvidence(evidence) {
       evidence.failClosed,
       "BIM federation fail-closed evidence",
     )).some((value) => value !== true) ||
-    evidence.lifecycle?.releasedFederationSources !== 2 ||
+    evidence.lifecycle?.releasedFederationSources !== 3 ||
     evidence.lifecycle.federationDisposed !== true ||
-    evidence.lifecycle.sourceSessionsDisposed !== 3 ||
-    evidence.lifecycle.sourcesDisposed !== 3
+    evidence.lifecycle.sourceSessionsDisposed !== 4 ||
+    evidence.lifecycle.sourcesDisposed !== 4
   ) {
     throw new Error(
       "BIM federation fail-closed or lifecycle evidence is invalid",
@@ -212,7 +243,7 @@ export function validateBimFederationEvidence(evidence) {
     evidence.decision.pointCloudCodec !==
       "held-codec-crs-scale-evidence" ||
     evidence.decision.gltfGlbCodec !==
-      "held-codec-license-cleanup-evidence" ||
+      "passed-bounded-reference-mesh" ||
     evidence.decision.gis3dTiles !==
       "held-engine-network-precision-evidence" ||
     evidence.decision.rvtDgnNativeBridge !==
@@ -283,7 +314,13 @@ export function validateBimFederationCompatibility(
         "bim-federation-synthetic-2026-08-04.json" ||
     manifest.evidence?.sourceMetadata !==
       "compatibility/evidence/" +
-        "bim-model-source-metadata-2026-08-04.json"
+        "bim-model-source-metadata-2026-08-04.json" ||
+    manifest.evidence?.gltfReferenceSource !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-khronos-box-2026-08-04.json" ||
+    manifest.evidence?.gltfBrowserWebGl2 !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json"
   ) {
     throw new Error(
       "BIM federation Gate inventory is invalid",
@@ -298,7 +335,8 @@ export function validateBimFederationCompatibility(
     policy.mergeNativeIdentity !== false ||
     policy.allowImplicitDatumTransformation !== false ||
     policy.allowNonIfcSemanticAuthority !== false ||
-    policy.claimActualNonIfcCodec !== false ||
+    policy.claimQualifiedGltfCodec !== true ||
+    policy.claimUnqualifiedReferenceCodec !== false ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimUserDemand !== false ||
     policy.claimProductionFederation !== false ||

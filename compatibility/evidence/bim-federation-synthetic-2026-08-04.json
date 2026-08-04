@@ -15,20 +15,26 @@
     "federationId": "federation:synthetic-campus",
     "sourceSlots": [
       "source-slot:architecture",
+      "source-slot:glb-reference",
       "source-slot:mep"
     ],
     "disciplines": [
       "architecture",
+      "reference",
       "mep"
     ],
-    "initialSources": 2,
+    "initialSources": 3,
     "sourceIdentityMerged": false,
     "duplicateGlobalId": "0AAAAAAAAAAAAAAAAAAA16",
     "duplicateGlobalIdOccurrences": 2,
-    "distinctSelectionKeys": 2,
+    "distinctSelectionKeys": 3,
     "sourceVisibility": [
       {
         "federationSourceId": "source-slot:architecture",
+        "visible": true
+      },
+      {
+        "federationSourceId": "source-slot:glb-reference",
         "visible": true
       },
       {
@@ -36,6 +42,19 @@
         "visible": false
       }
     ]
+  },
+  "referenceMesh": {
+    "federationSourceId": "source-slot:glb-reference",
+    "format": "glb",
+    "sourceRole": "derived-or-reference-mesh",
+    "semanticAuthority": "not-bim-authority",
+    "nativeAuthority": "external-reference-mesh",
+    "nativeId": "node:0/mesh:0/primitive:0",
+    "globalId": null,
+    "selected": true,
+    "alignment": "unaligned",
+    "write": "blocked-read-only",
+    "roundTrip": "blocked-not-source-authority"
   },
   "coordinates": {
     "federationCoordinateSystem": "EPSG:32652",
@@ -61,24 +80,24 @@
     "refreshedSource": "source-slot:mep",
     "previousRevisionId": "source-snapshot:sha256:ad37899ba9487fa6fcaae0c2052cbb87200a058335f0b0eaa92ca36931528d11",
     "currentRevisionId": "source-snapshot:sha256:8e8f2b5544c187406899487b8bfec1abfb7ca82b9bc3c44039324428f35d144a",
-    "unchangedFederationSources": 1,
+    "unchangedFederationSources": 2,
     "architectureRevisionPreserved": "source-snapshot:sha256:dd6a1f1220ca7f6e9508ee81e8084a5ae5deba9d3f50b592f4d5283e36c73469",
     "priorIdentityPolicy": "all-prior-source-selections-are-stale"
   },
   "savedView": {
     "schema": "bim-explorer-federation-saved-view/0.1",
-    "selectedSources": 2,
-    "sourceStates": 2,
+    "selectedSources": 3,
+    "sourceStates": 3,
     "crossSource": true
   },
   "referenceFormats": {
     "registered": 9,
     "admitted": [
-      "ifc"
+      "ifc",
+      "gltf",
+      "glb"
     ],
     "held": [
-      "gltf",
-      "glb",
       "las",
       "laz",
       "e57",
@@ -93,16 +112,17 @@
   "failClosed": {
     "staleSavedViewRejected": true,
     "staleSelectionRejected": true,
-    "heldGlbRejected": true,
+    "heldLasRejected": true,
+    "referenceSemanticAuthorityRejected": true,
     "sourceIdentityMergeRejectedByPolicy": true,
     "nativeMutationNotGranted": true,
     "spatialAuthorityNotGranted": true
   },
   "lifecycle": {
-    "releasedFederationSources": 2,
+    "releasedFederationSources": 3,
     "federationDisposed": true,
-    "sourceSessionsDisposed": 3,
-    "sourcesDisposed": 3
+    "sourceSessionsDisposed": 4,
+    "sourcesDisposed": 4
   },
   "decision": {
     "multiIfcFoundation": "passed-synthetic",
@@ -110,7 +130,7 @@
     "actualSpatialConsumer": "held-consumer-owned",
     "actualMultiFormatUserDemand": "held-external-evidence",
     "pointCloudCodec": "held-codec-crs-scale-evidence",
-    "gltfGlbCodec": "held-codec-license-cleanup-evidence",
+    "gltfGlbCodec": "passed-bounded-reference-mesh",
     "gis3dTiles": "held-engine-network-precision-evidence",
     "rvtDgnNativeBridge": "held-sdk-rights-reopen-qualification",
     "surveyedDatumTransformation": "held-survey-evidence",

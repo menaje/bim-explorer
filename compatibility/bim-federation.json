@@ -24,20 +24,23 @@
     "crossSourceSavedView": true,
     "staleRevisionFailClosed": true,
     "referenceFormatCapabilityMatrix": true,
-    "ifcOnlyAdmission": true,
+    "ifcAndGltfReferenceAdmission": true,
+    "referenceNativeIdentityIsolation": true,
     "boundedLifecycle": true,
     "actualSpatialConsumerConformance": false,
     "actualMultiFormatUserDemand": false,
     "surveyedCoordinateDatumEvidence": false,
     "productScaleFederationPerformance": false,
     "pointCloudCodec": false,
-    "gltfGlbCodec": false,
+    "gltfGlbCodec": true,
     "gis3dTilesEngine": false,
     "rvtDgnNativeBridge": false
   },
   "evidence": {
     "syntheticFederation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
-    "sourceMetadata": "compatibility/evidence/bim-model-source-metadata-2026-08-04.json"
+    "sourceMetadata": "compatibility/evidence/bim-model-source-metadata-2026-08-04.json",
+    "gltfReferenceSource": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
+    "gltfBrowserWebGl2": "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json"
   },
   "blockers": [
     "actual Coni Spatial consumer composition remains consumer-owned",
@@ -45,14 +48,14 @@
     "surveyed control points and datum transformation need qualified geospatial evidence",
     "product-scale multi-source first-frame, memory and cleanup need a redistributable fixture",
     "LAS, LAZ and E57 require codec, CRS, chunking and cleanup qualification",
-    "glTF and GLB require codec, license, precision and cleanup qualification",
     "3D Tiles and GIS context require engine, network and precision qualification",
     "RVT and DGN require SDK rights, platform packaging and reopen qualification"
   ],
   "limitations": [
-    "the passing federation evidence uses three generated IFC4 snapshots with one same-CRS MapConversion",
+    "the passing federation evidence uses three generated IFC4 snapshots, including one refresh revision, plus one generated GLB source",
     "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
-    "non-IFC format entries are held capability records, not parsers or supported product formats",
+    "glTF/GLB admission is a bounded reference-mesh source and does not imply Browser or VS Code product file-open",
+    "point-cloud, GIS and native SDK format entries remain held capability records",
     "source identity, GlobalId and ownership remain scoped to each federation source slot",
     "the foundation grants no native mutation, Spatial acceptance, publish or Canonical Entity authority"
   ],
@@ -61,7 +64,8 @@
     "mergeNativeIdentity": false,
     "allowImplicitDatumTransformation": false,
     "allowNonIfcSemanticAuthority": false,
-    "claimActualNonIfcCodec": false,
+    "claimQualifiedGltfCodec": true,
+    "claimUnqualifiedReferenceCodec": false,
     "claimActualSpatialConsumer": false,
     "claimUserDemand": false,
     "claimProductionFederation": false,

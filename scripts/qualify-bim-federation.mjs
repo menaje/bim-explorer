@@ -11,6 +11,9 @@ import {
   createBimModelSource,
 } from "../packages/bim-model-source/src/index.mjs";
 import {
+  createGltfReferenceSource,
+} from "../packages/gltf-reference-source/src/index.mjs";
+import {
   BIM_FEDERATION_ALIGNMENT_SCHEMA,
   BIM_FEDERATION_CONTRACT,
   BIM_FEDERATION_SAVED_VIEW_SCHEMA,
@@ -20,11 +23,15 @@ import {
   createBimFederation,
   createExplicitAlignment,
   createProjectedCrsAlignment,
+  createUnalignedSource,
   getReferenceFormatRegistry,
 } from "../packages/bim-federation/src/index.mjs";
 import {
   syntheticGeoreferencedIfc,
 } from "./generate-synthetic-ifc.mjs";
+import {
+  syntheticGlbBytes,
+} from "./generate-synthetic-gltf.mjs";
 
 const EVIDENCE_PATH =
   "compatibility/evidence/" +
@@ -32,6 +39,7 @@ const EVIDENCE_PATH =
 const FEDERATION_ID = "federation:synthetic-campus";
 const ARCHITECTURE_SLOT = "source-slot:architecture";
 const MEP_SLOT = "source-slot:mep";
+const REFERENCE_SLOT = "source-slot:glb-reference";
 const CRS = "EPSG:32652";
 const ORIGIN = Object.freeze([500000, 4100000, 100]);
 
@@ -81,6 +89,26 @@ async function sourceFixture(label) {
   };
 }
 
+async function referenceFixture() {
+  const source = await createGltfReferenceSource(
+    syntheticGlbBytes(),
+  );
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  return {
+    source,
+    session,
+    snapshot,
+    entity: snapshot.entities[0],
+    alignment: createUnalignedSource({
+      sourceRevisionId: snapshot.revisionId,
+      reason: "reference mesh has no shared coordinate evidence",
+    }),
+  };
+}
+
 function selectionItem(federationSourceId, current) {
   return {
     federationSourceId,
@@ -88,6 +116,19 @@ function selectionItem(federationSourceId, current) {
     nativeIdentity: {
       expressId: current.entity.expressId,
       globalId: current.entity.globalId,
+      externalIdentityToken:
+        current.entity.externalIdentityToken,
+    },
+  };
+}
+
+function referenceSelectionItem(current) {
+  return {
+    federationSourceId: REFERENCE_SLOT,
+    sourceRevisionId: current.snapshot.revisionId,
+    nativeIdentity: {
+      nativeId: current.entity.nativeId,
+      globalId: null,
       externalIdentityToken:
         current.entity.externalIdentityToken,
     },
@@ -118,6 +159,7 @@ export async function qualifyBimFederation() {
   const architecture = await sourceFixture("architecture");
   const mepBefore = await sourceFixture("mep-before");
   const mepAfter = await sourceFixture("mep-after");
+  const reference = await referenceFixture();
   const federation = createBimFederation({
     federationId: FEDERATION_ID,
     maximumSources: 8,
@@ -138,8 +180,16 @@ export async function qualifyBimFederation() {
     owner: "external-document:mep",
     alignment: mepBefore.alignment,
   });
+  const referenceSource = federation.addReferenceSource({
+    format: "glb",
+    federationSourceId: REFERENCE_SLOT,
+    snapshot: reference.snapshot,
+    discipline: "reference",
+    owner: "external-reference:glb",
+    alignment: reference.alignment,
+  });
   const initialDescriptor = federation.getDescriptor();
-  assert.equal(initialDescriptor.sources.length, 2);
+  assert.equal(initialDescriptor.sources.length, 3);
   assert.equal(
     architecture.entity.globalId,
     mepBefore.entity.globalId,
@@ -162,11 +212,12 @@ export async function qualifyBimFederation() {
     items: [
       selectionItem(ARCHITECTURE_SLOT, architecture),
       selectionItem(MEP_SLOT, mepBefore),
+      referenceSelectionItem(reference),
     ],
   });
   assert.equal(new Set(
     selection.items.map((item) => item.key),
-  ).size, 2);
+  ).size, 3);
   federation.setSourceVisibility({
     federationSourceId: MEP_SLOT,
     sourceRevisionId: mepBefore.snapshot.revisionId,
@@ -232,13 +283,13 @@ export async function qualifyBimFederation() {
   const held = registry.formats
     .filter((format) => !format.admitted)
     .map((format) => format.format);
-  const heldGlbRejected = await rejected(
+  const heldLasRejected = await rejected(
     async () => federation.addReferenceSource({
-      format: "glb",
+      format: "las",
     }),
     /source is held/u,
   );
-  assert.deepEqual(admitted, ["ifc"]);
+  assert.deepEqual(admitted, ["ifc", "gltf", "glb"]);
   assert.equal(
     registry.formats.every((format) =>
       format.capabilities.write.startsWith("blocked-") &&
@@ -251,11 +302,13 @@ export async function qualifyBimFederation() {
     architecture.session.dispose(),
     mepBefore.session.dispose(),
     mepAfter.session.dispose(),
+    reference.session.dispose(),
   ]);
   await Promise.all([
     architecture.source.dispose(),
     mepBefore.source.dispose(),
     mepAfter.source.dispose(),
+    reference.source.dispose(),
   ]);
 
   return deepFreeze({
@@ -276,9 +329,10 @@ export async function qualifyBimFederation() {
       federationId: FEDERATION_ID,
       sourceSlots: [
         ARCHITECTURE_SLOT,
+        REFERENCE_SLOT,
         MEP_SLOT,
       ],
-      disciplines: ["architecture", "mep"],
+      disciplines: ["architecture", "reference", "mep"],
       initialSources: initialDescriptor.sources.length,
       sourceIdentityMerged: false,
       duplicateGlobalId:
@@ -290,6 +344,25 @@ export async function qualifyBimFederation() {
           federationSourceId: source.federationSourceId,
           visible: source.visible,
         })),
+    },
+    referenceMesh: {
+      federationSourceId: REFERENCE_SLOT,
+      format: referenceSource.format,
+      sourceRole: referenceSource.sourceRole,
+      semanticAuthority:
+        referenceSource.identityPolicy.semanticAuthority,
+      nativeAuthority:
+        referenceSource.identityPolicy.nativeAuthority,
+      nativeId: reference.entity.nativeId,
+      globalId: reference.entity.globalId,
+      selected:
+        selection.items.some((item) =>
+          item.federationSourceId === REFERENCE_SLOT &&
+          item.nativeIdentity.nativeId ===
+            reference.entity.nativeId),
+      alignment: referenceSource.alignment.status,
+      write: "blocked-read-only",
+      roundTrip: "blocked-not-source-authority",
     },
     coordinates: {
       federationCoordinateSystem: CRS,
@@ -333,7 +406,10 @@ export async function qualifyBimFederation() {
     failClosed: {
       staleSavedViewRejected,
       staleSelectionRejected,
-      heldGlbRejected,
+      heldLasRejected,
+      referenceSemanticAuthorityRejected:
+        referenceSource.identityPolicy.semanticAuthority ===
+          "not-bim-authority",
       sourceIdentityMergeRejectedByPolicy:
         initialDescriptor.authority
           .mergeSourceIdentity === false,
@@ -348,8 +424,8 @@ export async function qualifyBimFederation() {
       releasedFederationSources:
         lifecycle.releasedSources,
       federationDisposed: lifecycle.disposed,
-      sourceSessionsDisposed: 3,
-      sourcesDisposed: 3,
+      sourceSessionsDisposed: 4,
+      sourcesDisposed: 4,
     },
     decision: {
       multiIfcFoundation: "passed-synthetic",
@@ -361,7 +437,7 @@ export async function qualifyBimFederation() {
       pointCloudCodec:
         "held-codec-crs-scale-evidence",
       gltfGlbCodec:
-        "held-codec-license-cleanup-evidence",
+        "passed-bounded-reference-mesh",
       gis3dTiles:
         "held-engine-network-precision-evidence",
       rvtDgnNativeBridge:

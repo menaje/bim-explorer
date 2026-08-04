@@ -41,8 +41,9 @@ nativeDocument.profile
 ```
 
 refresh가 native fingerprint와 revision을 바꿔도 stable slot은 유지할 수
-있습니다. 그러나 이전 revision의 Express ID, GlobalId projection,
-Render/Pick ID, selection과 saved view는 자동 이월하지 않습니다.
+있습니다. 그러나 이전 revision의 Express ID, GlobalId 또는 source-native
+ID projection, Render/Pick ID, selection과 saved view는 자동 이월하지
+않습니다.
 
 서로 다른 slot에 같은 IFC GlobalId가 있어도 identity를 합치지 않습니다.
 federated selection key는 최소한 다음 tuple에 묶입니다.
@@ -123,14 +124,16 @@ format 등록과 실제 source admission을 분리합니다.
 | Format | Role | View | Query | Write | Round-trip |
 | --- | --- | --- | --- | --- | --- |
 | IFC4 ReferenceView | semantic BIM source | qualified bounded profile | qualified bounded semantics | blocked | blocked |
-| glTF/GLB | derived/reference mesh | held codec | held metadata | blocked | blocked |
+| glTF/GLB | derived/reference mesh | qualified bounded glTF 2.0 reference mesh | qualified bounded node/mesh metadata | blocked | blocked |
 | LAS/LAZ/E57 | point observation reference | held codec/scale | held metadata | blocked | blocked |
 | 3D Tiles | GIS/site context | held engine/network | held metadata | blocked | blocked |
 | RVT/DGN | native SDK reference | held SDK/rights | held SDK/profile | separate Gate | reopen Gate |
 
-mesh, point cloud와 GIS source를 BIM semantic authority로 승격하지 않습니다.
-RVT/DGN은 SDK 사용권, platform package, native adapter와 reopen
-qualification 전에는 admission하지 않습니다.
+glTF/GLB source는 source-native `nativeId`를 사용하고 `globalId: null`,
+`semanticAuthority: false`를 유지합니다. mesh, point cloud와 GIS source를
+BIM semantic authority로 승격하지 않습니다. RVT/DGN은 SDK 사용권,
+platform package, native adapter와 reopen qualification 전에는
+admission하지 않습니다.
 
 새 format을 `admitted`로 바꾸려면 format별로 최소 다음 evidence가
 필요합니다.
@@ -140,7 +143,10 @@ qualification 전에는 admission하지 않습니다.
 - coordinate/precision profile
 - source role과 semantic authority
 - view/query/write/round-trip 각각의 conformance
-- representative redistributable fixture와 product-scale budget
+- representative redistributable fixture와 bounded budget
+
+product-scale budget은 experimental codec admission과 별도의 production
+Gate입니다.
 
 ## Bounds와 lifecycle
 
@@ -158,5 +164,6 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 실제 사용자 과업의 두 format 이상 수요
 - 측량 control point와 datum transformation
 - product-scale multi-source first-frame, memory와 cleanup
-- glTF/GLB, LAS/LAZ/E57와 3D Tiles parser/engine
+- glTF/GLB external resource bundle, required extension와 제품 file-open
+- LAS/LAZ/E57와 3D Tiles parser/engine
 - RVT/DGN native SDK bridge와 reopen qualification

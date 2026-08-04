@@ -133,11 +133,13 @@ Context Reference를 발급합니다. 현재 synthetic provider conformance는
 
 post-v0.1 federation foundation은
 [`bim-explorer-federation/0.1`](specs/bim-federation-v0.1.md)로
-두 IFC source의 identity·visibility·partial/stale·same-CRS alignment,
-incremental refresh와 cross-source saved view를 분리합니다. glTF/GLB,
-LAS/LAZ/E57, 3D Tiles, RVT/DGN은 capability Gate만 등록했고 실제
-codec/SDK evidence 전에는 열기를 거부합니다. 이 기능은 immutable
-Community v0.1.0 asset에 포함되지 않습니다.
+두 IFC source와 bounded glTF/GLB reference mesh의
+identity·visibility·partial/stale·alignment, incremental refresh와
+cross-source saved view를 분리합니다. glTF/GLB는 source-native identity만
+사용하며 BIM semantic authority를 갖지 않습니다. LAS/LAZ/E57, 3D Tiles,
+RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
+열기를 거부합니다. 이 기능은 immutable Community v0.1.0 asset에
+포함되지 않으며 제품 file-open 지원과도 별도입니다.
 
 ## 비목표
 

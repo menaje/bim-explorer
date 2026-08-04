@@ -19,6 +19,10 @@ const browserEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.browserWebGl2),
   "utf8",
 ));
+const federationEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.federation),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -41,9 +45,9 @@ const trueGates = [
   "dependencyLicenseAndIntegrity",
   "deterministicCleanup",
   "browserWebGl2",
+  "federationReferenceAdmission",
 ];
 const heldGates = [
-  "federationReferenceAdmission",
   "browserProductOpen",
   "vscodeProductOpen",
   "externalResourceBundle",
@@ -84,7 +88,7 @@ if (
   manifest.policy.claimProductSupport !== false ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
-  manifest.blockers.length !== 4 ||
+  manifest.blockers.length !== 3 ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -169,7 +173,18 @@ if (
   browserEvidence.network.externalOrigins.length !== 0 ||
   browserEvidence.network.runtimeErrors.length !== 0 ||
   Object.values(browserEvidence.assertions)
-    .some((value) => value !== true)
+    .some((value) => value !== true) ||
+  federationEvidence.referenceMesh?.format !== "glb" ||
+  federationEvidence.referenceMesh?.sourceRole !==
+    "derived-or-reference-mesh" ||
+  federationEvidence.referenceMesh?.semanticAuthority !==
+    "not-bim-authority" ||
+  federationEvidence.referenceMesh?.globalId !== null ||
+  federationEvidence.referenceMesh?.selected !== true ||
+  federationEvidence.referenceMesh?.write !==
+    "blocked-read-only" ||
+  federationEvidence.referenceMesh?.roundTrip !==
+    "blocked-not-source-authority"
 ) {
   throw new Error(
     "glTF reference source compatibility check failed",
@@ -178,6 +193,7 @@ if (
 const serialized = JSON.stringify({
   evidence,
   browserEvidence,
+  federationEvidence,
 });
 if (
   serialized.includes("/Users/") ||

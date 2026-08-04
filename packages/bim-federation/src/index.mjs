@@ -12,6 +12,10 @@ export const BIM_REFERENCE_FORMAT_REGISTRY_SCHEMA =
   "bim-explorer-reference-format-registry/0.1";
 
 const SOURCE_PROTOCOL = "bim-explorer-bim-source/0.2";
+const GLTF_REFERENCE_CONTRACT =
+  "bim-explorer-gltf-reference-source/0.1";
+const GLTF_REFERENCE_PROFILE =
+  "gltf-2.0-bounded-reference-mesh-v0.1";
 const SOURCE_STATES = new Set(["ready", "partial", "stale"]);
 const MAXIMUM_SOURCES = 32;
 const MAXIMUM_SELECTION_ITEMS = 512;
@@ -101,6 +105,12 @@ function validateSourceState(value, reason) {
 function validateSnapshot(snapshot) {
   const value = plainRecord(snapshot, "BIM source snapshot");
   const source = plainRecord(value.source, "BIM source descriptor");
+  const format = source.format ?? "ifc";
+  const reference = format !== "ifc";
+  const sourceRole = source.sourceRole ??
+    (format === "ifc"
+      ? "semantic-bim-source"
+      : null);
   if (
     value.protocolVersion !== SOURCE_PROTOCOL ||
     !/^sha256:[0-9a-f]{64}$/u.test(source.fingerprint ?? "") ||
@@ -111,7 +121,35 @@ function validateSnapshot(snapshot) {
   ) {
     throw new TypeError("BIM source snapshot identity is invalid");
   }
+  if (
+    reference &&
+    (
+      !["gltf", "glb"].includes(format) ||
+      source.gltfVersion !== "2.0" ||
+      source.profile !== GLTF_REFERENCE_PROFILE ||
+      source.mediaType !== (
+        format === "glb"
+          ? "model/gltf-binary"
+          : "model/gltf+json"
+      ) ||
+      source.adapter?.id !==
+        "@bim-explorer/gltf-reference-source" ||
+      value.referenceMetadata?.schema !==
+        GLTF_REFERENCE_CONTRACT ||
+      value.coordinateSystem?.storage !==
+        "gltf-local-meter-y-up" ||
+      value.coordinateSystem?.source !==
+        "gltf-local-meter-y-up" ||
+      value.geometry?.representationAuthority !==
+        "derived-display-cache"
+    )
+  ) {
+    throw new TypeError(
+      "reference source profile is not qualified",
+    );
+  }
   const entityByExpressId = new Map();
+  const entityByNativeId = new Map();
   for (const item of value.entities) {
     const entity = plainRecord(item, "BIM source entity");
     if (
@@ -128,12 +166,40 @@ function validateSnapshot(snapshot) {
     ) {
       throw new TypeError("BIM source GlobalId is invalid");
     }
+    if (reference) {
+      if (
+        sourceRole !== "derived-or-reference-mesh" ||
+        source.semanticAuthority !== false ||
+        source.writeAuthority !== false ||
+        source.roundTripAuthority !== false ||
+        entity.globalId !== null ||
+        entity.localNumericId !== entity.expressId ||
+        entity.semanticAuthority !== false ||
+        typeof entity.nativeId !== "string" ||
+        entity.nativeId.length === 0 ||
+        entity.nativeId.length > 256 ||
+        /[\u0000-\u001f\u007f]/u.test(entity.nativeId) ||
+        LOCAL_PATH_PATTERN.test(entity.nativeId) ||
+        entityByNativeId.has(entity.nativeId) ||
+        typeof entity.externalIdentityToken !== "string" ||
+        entity.externalIdentityToken !==
+          `gltf-native:${source.fingerprint}:${entity.nativeId}`
+      ) {
+        throw new TypeError(
+          "reference source native identity or authority is invalid",
+        );
+      }
+      entityByNativeId.set(entity.nativeId, entity);
+    }
     entityByExpressId.set(entity.expressId, entity);
   }
   return {
     snapshot: value,
     source,
+    format,
+    sourceRole,
     entityByExpressId,
+    entityByNativeId,
   };
 }
 
@@ -348,13 +414,14 @@ const REFERENCE_FORMATS = deepFreeze([
       coordinates: "explicit-metadata-required",
     },
     capabilities: {
-      view: "held-codec-and-conformance",
-      query: "held-metadata-profile",
+      view: "qualified-gltf-2.0-bounded-reference-mesh-read-only",
+      query: "qualified-bounded-node-mesh-metadata",
       write: "blocked-read-only",
       roundTrip: "blocked-not-source-authority",
     },
-    admitted: false,
-    requirement: "glTF 2.0 codec, license, precision and cleanup evidence",
+    admitted: true,
+    requirement:
+      "exact bounded glTF 2.0 profile, Khronos Validator and Browser evidence",
   },
   {
     format: "glb",
@@ -366,13 +433,14 @@ const REFERENCE_FORMATS = deepFreeze([
       coordinates: "explicit-metadata-required",
     },
     capabilities: {
-      view: "held-codec-and-conformance",
-      query: "held-metadata-profile",
+      view: "qualified-gltf-2.0-bounded-reference-mesh-read-only",
+      query: "qualified-bounded-node-mesh-metadata",
       write: "blocked-read-only",
       roundTrip: "blocked-not-source-authority",
     },
-    admitted: false,
-    requirement: "glTF 2.0 codec, license, precision and cleanup evidence",
+    admitted: true,
+    requirement:
+      "exact bounded glTF 2.0 profile, Khronos Validator and Browser evidence",
   },
   ...["las", "laz", "e57"].map((format) => ({
     format,
@@ -511,19 +579,22 @@ function cameraDescriptor(value) {
 }
 
 function publicSourceDescriptor(entry) {
+  const reference = entry.format !== "ifc";
   return {
     schema: BIM_FEDERATION_SOURCE_SCHEMA,
     federationSourceId: entry.federationSourceId,
     discipline: entry.discipline,
     owner: entry.owner,
-    format: "ifc",
-    sourceRole: "semantic-bim-source",
+    format: entry.format,
+    sourceRole: entry.sourceRole,
     nativeDocument: {
       sourceId: entry.snapshot.sourceId,
       documentId: entry.source.documentId,
       fingerprint: entry.source.fingerprint,
       revisionId: entry.snapshot.revisionId,
-      schema: entry.source.ifcSchema,
+      schema: reference
+        ? `glTF ${entry.source.gltfVersion}`
+        : entry.source.ifcSchema,
       profile: entry.source.profile,
     },
     state: entry.state,
@@ -535,7 +606,12 @@ function publicSourceDescriptor(entry) {
         `${entry.federationSourceId}@` +
         entry.snapshot.revisionId,
       mergeAcrossSources: false,
-      nativeAuthority: "external-bim-document",
+      nativeAuthority: reference
+        ? "external-reference-mesh"
+        : "external-bim-document",
+      semanticAuthority: reference
+        ? "not-bim-authority"
+        : "external-source-document",
     },
   };
 }
@@ -611,9 +687,13 @@ export function createBimFederation({
         selection.nativeIdentity,
         "federation native identity",
       );
-      const entity = entry.entityByExpressId.get(
-        nativeIdentity.expressId,
-      );
+      const entity = entry.format === "ifc"
+        ? entry.entityByExpressId.get(
+          nativeIdentity.expressId,
+        )
+        : entry.entityByNativeId.get(
+          nativeIdentity.nativeId,
+        );
       if (
         entity === undefined ||
         entity.globalId !== nativeIdentity.globalId ||
@@ -627,23 +707,37 @@ export function createBimFederation({
       const key =
         `${entry.federationSourceId}:` +
         `${entry.snapshot.revisionId}:` +
-        `${entity.expressId}`;
+        (
+          entry.format === "ifc"
+            ? `express:${entity.expressId}`
+            : `native:${entity.nativeId}`
+        );
       if (seen.has(key)) {
         throw new RangeError(
           "federation selection contains duplicate identity",
         );
       }
       seen.add(key);
-      return {
-        key,
-        federationSourceId: entry.federationSourceId,
-        sourceRevisionId: entry.snapshot.revisionId,
-        nativeIdentity: {
+      const projectedIdentity = entry.format === "ifc"
+        ? {
           expressId: entity.expressId,
           globalId: entity.globalId ?? null,
           externalIdentityToken:
             entity.externalIdentityToken ?? null,
-        },
+        }
+        : {
+          nativeId: entity.nativeId,
+          localNumericId:
+            entity.localNumericId ?? entity.expressId,
+          globalId: null,
+          externalIdentityToken:
+            entity.externalIdentityToken,
+        };
+      return {
+        key,
+        federationSourceId: entry.federationSourceId,
+        sourceRevisionId: entry.snapshot.revisionId,
+        nativeIdentity: projectedIdentity,
       };
     });
   }
@@ -718,11 +812,19 @@ export function createBimFederation({
         );
       }
       const current = validateSnapshot(snapshot);
+      if (current.format !== "ifc") {
+        throw new TypeError(
+          "addIfcSource requires an IFC source snapshot",
+        );
+      }
       const entry = {
         federationSourceId: sourceId,
         snapshot: current.snapshot,
         source: current.source,
         entityByExpressId: current.entityByExpressId,
+        entityByNativeId: current.entityByNativeId,
+        format: current.format,
+        sourceRole: current.sourceRole,
         discipline: boundedString(
           discipline,
           "federation source discipline",
@@ -751,7 +853,17 @@ export function createBimFederation({
       generation += 1;
       return deepFreeze(publicSourceDescriptor(entry));
     },
-    addReferenceSource({ format }) {
+    addReferenceSource({
+      format,
+      federationSourceId,
+      snapshot,
+      discipline,
+      owner,
+      alignment,
+      state = "ready",
+      stateReason = null,
+      visible = true,
+    }) {
       active();
       const capability = getReferenceFormatCapability(format);
       if (!capability.admitted) {
@@ -760,9 +872,69 @@ export function createBimFederation({
           capability.capabilities.view,
         );
       }
-      throw unsupported(
-        "IFC sources require addIfcSource with a bounded snapshot",
+      if (capability.format === "ifc") {
+        throw unsupported(
+          "IFC sources require addIfcSource with a bounded snapshot",
+        );
+      }
+      if (sources.size >= maximumSources) {
+        throw new RangeError(
+          "federation source count exceeds its bound",
+        );
+      }
+      const sourceId = boundedString(
+        federationSourceId,
+        "federation source ID",
       );
+      if (sources.has(sourceId)) {
+        throw new RangeError(
+          "federation source ID already exists",
+        );
+      }
+      const current = validateSnapshot(snapshot);
+      if (
+        current.format !== capability.format ||
+        current.sourceRole !== capability.sourceRole
+      ) {
+        throw new TypeError(
+          "reference source snapshot does not match its format capability",
+        );
+      }
+      if (typeof visible !== "boolean") {
+        throw new TypeError(
+          "federation source visibility must be boolean",
+        );
+      }
+      const entry = {
+        federationSourceId: sourceId,
+        snapshot: current.snapshot,
+        source: current.source,
+        entityByExpressId: current.entityByExpressId,
+        entityByNativeId: current.entityByNativeId,
+        format: current.format,
+        sourceRole: current.sourceRole,
+        discipline: boundedString(
+          discipline,
+          "federation source discipline",
+        ),
+        owner: boundedString(
+          owner,
+          "federation source owner",
+        ),
+        alignment: validateAlignment(
+          alignment,
+          current.snapshot.revisionId,
+        ),
+        state,
+        stateReason: validateSourceState(
+          state,
+          stateReason,
+        ),
+        visible,
+      };
+      sources.set(sourceId, entry);
+      generation += 1;
+      return deepFreeze(publicSourceDescriptor(entry));
     },
     setSourceVisibility({
       federationSourceId,
@@ -972,6 +1144,11 @@ export function createBimFederation({
         expectedRevisionId,
       );
       const current = validateSnapshot(snapshot);
+      if (current.format !== "ifc") {
+        throw new TypeError(
+          "refreshIfcSource requires an IFC source snapshot",
+        );
+      }
       if (current.snapshot.revisionId === expectedRevisionId) {
         throw new RangeError(
           "federation refresh requires a new source revision",
@@ -982,6 +1159,9 @@ export function createBimFederation({
         snapshot: current.snapshot,
         source: current.source,
         entityByExpressId: current.entityByExpressId,
+        entityByNativeId: current.entityByNativeId,
+        format: current.format,
+        sourceRole: current.sourceRole,
         alignment: validateAlignment(
           alignment,
           current.snapshot.revisionId,
@@ -998,6 +1178,77 @@ export function createBimFederation({
         schema: "bim-explorer-federation-refresh/0.1",
         federationId: id,
         federationSourceId: previous.federationSourceId,
+        previousRevisionId: expectedRevisionId,
+        currentRevisionId: current.snapshot.revisionId,
+        unchangedFederationSources: sources.size - 1,
+        priorIdentityPolicy:
+          "all-prior-source-selections-are-stale",
+        sourceCount: sources.size,
+        generation,
+      });
+    },
+    refreshReferenceSource({
+      format,
+      federationSourceId,
+      expectedRevisionId,
+      snapshot,
+      alignment,
+      state = "ready",
+      stateReason = null,
+    }) {
+      const capability = getReferenceFormatCapability(format);
+      if (
+        !capability.admitted ||
+        capability.format === "ifc"
+      ) {
+        throw unsupported(
+          `${capability.format} reference refresh is held`,
+        );
+      }
+      const previous = sourceEntry(
+        federationSourceId,
+        expectedRevisionId,
+      );
+      if (previous.format !== capability.format) {
+        throw new TypeError(
+          "federation reference format cannot change on refresh",
+        );
+      }
+      const current = validateSnapshot(snapshot);
+      if (
+        current.format !== capability.format ||
+        current.sourceRole !== capability.sourceRole ||
+        current.snapshot.revisionId === expectedRevisionId
+      ) {
+        throw new RangeError(
+          "federation reference refresh snapshot is invalid",
+        );
+      }
+      const next = {
+        ...previous,
+        snapshot: current.snapshot,
+        source: current.source,
+        entityByExpressId: current.entityByExpressId,
+        entityByNativeId: current.entityByNativeId,
+        format: current.format,
+        sourceRole: current.sourceRole,
+        alignment: validateAlignment(
+          alignment,
+          current.snapshot.revisionId,
+        ),
+        state,
+        stateReason: validateSourceState(
+          state,
+          stateReason,
+        ),
+      };
+      sources.set(previous.federationSourceId, next);
+      generation += 1;
+      return deepFreeze({
+        schema: "bim-explorer-federation-refresh/0.1",
+        federationId: id,
+        federationSourceId: previous.federationSourceId,
+        format: current.format,
         previousRevisionId: expectedRevisionId,
         currentRevisionId: current.snapshot.revisionId,
         unchangedFederationSources: sources.size - 1,

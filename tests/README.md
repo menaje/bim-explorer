@@ -109,5 +109,7 @@ service test가 아닙니다.
 `federation` test는 generated georeferenced IFC 세 개로 두 active source
 slot, duplicate GlobalId isolation, per-source visibility, partial/stale,
 same-CRS·explicit Float64 alignment, single-source refresh와 cross-source
-saved view stale rejection을 검사합니다. non-IFC registry entry는 codec
-evidence 없이 source admission되지 않는지 확인합니다.
+saved view stale rejection을 검사합니다. 별도 generated glTF/GLB test는
+bounded reference source admission, source-native selection, IFC GlobalId
+부재, unaligned fail-closed, refresh와 semantic authority overclaim 거부를
+확인합니다. LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 admission되지 않습니다.

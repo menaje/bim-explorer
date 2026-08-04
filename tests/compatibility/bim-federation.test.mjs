@@ -18,7 +18,7 @@ const [manifest, evidence] = await Promise.all([
   ).then(JSON.parse),
 ]);
 
-test("BIM federation admits only the evidenced IFC foundation", () => {
+test("BIM federation admits IFC and qualified glTF references", () => {
   assert.deepEqual(
     validateBimFederationCompatibility(
       manifest,
@@ -26,8 +26,8 @@ test("BIM federation admits only the evidenced IFC foundation", () => {
     ),
     {
       status: "experimental",
-      passedGates: 14,
-      heldGates: 8,
+      passedGates: 16,
+      heldGates: 7,
       registeredFormats: 9,
     },
   );
@@ -47,7 +47,7 @@ test("BIM federation cannot merge native source identity", () => {
 
 test("held reference codecs cannot become supported without evidence", () => {
   const overclaim = structuredClone(manifest);
-  overclaim.gates.gltfGlbCodec = true;
+  overclaim.gates.pointCloudCodec = true;
   assert.throws(
     () => validateBimFederationCompatibility(
       overclaim,

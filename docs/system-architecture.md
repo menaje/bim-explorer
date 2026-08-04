@@ -293,14 +293,16 @@ refresh하면 그 slot의 prior selection과 saved view만 stale boundary에
 걸리고 다른 source revision은 유지됩니다.
 
 same-CRS IFC MapConversion과 provenance가 있는 explicit matrix만
-admission합니다. datum transformation은 수행하지 않습니다. glTF/GLB,
-LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 capability registry에 view/query/write/
-round-trip Gate를 분리해 기록하지만 실제 codec/SDK evidence 전에는
-source admission을 거부합니다.
+admission합니다. datum transformation은 수행하지 않습니다. bounded
+glTF/GLB reference mesh는 source-native identity와 unaligned 상태로
+admission할 수 있지만 IFC semantic authority를 부여하지 않습니다.
+LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 capability registry에
+view/query/write/round-trip Gate를 분리해 기록하고 실제 codec/SDK
+evidence 전에는 source admission을 거부합니다.
 
-현재 generated IFC4 두 source의 synthetic foundation만 통과했습니다.
-실제 측량 coordinate, product-scale multi-source 성능, 실제 사용자 수요와
-Spatial consumer는 별도 Gate입니다.
+현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
+foundation을 통과했습니다. 실제 측량 coordinate, product-scale
+multi-source 성능, 실제 사용자 수요와 Spatial consumer는 별도 Gate입니다.
 
 ## Spatial integration
 

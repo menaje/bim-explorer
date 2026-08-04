@@ -123,3 +123,9 @@ headless Chrome WebGL2에 올려 98,412 non-background pixels, source-native
 pick, selection highlight와 800-byte persistent allocation 전량 회수를
 확인했습니다. SwiftShader API 경로만 관찰했으므로 physical GPU를
 주장하지 않습니다.
+
+같은 bounded snapshot은 IFC semantic source 두 개와 함께 federation
+reference slot으로 admission했습니다. `nativeId` 선택, `globalId: null`,
+unaligned shared-coordinate 거부, exact revision refresh와 deterministic
+cleanup을 재현했습니다. 이 결과는 제품 file-open이나 broader glTF
+profile을 승인하지 않습니다.

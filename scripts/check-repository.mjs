@@ -271,6 +271,7 @@ const REQUIRED_PATHS = [
   "tests/foundation/repository.test.mjs",
   "tests/federation/bim-federation.test.mjs",
   "tests/federation/bim-federation-qualification.test.mjs",
+  "tests/federation/gltf-reference-federation.test.mjs",
   "tests/gltf/gltf-reference-source.test.mjs",
   "tests/gltf/gltf-browser-probe.test.mjs",
   "tests/gltf/public-gltf-fixture.test.mjs",

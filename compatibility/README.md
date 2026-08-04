@@ -188,18 +188,20 @@ multi-source IFC identity, visibility, same-CRS Float64 alignment,
 partial/stale, incremental refresh와 cross-source saved view foundation은
 [`bim-federation.json`](bim-federation.json)과
 [`synthetic federation evidence`](evidence/bim-federation-synthetic-2026-08-04.json)가
-소유합니다. 14개 foundation Gate는 통과했고 actual Spatial consumer,
-사용자 수요, 측량 datum, product-scale federation과 glTF/GLB,
-LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate 8개는 보류합니다. registry는
-format 이름과 view/query/write/round-trip 상태를 기록할 뿐 비 IFC
-source 지원을 주장하지 않습니다.
+소유합니다. IFC semantic source 두 개와 GLB reference mesh 하나를 함께
+배치해 source-native identity와 unaligned 경계를 포함한 16개 foundation
+Gate를 통과했습니다. actual Spatial consumer, 사용자 수요, 측량 datum,
+product-scale federation과 LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate
+7개는 보류합니다. registry는 `ifc`, `gltf`, `glb`만 admission하고 다른
+format은 fail closed합니다.
 
 bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도
 관리합니다. Khronos Box GLB, 공식 Validator, source-native identity와
-headless generic renderer evidence만 현재 통과했으며 Browser WebGL2,
-federation admission과 제품 file-open은 독립 Gate로 남습니다. GLB는
-ignored cache에서만 사용하고 release에는 포함하지 않습니다.
+headless generic renderer, 실제 Chrome WebGL2와 federation reference
+admission을 통과했습니다. Browser/VS Code 제품 file-open, external
+resource와 required extension은 독립 Gate로 남습니다. GLB는 ignored
+cache에서만 사용하고 release에는 포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

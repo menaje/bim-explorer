@@ -345,7 +345,7 @@ test("coordinate alignment is explicit and never claims datum conversion", async
   await disposeFixture(current);
 });
 
-test("reference format registry separates every capability and fails closed", () => {
+test("reference format registry admits only qualified reference profiles", () => {
   const registry = getReferenceFormatRegistry();
   assert.equal(registry.formats.length, 9);
   const ifc = getReferenceFormatCapability("IFC");
@@ -354,9 +354,22 @@ test("reference format registry separates every capability and fails closed", ()
   assert.match(ifc.capabilities.write, /^blocked-/u);
   assert.match(ifc.capabilities.roundTrip, /^blocked-/u);
 
+  for (const format of ["gltf", "glb"]) {
+    const capability = getReferenceFormatCapability(format);
+    assert.equal(capability.admitted, true);
+    assert.equal(
+      capability.sourceRole,
+      "derived-or-reference-mesh",
+    );
+    assert.match(capability.capabilities.view, /^qualified-/u);
+    assert.match(capability.capabilities.write, /^blocked-/u);
+    assert.match(
+      capability.capabilities.roundTrip,
+      /^blocked-/u,
+    );
+  }
+
   for (const format of [
-    "gltf",
-    "glb",
     "las",
     "laz",
     "e57",
@@ -382,7 +395,7 @@ test("reference format registry separates every capability and fails closed", ()
     federationId: "federation:format-gate",
   });
   assert.throws(
-    () => federation.addReferenceSource({ format: "glb" }),
+    () => federation.addReferenceSource({ format: "las" }),
     /source is held/u,
   );
   assert.throws(

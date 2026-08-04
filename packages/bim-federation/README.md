@@ -16,7 +16,10 @@ context에 배치하는 post-v0.1 foundation입니다.
   view/query/write/round-trip admission을 서로 분리합니다.
 
 현재 실제 source admission은 기존 IFC4 `ReferenceView_V1.2` read-only
-snapshot뿐입니다. 다른 format entry는 capability와 qualification Gate만
-정의하며 parser, SDK, redistribution 또는 제품 지원을 주장하지 않습니다.
-datum transformation, 실제 측량 좌표, 대형 federation 성능, 실제 Spatial
-consumer도 별도 evidence가 필요합니다.
+semantic snapshot과 bounded glTF 2.0/GLB read-only reference mesh입니다.
+glTF/GLB는 source-native `nativeId`만 사용하고 IFC GlobalId나 BIM semantic
+authority를 만들지 않습니다. LAS/LAZ/E57, 3D Tiles, RVT/DGN entry는
+capability와 qualification Gate만 정의하며 codec, SDK, redistribution
+또는 제품 지원을 주장하지 않습니다. datum transformation, 실제 측량
+좌표, 대형 federation 성능, 실제 Spatial consumer도 별도 evidence가
+필요합니다.

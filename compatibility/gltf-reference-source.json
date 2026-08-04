@@ -21,7 +21,7 @@
     "dependencyLicenseAndIntegrity": true,
     "deterministicCleanup": true,
     "browserWebGl2": true,
-    "federationReferenceAdmission": false,
+    "federationReferenceAdmission": true,
     "browserProductOpen": false,
     "vscodeProductOpen": false,
     "externalResourceBundle": false,
@@ -33,10 +33,10 @@
   "evidence": {
     "publicKhronosBox": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
     "browserWebGl2": "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
+    "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json"
   },
   "blockers": [
-    "federation source admission remains held until its source-role contract is implemented",
     "Browser and VS Code product file-open surfaces remain IFC-only",
     "external resource bundles and required extensions remain unsupported",
     "product-scale geometry and cross-platform package evidence are not available"

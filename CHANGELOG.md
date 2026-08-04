@@ -5,8 +5,9 @@
 - add an experimental multi-IFC federation contract with source-scoped
   identity, visibility, partial/stale state, explicit Float64 alignment,
   incremental refresh, cross-source selection and saved views;
-- add fail-closed capability Gates for glTF/GLB, LAS/LAZ/E57, 3D Tiles and
-  RVT/DGN without claiming codec or SDK support.
+- add a bounded glTF 2.0/GLB read-only reference source with Khronos Validator,
+  generic renderer, Browser WebGL2 and federation admission evidence;
+- keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04
 

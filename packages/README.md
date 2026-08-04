@@ -62,8 +62,10 @@ Spatial Revision이나 acceptance authority는 소유하지 않습니다.
 [`bim-federation`](bim-federation/README.md)은 stable source slot 아래
 서로 다른 native revision/identity를 유지하고, source별 visibility와
 partial/stale 상태, Float64 alignment, cross-source saved view를 제공합니다.
-후속 format은 view/query/write/round-trip Gate만 등록하며 codec이 없는
-format을 지원 대상으로 표현하지 않습니다.
+IFC semantic source와 bounded glTF/GLB reference mesh를 admission하며
+source-native identity를 IFC GlobalId와 합치지 않습니다. 나머지 format은
+view/query/write/round-trip Gate만 등록하며 codec이 없는 format을 지원
+대상으로 표현하지 않습니다.
 
 [`gltf-reference-source`](gltf-reference-source/README.md)는 glTF 2.0/GLB의
 embedded geometry를 bounded generic 3D range로 투영합니다. 이 source는
