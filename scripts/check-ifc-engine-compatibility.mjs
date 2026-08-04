@@ -11,6 +11,9 @@ import {
   REPORT_SCHEMA,
   validateIfcEngineReport,
 } from "../packages/ifc-engine-contract/src/index.mjs";
+import {
+  qualifyIfcLicenseProfile,
+} from "./qualify-ifc-license-profile.mjs";
 
 const CANDIDATES = ["web-ifc", "ifcopenshell"];
 const STATUS_SET = new Set(CAPABILITY_STATUSES);
@@ -1674,6 +1677,8 @@ function validatePlatformPackaging(manifest, evidence) {
     qualification.webIfcMacosStageQualified !== true ||
     qualification.webIfcLinuxStageQualified !== true ||
     qualification.stageArtifactIntegrityQualified !== true ||
+    qualification.registryArtifactIntegrityQualified !== true ||
+    qualification.technicalLicenseProfileQualified !== true ||
     qualification.productionPackageQualified !== false ||
     qualification.ifcOpenShellLinuxQualified !== false ||
     qualification.publicLicenseQualified !== false ||
@@ -1868,6 +1873,147 @@ function validatePlatformPackaging(manifest, evidence) {
   });
 }
 
+function validateIfcLicenseProfile(manifest, evidence) {
+  const qualification = plainRecord(
+    manifest.licenseQualification,
+    "license qualification",
+  );
+  if (
+    qualification.status !==
+      "passed-technical-due-diligence" ||
+    qualification.evidence !==
+      "compatibility/evidence/ifc-license-profile-2026-08-04.json" ||
+    qualification.legalAdvice !== false ||
+    qualification.productionRedistributionApproved !== false ||
+    qualification.exactSourceAvailabilityRecorded !== true ||
+    qualification.thirdPartyNoticesRecorded !== true ||
+    qualification.rootOpenSourceLicense !== "held-release-gate"
+  ) {
+    throw new Error(
+      "IFC technical license qualification is incomplete or overclaims",
+    );
+  }
+  plainRecord(evidence, "IFC license profile evidence");
+  const profile = manifest.profile;
+  const selected = manifest.candidates["web-ifc"];
+  if (
+    evidence.schema !==
+      "bim-explorer-ifc-license-profile-qualification/1" ||
+    evidence.status !== "passed-technical-due-diligence" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.scope?.profile?.schema !== profile.schema ||
+    evidence.scope.profile.view !== profile.view ||
+    evidence.scope.profile.exchangeScenario !==
+      profile.exchangeScenario ||
+    evidence.scope.admission !== "experimental-read-only" ||
+    evidence.scope.legalAdvice !== false ||
+    evidence.scope.productionRedistributionApproval !== false ||
+    evidence.repository?.private !== true ||
+    evidence.repository.license !== "UNLICENSED" ||
+    evidence.repository.publicOpenSourceLicense !==
+      "held-release-gate" ||
+    evidence.selectedEngine?.id !== "web-ifc" ||
+    evidence.selectedEngine.version !== selected.version ||
+    evidence.selectedEngine.role !==
+      "primary-experimental-read-only" ||
+    evidence.selectedEngine.sourceModified !== false
+  ) {
+    throw new Error(
+      "IFC license profile scope or selection is incomplete",
+    );
+  }
+  const artifact = plainRecord(
+    evidence.artifact,
+    "IFC license artifact",
+  );
+  if (
+    artifact.package !== selected.artifact.package ||
+    artifact.version !== selected.version ||
+    artifact.resolved !== selected.artifact.resolved ||
+    artifact.integrity !== selected.artifact.integrity ||
+    artifact.observedTarball?.sha256 !==
+      selected.artifact.sha256 ||
+    artifact.observedTarball.bytes !==
+      selected.artifact.bytes ||
+    artifact.npmGitHead !== selected.artifact.gitHead ||
+    artifact.exactSource !== selected.exactSource ||
+    artifact.installedContent?.entries !== 14 ||
+    artifact.installedContent.bytes !== 23_995_895 ||
+    artifact.installedContent.sha256 !==
+      selected.artifact.installedContentSha256 ||
+    artifact.license?.spdx !== selected.license ||
+    artifact.license.sha256 !==
+      "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5" ||
+    artifact.license.fullTextPresent !== true ||
+    Object.keys(artifact.runtimeFiles ?? {}).length !== 4
+  ) {
+    throw new Error(
+      "IFC selected artifact integrity or license differs",
+    );
+  }
+  const packaging = plainRecord(
+    evidence.packagingBoundary,
+    "IFC license packaging boundary",
+  );
+  if (
+    !sameJson(packaging.selectedRuntime?.browser, [
+      "web-ifc-api.js",
+      "web-ifc.wasm",
+    ]) ||
+    !sameJson(packaging.selectedRuntime?.node, [
+      "web-ifc-api-node.js",
+      "web-ifc-node.wasm",
+    ]) ||
+    !Array.isArray(packaging.exactNotices) ||
+    packaging.exactNotices.length !== 3 ||
+    packaging.exactNotices.some(
+      (notice) =>
+        notice.exactVersion !== true ||
+        notice.exactSource !== true ||
+        notice.legalApprovalDisclaimed !== true ||
+        !/^[a-f0-9]{64}$/u.test(notice.sha256),
+    ) ||
+    Object.values(packaging.sourceAvailability ?? {})
+      .some((value) => value !== true) ||
+    Object.keys(packaging.sourceAvailability ?? {}).length !== 5 ||
+    packaging.multiThreadRuntime?.declaredWorkerFile !== true ||
+    packaging.multiThreadRuntime.publishedWorkerFilePresent !== false ||
+    packaging.multiThreadRuntime.admission !== "blocked" ||
+    packaging.publicBrowserPackage !== "blocked" ||
+    packaging.publicVscodePackage !== "blocked" ||
+    packaging.sbom !== "blocked" ||
+    packaging.signing !== "blocked"
+  ) {
+    throw new Error(
+      "IFC packaging license boundary is incomplete or overclaims",
+    );
+  }
+  if (
+    evidence.fallback?.id !== "ifcopenshell" ||
+    evidence.fallback.version !==
+      manifest.candidates.ifcopenshell.version ||
+    evidence.fallback.role !==
+      "qualification-reference-oracle" ||
+    evidence.fallback.bundled !== false ||
+    evidence.decision?.engineSelection !== "web-ifc" ||
+    evidence.decision.profileAdmission !==
+      "passed-experimental-read-only" ||
+    evidence.decision.writeRoundTrip !== "blocked" ||
+    evidence.decision.productionRedistribution !==
+      "blocked-release-engineering-and-legal-gate" ||
+    evidence.decision.legalApproval !== false ||
+    evidence.decision.productionClaims !== false
+  ) {
+    throw new Error(
+      "IFC license decision or fallback boundary overclaims support",
+    );
+  }
+  return Object.freeze({
+    selectedEngine: "web-ifc",
+    profileAdmission: "experimental-read-only",
+  });
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -1883,6 +2029,7 @@ export function validateIfcEngineCompatibility(
   inCallBrowserEvidence,
   resourceExhaustionEvidence,
   platformPackagingEvidence,
+  licenseProfileEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -1904,11 +2051,13 @@ export function validateIfcEngineCompatibility(
   }
   const profile = plainRecord(manifest.profile, "profile");
   if (
-    profile.status !== "draft" ||
+    profile.status !== "admitted-experimental" ||
     profile.readRender !== "experimental" ||
     profile.writeRoundTrip !== "blocked"
   ) {
-    throw new Error("draft IFC profile must separate read/render from write");
+    throw new Error(
+      "admitted IFC profile must separate read/render from write",
+    );
   }
 
   const candidates = plainRecord(manifest.candidates, "candidates");
@@ -1956,11 +2105,16 @@ export function validateIfcEngineCompatibility(
   }
   const decision = plainRecord(manifest.decision, "decision");
   if (
-    decision.selection !== "held" ||
-    decision.goNoGo !== "held" ||
+    decision.selection !== "web-ifc@0.0.77" ||
+    decision.admission !== "experimental-read-only" ||
+    decision.selectedProfile !==
+      "IFC4/ReferenceView_V1.2/local-read-only-exploration" ||
+    decision.goNoGo !== "go-experimental-no-go-production" ||
     decision.productionClaims !== false
   ) {
-    throw new Error("experimental engine decision must fail closed");
+    throw new Error(
+      "experimental engine decision must fail closed to selected scope",
+    );
   }
   if (
     !Array.isArray(manifest.blockers) ||
@@ -1987,7 +2141,10 @@ export function validateIfcEngineCompatibility(
     gates.linuxPackaging !== false ||
     gates.crossPlatformWebIfcStage !== true ||
     gates.stageArtifactIntegrity !== true ||
-    gates.artifactIntegrity !== false ||
+    gates.artifactIntegrity !== true ||
+    gates.technicalLicenseProfile !== true ||
+    gates.engineSelection !== true ||
+    gates.profileAdmission !== true ||
     gates.redistributionReview !== false
   ) {
     throw new Error("IFC engine qualification gates must match evidence");
@@ -2010,6 +2167,7 @@ export function validateIfcEngineCompatibility(
     manifest,
     platformPackagingEvidence,
   );
+  validateIfcLicenseProfile(manifest, licenseProfileEvidence);
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
   validateBrowserCheckpointCancellation(
@@ -2274,6 +2432,18 @@ async function main() {
       "utf8",
     ),
   );
+  const licenseProfileEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.licenseQualification.evidence),
+      "utf8",
+    ),
+  );
+  const currentLicenseProfile = await qualifyIfcLicenseProfile();
+  if (!sameJson(licenseProfileEvidence, currentLicenseProfile)) {
+    throw new Error(
+      "committed IFC license profile differs from current package/notices",
+    );
+  }
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -2289,6 +2459,7 @@ async function main() {
     inCallBrowserEvidence,
     resourceExhaustionEvidence,
     platformPackagingEvidence,
+    licenseProfileEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

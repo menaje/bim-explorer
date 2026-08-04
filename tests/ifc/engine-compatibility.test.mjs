@@ -86,6 +86,12 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const licenseProfileEvidence = JSON.parse(
+    await readFile(
+      manifest.licenseQualification.evidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -101,6 +107,7 @@ async function fixtures() {
     inCallBrowserEvidence,
     resourceExhaustionEvidence,
     platformPackagingEvidence,
+    licenseProfileEvidence,
   };
 }
 
@@ -120,10 +127,11 @@ function validateFixtures(value) {
     value.inCallBrowserEvidence,
     value.resourceExhaustionEvidence,
     value.platformPackagingEvidence,
+    value.licenseProfileEvidence,
   );
 }
 
-test("IFC engine compatibility remains experimental and held", async () => {
+test("IFC engine compatibility selects a narrow experimental profile", async () => {
   const fixtureSet = await fixtures();
   const { manifest } = fixtureSet;
   const result = validateFixtures(fixtureSet);
@@ -148,7 +156,16 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.linuxPackaging, false);
   assert.equal(manifest.gates.crossPlatformWebIfcStage, true);
   assert.equal(manifest.gates.stageArtifactIntegrity, true);
-  assert.equal(manifest.gates.artifactIntegrity, false);
+  assert.equal(manifest.gates.artifactIntegrity, true);
+  assert.equal(manifest.gates.technicalLicenseProfile, true);
+  assert.equal(manifest.gates.engineSelection, true);
+  assert.equal(manifest.gates.profileAdmission, true);
+  assert.equal(manifest.gates.redistributionReview, false);
+  assert.equal(manifest.decision.selection, "web-ifc@0.0.77");
+  assert.equal(
+    manifest.decision.goNoGo,
+    "go-experimental-no-go-production",
+  );
 });
 
 test("IFC engine compatibility rejects an unmeasured pin", async () => {
@@ -310,5 +327,25 @@ test("platform stage requires byte-identical macOS and Linux artifacts", async (
   assert.throws(
     () => validateFixtures(fixtureSet),
     /platform-package evidence is incomplete/u,
+  );
+});
+
+test("technical license evidence cannot promote redistribution", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.licenseProfileEvidence
+    .decision.productionRedistribution = "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /decision or fallback boundary overclaims/u,
+  );
+});
+
+test("technical license evidence requires exact selected source", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.licenseProfileEvidence.artifact.npmGitHead =
+    "0".repeat(40);
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /artifact integrity or license differs/u,
   );
 });

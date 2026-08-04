@@ -3,7 +3,7 @@ type: qualification
 status: active
 authority:
   - ifc-engine-candidate-evidence
-  - draft-ifc-implementation-profile
+  - experimental-ifc-implementation-profile
   - engine-selection-gates
 last_reviewed: 2026-08-04
 ---
@@ -15,8 +15,18 @@ last_reviewed: 2026-08-04
 `web-ifc@0.0.77`과 `ifcopenshell@0.8.4.post1`은 같은 repository-authored
 IFC4 base와 mapped/shared synthetic fixture에서 semantic, GlobalId–Express
 ID identity, relation, quantity, classification, extrusion geometry와 IFC
-world bounds assertion을 통과했습니다. 그러나 첫 engine 선정과 production
-go/no-go는 보류합니다.
+world bounds assertion을 통과했습니다. 이 근거와 실제 Browser/VS Code
+JavaScript/WASM 제품 경로를 기준으로 첫 engine은 exact
+`web-ifc@0.0.77`, 첫 implementation profile은 IFC4
+`ReferenceView_V1.2`의 local read-only semantic/extruded-geometry
+exploration으로 experimental admission합니다.
+
+production go/no-go는 **no-go**입니다. exact npm tarball/integrity,
+installed content, MPL-2.0 full text, npm `gitHead` source commit과 세 notice를
+기술적으로 고정했지만 BIM Explorer 자체 license, 외부 배포본에 포함될
+source-access notice, SBOM, signing, Browser/VS Code public package와 법률
+검토는 아직 통과하지 않았습니다. IfcOpenShell은 bundle하거나 fallback으로
+자동 실행하지 않고 cross-engine qualification reference oracle로 유지합니다.
 
 `web-ifc`는 local Chromium module Worker에서 single-thread WASM으로 base
 fixture를 읽는 첫 smoke와 실제 file chooser를 통한 bounded local-file
@@ -25,8 +35,8 @@ lifecycle, 유효한 IFC가 열린 뒤 checkpoint 취소·정리 prototype을
 heap-capacity budget도 통과했습니다. 이어서 CC BY 4.0 Schependomlaan
 IFC2X3 46.77MB를 고정 digest로 검증하고 Node CPU/RSS와 실제 Chromium
 Worker parse/geometry budget을 통과했습니다. JavaScript/WASM 경로를
-Browser와 VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정이나
-IFC2X3 profile 승격은 아닙니다. Browser WebGL2 first-frame prototype도
+Browser와 VS Code surface에서 공유할 수 있음을 확인했으며 IFC2X3 profile
+승격은 아닙니다. Browser WebGL2 first-frame prototype도
 통과했습니다. 세 가지 generated malformed/truncated source는 web-ifc와
 IfcOpenShell 격리 process에서 각각 두 번 거부·정리하고 정상 source recovery를
 재현했으며, web-ifc는 실제 Chromium Worker에서도 explicit dispose와
@@ -37,19 +47,20 @@ web-ifc는 실제 Chromium에서도 50ms grace의 강제 Worker 종료와 새 Wo
 fresh-process recovery도 통과했습니다. 다만 engine-cooperative cancellation,
 강제 종료된 runtime 내부의 explicit cleanup, production packaging,
 Browser/native allocator exhaustion과 법률 Gate가 남아 있으므로
-IfcOpenShell native process를 desktop fallback으로 계속 유지합니다.
+IfcOpenShell은 unbundled qualification reference oracle로 유지합니다.
 
 같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
 [`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
-소유합니다. 이 결과도 engine selection이 아니라 bounded read-only source
-단계의 입력 증거입니다.
+소유합니다. 이 결과는 engine 선정 근거 중 bounded read-only source
+단계이며 IFC2X3 profile admission은 아닙니다.
 
 이 source의 첫 geometry range를 headless와 실제 Browser WebGL2 backend에
 연결한 결과는
 [`headless renderer evidence`](../compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json)와
 [`Browser WebGL2 evidence`](../compatibility/evidence/bim-renderer-3d-public-browser-webgl2-2026-08-04.json)가
 소유합니다. WebGL2 GPU API upload·rasterized first frame·dispose Gate는
-통과했지만 physical GPU·memory나 engine/profile 선정을 의미하지 않습니다.
+통과했지만 physical GPU·memory나 IFC2X3 profile admission을 의미하지
+않습니다.
 
 지원 상태의 authority는
 [`compatibility/ifc-engines.json`](../compatibility/ifc-engines.json),
@@ -271,7 +282,7 @@ Node/WASM stage 범위에서 `native`입니다. package는 `private: true`,
 Browser/VS Code bundle, IfcOpenShell Linux wheel, public license, SBOM,
 signing과 redistribution을 승인하지 않습니다.
 
-## Draft implementation profile
+## Admitted experimental implementation profile
 
 현재 profile은 다음만 `experimental`입니다.
 
@@ -293,7 +304,7 @@ signing과 redistribution을 승인하지 않습니다.
 - generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
 공개 IFC2X3 관찰은 engine의 대표 parse/geometry 성능을 재기 위한
-performance-only Gate입니다. 아래 draft IFC4 profile의 schema나 exchange
+performance-only Gate입니다. 아래 admitted IFC4 profile의 schema나 exchange
 scenario에 포함하지 않습니다.
 
 다음은 `blocked`입니다.
@@ -336,10 +347,25 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 
 web-ifc upstream은 Node와 Browser용 WASM engine이며 저장소 license를
 MPL-2.0으로 공개합니다. 현재 npm dependency는 exact version과 integrity로
-고정했습니다. private stage에는 upstream MPL-2.0 text와 dependency
-notice를 함께 넣었고 macOS/Linux artifact identity를 확인했습니다. 이는
-BIM Explorer 자체의 public license, MPL source 제공 절차, SBOM, signing
-또는 production redistribution 검토를 대신하지 않습니다.
+고정했습니다. npm tarball은 3,088,753 bytes, SHA-256
+`d9f88c96bde26a2b1e317458f8fa38ac46f18f1f688f2cb1a7f8e97890f2f341`,
+registry SHA-512 integrity와 npm `gitHead`
+`f26c4beef0a668ebdb180d2b95a94097a1e21cef`를 기록했습니다. 설치본은
+14 files, 23,995,895 bytes이고 content digest는
+`d7d35cd72317078b0bd191670a601bea61dc216852943d378f2a088a310434ef`입니다.
+MPL-2.0 full text와 Browser/Node JS·WASM file digest도
+[`license profile evidence`](../compatibility/evidence/ifc-license-profile-2026-08-04.json)가
+검증합니다.
+
+Mozilla의 MPL 2.0 license와 FAQ를 release-engineering 기준으로 적용하면
+외부에 executable/minified JavaScript/WASM을 전달할 때 포함된 MPL code의
+source를 받을 수 있는 합리적인 경로를 알리고, MPL file 수정분은 해당
+source에 포함해야 합니다. 별도 BIM Explorer/Spatial 파일은 분리된 Larger
+Work 경계를 유지할 수 있습니다. 현재 npm artifact는 수정하지 않았고 exact
+source commit을 세 notice에 기록했습니다. 이 기술 체크리스트는 법률
+자문이 아니며 BIM Explorer 자체 public license, 실제 배포본의 source
+제공 절차, SBOM, signing 또는 production redistribution 승인을 대신하지
+않습니다.
 
 IfcOpenShell은 공식 설치 문서가 Python package 설치를 안내하고, upstream
 repository는 library와 executable의 license 범위를 구분합니다. 이번
@@ -354,14 +380,17 @@ source를 재배포하지 않고 on-demand local cache만 만들며, product bun
 포함은 별도 release/legal Gate로 유지합니다.
 
 - [web-ifc upstream](https://github.com/ThatOpen/engine_web-ifc)
-- [web-ifc license](https://github.com/ThatOpen/engine_web-ifc/blob/master/LICENSE.md)
+- [web-ifc exact source](https://github.com/ThatOpen/engine_web-ifc/tree/f26c4beef0a668ebdb180d2b95a94097a1e21cef)
+- [web-ifc exact license](https://github.com/ThatOpen/engine_web-ifc/blob/f26c4beef0a668ebdb180d2b95a94097a1e21cef/LICENSE.md)
+- [Mozilla MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/)
+- [Mozilla MPL 2.0 FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)
 - [IfcOpenShell upstream](https://github.com/IfcOpenShell/IfcOpenShell)
 - [IfcOpenShell Python installation](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html)
 - [Community Sample Test Files](https://github.com/buildingsmart-community/Community-Sample-Test-Files)
 - [Public fixture license](https://github.com/buildingsmart-community/Community-Sample-Test-Files/blob/7ddf57a201f88a0c213d5322b02ed15e94a60a40/LICENSE)
 
-법률 검토와 public release Gate 전에는 어느 후보도 production
-redistribution 가능하다고 주장하지 않습니다.
+engine/profile 선정은 완료했지만 법률 검토와 public release Gate 전에는
+production redistribution 가능하다고 주장하지 않습니다.
 
 ## 재현
 
@@ -376,6 +405,7 @@ npm run fetch:ifc:public
 npm run qualify:ifc:cancel-in-call
 npm run qualify:ifc:rss-limit
 npm run qualify:ifc:platform-package
+npm run qualify:ifc:license-profile
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
@@ -439,7 +469,6 @@ exhaustion safety, physical GPU memory와 cross-Host engine budget은 계속
 
 1. Browser/native allocator exhaustion과 필요 시 cooperative cancellation
 2. connection/system/opening을 포함한 broader semantic corpus
-3. Linux Browser CI와 production Browser/VS Code engine package proof
-4. IfcOpenShell Linux wheel integrity 또는 desktop fallback 범위 확정
-5. dependency 결합·NOTICE·source 제공·SBOM·signing 법률 검토
-6. 결과를 근거로 engine/profile go/no-go 결정
+3. production Browser/VS Code engine package와 shipped notice/source link
+4. BIM Explorer own license, SBOM, signing과 external redistribution 법률 검토
+5. IfcOpenShell을 실제 fallback으로 요구할 때만 wheel/relink 범위 재검토

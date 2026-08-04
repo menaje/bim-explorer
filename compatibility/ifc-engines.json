@@ -9,7 +9,7 @@
     "version": "0.1.0"
   },
   "profile": {
-    "status": "draft",
+    "status": "admitted-experimental",
     "schema": "IFC4",
     "view": "ReferenceView_V1.2",
     "exchangeScenario": "local read-only semantic and extruded-geometry exploration",
@@ -99,12 +99,23 @@
     "webIfcMacosStageQualified": true,
     "webIfcLinuxStageQualified": true,
     "stageArtifactIntegrityQualified": true,
+    "registryArtifactIntegrityQualified": true,
+    "technicalLicenseProfileQualified": true,
     "productionPackageQualified": false,
     "ifcOpenShellLinuxQualified": false,
     "publicLicenseQualified": false,
     "artifactSigningQualified": false,
     "sbomQualified": false,
     "redistributionReviewQualified": false
+  },
+  "licenseQualification": {
+    "status": "passed-technical-due-diligence",
+    "evidence": "compatibility/evidence/ifc-license-profile-2026-08-04.json",
+    "legalAdvice": false,
+    "productionRedistributionApproved": false,
+    "exactSourceAvailabilityRecorded": true,
+    "thirdPartyNoticesRecorded": true,
+    "rootOpenSourceLicense": "held-release-gate"
   },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
@@ -129,11 +140,18 @@
       "artifact": {
         "registry": "npm",
         "package": "web-ifc",
-        "integrity": "sha512-VzQ0W/Iiqbidxn1ECUvz6qJ6p2sXBVNcOsUOBCETzy77psAH6yFLKQm74aXabkx3JH4OvFVHe8k1qS6+Z2zl1w=="
+        "resolved": "https://registry.npmjs.org/web-ifc/-/web-ifc-0.0.77.tgz",
+        "integrity": "sha512-VzQ0W/Iiqbidxn1ECUvz6qJ6p2sXBVNcOsUOBCETzy77psAH6yFLKQm74aXabkx3JH4OvFVHe8k1qS6+Z2zl1w==",
+        "sha256": "d9f88c96bde26a2b1e317458f8fa38ac46f18f1f688f2cb1a7f8e97890f2f341",
+        "bytes": 3088753,
+        "gitHead": "f26c4beef0a668ebdb180d2b95a94097a1e21cef",
+        "installedContentSha256": "d7d35cd72317078b0bd191670a601bea61dc216852943d378f2a088a310434ef"
       },
       "license": "MPL-2.0",
       "upstream": "https://github.com/ThatOpen/engine_web-ifc",
-      "licenseSource": "https://github.com/ThatOpen/engine_web-ifc/blob/master/LICENSE.md"
+      "exactSource": "https://github.com/ThatOpen/engine_web-ifc/tree/f26c4beef0a668ebdb180d2b95a94097a1e21cef",
+      "licenseSource": "https://github.com/ThatOpen/engine_web-ifc/blob/f26c4beef0a668ebdb180d2b95a94097a1e21cef/LICENSE.md",
+      "selectedRole": "primary-experimental-read-only"
     },
     "ifcopenshell": {
       "status": "experimental",
@@ -146,7 +164,8 @@
       },
       "license": "LGPL-3.0-or-later",
       "upstream": "https://github.com/IfcOpenShell/IfcOpenShell",
-      "installationSource": "https://docs.ifcopenshell.org/ifcopenshell-python/installation.html"
+      "installationSource": "https://docs.ifcopenshell.org/ifcopenshell-python/installation.html",
+      "selectedRole": "qualification-reference-oracle"
     }
   },
   "prototypes": {
@@ -281,22 +300,26 @@
     "vscodePackaging": false,
     "crossPlatformWebIfcStage": true,
     "stageArtifactIntegrity": true,
-    "artifactIntegrity": false,
+    "artifactIntegrity": true,
+    "technicalLicenseProfile": true,
+    "engineSelection": true,
+    "profileAdmission": true,
     "redistributionReview": false
   },
   "decision": {
-    "selection": "held",
-    "goNoGo": "held",
-    "nextPrototype": "browser-resource-boundary-and-release-legal-profile",
-    "fallbackPrototype": "ifcopenshell-native-process",
+    "selection": "web-ifc@0.0.77",
+    "admission": "experimental-read-only",
+    "selectedProfile": "IFC4/ReferenceView_V1.2/local-read-only-exploration",
+    "goNoGo": "go-experimental-no-go-production",
+    "nextPrototype": "public-browser-vscode-package-sbom-and-signing",
+    "fallbackPrototype": "ifcopenshell-qualification-reference-oracle",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus, repeated forced process-isolation cancellation and a sampled 256 MiB process RSS limit after a public-model call-start checkpoint, each with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing, WebGL2 exploration and byte-identical private Node/WASM clean-install stages on macOS arm64 and Linux x64. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, Browser/native allocator exhaustion safety, physical GPU memory, context-loss recovery, production Browser/VS Code packaging, IfcOpenShell Linux packaging and product redistribution review remain unqualified."
+    "rationale": "web-ifc is the only candidate qualified across the actual Browser and VS Code JavaScript/WASM product path, representative parsing, WebGL2 exploration, forced Worker/process isolation and byte-identical private macOS/Linux stages. Its exact npm artifact, installed content, MPL-2.0 text, source commit and notice plan pass technical due diligence, so web-ifc 0.0.77 is selected for the narrow IFC4 ReferenceView_V1.2 local read-only exploration profile. IfcOpenShell remains an unbundled comparison oracle. This is a no-go for production redistribution until the public Browser/VS Code package, BIM Explorer license, shipped source-access notice, SBOM, signing and legal review pass."
   },
   "blockers": [
-    "Browser WebGL2 exploration passes, but physical GPU memory and context-loss recovery are unqualified",
     "Forced isolation and process RSS-limit recovery pass, but engine-cooperative cancellation, explicit cleanup after forced exit, Browser heap exhaustion and native allocator/parser memory safety remain unqualified",
-    "Private web-ifc Node/WASM stages pass on macOS/Linux, but no production Browser or VS Code package proof exists",
-    "IfcOpenShell wheel integrity and production redistribution review are incomplete",
+    "Private web-ifc Node/WASM stages and technical MPL evidence pass, but no production Browser or VS Code package, SBOM, signing or external redistribution approval exists",
+    "IfcOpenShell is an unbundled qualification oracle; wheel integrity, Linux packaging and LGPL distribution obligations remain unqualified",
     "No write or round-trip qualification",
     "No broader connection, system, opening or non-wall relation corpus"
   ]

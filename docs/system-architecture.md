@@ -89,9 +89,11 @@ allocator exhaustion과 parser memory safety는 계속 별도 Gate입니다.
 
 현재 공통 report와 capability vocabulary는
 [IFC engine adapter v0.2 draft](../specs/ifc-engine-adapter-v0.2.md)가
-정의합니다. 두 후보 모두 작은 IFC4 fixture를 통과했지만 selection과
-production admission은
-[qualification Gate](ifc-engine-qualification.md)에 따라 보류합니다.
+정의합니다. 두 후보 모두 작은 IFC4 fixture를 통과했고,
+`web-ifc@0.0.77`을 IFC4 `ReferenceView_V1.2` local read-only exploration의
+첫 experimental engine으로 선정했습니다. IfcOpenShell은 unbundled
+qualification oracle입니다. production package와 redistribution admission은
+[qualification Gate](ifc-engine-qualification.md)에 따라 계속 막습니다.
 
 ## BIM source snapshot
 

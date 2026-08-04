@@ -35,14 +35,17 @@ Spatial 의존성은 없으며, 제품 entrypoint의 public Viewer Core 채택,
 IFC2X3 profile admission, physical GPU와 marketplace release는 계속
 보류합니다.
 
-IFC engine 후보와 draft profile 상태는
+IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
 비교는
 [`synthetic-small evidence`](evidence/ifc-engine-synthetic-small-2026-08-03.json),
 mapped/shared/Qto/classification 비교는
 [`synthetic-mapped evidence`](evidence/ifc-engine-synthetic-mapped-2026-08-03.json)에
-기록합니다. 이는 `experimental` evidence이며 engine selection 또는
-production redistribution 승인이 아닙니다.
+기록합니다. exact `web-ifc@0.0.77` package/source/license evidence는
+[`license profile evidence`](evidence/ifc-license-profile-2026-08-04.json)가
+소유합니다. 이 결과는 IFC4 `ReferenceView_V1.2` local read-only
+exploration의 experimental engine selection이며 production redistribution
+승인은 아닙니다.
 
 read-only `BimModelSource`의 raw source fingerprint, deterministic cache,
 tree/property/Render/Pick identity, bounded tree/search/relation query와

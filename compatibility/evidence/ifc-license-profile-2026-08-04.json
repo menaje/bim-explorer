@@ -1,0 +1,146 @@
+{
+  "schema": "bim-explorer-ifc-license-profile-qualification/1",
+  "status": "passed-technical-due-diligence",
+  "asOf": "2026-08-04",
+  "scope": {
+    "profile": {
+      "schema": "IFC4",
+      "view": "ReferenceView_V1.2",
+      "exchangeScenario": "local read-only semantic and extruded-geometry exploration"
+    },
+    "admission": "experimental-read-only",
+    "legalAdvice": false,
+    "productionRedistributionApproval": false
+  },
+  "repository": {
+    "private": true,
+    "license": "UNLICENSED",
+    "publicOpenSourceLicense": "held-release-gate"
+  },
+  "selectedEngine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "role": "primary-experimental-read-only",
+    "browserBoundary": "dedicated-single-thread-wasm-worker",
+    "nodeBoundary": "isolated-node-wasm-process",
+    "sourceModified": false
+  },
+  "artifact": {
+    "registry": "npm",
+    "package": "web-ifc",
+    "version": "0.0.77",
+    "resolved": "https://registry.npmjs.org/web-ifc/-/web-ifc-0.0.77.tgz",
+    "integrity": "sha512-VzQ0W/Iiqbidxn1ECUvz6qJ6p2sXBVNcOsUOBCETzy77psAH6yFLKQm74aXabkx3JH4OvFVHe8k1qS6+Z2zl1w==",
+    "observedTarball": {
+      "bytes": 3088753,
+      "sha256": "d9f88c96bde26a2b1e317458f8fa38ac46f18f1f688f2cb1a7f8e97890f2f341"
+    },
+    "npmGitHead": "f26c4beef0a668ebdb180d2b95a94097a1e21cef",
+    "exactSource": "https://github.com/ThatOpen/engine_web-ifc/tree/f26c4beef0a668ebdb180d2b95a94097a1e21cef",
+    "installedContent": {
+      "entries": 14,
+      "bytes": 23995895,
+      "sha256": "d7d35cd72317078b0bd191670a601bea61dc216852943d378f2a088a310434ef"
+    },
+    "runtimeFiles": {
+      "web-ifc-api-node.js": {
+        "bytes": 5928746,
+        "sha256": "b5df98db47f5862e9e46986da09278c6dee8075604df8fb134546770edcb464b"
+      },
+      "web-ifc-api.js": {
+        "bytes": 5903794,
+        "sha256": "b9436f3be6365be57152b30fd32d562a8a9aade85e412e1a2c7ca8fe4219a2c4"
+      },
+      "web-ifc-node.wasm": {
+        "bytes": 1288859,
+        "sha256": "7c52cdcd25c17fd94746015676404008c630aa2c35b51d7977d47a649fdde936"
+      },
+      "web-ifc.wasm": {
+        "bytes": 1303940,
+        "sha256": "392b547232aa63df84961d9d3d6e2a7a259cd832b888830cab2ee30778bf28a0"
+      }
+    },
+    "license": {
+      "spdx": "MPL-2.0",
+      "path": "node_modules/web-ifc/LICENSE.md",
+      "bytes": 16725,
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+      "fullTextPresent": true
+    }
+  },
+  "packagingBoundary": {
+    "selectedRuntime": {
+      "browser": [
+        "web-ifc-api.js",
+        "web-ifc.wasm"
+      ],
+      "node": [
+        "web-ifc-api-node.js",
+        "web-ifc-node.wasm"
+      ]
+    },
+    "exactNotices": [
+      {
+        "path": "THIRD_PARTY_NOTICES.md",
+        "bytes": 2713,
+        "sha256": "76c4215651d6ecbc5be498aff40c9ec2a92e0175ac580917b3a20c1536864006",
+        "exactVersion": true,
+        "exactSource": true,
+        "legalApprovalDisclaimed": true
+      },
+      {
+        "path": "adapters/web-ifc/THIRD_PARTY_NOTICES.md",
+        "bytes": 830,
+        "sha256": "130e6c314b83a83b493f3fc3c389b9b3e94b1f1e569849c1abd96c074c907fbc",
+        "exactVersion": true,
+        "exactSource": true,
+        "legalApprovalDisclaimed": true
+      },
+      {
+        "path": "packaging/web-ifc-platform-stage/THIRD_PARTY_NOTICES.md",
+        "bytes": 757,
+        "sha256": "1ae196ecfeb5d650657454263f44d23e069bceae3b1cf24194fa5e91064e7b09",
+        "exactVersion": true,
+        "exactSource": true,
+        "legalApprovalDisclaimed": true
+      }
+    ],
+    "sourceAvailability": {
+      "exactSourceUrlRecorded": true,
+      "executableDistributionNoticeRequired": true,
+      "mplModificationSourceRequired": true,
+      "minifiedJavascriptTreatedAsExecutable": true,
+      "separateProductFilesRemainSeparate": true
+    },
+    "multiThreadRuntime": {
+      "declaredWorkerFile": true,
+      "publishedWorkerFilePresent": false,
+      "admission": "blocked"
+    },
+    "publicBrowserPackage": "blocked",
+    "publicVscodePackage": "blocked",
+    "sbom": "blocked",
+    "signing": "blocked"
+  },
+  "fallback": {
+    "id": "ifcopenshell",
+    "version": "0.8.4.post1",
+    "role": "qualification-reference-oracle",
+    "bundled": false,
+    "reason": "wheel integrity, Linux package boundary and LGPL obligations remain unqualified"
+  },
+  "decision": {
+    "engineSelection": "web-ifc",
+    "profileAdmission": "passed-experimental-read-only",
+    "writeRoundTrip": "blocked",
+    "productionRedistribution": "blocked-release-engineering-and-legal-gate",
+    "legalApproval": false,
+    "productionClaims": false
+  },
+  "references": {
+    "mplLicense": "https://www.mozilla.org/en-US/MPL/2.0/",
+    "mplFaq": "https://www.mozilla.org/en-US/MPL/2.0/FAQ/",
+    "webIfcUpstream": "https://github.com/ThatOpen/engine_web-ifc",
+    "ifcOpenShellLibrary": "https://docs.ifcopenshell.org/ifcopenshell.html"
+  }
+}

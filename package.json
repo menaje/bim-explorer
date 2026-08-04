@@ -34,6 +34,7 @@
     "qualify:ifc:cancel-in-call": "node scripts/qualify-ifc-in-call-cancellation.mjs --engine web-ifc",
     "qualify:ifc:rss-limit": "node scripts/qualify-ifc-resource-exhaustion.mjs --engine web-ifc",
     "qualify:ifc:platform-package": "node scripts/qualify-web-ifc-platform-package.mjs",
+    "qualify:ifc:license-profile": "node scripts/qualify-ifc-license-profile.mjs",
     "qualify:viewer-core": "node scripts/qualify-viewer-core-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
     "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",

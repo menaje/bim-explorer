@@ -6,7 +6,17 @@ experimental `web-ifc` qualification adapter와 local Browser Worker probe는
 - `web-ifc@0.0.77`
 - MPL-2.0
 - <https://github.com/ThatOpen/engine_web-ifc>
+- exact npm source commit:
+  <https://github.com/ThatOpen/engine_web-ifc/tree/f26c4beef0a668ebdb180d2b95a94097a1e21cef>
 - [adapter notice](adapters/web-ifc/THIRD_PARTY_NOTICES.md)
+
+외부에 Browser/VS Code executable을 배포할 때는 이 notice와 MPL-2.0
+license text를 수령자가 확인할 수 있어야 하며, 포함된 MPL code의 정확한
+source와 수정분을 합리적인 방법으로 받을 수 있는 경로를 함께 제공해야
+합니다. 현재 qualification은 upstream npm artifact를 수정하지 않습니다.
+BIM Explorer 고유 파일과 Coni Spatial 고유 파일은 `web-ifc`와 분리된
+Larger Work 경계로 유지합니다. 이 항목은 release engineering 기준이며
+법률 자문이나 public redistribution 승인이 아닙니다.
 
 IfcOpenShell은 repository dependency나 distributable bundle에 포함하지 않고,
 qualification 시 외부 Python environment를 주입합니다.
@@ -22,9 +32,10 @@ cache에서만 사용합니다. 정확한 source·digest·사용 경계는
 [`public fixture manifest`](fixtures/ifc/public-schependomlaan/manifest.json)가
 소유합니다.
 
-두 후보 모두 public product dependency나 production redistribution 승인을
-받지 않았습니다. 후보를 release dependency로 승격할 때 다음을 같은 변경에서
-기록해야 합니다.
+`web-ifc`는 제한된 IFC4 read-only exploration profile의 첫 experimental
+engine으로 선정했습니다. 하지만 두 후보 모두 public product dependency나
+production redistribution 승인을 받지 않았습니다. 후보를 release
+dependency로 승격할 때 다음을 같은 변경에서 기록해야 합니다.
 
 `packaging/web-ifc-platform-stage`는 exact Node API/WASM, MPL-2.0 text와
 notice를 포함해 macOS/Linux의 offline clean install과 byte identity만
