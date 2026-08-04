@@ -20,11 +20,13 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > Chromium WebGL2에 mount하고 전량 회수했습니다. camera/view/pointer input,
 > revision-bound pick/highlight, section/measurement, large-coordinate origin,
 > progressive range cache, isolate/show-all, affected-bounds atomic redraw와
-> visibility-first range도 실제 Browser에서 재현했습니다. Browser와
-> VS Code Webview용 내부 host contract는 같은 renderer 결과와 source
-> switch/editor-exit cleanup을 통과했습니다. physical GPU qualification,
-> 실제 VS Code extension shell, deferred property range, engine 선정, 공용
-> Viewer Core package와 지원 profile은 아직 확정되지 않았습니다.
+> visibility-first range도 실제 Browser에서 재현했습니다. Browser 제품
+> shell과 staged VS Code `.ifc` read-only Custom Editor는 같은 source
+> fingerprint, model/renderer projection, 실제 Chromium WebGL2와
+> source switch/editor-exit cleanup을 통과했습니다. 독립 VSIX도 빈
+> profile에 clean install했습니다. physical GPU qualification, deferred
+> property range, engine 선정, 공용 Viewer Core package와 지원 profile은
+> 아직 확정되지 않았습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
@@ -151,6 +153,8 @@ Node.js 24가 필요합니다.
 ```bash
 npm ci
 npm run check
+npm run start:web
+npm run package:vscode
 ```
 
 저장소 구조와 authority 문서는 [docs/README.md](docs/README.md), 현재
@@ -166,6 +170,9 @@ Viewer Core admission 상태는
 따릅니다.
 내부 semantic explorer 계약의 상태는
 [compatibility/bim-semantic-explorer.json](compatibility/bim-semantic-explorer.json)을
+따릅니다.
+Browser/VS Code 제품 Host 계약의 상태는
+[compatibility/bim-product-shells.json](compatibility/bim-product-shells.json)을
 따릅니다.
 실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
 않습니다.

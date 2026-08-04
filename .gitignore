@@ -5,6 +5,7 @@
 node_modules/
 .venv/
 .qualification-venv/
+.vscode-test/
 __pycache__/
 *.pyc
 coverage/

@@ -1,0 +1,70 @@
+{
+  "schema": "bim-explorer-vscode-custom-editor-evidence/1",
+  "capturedAt": "2026-08-04T01:30:20.662Z",
+  "environment": {
+    "vscode": "1.131.0",
+    "platform": "darwin-arm64",
+    "stagedPackageLayout": true
+  },
+  "fixture": {
+    "id": "synthetic-semantic-ifc4",
+    "committed": false,
+    "sourceBytes": 4030,
+    "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "ifcSchema": "IFC4"
+  },
+  "observation": {
+    "hostKind": "vscode-webview",
+    "model": {
+      "products": 2,
+      "treeNodes": 7,
+      "triangles": 24,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 108.5,
+      "sourceMs": 3.799999952316284,
+      "totalMs": 112.29999995231628
+    },
+    "resources": {
+      "sourceBytes": 4030,
+      "geometryBytes": 996,
+      "metadataBytes": 2868,
+      "ranges": 1,
+      "products": 2,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 57585,
+      "sourceReadBytes": 996,
+      "uploadedBytes": 1120
+    },
+    "semantic": {
+      "selectedExpressId": 40,
+      "treeRows": 7,
+      "maximumDomRows": 64
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed"
+    },
+    "commandCount": 4,
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "assertions": {
+    "actualVscodeChromiumWebGl2": true,
+    "localSourceOpened": true,
+    "pathFreeHostBridge": true,
+    "commandsRegistered": true,
+    "editorCloseObserved": true,
+    "packagedRuntimeIndependent": true,
+    "spatialIndependent": true
+  },
+  "decision": {
+    "vscodeCustomEditor": "passed",
+    "actualPhysicalGpu": "not-claimed",
+    "publicViewerCoreConformance": "held"
+  }
+}

@@ -133,8 +133,8 @@ WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
 상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
 property set value는 현재 name-only `lossy`, host/void/fill과 connection은
-`opaque`입니다. public representative semantic scale과 product shell은
-보류합니다.
+`opaque`입니다. generated fixture의 Browser/VS Code product shell은
+통과했지만 public representative semantic/product scale은 보류합니다.
 
 ## Viewer Core와 3D presentation
 
@@ -179,8 +179,9 @@ affected bounds만 scissor redraw한 뒤 atomic commit합니다.
 내부 3D host contract는 Browser와 `vscode-webview` kind에 같은 renderer
 경로를 제공합니다. 실제 Chromium에서 양쪽 모두 mount, view, pick, source
 switch와 editor-exit cleanup의 normalized 결과가 같았고 GPU, range session,
-Worker lease가 정리됐습니다. 이는 실제 VS Code extension shell이나 upstream
-Viewer Core compatibility 주장이 아닙니다.
+Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도 같은
+generated source fingerprint, model/renderer projection과 WebGL2 frame을
+재현했습니다. 이는 upstream Viewer Core compatibility 주장은 아닙니다.
 
 현재 upstream package는 workspace-only이므로 compatibility 상태는
 [`unresolved`](../compatibility/viewer-core.json)입니다. 코드를 복사하거나
@@ -193,13 +194,27 @@ Browser Host와 VS Code Host는 같은 product lifecycle을 구현합니다.
 | Host 책임 | Browser | VS Code |
 | --- | --- | --- |
 | source capability | File/Blob picker | Custom Editor document |
-| adapter backend | Worker/WASM 우선 | Worker 또는 isolated native process |
-| binary range | Blob/OPFS/HTTP opt-in | extension-managed local range |
+| adapter backend | module Worker + WASM | bundled module Worker + WASM |
+| binary range | Worker-owned immutable range | webview Worker-owned range |
 | resource reveal | explicit download/view | bounded editor/reveal intent |
 | lifecycle | page/worker disposal | document/webview disposal |
 
 Host private transport는 public Viewer or Agent protocol이 아닙니다. VS Code
 message나 Browser DOM event를 cross-product API로 안정화하지 않습니다.
+
+VS Code extension host는 exact local `file:` URI를 regular non-symlink로
+검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
+`ArrayBuffer`, generation과 bounded setting만 전달하며 report는
+fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
+diagnostic에 넣지 않습니다.
+
+webview CSP가 local resource URL의 직접 Worker 생성을 제한하므로 package는
+source Worker bundle을 고정합니다. webview가 exact bundle, web-ifc module과
+WASM을 bounded read한 뒤 `blob:` capability로 module Worker에 주입합니다.
+Browser는 같은 Worker source를 same-origin module로 직접 실행합니다. 두
+Host의 결과는
+[product shell compatibility](../compatibility/bim-product-shells.json)가
+같은 fingerprint와 projection으로 비교합니다.
 
 ## Spatial integration
 

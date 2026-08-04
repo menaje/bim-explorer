@@ -12,3 +12,4 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 - [BIM source artifact v0.1](bim-source-artifact-v0.1.md)
 - [BIM renderer 3D v0.1](bim-renderer-3d-v0.1.md)
 - [BIM semantic explorer v0.1](bim-semantic-explorer-v0.1.md)
+- [BIM product hosts v0.1](bim-product-hosts-v0.1.md)

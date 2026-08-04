@@ -1,0 +1,46 @@
+{
+  "schema": "bim-explorer-vscode-vsix-install-evidence/1",
+  "capturedAt": "2026-08-04T01:31:45.033Z",
+  "environment": {
+    "platform": "darwin-arm64",
+    "cleanUserData": true,
+    "cleanExtensionsDirectory": true
+  },
+  "package": {
+    "id": "menaje.bim-explorer",
+    "version": "0.0.0",
+    "byteLength": 1092794,
+    "installedRuntimeFiles": 6,
+    "workerBundleSha256": "0d24ba7b64655b24c175f2ef3f9a2d207a9f9a604d71472fd01373af42690440"
+  },
+  "observation": {
+    "installedExtensions": [
+      "menaje.bim-explorer@0.0.0"
+    ],
+    "association": {
+      "viewType": "bimExplorer.ifcEditor",
+      "displayName": "BIM Explorer",
+      "selector": [
+        {
+          "filenamePattern": "*.ifc"
+        }
+      ],
+      "priority": "default"
+    },
+    "dependencies": {
+      "web-ifc": "0.0.77"
+    }
+  },
+  "assertions": {
+    "cliAcceptedPackage": true,
+    "extensionRegistered": true,
+    "requiredRuntimeComplete": true,
+    "workerBundleExact": true,
+    "noSpatialDependency": true,
+    "readOnlyIfcAssociation": true
+  },
+  "decision": {
+    "cleanInstall": "passed",
+    "marketplaceRelease": "held"
+  }
+}

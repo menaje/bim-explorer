@@ -1,0 +1,100 @@
+{
+  "name": "bim-explorer",
+  "displayName": "BIM Explorer",
+  "description": "Local-first read-only IFC structure, semantics, and 3D exploration",
+  "version": "0.0.0",
+  "publisher": "menaje",
+  "private": true,
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/menaje/bim-explorer.git"
+  },
+  "type": "commonjs",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onCustomEditor:bimExplorer.ifcEditor",
+    "onCommand:bimExplorer.openWith",
+    "onCommand:bimExplorer.cancel",
+    "onCommand:bimExplorer.retry",
+    "onCommand:bimExplorer.showDiagnostics"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "bimExplorer.ifcEditor",
+        "displayName": "BIM Explorer",
+        "selector": [
+          {
+            "filenamePattern": "*.ifc"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "bimExplorer.openWith",
+        "title": "BIM Explorer: Open IFC Read-Only"
+      },
+      {
+        "command": "bimExplorer.cancel",
+        "title": "BIM Explorer: Cancel Model Open"
+      },
+      {
+        "command": "bimExplorer.retry",
+        "title": "BIM Explorer: Retry Model Open"
+      },
+      {
+        "command": "bimExplorer.showDiagnostics",
+        "title": "BIM Explorer: Show Local Diagnostics"
+      }
+    ],
+    "configuration": {
+      "title": "BIM Explorer",
+      "properties": {
+        "bimExplorer.maximumSourceBytes": {
+          "type": "number",
+          "default": 67108864,
+          "minimum": 1,
+          "maximum": 67108864,
+          "description": "Maximum local IFC byte length admitted by the read-only editor."
+        },
+        "bimExplorer.openTimeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "maximum": 120000,
+          "description": "Maximum local Worker conversion time before the editor fails closed."
+        },
+        "bimExplorer.ifcProfile": {
+          "type": "string",
+          "default": "ReferenceView_V1.2",
+          "enum": [
+            "ReferenceView_V1.2"
+          ],
+          "description": "IFC profile used for local read-only conversion."
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "The editor is read-only, local-only, bounded, and does not execute model content."
+    }
+  },
+  "dependencies": {
+    "web-ifc": "0.0.77"
+  }
+}

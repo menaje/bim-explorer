@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+    <meta name="bim-host-kind" content="browser">
+    <meta
+      name="bim-web-ifc-module"
+      content="/vendor/web-ifc-api.js"
+    >
+    <meta name="bim-wasm-path" content="/vendor/">
+    <meta
+      name="bim-worker-module"
+      content="./source-worker.mjs"
+    >
+    <meta name="bim-profile" content="ReferenceView_V1.2">
+    <meta name="bim-fixture-enabled" content="false">
+    <title>BIM Explorer</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">Local-first · read-only</p>
+          <h1>BIM Explorer</h1>
+          <p class="subtitle">
+            Open IFC spatial structure, semantics, and 3D locally.
+          </p>
+        </div>
+        <div class="header-actions">
+          <label id="open-source" class="primary-action">
+            Open IFC
+            <input
+              id="source-file"
+              type="file"
+              accept=".ifc,application/x-step"
+            >
+          </label>
+          <button id="open-fixture" type="button">
+            Open qualification fixture
+          </button>
+          <button id="cancel-open" type="button" disabled>
+            Cancel
+          </button>
+          <button id="retry-open" type="button" disabled>
+            Retry
+          </button>
+          <button id="close-model" type="button" disabled>
+            Close model
+          </button>
+        </div>
+      </header>
+
+      <section class="status-bar" aria-label="Model status">
+        <p
+          id="status"
+          role="status"
+          aria-live="polite"
+          data-state="idle"
+        >Choose a local IFC file.</p>
+        <p id="source-identity">No active source</p>
+      </section>
+
+      <section class="workspace" aria-label="BIM Explorer workspace">
+        <aside class="panel tree-panel" aria-labelledby="tree-title">
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Structure</p>
+              <h2 id="tree-title">Model tree</h2>
+            </div>
+            <span id="tree-count" class="badge">0</span>
+          </div>
+          <div
+            id="model-tree"
+            class="tree"
+            role="tree"
+            aria-label="IFC spatial and product hierarchy"
+          ></div>
+          <p id="tree-omission" class="omission"></p>
+        </aside>
+
+        <section class="center">
+          <form id="search-form" class="search" role="search">
+            <label for="search-input">Search model semantics</label>
+            <div>
+              <input
+                id="search-input"
+                type="search"
+                autocomplete="off"
+                placeholder="GlobalId, name, class, property…"
+              >
+              <button type="submit">Search</button>
+            </div>
+          </form>
+
+          <section class="viewport" aria-labelledby="viewport-title">
+            <div class="panel-heading viewport-heading">
+              <div>
+                <p class="kicker">Same source revision</p>
+                <h2 id="viewport-title">3D model</h2>
+              </div>
+              <div class="inline-actions">
+                <button id="pick-model" type="button" disabled>
+                  Pick center
+                </button>
+                <button id="show-all" type="button" disabled>
+                  Show all
+                </button>
+              </div>
+            </div>
+            <canvas
+              id="model-canvas"
+              width="800"
+              height="450"
+              aria-label="WebGL2 BIM model"
+            ></canvas>
+          </section>
+
+          <section class="results-panel" aria-labelledby="results-title">
+            <div class="panel-heading">
+              <div>
+                <p class="kicker">Bounded query</p>
+                <h2 id="results-title">Search results</h2>
+              </div>
+              <div class="inline-actions">
+                <button id="more-results" type="button" disabled>
+                  More
+                </button>
+                <button id="isolate-results" type="button" disabled>
+                  Isolate results
+                </button>
+              </div>
+            </div>
+            <div
+              id="search-results"
+              class="results"
+              role="listbox"
+              aria-label="Semantic search results"
+            ></div>
+            <p id="search-omission" class="omission"></p>
+          </section>
+        </section>
+
+        <aside class="right-column">
+          <section class="panel inspector" aria-labelledby="inspector-title">
+            <div class="panel-heading">
+              <div>
+                <p class="kicker">Selection</p>
+                <h2 id="inspector-title">Properties</h2>
+              </div>
+              <span id="selection-origin" class="badge">none</span>
+            </div>
+            <div id="inspector-content">
+              <p class="empty">Open a model to explore properties.</p>
+            </div>
+          </section>
+
+          <details class="diagnostics" open>
+            <summary>Local diagnostics</summary>
+            <dl id="diagnostic-values">
+              <div><dt>Host</dt><dd id="diag-host">browser</dd></div>
+              <div><dt>Source</dt><dd id="diag-source">—</dd></div>
+              <div><dt>Parse</dt><dd id="diag-time">—</dd></div>
+              <div><dt>Bytes</dt><dd id="diag-bytes">—</dd></div>
+              <div><dt>GPU</dt><dd id="diag-gpu">—</dd></div>
+              <div><dt>Lifecycle</dt><dd id="diag-life">idle</dd></div>
+            </dl>
+          </details>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

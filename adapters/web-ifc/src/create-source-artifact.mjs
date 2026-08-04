@@ -1,9 +1,6 @@
-import { createHash } from "node:crypto";
-
 import {
   BIM_SOURCE_ARTIFACT_SCHEMA,
-} from "@bim-explorer/bim-model-source";
-import * as WebIFC from "web-ifc";
+} from "../../../packages/bim-model-source/src/artifact-schema.mjs";
 
 export const WEB_IFC_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
@@ -19,13 +16,59 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumMetadataBytes: 64 * 1024 * 1024,
 });
 const IFC_GLOBAL_ID = /^[0-3][0-9A-Za-z_$]{21}$/u;
-const SPATIAL_TYPES = Object.freeze([
-  WebIFC.IFCPROJECT,
-  WebIFC.IFCSITE,
-  WebIFC.IFCBUILDING,
-  WebIFC.IFCBUILDINGSTOREY,
-  WebIFC.IFCSPACE,
-]);
+let WebIFC = null;
+let defaultWebIfcModule = null;
+
+async function loadWebIfc(webIfcModuleUrl, webIfcModule) {
+  const module = webIfcModule ??
+    (
+      webIfcModuleUrl === null
+        ? defaultWebIfcModule ??= import("web-ifc")
+        : await import(webIfcModuleUrl)
+    );
+  const resolved = await module;
+  if (
+    typeof resolved.IfcAPI !== "function" ||
+    !Number.isSafeInteger(resolved.IFCPROJECT)
+  ) {
+    throw new TypeError("web-ifc module is invalid");
+  }
+  if (WebIFC !== null && WebIFC.IfcAPI !== resolved.IfcAPI) {
+    throw new DOMException(
+      "web-ifc adapter module is already active",
+      "InvalidStateError",
+    );
+  }
+  WebIFC = resolved;
+  return resolved;
+}
+
+function spatialTypes() {
+  return Object.freeze([
+    WebIFC.IFCPROJECT,
+    WebIFC.IFCSITE,
+    WebIFC.IFCBUILDING,
+    WebIFC.IFCBUILDINGSTOREY,
+    WebIFC.IFCSPACE,
+  ]);
+}
+
+function bytesToHex(bytes) {
+  return [...bytes]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sha256(bytes) {
+  if (globalThis.crypto?.subtle === undefined) {
+    throw new Error("SHA-256 Web Crypto is unavailable");
+  }
+  const result = await globalThis.crypto.subtle.digest(
+    "SHA-256",
+    bytes,
+  );
+  return bytesToHex(new Uint8Array(result));
+}
 
 function positiveInteger(value, label) {
   if (!Number.isSafeInteger(value) || value <= 0) {
@@ -483,7 +526,7 @@ function encodeGeometryRange(records, rangeId) {
   return { bytes, slices };
 }
 
-function encodeGeometryRanges(
+async function encodeGeometryRanges(
   records,
   {
     maximumGeometryBytes,
@@ -542,21 +585,20 @@ function encodeGeometryRanges(
     );
   }
   const slices = new Map();
-  const ranges = groups.map((group, index) => {
+  const ranges = [];
+  for (const [index, group] of groups.entries()) {
     const rangeId = `range:ifc:geometry:${index}`;
     const encoded = encodeGeometryRange(group, rangeId);
     for (const [geometryExpressId, slice] of encoded.slices) {
       slices.set(geometryExpressId, slice);
     }
-    return {
+    ranges.push({
       rangeId,
       mediaType: WEB_IFC_GEOMETRY_MEDIA_TYPE,
-      sha256: createHash("sha256")
-        .update(encoded.bytes)
-        .digest("hex"),
+      sha256: await sha256(encoded.bytes),
       bytes: encoded.bytes,
-    };
-  });
+    });
+  }
   return {
     ranges,
     slices,
@@ -587,7 +629,7 @@ function buildTree(
       }
     }
   }
-  for (const type of SPATIAL_TYPES) {
+  for (const type of spatialTypes()) {
     for (const expressId of entityIds(api, modelId, type)) {
       const line = api.GetLine(modelId, expressId, false);
       const globalId = textValue(line?.GlobalId);
@@ -646,7 +688,9 @@ function buildTree(
 }
 
 export async function createWebIfcSourceArtifact(sourceBytes, {
+  adapterBackend = "node-wasm-source-artifact",
   documentId,
+  forceSingleThread = false,
   profile = "unspecified",
   signal,
   maximumSourceBytes = DEFAULT_LIMITS.maximumSourceBytes,
@@ -657,6 +701,10 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   maximumRelationEntries = DEFAULT_LIMITS.maximumRelationEntries,
   maximumTreeNodes = DEFAULT_LIMITS.maximumTreeNodes,
   maximumMetadataBytes = DEFAULT_LIMITS.maximumMetadataBytes,
+  wasmPath = null,
+  wasmUrl = null,
+  webIfcModule = null,
+  webIfcModuleUrl = null,
 } = {}) {
   for (const [label, value] of Object.entries({
     maximumSourceBytes,
@@ -679,11 +727,66 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   if (typeof profile !== "string" || profile.length === 0) {
     throw new TypeError("profile must be a non-empty string");
   }
+  if (
+    typeof adapterBackend !== "string" ||
+    adapterBackend.length === 0
+  ) {
+    throw new TypeError(
+      "adapterBackend must be a non-empty string",
+    );
+  }
+  if (typeof forceSingleThread !== "boolean") {
+    throw new TypeError("forceSingleThread must be boolean");
+  }
+  if (
+    wasmPath !== null &&
+    (
+      typeof wasmPath !== "string" ||
+      wasmPath.length === 0
+    )
+  ) {
+    throw new TypeError("wasmPath must be null or a URL");
+  }
+  if (
+    wasmUrl !== null &&
+    (
+      typeof wasmUrl !== "string" ||
+      wasmUrl.length === 0
+    )
+  ) {
+    throw new TypeError("wasmUrl must be null or a URL");
+  }
+  if (
+    webIfcModule !== null &&
+    (
+      typeof webIfcModule !== "object" ||
+      webIfcModule === undefined
+    )
+  ) {
+    throw new TypeError(
+      "webIfcModule must be null or a module namespace",
+    );
+  }
+  if (
+    webIfcModuleUrl !== null &&
+    (
+      typeof webIfcModuleUrl !== "string" ||
+      webIfcModuleUrl.length === 0
+    )
+  ) {
+    throw new TypeError(
+      "webIfcModuleUrl must be null or a URL",
+    );
+  }
   const bytes = Uint8Array.from(sourceBytes);
-  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const sourceSha256 = await sha256(bytes);
   const resolvedDocumentId =
-    documentId ?? `document:ifc:${sha256.slice(0, 24)}`;
-  const api = new WebIFC.IfcAPI();
+    documentId ?? `document:ifc:${sourceSha256.slice(0, 24)}`;
+  const webIfc = await loadWebIfc(
+    webIfcModuleUrl,
+    webIfcModule,
+  );
+  const api = new webIfc.IfcAPI();
   let initialized = false;
   let modelId = null;
   let modelClosed = false;
@@ -691,7 +794,13 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   let artifact;
 
   aborted(signal);
-  await api.Init();
+  if (wasmPath !== null) {
+    api.SetWasmPath(wasmPath, true);
+  }
+  await api.Init(
+    wasmUrl === null ? undefined : () => wasmUrl,
+    forceSingleThread,
+  );
   initialized = true;
   try {
     aborted(signal);
@@ -847,7 +956,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
     if (records.length === 0 || entities.length === 0) {
       throw new Error("IFC source has no renderable geometry products");
     }
-    const encoded = encodeGeometryRanges(
+    const encoded = await encodeGeometryRanges(
       records,
       {
         maximumGeometryBytes,
@@ -882,14 +991,14 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       source: {
         documentId: resolvedDocumentId,
         byteLength: bytes.byteLength,
-        sha256,
+        sha256: sourceSha256,
         ifcSchema: api.GetModelSchema(modelId),
         profile,
       },
       adapter: {
         id: "web-ifc",
         version: "0.0.77",
-        backend: "node-wasm-source-artifact",
+        backend: adapterBackend,
         license: "MPL-2.0",
         cleanup: {
           modelClosed: false,

@@ -1,0 +1,1149 @@
+import {
+  createBimRenderer3dHost,
+  createBounded3dRenderer,
+  createWebGl2Backend,
+} from "../../packages/bim-renderer-3d/src/index.mjs";
+import {
+  createBimSemanticExplorer,
+} from "../../packages/bim-semantic-explorer/src/index.mjs";
+import {
+  createBimProductSourceWorkerClient,
+} from "./worker-source-client.mjs";
+
+const HOST_MESSAGE =
+  "bim-explorer-product-host-message/0.1";
+const REPORT_SCHEMA =
+  "bim-explorer-product-shell-report/0.1";
+const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+
+const elements = {
+  cancel: document.querySelector("#cancel-open"),
+  canvas: document.querySelector("#model-canvas"),
+  close: document.querySelector("#close-model"),
+  diagBytes: document.querySelector("#diag-bytes"),
+  diagGpu: document.querySelector("#diag-gpu"),
+  diagHost: document.querySelector("#diag-host"),
+  diagLife: document.querySelector("#diag-life"),
+  diagSource: document.querySelector("#diag-source"),
+  diagTime: document.querySelector("#diag-time"),
+  diagnostics: document.querySelector(".diagnostics"),
+  file: document.querySelector("#source-file"),
+  fixture: document.querySelector("#open-fixture"),
+  inspector: document.querySelector("#inspector-content"),
+  isolateResults: document.querySelector("#isolate-results"),
+  moreResults: document.querySelector("#more-results"),
+  openSource: document.querySelector("#open-source"),
+  pick: document.querySelector("#pick-model"),
+  results: document.querySelector("#search-results"),
+  retry: document.querySelector("#retry-open"),
+  searchForm: document.querySelector("#search-form"),
+  searchInput: document.querySelector("#search-input"),
+  searchOmission: document.querySelector("#search-omission"),
+  selectionOrigin: document.querySelector("#selection-origin"),
+  showAll: document.querySelector("#show-all"),
+  sourceIdentity: document.querySelector("#source-identity"),
+  status: document.querySelector("#status"),
+  tree: document.querySelector("#model-tree"),
+  treeCount: document.querySelector("#tree-count"),
+  treeOmission: document.querySelector("#tree-omission"),
+};
+
+function meta(name) {
+  const value = document.querySelector(
+    `meta[name="${name}"]`,
+  )?.content;
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`BIM Explorer runtime ${name} is missing`);
+  }
+  return value;
+}
+
+const hostKind = meta("bim-host-kind");
+if (!["browser", "vscode-webview"].includes(hostKind)) {
+  throw new Error("BIM Explorer host kind is invalid");
+}
+const runtime = Object.freeze({
+  fixtureEnabled:
+    meta("bim-fixture-enabled") === "true",
+  hostKind,
+  profile: meta("bim-profile"),
+  wasmPath: new URL(
+    meta("bim-wasm-path"),
+    globalThis.location.href,
+  ).href,
+  webIfcModuleUrl: new URL(
+    meta("bim-web-ifc-module"),
+    globalThis.location.href,
+  ).href,
+  workerModuleUrl: new URL(
+    meta("bim-worker-module"),
+    globalThis.location.href,
+  ).href,
+});
+
+const vscodeApi =
+  typeof globalThis.acquireVsCodeApi === "function"
+    ? globalThis.acquireVsCodeApi()
+    : null;
+let active = null;
+let lastFailedBytes = null;
+let openingClient = null;
+let openingSequence = 0;
+let hostGeneration = 0;
+let latestSourceCheckpoint = "not-started";
+let vscodeWorkerRuntimePromise = null;
+let wasmBlobUrl = null;
+let webIfcBlobUrl = null;
+
+function localStorageAdapter() {
+  if (vscodeApi !== null) {
+    return {
+      getItem(key) {
+        return vscodeApi.getState()?.savedViews?.[key] ?? null;
+      },
+      removeItem(key) {
+        const state = vscodeApi.getState() ?? {};
+        const savedViews = {
+          ...(state.savedViews ?? {}),
+        };
+        delete savedViews[key];
+        vscodeApi.setState({
+          ...state,
+          savedViews,
+        });
+      },
+      setItem(key, value) {
+        const state = vscodeApi.getState() ?? {};
+        vscodeApi.setState({
+          ...state,
+          savedViews: {
+            ...(state.savedViews ?? {}),
+            [key]: value,
+          },
+        });
+      },
+    };
+  }
+  try {
+    const storage = globalThis.localStorage;
+    const probe = "bim-explorer-storage-probe";
+    storage.setItem(probe, "1");
+    storage.removeItem(probe);
+    return storage;
+  } catch {
+    return null;
+  }
+}
+
+function clear(element) {
+  element.replaceChildren();
+}
+
+function text(tag, value, className = null) {
+  const element = document.createElement(tag);
+  element.textContent = String(value);
+  if (className !== null) {
+    element.className = className;
+  }
+  return element;
+}
+
+function setStatus(state, message) {
+  elements.status.dataset.state = state;
+  elements.status.textContent = message;
+}
+
+function controls(state) {
+  const ready = state === "ready";
+  const opening = state === "opening";
+  elements.cancel.disabled = !opening;
+  elements.close.disabled = !ready;
+  elements.pick.disabled = !ready;
+  elements.showAll.disabled = !ready;
+  elements.searchInput.disabled = !ready;
+  elements.retry.disabled =
+    state !== "failed" ||
+    (lastFailedBytes === null && vscodeApi === null);
+}
+
+function inspectorSection(title, items, renderItem) {
+  const section = document.createElement("section");
+  section.append(text("h3", title));
+  if (items.length === 0) {
+    section.append(text("p", "Not available", "empty"));
+    return section;
+  }
+  const list = document.createElement("ul");
+  for (const item of items) {
+    const row = document.createElement("li");
+    row.append(renderItem(item));
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+function renderTree(state) {
+  clear(elements.tree);
+  elements.treeCount.textContent =
+    `${state.tree.rows.length}/${state.tree.visibleLoadedRows}`;
+  elements.treeOmission.textContent =
+    state.tree.omittedDomRows > 0
+      ? `${state.tree.omittedDomRows} rows omitted by the ` +
+        `${state.tree.maximumDomRows}-row DOM bound.`
+      : "";
+  for (const row of state.tree.rows) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.childCount = String(row.childCount);
+    button.dataset.depth = String(row.depth);
+    button.dataset.expressId = String(row.expressId);
+    button.setAttribute("role", "treeitem");
+    button.setAttribute("aria-level", String(row.depth + 1));
+    button.setAttribute(
+      "aria-selected",
+      String(row.selected),
+    );
+    if (row.childCount > 0) {
+      button.setAttribute(
+        "aria-expanded",
+        String(row.expanded),
+      );
+    }
+    button.append(
+      text(
+        "span",
+        `${row.ifcClass} · ${row.parentRelation}`,
+        "meta",
+      ),
+      text("span", row.name, "name"),
+    );
+    button.addEventListener("click", async () => {
+      await selectExpressId(row.expressId, "tree");
+    });
+    elements.tree.append(button);
+  }
+}
+
+function renderResults(state) {
+  clear(elements.results);
+  for (const item of state.search.items) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.expressId = String(item.expressId);
+    button.setAttribute("role", "option");
+    button.setAttribute(
+      "aria-selected",
+      String(
+        state.selection?.expressId === item.expressId,
+      ),
+    );
+    button.append(
+      text(
+        "span",
+        `${item.ifcClass} · ${item.matchedFields.join(", ")}`,
+        "meta",
+      ),
+      text("span", item.name, "name"),
+    );
+    button.addEventListener("click", async () => {
+      await selectExpressId(item.expressId, "search");
+    });
+    elements.results.append(button);
+  }
+  elements.searchOmission.textContent =
+    state.search.query.length === 0
+      ? "Results are bounded and report every omission."
+      : `${state.search.loaded}/${state.search.total} loaded · ` +
+        `${state.search.omitted} omitted`;
+  elements.moreResults.disabled = !state.search.hasMore;
+  elements.isolateResults.disabled =
+    state.search.items.every((item) =>
+      item.renderId === null);
+}
+
+function renderInspector(state) {
+  clear(elements.inspector);
+  elements.selectionOrigin.textContent =
+    state.selection?.origin ?? "none";
+  const inspector = state.inspector;
+  if (inspector === null) {
+    elements.inspector.append(
+      text(
+        "p",
+        "Select a tree, search, relation, or 3D object.",
+        "empty",
+      ),
+    );
+    return;
+  }
+  elements.inspector.append(
+    inspectorSection("Identity", [inspector.identity], (item) =>
+      text(
+        "span",
+        `${item.ifcClass} · ${item.name} · #${item.expressId}`,
+      )),
+    inspectorSection(
+      "Container",
+      inspector.groups.containment,
+      (item) => text("span", `${item.ifcClass} · ${item.name}`),
+    ),
+    inspectorSection(
+      "Type",
+      inspector.groups.type,
+      (item) => text("span", `${item.ifcClass} · ${item.name}`),
+    ),
+    inspectorSection(
+      "Property sets",
+      inspector.groups.propertySets,
+      (item) => text(
+        "span",
+        `${item.name} · ${item.valueStatus}`,
+      ),
+    ),
+    inspectorSection(
+      "Quantities",
+      inspector.groups.quantities,
+      (item) => text("span", `${item.name}: ${item.value}`),
+    ),
+    inspectorSection(
+      "Materials",
+      inspector.groups.materials,
+      (item) => text("span", item.name),
+    ),
+    inspectorSection(
+      "Classifications",
+      inspector.groups.classifications,
+      (item) => text(
+        "span",
+        `${item.identification} · ${item.name}`,
+      ),
+    ),
+    inspectorSection(
+      "Relations",
+      inspector.groups.relations,
+      (item) => {
+        if (item.target === undefined) {
+          return text(
+            "span",
+            `${item.kind} · ${item.name ?? "value"}`,
+          );
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "relation-button";
+        button.textContent =
+          `${item.kind} · ${item.target.name}`;
+        button.addEventListener("click", async () => {
+          await active.explorer.selectRelation({
+            kind: item.kind,
+            targetExpressId: item.target.expressId,
+          });
+          await applySelectionView();
+          render();
+        });
+        return button;
+      },
+    ),
+    inspectorSection(
+      "Information limits",
+      inspector.coverage.limitations,
+      (item) => text(
+        "span",
+        `${item.capability} · ${item.status}`,
+        "limitation",
+      ),
+    ),
+  );
+}
+
+function render() {
+  if (active === null) {
+    return;
+  }
+  const state = active.explorer.state;
+  renderTree(state);
+  renderResults(state);
+  renderInspector(state);
+}
+
+function contextLabel(snapshot) {
+  return snapshot.source.fingerprint.slice(0, 23) +
+    `… · ${snapshot.source.ifcSchema}`;
+}
+
+function updateDiagnostics(opened, mount) {
+  const snapshot = opened.snapshot;
+  const report = opened.report;
+  elements.diagHost.textContent = runtime.hostKind;
+  elements.diagSource.textContent =
+    snapshot.source.fingerprint.slice(0, 20) + "…";
+  elements.diagTime.textContent =
+    `${report.performance.totalMs.toFixed(1)} ms`;
+  elements.diagBytes.textContent =
+    `${report.resources.sourceBytes} source · ` +
+    `${report.resources.geometryBytes} geometry · ` +
+    `${report.resources.metadataBytes} metadata`;
+  elements.diagGpu.textContent =
+    `${mount.renderer.backend.uploadedBytes} bytes · ` +
+    `${mount.renderer.backend.nonBackgroundPixels} pixels`;
+  elements.diagLife.textContent =
+    "source session + Worker + GPU active";
+}
+
+function publishReport(status, additions = {}) {
+  const report = Object.freeze({
+    schema: REPORT_SCHEMA,
+    status,
+    hostKind: runtime.hostKind,
+    externalUpload: false,
+    telemetry: false,
+    ...additions,
+  });
+  globalThis.__bimExplorerProductReport = report;
+  if (vscodeApi !== null) {
+    vscodeApi.postMessage({
+      schema: HOST_MESSAGE,
+      type: "report",
+      report,
+    });
+  }
+  return report;
+}
+
+async function applySelectionView() {
+  if (active?.explorer.state.selection === null) {
+    return null;
+  }
+  const command = await active.explorer.setVisibility("show-all");
+  return active.host.renderView({
+    camera: active.camera,
+    ...command,
+  });
+}
+
+async function selectExpressId(expressId, origin) {
+  await active.explorer.selectExpressId(expressId, {
+    origin,
+  });
+  await applySelectionView();
+  render();
+}
+
+function firstRenderable(snapshot) {
+  return snapshot.entities.find((entity) =>
+    entity.renderId !== null) ?? null;
+}
+
+async function revealFirstProduct(explorer, snapshot, entity) {
+  const nodeById = new Map(
+    snapshot.tree.nodes.map((node) => [
+      node.expressId,
+      node,
+    ]),
+  );
+  const lineage = [];
+  let node = nodeById.get(entity.expressId);
+  while (node?.parentExpressId !== null) {
+    node = nodeById.get(node.parentExpressId);
+    if (node !== undefined) {
+      lineage.unshift(node.expressId);
+    }
+  }
+  for (const expressId of lineage) {
+    await explorer.expand(expressId);
+  }
+  await explorer.selectExpressId(entity.expressId, {
+    origin: "tree",
+  });
+}
+
+async function disposeActive(reason) {
+  if (active === null) {
+    return null;
+  }
+  const current = active;
+  active = null;
+  let explorerDisposed = false;
+  let hostReceipt = null;
+  let clientDisposed = false;
+  try {
+    explorerDisposed = await current.explorer.dispose();
+  } finally {
+    try {
+      hostReceipt = await current.host.dispose({ reason });
+    } finally {
+      clientDisposed = await current.client.dispose();
+    }
+  }
+  elements.diagLife.textContent = "disposed";
+  return {
+    clientDisposed,
+    explorerDisposed,
+    hostReceipt,
+    backend: current.backend.state,
+    client: current.client.state,
+  };
+}
+
+async function responseText(url, label, maximumBytes) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    credentials: "omit",
+  });
+  if (!response.ok) {
+    throw new Error(`${label} is unavailable`);
+  }
+  const source = await response.text();
+  if (source.length === 0 || source.length > maximumBytes) {
+    throw new RangeError(`${label} exceeds its byte limit`);
+  }
+  return source;
+}
+
+async function responseBytes(url, label, maximumBytes) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    credentials: "omit",
+  });
+  if (!response.ok) {
+    throw new Error(`${label} is unavailable`);
+  }
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength === 0 || bytes.byteLength > maximumBytes) {
+    throw new RangeError(`${label} exceeds its byte limit`);
+  }
+  return bytes;
+}
+
+async function vscodeWorkerRuntime() {
+  if (runtime.hostKind !== "vscode-webview") {
+    return null;
+  }
+  vscodeWorkerRuntimePromise ??= Promise.all([
+    responseText(
+      runtime.workerModuleUrl,
+      "VS Code Worker bundle",
+      1024 * 1024,
+    ),
+    responseText(
+      runtime.webIfcModuleUrl,
+      "VS Code web-ifc module",
+      8 * 1024 * 1024,
+    ),
+    responseBytes(
+      new URL("web-ifc.wasm", runtime.wasmPath).href,
+      "VS Code web-ifc WASM",
+      32 * 1024 * 1024,
+    ),
+  ]).then(([workerBundle, webIfcSource, wasmBytes]) => {
+    webIfcBlobUrl = URL.createObjectURL(
+      new Blob([webIfcSource], {
+        type: "text/javascript",
+      }),
+    );
+    wasmBlobUrl = URL.createObjectURL(
+      new Blob([wasmBytes], {
+        type: "application/wasm",
+      }),
+    );
+    return Object.freeze({
+      wasmUrl: wasmBlobUrl,
+      webIfcModuleUrl: webIfcBlobUrl,
+      workerBundle,
+    });
+  });
+  return vscodeWorkerRuntimePromise;
+}
+
+async function client({
+  maximumSourceBytes = MAXIMUM_SOURCE_BYTES,
+  openTimeoutMs = 30_000,
+} = {}) {
+  const boundedSourceBytes =
+    Number.isSafeInteger(maximumSourceBytes) &&
+    maximumSourceBytes > 0
+      ? Math.min(
+          maximumSourceBytes,
+          MAXIMUM_SOURCE_BYTES,
+        )
+      : MAXIMUM_SOURCE_BYTES;
+  const boundedOpenTimeout =
+    Number.isSafeInteger(openTimeoutMs) &&
+    openTimeoutMs >= 1_000 &&
+    openTimeoutMs <= 120_000
+      ? openTimeoutMs
+      : 30_000;
+  const workerRuntime = await vscodeWorkerRuntime();
+  const workerFactory = workerRuntime !== null
+    ? (url) => {
+        const bootstrapUrl = URL.createObjectURL(
+          new Blob(
+            [workerRuntime.workerBundle],
+            {
+              type: "text/javascript",
+            },
+          ),
+        );
+        const worker = new Worker(bootstrapUrl, {
+          name: "bim-explorer-source",
+          type: "module",
+        });
+        let revoked = false;
+        const revoke = () => {
+          if (!revoked) {
+            revoked = true;
+            URL.revokeObjectURL(bootstrapUrl);
+          }
+        };
+        return {
+          addEventListener(...args) {
+            return worker.addEventListener(...args);
+          },
+          postMessage(...args) {
+            return worker.postMessage(...args);
+          },
+          terminate() {
+            revoke();
+            return worker.terminate();
+          },
+        };
+      }
+    : undefined;
+  const value = createBimProductSourceWorkerClient({
+    limits: {
+      maximumSourceBytes: boundedSourceBytes,
+      openTimeoutMs: boundedOpenTimeout,
+      operationTimeoutMs: 10_000,
+    },
+    wasmPath: runtime.wasmPath,
+    wasmUrl: workerRuntime?.wasmUrl ?? null,
+    webIfcModuleUrl:
+      workerRuntime?.webIfcModuleUrl ??
+      runtime.webIfcModuleUrl,
+    ...(workerFactory === undefined
+      ? {}
+      : { workerFactory }),
+    workerUrl: runtime.workerModuleUrl,
+  });
+  value.onProgress((event) => {
+    const labels = {
+      "source-admitted": "Source admitted; starting isolated conversion…",
+      "artifact-created": "IFC indexed; creating immutable source…",
+      "snapshot-ready": "Snapshot ready; mounting WebGL2…",
+      "web-ifc-imported": "web-ifc ready; initializing WASM…",
+      "web-ifc-importing": "Loading local web-ifc module…",
+      "worker-ready": "Source Worker ready…",
+    };
+    latestSourceCheckpoint = event.phase;
+    setStatus(
+      "opening",
+      labels[event.phase] ?? "Opening IFC locally…",
+    );
+  });
+  return value;
+}
+
+async function openBytes(bytesValue, {
+  limits = {},
+  origin,
+  profile = runtime.profile,
+} = {}) {
+  if (
+    !(bytesValue instanceof Uint8Array) ||
+    bytesValue.byteLength === 0 ||
+    bytesValue.byteLength > MAXIMUM_SOURCE_BYTES
+  ) {
+    throw new RangeError(
+      "Selected IFC exceeds the 64 MiB local admission limit",
+    );
+  }
+  const sequence = openingSequence + 1;
+  openingSequence = sequence;
+  controls("opening");
+  latestSourceCheckpoint = "client-creating";
+  setStatus("opening", "Opening IFC locally…");
+  elements.diagLife.textContent = "opening isolated Worker";
+  const priorCleanup = await disposeActive("source-switch");
+  if (openingClient !== null) {
+    openingClient.terminate();
+    await openingClient.dispose();
+  }
+  const sourceClient = await client(limits);
+  latestSourceCheckpoint = "worker-creating";
+  openingClient = sourceClient;
+  let phase = "source-open";
+  try {
+    const opened = await sourceClient.open(bytesValue, {
+      profile,
+    });
+    if (sequence !== openingSequence) {
+      await opened.session.dispose();
+      await opened.workerLease.dispose();
+      await sourceClient.dispose();
+      return null;
+    }
+    phase = "renderer-create";
+    const backend = createWebGl2Backend({
+      canvas: elements.canvas,
+      height: 450,
+      width: 800,
+    });
+    const renderer = createBounded3dRenderer({ backend });
+    const host = createBimRenderer3dHost({
+      kind: runtime.hostKind,
+      renderer,
+    });
+    phase = "renderer-mount";
+    const mount = await host.mount({
+      session: opened.session,
+      snapshot: opened.snapshot,
+      workerLease: opened.workerLease,
+    });
+    phase = "semantic-initialize";
+    const explorer = createBimSemanticExplorer({
+      session: opened.session,
+      snapshot: opened.snapshot,
+      storage: localStorageAdapter(),
+      limits: {
+        maximumDomRows: 64,
+        maximumLoadedTreeItems: 2_000,
+        maximumRelations: 100,
+        maximumSearchResults: 500,
+        searchPageSize: 25,
+        treePageSize: 25,
+      },
+    });
+    await explorer.initialize();
+    const entity = firstRenderable(opened.snapshot);
+    if (entity !== null) {
+      await revealFirstProduct(
+        explorer,
+        opened.snapshot,
+        entity,
+      );
+    }
+    active = {
+      backend,
+      camera: mount.renderer.backend.camera,
+      client: sourceClient,
+      explorer,
+      host,
+      mount,
+      opened,
+      origin,
+    };
+    openingClient = null;
+    lastFailedBytes?.fill(0);
+    lastFailedBytes = null;
+    render();
+    updateDiagnostics(opened, mount);
+    elements.sourceIdentity.textContent =
+      contextLabel(opened.snapshot);
+    setStatus("ready", "Ready: local IFC is open read-only.");
+    controls("ready");
+    publishReport("ready", {
+      source: {
+        fingerprint: opened.snapshot.source.fingerprint,
+        revisionId: opened.snapshot.revisionId,
+        snapshotId: opened.snapshot.snapshotId,
+        byteLength: opened.snapshot.source.byteLength,
+        ifcSchema: opened.snapshot.source.ifcSchema,
+      },
+      model: {
+        products: opened.snapshot.geometry.products,
+        treeNodes: opened.snapshot.tree.nodes.length,
+        triangles: opened.snapshot.geometry.triangles,
+        ranges:
+          opened.snapshot.layers[0].rangeHandles.length,
+      },
+      performance: opened.report.performance,
+      resources: opened.report.resources,
+      renderer: {
+        actualGpu: mount.renderer.backend.actualGpu,
+        nonBackgroundPixels:
+          mount.renderer.backend.nonBackgroundPixels,
+        sourceReadBytes: mount.renderer.metrics.sourceReadBytes,
+        uploadedBytes: mount.renderer.backend.uploadedBytes,
+      },
+      semantic: {
+        selectedExpressId:
+          explorer.state.selection?.expressId ?? null,
+        treeRows: explorer.state.tree.rows.length,
+        maximumDomRows:
+          explorer.state.tree.maximumDomRows,
+      },
+      priorCleanup,
+    });
+    return active;
+  } catch (error) {
+    if (sequence !== openingSequence) {
+      return null;
+    }
+    sourceClient.terminate();
+    await sourceClient.dispose();
+    openingClient = null;
+    const code = typeof error?.code === "string"
+      ? error.code
+      : phase === "source-open"
+        ? "SOURCE_OPEN_FAILED"
+        : phase === "renderer-create"
+          ? "RENDERER_CREATE_FAILED"
+          : phase === "renderer-mount"
+            ? "RENDERER_MOUNT_FAILED"
+            : "SEMANTIC_INITIALIZE_FAILED";
+    setStatus(
+      "failed",
+      `Open failed: ${code}`,
+    );
+    elements.diagLife.textContent = "failed; resources released";
+    controls("failed");
+    publishReport("failed", {
+      diagnostic: {
+        checkpoint: latestSourceCheckpoint,
+        code,
+        name:
+          typeof error?.name === "string"
+            ? error.name
+            : "Error",
+        operation: phase,
+        retryable: true,
+      },
+    });
+    throw error;
+  }
+}
+
+async function readLocalFile(file) {
+  if (
+    file.size <= 0 ||
+    file.size > MAXIMUM_SOURCE_BYTES
+  ) {
+    throw new RangeError(
+      "Selected IFC exceeds the 64 MiB local admission limit",
+    );
+  }
+  const buffer = await file.arrayBuffer();
+  if (
+    buffer.byteLength !== file.size ||
+    buffer.byteLength > MAXIMUM_SOURCE_BYTES
+  ) {
+    throw new RangeError(
+      "Selected IFC changed during local admission",
+    );
+  }
+  return new Uint8Array(buffer);
+}
+
+elements.file.addEventListener("change", async () => {
+  const file = elements.file.files?.[0] ?? null;
+  elements.file.value = "";
+  if (file === null) {
+    return;
+  }
+  try {
+    const bytes = await readLocalFile(file);
+    lastFailedBytes?.fill(0);
+    lastFailedBytes = Uint8Array.from(bytes);
+    await openBytes(bytes, {
+      origin: "local-file",
+    });
+  } catch (error) {
+    if (elements.status.dataset.state !== "failed") {
+      setStatus(
+        "failed",
+        "Open failed: LOCAL_FILE_ADMISSION_FAILED",
+      );
+      controls("failed");
+    }
+  }
+});
+
+elements.fixture.addEventListener("click", async () => {
+  try {
+    const response = await fetch("/qualification-fixture.ifc", {
+      cache: "no-store",
+      credentials: "omit",
+    });
+    if (!response.ok) {
+      throw new Error("qualification fixture is unavailable");
+    }
+    const bytes = new Uint8Array(
+      await response.arrayBuffer(),
+    );
+    lastFailedBytes?.fill(0);
+    lastFailedBytes = Uint8Array.from(bytes);
+    await openBytes(bytes, {
+      origin: "qualification-fixture",
+    });
+  } catch {
+    setStatus(
+      "failed",
+      "Open failed: QUALIFICATION_FIXTURE_UNAVAILABLE",
+    );
+    controls("failed");
+  }
+});
+
+elements.cancel.addEventListener("click", async () => {
+  openingSequence += 1;
+  openingClient?.terminate();
+  await openingClient?.dispose();
+  openingClient = null;
+  setStatus("idle", "Open cancelled; Worker terminated.");
+  elements.diagLife.textContent = "cancelled; Worker terminated";
+  controls("idle");
+  publishReport("cancelled", {
+    cleanup: {
+      workerTerminated: true,
+    },
+  });
+});
+
+elements.retry.addEventListener("click", async () => {
+  if (vscodeApi !== null) {
+    vscodeApi.postMessage({
+      schema: HOST_MESSAGE,
+      type: "retry",
+    });
+    return;
+  }
+  if (lastFailedBytes !== null) {
+    try {
+      await openBytes(lastFailedBytes, {
+        origin: "retry",
+      });
+    } catch {
+      // openBytes already published a stable path-free diagnostic.
+    }
+  }
+});
+
+elements.close.addEventListener("click", async () => {
+  const cleanup = await disposeActive("user-close");
+  elements.sourceIdentity.textContent = "No active source";
+  setStatus("idle", "Model closed; local resources released.");
+  controls("idle");
+  publishReport("disposed", {
+    cleanup,
+  });
+});
+
+elements.searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (active === null) {
+    return;
+  }
+  await active.explorer.search(elements.searchInput.value);
+  render();
+});
+
+elements.moreResults.addEventListener("click", async () => {
+  await active?.explorer.loadMoreSearch();
+  render();
+});
+
+elements.isolateResults.addEventListener("click", async () => {
+  if (active === null) {
+    return;
+  }
+  const command = await active.explorer.setVisibility(
+    "isolate-results",
+  );
+  await active.host.renderView({
+    camera: active.camera,
+    ...command,
+  });
+  render();
+});
+
+elements.showAll.addEventListener("click", async () => {
+  if (active === null) {
+    return;
+  }
+  const command = await active.explorer.setVisibility("show-all");
+  await active.host.renderView({
+    camera: active.camera,
+    ...command,
+  });
+});
+
+async function pickVisible() {
+  const coordinates = [
+    [400, 225],
+    [400, 150],
+    [400, 300],
+    [275, 225],
+    [525, 225],
+  ];
+  for (const [x, y] of coordinates) {
+    const receipt = await active.host.pick({ x, y });
+    if (receipt.status === "hit") {
+      return receipt;
+    }
+  }
+  throw new Error("no visible BIM object was picked");
+}
+
+elements.pick.addEventListener("click", async () => {
+  if (active === null) {
+    return;
+  }
+  const pick = await pickVisible();
+  await active.explorer.selectPick(pick);
+  await applySelectionView();
+  render();
+});
+
+elements.tree.addEventListener("keydown", async (event) => {
+  const target = event.target.closest('[role="treeitem"]');
+  if (target === null || active === null) {
+    return;
+  }
+  const buttons = [
+    ...elements.tree.querySelectorAll('[role="treeitem"]'),
+  ];
+  const index = buttons.indexOf(target);
+  const expressId = Number(target.dataset.expressId);
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    buttons[Math.min(index + 1, buttons.length - 1)]?.focus();
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    buttons[Math.max(index - 1, 0)]?.focus();
+  } else if (
+    event.key === "ArrowRight" &&
+    Number(target.dataset.childCount) > 0
+  ) {
+    event.preventDefault();
+    await active.explorer.expand(expressId);
+    render();
+  } else if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    await active.explorer.collapse(expressId);
+    render();
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    await selectExpressId(expressId, "tree");
+  }
+});
+
+globalThis.addEventListener("message", async (event) => {
+  const message = event.data;
+  if (
+    vscodeApi === null ||
+    message?.schema !== HOST_MESSAGE
+  ) {
+    return;
+  }
+  if (message.type === "source-bytes") {
+    if (
+      !Number.isSafeInteger(message.generation) ||
+      message.generation <= hostGeneration
+    ) {
+      return;
+    }
+    hostGeneration = message.generation;
+    let bytes;
+    if (message.bytes instanceof ArrayBuffer) {
+      bytes = new Uint8Array(message.bytes);
+    } else if (ArrayBuffer.isView(message.bytes)) {
+      bytes = new Uint8Array(
+        message.bytes.buffer,
+        message.bytes.byteOffset,
+        message.bytes.byteLength,
+      );
+    } else if (Array.isArray(message.bytes)) {
+      bytes = Uint8Array.from(message.bytes);
+    } else {
+      setStatus("failed", "Open failed: HOST_BYTES_INVALID");
+      controls("failed");
+      return;
+    }
+    try {
+      await openBytes(bytes, {
+        limits: message.limits ?? {},
+        origin: "vscode-custom-editor",
+        profile: message.profile ?? runtime.profile,
+      });
+    } catch {
+      // openBytes already published a stable path-free diagnostic.
+    } finally {
+      bytes.fill(0);
+    }
+  } else if (message.type === "cancel") {
+    openingSequence += 1;
+    openingClient?.terminate();
+    await openingClient?.dispose();
+    openingClient = null;
+    setStatus("idle", "Open cancelled; Worker terminated.");
+    controls("idle");
+    publishReport("cancelled", {
+      cleanup: {
+        workerTerminated: true,
+      },
+    });
+  } else if (message.type === "source-error") {
+    openingSequence += 1;
+    openingClient?.terminate();
+    await openingClient?.dispose();
+    openingClient = null;
+    const code =
+      typeof message.diagnostic?.code === "string"
+        ? message.diagnostic.code
+        : "SOURCE_FILE_READ_FAILED";
+    setStatus("failed", `Open failed: ${code}`);
+    elements.diagLife.textContent =
+      "failed before source admission";
+    controls("failed");
+    publishReport("failed", {
+      diagnostic: {
+        code,
+        retryable:
+          message.diagnostic?.retryable === true,
+      },
+    });
+  } else if (message.type === "show-diagnostics") {
+    elements.diagnostics.open = true;
+    elements.diagnostics.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  } else if (message.type === "dispose") {
+    const cleanup = await disposeActive("editor-close");
+    publishReport("disposed", { cleanup });
+  }
+});
+
+globalThis.addEventListener("pagehide", () => {
+  openingClient?.terminate();
+  if (webIfcBlobUrl !== null) {
+    URL.revokeObjectURL(webIfcBlobUrl);
+    webIfcBlobUrl = null;
+  }
+  if (wasmBlobUrl !== null) {
+    URL.revokeObjectURL(wasmBlobUrl);
+    wasmBlobUrl = null;
+  }
+  if (active !== null) {
+    void disposeActive("pagehide");
+  }
+});
+
+elements.diagHost.textContent = runtime.hostKind;
+elements.fixture.hidden =
+  runtime.hostKind !== "browser" ||
+  !runtime.fixtureEnabled;
+if (runtime.hostKind === "vscode-webview") {
+  elements.openSource.hidden = true;
+  elements.fixture.hidden = true;
+  setStatus("opening", "Waiting for the read-only editor source…");
+  controls("opening");
+  vscodeApi.postMessage({
+    schema: HOST_MESSAGE,
+    type: "ready",
+  });
+} else {
+  controls("idle");
+  publishReport("idle");
+}

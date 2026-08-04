@@ -1,11 +1,14 @@
-import { createHash } from "node:crypto";
+import {
+  BIM_SOURCE_ARTIFACT_SCHEMA,
+} from "./artifact-schema.mjs";
 import {
   BIM_SOURCE_SEMANTIC_QUERY_RESULT,
   BimSemanticIndex,
 } from "./semantic-index.mjs";
+import {
+  sha256Hex,
+} from "./sha256.mjs";
 
-export const BIM_SOURCE_ARTIFACT_SCHEMA =
-  "bim-explorer-bim-source-artifact/0.1";
 export const BIM_SOURCE_PROTOCOL_VERSION =
   "bim-explorer-bim-source/0.1";
 
@@ -117,7 +120,7 @@ function invalidState(message) {
 }
 
 function digest(bytes) {
-  return createHash("sha256").update(bytes).digest("hex");
+  return sha256Hex(bytes);
 }
 
 function parseGeometryRange(bytes, label) {
@@ -816,9 +819,11 @@ export class BimModelSource {
     const sourceDigest = this.#artifact.source.sha256;
     this.sourceFingerprint = `sha256:${sourceDigest}`;
     this.revisionId = `source-snapshot:${this.sourceFingerprint}`;
-    this.cacheFingerprint = `sha256:${createHash("sha256")
-      .update(canonicalJson(projection(this.#artifact)))
-      .digest("hex")}`;
+    this.cacheFingerprint = `sha256:${sha256Hex(
+      new TextEncoder().encode(
+        canonicalJson(projection(this.#artifact)),
+      ),
+    )}`;
     this.sourceId = `source:ifc:${sourceDigest.slice(0, 24)}`;
     this.sessionId = `session:bim-source:${sourceDigest.slice(0, 24)}`;
     this.snapshotId = `snapshot:bim-source:${sourceDigest}:0`;
@@ -1167,5 +1172,6 @@ export function createBimModelSource(artifact, options) {
 }
 
 export {
+  BIM_SOURCE_ARTIFACT_SCHEMA,
   BIM_SOURCE_SEMANTIC_QUERY_RESULT,
 };

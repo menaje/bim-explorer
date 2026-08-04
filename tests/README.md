@@ -9,6 +9,7 @@
 - `ifc/`: engine/profile/geometry/semantic qualification
 - `renderer/`: 3D lifecycle, picking, section과 disposal
 - `product/`: Browser/VS Code standalone behavior
+- `vscode/`: staged Custom Editor의 실제 VS Code Chromium qualification
 
 실제 고객 BIM과 redistribution 권한이 불분명한 파일은 test fixture로
 추적하지 않습니다.
@@ -54,6 +55,15 @@ revision-bound 3D pick, isolate, saved view와 DOM/search aggregate bound를
 검사합니다. Browser probe server test는 strict same-origin CSP와 bounded
 geometry range만 노출하는지 검사합니다. 실제 Chromium 키보드·ARIA와
 WebGL2 pick은 별도 compatibility evidence로 고정합니다.
+
+`product` test는 allowlist loopback server, Worker generation/cancel,
+runtime-neutral digest, VS Code manifest/CSP, non-symlink exact-file
+admission, path-free report와 독립 package staging을 검사합니다.
+`npm run qualify:product:web`은 실제 Chrome에서 local Worker, semantic
+search, 3D pick과 cleanup을 실행합니다. `npm run qualify:product:vscode`는
+독립 staging을 실제 VS Code Custom Editor로 열고 같은 source/render
+projection과 editor close를 확인합니다. `npm run
+qualify:product:vscode-install`은 생성한 VSIX를 빈 profile에 설치합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

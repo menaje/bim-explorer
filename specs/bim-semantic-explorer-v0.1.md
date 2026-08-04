@@ -68,5 +68,5 @@ storage key에 저장합니다. 다른 revision에서는 복원하지 않습니�
 - public representative model의 semantic DOM/search scale
 - deferred property-value payload
 - host/void/fill과 connection의 broader graph
-- production Browser/VS Code product shell
+- public representative Browser/VS Code product scale
 - Viewer Core public conformance와 Spatial handoff

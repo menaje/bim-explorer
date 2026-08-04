@@ -1,0 +1,82 @@
+{
+  "schema": "bim-explorer-product-shell-browser-evidence/1",
+  "capturedAt": "2026-08-04T01:31:55.559Z",
+  "environment": {
+    "browser": "Google Chrome 150.0.7871.187",
+    "headless": true,
+    "platform": "darwin-arm64",
+    "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
+  },
+  "fixture": {
+    "id": "synthetic-semantic-ifc4",
+    "committed": false,
+    "sourceBytes": 4030,
+    "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "ifcSchema": "IFC4"
+  },
+  "observation": {
+    "hostKind": "browser",
+    "model": {
+      "products": 2,
+      "treeNodes": 7,
+      "triangles": 24,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 116.42000007629395,
+      "sourceMs": 4.064999938011169,
+      "totalMs": 120.5349999666214
+    },
+    "resources": {
+      "sourceBytes": 4030,
+      "geometryBytes": 996,
+      "metadataBytes": 2868,
+      "ranges": 1,
+      "products": 2,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 57585,
+      "sourceReadBytes": 996,
+      "uploadedBytes": 1120
+    },
+    "semantic": {
+      "selectedExpressId": 40,
+      "treeRows": 7,
+      "maximumDomRows": 64
+    },
+    "interaction": {
+      "searchResults": 2,
+      "selectedExpressId": 40,
+      "selectionOrigin": "3d",
+      "treeRows": 7
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed",
+      "backendDisposed": true,
+      "clientDisposed": true
+    },
+    "network": {
+      "externalOrigins": [],
+      "localRequestCount": 13
+    },
+    "runtimeErrors": []
+  },
+  "assertions": {
+    "actualBrowserWebGl2": true,
+    "boundedLocalSource": true,
+    "localOnly": true,
+    "pathFree": true,
+    "semanticAnd3dSync": true,
+    "workerAndGpuCleanup": true,
+    "noRuntimeErrors": true
+  },
+  "decision": {
+    "browserProductShell": "passed",
+    "actualPhysicalGpu": "not-claimed",
+    "publicViewerCoreConformance": "held",
+    "vscodeChromiumRuntime": "separate-gate"
+  }
+}

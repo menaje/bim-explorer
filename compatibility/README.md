@@ -10,6 +10,19 @@
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
 
+Browser 제품 shell과 VS Code `.ifc` read-only Custom Editor의 동일
+source/render projection, 실제 Chromium WebGL2, local Worker lifecycle,
+path-free host bridge와 clean VSIX install 결과는
+[`bim-product-shells.json`](bim-product-shells.json),
+[`Browser product evidence`](evidence/bim-product-shell-browser-synthetic-2026-08-04.json),
+[`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
+[`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json)가
+소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
+24 triangles, 57,585 non-background pixels와 1,120 uploaded bytes를
+재현했습니다. 계정·upload·telemetry·Coni Spatial 의존성은 없으며,
+public Viewer Core conformance, 대표 공개 모델 product scale, physical
+GPU와 marketplace release는 계속 보류합니다.
+
 IFC engine 후보와 draft profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
 비교는
