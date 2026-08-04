@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-product-shell-browser-evidence/1",
-  "capturedAt": "2026-08-04T01:53:31.274Z",
+  "capturedAt": "2026-08-04T02:31:11.019Z",
   "environment": {
     "browser": "Google Chrome 150.0.7871.187",
     "headless": true,
@@ -30,14 +30,17 @@
       "ranges": 3
     },
     "performance": {
-      "artifactMs": 2243.475000023842,
-      "sourceMs": 722.8250000476837,
-      "totalMs": 2966.3799999952316
+      "artifactMs": 2289.585000038147,
+      "sourceMs": 570.1800000667572,
+      "totalMs": 2859.8400000333786
     },
     "resources": {
       "sourceBytes": 46766968,
       "geometryBytes": 9290696,
-      "metadataBytes": 10007872,
+      "metadataBytes": 9266930,
+      "detailBytes": 5490130,
+      "detailRanges": 6,
+      "largestDetailRangeBytes": 1047997,
       "ranges": 3,
       "products": 3569,
       "wasmHeapCapacityBytes": null

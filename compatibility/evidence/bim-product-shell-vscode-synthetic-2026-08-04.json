@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-custom-editor-evidence/1",
-  "capturedAt": "2026-08-04T01:59:36.116Z",
+  "capturedAt": "2026-08-04T02:31:55.644Z",
   "environment": {
     "vscode": "1.131.0",
     "platform": "darwin-arm64",
@@ -22,14 +22,17 @@
       "ranges": 1
     },
     "performance": {
-      "artifactMs": 108.30000007152557,
-      "sourceMs": 3.6999999284744263,
-      "totalMs": 112.19999992847443
+      "artifactMs": 102.79999995231628,
+      "sourceMs": 3.799999952316284,
+      "totalMs": 106.69999992847443
     },
     "resources": {
       "sourceBytes": 4030,
       "geometryBytes": 996,
-      "metadataBytes": 2868,
+      "metadataBytes": 2899,
+      "detailBytes": 440,
+      "detailRanges": 1,
+      "largestDetailRangeBytes": 440,
       "ranges": 1,
       "products": 2,
       "wasmHeapCapacityBytes": null

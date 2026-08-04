@@ -38,7 +38,7 @@ test("BIM model source compatibility records public multi-range evidence", async
   assert.equal(result.products, 3_569);
   assert.equal(result.triangles, 261_424);
   assert.equal(result.syntheticProducts, 2);
-  assert.equal(result.passedGates, 10);
+  assert.equal(result.passedGates, 13);
   assert.equal(result.heldGates, 4);
 });
 
@@ -116,5 +116,25 @@ test("public source evidence pins every geometry range", async () => {
       corrupted,
     ),
     /range 1 is invalid/u,
+  );
+});
+
+test("public source evidence pins every semantic detail range", async () => {
+  const {
+    manifest,
+    syntheticEvidence,
+    publicEvidence,
+  } = await fixtures();
+  const corrupted = structuredClone(publicEvidence);
+  corrupted.representativeReport.snapshot
+    .detailRanges[1].sha256 = "0".repeat(64);
+
+  assert.throws(
+    () => validateBimModelSourceCompatibility(
+      manifest,
+      syntheticEvidence,
+      corrupted,
+    ),
+    /detail range 1 is invalid/u,
   );
 });

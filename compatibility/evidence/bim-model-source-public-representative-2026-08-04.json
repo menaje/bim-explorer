@@ -73,7 +73,7 @@
     "snapshot": {
       "sourceFingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
       "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
-      "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+      "cacheFingerprint": "sha256:3bb5d81e5995f6da2a84f7000f7a4867d64fa30d79f58298ae805664367397a7",
       "treeNodes": 3578,
       "entities": 3569,
       "geometry": {
@@ -108,6 +108,9 @@
           "maximumGeometryBytes": 268435456,
           "maximumRangeBytes": 4194304,
           "maximumRanges": 4096,
+          "maximumDetailBytes": 67108864,
+          "maximumDetailRangeBytes": 1048576,
+          "maximumDetailRanges": 4096,
           "maximumRelationEntries": 500000,
           "maximumTreeNodes": 200000,
           "maximumMetadataBytes": 67108864
@@ -117,7 +120,10 @@
           "geometryBytes": 9290696,
           "ranges": 3,
           "largestRangeBytes": 4194152,
-          "metadataBytes": 10007872,
+          "detailBytes": 5490130,
+          "detailRanges": 6,
+          "largestDetailRangeBytes": 1047997,
+          "metadataBytes": 9266930,
           "products": 3569,
           "relationEntries": 30761,
           "treeNodes": 3578
@@ -130,6 +136,14 @@
         "deferredRangeIds": [
           "range:ifc:geometry:1",
           "range:ifc:geometry:2"
+        ],
+        "deferredDetailRangeIds": [
+          "range:ifc:semantic-detail:0",
+          "range:ifc:semantic-detail:1",
+          "range:ifc:semantic-detail:2",
+          "range:ifc:semantic-detail:3",
+          "range:ifc:semantic-detail:4",
+          "range:ifc:semantic-detail:5"
         ]
       },
       "ranges": [
@@ -151,6 +165,44 @@
           "maximumRequestBytes": 902676,
           "sha256": "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2"
         }
+      ],
+      "detailRanges": [
+        {
+          "handleId": "range:ifc:semantic-detail:0",
+          "byteLength": 1042933,
+          "maximumRequestBytes": 1042933,
+          "sha256": "0b27e11f658ff1339648b662db628564cc214843b82fed28d2df0ba1609b8a8f"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:1",
+          "byteLength": 1047997,
+          "maximumRequestBytes": 1047997,
+          "sha256": "2a0f33eea98664ded937de4de71a9aec7505e79edbe3f07b551614c3735b0473"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:2",
+          "byteLength": 1047080,
+          "maximumRequestBytes": 1047080,
+          "sha256": "65b34541b637514eaea7f8be30c3018fc5618cf7367b984547ef0cb1cac51215"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:3",
+          "byteLength": 1047156,
+          "maximumRequestBytes": 1047156,
+          "sha256": "91abff070519a0d1505d554da843fc21c0494b76c855cd6832fa6c95685498e9"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:4",
+          "byteLength": 1047657,
+          "maximumRequestBytes": 1047657,
+          "sha256": "6858ef8802f7696702486473d0f6a6564be4591da897b3f33304458a2bdeb814"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:5",
+          "byteLength": 257307,
+          "maximumRequestBytes": 257307,
+          "sha256": "09cf825dba0cb8c9d189ab50373930484a9d1d14fa7ba4dad8d5bd9d8813356b"
+        }
       ]
     },
     "firstRangeRead": {
@@ -160,7 +212,28 @@
       "sha256": "b6882fab72a8ce041fad4b2ef2ce09ae5652c3c4141d9a36dc4dc011ae1d14a5",
       "digestValidated": true,
       "deferredRangesUnread": true,
+      "deferredDetailRangesUnread": true,
       "remainingReadBytes": 5096828
+    },
+    "detailRangeRead": {
+      "handleId": "range:ifc:semantic-detail:0",
+      "rangeByteLength": 1042933,
+      "rangeSha256": "0b27e11f658ff1339648b662db628564cc214843b82fed28d2df0ba1609b8a8f",
+      "maximumRequestBytes": 1042933,
+      "receipt": {
+        "handleId": "range:ifc:semantic-detail:0",
+        "offset": 24,
+        "byteLength": 2575
+      },
+      "reads": 1,
+      "bytesRead": 2575,
+      "remainingReadBytes": 5487555,
+      "schema": "bim-explorer-bim-entity-details/0.1",
+      "expressId": 224,
+      "globalId": "1nOs6Hg0v9fR$sLR1LjIyX",
+      "quantityCount": 63,
+      "materialCount": 0,
+      "classificationCount": 0
     },
     "identity": {
       "expressId": 224,
@@ -191,15 +264,15 @@
       "staleRevisionRejected": true
     },
     "performance": {
-      "readMs": 10.458708000000001,
-      "artifactMs": 2151.843375,
-      "sourceMs": 226.64887499999986,
-      "totalMs": 2410.75025
+      "readMs": 7.694458000000001,
+      "artifactMs": 2493.616833,
+      "sourceMs": 620.6332920000004,
+      "totalMs": 3143.926583
     },
     "processMemoryBytes": {
-      "maximumResidentSetSize": 587628544,
-      "residentSetSizeAfterFirstRange": 577945600,
-      "heapUsedAfterFirstRange": 120814280
+      "maximumResidentSetSize": 664961024,
+      "residentSetSizeAfterFirstRange": 524189696,
+      "heapUsedAfterFirstRange": 124004928
     },
     "cleanup": {
       "adapterModelClosed": true,
@@ -212,17 +285,17 @@
   "runs": [
     {
       "attempt": 1,
-      "deterministicProjectionSha256": "67ffd4a80d3719e7836c3ca61fd27e60409fed0cad23d0848e42e9675ea8413e",
+      "deterministicProjectionSha256": "58f25afef637a621baa3593a9042c80edbb2b7b39b19030c0835605726494176",
       "performance": {
-        "readMs": 10.458708000000001,
-        "artifactMs": 2151.843375,
-        "sourceMs": 226.64887499999986,
-        "totalMs": 2410.75025
+        "readMs": 7.694458000000001,
+        "artifactMs": 2493.616833,
+        "sourceMs": 620.6332920000004,
+        "totalMs": 3143.926583
       },
       "processMemoryBytes": {
-        "maximumResidentSetSize": 587628544,
-        "residentSetSizeAfterFirstRange": 577945600,
-        "heapUsedAfterFirstRange": 120814280
+        "maximumResidentSetSize": 664961024,
+        "residentSetSizeAfterFirstRange": 524189696,
+        "heapUsedAfterFirstRange": 124004928
       },
       "process": {
         "outcome": "completed",
@@ -232,25 +305,25 @@
         "timedOut": false,
         "cancelled": false,
         "outputLimitExceeded": false,
-        "stdoutBytes": 3295,
+        "stdoutBytes": 5230,
         "stderrBytes": 0,
         "stderrCaptured": false,
-        "wallClockMs": 2618.6977500000003
+        "wallClockMs": 3196.638666
       }
     },
     {
       "attempt": 2,
-      "deterministicProjectionSha256": "67ffd4a80d3719e7836c3ca61fd27e60409fed0cad23d0848e42e9675ea8413e",
+      "deterministicProjectionSha256": "58f25afef637a621baa3593a9042c80edbb2b7b39b19030c0835605726494176",
       "performance": {
-        "readMs": 7.96320799999998,
-        "artifactMs": 2113.046542,
-        "sourceMs": 216.11191700000018,
-        "totalMs": 2357.6998750000002
+        "readMs": 7.044625,
+        "artifactMs": 2385.0685,
+        "sourceMs": 618.931458,
+        "totalMs": 3032.6446250000004
       },
       "processMemoryBytes": {
-        "maximumResidentSetSize": 586579968,
-        "residentSetSizeAfterFirstRange": 577699840,
-        "heapUsedAfterFirstRange": 121348152
+        "maximumResidentSetSize": 680968192,
+        "residentSetSizeAfterFirstRange": 671956992,
+        "heapUsedAfterFirstRange": 144767720
       },
       "process": {
         "outcome": "completed",
@@ -260,10 +333,10 @@
         "timedOut": false,
         "cancelled": false,
         "outputLimitExceeded": false,
-        "stdoutBytes": 3301,
+        "stdoutBytes": 5219,
         "stderrBytes": 0,
         "stderrCaptured": false,
-        "wallClockMs": 2567.6738329999994
+        "wallClockMs": 3088.51275
       }
     }
   ],
@@ -271,6 +344,8 @@
     "repeatedSnapshotIdentity": true,
     "boundedMultiRangeDirectory": true,
     "firstRangeReadWithoutDeferredRanges": true,
+    "firstRangeReadWithoutSemanticDetails": true,
+    "boundedSemanticDetailRead": true,
     "treePropertyRenderPickIdentity": true,
     "nonRenderableProductDiagnostic": true,
     "staleRevisionRejected": true,
@@ -280,8 +355,9 @@
   "decision": {
     "publicRepresentativeSourceArtifact": "passed-performance-only",
     "multiRangeGeometryDirectory": "passed",
-    "firstRenderedFrame": "blocked",
-    "deferredPropertyRanges": "blocked",
+    "firstRenderedFrame": "passed-by-renderer-evidence",
+    "deferredSemanticDetailRanges": "passed",
+    "propertyValuePayload": "blocked",
     "viewerCoreConformance": "blocked-unresolved-upstream",
     "draftProfileAdmission": "blocked",
     "productionClaims": false

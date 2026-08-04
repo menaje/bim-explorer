@@ -3,9 +3,11 @@
   "asOf": "2026-08-04",
   "status": "experimental",
   "contract": {
-    "artifactSchema": "bim-explorer-bim-source-artifact/0.1",
-    "sourceProtocol": "bim-explorer-bim-source/0.1",
-    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
+    "artifactSchema": "bim-explorer-bim-source-artifact/0.2",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
+    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
+    "semanticDetailMediaType": "application/vnd.bim-explorer.semantic-detail-range.v1",
+    "entityDetailsSchema": "bim-explorer-bim-entity-details/0.1"
   },
   "adapter": {
     "id": "web-ifc",
@@ -32,11 +34,12 @@
   },
   "expected": {
     "synthetic": {
-      "cacheFingerprint": "sha256:f1e25a17783ead2457d423fd2195e3af21041a6834dec6e6926090eb3c7583d4",
-      "geometryRangeSha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969"
+      "cacheFingerprint": "sha256:b3d1e7932a4d7abe9a2667d340ebb67236fc30550ec1a5c4fd7ba8916abb6f78",
+      "geometryRangeSha256": "177bec4bea950d38c75cd0e81760a09c9e713fd18875d7ef1eba46d5e7827969",
+      "semanticDetailRangeSha256": "2867bff13619e120cbd375227896ee0ee6c0a4acc376436fb5ff92e17c5ef842"
     },
     "publicRepresentative": {
-      "cacheFingerprint": "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427",
+      "cacheFingerprint": "sha256:3bb5d81e5995f6da2a84f7000f7a4867d64fa30d79f58298ae805664367397a7",
       "products": 3569,
       "renderableProducts": 3504,
       "nonRenderableProducts": 65,
@@ -57,6 +60,38 @@
           "byteLength": 902676,
           "sha256": "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2"
         }
+      ],
+      "detailRanges": [
+        {
+          "handleId": "range:ifc:semantic-detail:0",
+          "byteLength": 1042933,
+          "sha256": "0b27e11f658ff1339648b662db628564cc214843b82fed28d2df0ba1609b8a8f"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:1",
+          "byteLength": 1047997,
+          "sha256": "2a0f33eea98664ded937de4de71a9aec7505e79edbe3f07b551614c3735b0473"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:2",
+          "byteLength": 1047080,
+          "sha256": "65b34541b637514eaea7f8be30c3018fc5618cf7367b984547ef0cb1cac51215"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:3",
+          "byteLength": 1047156,
+          "sha256": "91abff070519a0d1505d554da843fc21c0494b76c855cd6832fa6c95685498e9"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:4",
+          "byteLength": 1047657,
+          "sha256": "6858ef8802f7696702486473d0f6a6564be4591da897b3f33304458a2bdeb814"
+        },
+        {
+          "handleId": "range:ifc:semantic-detail:5",
+          "byteLength": 257307,
+          "sha256": "09cf825dba0cb8c9d189ab50373930484a9d1d14fa7ba4dad8d5bd9d8813356b"
+        }
       ]
     }
   },
@@ -71,24 +106,34 @@
     "multiRangeGeometryDirectory": true,
     "nonRenderableProductDiagnostic": true,
     "boundedSemanticQueries": true,
-    "firstRenderedFrame": false,
-    "deferredPropertyRanges": false,
-    "viewerCoreConformance": false,
-    "browserWorkerPackaging": false
+    "firstRenderedFrame": true,
+    "deferredSemanticDetailRanges": true,
+    "browserWorkerPackaging": true,
+    "fullPropertyValuePayload": false,
+    "georeferencingMapConversion": false,
+    "sourcePrecisionGeometry": false,
+    "viewerCoreConformance": false
   },
   "evidence": {
     "syntheticMapped": "compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-04.json",
-    "publicRepresentative": "compatibility/evidence/bim-model-source-public-representative-2026-08-04.json"
+    "publicRepresentative": "compatibility/evidence/bim-model-source-public-representative-2026-08-04.json",
+    "rendererVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json",
+    "browserWorkerPackaging": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json"
   },
   "blockers": [
-    "a renderer has not consumed the first geometry range into a measured first frame",
-    "property and relation payloads are not partitioned into deferred ranges",
-    "durable Viewer Core package and BIM RenderSource conformance remain unresolved",
-    "Browser Worker and VS Code packaging are not qualified"
+    "property-set values are not projected into the deferred semantic detail ranges",
+    "IFC map conversion and georeferencing metadata remain opaque",
+    "source-precision geometry is not separated from display tessellation",
+    "durable Viewer Core package and BIM RenderSource conformance remain unresolved"
   ],
   "policy": {
     "readOnly": true,
     "spatialAuthority": false,
+    "claimRenderedFirstFrame": true,
+    "claimDeferredSemanticDetails": true,
+    "claimFullPropertyValues": false,
+    "claimGeoreferencing": false,
+    "claimSourcePrecisionGeometry": false,
     "claimViewerCoreCompatibility": false,
     "claimProductionIfcSupport": false
   }

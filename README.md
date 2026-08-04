@@ -15,7 +15,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > mapped IFC에서는 raw fingerprint, spatial tree/property identity, shared
 > binary geometry range와 stale/budget 거부를 통과했습니다. 같은 공개
 > IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
-> geometry range와 비렌더링 제품 diagnostic도 재현했습니다. 첫 range의
+> geometry range, 6개 deferred semantic detail range와 비렌더링 제품
+> diagnostic도 재현했습니다. first-frame은 detail을 읽지 않고 선택
+> 제품의 exact detail slice만 읽습니다. 첫 range의
 > 2,458 geometry records·3,182 instances를 bounded headless renderer와 실제
 > Chromium WebGL2에 mount하고 전량 회수했습니다. camera/view/pointer input,
 > revision-bound pick/highlight, section/measurement, large-coordinate origin,
@@ -28,8 +30,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > cleanup을 다시 통과했습니다. 이어 46.77MB 공개 IFC도 Browser와
 > clean-installed VSIX에서 각각 3,569 products·261,424 triangles·3 ranges로
 > 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다. physical
-> GPU qualification, deferred
-> property range, engine 선정, 공용 Viewer Core package와 지원 profile은
+> GPU qualification, property-set value range, georeferencing,
+> source-precision 분리, engine 선정, 공용 Viewer Core package와 지원 profile은
 > 아직 확정되지 않았습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,

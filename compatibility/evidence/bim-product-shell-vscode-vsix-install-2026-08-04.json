@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-vsix-install-evidence/1",
-  "capturedAt": "2026-08-04T02:00:39.343Z",
+  "capturedAt": "2026-08-04T02:32:40.154Z",
   "environment": {
     "platform": "darwin-arm64",
     "cleanUserData": true,
@@ -9,9 +9,9 @@
   "package": {
     "id": "menaje.bim-explorer",
     "version": "0.0.0",
-    "byteLength": 1093014,
+    "byteLength": 1098391,
     "installedRuntimeFiles": 6,
-    "workerBundleSha256": "0d24ba7b64655b24c175f2ef3f9a2d207a9f9a604d71472fd01373af42690440"
+    "workerBundleSha256": "2c1877aa357fa9d81cf4822d00b9cd8c32b2d70baf5145eae2b9ed237ca54abf"
   },
   "observation": {
     "installedExtensions": [
@@ -83,14 +83,17 @@
         "ranges": 3
       },
       "performance": {
-        "artifactMs": 2268.100000023842,
-        "sourceMs": 413.7000000476837,
-        "totalMs": 2681.8000000715256
+        "artifactMs": 2311.7999999523163,
+        "sourceMs": 578.1000000238419,
+        "totalMs": 2890
       },
       "resources": {
         "sourceBytes": 46766968,
         "geometryBytes": 9290696,
-        "metadataBytes": 10007872,
+        "metadataBytes": 9266930,
+        "detailBytes": 5490130,
+        "detailRanges": 6,
+        "largestDetailRangeBytes": 1047997,
         "ranges": 3,
         "products": 3569,
         "wasmHeapCapacityBytes": null

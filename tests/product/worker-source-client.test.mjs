@@ -149,6 +149,10 @@ test("product Worker client binds session operations and cleanup to one generati
     await opened.session.queryTree({}),
     { operation: "queryTree" },
   );
+  assert.deepEqual(
+    await opened.session.getEntityDetails({ expressId: 40 }),
+    { operation: "getEntityDetails" },
+  );
   assert.equal(await opened.session.dispose(), true);
   assert.equal(await opened.session.dispose(), false);
   assert.equal(await opened.workerLease.dispose(), true);

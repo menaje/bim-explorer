@@ -17,6 +17,7 @@ const TRUE_GATES = [
   "accessibleRoles",
   "boundedDomLifecycle",
   "actualBrowserWebGl2Pick",
+  "deferredSemanticDetailRanges",
   "deterministicCleanup",
 ];
 const HELD_GATES = [
@@ -28,6 +29,7 @@ const ASSERTIONS = [
   "accessibleRoles",
   "actualBrowser",
   "actualRendererPick",
+  "boundedLazyDetails",
   "boundedDom",
   "boundedSearch",
   "decompositionAndContainment",
@@ -83,7 +85,7 @@ export function validateBimSemanticExplorerCompatibility(
     contract?.explorer !==
       "bim-explorer-bim-semantic-explorer/0.1" ||
     contract?.sourceProtocol !==
-      "bim-explorer-bim-source/0.1" ||
+      "bim-explorer-bim-source/0.2" ||
     contract?.semanticQueryResult !==
       "bim-explorer-bim-source-semantic-query-result/0.1" ||
     contract?.rendererPickReceipt !==
@@ -106,6 +108,8 @@ export function validateBimSemanticExplorerCompatibility(
     fixture.thirdPartyContent !== false ||
     evidence.source?.fingerprint !==
       `sha256:${fixture.sha256}` ||
+    evidence.source?.protocolVersion !==
+      contract.sourceProtocol ||
     evidence.source?.revisionId !==
       `source-snapshot:sha256:${fixture.sha256}`
   ) {
@@ -141,6 +145,7 @@ export function validateBimSemanticExplorerCompatibility(
         "bim-semantic-explorer-browser-synthetic-2026-08-04.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
+    manifest.policy?.claimDeferredSemanticDetails !== true ||
     manifest.policy?.claimPublicScale !== false ||
     manifest.policy?.claimFullPropertyValues !== false ||
     manifest.policy?.claimAdvancedRelationGraph !== false ||
@@ -159,6 +164,7 @@ export function validateBimSemanticExplorerCompatibility(
     limits?.searchPageSize !== 1 ||
     limits?.treePageSize !== 2 ||
     limits?.maximumSourceReadBytes !== 1_024 ||
+    limits?.maximumDetailReadBytes !== 440 ||
     limits?.maximumSemanticQueries !== 20
   ) {
     throw new Error(
@@ -227,6 +233,7 @@ export function validateBimSemanticExplorerCompatibility(
   if (
     !panels?.propertySets?.includes("Pset_WallCommon") ||
     !panels.quantities?.includes("GrossVolume") ||
+    panels.quantityValues?.GrossVolume !== 2.4 ||
     !panels.materials?.includes("Concrete") ||
     !panels.classifications?.includes("BE-WALL") ||
     !panels.limitations?.includes(
@@ -277,7 +284,12 @@ export function validateBimSemanticExplorerCompatibility(
     !Object.values(evidence.browser?.roles ?? {})
       .every((value) => value === true) ||
     queryCount > limits.maximumSemanticQueries ||
-    evidence.beforeCleanup?.session?.rangeBytes !== 996
+    evidence.beforeCleanup?.session?.detailReads !== 1 ||
+    evidence.beforeCleanup?.session?.rangeReads !== 9 ||
+    evidence.beforeCleanup?.session?.rangeBytes !== 1_200 ||
+    evidence.beforeCleanup.session.rangeBytes >
+      limits.maximumSourceReadBytes +
+        limits.maximumDetailReadBytes
   ) {
     throw new Error(
       "BIM semantic explorer Browser bounds are invalid",

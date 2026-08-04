@@ -171,7 +171,10 @@ export async function prepareSemanticExplorerProbe() {
       snapshot,
     },
     ranges: new Map(
-      artifact.ranges.map((range) => [
+      [
+        ...artifact.ranges,
+        ...artifact.detailRanges,
+      ].map((range) => [
         range.rangeId,
         Buffer.from(range.bytes),
       ]),
@@ -187,11 +190,11 @@ export function createSemanticExplorerProbeServer({
     JSON.stringify(input),
     "utf8",
   );
-  const handles = new Map(
-    input.snapshot.layers
-      .flatMap((layer) => layer.rangeHandles)
-      .map((handle) => [handle.handleId, handle]),
-  );
+  const handles = new Map([
+    ...input.snapshot.layers
+      .flatMap((layer) => layer.rangeHandles),
+    ...input.snapshot.details.rangeHandles,
+  ].map((handle) => [handle.handleId, handle]));
   const state = {
     rangeBytes: 0,
     rangeRequests: 0,
@@ -301,7 +304,7 @@ export function createSemanticExplorerProbeServer({
       }
       response.writeHead(206, {
         ...baseHeaders(
-          "application/vnd.bim-explorer.geometry-range.v1",
+          handle.mediaType,
           body.byteLength,
         ),
         "Accept-Ranges": "bytes",

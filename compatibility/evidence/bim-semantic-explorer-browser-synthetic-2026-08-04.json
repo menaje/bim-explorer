@@ -10,6 +10,7 @@
   },
   "source": {
     "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "protocolVersion": "bim-explorer-bim-source/0.2",
     "revisionId": "source-snapshot:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
     "snapshotId": "snapshot:bim-source:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0"
   },
@@ -27,7 +28,7 @@
         "snapshotId": "snapshot:bim-source:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0",
         "layerId": "layer:bim-source:base-3d"
       },
-      "viewRevision": 1,
+      "viewRevision": 0,
       "coordinates": {
         "x": 320,
         "y": 120,
@@ -47,7 +48,7 @@
       ],
       "backend": {
         "backendId": "webgl2",
-        "frameId": "webgl2-pick:1:4",
+        "frameId": "webgl2-pick:1:2",
         "actualGpu": true,
         "context": "webgl2",
         "hit": true,
@@ -69,7 +70,7 @@
         "drawCalls": 2,
         "temporaryTargetBytes": 1382400,
         "temporaryReleased": true,
-        "frameMs": 15.899999976158142,
+        "frameMs": 14.899999976158142,
         "glError": 0
       }
     }
@@ -117,6 +118,7 @@
         "complex-material-graph:opaque",
         "connection-relation-index:opaque",
         "georeferencing-map-conversion:opaque",
+        "property-value-payload:opaque",
         "property-value:lossy"
       ],
       "materials": [
@@ -130,7 +132,12 @@
         "GrossSideArea",
         "GrossVolume",
         "Length"
-      ]
+      ],
+      "quantityValues": {
+        "GrossSideArea": 12,
+        "GrossVolume": 2.4,
+        "Length": 4
+      }
     },
     "pick": {
       "receiptExpressId": 40,
@@ -194,7 +201,7 @@
     "backend": {
       "disposed": false,
       "mounts": 1,
-      "picks": 4,
+      "picks": 2,
       "releasedBytes": 0,
       "unmounts": 0,
       "contextInitialized": true,
@@ -205,7 +212,7 @@
       "activeHandleId": "webgl2-mount:1",
       "activeBytes": 1120,
       "residentRanges": 1,
-      "frames": 3,
+      "frames": 2,
       "cameraProjection": "perspective",
       "clippingPlanes": 0,
       "hiddenRenderIds": 0,
@@ -222,9 +229,10 @@
     },
     "session": {
       "disposed": false,
-      "rangeBytes": 996,
-      "rangeReads": 8,
-      "relationQueries": 7,
+      "detailReads": 1,
+      "rangeBytes": 1200,
+      "rangeReads": 9,
+      "relationQueries": 6,
       "searchQueries": 3,
       "treeQueries": 6
     }
@@ -233,7 +241,7 @@
     "backend": {
       "disposed": true,
       "mounts": 1,
-      "picks": 4,
+      "picks": 2,
       "releasedBytes": 1120,
       "unmounts": 1,
       "contextInitialized": true,
@@ -255,9 +263,10 @@
     "rendererDisposed": true,
     "session": {
       "disposed": true,
-      "rangeBytes": 996,
-      "rangeReads": 8,
-      "relationQueries": 7,
+      "detailReads": 1,
+      "rangeBytes": 1200,
+      "rangeReads": 9,
+      "relationQueries": 6,
       "searchQueries": 3,
       "treeQueries": 6
     },
@@ -267,6 +276,7 @@
     "accessibleRoles": true,
     "actualBrowser": true,
     "actualRendererPick": true,
+    "boundedLazyDetails": true,
     "boundedDom": true,
     "boundedSearch": true,
     "decompositionAndContainment": true,

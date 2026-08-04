@@ -20,7 +20,7 @@ const BUDGET = Object.freeze({
   maximumProcessRssBytes: 805_306_368,
 });
 const EXPECTED_CACHE_FINGERPRINT =
-  "sha256:b206cc72721dc7e4fd005790dc61d0c49075c5a92975e69ec0b4e1f42da86427";
+  "sha256:3bb5d81e5995f6da2a84f7000f7a4867d64fa30d79f58298ae805664367397a7";
 const EXPECTED_RANGES = Object.freeze([
   Object.freeze({
     handleId: "range:ifc:geometry:0",
@@ -42,6 +42,50 @@ const EXPECTED_RANGES = Object.freeze([
     maximumRequestBytes: 902_676,
     sha256:
       "eb15061efde600623024c6fa9c5b4c457a412dd69f77cd381f270308008748f2",
+  }),
+]);
+const EXPECTED_DETAIL_RANGES = Object.freeze([
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:0",
+    byteLength: 1_042_933,
+    maximumRequestBytes: 1_042_933,
+    sha256:
+      "0b27e11f658ff1339648b662db628564cc214843b82fed28d2df0ba1609b8a8f",
+  }),
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:1",
+    byteLength: 1_047_997,
+    maximumRequestBytes: 1_047_997,
+    sha256:
+      "2a0f33eea98664ded937de4de71a9aec7505e79edbe3f07b551614c3735b0473",
+  }),
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:2",
+    byteLength: 1_047_080,
+    maximumRequestBytes: 1_047_080,
+    sha256:
+      "65b34541b637514eaea7f8be30c3018fc5618cf7367b984547ef0cb1cac51215",
+  }),
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:3",
+    byteLength: 1_047_156,
+    maximumRequestBytes: 1_047_156,
+    sha256:
+      "91abff070519a0d1505d554da843fc21c0494b76c855cd6832fa6c95685498e9",
+  }),
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:4",
+    byteLength: 1_047_657,
+    maximumRequestBytes: 1_047_657,
+    sha256:
+      "6858ef8802f7696702486473d0f6a6564be4591da897b3f33304458a2bdeb814",
+  }),
+  Object.freeze({
+    handleId: "range:ifc:semantic-detail:5",
+    byteLength: 257_307,
+    maximumRequestBytes: 257_307,
+    sha256:
+      "09cf825dba0cb8c9d189ab50373930484a9d1d14fa7ba4dad8d5bd9d8813356b",
   }),
 ]);
 
@@ -109,6 +153,9 @@ function assertReport(result, manifest) {
     resources?.limits?.maximumGeometryBytes !== 268_435_456 ||
     resources?.limits?.maximumRangeBytes !== 4_194_304 ||
     resources?.limits?.maximumRanges !== 4_096 ||
+    resources?.limits?.maximumDetailBytes !== 67_108_864 ||
+    resources?.limits?.maximumDetailRangeBytes !== 1_048_576 ||
+    resources?.limits?.maximumDetailRanges !== 4_096 ||
     resources?.limits?.maximumRelationEntries !== 500_000 ||
     resources?.limits?.maximumTreeNodes !== 200_000 ||
     resources?.limits?.maximumMetadataBytes !== 67_108_864 ||
@@ -116,7 +163,11 @@ function assertReport(result, manifest) {
     resources?.observed?.geometryBytes !== 9_290_696 ||
     resources?.observed?.ranges !== 3 ||
     resources?.observed?.largestRangeBytes !== 4_194_152 ||
-    resources?.observed?.metadataBytes !== 10_007_872 ||
+    resources?.observed?.detailBytes !== 5_490_130 ||
+    resources?.observed?.detailRanges !== 6 ||
+    resources?.observed?.largestDetailRangeBytes !==
+      1_047_997 ||
+    resources?.observed?.metadataBytes !== 9_266_930 ||
     resources?.observed?.products !==
       manifest.expected.geometryProducts ||
     resources?.observed?.relationEntries !== 30_761 ||
@@ -127,21 +178,56 @@ function assertReport(result, manifest) {
   const ranges = report.snapshot?.ranges;
   if (
     JSON.stringify(ranges) !== JSON.stringify(EXPECTED_RANGES) ||
+    JSON.stringify(report.snapshot?.detailRanges) !==
+      JSON.stringify(EXPECTED_DETAIL_RANGES) ||
     JSON.stringify(report.snapshot?.loadPlan) !== JSON.stringify({
       firstRangeIds: ["range:ifc:geometry:0"],
       deferredRangeIds: [
         "range:ifc:geometry:1",
         "range:ifc:geometry:2",
       ],
+      deferredDetailRangeIds: EXPECTED_DETAIL_RANGES.map(
+        (range) => range.handleId,
+      ),
     }) ||
     report.firstRangeRead?.handleId !== ranges[0].handleId ||
     report.firstRangeRead?.bytesRead !== ranges[0].byteLength ||
     report.firstRangeRead?.reads !== 4 ||
     report.firstRangeRead?.digestValidated !== true ||
     report.firstRangeRead?.deferredRangesUnread !== true ||
+    report.firstRangeRead?.deferredDetailRangesUnread !== true ||
     report.firstRangeRead?.remainingReadBytes !== 5_096_828
   ) {
     throw new Error("public source artifact range plan mismatch");
+  }
+  if (
+    report.detailRangeRead?.handleId !==
+      EXPECTED_DETAIL_RANGES[0].handleId ||
+    report.detailRangeRead?.rangeByteLength !==
+      EXPECTED_DETAIL_RANGES[0].byteLength ||
+    report.detailRangeRead?.rangeSha256 !==
+      EXPECTED_DETAIL_RANGES[0].sha256 ||
+    report.detailRangeRead?.maximumRequestBytes !==
+      EXPECTED_DETAIL_RANGES[0].maximumRequestBytes ||
+    report.detailRangeRead?.receipt?.handleId !==
+      EXPECTED_DETAIL_RANGES[0].handleId ||
+    report.detailRangeRead?.receipt?.offset !== 24 ||
+    report.detailRangeRead?.receipt?.byteLength !== 2_575 ||
+    report.detailRangeRead?.reads !== 1 ||
+    report.detailRangeRead?.bytesRead !== 2_575 ||
+    report.detailRangeRead?.remainingReadBytes !== 5_487_555 ||
+    report.detailRangeRead?.schema !==
+      "bim-explorer-bim-entity-details/0.1" ||
+    report.detailRangeRead?.expressId !== 224 ||
+    report.detailRangeRead?.globalId !==
+      "1nOs6Hg0v9fR$sLR1LjIyX" ||
+    report.detailRangeRead?.quantityCount !== 63 ||
+    report.detailRangeRead?.materialCount !== 0 ||
+    report.detailRangeRead?.classificationCount !== 0
+  ) {
+    throw new Error(
+      "public source artifact semantic detail plan mismatch",
+    );
   }
   if (
     report.identity?.treeEntityMatch !== true ||
@@ -218,6 +304,7 @@ function deterministicProjection(report) {
     fixture: report.fixture,
     snapshot: report.snapshot,
     firstRangeRead: report.firstRangeRead,
+    detailRangeRead: report.detailRangeRead,
     identity: report.identity,
     nonRenderable: report.nonRenderable,
     failClosed: report.failClosed,
@@ -308,6 +395,8 @@ async function qualify() {
       repeatedSnapshotIdentity: true,
       boundedMultiRangeDirectory: true,
       firstRangeReadWithoutDeferredRanges: true,
+      firstRangeReadWithoutSemanticDetails: true,
+      boundedSemanticDetailRead: true,
       treePropertyRenderPickIdentity: true,
       nonRenderableProductDiagnostic: true,
       staleRevisionRejected: true,
@@ -318,8 +407,9 @@ async function qualify() {
       publicRepresentativeSourceArtifact:
         "passed-performance-only",
       multiRangeGeometryDirectory: "passed",
-      firstRenderedFrame: "blocked",
-      deferredPropertyRanges: "blocked",
+      firstRenderedFrame: "passed-by-renderer-evidence",
+      deferredSemanticDetailRanges: "passed",
+      propertyValuePayload: "blocked",
       viewerCoreConformance: "blocked-unresolved-upstream",
       draftProfileAdmission: "blocked",
       productionClaims: false,

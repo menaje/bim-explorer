@@ -30,7 +30,7 @@ test("BIM semantic explorer pins Browser semantic and 3D selection evidence", as
     fixture: "synthetic-semantic-ifc4",
     treeRows: 7,
     searchResults: 2,
-    passedGates: 15,
+    passedGates: 16,
     heldGates: 3,
   });
 });
@@ -75,6 +75,20 @@ test("semantic explorer evidence requires keyboard navigation", async () => {
     () => validateBimSemanticExplorerCompatibility(
       manifest,
       incomplete,
+    ),
+    /Browser bounds are invalid/u,
+  );
+});
+
+test("semantic explorer evidence pins one bounded lazy detail read", async () => {
+  const { evidence, manifest } = await fixtures();
+  const eager = structuredClone(evidence);
+  eager.beforeCleanup.session.detailReads = 2;
+
+  assert.throws(
+    () => validateBimSemanticExplorerCompatibility(
+      manifest,
+      eager,
     ),
     /Browser bounds are invalid/u,
   );

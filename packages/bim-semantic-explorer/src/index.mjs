@@ -7,6 +7,8 @@ const QUERY_RESULT_SCHEMA =
   "bim-explorer-bim-source-semantic-query-result/0.1";
 const PICK_RECEIPT_SCHEMA =
   "bim-explorer-bim-renderer-3d-pick-receipt/0.1";
+const ENTITY_DETAILS_SCHEMA =
+  "bim-explorer-bim-entity-details/0.1";
 const DEFAULT_LIMITS = Object.freeze({
   maximumDomRows: 64,
   maximumLoadedTreeItems: 2_000,
@@ -107,6 +109,14 @@ function validateSession(session) {
         `semantic explorer session.${method} must be a function`,
       );
     }
+  }
+  if (
+    session.getEntityDetails !== undefined &&
+    typeof session.getEntityDetails !== "function"
+  ) {
+    throw new TypeError(
+      "semantic explorer session.getEntityDetails must be a function",
+    );
   }
   return session;
 }
@@ -652,6 +662,33 @@ export class BimSemanticExplorer {
         throw new RangeError(
           "semantic entity is inconsistent with the snapshot tree",
         );
+      }
+      if (
+        typeof this.#session.getEntityDetails === "function"
+      ) {
+        const details =
+          await this.#session.getEntityDetails(
+            this.#request({ expressId }),
+          );
+        if (
+          details?.schema !== ENTITY_DETAILS_SCHEMA ||
+          details.expressId !== entity.expressId ||
+          details.globalId !== entity.globalId ||
+          Object.entries(this.#context).some(
+            ([field, value]) => details[field] !== value,
+          )
+        ) {
+          throw new RangeError(
+            "semantic entity details are outside the snapshot",
+          );
+        }
+        entity = {
+          ...structuredClone(entity),
+          semantics: {
+            ...structuredClone(entity.semantics),
+            ...structuredClone(details.semantics),
+          },
+        };
       }
       identity = identityFromNode(node);
     } else if (node !== undefined) {

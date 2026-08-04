@@ -10,7 +10,9 @@ import {
 } from "./sha256.mjs";
 
 export const BIM_SOURCE_PROTOCOL_VERSION =
-  "bim-explorer-bim-source/0.1";
+  "bim-explorer-bim-source/0.2";
+export const BIM_ENTITY_DETAILS_SCHEMA =
+  "bim-explorer-bim-entity-details/0.1";
 
 const SHA256 = /^[0-9a-f]{64}$/u;
 const IFC_GLOBAL_ID = /^[0-3][0-9A-Za-z_$]{21}$/u;
@@ -18,6 +20,8 @@ const DOCUMENT_ID = /^document:[a-z0-9][a-z0-9:._-]*$/u;
 const RANGE_ID = /^range:[a-z0-9][a-z0-9:._-]*$/u;
 const GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
+const SEMANTIC_DETAIL_MEDIA_TYPE =
+  "application/vnd.bim-explorer.semantic-detail-range.v1";
 
 function plainRecord(value, label) {
   if (
@@ -218,6 +222,151 @@ function parseGeometryRange(bytes, label) {
   return records;
 }
 
+function validateSemanticDetails(value, label) {
+  const details = plainRecord(value, label);
+  const quantities = plainRecord(
+    details.quantities,
+    `${label}.quantities`,
+  );
+  for (const [name, measurement] of Object.entries(quantities)) {
+    nonEmptyString(name, `${label}.quantities name`);
+    if (
+      typeof measurement !== "number" ||
+      !Number.isFinite(measurement)
+    ) {
+      throw new TypeError(
+        `${label}.quantities.${name} must be finite`,
+      );
+    }
+  }
+  if (
+    !Array.isArray(details.materials) ||
+    !details.materials.every((name) =>
+      typeof name === "string" && name.length > 0)
+  ) {
+    throw new TypeError(
+      `${label}.materials must be a string list`,
+    );
+  }
+  if (!Array.isArray(details.classifications)) {
+    throw new TypeError(
+      `${label}.classifications must be a list`,
+    );
+  }
+  const classifications = details.classifications.map(
+    (value, index) => {
+      const classification = plainRecord(
+        value,
+        `${label}.classifications[${index}]`,
+      );
+      for (const field of [
+        "identification",
+        "name",
+        "source",
+      ]) {
+        nonEmptyString(
+          classification[field],
+          `${label}.classifications[${index}].${field}`,
+        );
+      }
+      return structuredClone(classification);
+    },
+  );
+  return {
+    quantities: structuredClone(quantities),
+    materials: [...details.materials],
+    classifications,
+  };
+}
+
+function parseSemanticDetailRange(bytes, label) {
+  const headerBytes = 16;
+  const recordHeaderBytes = 8;
+  if (bytes.byteLength < headerBytes) {
+    throw new RangeError(
+      `${label} semantic detail header is truncated`,
+    );
+  }
+  if (
+    new TextDecoder().decode(bytes.slice(0, 8)) !==
+      "BEXDET01"
+  ) {
+    throw new Error(
+      `${label} semantic detail magic is invalid`,
+    );
+  }
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength,
+  );
+  if (view.getUint32(8, true) !== 1) {
+    throw new Error(
+      `${label} semantic detail version is unsupported`,
+    );
+  }
+  const recordCount = view.getUint32(12, true);
+  if (recordCount === 0) {
+    throw new Error(
+      `${label} semantic detail records must be non-empty`,
+    );
+  }
+  const records = new Map();
+  const decoder = new TextDecoder("utf-8", {
+    fatal: true,
+  });
+  let offset = headerBytes;
+  for (let index = 0; index < recordCount; index += 1) {
+    const recordLabel =
+      `${label} semantic detail record ${index}`;
+    if (offset + recordHeaderBytes > bytes.byteLength) {
+      throw new RangeError(
+        `${recordLabel} header is truncated`,
+      );
+    }
+    const expressId = view.getUint32(offset, true);
+    const byteLength = view.getUint32(offset + 4, true);
+    offset += recordHeaderBytes;
+    if (
+      expressId === 0 ||
+      byteLength === 0 ||
+      offset + byteLength > bytes.byteLength
+    ) {
+      throw new RangeError(
+        `${recordLabel} payload is malformed`,
+      );
+    }
+    let value;
+    try {
+      value = JSON.parse(
+        decoder.decode(bytes.slice(offset, offset + byteLength)),
+      );
+    } catch {
+      throw new Error(
+        `${recordLabel} JSON is malformed`,
+      );
+    }
+    validateSemanticDetails(value, recordLabel);
+    if (records.has(expressId)) {
+      throw new Error(
+        `${label} semantic detail Express IDs must be unique`,
+      );
+    }
+    records.set(expressId, {
+      expressId,
+      offset,
+      byteLength,
+    });
+    offset += byteLength;
+  }
+  if (offset !== bytes.byteLength) {
+    throw new Error(
+      `${label} has unindexed semantic detail bytes`,
+    );
+  }
+  return records;
+}
+
 function validateSource(value) {
   const source = plainRecord(value, "artifact.source");
   if (!DOCUMENT_ID.test(source.documentId ?? "")) {
@@ -294,6 +443,73 @@ function validateRange(value, index) {
   };
 }
 
+function validateDetailRange(value, index) {
+  const label = `artifact.detailRanges[${index}]`;
+  const range = plainRecord(value, label);
+  if (!RANGE_ID.test(range.rangeId ?? "")) {
+    throw new TypeError(`${label}.rangeId is invalid`);
+  }
+  if (range.mediaType !== SEMANTIC_DETAIL_MEDIA_TYPE) {
+    throw new Error(`${label}.mediaType is unsupported`);
+  }
+  if (
+    !(range.bytes instanceof Uint8Array) ||
+    range.bytes.byteLength === 0
+  ) {
+    throw new TypeError(
+      `${label}.bytes must be a non-empty Uint8Array`,
+    );
+  }
+  const bytes = Uint8Array.from(range.bytes);
+  const sha256 = digest(bytes);
+  if (range.sha256 !== sha256) {
+    throw new Error(
+      `${label} digest does not match its bytes`,
+    );
+  }
+  return {
+    rangeId: range.rangeId,
+    mediaType: range.mediaType,
+    sha256,
+    bytes,
+    records: parseSemanticDetailRange(bytes, label),
+  };
+}
+
+function validateSemanticSummary(value, label) {
+  const semantics = plainRecord(value, label);
+  for (const field of [
+    "propertySets",
+    "quantityNames",
+    "materialNames",
+    "classificationNames",
+  ]) {
+    if (
+      !Array.isArray(semantics[field]) ||
+      !semantics[field].every((item) =>
+        typeof item === "string" && item.length > 0)
+    ) {
+      throw new TypeError(
+        `${label}.${field} must be a string list`,
+      );
+    }
+  }
+  for (const field of ["container", "type"]) {
+    if (
+      semantics[field] !== null &&
+      (
+        typeof semantics[field] !== "object" ||
+        Array.isArray(semantics[field])
+      )
+    ) {
+      throw new TypeError(
+        `${label}.${field} must be an object or null`,
+      );
+    }
+  }
+  return structuredClone(semantics);
+}
+
 function validatePrimitive(value, label, rangeById) {
   const primitive = plainRecord(value, label);
   positiveInteger(
@@ -346,7 +562,12 @@ function validatePrimitive(value, label, rangeById) {
   };
 }
 
-function validateEntity(value, index, rangeById) {
+function validateEntity(
+  value,
+  index,
+  rangeById,
+  detailRangeById,
+) {
   const label = `artifact.entities[${index}]`;
   const entity = plainRecord(value, label);
   positiveInteger(entity.expressId, `${label}.expressId`);
@@ -413,6 +634,36 @@ function validateEntity(value, index, rangeById) {
   const bounds = entity.renderable
     ? boundsValue(entity.bounds, `${label}.bounds`)
     : null;
+  const detailSlice = plainRecord(
+    entity.detailSlice,
+    `${label}.detailSlice`,
+  );
+  if (!detailRangeById.has(detailSlice.rangeId)) {
+    throw new RangeError(
+      `${label}.detailSlice references an unknown range`,
+    );
+  }
+  nonNegativeInteger(
+    detailSlice.offset,
+    `${label}.detailSlice.offset`,
+  );
+  positiveInteger(
+    detailSlice.byteLength,
+    `${label}.detailSlice.byteLength`,
+  );
+  const detailRecord = detailRangeById
+    .get(detailSlice.rangeId)
+    .records
+    .get(entity.expressId);
+  if (
+    detailRecord === undefined ||
+    detailRecord.offset !== detailSlice.offset ||
+    detailRecord.byteLength !== detailSlice.byteLength
+  ) {
+    throw new Error(
+      `${label}.detailSlice does not match its semantic record`,
+    );
+  }
   return {
     expressId: entity.expressId,
     globalId: entity.globalId,
@@ -424,9 +675,11 @@ function validateEntity(value, index, rangeById) {
     bounds,
     primitives,
     diagnostics,
-    semantics: structuredClone(
-      plainRecord(entity.semantics, `${label}.semantics`),
+    semantics: validateSemanticSummary(
+      entity.semantics,
+      `${label}.semantics`,
     ),
+    detailSlice: structuredClone(detailSlice),
   };
 }
 
@@ -524,6 +777,7 @@ function validateResources(
   value,
   source,
   ranges,
+  detailRanges,
   entities,
   tree,
 ) {
@@ -540,6 +794,9 @@ function validateResources(
     "maximumGeometryBytes",
     "maximumRangeBytes",
     "maximumRanges",
+    "maximumDetailBytes",
+    "maximumDetailRangeBytes",
+    "maximumDetailRanges",
     "maximumRelationEntries",
     "maximumTreeNodes",
     "maximumMetadataBytes",
@@ -549,6 +806,9 @@ function validateResources(
     "geometryBytes",
     "ranges",
     "largestRangeBytes",
+    "detailBytes",
+    "detailRanges",
+    "largestDetailRangeBytes",
     "metadataBytes",
     "products",
     "relationEntries",
@@ -570,12 +830,21 @@ function validateResources(
   const metadataBytes = new TextEncoder().encode(
     JSON.stringify({ tree, entities }),
   ).byteLength;
+  const totalDetailBytes = detailRanges.reduce(
+    (sum, range) => sum + range.bytes.byteLength,
+    0,
+  );
   if (
     observed.sourceBytes !== source.byteLength ||
     observed.geometryBytes !== totalGeometryBytes ||
     observed.ranges !== ranges.length ||
     observed.largestRangeBytes !== Math.max(
       ...ranges.map((range) => range.bytes.byteLength),
+    ) ||
+    observed.detailBytes !== totalDetailBytes ||
+    observed.detailRanges !== detailRanges.length ||
+    observed.largestDetailRangeBytes !== Math.max(
+      ...detailRanges.map((range) => range.bytes.byteLength),
     ) ||
     observed.metadataBytes !== metadataBytes ||
     observed.products !== entities.length ||
@@ -588,6 +857,9 @@ function validateResources(
     ["geometryBytes", "maximumGeometryBytes"],
     ["largestRangeBytes", "maximumRangeBytes"],
     ["ranges", "maximumRanges"],
+    ["detailBytes", "maximumDetailBytes"],
+    ["largestDetailRangeBytes", "maximumDetailRangeBytes"],
+    ["detailRanges", "maximumDetailRanges"],
     ["metadataBytes", "maximumMetadataBytes"],
     ["products", "maximumProducts"],
     ["relationEntries", "maximumRelationEntries"],
@@ -645,11 +917,49 @@ function validateArtifact(value) {
   if (rangeById.size !== ranges.length) {
     throw new Error("artifact range IDs must be unique");
   }
+  if (
+    !Array.isArray(artifact.detailRanges) ||
+    artifact.detailRanges.length === 0
+  ) {
+    throw new TypeError(
+      "artifact.detailRanges must be non-empty",
+    );
+  }
+  const detailRanges = artifact.detailRanges.map(
+    validateDetailRange,
+  );
+  const detailRangeById = new Map(
+    detailRanges.map((range) => [range.rangeId, range]),
+  );
+  if (
+    detailRangeById.size !== detailRanges.length ||
+    detailRanges.some((range) => rangeById.has(range.rangeId))
+  ) {
+    throw new Error("artifact range IDs must be globally unique");
+  }
   if (!Array.isArray(artifact.entities) || artifact.entities.length === 0) {
     throw new TypeError("artifact.entities must be non-empty");
   }
   const entities = artifact.entities.map((entity, index) =>
-    validateEntity(entity, index, rangeById));
+    validateEntity(
+      entity,
+      index,
+      rangeById,
+      detailRangeById,
+    ));
+  const detailExpressIds = new Set(
+    detailRanges.flatMap((range) =>
+      [...range.records.keys()]),
+  );
+  if (
+    detailExpressIds.size !== entities.length ||
+    entities.some((entity) =>
+      !detailExpressIds.has(entity.expressId))
+  ) {
+    throw new Error(
+      "artifact semantic details do not match entities",
+    );
+  }
   for (const [field, values] of [
     ["Express ID", entities.map((entity) => entity.expressId)],
     ["GlobalId", entities.map((entity) => entity.globalId)],
@@ -739,6 +1049,7 @@ function validateArtifact(value) {
     artifact.resources,
     source,
     ranges,
+    detailRanges,
     entities,
     tree,
   );
@@ -753,6 +1064,7 @@ function validateArtifact(value) {
     resources,
     entities,
     ranges,
+    detailRanges,
   };
 }
 
@@ -768,6 +1080,12 @@ function projection(artifact) {
     resources: artifact.resources,
     entities: artifact.entities,
     ranges: artifact.ranges.map((range) => ({
+      rangeId: range.rangeId,
+      mediaType: range.mediaType,
+      byteLength: range.bytes.byteLength,
+      sha256: range.sha256,
+    })),
+    detailRanges: artifact.detailRanges.map((range) => ({
       rangeId: range.rangeId,
       mediaType: range.mediaType,
       byteLength: range.bytes.byteLength,
@@ -790,6 +1108,8 @@ function contextFields(source) {
 export class BimModelSource {
   #artifact;
   #rangeById;
+  #detailRangeById;
+  #detailByExpressId = new Map();
   #entityByExpressId;
   #entityByGlobalId;
   #entityByRenderId;
@@ -803,19 +1123,38 @@ export class BimModelSource {
   #rangeBytesRead = 0;
   #entityReads = 0;
   #pickResolutions = 0;
+  #detailReads = 0;
+  #detailBytesRead = 0;
 
   constructor(artifact, {
     maximumRequestBytes = 1_048_576,
+    maximumDetailRequestBytes = 1_048_576,
+    detailReadBudgetBytes,
     sessionReadBudgetBytes,
   } = {}) {
     positiveInteger(maximumRequestBytes, "maximumRequestBytes");
+    positiveInteger(
+      maximumDetailRequestBytes,
+      "maximumDetailRequestBytes",
+    );
     this.#artifact = validateArtifact(artifact);
     const totalRangeBytes = this.#artifact.ranges.reduce(
       (sum, range) => sum + range.bytes.byteLength,
       0,
     );
+    const totalDetailRangeBytes =
+      this.#artifact.detailRanges.reduce(
+        (sum, range) => sum + range.bytes.byteLength,
+        0,
+      );
     const readBudget = sessionReadBudgetBytes ?? totalRangeBytes;
+    const detailBudget =
+      detailReadBudgetBytes ?? totalDetailRangeBytes;
     positiveInteger(readBudget, "sessionReadBudgetBytes");
+    positiveInteger(
+      detailBudget,
+      "detailReadBudgetBytes",
+    );
     const sourceDigest = this.#artifact.source.sha256;
     this.sourceFingerprint = `sha256:${sourceDigest}`;
     this.revisionId = `source-snapshot:${this.sourceFingerprint}`;
@@ -834,6 +1173,11 @@ export class BimModelSource {
 
     this.#rangeById = new Map(
       this.#artifact.ranges.map((range) => [range.rangeId, range]),
+    );
+    this.#detailRangeById = new Map(
+      this.#artifact.detailRanges.map(
+        (range) => [range.rangeId, range],
+      ),
     );
     const idPrefix = sourceDigest.slice(0, 16);
     const entities = this.#artifact.entities.map((entity) =>
@@ -901,6 +1245,21 @@ export class BimModelSource {
         expiresAt: null,
         disposeWithSession: true,
       }));
+    const detailRangeHandles =
+      this.#artifact.detailRanges.map((range) =>
+        deepFreeze({
+          ...baseContext,
+          handleId: range.rangeId,
+          mediaType: range.mediaType,
+          byteLength: range.bytes.byteLength,
+          maximumRequestBytes: Math.min(
+            maximumDetailRequestBytes,
+            range.bytes.byteLength,
+          ),
+          sha256: range.sha256,
+          expiresAt: null,
+          disposeWithSession: true,
+        }));
     const descriptor = {
       documentId: this.#artifact.source.documentId,
       fingerprint: this.sourceFingerprint,
@@ -932,6 +1291,10 @@ export class BimModelSource {
           rangeHandles,
         },
       ],
+      details: {
+        mediaType: SEMANTIC_DETAIL_MEDIA_TYPE,
+        rangeHandles: detailRangeHandles,
+      },
       loadPlan: {
         firstFrameRangeIds: rangeHandles
           .slice(0, 1)
@@ -939,11 +1302,17 @@ export class BimModelSource {
         deferredRangeIds: rangeHandles
           .slice(1)
           .map((handle) => handle.handleId),
+        deferredDetailRangeIds: detailRangeHandles
+          .map((handle) => handle.handleId),
       },
     });
     this.maximumRequestBytes = maximumRequestBytes;
+    this.maximumDetailRequestBytes =
+      maximumDetailRequestBytes;
     this.sessionReadBudgetBytes = readBudget;
+    this.detailReadBudgetBytes = detailBudget;
     this.totalRangeBytes = totalRangeBytes;
+    this.totalDetailRangeBytes = totalDetailRangeBytes;
   }
 
   get state() {
@@ -959,6 +1328,13 @@ export class BimModelSource {
       ),
       entityReads: this.#entityReads,
       pickResolutions: this.#pickResolutions,
+      detailReads: this.#detailReads,
+      detailBytesRead: this.#detailBytesRead,
+      remainingDetailReadBytes: Math.max(
+        0,
+        this.detailReadBudgetBytes -
+          this.#detailBytesRead,
+      ),
     });
   }
 
@@ -1007,12 +1383,15 @@ export class BimModelSource {
         "semantic-index",
         "binary-range-read",
         "entity-resolve",
+        "deferred-entity-details",
         "pick-resolve",
         "bounded-tree-query",
         "bounded-semantic-search",
         "bounded-relation-query",
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
+      detailResourceBudgetBytes:
+        this.detailReadBudgetBytes,
     });
     return {
       descriptor,
@@ -1089,6 +1468,86 @@ export class BimModelSource {
         this.#entityReads += 1;
         return entity;
       },
+      getEntityDetails: async (
+        request,
+        { signal: detailSignal } = {},
+      ) => {
+        this.#assertSessionOpen();
+        aborted(detailSignal);
+        this.#assertContext(request, "entity detail request");
+        if (
+          !Number.isSafeInteger(request?.expressId) ||
+          request.expressId <= 0
+        ) {
+          throw new TypeError(
+            "entity detail request must contain an Express ID",
+          );
+        }
+        const entity = this.#entityByExpressId.get(
+          request.expressId,
+        );
+        if (entity === undefined) {
+          throw new RangeError(
+            "entity detail identity is outside the snapshot",
+          );
+        }
+        const cached = this.#detailByExpressId.get(
+          entity.expressId,
+        );
+        if (cached !== undefined) {
+          return cached;
+        }
+        const slice = entity.detailSlice;
+        const range = this.#detailRangeById.get(
+          slice.rangeId,
+        );
+        if (
+          range === undefined ||
+          slice.byteLength > this.maximumDetailRequestBytes ||
+          this.#detailBytesRead + slice.byteLength >
+            this.detailReadBudgetBytes
+        ) {
+          throw new RangeError(
+            "entity detail range exceeds its read budget",
+          );
+        }
+        let semantics;
+        try {
+          semantics = validateSemanticDetails(
+            JSON.parse(
+              new TextDecoder("utf-8", {
+                fatal: true,
+              }).decode(
+                range.bytes.slice(
+                  slice.offset,
+                  slice.offset + slice.byteLength,
+                ),
+              ),
+            ),
+            "entity semantic details",
+          );
+        } catch {
+          throw new Error(
+            "entity semantic detail payload is malformed",
+          );
+        }
+        this.#detailReads += 1;
+        this.#detailBytesRead += slice.byteLength;
+        const result = deepFreeze({
+          schema: BIM_ENTITY_DETAILS_SCHEMA,
+          ...contextFields(this),
+          expressId: entity.expressId,
+          globalId: entity.globalId,
+          semantics,
+          receipt: {
+            handleId: range.rangeId,
+            offset: slice.offset,
+            byteLength: slice.byteLength,
+          },
+        });
+        this.#detailByExpressId.set(entity.expressId, result);
+        return result;
+      },
       resolvePick: async (
         request,
         { signal: pickSignal } = {},
@@ -1158,7 +1617,12 @@ export class BimModelSource {
     for (const range of this.#rangeById.values()) {
       range.bytes.fill(0);
     }
+    for (const range of this.#detailRangeById.values()) {
+      range.bytes.fill(0);
+    }
     this.#rangeById.clear();
+    this.#detailRangeById.clear();
+    this.#detailByExpressId.clear();
     this.#entityByExpressId.clear();
     this.#entityByGlobalId.clear();
     this.#entityByRenderId.clear();

@@ -22,6 +22,7 @@ const PASSED_GATES = [
   "noAccountUploadTelemetry",
   "spatialIndependent",
   "publicRepresentativeProductScale",
+  "deferredSemanticDetailDiagnostics",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -138,7 +139,7 @@ export function validateBimProductShellCompatibility(
     contracts?.sourceWorkerResponse !==
       "bim-explorer-product-source-worker-response/0.1" ||
     contracts?.sourceProtocol !==
-      "bim-explorer-bim-source/0.1" ||
+      "bim-explorer-bim-source/0.2" ||
     contracts?.rendererHost !==
       "bim-explorer-bim-renderer-3d-host/0.1" ||
     contracts?.semanticExplorer !==
@@ -263,6 +264,7 @@ export function validateBimProductShellCompatibility(
     limits?.openTimeoutMs !== 30_000 ||
     limits?.operationTimeoutMs !== 10_000 ||
     limits?.maximumRangeRequestBytes !== 1024 * 1024 ||
+    limits?.maximumDetailRequestBytes !== 1024 * 1024 ||
     limits?.maximumDomRows !== 64 ||
     limits?.maximumLoadedTreeItems !== 2_000 ||
     limits?.maximumRelations !== 100 ||
@@ -336,7 +338,12 @@ export function validateBimProductShellCompatibility(
     browserPublic.observation?.resources?.geometryBytes !==
       9_290_696 ||
     browserPublic.observation?.resources?.metadataBytes !==
-      10_007_872 ||
+      9_266_930 ||
+    browserPublic.observation?.resources?.detailBytes !==
+      5_490_130 ||
+    browserPublic.observation?.resources?.detailRanges !== 6 ||
+    browserPublic.observation?.resources
+      ?.largestDetailRangeBytes !== 1_047_997 ||
     browserPublic.observation?.renderer?.sourceReadBytes !==
       4_193_868 ||
     browserPublic.observation?.renderer?.uploadedBytes !==
@@ -407,6 +414,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
+    manifest.policy?.claimDeferredSemanticDetails !== true ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||

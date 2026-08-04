@@ -170,6 +170,21 @@ export async function measureWebIfcSourceArtifact(
     throw new Error("source artifact first range is unavailable");
   }
   const firstRangeRead = await readAndHashRange(session, firstHandle);
+  const sourceStateAfterFirstRange = source.state;
+  const identityDetails = await session.getEntityDetails({
+    ...requestContext,
+    expressId: identityEntity.expressId,
+  });
+  const detailHandle = snapshot.details.rangeHandles.find(
+    (handle) =>
+      handle.handleId ===
+        identityDetails.receipt.handleId,
+  );
+  if (detailHandle === undefined) {
+    throw new Error(
+      "source artifact detail handle is unavailable",
+    );
+  }
   const sourceStateBeforeDispose = source.state;
   const memory = process.memoryUsage();
   const sessionDisposed = await session.dispose();
@@ -202,6 +217,8 @@ export async function measureWebIfcSourceArtifact(
       loadPlan: {
         firstRangeIds: snapshot.loadPlan.firstFrameRangeIds,
         deferredRangeIds: snapshot.loadPlan.deferredRangeIds,
+        deferredDetailRangeIds:
+          snapshot.loadPlan.deferredDetailRangeIds,
       },
       ranges: rangeHandles.map((handle) => ({
         handleId: handle.handleId,
@@ -209,15 +226,48 @@ export async function measureWebIfcSourceArtifact(
         maximumRequestBytes: handle.maximumRequestBytes,
         sha256: handle.sha256,
       })),
+      detailRanges: snapshot.details.rangeHandles.map(
+        (handle) => ({
+          handleId: handle.handleId,
+          byteLength: handle.byteLength,
+          maximumRequestBytes: handle.maximumRequestBytes,
+          sha256: handle.sha256,
+        }),
+      ),
     },
     firstRangeRead: {
       handleId: firstHandle.handleId,
       ...firstRangeRead,
       digestValidated: firstRangeRead.sha256 === firstHandle.sha256,
       deferredRangesUnread:
-        sourceStateBeforeDispose.rangeBytesRead === firstHandle.byteLength,
+        sourceStateAfterFirstRange.rangeBytesRead ===
+          firstHandle.byteLength,
+      deferredDetailRangesUnread:
+        sourceStateAfterFirstRange.detailBytesRead === 0,
       remainingReadBytes:
-        sourceStateBeforeDispose.remainingReadBytes,
+        sourceStateAfterFirstRange.remainingReadBytes,
+    },
+    detailRangeRead: {
+      handleId: detailHandle.handleId,
+      rangeByteLength: detailHandle.byteLength,
+      rangeSha256: detailHandle.sha256,
+      maximumRequestBytes:
+        detailHandle.maximumRequestBytes,
+      receipt: identityDetails.receipt,
+      reads: sourceStateBeforeDispose.detailReads,
+      bytesRead: sourceStateBeforeDispose.detailBytesRead,
+      remainingReadBytes:
+        sourceStateBeforeDispose.remainingDetailReadBytes,
+      schema: identityDetails.schema,
+      expressId: identityDetails.expressId,
+      globalId: identityDetails.globalId,
+      quantityCount: Object.keys(
+        identityDetails.semantics.quantities,
+      ).length,
+      materialCount:
+        identityDetails.semantics.materials.length,
+      classificationCount:
+        identityDetails.semantics.classifications.length,
     },
     identity: {
       expressId: identityEntity.expressId,

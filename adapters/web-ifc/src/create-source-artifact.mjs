@@ -4,6 +4,8 @@ import {
 
 export const WEB_IFC_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
+export const WEB_IFC_SEMANTIC_DETAIL_MEDIA_TYPE =
+  "application/vnd.bim-explorer.semantic-detail-range.v1";
 
 const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
@@ -11,6 +13,9 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumGeometryBytes: 256 * 1024 * 1024,
   maximumRangeBytes: 4 * 1024 * 1024,
   maximumRanges: 4_096,
+  maximumDetailBytes: 64 * 1024 * 1024,
+  maximumDetailRangeBytes: 1024 * 1024,
+  maximumDetailRanges: 4_096,
   maximumRelationEntries: 500_000,
   maximumTreeNodes: 200_000,
   maximumMetadataBytes: 64 * 1024 * 1024,
@@ -609,6 +614,144 @@ async function encodeGeometryRanges(
   };
 }
 
+function semanticSummary(semantics) {
+  return {
+    container: semantics.container,
+    type: semantics.type,
+    propertySets: semantics.propertySets,
+    quantityNames: Object.keys(semantics.quantities),
+    materialNames: [...semantics.materials],
+    classificationNames: semantics.classifications.map(
+      (value) => value.name,
+    ),
+  };
+}
+
+function semanticDetail(semantics) {
+  return {
+    quantities: semantics.quantities,
+    materials: semantics.materials,
+    classifications: semantics.classifications,
+  };
+}
+
+function encodedDetailRecord(record) {
+  const payload = new TextEncoder().encode(
+    JSON.stringify(record.details),
+  );
+  return {
+    expressId: record.expressId,
+    payload,
+    byteLength: 8 + payload.byteLength,
+  };
+}
+
+async function encodeSemanticDetailRanges(
+  records,
+  {
+    maximumDetailBytes,
+    maximumDetailRangeBytes,
+    maximumDetailRanges,
+  },
+) {
+  const headerBytes = 16;
+  const encodedRecords = records.map(encodedDetailRecord);
+  const groups = [];
+  let current = [];
+  let currentBytes = headerBytes;
+  for (const record of encodedRecords) {
+    if (headerBytes + record.byteLength > maximumDetailRangeBytes) {
+      throw new RangeError(
+        `semantic detail ${record.expressId} exceeds ` +
+          "the configured detail range byte limit",
+      );
+    }
+    if (
+      current.length > 0 &&
+      currentBytes + record.byteLength >
+        maximumDetailRangeBytes
+    ) {
+      groups.push(current);
+      current = [];
+      currentBytes = headerBytes;
+    }
+    current.push(record);
+    currentBytes += record.byteLength;
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  if (groups.length === 0) {
+    throw new Error("IFC source has no semantic detail ranges");
+  }
+  if (groups.length > maximumDetailRanges) {
+    throw new RangeError(
+      "IFC semantic details exceed the configured range count limit",
+    );
+  }
+  const totalBytes = groups.reduce(
+    (sum, group) =>
+      sum +
+      headerBytes +
+      group.reduce(
+        (groupSum, record) =>
+          groupSum + record.byteLength,
+        0,
+      ),
+    0,
+  );
+  if (totalBytes > maximumDetailBytes) {
+    throw new RangeError(
+      "encoded IFC semantic details exceed the configured byte limit",
+    );
+  }
+  const ranges = [];
+  const slices = new Map();
+  for (const [index, group] of groups.entries()) {
+    const rangeId = `range:ifc:semantic-detail:${index}`;
+    const byteLength = headerBytes + group.reduce(
+      (sum, record) => sum + record.byteLength,
+      0,
+    );
+    const bytes = new Uint8Array(byteLength);
+    bytes.set(new TextEncoder().encode("BEXDET01"), 0);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(8, 1, true);
+    view.setUint32(12, group.length, true);
+    let offset = headerBytes;
+    for (const record of group) {
+      view.setUint32(offset, record.expressId, true);
+      view.setUint32(
+        offset + 4,
+        record.payload.byteLength,
+        true,
+      );
+      offset += 8;
+      bytes.set(record.payload, offset);
+      slices.set(record.expressId, {
+        rangeId,
+        offset,
+        byteLength: record.payload.byteLength,
+      });
+      offset += record.payload.byteLength;
+    }
+    ranges.push({
+      rangeId,
+      mediaType: WEB_IFC_SEMANTIC_DETAIL_MEDIA_TYPE,
+      sha256: await sha256(bytes),
+      bytes,
+    });
+  }
+  return {
+    ranges,
+    slices,
+    totalBytes,
+    largestRangeBytes: Math.max(
+      ...ranges.map((range) => range.bytes.byteLength),
+    ),
+  };
+}
+
 function buildTree(
   api,
   modelId,
@@ -698,6 +841,10 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   maximumGeometryBytes = DEFAULT_LIMITS.maximumGeometryBytes,
   maximumRangeBytes = DEFAULT_LIMITS.maximumRangeBytes,
   maximumRanges = DEFAULT_LIMITS.maximumRanges,
+  maximumDetailBytes = DEFAULT_LIMITS.maximumDetailBytes,
+  maximumDetailRangeBytes =
+    DEFAULT_LIMITS.maximumDetailRangeBytes,
+  maximumDetailRanges = DEFAULT_LIMITS.maximumDetailRanges,
   maximumRelationEntries = DEFAULT_LIMITS.maximumRelationEntries,
   maximumTreeNodes = DEFAULT_LIMITS.maximumTreeNodes,
   maximumMetadataBytes = DEFAULT_LIMITS.maximumMetadataBytes,
@@ -712,6 +859,9 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
     maximumGeometryBytes,
     maximumRangeBytes,
     maximumRanges,
+    maximumDetailBytes,
+    maximumDetailRangeBytes,
+    maximumDetailRanges,
     maximumRelationEntries,
     maximumTreeNodes,
     maximumMetadataBytes,
@@ -971,6 +1121,23 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
         );
       }
     }
+    const semanticDetails = await encodeSemanticDetailRanges(
+      entities.map((entity) => ({
+        expressId: entity.expressId,
+        details: semanticDetail(entity.semantics),
+      })),
+      {
+        maximumDetailBytes,
+        maximumDetailRangeBytes,
+        maximumDetailRanges,
+      },
+    );
+    for (const entity of entities) {
+      entity.detailSlice = semanticDetails.slices.get(
+        entity.expressId,
+      );
+      entity.semantics = semanticSummary(entity.semantics);
+    }
     const tree = buildTree(
       api,
       modelId,
@@ -1025,6 +1192,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           "quantities",
           "direct-material-name",
           "classification-reference",
+          "deferred-semantic-detail-range",
           "shared-geometry-instance",
           "non-renderable-product-diagnostic",
         ],
@@ -1034,6 +1202,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           "complex-material-graph",
           "connection-relation-index",
           "georeferencing-map-conversion",
+          "property-value-payload",
         ],
       },
       tree,
@@ -1060,6 +1229,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       },
       entities,
       ranges: encoded.ranges,
+      detailRanges: semanticDetails.ranges,
       resources: {
         limits: {
           maximumSourceBytes,
@@ -1067,6 +1237,9 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           maximumGeometryBytes,
           maximumRangeBytes,
           maximumRanges,
+          maximumDetailBytes,
+          maximumDetailRangeBytes,
+          maximumDetailRanges,
           maximumRelationEntries,
           maximumTreeNodes,
           maximumMetadataBytes,
@@ -1076,6 +1249,10 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           geometryBytes: encoded.totalBytes,
           ranges: encoded.ranges.length,
           largestRangeBytes: encoded.largestRangeBytes,
+          detailBytes: semanticDetails.totalBytes,
+          detailRanges: semanticDetails.ranges.length,
+          largestDetailRangeBytes:
+            semanticDetails.largestRangeBytes,
           metadataBytes: metadataByteLength,
           products: entities.length,
           relationEntries: indexes.relationEntries,

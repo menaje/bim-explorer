@@ -139,19 +139,15 @@ function fieldValues(node, entity) {
   );
   values.set(
     "quantity",
-    Object.keys(semantics.quantities ?? {}),
+    [...(semantics.quantityNames ?? [])],
   );
   values.set(
     "material",
-    [...(semantics.materials ?? [])],
+    [...(semantics.materialNames ?? [])],
   );
   values.set(
     "classification",
-    (semantics.classifications ?? []).flatMap((value) => [
-      value.identification,
-      value.name,
-      value.source,
-    ]),
+    [...(semantics.classificationNames ?? [])],
   );
   values.set(
     "type",
@@ -416,31 +412,32 @@ export class BimSemanticIndex {
         });
       }
       for (
-        const [name, value] of Object.entries(
-          semantics.quantities ?? {},
-        )
+        const name of semantics.quantityNames ?? []
       ) {
         relations.push({
           kind: "quantity",
           name,
-          value,
+          value: null,
+          valueStatus: "deferred",
         });
       }
-      for (const name of semantics.materials ?? []) {
+      for (const name of semantics.materialNames ?? []) {
         relations.push({
           kind: "material",
           name,
           value: null,
+          valueStatus: "deferred",
         });
       }
       for (
-        const classification of
-          semantics.classifications ?? []
+        const name of
+          semantics.classificationNames ?? []
       ) {
         relations.push({
           kind: "classification",
-          name: classification.name,
-          value: classification,
+          name,
+          value: null,
+          valueStatus: "deferred",
         });
       }
     }
@@ -487,9 +484,10 @@ export class BimSemanticIndex {
           "spatial-containment",
           "type-occurrence",
           "property-set-name",
-          "quantity",
-          "direct-material",
-          "classification-reference",
+          "deferred-quantity",
+          "deferred-direct-material",
+          "deferred-classification-reference",
+          "deferred-semantic-detail",
         ],
         unavailable: [
           {

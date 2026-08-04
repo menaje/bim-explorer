@@ -150,6 +150,7 @@ const REQUIRED_PATHS = [
   "scripts/serve-semantic-explorer-probe.mjs",
   "specs/README.md",
   "specs/bim-source-artifact-v0.1.md",
+  "specs/bim-source-artifact-v0.2.md",
   "specs/bim-renderer-3d-v0.1.md",
   "specs/bim-semantic-explorer-v0.1.md",
   "specs/bim-product-hosts-v0.1.md",

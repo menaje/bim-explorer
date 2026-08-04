@@ -98,19 +98,23 @@ snapshot은 Spatial Revision이 아닙니다. source bytes가 달라지면 새 s
 identity reconciliation 결과가 필요합니다.
 
 현재 내부 draft
-[`bim-source-artifact/0.1`](../specs/bim-source-artifact-v0.1.md)은 generated
+[`bim-source-artifact/0.2`](../specs/bim-source-artifact-v0.2.md)은 generated
 mapped IFC에서 raw source SHA-256, 7-node spatial/product tree, 두 Wall의
 property/type/containment와 한 shared geometry payload를 같은 immutable
 snapshot에 묶습니다. range digest, 최대 단일 read와 session 누적 budget,
 stale context, 중복 identity와 cleanup을 강제합니다. 고정된 공개 IFC2X3의
 3,569 products는 3개 bounded geometry range로 나뉘며 첫 range만 읽고
-나머지를 미읽기로 유지하는 source 단계도 통과했습니다. 비어 있는
-tessellation은 semantic identity와 diagnostic만 유지합니다. renderer
-first-frame은 별도 renderer evidence에서 검증하고, deferred property
-range와 Viewer Core conformance는 아직 보류합니다.
+나머지를 미읽기로 유지합니다. 5,490,130-byte semantic detail은 6개
+range로 분리되고 first-frame에서는 읽지 않으며 선택 entity의 exact JSON
+slice만 읽습니다. 비어 있는 tessellation은 semantic identity와
+diagnostic만 유지합니다. renderer first-frame과 Browser/VS Code Worker
+packaging은 별도 evidence에서 검증했고, property-set value payload,
+georeferencing, source-precision 분리와 Viewer Core conformance는
+보류합니다.
 
 `BimModelSource`는 exact snapshot context를 요구하는 bounded
-`queryTree`, `searchEntities`, `queryRelations`를 제공합니다. page는 최대
+`queryTree`, `searchEntities`, `queryRelations`, `getEntityDetails`를
+제공합니다. page는 최대
 100 items이며 cursor는 revision과 query에 결합됩니다. decomposition과
 spatial containment, occurrence/type, Pset/Qto, direct material과
 classification을 구분하고, 제공하지 않는 relation은 opaque coverage로
@@ -133,7 +137,8 @@ WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
 상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
 property set value는 현재 name-only `lossy`, host/void/fill과 connection은
-`opaque`입니다. generated fixture의 semantic conformance와 46.77MB 공개
+`opaque`입니다. quantity/material/classification detail은 선택 시 deferred
+range에서 읽습니다. generated fixture의 semantic conformance와 46.77MB 공개
 fixture의 Browser/clean-installed VSIX product scale은 통과했지만,
 value-level public semantic conformance는 보류합니다.
 

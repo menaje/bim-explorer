@@ -383,7 +383,8 @@ function updateDiagnostics(opened, mount) {
   elements.diagBytes.textContent =
     `${report.resources.sourceBytes} source · ` +
     `${report.resources.geometryBytes} geometry · ` +
-    `${report.resources.metadataBytes} metadata`;
+    `${report.resources.metadataBytes} metadata · ` +
+    `${report.resources.detailBytes} deferred detail`;
   elements.diagGpu.textContent =
     `${mount.renderer.backend.uploadedBytes} bytes · ` +
     `${mount.renderer.backend.nonBackgroundPixels} pixels`;

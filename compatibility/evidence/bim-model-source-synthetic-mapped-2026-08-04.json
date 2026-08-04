@@ -28,16 +28,18 @@
     }
   },
   "contract": {
-    "artifactSchema": "bim-explorer-bim-source-artifact/0.1",
-    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "artifactSchema": "bim-explorer-bim-source-artifact/0.2",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
+    "semanticDetailMediaType": "application/vnd.bim-explorer.semantic-detail-range.v1",
+    "entityDetailsSchema": "bim-explorer-bim-entity-details/0.1",
     "viewerCoreConformance": false
   },
   "sourceSnapshot": {
     "sourceFingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
     "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
     "snapshotId": "snapshot:bim-source:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0",
-    "cacheFingerprint": "sha256:f1e25a17783ead2457d423fd2195e3af21041a6834dec6e6926090eb3c7583d4",
+    "cacheFingerprint": "sha256:b3d1e7932a4d7abe9a2667d340ebb67236fc30550ec1a5c4fd7ba8916abb6f78",
     "deterministicCacheFingerprint": true,
     "treeNodes": 7,
     "geometry": {
@@ -72,6 +74,9 @@
         "maximumGeometryBytes": 268435456,
         "maximumRangeBytes": 4194304,
         "maximumRanges": 4096,
+        "maximumDetailBytes": 67108864,
+        "maximumDetailRangeBytes": 1048576,
+        "maximumDetailRanges": 4096,
         "maximumRelationEntries": 500000,
         "maximumTreeNodes": 200000,
         "maximumMetadataBytes": 67108864
@@ -81,7 +86,10 @@
         "geometryBytes": 996,
         "ranges": 1,
         "largestRangeBytes": 996,
-        "metadataBytes": 2886,
+        "detailBytes": 440,
+        "detailRanges": 1,
+        "largestDetailRangeBytes": 440,
+        "metadataBytes": 2917,
         "products": 2,
         "relationEntries": 12,
         "treeNodes": 7
@@ -97,6 +105,43 @@
     "bytesRead": 996,
     "digestValidated": true,
     "sharedSliceOffset": 16
+  },
+  "semanticDetailRange": {
+    "ranges": 1,
+    "totalBytes": 440,
+    "largestRangeBytes": 440,
+    "handleId": "range:ifc:semantic-detail:0",
+    "mediaType": "application/vnd.bim-explorer.semantic-detail-range.v1",
+    "rangeByteLength": 440,
+    "rangeSha256": "2867bff13619e120cbd375227896ee0ee6c0a4acc376436fb5ff92e17c5ef842",
+    "maximumRequestBytes": 440,
+    "sessionReadBudgetBytes": 440,
+    "entitySlice": {
+      "handleId": "range:ifc:semantic-detail:0",
+      "offset": 24,
+      "byteLength": 204
+    },
+    "reads": 1,
+    "bytesRead": 204,
+    "remainingReadBytes": 236,
+    "schema": "bim-explorer-bim-entity-details/0.1",
+    "expressId": 40,
+    "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+    "quantities": {
+      "GrossSideArea": 12,
+      "GrossVolume": 2.4,
+      "Length": 4
+    },
+    "materials": [
+      "Concrete"
+    ],
+    "classifications": [
+      {
+        "identification": "BE-WALL",
+        "name": "Synthetic Wall Class",
+        "source": "Synthetic Classification"
+      }
+    ]
   },
   "identity": {
     "expressId": 40,
@@ -130,20 +175,16 @@
       "Pset_WallCommon",
       "Pset_WallTypeCommon"
     ],
-    "quantities": {
-      "GrossSideArea": 12,
-      "GrossVolume": 2.4,
-      "Length": 4
-    },
-    "materials": [
+    "quantityNames": [
+      "GrossSideArea",
+      "GrossVolume",
+      "Length"
+    ],
+    "materialNames": [
       "Concrete"
     ],
-    "classifications": [
-      {
-        "identification": "BE-WALL",
-        "name": "Synthetic Wall Class",
-        "source": "Synthetic Classification"
-      }
+    "classificationNames": [
+      "Synthetic Wall Class"
     ]
   },
   "semanticQueries": {
@@ -208,6 +249,10 @@
         {
           "capability": "georeferencing-map-conversion",
           "status": "opaque"
+        },
+        {
+          "capability": "property-value-payload",
+          "status": "opaque"
         }
       ]
     }
@@ -218,6 +263,10 @@
     "geometryBudgetRejected": true,
     "rangeByteLimitRejected": true,
     "rangeCountLimitRejected": true,
+    "detailBudgetRejected": true,
+    "detailRangeByteLimitRejected": true,
+    "detailRangeCountLimitRejected": true,
+    "detailReadBudgetRejected": true,
     "relationIndexBudgetRejected": true,
     "treeNodeBudgetRejected": true,
     "metadataBudgetRejected": true,
@@ -227,6 +276,9 @@
     "mismatchedPickRejected": true,
     "malformedRangeDigestRejected": true,
     "malformedRangeStructureRejected": true,
+    "malformedDetailDigestRejected": true,
+    "malformedDetailStructureRejected": true,
+    "duplicateDetailIdentityRejected": true,
     "duplicateGlobalIdRejected": true
   },
   "cleanup": {
@@ -238,7 +290,8 @@
   "decision": {
     "internalSourceContract": "passed-synthetic-only",
     "publicRepresentativeSourceArtifact": "held",
-    "multiRangeDeferredLoading": "held",
+    "multiRangeDeferredLoading": "passed",
+    "deferredSemanticDetailRanges": "passed-synthetic",
     "viewerCoreConformance": "blocked-unresolved-upstream",
     "productionClaims": false
   }

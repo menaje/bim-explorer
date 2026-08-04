@@ -7,7 +7,7 @@
     "shellReport": "bim-explorer-product-shell-report/0.1",
     "sourceWorkerRequest": "bim-explorer-product-source-worker-request/0.1",
     "sourceWorkerResponse": "bim-explorer-product-source-worker-response/0.1",
-    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
     "rendererHost": "bim-explorer-bim-renderer-3d-host/0.1",
     "semanticExplorer": "bim-explorer-bim-semantic-explorer/0.1"
   },
@@ -38,6 +38,7 @@
     "openTimeoutMs": 30000,
     "operationTimeoutMs": 10000,
     "maximumRangeRequestBytes": 1048576,
+    "maximumDetailRequestBytes": 1048576,
     "maximumDomRows": 64,
     "maximumLoadedTreeItems": 2000,
     "maximumRelations": 100,
@@ -63,6 +64,7 @@
     "noAccountUploadTelemetry": true,
     "spatialIndependent": true,
     "publicRepresentativeProductScale": true,
+    "deferredSemanticDetailDiagnostics": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -82,6 +84,7 @@
     "readOnly": true,
     "localOnly": true,
     "spatialAuthority": false,
+    "claimDeferredSemanticDetails": true,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

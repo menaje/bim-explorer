@@ -143,6 +143,14 @@ class WorkerRangeSemanticSession {
     return this.#call("getEntity", [request, {}]);
   }
 
+  getEntityDetails(request, options = {}) {
+    aborted(options.signal);
+    return this.#call(
+      "getEntityDetails",
+      [request, {}],
+    );
+  }
+
   queryTree(request, options = {}) {
     aborted(options.signal);
     return this.#call("queryTree", [request, {}]);

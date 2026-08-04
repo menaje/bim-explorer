@@ -84,6 +84,9 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
       maximumGeometryBytes: 268_435_456,
       maximumRangeBytes: 4_194_304,
       maximumRanges: 4_096,
+      maximumDetailBytes: 67_108_864,
+      maximumDetailRangeBytes: 1_048_576,
+      maximumDetailRanges: 4_096,
       maximumRelationEntries: 500_000,
       maximumTreeNodes: 200_000,
       maximumMetadataBytes: 67_108_864,
@@ -93,7 +96,10 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
       geometryBytes: 996,
       ranges: 1,
       largestRangeBytes: 996,
-      metadataBytes: 2_886,
+      detailBytes: 440,
+      detailRanges: 1,
+      largestDetailRangeBytes: 440,
+      metadataBytes: 2_917,
       products: 2,
       relationEntries: 12,
       treeNodes: 7,
@@ -136,25 +142,31 @@ test("web-ifc artifact preserves shared geometry, tree, and semantics", async ()
       "Pset_WallCommon",
       "Pset_WallTypeCommon",
     ],
-    quantities: {
-      GrossSideArea: 12,
-      GrossVolume: 2.4,
-      Length: 4,
-    },
-    materials: ["Concrete"],
-    classifications: [
-      {
-        identification: "BE-WALL",
-        name: "Synthetic Wall Class",
-        source: "Synthetic Classification",
-      },
+    quantityNames: [
+      "GrossSideArea",
+      "GrossVolume",
+      "Length",
     ],
+    materialNames: ["Concrete"],
+    classificationNames: ["Synthetic Wall Class"],
   });
   assert.equal(artifact.ranges[0].bytes.byteLength, 996);
   assert.equal(
     new TextDecoder().decode(artifact.ranges[0].bytes.slice(0, 8)),
     "BEXGEO01",
   );
+  assert.equal(artifact.detailRanges.length, 1);
+  assert.equal(
+    new TextDecoder().decode(
+      artifact.detailRanges[0].bytes.slice(0, 8),
+    ),
+    "BEXDET01",
+  );
+  assert.deepEqual(artifact.entities[0].detailSlice, {
+    rangeId: "range:ifc:semantic-detail:0",
+    offset: 24,
+    byteLength: 204,
+  });
 });
 
 test("web-ifc partitions atomic geometry into first and deferred ranges", async () => {
@@ -199,6 +211,9 @@ test("web-ifc partitions atomic geometry into first and deferred ranges", async 
   assert.deepEqual(snapshot.loadPlan, {
     firstFrameRangeIds: ["range:ifc:geometry:0"],
     deferredRangeIds: ["range:ifc:geometry:1"],
+    deferredDetailRangeIds: [
+      "range:ifc:semantic-detail:0",
+    ],
   });
   const [first, deferred] = snapshot.layers[0].rangeHandles;
   assert.equal(
@@ -206,6 +221,7 @@ test("web-ifc partitions atomic geometry into first and deferred ranges", async 
     996,
   );
   assert.equal(source.state.remainingReadBytes, 996);
+  assert.equal(source.state.remainingDetailReadBytes, 440);
   assert.equal(
     (await session.readRange(
       deferred,
@@ -215,6 +231,7 @@ test("web-ifc partitions atomic geometry into first and deferred ranges", async 
     996,
   );
   assert.equal(source.state.remainingReadBytes, 0);
+  assert.equal(source.state.remainingDetailReadBytes, 440);
   await session.dispose();
   await source.dispose();
 });
@@ -244,6 +261,7 @@ test("BimModelSource binds tree, entity, render, and pick to one revision", asyn
   assert.equal(treeWall.globalId, wall.globalId);
   assert.equal(treeWall.renderId, wall.renderId);
   assert.equal(treeWall.pickId, wall.pickId);
+  assert.equal(wall.semantics.quantities, undefined);
   for (const identity of [
     { expressId: wall.expressId },
     { globalId: wall.globalId },
@@ -321,6 +339,37 @@ test("BimModelSource binds tree, entity, render, and pick to one revision", asyn
     }),
     /pick identity is outside the snapshot/u,
   );
+  const details = await session.getEntityDetails({
+    ...context,
+    expressId: wall.expressId,
+  });
+  assert.equal(
+    details.schema,
+    "bim-explorer-bim-entity-details/0.1",
+  );
+  assert.deepEqual(details.semantics, {
+    quantities: {
+      GrossSideArea: 12,
+      GrossVolume: 2.4,
+      Length: 4,
+    },
+    materials: ["Concrete"],
+    classifications: [
+      {
+        identification: "BE-WALL",
+        name: "Synthetic Wall Class",
+        source: "Synthetic Classification",
+      },
+    ],
+  });
+  await assert.rejects(
+    session.getEntityDetails({
+      ...context,
+      revisionId: `${snapshot.revisionId}:stale`,
+      expressId: wall.expressId,
+    }),
+    /revisionId is outside the snapshot/u,
+  );
   assert.deepEqual(source.state, {
     opened: true,
     sessionDisposed: false,
@@ -330,6 +379,9 @@ test("BimModelSource binds tree, entity, render, and pick to one revision", asyn
     remainingReadBytes: 0,
     entityReads: 4,
     pickResolutions: 1,
+    detailReads: 1,
+    detailBytesRead: 204,
+    remainingDetailReadBytes: 236,
   });
   assert.equal(await session.dispose(), true);
   assert.equal(await session.dispose(), false);
@@ -425,7 +477,16 @@ test("BimModelSource pages tree, search, and typed relations", async () => {
   assert.ok(wallRelations.items.some((relation) =>
     relation.kind === "quantity" &&
     relation.name === "GrossVolume" &&
-    relation.value === 2.4));
+    relation.value === null &&
+    relation.valueStatus === "deferred"));
+  const wallDetails = await session.getEntityDetails({
+    ...context,
+    expressId: 40,
+  });
+  assert.equal(
+    wallDetails.semantics.quantities.GrossVolume,
+    2.4,
+  );
   assert.ok(wallRelations.informationCoverage.unavailable.some(
     (item) =>
       item.capability === "connection-relation" &&
@@ -572,6 +633,25 @@ test("BIM source admission fails closed on limits and malformed artifacts", asyn
     /exceeds the configured range byte limit/u,
   );
   await assert.rejects(
+    createWebIfcSourceArtifact(bytes, {
+      maximumDetailBytes: 439,
+    }),
+    /semantic details exceed the configured byte limit/u,
+  );
+  await assert.rejects(
+    createWebIfcSourceArtifact(bytes, {
+      maximumDetailRangeBytes: 227,
+    }),
+    /configured detail range byte limit/u,
+  );
+  await assert.rejects(
+    createWebIfcSourceArtifact(bytes, {
+      maximumDetailRangeBytes: 228,
+      maximumDetailRanges: 1,
+    }),
+    /semantic details exceed the configured range count limit/u,
+  );
+  await assert.rejects(
     createWebIfcSourceArtifact(multiGeometryBytes(), {
       maximumRangeBytes: 996,
       maximumRanges: 1,
@@ -615,6 +695,63 @@ test("BIM source admission fails closed on limits and malformed artifacts", asyn
     /geometry magic is invalid/u,
   );
 
+  const badDetailDigest = structuredClone(artifact);
+  badDetailDigest.detailRanges[0].bytes[24] ^= 0xff;
+  assert.throws(
+    () => createBimModelSource(badDetailDigest),
+    /digest does not match/u,
+  );
+
+  const badDetailJson = structuredClone(artifact);
+  badDetailJson.detailRanges[0].bytes[24] = 0xff;
+  badDetailJson.detailRanges[0].sha256 = createHash("sha256")
+    .update(badDetailJson.detailRanges[0].bytes)
+    .digest("hex");
+  assert.throws(
+    () => createBimModelSource(badDetailJson),
+    /semantic detail record 0 JSON is malformed/u,
+  );
+
+  const duplicateDetailIdentity = structuredClone(artifact);
+  const detailBytes = duplicateDetailIdentity.detailRanges[0].bytes;
+  const detailView = new DataView(
+    detailBytes.buffer,
+    detailBytes.byteOffset,
+    detailBytes.byteLength,
+  );
+  const firstDetailExpressId = detailView.getUint32(16, true);
+  const firstDetailByteLength = detailView.getUint32(20, true);
+  detailView.setUint32(
+    24 + firstDetailByteLength,
+    firstDetailExpressId,
+    true,
+  );
+  duplicateDetailIdentity.detailRanges[0].sha256 =
+    createHash("sha256")
+      .update(detailBytes)
+      .digest("hex");
+  assert.throws(
+    () => createBimModelSource(duplicateDetailIdentity),
+    /semantic detail Express IDs must be unique/u,
+  );
+
+  const mismatchedDetailIdentity = structuredClone(artifact);
+  const mismatchedDetailBytes =
+    mismatchedDetailIdentity.detailRanges[0].bytes;
+  new DataView(
+    mismatchedDetailBytes.buffer,
+    mismatchedDetailBytes.byteOffset,
+    mismatchedDetailBytes.byteLength,
+  ).setUint32(16, 41, true);
+  mismatchedDetailIdentity.detailRanges[0].sha256 =
+    createHash("sha256")
+      .update(mismatchedDetailBytes)
+      .digest("hex");
+  assert.throws(
+    () => createBimModelSource(mismatchedDetailIdentity),
+    /detailSlice does not match its semantic record/u,
+  );
+
   const duplicateIdentity = structuredClone(artifact);
   duplicateIdentity.entities[1].globalId =
     duplicateIdentity.entities[0].globalId;
@@ -630,4 +767,64 @@ test("BIM source admission fails closed on limits and malformed artifacts", asyn
     () => createBimModelSource(staleSlice),
     /slice exceeds/u,
   );
+});
+
+test("BIM source detail reads have an independent bounded budget", async () => {
+  const artifact = await createWebIfcSourceArtifact(mappedBytes());
+  const firstDetailBytes =
+    artifact.entities[0].detailSlice.byteLength;
+  const source = createBimModelSource(artifact, {
+    detailReadBudgetBytes: firstDetailBytes,
+    maximumDetailRequestBytes: firstDetailBytes,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = requestContext(snapshot);
+
+  assert.equal(
+    (await session.getEntityDetails({
+      ...context,
+      expressId: snapshot.entities[0].expressId,
+    })).receipt.byteLength,
+    firstDetailBytes,
+  );
+  assert.equal(
+    (await session.getEntityDetails({
+      ...context,
+      expressId: snapshot.entities[0].expressId,
+    })).receipt.byteLength,
+    firstDetailBytes,
+  );
+  await assert.rejects(
+    session.getEntityDetails({
+      ...context,
+      expressId: snapshot.entities[1].expressId,
+    }),
+    /detail range exceeds its read budget/u,
+  );
+  assert.equal(source.state.rangeReads, 0);
+  assert.equal(source.state.detailReads, 1);
+  assert.equal(source.state.remainingDetailReadBytes, 0);
+  await session.dispose();
+  await source.dispose();
+
+  const requestLimited = createBimModelSource(artifact, {
+    maximumDetailRequestBytes: firstDetailBytes - 1,
+  });
+  const limitedSession = await requestLimited.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const limitedSnapshot = await limitedSession.getSnapshot();
+  await assert.rejects(
+    limitedSession.getEntityDetails({
+      ...requestContext(limitedSnapshot),
+      expressId: limitedSnapshot.entities[0].expressId,
+    }),
+    /detail range exceeds its read budget/u,
+  );
+  assert.equal(requestLimited.state.detailReads, 0);
+  await limitedSession.dispose();
+  await requestLimited.dispose();
 });

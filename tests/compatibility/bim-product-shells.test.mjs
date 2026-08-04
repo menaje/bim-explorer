@@ -57,7 +57,7 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 19,
+      passedGates: 20,
       publicProducts: 3_569,
       status: "experimental",
     },
@@ -168,5 +168,20 @@ test("product shells keep public IFC2X3 profile admission held", async () => {
       values.installation,
     ),
     /public BIM product fixture policy is invalid/u,
+  );
+});
+
+test("product shells pin public deferred detail diagnostics", async () => {
+  const values = await fixtures();
+  values.browserPublic.observation.resources.detailRanges = 5;
+  assert.throws(
+    () => validateBimProductShellCompatibility(
+      values.manifest,
+      values.browser,
+      values.vscode,
+      values.browserPublic,
+      values.installation,
+    ),
+    /host projections diverge|public BIM product scale/u,
   );
 });

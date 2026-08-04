@@ -4,6 +4,7 @@ import {
   createWebIfcSourceArtifact,
 } from "../adapters/web-ifc/src/create-source-artifact.mjs";
 import {
+  BIM_ENTITY_DETAILS_SCHEMA,
   BIM_SOURCE_PROTOCOL_VERSION,
   createBimModelSource,
 } from "../packages/bim-model-source/src/index.mjs";
@@ -135,6 +136,17 @@ async function qualify() {
     expressId: 55,
     limit: 100,
   });
+  const wallDetails = await session.getEntityDetails({
+    ...requestContext,
+    expressId: wall.expressId,
+  });
+  const detailHandle = snapshot.details.rangeHandles.find(
+    (candidate) =>
+      candidate.handleId === wall.detailSlice.rangeId,
+  );
+  if (detailHandle === undefined) {
+    throw new Error("wall semantic detail handle is unavailable");
+  }
   const semanticCursorMismatchRejected = await rejected(
     () => session.searchEntities({
       ...requestContext,
@@ -194,6 +206,51 @@ async function qualify() {
     () => Promise.resolve(createBimModelSource(badStructure)),
     /geometry magic is invalid/u,
   );
+  const badDetailDigest = structuredClone(firstArtifact);
+  badDetailDigest.detailRanges[0].bytes[24] ^= 0xff;
+  const malformedDetailDigestRejected = await rejected(
+    () => Promise.resolve(createBimModelSource(badDetailDigest)),
+    /digest does not match/u,
+  );
+  const badDetailStructure = structuredClone(firstArtifact);
+  badDetailStructure.detailRanges[0].bytes[0] ^= 0xff;
+  badDetailStructure.detailRanges[0].sha256 =
+    createHash("sha256")
+      .update(badDetailStructure.detailRanges[0].bytes)
+      .digest("hex");
+  const malformedDetailStructureRejected = await rejected(
+    () => Promise.resolve(
+      createBimModelSource(badDetailStructure),
+    ),
+    /semantic detail magic is invalid/u,
+  );
+  const duplicateDetailIdentity = structuredClone(firstArtifact);
+  const duplicateDetailBytes =
+    duplicateDetailIdentity.detailRanges[0].bytes;
+  const duplicateDetailView = new DataView(
+    duplicateDetailBytes.buffer,
+    duplicateDetailBytes.byteOffset,
+    duplicateDetailBytes.byteLength,
+  );
+  const firstDetailExpressId =
+    duplicateDetailView.getUint32(16, true);
+  const firstDetailByteLength =
+    duplicateDetailView.getUint32(20, true);
+  duplicateDetailView.setUint32(
+    24 + firstDetailByteLength,
+    firstDetailExpressId,
+    true,
+  );
+  duplicateDetailIdentity.detailRanges[0].sha256 =
+    createHash("sha256")
+      .update(duplicateDetailBytes)
+      .digest("hex");
+  const duplicateDetailIdentityRejected = await rejected(
+    () => Promise.resolve(
+      createBimModelSource(duplicateDetailIdentity),
+    ),
+    /semantic detail Express IDs must be unique/u,
+  );
   const duplicateIdentity = structuredClone(firstArtifact);
   duplicateIdentity.entities[1].globalId =
     duplicateIdentity.entities[0].globalId;
@@ -226,6 +283,25 @@ async function qualify() {
     }),
     /range count limit/u,
   );
+  const detailBudgetRejected = await rejected(
+    () => createWebIfcSourceArtifact(bytes, {
+      maximumDetailBytes: 439,
+    }),
+    /semantic details exceed the configured byte limit/u,
+  );
+  const detailRangeByteLimitRejected = await rejected(
+    () => createWebIfcSourceArtifact(bytes, {
+      maximumDetailRangeBytes: 227,
+    }),
+    /configured detail range byte limit/u,
+  );
+  const detailRangeCountLimitRejected = await rejected(
+    () => createWebIfcSourceArtifact(bytes, {
+      maximumDetailRangeBytes: 228,
+      maximumDetailRanges: 1,
+    }),
+    /semantic details exceed the configured range count limit/u,
+  );
   const relationIndexBudgetRejected = await rejected(
     () => createWebIfcSourceArtifact(bytes, {
       maximumRelationEntries: 11,
@@ -244,7 +320,33 @@ async function qualify() {
     }),
     /metadata exceeds the configured byte limit/u,
   );
+  const boundedDetailSource = createBimModelSource(
+    secondArtifact,
+    {
+      detailReadBudgetBytes: wall.detailSlice.byteLength,
+      maximumDetailRequestBytes: wall.detailSlice.byteLength,
+    },
+  );
+  const boundedDetailSession = await boundedDetailSource.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const boundedDetailSnapshot =
+    await boundedDetailSession.getSnapshot();
+  await boundedDetailSession.getEntityDetails({
+    ...context(boundedDetailSnapshot),
+    expressId: boundedDetailSnapshot.entities[0].expressId,
+  });
+  const detailReadBudgetRejected = await rejected(
+    () => boundedDetailSession.getEntityDetails({
+      ...context(boundedDetailSnapshot),
+      expressId: boundedDetailSnapshot.entities[1].expressId,
+    }),
+    /detail range exceeds its read budget/u,
+  );
+  await boundedDetailSession.dispose();
+  await boundedDetailSource.dispose();
 
+  const detailState = source.state;
   const sessionDisposed = await session.dispose();
   const sourceDisposed = await source.dispose();
   await repeatedSource.dispose();
@@ -272,11 +374,18 @@ async function qualify() {
     !mismatchedPickRejected ||
     !malformedRangeDigestRejected ||
     !malformedRangeStructureRejected ||
+    !malformedDetailDigestRejected ||
+    !malformedDetailStructureRejected ||
+    !duplicateDetailIdentityRejected ||
     !duplicateGlobalIdRejected ||
     !sourceSizeLimitRejected ||
     !geometryBudgetRejected ||
     !rangeByteLimitRejected ||
     !rangeCountLimitRejected ||
+    !detailBudgetRejected ||
+    !detailRangeByteLimitRejected ||
+    !detailRangeCountLimitRejected ||
+    !detailReadBudgetRejected ||
     !relationIndexBudgetRejected ||
     !treeNodeBudgetRejected ||
     !metadataBudgetRejected ||
@@ -313,6 +422,8 @@ async function qualify() {
       artifactSchema: firstArtifact.schema,
       sourceProtocol: BIM_SOURCE_PROTOCOL_VERSION,
       geometryMediaType: handle.mediaType,
+      semanticDetailMediaType: detailHandle.mediaType,
+      entityDetailsSchema: BIM_ENTITY_DETAILS_SCHEMA,
       viewerCoreConformance: false,
     },
     sourceSnapshot: {
@@ -335,6 +446,35 @@ async function qualify() {
       digestValidated: geometryDigest === handle.sha256,
       sharedSliceOffset:
         snapshot.entities[0].primitives[0].slice.offset,
+    },
+    semanticDetailRange: {
+      ranges: snapshot.details.rangeHandles.length,
+      totalBytes: source.totalDetailRangeBytes,
+      largestRangeBytes: Math.max(
+        ...snapshot.details.rangeHandles.map(
+          (candidate) => candidate.byteLength,
+        ),
+      ),
+      handleId: detailHandle.handleId,
+      mediaType: detailHandle.mediaType,
+      rangeByteLength: detailHandle.byteLength,
+      rangeSha256: detailHandle.sha256,
+      maximumRequestBytes:
+        detailHandle.maximumRequestBytes,
+      sessionReadBudgetBytes:
+        source.detailReadBudgetBytes,
+      entitySlice: wallDetails.receipt,
+      reads: detailState.detailReads,
+      bytesRead: detailState.detailBytesRead,
+      remainingReadBytes:
+        detailState.remainingDetailReadBytes,
+      schema: wallDetails.schema,
+      expressId: wallDetails.expressId,
+      globalId: wallDetails.globalId,
+      quantities: wallDetails.semantics.quantities,
+      materials: wallDetails.semantics.materials,
+      classifications:
+        wallDetails.semantics.classifications,
     },
     identity: {
       expressId: wall.expressId,
@@ -391,6 +531,10 @@ async function qualify() {
       geometryBudgetRejected,
       rangeByteLimitRejected,
       rangeCountLimitRejected,
+      detailBudgetRejected,
+      detailRangeByteLimitRejected,
+      detailRangeCountLimitRejected,
+      detailReadBudgetRejected,
       relationIndexBudgetRejected,
       treeNodeBudgetRejected,
       metadataBudgetRejected,
@@ -400,6 +544,9 @@ async function qualify() {
       mismatchedPickRejected,
       malformedRangeDigestRejected,
       malformedRangeStructureRejected,
+      malformedDetailDigestRejected,
+      malformedDetailStructureRejected,
+      duplicateDetailIdentityRejected,
       duplicateGlobalIdRejected,
     },
     cleanup: {
@@ -412,7 +559,8 @@ async function qualify() {
     decision: {
       internalSourceContract: "passed-synthetic-only",
       publicRepresentativeSourceArtifact: "held",
-      multiRangeDeferredLoading: "held",
+      multiRangeDeferredLoading: "passed",
+      deferredSemanticDetailRanges: "passed-synthetic",
       viewerCoreConformance: "blocked-unresolved-upstream",
       productionClaims: false,
     },

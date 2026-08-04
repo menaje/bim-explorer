@@ -4,7 +4,7 @@
   "status": "experimental",
   "contract": {
     "explorer": "bim-explorer-bim-semantic-explorer/0.1",
-    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
     "semanticQueryResult": "bim-explorer-bim-source-semantic-query-result/0.1",
     "rendererPickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
     "savedView": "bim-explorer-bim-semantic-saved-view/0.1"
@@ -26,6 +26,7 @@
     "searchPageSize": 1,
     "treePageSize": 2,
     "maximumSourceReadBytes": 1024,
+    "maximumDetailReadBytes": 440,
     "maximumSemanticQueries": 20
   },
   "gates": {
@@ -43,6 +44,7 @@
     "accessibleRoles": true,
     "boundedDomLifecycle": true,
     "actualBrowserWebGl2Pick": true,
+    "deferredSemanticDetailRanges": true,
     "deterministicCleanup": true,
     "publicRepresentativeScale": false,
     "fullPropertyValuePayload": false,
@@ -59,6 +61,7 @@
   "policy": {
     "readOnly": true,
     "spatialAuthority": false,
+    "claimDeferredSemanticDetails": true,
     "claimPublicScale": false,
     "claimFullPropertyValues": false,
     "claimAdvancedRelationGraph": false,

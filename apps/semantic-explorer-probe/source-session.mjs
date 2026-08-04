@@ -36,8 +36,10 @@ function contextFromSnapshot(snapshot) {
 export class BrowserSemanticRangeSession {
   #context;
   #disposed = false;
+  #detailByExpressId = new Map();
   #entityByExpressId;
   #handles;
+  #detailReads = 0;
   #rangeBytes = 0;
   #rangeReads = 0;
   #relationQueries = 0;
@@ -60,7 +62,10 @@ export class BrowserSemanticRangeSession {
     }
     this.#context = contextFromSnapshot(snapshot);
     this.#handles = new Map(
-      layer.rangeHandles.map((handle) => [
+      [
+        ...layer.rangeHandles,
+        ...(snapshot.details?.rangeHandles ?? []),
+      ].map((handle) => [
         handle.handleId,
         handle,
       ]),
@@ -82,6 +87,7 @@ export class BrowserSemanticRangeSession {
   get state() {
     return Object.freeze({
       disposed: this.#disposed,
+      detailReads: this.#detailReads,
       rangeBytes: this.#rangeBytes,
       rangeReads: this.#rangeReads,
       relationQueries: this.#relationQueries,
@@ -127,6 +133,66 @@ export class BrowserSemanticRangeSession {
       );
     }
     return entity;
+  }
+
+  async getEntityDetails(request, { signal } = {}) {
+    aborted(signal);
+    this.#assertRequest(
+      request,
+      "Browser entity detail request",
+    );
+    const entity = this.#entityByExpressId.get(
+      request.expressId,
+    );
+    if (entity === undefined) {
+      throw new RangeError(
+        "Browser entity detail is outside the snapshot",
+      );
+    }
+    const cached = this.#detailByExpressId.get(
+      entity.expressId,
+    );
+    if (cached !== undefined) {
+      return cached;
+    }
+    const slice = entity.detailSlice;
+    const handle = this.#handles.get(slice.rangeId);
+    if (handle === undefined) {
+      throw new RangeError(
+        "Browser entity detail handle is unavailable",
+      );
+    }
+    const bytes = await this.readRange(
+      handle,
+      slice.offset,
+      slice.byteLength,
+      { signal },
+    );
+    let semantics;
+    try {
+      semantics = JSON.parse(
+        new TextDecoder("utf-8", {
+          fatal: true,
+        }).decode(bytes),
+      );
+    } finally {
+      bytes.fill(0);
+    }
+    this.#detailReads += 1;
+    const result = Object.freeze({
+      schema: "bim-explorer-bim-entity-details/0.1",
+      ...this.#context,
+      expressId: entity.expressId,
+      globalId: entity.globalId,
+      semantics,
+      receipt: {
+        handleId: handle.handleId,
+        offset: slice.offset,
+        byteLength: slice.byteLength,
+      },
+    });
+    this.#detailByExpressId.set(entity.expressId, result);
+    return result;
   }
 
   async queryTree(request, { signal } = {}) {
@@ -224,6 +290,7 @@ export class BrowserSemanticRangeSession {
       return false;
     }
     this.#disposed = true;
+    this.#detailByExpressId.clear();
     this.#handles.clear();
     this.#entityByExpressId.clear();
     return true;

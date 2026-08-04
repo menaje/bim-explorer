@@ -448,6 +448,11 @@ async function finish() {
     actualRendererPick:
       lastPick?.status === "hit" &&
       Number.isSafeInteger(lastPick.identity?.expressId),
+    boundedLazyDetails:
+      beforeCleanup.session.detailReads === 1 &&
+      beforeCleanup.session.rangeBytes -
+        mountReceipt.metrics.sourceReadBytes === 204 &&
+      scenario.panels.quantityValues.GrossVolume === 2.4,
     boundedDom:
       treeButtons().length <= state.tree.maximumDomRows &&
       state.tree.maximumDomRows === 8,
@@ -525,6 +530,7 @@ async function finish() {
     fixture: input.fixture,
     source: {
       fingerprint: input.snapshot.source.fingerprint,
+      protocolVersion: input.snapshot.protocolVersion,
       revisionId: input.snapshot.revisionId,
       snapshotId: input.snapshot.snapshotId,
     },
@@ -594,6 +600,12 @@ async function prepareScenario() {
       item.name),
     quantities: panelState.groups.quantities.map((item) =>
       item.name),
+    quantityValues: Object.fromEntries(
+      panelState.groups.quantities.map((item) => [
+        item.name,
+        item.value,
+      ]),
+    ),
   };
   const type = await explorer.selectRelation({
     kind: "type-definition",
