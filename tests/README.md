@@ -28,21 +28,25 @@ classification fixture까지 검사합니다. IfcOpenShell은 repository depende
 timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니다. 별도
 negative qualification은 generated 3-case corpus를 web-ifc/IfcOpenShell
 process에서 각각 두 번 거부하고 cleanup 경계와 정상 IFC recovery를
-검사합니다. 이는 synchronous in-call cancellation이나 resource exhaustion
-증거로 승격하지 않습니다.
+검사합니다. 별도 in-call qualification은 공개 IFC call-start checkpoint
+뒤 process 강제 종료와 fresh-process recovery를 검증합니다. engine
+cooperative cancellation이나 resource exhaustion 증거로 승격하지 않습니다.
 
 Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
 Worker client의 report validation, path-free failure, ordered checkpoint,
 model-opened cooperative cleanup과 응답 없는 취소의 bounded 강제 종료를
-검사합니다. source-session test는 size-before-read admission, 파일명 비노출,
+검사합니다. `model-open-call-starting` 뒤 응답하지 않는 Worker의 forced
+isolation과 receipt도 검사합니다. source-session test는 size-before-read
+admission, 파일명 비노출,
 active source 교체, stale 결과 억제, 중첩 cancellation receipt와 terminal
 disposal을 검사합니다. 실제 Chromium ESM/WASM, file chooser와 checkpoint
 취소, negative corpus dispose/recovery, 1,024-Wall bounded performance
-관찰은 별도 evidence로 기록합니다.
+관찰과 공개 IFC in-call forced isolation/fresh-Worker recovery는 별도
+evidence로 기록합니다.
 성능 test는 fixture identity, 시간 budget, WASM heap capacity와 cleanup을
-fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engine 호출의
-선점, resource exhaustion과 production Browser packaging Gate는 계속
-분리합니다.
+fail-closed로 검사합니다. engine-cooperative cancellation, 종료된 runtime
+내부 cleanup, resource exhaustion과 production Browser packaging Gate는
+계속 분리합니다.
 
 `bim-model-source` test는 generated mapped IFC에서 raw source fingerprint,
 spatial tree와 product semantics, shared·multi-range geometry payload,

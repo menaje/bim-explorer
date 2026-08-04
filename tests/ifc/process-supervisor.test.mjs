@@ -146,3 +146,41 @@ test("adapter supervisor rejects cancellation before spawn", async () => {
     },
   );
 });
+
+test("adapter supervisor can cancel from a path-free progress checkpoint", async () => {
+  const cancellation = new AbortController();
+  const observed = [];
+  await assert.rejects(
+    runAdapterProcess({
+      id: "checkpoint-cancellation-stub",
+      executable: process.execPath,
+      arguments: [
+        "--input-type=module",
+        "--eval",
+        "process.stdout.write(JSON.stringify({" +
+          "schema:'checkpoint/0.1',phase:'call-starting'})+'\\n');" +
+          "setInterval(()=>{},1000)",
+      ],
+      onProgress(value) {
+        observed.push(value);
+        cancellation.abort();
+      },
+      signal: cancellation.signal,
+      timeoutMs: 5_000,
+    }),
+    (error) => {
+      assert.ok(error instanceof AdapterProcessError);
+      assert.equal(error.receipt.outcome, "cancelled");
+      assert.equal(error.receipt.processExited, true);
+      assert.equal(error.receipt.cancelled, true);
+      assert.equal(error.receipt.signal, "SIGTERM");
+      return true;
+    },
+  );
+  assert.deepEqual(observed, [
+    {
+      schema: "checkpoint/0.1",
+      phase: "call-starting",
+    },
+  ]);
+});

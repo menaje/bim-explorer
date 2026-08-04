@@ -62,6 +62,18 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const inCallNodeEvidence = JSON.parse(
+    await readFile(
+      manifest.inCallCancellation.nodeEvidence,
+      "utf8",
+    ),
+  );
+  const inCallBrowserEvidence = JSON.parse(
+    await readFile(
+      manifest.inCallCancellation.browserEvidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -73,6 +85,8 @@ async function fixtures() {
     publicBrowserPerformanceEvidence,
     negativeNodeEvidence,
     negativeBrowserEvidence,
+    inCallNodeEvidence,
+    inCallBrowserEvidence,
   };
 }
 
@@ -88,6 +102,8 @@ function validateFixtures(value) {
     value.publicBrowserPerformanceEvidence,
     value.negativeNodeEvidence,
     value.negativeBrowserEvidence,
+    value.inCallNodeEvidence,
+    value.inCallBrowserEvidence,
   );
 }
 
@@ -107,7 +123,8 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.representativeNodeCpuRss, true);
   assert.equal(manifest.gates.browserRepresentativeParsing, true);
   assert.equal(manifest.gates.largeModelPerformance, false);
-  assert.equal(manifest.gates.cancellation, false);
+  assert.equal(manifest.gates.forcedIsolationCancellation, true);
+  assert.equal(manifest.gates.cancellation, true);
   assert.equal(manifest.gates.corruptInputCleanup, true);
   assert.equal(manifest.gates.browserPackaging, false);
 });
@@ -211,5 +228,25 @@ test("negative cleanup cannot promote in-call cancellation", async () => {
   assert.throws(
     () => validateFixtures(fixtureSet),
     /overclaims support/u,
+  );
+});
+
+test("forced isolation cannot promote cooperative engine cleanup", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.inCallNodeEvidence
+    .decision.cooperativeEngineCancellation = "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /overclaims support/u,
+  );
+});
+
+test("forced Browser cancellation requires a bounded termination receipt", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.inCallBrowserEvidence
+    .cancellationObservation.worker.cancellationWaitMs = 1_000;
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /receipt is incomplete/u,
   );
 });

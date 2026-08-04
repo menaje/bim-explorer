@@ -30,7 +30,7 @@
     "held": [
       "IFC2X3 and IFC4.3",
       "visibility-driven range planning, physical GPU memory and picking/input",
-      "synchronous in-call cancellation and resource-exhaustion recovery",
+      "engine-cooperative in-call cancellation, explicit in-process cleanup and resource-exhaustion recovery",
       "write and round-trip"
     ]
   },
@@ -68,6 +68,17 @@
     "thirdPartyContent": false,
     "resourceExhaustionQualified": false,
     "inCallCancellationQualified": false
+  },
+  "inCallCancellation": {
+    "status": "experimental",
+    "scope": "forced-process-and-browser-worker-isolation",
+    "fixture": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "nodeEvidence": "compatibility/evidence/ifc-engine-in-call-cancellation-2026-08-04.json",
+    "browserEvidence": "compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json",
+    "forcedIsolationQualified": true,
+    "cooperativeEngineCancellationQualified": false,
+    "explicitCleanupDuringCallQualified": false,
+    "resourceExhaustionQualified": false
   },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
@@ -120,6 +131,7 @@
       "evidence": "compatibility/evidence/web-ifc-browser-worker-smoke-2026-08-03.json",
       "lifecycleEvidence": "compatibility/evidence/web-ifc-browser-local-file-2026-08-03.json",
       "cancellationEvidence": "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
+      "inCallCancellationEvidence": "compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json",
       "performanceEvidence": "compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json",
       "publicPerformanceEvidence": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
       "negativeEvidence": "compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json",
@@ -184,8 +196,8 @@
       "ifcopenshell": "blocked"
     },
     "cancellation": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "corruptInputCleanup": {
       "web-ifc": "mapped",
@@ -232,7 +244,8 @@
     "browserRepresentativeParsing": true,
     "browserRepresentativeWebGl2FirstFrame": true,
     "largeModelPerformance": false,
-    "cancellation": false,
+    "forcedIsolationCancellation": true,
+    "cancellation": true,
     "corruptInputCleanup": true,
     "macosPackaging": true,
     "linuxPackaging": false,
@@ -244,14 +257,14 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "in-call-cancellation-and-linux-package-matrix",
+    "nextPrototype": "resource-exhaustion-and-linux-package-matrix",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts plus a three-case generated negative corpus with isolated-process cleanup and valid-source recovery. web-ifc additionally passes the same negative corpus in actual Chromium Workers with explicit model close/engine dispose, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Physical GPU memory, context-loss recovery, production packaging, synchronous in-call cancellation, resource exhaustion and product redistribution review are still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus and repeated forced process-isolation cancellation after a public-model call-start checkpoint with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, physical GPU memory, context-loss recovery, resource exhaustion, production packaging and product redistribution review remain unqualified."
   },
   "blockers": [
     "Browser WebGL2 exploration passes, but physical GPU memory and context-loss recovery are unqualified",
-    "No synchronous in-call cancellation or resource-exhaustion conformance",
+    "Forced isolation cancellation passes, but engine-cooperative cancellation, explicit cleanup after forced exit and resource exhaustion remain unqualified",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",

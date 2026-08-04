@@ -3,9 +3,10 @@ export const BROWSER_WORKER_REQUEST_SCHEMA =
 export const BROWSER_WORKER_RESULT_SCHEMA =
   "bim-explorer-browser-worker-result/0.4";
 export const BROWSER_WORKER_PROGRESS_SCHEMA =
-  "bim-explorer-browser-worker-progress/0.1";
+  "bim-explorer-browser-worker-progress/0.2";
 export const BROWSER_WORKER_PHASES = Object.freeze([
   "engine-initialized",
+  "model-open-call-starting",
   "model-opened",
   "inspection-complete",
 ]);
@@ -344,6 +345,13 @@ function receipt(outcome, started, overrides = {}) {
     },
     wallClockMs: performance.now() - started,
   };
+  if (
+    typeof overrides.cancellationWaitMs === "number" &&
+    Number.isFinite(overrides.cancellationWaitMs) &&
+    overrides.cancellationWaitMs >= 0
+  ) {
+    value.cancellationWaitMs = overrides.cancellationWaitMs;
+  }
   if (typeof overrides.cleanup?.modelOpened === "boolean") {
     value.cleanup.modelOpened = overrides.cleanup.modelOpened;
   }
@@ -400,6 +408,7 @@ export async function inspectIfcInBrowserWorker(
   };
   return await new Promise((resolve, reject) => {
     let cancellationTimeout;
+    let cancellationStarted = null;
     let cancelling = false;
     let lastPhase = null;
     let requestPosted = false;
@@ -451,6 +460,7 @@ export async function inspectIfcInBrowserWorker(
         return;
       }
       cancelling = true;
+      cancellationStarted = performance.now();
       try {
         worker.postMessage({
           schema: BROWSER_WORKER_REQUEST_SCHEMA,
@@ -465,6 +475,8 @@ export async function inspectIfcInBrowserWorker(
       }
       cancellationTimeout = setTimeout(() => {
         fail("cancelled-forced", {
+          cancellationWaitMs:
+            performance.now() - cancellationStarted,
           cancelled: true,
         });
       }, cancellationGraceMs);

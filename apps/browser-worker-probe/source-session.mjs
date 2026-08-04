@@ -96,7 +96,7 @@ function workerCancellationReceipt(error) {
   ) {
     return null;
   }
-  return {
+  const receipt = {
     outcome: error.receipt.outcome,
     cooperativeCancellation:
       error.receipt.cooperativeCancellation,
@@ -105,6 +105,22 @@ function workerCancellationReceipt(error) {
     workerTerminationRequested:
       error.receipt.workerTerminationRequested,
   };
+  if (
+    typeof error.receipt.cancellationWaitMs === "number" &&
+    Number.isFinite(error.receipt.cancellationWaitMs) &&
+    error.receipt.cancellationWaitMs >= 0
+  ) {
+    receipt.cancellationWaitMs =
+      error.receipt.cancellationWaitMs;
+  }
+  if (
+    typeof error.receipt.wallClockMs === "number" &&
+    Number.isFinite(error.receipt.wallClockMs) &&
+    error.receipt.wallClockMs >= 0
+  ) {
+    receipt.wallClockMs = error.receipt.wallClockMs;
+  }
+  return receipt;
 }
 
 export class BrowserIfcSourceSession {

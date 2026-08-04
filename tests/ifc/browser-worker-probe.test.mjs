@@ -196,6 +196,7 @@ class FakeWorker {
         this.action === "success" ||
         this.action === "invalid-resource" ||
         this.action === "cooperative-cancel" ||
+        this.action === "forced-in-call-cancel" ||
         this.action === "rejected" ||
         this.action === "invalid-rejection"
       ) {
@@ -282,7 +283,27 @@ class FakeWorker {
     if (
       message.type === "continue" &&
       this.action === "cooperative-cancel" &&
-      this.phaseIndex < 1
+      this.phaseIndex <
+        BROWSER_WORKER_PHASES.indexOf("model-opened")
+    ) {
+      this.phaseIndex += 1;
+      queueMicrotask(() => {
+        this.emit("message", {
+          data: progress(
+            message.requestId,
+            BROWSER_WORKER_PHASES[this.phaseIndex],
+          ),
+        });
+      });
+      return;
+    }
+    if (
+      message.type === "continue" &&
+      this.action === "forced-in-call-cancel" &&
+      this.phaseIndex <
+        BROWSER_WORKER_PHASES.indexOf(
+          "model-open-call-starting",
+        )
     ) {
       this.phaseIndex += 1;
       queueMicrotask(() => {
@@ -377,6 +398,7 @@ test("Browser Worker client force-terminates an unresponsive cancellation", asyn
     assert.equal(error.receipt.outcome, "cancelled-forced");
     assert.equal(error.receipt.cancelled, true);
     assert.equal(error.receipt.cooperativeCancellation, false);
+    assert.ok(error.receipt.cancellationWaitMs >= 1);
     assert.equal(worker.terminated, true);
     return true;
   });
@@ -415,7 +437,52 @@ test("Browser Worker cooperatively cancels after model open and cleans up", asyn
   });
   assert.deepEqual(observed, [
     "engine-initialized",
+    "model-open-call-starting",
     "model-opened",
+  ]);
+});
+
+test("Browser Worker force-terminates after the model-open call checkpoint", async () => {
+  const worker = new FakeWorker("forced-in-call-cancel");
+  const cancellation = new AbortController();
+  const observed = [];
+  const running = inspectIfcInBrowserWorker(
+    new Uint8Array([1, 2, 3]).buffer,
+    {
+      cancellationGraceMs: 1,
+      onProgress(value) {
+        observed.push(value.phase);
+        if (value.phase === "model-open-call-starting") {
+          setTimeout(() => {
+            cancellation.abort();
+          }, 0);
+        }
+      },
+      signal: cancellation.signal,
+      workerFactory: () => worker,
+    },
+  );
+  await assert.rejects(running, (error) => {
+    assert.ok(error instanceof BrowserWorkerError);
+    assert.equal(error.receipt.outcome, "cancelled-forced");
+    assert.equal(error.receipt.cancelled, true);
+    assert.equal(error.receipt.cooperativeCancellation, false);
+    assert.ok(error.receipt.cancellationWaitMs >= 1);
+    assert.equal(
+      error.receipt.lastPhase,
+      "model-open-call-starting",
+    );
+    assert.deepEqual(error.receipt.cleanup, {
+      modelClosed: false,
+      engineDisposed: false,
+    });
+    assert.equal(error.receipt.workerTerminationRequested, true);
+    assert.equal(worker.terminated, true);
+    return true;
+  });
+  assert.deepEqual(observed, [
+    "engine-initialized",
+    "model-open-call-starting",
   ]);
 });
 
@@ -867,6 +934,7 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   const pageHtml = await page.text();
   assert.match(pageHtml, /Run synthetic IFC probe/u);
   assert.match(pageHtml, /Run cancellation probe/u);
+  assert.match(pageHtml, /Run in-call isolation probe/u);
   assert.match(pageHtml, /Run negative corpus probe/u);
   assert.match(pageHtml, /Run performance probe/u);
   assert.match(pageHtml, /Run public representative probe/u);

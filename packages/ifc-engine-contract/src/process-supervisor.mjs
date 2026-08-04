@@ -40,7 +40,11 @@ function validateOptions(options) {
     typeof options.executable !== "string" ||
     options.executable.length === 0 ||
     !Array.isArray(options.arguments) ||
-    !options.arguments.every((value) => typeof value === "string")
+    !options.arguments.every((value) => typeof value === "string") ||
+    (
+      options.onProgress !== undefined &&
+      typeof options.onProgress !== "function"
+    )
   ) {
     throw new TypeError("invalid isolated adapter process options");
   }
@@ -85,6 +89,7 @@ export async function runAdapterProcess(options) {
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
+    let progressBuffer = "";
     let stdoutBytes = 0;
     let stderrBytes = 0;
     let timedOut = false;
@@ -133,6 +138,22 @@ export async function runAdapterProcess(options) {
       stdoutBytes += Buffer.byteLength(chunk);
       if (stdoutBytes <= maxOutputBytes) {
         stdout += chunk;
+        if (options.onProgress) {
+          progressBuffer += chunk;
+          let newline = progressBuffer.indexOf("\n");
+          while (newline >= 0) {
+            const line = progressBuffer.slice(0, newline).trim();
+            progressBuffer = progressBuffer.slice(newline + 1);
+            if (line) {
+              try {
+                options.onProgress(Object.freeze(JSON.parse(line)));
+              } catch {
+                // The final report and process receipt remain authoritative.
+              }
+            }
+            newline = progressBuffer.indexOf("\n");
+          }
+        }
       } else {
         outputLimitExceeded = true;
         kill("SIGKILL");

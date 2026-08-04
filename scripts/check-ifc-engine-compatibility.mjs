@@ -108,6 +108,8 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
     prototype.lifecycleEvidence.length === 0 ||
     typeof prototype.cancellationEvidence !== "string" ||
     prototype.cancellationEvidence.length === 0 ||
+    typeof prototype.inCallCancellationEvidence !== "string" ||
+    prototype.inCallCancellationEvidence.length === 0 ||
     typeof prototype.performanceEvidence !== "string" ||
     prototype.performanceEvidence.length === 0 ||
     typeof prototype.negativeEvidence !== "string" ||
@@ -1187,6 +1189,313 @@ function validateNegativeCorpus(
   };
 }
 
+function validateInCallCancellation(
+  manifest,
+  nodeEvidence,
+  browserEvidence,
+) {
+  const qualification = plainRecord(
+    manifest.inCallCancellation,
+    "inCallCancellation",
+  );
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  if (
+    qualification.status !== "experimental" ||
+    qualification.scope !==
+      "forced-process-and-browser-worker-isolation" ||
+    qualification.fixture !==
+      "fixtures/ifc/public-schependomlaan/manifest.json" ||
+    prototype.inCallCancellationEvidence !==
+      qualification.browserEvidence ||
+    qualification.forcedIsolationQualified !== true ||
+    qualification.cooperativeEngineCancellationQualified !== false ||
+    qualification.explicitCleanupDuringCallQualified !== false ||
+    qualification.resourceExhaustionQualified !== false
+  ) {
+    throw new Error("in-call cancellation manifest is invalid");
+  }
+
+  const publicSource = {
+    byteLength: 46_766_968,
+    id: "public-schependomlaan-complete-ifc2x3",
+    sha256:
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+  };
+  const recoverySource = {
+    byteLength: 2_855,
+    id: "synthetic-small-ifc4",
+    schema: "IFC4",
+    sha256:
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+  };
+  const identities = {
+    "web-ifc": {
+      backend: "node-wasm-process",
+      cleanup: {
+        engineDisposed: true,
+        modelClosed: true,
+      },
+    },
+    ifcopenshell: {
+      backend: "python-native-process",
+      cleanup: {
+        engineDisposed: false,
+        modelClosed: false,
+      },
+    },
+  };
+
+  plainRecord(nodeEvidence, "in-call cancellation Node evidence");
+  if (
+    nodeEvidence.schema !==
+      "bim-explorer-ifc-in-call-cancellation-evidence/0.1" ||
+    nodeEvidence.status !== "experimental" ||
+    nodeEvidence.fixture?.id !== publicSource.id ||
+    nodeEvidence.fixture?.byteLength !== publicSource.byteLength ||
+    nodeEvidence.fixture?.sha256 !== publicSource.sha256 ||
+    nodeEvidence.fixture?.schema !== "IFC2X3" ||
+    nodeEvidence.fixture?.artifactCommitted !== false ||
+    nodeEvidence.fixture?.bundlingApproved !== false ||
+    nodeEvidence.fixture?.customerContent !== false ||
+    nodeEvidence.policy?.callStartCheckpoint !==
+      "model-open-call-starting" ||
+    nodeEvidence.policy?.cancellationDelayMs !== 25 ||
+    nodeEvidence.policy?.cancellationGraceMs !== 500 ||
+    nodeEvidence.policy?.timeoutMs !== 30_000 ||
+    !Array.isArray(nodeEvidence.engines) ||
+    nodeEvidence.engines.length !== CANDIDATES.length
+  ) {
+    throw new Error("in-call cancellation Node evidence identity mismatch");
+  }
+  for (const engineId of CANDIDATES) {
+    const engine = nodeEvidence.engines
+      .find((candidate) => candidate.engine === engineId);
+    if (
+      engine?.status !==
+        "passed-forced-isolation-cancellation" ||
+      !Array.isArray(engine.runs) ||
+      engine.runs.length !== 2
+    ) {
+      throw new Error(`${engineId} in-call cancellation is missing`);
+    }
+    for (let index = 0; index < engine.runs.length; index += 1) {
+      const run = engine.runs[index];
+      if (
+        run.attempt !== index + 1 ||
+        run.checkpoint?.schema !==
+          "bim-explorer-ifc-in-call-progress/0.1" ||
+        run.checkpoint?.phase !== "model-open-call-starting" ||
+        run.checkpoint?.engine?.id !== engineId ||
+        run.checkpoint?.engine?.version !==
+          manifest.candidates[engineId].version ||
+        run.checkpoint?.engine?.backend !==
+          identities[engineId].backend ||
+        run.checkpoint?.source?.id !== publicSource.id ||
+        run.checkpoint?.source?.byteLength !==
+          publicSource.byteLength ||
+        run.checkpoint?.source?.sha256 !== publicSource.sha256 ||
+        typeof run.checkpoint?.observedAfterStartMs !== "number" ||
+        !Number.isFinite(run.checkpoint.observedAfterStartMs) ||
+        run.checkpoint.observedAfterStartMs <= 0 ||
+        run.cancellationDelayMs !== 25 ||
+        run.receipt?.outcome !== "cancelled" ||
+        run.receipt?.processExited !== true ||
+        run.receipt?.cancelled !== true ||
+        run.receipt?.timedOut !== false ||
+        run.receipt?.outputLimitExceeded !== false ||
+        !["SIGTERM", "SIGKILL"].includes(run.receipt?.signal) ||
+        typeof run.receipt?.wallClockMs !== "number" ||
+        !Number.isFinite(run.receipt.wallClockMs) ||
+        run.receipt.wallClockMs <=
+          run.checkpoint.observedAfterStartMs
+      ) {
+        throw new Error(
+          `${engineId} in-call cancellation receipt is incomplete`,
+        );
+      }
+    }
+    const recovery = engine.recovery;
+    if (
+      !sameJson(recovery?.source, {
+        ...recoverySource,
+        view: "ReferenceView_V1.2",
+      }) ||
+      recovery.semantics?.projects !== 1 ||
+      recovery.semantics?.walls !== 1 ||
+      recovery.geometry?.products !== 1 ||
+      recovery.geometry?.triangles !== 12 ||
+      !sameJson(recovery.cleanup, identities[engineId].cleanup) ||
+      recovery.process?.outcome !== "completed" ||
+      recovery.process?.processExited !== true ||
+      recovery.process?.exitCode !== 0 ||
+      recovery.process?.timedOut !== false ||
+      recovery.process?.cancelled !== false
+    ) {
+      throw new Error(
+        `${engineId} post-cancellation recovery is incomplete`,
+      );
+    }
+  }
+  if (
+    !Object.values(nodeEvidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(nodeEvidence.conformance ?? {}).length !== 7 ||
+    nodeEvidence.decision?.forcedIsolationCancellation !== "passed" ||
+    nodeEvidence.decision?.cooperativeEngineCancellation !== "blocked" ||
+    nodeEvidence.decision?.explicitCleanupDuringCall !== "blocked" ||
+    nodeEvidence.decision?.resourceExhaustion !== "blocked" ||
+    nodeEvidence.decision?.productionPackaging !== "blocked" ||
+    nodeEvidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("in-call cancellation Node evidence overclaims support");
+  }
+
+  plainRecord(browserEvidence, "in-call cancellation Browser evidence");
+  if (
+    browserEvidence.schema !==
+      "bim-explorer-browser-in-call-cancellation-evidence/0.1" ||
+    browserEvidence.status !== "experimental" ||
+    browserEvidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.4" ||
+    browserEvidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.4" ||
+    browserEvidence.contract?.progressSchema !==
+      "bim-explorer-browser-worker-progress/0.2" ||
+    browserEvidence.contract?.callStartCheckpoint !==
+      "model-open-call-starting" ||
+    browserEvidence.contract?.cancellationDelayMs !== 25 ||
+    browserEvidence.contract?.cancellationGraceMs !== 50 ||
+    browserEvidence.contract?.timeoutMs !== 30_000 ||
+    browserEvidence.engine?.id !== "web-ifc" ||
+    browserEvidence.engine?.version !==
+      manifest.candidates["web-ifc"].version ||
+    browserEvidence.engine?.backend !== prototype.backend ||
+    browserEvidence.engine?.license !==
+      manifest.candidates["web-ifc"].license ||
+    browserEvidence.fixture?.id !== publicSource.id ||
+    browserEvidence.fixture?.manifest !== qualification.fixture ||
+    browserEvidence.fixture?.byteLength !== publicSource.byteLength ||
+    browserEvidence.fixture?.sha256 !== publicSource.sha256 ||
+    browserEvidence.fixture?.schema !== "IFC2X3" ||
+    browserEvidence.fixture?.rightsVerified !== true ||
+    browserEvidence.fixture?.artifactCommitted !== false ||
+    browserEvidence.fixture?.bundlingApproved !== false ||
+    browserEvidence.fixture?.profileAdmission !== false
+  ) {
+    throw new Error(
+      "in-call cancellation Browser evidence identity mismatch",
+    );
+  }
+  const observation = plainRecord(
+    browserEvidence.cancellationObservation,
+    "cancellationObservation",
+  );
+  const worker = observation.worker;
+  if (
+    observation.source?.id !== publicSource.id ||
+    observation.source?.kind !== "public-fixture" ||
+    observation.source?.byteLength !== publicSource.byteLength ||
+    observation.source?.sha256 !== publicSource.sha256 ||
+    observation.source?.schema !== "IFC2X3" ||
+    !sameJson(observation.observedPhases, [
+      "engine-initialized",
+      "model-open-call-starting",
+    ]) ||
+    observation.requestedAfterPhase !==
+      "model-open-call-starting" ||
+    observation.sourceSession?.outcome !== "cancelled" ||
+    observation.sourceSession?.workerStarted !== true ||
+    observation.sourceSession?.cancelled !== true ||
+    observation.sourceSession?.disposed !== false ||
+    worker?.outcome !== "cancelled-forced" ||
+    worker.cooperativeCancellation !== false ||
+    worker.lastPhase !== "model-open-call-starting" ||
+    worker.cleanup?.modelClosed !== false ||
+    worker.cleanup?.engineDisposed !== false ||
+    worker.workerTerminationRequested !== true ||
+    typeof worker.cancellationWaitMs !== "number" ||
+    !Number.isFinite(worker.cancellationWaitMs) ||
+    worker.cancellationWaitMs <
+      browserEvidence.contract.cancellationGraceMs ||
+    worker.cancellationWaitMs >
+      browserEvidence.contract.cancellationGraceMs + 200
+  ) {
+    throw new Error(
+      "forced Browser in-call cancellation receipt is incomplete",
+    );
+  }
+  for (const [label, value] of Object.entries({
+    sessionWallClockMs: observation.sourceSession?.wallClockMs,
+    workerWallClockMs: worker?.wallClockMs,
+  })) {
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value <= 0
+    ) {
+      throw new Error(`Browser in-call ${label} is invalid`);
+    }
+  }
+  const browserRecovery = browserEvidence.recoveryObservation;
+  if (
+    browserRecovery?.source?.id !==
+      "synthetic-in-call-recovery-ifc4" ||
+    browserRecovery.source.kind !== "synthetic" ||
+    browserRecovery.source.byteLength !== recoverySource.byteLength ||
+    browserRecovery.source.sha256 !== recoverySource.sha256 ||
+    browserRecovery.source.schema !== recoverySource.schema ||
+    browserRecovery.semantics?.projects !== 1 ||
+    browserRecovery.semantics?.walls !== 1 ||
+    browserRecovery.geometry?.products !== 1 ||
+    browserRecovery.geometry?.triangles !== 12 ||
+    browserRecovery.resources?.inputBytes !== recoverySource.byteLength ||
+    browserRecovery.cleanup?.modelClosed !== true ||
+    browserRecovery.cleanup?.engineDisposed !== true ||
+    browserRecovery.worker?.outcome !== "completed" ||
+    browserRecovery.worker?.lastPhase !== "inspection-complete" ||
+    browserRecovery.worker?.cleanup?.modelClosed !== true ||
+    browserRecovery.worker?.cleanup?.engineDisposed !== true ||
+    browserRecovery.worker?.workerTerminationRequested !== true ||
+    browserRecovery.sourceSession?.outcome !== "completed" ||
+    browserRecovery.sourceSession?.workerStarted !== true ||
+    browserRecovery.sourceSession?.cancelled !== false ||
+    browserRecovery.sourceSession?.disposed !== false
+  ) {
+    throw new Error("Browser post-cancellation recovery is incomplete");
+  }
+  if (
+    !Object.values(browserEvidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(browserEvidence.conformance ?? {}).length !== 9 ||
+    browserEvidence.diagnostics?.consoleWarnings !== 0 ||
+    browserEvidence.diagnostics?.consoleErrors !== 0 ||
+    browserEvidence.decision?.forcedIsolationCancellation !== "passed" ||
+    browserEvidence.decision?.cooperativeEngineCancellation !==
+      "blocked" ||
+    browserEvidence.decision?.explicitCleanupDuringCall !== "blocked" ||
+    browserEvidence.decision?.resourceExhaustion !== "blocked" ||
+    browserEvidence.decision?.browserPackaging !== "blocked" ||
+    browserEvidence.decision?.productionClaims !== false ||
+    /(?:\/Users\/|\/Volumes\/|[A-Z]:\\)/u.test(
+      JSON.stringify({
+        browserEvidence,
+        nodeEvidence,
+      }),
+    )
+  ) {
+    throw new Error(
+      "in-call cancellation evidence is incomplete or overclaims",
+    );
+  }
+  return {
+    "web-ifc": "mapped",
+    ifcopenshell: "mapped",
+  };
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -1198,6 +1507,8 @@ export function validateIfcEngineCompatibility(
   publicBrowserPerformanceEvidence,
   negativeNodeEvidence,
   negativeBrowserEvidence,
+  inCallNodeEvidence,
+  inCallBrowserEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -1293,7 +1604,8 @@ export function validateIfcEngineCompatibility(
     gates.browserRepresentativeParsing !== true ||
     gates.browserRepresentativeWebGl2FirstFrame !== true ||
     gates.largeModelPerformance !== false ||
-    gates.cancellation !== false ||
+    gates.forcedIsolationCancellation !== true ||
+    gates.cancellation !== true ||
     gates.corruptInputCleanup !== true ||
     gates.browserPackaging !== false
   ) {
@@ -1303,6 +1615,11 @@ export function validateIfcEngineCompatibility(
     manifest,
     negativeNodeEvidence,
     negativeBrowserEvidence,
+  );
+  const cancellationCapability = validateInCallCancellation(
+    manifest,
+    inCallNodeEvidence,
+    inCallBrowserEvidence,
   );
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
@@ -1414,6 +1731,17 @@ export function validateIfcEngineCompatibility(
         }
         continue;
       }
+      if (capability === "cancellation") {
+        if (
+          matrix[capability][id] !==
+            cancellationCapability[id]
+        ) {
+          throw new Error(
+            `${id} forced isolation cancellation differs from the matrix`,
+          );
+        }
+        continue;
+      }
       const aggregate = aggregateCapability(
         reports.map((report) => report.capabilities[capability]),
         `${id}.${capability}`,
@@ -1513,6 +1841,21 @@ async function main() {
       "utf8",
     ),
   );
+  const inCallNodeEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.inCallCancellation.nodeEvidence),
+      "utf8",
+    ),
+  );
+  const inCallBrowserEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        root,
+        manifest.inCallCancellation.browserEvidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -1524,6 +1867,8 @@ async function main() {
     publicBrowserPerformanceEvidence,
     negativeNodeEvidence,
     negativeBrowserEvidence,
+    inCallNodeEvidence,
+    inCallBrowserEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

@@ -17,15 +17,18 @@ cooperative cleanup, 1,024-Wall bounded Browser performance prototype은
 세 가지 repository-authored malformed/truncated input은 별도 process에서
 두 번씩 거부하고 model close·engine dispose 뒤 정상 IFC 복구를
 확인했습니다. 같은 corpus는 실제 Chromium Worker에서도 통과했습니다.
-실행 중인 synchronous engine 호출의 선점, resource exhaustion,
-physical GPU memory, clean package와 production redistribution은 아직
-검증하지 않았습니다. engine object, source path와 파일명은 report에
-포함하지 않습니다.
+공개 IFC call-start 뒤 process 강제 종료를 두 번, 실제 Chromium Worker
+강제 종료를 한 번 수행하고 각각 fresh runtime 복구를 확인했습니다.
+engine-cooperative cancellation, 강제 종료 뒤 내부 close/dispose,
+resource exhaustion, physical GPU memory, clean package와 production
+redistribution은 아직 검증하지 않았습니다. engine object, source path와
+파일명은 report에 포함하지 않습니다.
 
 ```sh
 npm run fetch:ifc:public
 npm run qualify:ifc:public
 npm run qualify:ifc:negative
+npm run qualify:ifc:cancel-in-call
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
 ```

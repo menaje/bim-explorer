@@ -26,6 +26,7 @@ export const PUBLIC_BROWSER_PERFORMANCE_FIXTURE = Object.freeze({
   products: 3_569,
   projects: 1,
   route: "/fixture/public-representative.ifc",
+  schema: "IFC2X3",
   sha256:
     "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
   triangles: 261_424,

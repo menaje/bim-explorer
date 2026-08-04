@@ -1,0 +1,260 @@
+{
+  "schema": "bim-explorer-ifc-in-call-cancellation-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "schema": "IFC2X3",
+    "cacheHit": true,
+    "artifactCommitted": false,
+    "bundlingApproved": false,
+    "customerContent": false
+  },
+  "environment": {
+    "architecture": "arm64",
+    "node": "v24.11.1",
+    "platform": "darwin"
+  },
+  "policy": {
+    "callStartCheckpoint": "model-open-call-starting",
+    "cancellationDelayMs": 25,
+    "cancellationGraceMs": 500,
+    "timeoutMs": 30000
+  },
+  "engines": [
+    {
+      "engine": "web-ifc",
+      "status": "passed-forced-isolation-cancellation",
+      "runs": [
+        {
+          "attempt": 1,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 235.007625
+          },
+          "cancellationDelayMs": 25,
+          "receipt": {
+            "outcome": "cancelled",
+            "exitCode": null,
+            "signal": "SIGTERM",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": true,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 315,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 266.5605
+          }
+        },
+        {
+          "attempt": 2,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 225.00779200000005
+          },
+          "cancellationDelayMs": 25,
+          "receipt": {
+            "outcome": "cancelled",
+            "exitCode": null,
+            "signal": "SIGTERM",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": true,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 315,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 256.681375
+          }
+        }
+      ],
+      "recovery": {
+        "source": {
+          "id": "synthetic-small-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "cancelled": false,
+          "outputLimitExceeded": false,
+          "stdoutBytes": 2660,
+          "stderrBytes": 0,
+          "stderrCaptured": false,
+          "wallClockMs": 218.53941699999996
+        }
+      }
+    },
+    {
+      "engine": "ifcopenshell",
+      "status": "passed-forced-isolation-cancellation",
+      "runs": [
+        {
+          "attempt": 1,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 404.4245000000001
+          },
+          "cancellationDelayMs": 25,
+          "receipt": {
+            "outcome": "cancelled",
+            "exitCode": null,
+            "signal": "SIGTERM",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": true,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 329,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 433.677417
+          }
+        },
+        {
+          "attempt": 2,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 180.36920800000007
+          },
+          "cancellationDelayMs": 25,
+          "receipt": {
+            "outcome": "cancelled",
+            "exitCode": null,
+            "signal": "SIGTERM",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": true,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 329,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 210.74729200000002
+          }
+        }
+      ],
+      "recovery": {
+        "source": {
+          "id": "synthetic-small-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": false,
+          "engineDisposed": false
+        },
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "cancelled": false,
+          "outputLimitExceeded": false,
+          "stdoutBytes": 2729,
+          "stderrBytes": 0,
+          "stderrCaptured": false,
+          "wallClockMs": 241.50258299999996
+        }
+      }
+    }
+  ],
+  "conformance": {
+    "publicFixtureIdentityVerified": true,
+    "callStartCheckpointObserved": true,
+    "cancellationRequestedAfterCheckpoint": true,
+    "boundedProcessTermination": true,
+    "processExitObserved": true,
+    "postCancellationRecovery": true,
+    "diagnosticRedaction": true
+  },
+  "decision": {
+    "forcedIsolationCancellation": "passed",
+    "cooperativeEngineCancellation": "blocked",
+    "explicitCleanupDuringCall": "blocked",
+    "resourceExhaustion": "blocked",
+    "productionPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "Cancellation is mapped to process termination after a call-start checkpoint.",
+    "No engine callback confirms the exact instruction at termination.",
+    "Model close and engine dispose cannot run after forced process exit.",
+    "Fresh-process recovery does not prove same-process reuse.",
+    "No resource-exhaustion or memory-safety claim is made."
+  ]
+}

@@ -2,7 +2,7 @@ import * as WebIFC from "/vendor/web-ifc-api.js";
 
 const REQUEST_SCHEMA = "bim-explorer-browser-worker-request/0.4";
 const RESULT_SCHEMA = "bim-explorer-browser-worker-result/0.4";
-const PROGRESS_SCHEMA = "bim-explorer-browser-worker-progress/0.1";
+const PROGRESS_SCHEMA = "bim-explorer-browser-worker-progress/0.2";
 const SOURCE_ID = /^[a-z0-9][a-z0-9-]+$/u;
 const SOURCE_KINDS = new Set([
   "local-file",
@@ -246,6 +246,7 @@ async function inspectRequest(request, state) {
     }
 
     failurePhase = "model-open";
+    await checkpoint(state, "model-open-call-starting");
     const openStarted = performance.now();
     modelId = api.OpenModel(bytes, {
       COORDINATE_TO_ORIGIN: false,

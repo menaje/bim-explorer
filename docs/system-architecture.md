@@ -69,6 +69,9 @@ Native와 WASM은 같은 adapter contract를 구현하는 backend 선택입니�
 - adapter phase checkpoint에서 `continue`/`cancel`을 handshake하고, 취소 시
   model close와 engine dispose를 cleanup receipt로 검증합니다.
 - bounded grace 안에 취소 영수증이 없으면 Worker 강제 종료로 승격합니다.
+- synchronous engine call 직전 checkpoint 뒤 제어권이 반환되지 않으면
+  process/Worker 전체를 강제 종료하고 fresh runtime으로 복구합니다.
+  이 경계에서는 종료된 runtime 내부의 close/dispose를 주장하지 않습니다.
 - malformed/truncated input은 path-free rejection receipt만 반환하고, 열린
   model을 닫은 뒤 engine dispose와 Worker 종료를 확인합니다.
 - negative source 뒤 정상 source는 새 Worker에서 동일 identity/geometry
@@ -76,9 +79,10 @@ Native와 WASM은 같은 adapter contract를 구현하는 backend 선택입니�
 
 두 backend의 지원 여부는 같은 public IFC fixture와 semantic/geometry
 conformance로 비교합니다. WASM을 위해 source identity나 geometry 의미를
-낮은 공통분모로 축소하지 않습니다. checkpoint cooperative cleanup과
-negative-input rejection은 실행 중인 동기 engine 호출을 선점하거나 resource
-exhaustion을 복구한다는 의미가 아닙니다.
+낮은 공통분모로 축소하지 않습니다. forced isolation은 동기 호출 중
+process/Worker를 회수하는 전략이며 engine-cooperative cancellation,
+강제 종료 뒤 explicit cleanup 또는 resource-exhaustion 복구를 의미하지
+않습니다.
 
 현재 공통 report와 capability vocabulary는
 [IFC engine adapter v0.2 draft](../specs/ifc-engine-adapter-v0.2.md)가

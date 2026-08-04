@@ -34,9 +34,10 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > clean-installed VSIX에서 각각 3,569 products·261,424 triangles·3 ranges로
 > 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다. physical
 > GPU qualification, property-set value range, georeferencing,
-> source-precision 분리, synchronous in-call cancellation, resource
-> exhaustion, engine 선정, 공용 Viewer Core package와 지원 profile은 아직
-> 확정되지 않았습니다.
+> source-precision 분리, engine-cooperative cancellation, forced-exit
+> 내부 cleanup, resource exhaustion, engine 선정, 공용 Viewer Core
+> package와 지원 profile은 아직 확정되지 않았습니다. 공개 IFC call-start
+> 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를

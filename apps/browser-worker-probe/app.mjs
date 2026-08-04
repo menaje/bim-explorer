@@ -17,6 +17,9 @@ const elements = {
   backend: document.querySelector("#backend"),
   cancel: document.querySelector("#cancel-probe"),
   cancelProbe: document.querySelector("#run-cancel-probe"),
+  inCallCancelProbe: document.querySelector(
+    "#run-in-call-cancel-probe",
+  ),
   cleanup: document.querySelector("#cleanup"),
   engine: document.querySelector("#engine"),
   geometry: document.querySelector("#geometry"),
@@ -37,6 +40,9 @@ const elements = {
 let sourceSession = new BrowserIfcSourceSession();
 let currentSourceCancellation = null;
 let currentRun = 0;
+
+const IN_CALL_CANCELLATION_DELAY_MS = 25;
+const IN_CALL_CANCELLATION_GRACE_MS = 50;
 
 function setRunning(running) {
   elements.cancel.disabled = !running;
@@ -153,6 +159,33 @@ function publicPerformanceSource(signal) {
     PUBLIC_BROWSER_PERFORMANCE_FIXTURE.route,
     signal,
   );
+}
+
+function assertExpectedForcedInCallCancellation(error) {
+  if (!(error instanceof BrowserSourceSessionError)) {
+    throw new Error("in-call cancellation returned no source receipt");
+  }
+  const receipt = error.receipt;
+  const worker = receipt.workerCancellation;
+  if (
+    receipt.outcome !== "cancelled" ||
+    receipt.workerStarted !== true ||
+    receipt.cancelled !== true ||
+    worker?.outcome !== "cancelled-forced" ||
+    worker.cooperativeCancellation !== false ||
+    worker.lastPhase !== "model-open-call-starting" ||
+    worker.cleanup?.modelClosed !== false ||
+    worker.cleanup?.engineDisposed !== false ||
+    worker.workerTerminationRequested !== true ||
+    typeof worker.cancellationWaitMs !== "number" ||
+    worker.cancellationWaitMs <
+      IN_CALL_CANCELLATION_GRACE_MS ||
+    worker.cancellationWaitMs >
+      IN_CALL_CANCELLATION_GRACE_MS + 200
+  ) {
+    throw new Error("forced in-call isolation receipt is incomplete");
+  }
+  return receipt;
 }
 
 async function negativeCorpusManifest(signal) {
@@ -342,6 +375,144 @@ async function runNegativeCorpusProbe() {
   }
 }
 
+async function runInCallCancellationProbe() {
+  const run = ++currentRun;
+  currentSourceCancellation?.abort();
+  sourceSession.cancel("source-replaced");
+  const sourceCancellation = new AbortController();
+  currentSourceCancellation = sourceCancellation;
+  let cancellationTimer = null;
+  setRunning(true);
+  elements.status.dataset.state = "running";
+  elements.status.textContent =
+    "Loading public IFC for in-call isolation…";
+  try {
+    const source = await publicPerformanceSource(
+      sourceCancellation.signal,
+    );
+    if (run !== currentRun) {
+      return;
+    }
+    const observedPhases = [];
+    let cancellationReceipt = null;
+    try {
+      await sourceSession.inspect(source, {
+        cancellationGraceMs: IN_CALL_CANCELLATION_GRACE_MS,
+        onProgress(progress) {
+          if (run !== currentRun) {
+            return;
+          }
+          observedPhases.push(progress.phase);
+          elements.status.textContent =
+            `Worker phase: ${progress.phase}`;
+          if (
+            progress.phase === "model-open-call-starting" &&
+            cancellationTimer === null
+          ) {
+            cancellationTimer = setTimeout(() => {
+              sourceSession.cancel();
+            }, IN_CALL_CANCELLATION_DELAY_MS);
+          }
+        },
+        sourceId: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.id,
+        sourceKind: "public-fixture",
+        timeoutMs: PUBLIC_BROWSER_PERFORMANCE_BUDGET.timeoutMs,
+      });
+      throw new Error("expected forced in-call cancellation");
+    } catch (error) {
+      cancellationReceipt =
+        assertExpectedForcedInCallCancellation(error);
+    } finally {
+      if (cancellationTimer !== null) {
+        clearTimeout(cancellationTimer);
+        cancellationTimer = null;
+      }
+    }
+
+    elements.status.textContent =
+      "Running valid IFC in a fresh Worker…";
+    const recovery = await sourceSession.inspect(
+      await syntheticSource(sourceCancellation.signal),
+      {
+        sourceId: "synthetic-in-call-recovery-ifc4",
+        sourceKind: "synthetic",
+      },
+    );
+    if (
+      recovery.report.semantics.projects !== 1 ||
+      recovery.report.semantics.walls !== 1 ||
+      recovery.report.geometry.products !== 1 ||
+      recovery.report.geometry.triangles !== 12 ||
+      recovery.report.cleanup.modelClosed !== true ||
+      recovery.report.cleanup.engineDisposed !== true
+    ) {
+      throw new Error("post-in-call cancellation recovery failed");
+    }
+    if (run === currentRun) {
+      renderResult(recovery, {
+        successStatus:
+          "Passed: forced in-call isolation and recovery",
+      });
+      elements.source.textContent =
+        "public IFC isolated · valid recovery";
+      elements.receipt.textContent = JSON.stringify(
+        {
+          inCallCancellation: {
+            source: {
+              id: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.id,
+              byteLength:
+                PUBLIC_BROWSER_PERFORMANCE_FIXTURE.byteLength,
+              sha256: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.sha256,
+              schema: PUBLIC_BROWSER_PERFORMANCE_FIXTURE.schema,
+            },
+            observedPhases,
+            requestedAfterPhase: "model-open-call-starting",
+            cancellationDelayMs:
+              IN_CALL_CANCELLATION_DELAY_MS,
+            cancellationGraceMs:
+              IN_CALL_CANCELLATION_GRACE_MS,
+            receipt: cancellationReceipt,
+          },
+          recovery: {
+            report: recovery.report,
+            worker: recovery.receipt,
+            sourceSession: recovery.sourceSession,
+          },
+          limits: [
+            "Worker termination is forced after a pre-call checkpoint.",
+            "No engine callback identifies the exact instruction at termination.",
+            "Forced termination cannot return model-close or engine-dispose receipts.",
+            "Recovery uses a fresh Worker.",
+          ],
+        },
+        null,
+        2,
+      );
+    }
+  } catch (error) {
+    if (run === currentRun) {
+      renderFailure(
+        sourceCancellation.signal.aborted
+          ? new BrowserSourceSessionError(
+              "Browser IFC source cancelled",
+              {
+                outcome: "cancelled",
+              },
+            )
+          : error,
+      );
+    }
+  } finally {
+    if (cancellationTimer !== null) {
+      clearTimeout(cancellationTimer);
+    }
+    if (run === currentRun) {
+      currentSourceCancellation = null;
+      setRunning(false);
+    }
+  }
+}
+
 async function runSource(
   sourceFactory,
   {
@@ -463,6 +634,9 @@ elements.cancelProbe.addEventListener("click", () => {
     sourceKind: "synthetic",
     status: "Opening IFC before cooperative cancellation…",
   });
+});
+elements.inCallCancelProbe.addEventListener("click", () => {
+  void runInCallCancellationProbe();
 });
 elements.negativeProbe.addEventListener("click", () => {
   void runNegativeCorpusProbe();

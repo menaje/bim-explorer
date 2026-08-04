@@ -1,0 +1,161 @@
+{
+  "schema": "bim-explorer-browser-in-call-cancellation-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-04T12:16:49+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.4",
+    "resultSchema": "bim-explorer-browser-worker-result/0.4",
+    "progressSchema": "bim-explorer-browser-worker-progress/0.2",
+    "callStartCheckpoint": "model-open-call-starting",
+    "cancellationDelayMs": 25,
+    "cancellationGraceMs": 50,
+    "timeoutMs": 30000
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "manifest": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "schema": "IFC2X3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "rightsVerified": true,
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundlingApproved": false,
+    "profileAdmission": false
+  },
+  "cancellationObservation": {
+    "source": {
+      "id": "public-schependomlaan-complete-ifc2x3",
+      "kind": "public-fixture",
+      "byteLength": 46766968,
+      "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+      "schema": "IFC2X3"
+    },
+    "observedPhases": [
+      "engine-initialized",
+      "model-open-call-starting"
+    ],
+    "requestedAfterPhase": "model-open-call-starting",
+    "sourceSession": {
+      "outcome": "cancelled",
+      "sourceId": "public-schependomlaan-complete-ifc2x3",
+      "sourceKind": "public-fixture",
+      "sourceBytes": 46766968,
+      "workerStarted": true,
+      "cancelled": true,
+      "disposed": false,
+      "wallClockMs": 224.70000004768372
+    },
+    "worker": {
+      "outcome": "cancelled-forced",
+      "cooperativeCancellation": false,
+      "lastPhase": "model-open-call-starting",
+      "cleanup": {
+        "modelClosed": false,
+        "engineDisposed": false
+      },
+      "workerTerminationRequested": true,
+      "cancellationWaitMs": 53,
+      "wallClockMs": 206.30000007152557
+    }
+  },
+  "recoveryObservation": {
+    "source": {
+      "id": "synthetic-in-call-recovery-ifc4",
+      "kind": "synthetic",
+      "byteLength": 2855,
+      "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+      "schema": "IFC4"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 1
+    },
+    "geometry": {
+      "products": 1,
+      "triangles": 12
+    },
+    "performance": {
+      "initializationMs": 9.200000047683716,
+      "openMs": 1.9000000953674316,
+      "inspectionMs": 4.5,
+      "totalMs": 16
+    },
+    "resources": {
+      "inputBytes": 2855,
+      "wasmHeapCapacityBytes": {
+        "afterInitialization": 16777216,
+        "afterInspection": 139788288,
+        "afterOpen": 139788288,
+        "peakObserved": 139788288
+      }
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "workerTerminationRequested": true,
+      "timedOut": false,
+      "cancelled": false,
+      "cooperativeCancellation": false,
+      "lastPhase": "inspection-complete",
+      "cleanup": {
+        "modelClosed": true,
+        "engineDisposed": true
+      },
+      "wallClockMs": 100.39999997615814
+    },
+    "sourceSession": {
+      "outcome": "completed",
+      "sourceId": "synthetic-in-call-recovery-ifc4",
+      "sourceKind": "synthetic",
+      "sourceBytes": 2855,
+      "workerStarted": true,
+      "cancelled": false,
+      "disposed": false,
+      "workerCancellation": null,
+      "wallClockMs": 100.60000002384186
+    }
+  },
+  "conformance": {
+    "publicFixtureIdentityVerified": true,
+    "orderedProgress": true,
+    "callStartCheckpointObserved": true,
+    "cancellationRequestedAfterCheckpoint": true,
+    "boundedCancellationGrace": true,
+    "forcedWorkerTermination": true,
+    "postCancellationRecovery": true,
+    "diagnosticRedaction": true,
+    "pathFreeReceipt": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "decision": {
+    "forcedIsolationCancellation": "passed",
+    "cooperativeEngineCancellation": "blocked",
+    "explicitCleanupDuringCall": "blocked",
+    "resourceExhaustion": "blocked",
+    "browserPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "The Worker continued from a pre-call checkpoint before the delayed cancellation request.",
+    "No engine callback identifies the exact instruction at termination.",
+    "Forced Worker termination cannot return model-close or engine-dispose receipts.",
+    "Recovery uses a fresh Worker and does not prove same-Worker reuse.",
+    "No resource-exhaustion, memory-safety or production-package claim is made."
+  ]
+}

@@ -110,9 +110,15 @@ process cleanup·recovery는
 [`negative corpus evidence`](evidence/ifc-engine-negative-corpus-2026-08-04.json),
 실제 Chromium Worker dispose·recovery는
 [`Browser negative evidence`](evidence/web-ifc-browser-negative-corpus-2026-08-04.json)에
-분리합니다. 모두 prototype 결과입니다. IFC2X3 profile, physical GPU,
-checkpoint 사이에서 실행 중인 동기 engine 호출의 선점, resource exhaustion
-또는 `packagingBrowser` capability를 승격하지 않습니다.
+분리합니다. 공개 IFC call-start checkpoint 뒤 두 후보 process를 각각
+두 번 강제 종료하고 새 process에서 복구한 결과는
+[`process in-call evidence`](evidence/ifc-engine-in-call-cancellation-2026-08-04.json),
+실제 Chromium Worker의 50ms grace 강제 종료·새 Worker 복구는
+[`Browser in-call evidence`](evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json)에
+기록합니다. `cancellation`은 이 forced-isolation 전략에 한해 `mapped`입니다.
+모두 prototype 결과이며 IFC2X3 profile, physical GPU, engine-cooperative
+cancellation, 강제 종료 뒤 내부 explicit cleanup, resource exhaustion 또는
+`packagingBrowser` capability를 승격하지 않습니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 

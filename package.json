@@ -31,6 +31,7 @@
     "qualify:ifc:web": "node scripts/qualify-ifc-engine.mjs --engine web-ifc",
     "qualify:ifc:mapped": "node scripts/qualify-ifc-engine.mjs --engine web-ifc --fixture mapped",
     "qualify:ifc:negative": "node scripts/qualify-ifc-negative-corpus.mjs --engine web-ifc",
+    "qualify:ifc:cancel-in-call": "node scripts/qualify-ifc-in-call-cancellation.mjs --engine web-ifc",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
     "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",
     "qualify:product:web": "node scripts/qualify-bim-product-shell.mjs",

@@ -22,4 +22,6 @@ memory/time budget, crash isolation과 disposal receipt를 증명해야 합니�
 
 둘 다
 [`ifc-engine-contract`](../packages/ifc-engine-contract/README.md)의 같은
-report를 출력합니다.
+report를 출력합니다. 공개 IFC call-start qualification에서는 adapter
+process 전체를 bounded cancellation 경계로 사용하고 fresh process에서
+recovery를 확인합니다.

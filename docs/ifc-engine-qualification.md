@@ -30,9 +30,13 @@ IFC2X3 profile 승격은 아닙니다. Browser WebGL2 first-frame prototype도
 통과했습니다. 세 가지 generated malformed/truncated source는 web-ifc와
 IfcOpenShell 격리 process에서 각각 두 번 거부·정리하고 정상 source recovery를
 재현했으며, web-ifc는 실제 Chromium Worker에서도 explicit dispose와
-recovery를 통과했습니다. 다만 production packaging, 실행 중 동기 engine
-호출의 선점, resource exhaustion과 법률 Gate가 남아 있으므로 IfcOpenShell
-native process를 desktop fallback으로 계속 유지합니다.
+recovery를 통과했습니다. 공개 IFC call-start checkpoint 뒤에는 두 후보를
+각각 두 번 강제 process 종료하고 새 process에서 정상 IFC를 복구했습니다.
+web-ifc는 실제 Chromium에서도 50ms grace의 강제 Worker 종료와 새 Worker
+복구를 통과했습니다. 다만 engine-cooperative cancellation, 강제 종료된
+runtime 내부의 explicit cleanup, production packaging, resource exhaustion과
+법률 Gate가 남아 있으므로 IfcOpenShell native process를 desktop fallback으로
+계속 유지합니다.
 
 같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
 [`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
@@ -59,7 +63,9 @@ Browser 관찰값은
 [`public Node performance`](../compatibility/evidence/web-ifc-public-representative-node-performance-2026-08-03.json)와
 [`public Browser performance`](../compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json),
 [`negative process corpus`](../compatibility/evidence/ifc-engine-negative-corpus-2026-08-04.json)와
-[`negative Browser corpus`](../compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json)가
+[`negative Browser corpus`](../compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json),
+[`in-call process isolation`](../compatibility/evidence/ifc-engine-in-call-cancellation-2026-08-04.json)과
+[`in-call Browser isolation`](../compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json)이
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -128,8 +134,9 @@ loopback-only 진단 surface는 exact `web-ifc@0.0.77` ESM과
 size-before-read admission, active source 교체, explicit cancel, stale 억제와
 terminal dispose를 검사합니다.
 
-취소 probe는 `engine-initialized`, `model-opened`,
-`inspection-complete` checkpoint마다 main thread의 `continue`를 기다립니다.
+취소 probe는 `engine-initialized`, `model-open-call-starting`,
+`model-opened`, `inspection-complete` checkpoint마다 main thread의
+`continue`를 기다립니다.
 실제 local Chromium에서 generated base IFC가 열린 직후 취소를 요청했고,
 Worker는 model close와 engine dispose를 수행한 뒤
 `cancelled-cooperative` 영수증을 반환했습니다. 500ms grace 안에 응답하지
@@ -164,8 +171,9 @@ warning/error는 없었습니다.
 공개 대표 source의 Node CPU/RSS와 Browser parse/geometry Gate만
 통과했습니다. 64 MiB admission과 WASM capacity는 Browser live process나
 GPU memory가 아니며 Worker는 mesh를 renderer에 upload하거나 frame을 그리지
-않습니다. checkpoint cleanup도 실행 중인 synchronous `web-ifc` 호출을
-선점하는 증거가 아닙니다. 별도 WebGL2 renderer evidence가 GPU API
+않습니다. model-opened checkpoint cleanup만으로는 실행 중인 synchronous
+`web-ifc` 호출의 선점을 증명하지 않습니다. 아래 forced-isolation
+evidence가 이 경계를 별도로 다룹니다. 별도 WebGL2 renderer evidence가 GPU API
 first-frame을 검증했지만 physical GPU memory, clean-install engine
 packaging, Linux Browser CI와 VS Code engine isolation은 별도 Gate입니다.
 
@@ -198,6 +206,29 @@ receipt를 반환했습니다. 열린 model close, engine dispose, Worker 종료
 resource-exhaustion, parser memory safety, 실행 중 동기 호출의 선점,
 same-process engine reuse와 production package는 승인하지 않습니다.
 
+## In-call forced isolation cancellation
+
+공개 Schependomlaan IFC2X3의 46,766,968 bytes를 사용해 `OpenModel` 또는
+`ifcopenshell.open` 직전 `model-open-call-starting` checkpoint를 stdout으로
+내보냈습니다. checkpoint를 받은 25ms 뒤 취소를 요청했으며 web-ifc와
+IfcOpenShell process는 각각 두 번 모두 `SIGTERM`으로 종료됐습니다. 종료된
+process를 재사용하지 않고 새 process에서 2,855-byte 정상 IFC4의 1 Project,
+1 Wall과 12 triangles를 다시 확인했습니다.
+
+실제 local Chromium Worker도 `model-open-call-starting`에서 `continue`한
+25ms 뒤 취소를 요청했습니다. 동기 호출 중 Worker가 취소 메시지에 응답하지
+않아 50ms grace 뒤 `cancelled-forced`로 종료됐고, 관찰 cancellation wait는
+53ms였습니다. 이어서 새 Worker가 정상 IFC4를 열고 model close·engine
+dispose까지 완료했습니다. console warning/error는 없었습니다.
+
+따라서 공통 `cancellation` capability는 **forced process/Worker isolation
+전략**에 한해 두 후보 모두 `mapped`입니다. 이는 engine이 협력적으로
+호출을 중단했다는 뜻이 아닙니다. pre-call checkpoint 뒤 어느 engine
+instruction에서 종료됐는지는 callback으로 확인하지 못했고, 강제 종료된
+runtime은 model close·engine dispose 영수증을 반환할 수 없습니다.
+same-runtime reuse, resource exhaustion과 parser memory safety도 승인하지
+않습니다.
+
 ## Draft implementation profile
 
 현재 profile은 다음만 `experimental`입니다.
@@ -213,6 +244,8 @@ same-process engine reuse와 production package는 승인하지 않습니다.
 - local Chromium module Worker의 small-fixture ESM/WASM smoke
 - bounded local-file admission과 source-session lifecycle prototype
 - 유효한 IFC의 model-opened checkpoint cooperative cleanup prototype
+- 공개 IFC call-start 뒤 process/Worker forced-isolation cancellation과
+  fresh-runtime recovery prototype
 - generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
 공개 IFC2X3 관찰은 engine의 대표 parse/geometry 성능을 재기 위한
@@ -223,8 +256,8 @@ scenario에 포함하지 않습니다.
 
 - IFC2X3, IFC4.3와 그 외 exchange scenario
 - connection, system, opening과 broader object/relation corpus
-- 실행 중 동기 engine 호출의 취소와 candidate-level cancellation 승인
-- resource exhaustion, parser memory safety와 same-process recovery
+- engine-cooperative in-call cancellation과 강제 종료 뒤 explicit cleanup
+- resource exhaustion, parser memory safety와 same-runtime recovery
 - visibility 기반 first frame, physical GPU memory와 context-loss recovery
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
@@ -246,7 +279,8 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 | relations | mapped | native |
 | mapped/shared/Qto/classification | mapped | mapped |
 | corrupt-input adapter cleanup | mapped | mapped |
-| synchronous in-call cancellation | blocked | blocked |
+| forced-isolation cancellation | mapped | mapped |
+| engine-cooperative cancellation | blocked | blocked |
 | write/round-trip | blocked | blocked |
 | verified packaging | macOS Node only | macOS Python wheel only |
 
@@ -290,6 +324,7 @@ npm run qualify:ifc:web
 npm run qualify:ifc:mapped
 npm run qualify:ifc:negative
 npm run fetch:ifc:public
+npm run qualify:ifc:cancel-in-call
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
@@ -297,7 +332,9 @@ npm run probe:browser-worker
 ```
 
 Browser probe에서는 **Run cancellation probe**로 model-opened checkpoint
-cleanup을 확인하고 **Run negative corpus probe**로 세 source의
+cleanup을, **Run in-call isolation probe**로 공개 IFC의 50ms forced
+Worker isolation과 fresh-Worker recovery를 확인합니다.
+**Run negative corpus probe**로 세 source의
 dispose/recovery를 확인합니다. **Run performance probe**로 1,024-Wall
 budget을 검사합니다. **Run public representative probe**로 고정 digest의
 46.77MB IFC2X3 parse/geometry budget을 검사하고, 이어서 **Run synthetic
@@ -312,6 +349,9 @@ node scripts/qualify-ifc-engine.mjs \
   --engine all \
   --fixture mapped \
   --python .qualification-venv/bin/python
+node scripts/qualify-ifc-in-call-cancellation.mjs \
+  --engine all \
+  --python .qualification-venv/bin/python
 ```
 
 synthetic qualification command는 매번 임시 `.ifc`를 생성하고 종료 시
@@ -323,17 +363,20 @@ qualification harness는 공통 process supervisor를 사용해 최소 환경,
 stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니다.
 일반 Node stub으로 redaction과 종료 승격을 검증하고, 별도 negative
 qualification은 두 engine의 반복 rejection·cleanup·recovery를 검증합니다.
+in-call qualification은 공개 IFC call-start checkpoint 뒤 두 engine
+process를 반복 강제 종료하고 fresh-process recovery를 검증합니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
 time/WASM-capacity budget과 negative corpus disposal도 통과했습니다. 공개
 대표 fixture의 Node CPU/RSS와 Browser parse/geometry도 분리해
-통과했습니다. 다만 동기 engine 호출 중 선점, resource exhaustion,
-physical GPU memory와 cross-Host engine budget을 검증하지 않았으므로
-candidate cancellation과 large-model Gate는 계속 `blocked`입니다.
+통과했습니다. forced-isolation cancellation Gate는 `mapped`로
+통과했지만 engine-cooperative cancellation, 강제 종료 뒤 내부 cleanup,
+resource exhaustion, physical GPU memory와 cross-Host engine budget은
+계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. 각 engine의 synchronous in-call cancellation과 resource exhaustion
+1. 각 engine의 resource exhaustion과 필요 시 cooperative cancellation
 2. connection/system/opening을 포함한 broader semantic corpus
 3. Linux Browser CI와 macOS/Linux package matrix
 4. VS Code engine isolation과 clean-package proof

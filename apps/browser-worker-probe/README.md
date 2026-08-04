@@ -10,7 +10,8 @@ npm run probe:browser-worker
 
 브라우저에서 `http://127.0.0.1:4173`을 열고 **Open local IFC**,
 **Run synthetic IFC probe**, **Run cancellation probe** 또는
-**Run negative corpus probe**, **Run performance probe**,
+**Run in-call isolation probe**, **Run negative corpus probe**,
+**Run performance probe**,
 **Run public representative probe**를
 실행합니다. local source는 64 MiB를 넘으면 읽기 전에 거부합니다. 파일명과
 path는 Worker request/result에 넣지 않고, 선택 직후 input의 파일명도
@@ -23,10 +24,12 @@ path는 Worker request/result에 넣지 않고, 선택 직후 input의 파일명
 - model close와 engine dispose 후 Worker 종료 요청
 - bounded Blob admission과 path/file-name-free source descriptor
 - source 교체 시 이전 작업 취소, stale 결과 억제와 명시적 취소
-- `engine-initialized` → `model-opened` → `inspection-complete` 순서의
-  checkpoint/continue handshake
+- `engine-initialized` → `model-open-call-starting` → `model-opened` →
+  `inspection-complete` 순서의 checkpoint/continue handshake
 - `model-opened` checkpoint 취소 시 model close와 engine dispose 영수증
 - 취소 요청 뒤 500ms grace와 응답하지 않는 Worker의 강제 종료 fallback
+- 공개 대표 IFC의 `model-open-call-starting` 직후 취소, 50ms grace 내
+  Worker 강제 종료와 새 Worker 정상 IFC recovery
 - invalid STEP preamble, truncated DATA와 missing Project root를 각각 새
   Worker에서 거부하고 opened model close·engine dispose·Worker 종료 확인
 - 세 negative source 뒤 정상 IFC를 새 Worker에서 다시 parse/inspect
@@ -48,8 +51,12 @@ upstream archive나 추출 IFC는 Git 또는 배포 bundle에 포함하지 않�
 30초 timeout, 25초 Worker total과 512 MiB WASM heap capacity를 적용합니다.
 
 checkpoint 취소는 유효한 작은 IFC가 열린 뒤 adapter가 제어권을 돌려준
-지점의 cooperative cleanup만 증명합니다. negative corpus도 작은 generated
-syntax/semantic rejection과 후속 recovery만 증명합니다. 실행 중인
-synchronous `web-ifc` 호출을 선점하는 cancellation, resource exhaustion,
-production Browser packaging, physical GPU memory와 VS Code engine
-isolation은 계속 검증 대상입니다.
+지점의 cooperative cleanup을 증명합니다. in-call isolation probe는
+`OpenModel` 직전 handshake 뒤 Worker가 응답하지 않는 동안 제한 시간 내
+Worker를 강제 종료하고 새 Worker에서 복구할 수 있음을 증명합니다. 정확히
+어느 engine instruction에서 종료됐는지, 종료된 Worker 내부의 model
+close/engine dispose, 같은 Worker 재사용은 증명하지 않습니다. negative
+corpus도 작은 generated syntax/semantic rejection과 후속 recovery만
+증명합니다. engine-cooperative synchronous cancellation, resource
+exhaustion, production Browser packaging, physical GPU memory와 VS Code
+engine isolation은 계속 검증 대상입니다.
