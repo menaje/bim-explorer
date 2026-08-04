@@ -159,7 +159,11 @@ test("semantic explorer round-trips spatial, occurrence, type, panels, and 3D", 
   assert.ok(
     explorer.state.inspector.groups.propertySets.some((item) =>
       item.name === "Pset_WallCommon" &&
-      item.valueStatus === "name-only"),
+      item.valueStatus === "loaded" &&
+      item.properties.some((property) =>
+        property.name === "Reference" &&
+        property.nominalValue.ifcType === "IFCLABEL" &&
+        property.nominalValue.value === "MW-SHARED")),
   );
   assert.ok(
     explorer.state.inspector.groups.quantities.some((item) =>
@@ -181,12 +185,11 @@ test("semantic explorer round-trips spatial, occurrence, type, panels, and 3D", 
         item.status === "opaque",
     ),
   );
-  assert.ok(
+  assert.equal(
     explorer.state.inspector.coverage.limitations.some(
-      (item) =>
-        item.capability === "property-value" &&
-        item.status === "lossy",
+      (item) => item.capability === "property-value",
     ),
+    false,
   );
 
   const type = await explorer.selectRelation({

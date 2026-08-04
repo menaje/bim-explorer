@@ -23,7 +23,8 @@ local BIM source
      - Native process or WASM Worker
   -> immutable BIM source snapshot
      - bounded metadata/index
-     - binary geometry ranges
+     - binary geometry/detail/property ranges
+     - georeferencing + precision authority
      - source-local identity map
   -> BimModelSource
   -> versioned Viewer Core/render protocol
@@ -103,8 +104,10 @@ snapshot은 다음 논리 계층을 가집니다.
 | --- | --- | --- |
 | Source descriptor | fingerprint, schema/profile, engine | immutable snapshot |
 | Semantic index | class, type, containment, property keys | paged/bounded |
+| Property detail | primitive occurrence/type values | lazy bounded range |
 | Relation index | decomposition, assignment, connection | paged/bounded |
 | Spatial index | bounds, storey, placement | paged/bounded |
+| Georeferencing | projected CRS, MapConversion, explicit absence | immutable snapshot |
 | Geometry ranges | mesh/edge/material chunks | range handle |
 | Identity map | GlobalId/Express ID ↔ Render/Pick ID | exact snapshot |
 
@@ -120,15 +123,18 @@ stale context, 중복 identity와 cleanup을 강제합니다. 고정된 공개 I
 3,569 products는 3개 bounded geometry range로 나뉘며 첫 range만 읽고
 나머지를 미읽기로 유지합니다. 5,490,130-byte semantic detail은 6개
 range로 분리되고 first-frame에서는 읽지 않으며 선택 entity의 exact JSON
-slice만 읽습니다. 비어 있는 tessellation은 semantic identity와
-diagnostic만 유지합니다. renderer first-frame과 Browser/VS Code Worker
-packaging은 별도 evidence에서 검증했고, property-set value payload,
-georeferencing, source-precision 분리와 Viewer Core conformance는
-보류합니다.
+slice만 읽습니다. 별도 property directory는 primitive occurrence/type
+value를 선택 시에만 읽습니다. IFC4 projected CRS/MapConversion은
+`mapped`·`absent`·`invalid`로 구분하고 Float64 metadata로 유지합니다.
+source precision authority는 fingerprinted external IFC document이고,
+geometry range는 lossy Float32 display tessellation임을 명시합니다. 비어
+있는 tessellation은 semantic identity와 diagnostic만 유지합니다. renderer
+first-frame, Browser/VS Code Worker packaging과 Viewer Core conformance는
+별도 evidence에서 검증했습니다.
 
 `BimModelSource`는 exact snapshot context를 요구하는 bounded
-`queryTree`, `searchEntities`, `queryRelations`, `getEntityDetails`를
-제공합니다. page는 최대
+`queryTree`, `searchEntities`, `queryRelations`, `getEntityDetails`,
+`getPropertySetValues`를 제공합니다. page는 최대
 100 items이며 cursor는 revision과 query에 결합됩니다. decomposition과
 spatial containment, occurrence/type, Pset/Qto, direct material과
 classification을 구분하고, 제공하지 않는 relation은 opaque coverage로
@@ -150,11 +156,13 @@ Pset/Qto/material/classification panel, paged search와 explicit omission,
 WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
 상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
-property set value는 현재 name-only `lossy`, host/void/fill과 connection은
-`opaque`입니다. quantity/material/classification detail은 선택 시 deferred
-range에서 읽습니다. generated fixture의 semantic conformance와 46.77MB 공개
+source가 `getPropertySetValues`를 제공하면 선택 entity의 primitive value를
+별도 bounded range에서 읽고, 구형 source는 name-only `lossy`를 유지합니다.
+host/void/fill과 connection은 `opaque`입니다.
+quantity/material/classification detail도 선택 시 deferred range에서
+읽습니다. generated fixture의 기존 semantic conformance와 46.77MB 공개
 fixture의 Browser/clean-installed VSIX product scale은 통과했지만,
-value-level public semantic conformance는 보류합니다.
+value-level public Browser semantic conformance는 보류합니다.
 
 ## Viewer Core와 3D presentation
 

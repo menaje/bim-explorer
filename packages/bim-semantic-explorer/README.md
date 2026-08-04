@@ -16,13 +16,16 @@ draft입니다.
 - search result와 selection을 위한 Render ID isolate command
 - source/revision에 묶인 local saved view
 - bounded loaded tree, search result, relation과 DOM row projection
-- opaque, lossy, omitted information의 명시적 상태
+- lazy property-set primitive value와 opaque, lossy, omitted 정보의
+  명시적 상태
 
 이 패키지는 DOM이나 renderer를 소유하지 않습니다. UI shell은
 `state.tree.rows`만 렌더링하고, 3D shell은 `setVisibility()`가 반환한
 command를 같은 revision의 renderer에 전달합니다. source session의
 dispose도 호출자가 소유합니다.
 
-property set은 현재 이름까지만 보존하므로 value-level property
-exploration은 `lossy`로 표시됩니다. host/void/fill과 connection은
-source가 아직 제공하지 않아 `opaque`입니다.
+source session이 `getPropertySetValues`를 제공하면 선택 entity의 bounded
+property slice를 읽어 occurrence/type primitive value를 표시합니다.
+호환 source가 value API를 제공하지 않으면 기존 name-only 상태와
+`property-value:lossy` limitation을 유지합니다. host/void/fill과
+connection은 source가 아직 제공하지 않아 `opaque`입니다.

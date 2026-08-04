@@ -256,7 +256,10 @@ function informationLimitations(entity, relationResult) {
   const limitations = [
     ...(relationResult.informationCoverage?.unavailable ?? []),
   ];
-  if ((entity?.semantics.propertySets?.length ?? 0) > 0) {
+  if (
+    (entity?.semantics.propertySets?.length ?? 0) > 0 &&
+    !Array.isArray(entity?.semantics.propertySetValues)
+  ) {
     limitations.push({
       capability: "property-value",
       status: "lossy",
@@ -295,12 +298,21 @@ function inspectorFor(identity, entity, relationResult) {
         semantics?.type === undefined
         ? []
         : [structuredClone(semantics.type)],
-      propertySets: [
-        ...(semantics?.propertySets ?? []),
-      ].map((name) => ({
-        name,
-        valueStatus: "name-only",
-      })),
+      propertySets: Array.isArray(
+        semantics?.propertySetValues,
+      )
+        ? semantics.propertySetValues.map(
+            (propertySet) => ({
+              ...structuredClone(propertySet),
+              valueStatus: "loaded",
+            }),
+          )
+        : [
+            ...(semantics?.propertySets ?? []),
+          ].map((name) => ({
+            name,
+            valueStatus: "name-only",
+          })),
       quantities: Object.entries(
         semantics?.quantities ?? {},
       ).map(([name, value]) => ({ name, value })),
@@ -687,6 +699,39 @@ export class BimSemanticExplorer {
           semantics: {
             ...structuredClone(entity.semantics),
             ...structuredClone(details.semantics),
+          },
+        };
+      }
+      if (
+        typeof this.#session.getPropertySetValues ===
+          "function"
+      ) {
+        const propertyValues =
+          await this.#session.getPropertySetValues(
+            this.#request({ expressId }),
+          );
+        if (
+          propertyValues?.schema !==
+            "bim-explorer-bim-property-set-values/0.1" ||
+          propertyValues.expressId !== entity.expressId ||
+          propertyValues.globalId !== entity.globalId ||
+          !Array.isArray(propertyValues.propertySets) ||
+          Object.entries(this.#context).some(
+            ([field, value]) =>
+              propertyValues[field] !== value,
+          )
+        ) {
+          throw new RangeError(
+            "property values are outside the snapshot",
+          );
+        }
+        entity = {
+          ...structuredClone(entity),
+          semantics: {
+            ...structuredClone(entity.semantics),
+            propertySetValues: structuredClone(
+              propertyValues.propertySets,
+            ),
           },
         };
       }

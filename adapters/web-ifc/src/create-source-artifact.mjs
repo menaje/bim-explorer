@@ -6,6 +6,8 @@ export const WEB_IFC_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 export const WEB_IFC_SEMANTIC_DETAIL_MEDIA_TYPE =
   "application/vnd.bim-explorer.semantic-detail-range.v1";
+export const WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE =
+  "application/vnd.bim-explorer.property-detail-range.v1";
 
 const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
@@ -16,6 +18,9 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumDetailBytes: 64 * 1024 * 1024,
   maximumDetailRangeBytes: 1024 * 1024,
   maximumDetailRanges: 4_096,
+  maximumPropertyDetailBytes: 64 * 1024 * 1024,
+  maximumPropertyDetailRangeBytes: 1024 * 1024,
+  maximumPropertyDetailRanges: 4_096,
   maximumRelationEntries: 500_000,
   maximumTreeNodes: 200_000,
   maximumMetadataBytes: 64 * 1024 * 1024,
@@ -275,6 +280,134 @@ function propertySetNames(api, modelId, definitions, typeLine) {
   return [...new Set(values.filter(Boolean))].sort();
 }
 
+function propertyNominalValue(api, nominalValue) {
+  const ifcType =
+    typeof nominalValue?.name === "string" &&
+    nominalValue.name.length > 0
+      ? nominalValue.name.toUpperCase()
+      : Number.isSafeInteger(nominalValue?.type)
+        ? api.GetNameFromTypeCode(
+            nominalValue.type,
+          ).toUpperCase()
+        : "UNKNOWN";
+  const value = scalar(nominalValue);
+  if (value === null || value === undefined) {
+    return {
+      status: "null",
+      ifcType,
+      value: null,
+    };
+  }
+  if (
+    typeof value === "string" ||
+    typeof value === "boolean" ||
+    (
+      typeof value === "number" &&
+      Number.isFinite(value)
+    )
+  ) {
+    return {
+      status: "value",
+      ifcType,
+      value,
+    };
+  }
+  return {
+    status: "opaque",
+    ifcType,
+    value: null,
+  };
+}
+
+function propertyUnit(api, modelId, value) {
+  const unitId = referenceId(value);
+  if (unitId === null) {
+    return null;
+  }
+  const unit = api.GetLine(modelId, unitId, false);
+  if (unit === null || unit === undefined) {
+    return null;
+  }
+  return {
+    expressId: unitId,
+    ifcClass: typeName(api, unit),
+    unitType: textValue(unit.UnitType),
+    prefix: textValue(unit.Prefix),
+    name: textValue(unit.Name),
+  };
+}
+
+function propertySetValues(
+  api,
+  modelId,
+  definitions,
+  typeLine,
+) {
+  const inputs = [
+    ...definitions
+      .filter((definition) =>
+        Array.isArray(definition.HasProperties))
+      .map((definition) => ({
+        definition,
+        scope: "occurrence",
+      })),
+    ...referenceIds(typeLine?.HasPropertySets)
+      .map((expressId) => ({
+        definition: api.GetLine(modelId, expressId, false),
+        scope: "type",
+      }))
+      .filter((value) => value.definition !== null),
+  ];
+  return inputs
+    .map(({ definition, scope }) => {
+      const properties = referenceIds(definition.HasProperties)
+        .map((expressId) => {
+          const property = api.GetLine(
+            modelId,
+            expressId,
+            false,
+          );
+          if (property === null || property === undefined) {
+            return null;
+          }
+          const propertyClass = typeName(api, property);
+          return {
+            expressId,
+            name: textValue(property.Name) || `#${expressId}`,
+            propertyClass,
+            nominalValue:
+              propertyClass === "IFCPROPERTYSINGLEVALUE"
+                ? propertyNominalValue(
+                    api,
+                    property.NominalValue,
+                  )
+                : {
+                    status: "opaque",
+                    ifcType: propertyClass,
+                    value: null,
+                  },
+            unit: propertyUnit(api, modelId, property.Unit),
+          };
+        })
+        .filter(Boolean)
+        .sort((left, right) =>
+          compareText(left.name, right.name) ||
+          left.expressId - right.expressId);
+      return {
+        expressId: definition.expressID,
+        name:
+          textValue(definition.Name) ||
+          `#${definition.expressID}`,
+        scope,
+        properties,
+      };
+    })
+    .sort((left, right) =>
+      compareText(left.scope, right.scope) ||
+      compareText(left.name, right.name) ||
+      left.expressId - right.expressId);
+}
+
 function quantities(api, modelId, definitions) {
   const values = {};
   for (const definition of definitions) {
@@ -358,6 +491,12 @@ function semanticRecord(api, modelId, expressId, indexes) {
       ? null
       : lineSummary(api, modelId, typeRelation.RelatingType),
     propertySets: propertySetNames(
+      api,
+      modelId,
+      definitions,
+      typeLine,
+    ),
+    propertySetValues: propertySetValues(
       api,
       modelId,
       definitions,
@@ -752,6 +891,128 @@ async function encodeSemanticDetailRanges(
   };
 }
 
+function encodedPropertyRecord(record) {
+  const payload = new TextEncoder().encode(
+    JSON.stringify({
+      propertySets: record.propertySets,
+    }),
+  );
+  return {
+    expressId: record.expressId,
+    payload,
+    byteLength: 8 + payload.byteLength,
+  };
+}
+
+async function encodePropertyDetailRanges(
+  records,
+  {
+    maximumPropertyDetailBytes,
+    maximumPropertyDetailRangeBytes,
+    maximumPropertyDetailRanges,
+  },
+) {
+  const headerBytes = 16;
+  const encodedRecords = records.map(encodedPropertyRecord);
+  const groups = [];
+  let current = [];
+  let currentBytes = headerBytes;
+  for (const record of encodedRecords) {
+    if (
+      headerBytes + record.byteLength >
+        maximumPropertyDetailRangeBytes
+    ) {
+      throw new RangeError(
+        `property detail ${record.expressId} exceeds ` +
+          "the configured property range byte limit",
+      );
+    }
+    if (
+      current.length > 0 &&
+      currentBytes + record.byteLength >
+        maximumPropertyDetailRangeBytes
+    ) {
+      groups.push(current);
+      current = [];
+      currentBytes = headerBytes;
+    }
+    current.push(record);
+    currentBytes += record.byteLength;
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  if (groups.length === 0) {
+    throw new Error("IFC source has no property detail ranges");
+  }
+  if (groups.length > maximumPropertyDetailRanges) {
+    throw new RangeError(
+      "IFC property details exceed the configured range count limit",
+    );
+  }
+  const totalBytes = groups.reduce(
+    (sum, group) =>
+      sum +
+      headerBytes +
+      group.reduce(
+        (groupSum, record) =>
+          groupSum + record.byteLength,
+        0,
+      ),
+    0,
+  );
+  if (totalBytes > maximumPropertyDetailBytes) {
+    throw new RangeError(
+      "encoded IFC property details exceed the configured byte limit",
+    );
+  }
+  const ranges = [];
+  const slices = new Map();
+  for (const [index, group] of groups.entries()) {
+    const rangeId = `range:ifc:property-detail:${index}`;
+    const byteLength = headerBytes + group.reduce(
+      (sum, record) => sum + record.byteLength,
+      0,
+    );
+    const bytes = new Uint8Array(byteLength);
+    bytes.set(new TextEncoder().encode("BEXPRP01"), 0);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(8, 1, true);
+    view.setUint32(12, group.length, true);
+    let offset = headerBytes;
+    for (const record of group) {
+      view.setUint32(offset, record.expressId, true);
+      view.setUint32(
+        offset + 4,
+        record.payload.byteLength,
+        true,
+      );
+      offset += 8;
+      bytes.set(record.payload, offset);
+      slices.set(record.expressId, {
+        rangeId,
+        offset,
+        byteLength: record.payload.byteLength,
+      });
+      offset += record.payload.byteLength;
+    }
+    ranges.push({
+      rangeId,
+      mediaType: WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE,
+      sha256: await sha256(bytes),
+      bytes,
+    });
+  }
+  return {
+    ranges,
+    slices,
+    totalBytes,
+    largestRangeBytes: Math.max(
+      ...ranges.map((range) => range.bytes.byteLength),
+    ),
+  };
+}
+
 function buildTree(
   api,
   modelId,
@@ -830,6 +1091,133 @@ function buildTree(
   };
 }
 
+function finiteScalar(value, fallback = undefined) {
+  const candidate = scalar(value);
+  if (
+    typeof candidate === "number" &&
+    Number.isFinite(candidate)
+  ) {
+    return candidate;
+  }
+  return fallback;
+}
+
+function georeferencingMetadata(api, modelId) {
+  const conversions = entityIds(
+    api,
+    modelId,
+    WebIFC.IFCMAPCONVERSION,
+  );
+  if (conversions.length === 0) {
+    return {
+      status: "absent",
+      reason: "no-ifc-map-conversion",
+    };
+  }
+  if (conversions.length !== 1) {
+    return {
+      status: "invalid",
+      diagnostics: [
+        {
+          code: "ambiguous-map-conversion",
+          count: conversions.length,
+        },
+      ],
+    };
+  }
+  const conversion = api.GetLine(
+    modelId,
+    conversions[0],
+    false,
+  );
+  const sourceContextExpressId = referenceId(
+    conversion?.SourceCRS,
+  );
+  const targetCrsExpressId = referenceId(
+    conversion?.TargetCRS,
+  );
+  const target = targetCrsExpressId === null
+    ? null
+    : api.GetLine(modelId, targetCrsExpressId, false);
+  const eastings = finiteScalar(conversion?.Eastings);
+  const northings = finiteScalar(conversion?.Northings);
+  const orthogonalHeight = finiteScalar(
+    conversion?.OrthogonalHeight,
+  );
+  const xAxisAbscissa = finiteScalar(
+    conversion?.XAxisAbscissa,
+    1,
+  );
+  const xAxisOrdinate = finiteScalar(
+    conversion?.XAxisOrdinate,
+    0,
+  );
+  const scale = finiteScalar(conversion?.Scale, 1);
+  const axisLength = Math.hypot(
+    xAxisAbscissa,
+    xAxisOrdinate,
+  );
+  if (
+    sourceContextExpressId === null ||
+    targetCrsExpressId === null ||
+    target === null ||
+    [
+      eastings,
+      northings,
+      orthogonalHeight,
+      xAxisAbscissa,
+      xAxisOrdinate,
+      scale,
+    ].some((value) => value === undefined) ||
+    scale <= 0 ||
+    axisLength === 0
+  ) {
+    return {
+      status: "invalid",
+      diagnostics: [
+        {
+          code: "invalid-map-conversion",
+          expressId: conversions[0],
+        },
+      ],
+    };
+  }
+  const axisX = xAxisAbscissa / axisLength;
+  const axisY = xAxisOrdinate / axisLength;
+  return {
+    status: "mapped",
+    projectedCrs: {
+      expressId: targetCrsExpressId,
+      name: textValue(target.Name),
+      description: textValue(target.Description),
+      geodeticDatum: textValue(target.GeodeticDatum),
+      verticalDatum: textValue(target.VerticalDatum),
+      mapProjection: textValue(target.MapProjection),
+      mapZone: textValue(target.MapZone),
+      mapUnit: propertyUnit(api, modelId, target.MapUnit),
+    },
+    mapConversion: {
+      expressId: conversions[0],
+      sourceContextExpressId,
+      targetCrsExpressId,
+      eastings,
+      northings,
+      orthogonalHeight,
+      xAxisAbscissa,
+      xAxisOrdinate,
+      scale,
+      normalizedXAxis: [axisX, axisY],
+      mapFromIfcWorld: [
+        scale * axisX, scale * axisY, 0, 0,
+        -scale * axisY, scale * axisX, 0, 0,
+        0, 0, scale, 0,
+        eastings, northings, orthogonalHeight, 1,
+      ],
+      numericPrecision: "float64-metadata",
+    },
+  };
+}
+
 export async function createWebIfcSourceArtifact(sourceBytes, {
   adapterBackend = "node-wasm-source-artifact",
   documentId,
@@ -845,6 +1233,12 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
   maximumDetailRangeBytes =
     DEFAULT_LIMITS.maximumDetailRangeBytes,
   maximumDetailRanges = DEFAULT_LIMITS.maximumDetailRanges,
+  maximumPropertyDetailBytes =
+    DEFAULT_LIMITS.maximumPropertyDetailBytes,
+  maximumPropertyDetailRangeBytes =
+    DEFAULT_LIMITS.maximumPropertyDetailRangeBytes,
+  maximumPropertyDetailRanges =
+    DEFAULT_LIMITS.maximumPropertyDetailRanges,
   maximumRelationEntries = DEFAULT_LIMITS.maximumRelationEntries,
   maximumTreeNodes = DEFAULT_LIMITS.maximumTreeNodes,
   maximumMetadataBytes = DEFAULT_LIMITS.maximumMetadataBytes,
@@ -862,6 +1256,9 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
     maximumDetailBytes,
     maximumDetailRangeBytes,
     maximumDetailRanges,
+    maximumPropertyDetailBytes,
+    maximumPropertyDetailRangeBytes,
+    maximumPropertyDetailRanges,
     maximumRelationEntries,
     maximumTreeNodes,
     maximumMetadataBytes,
@@ -1132,6 +1529,21 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
         maximumDetailRanges,
       },
     );
+    const propertyDetails = await encodePropertyDetailRanges(
+      entities.map((entity) => ({
+        expressId: entity.expressId,
+        propertySets: entity.semantics.propertySetValues,
+      })),
+      {
+        maximumPropertyDetailBytes,
+        maximumPropertyDetailRangeBytes,
+        maximumPropertyDetailRanges,
+      },
+    );
+    const propertySlices = entities.map((entity) => ({
+      expressId: entity.expressId,
+      ...propertyDetails.slices.get(entity.expressId),
+    }));
     for (const entity of entities) {
       entity.detailSlice = semanticDetails.slices.get(
         entity.expressId,
@@ -1182,6 +1594,7 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
           0, 0, 0, 1,
         ],
       },
+      georeferencing: georeferencingMetadata(api, modelId),
       coverage: {
         supported: [
           "geometry-products",
@@ -1230,6 +1643,26 @@ export async function createWebIfcSourceArtifact(sourceBytes, {
       entities,
       ranges: encoded.ranges,
       detailRanges: semanticDetails.ranges,
+      propertyDetails: {
+        mediaType: WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE,
+        ranges: propertyDetails.ranges,
+        slices: propertySlices,
+        resources: {
+          limits: {
+            maximumBytes: maximumPropertyDetailBytes,
+            maximumRangeBytes:
+              maximumPropertyDetailRangeBytes,
+            maximumRanges: maximumPropertyDetailRanges,
+          },
+          observed: {
+            bytes: propertyDetails.totalBytes,
+            ranges: propertyDetails.ranges.length,
+            largestRangeBytes:
+              propertyDetails.largestRangeBytes,
+            records: propertySlices.length,
+          },
+        },
+      },
       resources: {
         limits: {
           maximumSourceBytes,

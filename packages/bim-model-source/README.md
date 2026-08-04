@@ -11,8 +11,14 @@ IFC adapter가 생성한 immutable artifact를 bounded read-only source session�
   노출합니다.
 - eager semantic summary와 `BEXDET01` deferred detail directory를
   분리합니다.
-- geometry와 detail의 한 번 read 크기와 session 누적 budget을 독립적으로
-  강제합니다.
+- occurrence/type `IfcPropertySingleValue` primitive를 별도 `BEXPRP01`
+  property directory에서 lazy read합니다.
+- geometry, semantic detail과 property detail의 한 번 read 크기와 session
+  누적 budget을 독립적으로 강제합니다.
+- IFC4 projected CRS/MapConversion을 `mapped`, `absent`, `invalid`로
+  구분하고 Float64 world-to-map metadata를 노출합니다.
+- fingerprinted external IFC source와 lossy Float32 display tessellation의
+  authority를 명시적으로 분리합니다.
 - empty tessellation 제품은 tree/property identity와 diagnostic을 유지하되
   Render/Pick ID를 발급하지 않습니다.
 - tree child, semantic search와 relation을 1..100 item page로 제한하고
@@ -34,9 +40,10 @@ detail은 6개 range로 분할하고 첫 geometry read에서는 0 bytes를 유�
 profile 승인은 아닙니다.
 
 `queryTree`, `searchEntities`, `queryRelations`는 geometry range를 읽지
-않습니다. `getEntityDetails`는 exact Express ID의 bounded slice를 읽고 같은
-session의 반복 선택은 immutable 결과를 재사용합니다. property set은 현재
-이름까지만 보존하며 value-level payload는 제공하지 않습니다.
+않습니다. `getEntityDetails`와 `getPropertySetValues`는 각각 exact Express
+ID의 독립 bounded slice를 읽고 같은 session의 반복 선택은 immutable
+결과를 재사용합니다. property value projection은 primitive
+`IfcPropertySingleValue`에 한정하며 complex property kind는 `opaque`입니다.
 
 현재 계약은
 [`bim-source-artifact/0.2`](../../specs/bim-source-artifact-v0.2.md)와

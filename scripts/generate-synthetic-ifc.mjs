@@ -252,6 +252,30 @@ export function syntheticLargeCoordinateIfc() {
     );
 }
 
+export function syntheticGeoreferencedIfc() {
+  const closing = [
+    "ENDSEC;",
+    "END-ISO-10303-21;",
+    "",
+  ].join("\n");
+  const georeferencing = [
+    "#67=IFCPROJECTEDCRS('EPSG:32652'," +
+      "'WGS 84 / UTM zone 52N','WGS84',$,'UTM','52N',#6);",
+    "#68=IFCMAPCONVERSION(#12,#67,500000.,4100000.,100.," +
+      "0.8660254037844386,0.5,1.);",
+    ...closing.split("\n"),
+  ].join("\n");
+  const source = syntheticMappedIfc();
+  if (!source.endsWith(closing)) {
+    throw new Error(
+      "synthetic mapped IFC closing section is unavailable",
+    );
+  }
+  return source
+    .slice(0, -closing.length)
+    .concat(georeferencing);
+}
+
 export const SYNTHETIC_PERFORMANCE_WALLS = 1_024;
 
 function stepReal(value) {

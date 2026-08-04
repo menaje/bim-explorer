@@ -1,0 +1,205 @@
+{
+  "schema": "bim-explorer-bim-source-metadata-qualification/1",
+  "status": "passed-experimental",
+  "asOf": "2026-08-04",
+  "fixture": {
+    "id": "synthetic-georeferenced-ifc4",
+    "byteLength": 4191,
+    "sha256": "34e3038d63a3334f9c60b9c072ea7324fec238034bbe096da0d7fced751c8348",
+    "schema": "IFC4",
+    "profile": "ReferenceView_V1.2",
+    "artifactCommitted": false,
+    "thirdPartyContent": false
+  },
+  "contract": {
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
+    "propertySchema": "bim-explorer-bim-property-set-values/0.1",
+    "propertyMediaType": "application/vnd.bim-explorer.property-detail-range.v1"
+  },
+  "snapshot": {
+    "sourceFingerprint": "sha256:34e3038d63a3334f9c60b9c072ea7324fec238034bbe096da0d7fced751c8348",
+    "cacheFingerprint": "sha256:f689e5da9119ae99c7c94cf82ac7399e95fa9b728c90f0ec8be96b6b90b369d5",
+    "semanticCacheFingerprint": "sha256:473894f12d762502cffbe9204b94804d08cf0af9d60a247579d6515c184068b4",
+    "deterministicBaseCache": true,
+    "deterministicSemanticCache": true
+  },
+  "propertyDetails": {
+    "resources": {
+      "limits": {
+        "maximumBytes": 67108864,
+        "maximumRangeBytes": 1048576,
+        "maximumRanges": 4096
+      },
+      "observed": {
+        "bytes": 1026,
+        "ranges": 1,
+        "largestRangeBytes": 1026,
+        "records": 2
+      }
+    },
+    "range": {
+      "handleId": "range:ifc:property-detail:0",
+      "byteLength": 1026,
+      "sha256": "cd5175a4cb2e548897b6d1d8a32d9422983915a9bc05699d1e65341e0388b919"
+    },
+    "selectedEntity": {
+      "expressId": 40,
+      "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+      "schema": "bim-explorer-bim-property-set-values/0.1",
+      "propertySets": [
+        {
+          "expressId": 51,
+          "name": "Pset_WallCommon",
+          "scope": "occurrence",
+          "properties": [
+            {
+              "expressId": 50,
+              "name": "Reference",
+              "propertyClass": "IFCPROPERTYSINGLEVALUE",
+              "nominalValue": {
+                "status": "value",
+                "ifcType": "IFCLABEL",
+                "value": "MW-SHARED"
+              },
+              "unit": null
+            }
+          ]
+        },
+        {
+          "expressId": 54,
+          "name": "Pset_WallTypeCommon",
+          "scope": "type",
+          "properties": [
+            {
+              "expressId": 53,
+              "name": "FireRating",
+              "propertyClass": "IFCPROPERTYSINGLEVALUE",
+              "nominalValue": {
+                "status": "value",
+                "ifcType": "IFCLABEL",
+                "value": "90min"
+              },
+              "unit": null
+            }
+          ]
+        }
+      ],
+      "receipt": {
+        "handleId": "range:ifc:property-detail:0",
+        "offset": 24,
+        "byteLength": 497
+      }
+    },
+    "reads": 1,
+    "bytesRead": 497,
+    "repeatedReadCacheHit": true,
+    "geometryBytesRead": 0,
+    "legacyDetailBytesRead": 0
+  },
+  "georeferencing": {
+    "mapped": {
+      "status": "mapped",
+      "projectedCrs": {
+        "expressId": 67,
+        "name": "EPSG:32652",
+        "description": "WGS 84 / UTM zone 52N",
+        "geodeticDatum": "WGS84",
+        "verticalDatum": "",
+        "mapProjection": "UTM",
+        "mapZone": "52N",
+        "mapUnit": {
+          "expressId": 6,
+          "ifcClass": "IFCSIUNIT",
+          "unitType": "LENGTHUNIT",
+          "prefix": "",
+          "name": "METRE"
+        }
+      },
+      "mapConversion": {
+        "expressId": 68,
+        "sourceContextExpressId": 12,
+        "targetCrsExpressId": 67,
+        "eastings": 500000,
+        "northings": 4100000,
+        "orthogonalHeight": 100,
+        "xAxisAbscissa": 0.8660254037844386,
+        "xAxisOrdinate": 0.5,
+        "scale": 1,
+        "normalizedXAxis": [
+          0.8660254037844386,
+          0.5
+        ],
+        "mapFromIfcWorld": [
+          0.8660254037844386,
+          0.5,
+          0,
+          0,
+          -0.5,
+          0.8660254037844386,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          500000,
+          4100000,
+          100,
+          1
+        ],
+        "numericPrecision": "float64-metadata"
+      }
+    },
+    "absent": {
+      "status": "absent",
+      "reason": "no-ifc-map-conversion"
+    }
+  },
+  "geometryRepresentations": {
+    "sourcePrecision": {
+      "authority": "external-source-document",
+      "documentId": "document:ifc:34e3038d63a3334f9c60b9c0",
+      "fingerprint": "sha256:34e3038d63a3334f9c60b9c072ea7324fec238034bbe096da0d7fced751c8348",
+      "numericEncoding": "ifc-step-source-defined",
+      "geometryRangeExposed": false,
+      "mutable": false
+    },
+    "displayTessellation": {
+      "authority": "derived-render-cache",
+      "mediaType": "application/vnd.bim-explorer.geometry-range.v1",
+      "numericEncoding": "float32-position-normal-uint32-index",
+      "adapterId": "web-ifc",
+      "adapterVersion": "0.0.77",
+      "lossiness": "lossy",
+      "sourceMutationAuthority": false,
+      "rangeIds": [
+        "range:ifc:geometry:0"
+      ]
+    }
+  },
+  "failClosed": {
+    "propertyReadBudgetRejected": true,
+    "malformedPropertyDigestRejected": true,
+    "invalidMapConversionRejected": true
+  },
+  "cleanup": {
+    "adapterModelClosed": true,
+    "adapterEngineDisposed": true,
+    "first": {
+      "sessionDisposed": true,
+      "sourceDisposed": true
+    },
+    "second": {
+      "sessionDisposed": true,
+      "sourceDisposed": true
+    }
+  },
+  "decision": {
+    "propertySetValuePayload": "passed-deferred-bounded",
+    "georeferencingMapConversion": "passed-ifc4-synthetic",
+    "sourcePrecisionDisplaySeparation": "passed-contract",
+    "sourcePrecisionGeometryExport": "blocked",
+    "writeMutation": "blocked",
+    "productionClaims": false
+  }
+}

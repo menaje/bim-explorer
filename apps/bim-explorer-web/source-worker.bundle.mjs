@@ -6,6 +6,7 @@ var BIM_SOURCE_ARTIFACT_SCHEMA = "bim-explorer-bim-source-artifact/0.2";
 // adapters/web-ifc/src/create-source-artifact.mjs
 var WEB_IFC_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v1";
 var WEB_IFC_SEMANTIC_DETAIL_MEDIA_TYPE = "application/vnd.bim-explorer.semantic-detail-range.v1";
+var WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE = "application/vnd.bim-explorer.property-detail-range.v1";
 var DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
   maximumProducts: 1e5,
@@ -15,6 +16,9 @@ var DEFAULT_LIMITS = Object.freeze({
   maximumDetailBytes: 64 * 1024 * 1024,
   maximumDetailRangeBytes: 1024 * 1024,
   maximumDetailRanges: 4096,
+  maximumPropertyDetailBytes: 64 * 1024 * 1024,
+  maximumPropertyDetailRangeBytes: 1024 * 1024,
+  maximumPropertyDetailRanges: 4096,
   maximumRelationEntries: 5e5,
   maximumTreeNodes: 2e5,
   maximumMetadataBytes: 64 * 1024 * 1024
@@ -220,6 +224,93 @@ function propertySetNames(api, modelId, definitions, typeLine) {
   }
   return [...new Set(values.filter(Boolean))].sort();
 }
+function propertyNominalValue(api, nominalValue) {
+  const ifcType = typeof nominalValue?.name === "string" && nominalValue.name.length > 0 ? nominalValue.name.toUpperCase() : Number.isSafeInteger(nominalValue?.type) ? api.GetNameFromTypeCode(
+    nominalValue.type
+  ).toUpperCase() : "UNKNOWN";
+  const value = scalar(nominalValue);
+  if (value === null || value === void 0) {
+    return {
+      status: "null",
+      ifcType,
+      value: null
+    };
+  }
+  if (typeof value === "string" || typeof value === "boolean" || typeof value === "number" && Number.isFinite(value)) {
+    return {
+      status: "value",
+      ifcType,
+      value
+    };
+  }
+  return {
+    status: "opaque",
+    ifcType,
+    value: null
+  };
+}
+function propertyUnit(api, modelId, value) {
+  const unitId = referenceId(value);
+  if (unitId === null) {
+    return null;
+  }
+  const unit = api.GetLine(modelId, unitId, false);
+  if (unit === null || unit === void 0) {
+    return null;
+  }
+  return {
+    expressId: unitId,
+    ifcClass: typeName(api, unit),
+    unitType: textValue(unit.UnitType),
+    prefix: textValue(unit.Prefix),
+    name: textValue(unit.Name)
+  };
+}
+function propertySetValues(api, modelId, definitions, typeLine) {
+  const inputs = [
+    ...definitions.filter((definition) => Array.isArray(definition.HasProperties)).map((definition) => ({
+      definition,
+      scope: "occurrence"
+    })),
+    ...referenceIds(typeLine?.HasPropertySets).map((expressId) => ({
+      definition: api.GetLine(modelId, expressId, false),
+      scope: "type"
+    })).filter((value) => value.definition !== null)
+  ];
+  return inputs.map(({ definition, scope }) => {
+    const properties = referenceIds(definition.HasProperties).map((expressId) => {
+      const property = api.GetLine(
+        modelId,
+        expressId,
+        false
+      );
+      if (property === null || property === void 0) {
+        return null;
+      }
+      const propertyClass = typeName(api, property);
+      return {
+        expressId,
+        name: textValue(property.Name) || `#${expressId}`,
+        propertyClass,
+        nominalValue: propertyClass === "IFCPROPERTYSINGLEVALUE" ? propertyNominalValue(
+          api,
+          property.NominalValue
+        ) : {
+          status: "opaque",
+          ifcType: propertyClass,
+          value: null
+        },
+        unit: propertyUnit(api, modelId, property.Unit)
+      };
+    }).filter(Boolean).sort((left, right) => compareText(left.name, right.name) || left.expressId - right.expressId);
+    return {
+      expressId: definition.expressID,
+      name: textValue(definition.Name) || `#${definition.expressID}`,
+      scope,
+      properties
+    };
+  }).sort((left, right) => compareText(left.scope, right.scope) || compareText(left.name, right.name) || left.expressId - right.expressId);
+}
 function quantities(api, modelId, definitions) {
   const values = {};
   for (const definition of definitions) {
@@ -284,6 +375,12 @@ function semanticRecord(api, modelId, expressId, indexes) {
     ),
     type: typeRelation === null ? null : lineSummary(api, modelId, typeRelation.RelatingType),
     propertySets: propertySetNames(
+      api,
+      modelId,
+      definitions,
+      typeLine
+    ),
+    propertySetValues: propertySetValues(
       api,
       modelId,
       definitions,
@@ -610,6 +707,111 @@ async function encodeSemanticDetailRanges(records, {
     )
   };
 }
+function encodedPropertyRecord(record) {
+  const payload = new TextEncoder().encode(
+    JSON.stringify({
+      propertySets: record.propertySets
+    })
+  );
+  return {
+    expressId: record.expressId,
+    payload,
+    byteLength: 8 + payload.byteLength
+  };
+}
+async function encodePropertyDetailRanges(records, {
+  maximumPropertyDetailBytes,
+  maximumPropertyDetailRangeBytes,
+  maximumPropertyDetailRanges
+}) {
+  const headerBytes = 16;
+  const encodedRecords = records.map(encodedPropertyRecord);
+  const groups = [];
+  let current = [];
+  let currentBytes = headerBytes;
+  for (const record of encodedRecords) {
+    if (headerBytes + record.byteLength > maximumPropertyDetailRangeBytes) {
+      throw new RangeError(
+        `property detail ${record.expressId} exceeds the configured property range byte limit`
+      );
+    }
+    if (current.length > 0 && currentBytes + record.byteLength > maximumPropertyDetailRangeBytes) {
+      groups.push(current);
+      current = [];
+      currentBytes = headerBytes;
+    }
+    current.push(record);
+    currentBytes += record.byteLength;
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+  if (groups.length === 0) {
+    throw new Error("IFC source has no property detail ranges");
+  }
+  if (groups.length > maximumPropertyDetailRanges) {
+    throw new RangeError(
+      "IFC property details exceed the configured range count limit"
+    );
+  }
+  const totalBytes = groups.reduce(
+    (sum, group) => sum + headerBytes + group.reduce(
+      (groupSum, record) => groupSum + record.byteLength,
+      0
+    ),
+    0
+  );
+  if (totalBytes > maximumPropertyDetailBytes) {
+    throw new RangeError(
+      "encoded IFC property details exceed the configured byte limit"
+    );
+  }
+  const ranges = [];
+  const slices = /* @__PURE__ */ new Map();
+  for (const [index, group] of groups.entries()) {
+    const rangeId = `range:ifc:property-detail:${index}`;
+    const byteLength = headerBytes + group.reduce(
+      (sum, record) => sum + record.byteLength,
+      0
+    );
+    const bytes = new Uint8Array(byteLength);
+    bytes.set(new TextEncoder().encode("BEXPRP01"), 0);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(8, 1, true);
+    view.setUint32(12, group.length, true);
+    let offset = headerBytes;
+    for (const record of group) {
+      view.setUint32(offset, record.expressId, true);
+      view.setUint32(
+        offset + 4,
+        record.payload.byteLength,
+        true
+      );
+      offset += 8;
+      bytes.set(record.payload, offset);
+      slices.set(record.expressId, {
+        rangeId,
+        offset,
+        byteLength: record.payload.byteLength
+      });
+      offset += record.payload.byteLength;
+    }
+    ranges.push({
+      rangeId,
+      mediaType: WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE,
+      sha256: await sha256(bytes),
+      bytes
+    });
+  }
+  return {
+    ranges,
+    slices,
+    totalBytes,
+    largestRangeBytes: Math.max(
+      ...ranges.map((range) => range.bytes.byteLength)
+    )
+  };
+}
 function buildTree(api, modelId, entities, indexes, maximumTreeNodes) {
   const nodes = [];
   const parentById = /* @__PURE__ */ new Map();
@@ -673,6 +875,131 @@ function buildTree(api, modelId, entities, indexes, maximumTreeNodes) {
     nodes
   };
 }
+function finiteScalar(value, fallback = void 0) {
+  const candidate = scalar(value);
+  if (typeof candidate === "number" && Number.isFinite(candidate)) {
+    return candidate;
+  }
+  return fallback;
+}
+function georeferencingMetadata(api, modelId) {
+  const conversions = entityIds(
+    api,
+    modelId,
+    WebIFC.IFCMAPCONVERSION
+  );
+  if (conversions.length === 0) {
+    return {
+      status: "absent",
+      reason: "no-ifc-map-conversion"
+    };
+  }
+  if (conversions.length !== 1) {
+    return {
+      status: "invalid",
+      diagnostics: [
+        {
+          code: "ambiguous-map-conversion",
+          count: conversions.length
+        }
+      ]
+    };
+  }
+  const conversion = api.GetLine(
+    modelId,
+    conversions[0],
+    false
+  );
+  const sourceContextExpressId = referenceId(
+    conversion?.SourceCRS
+  );
+  const targetCrsExpressId = referenceId(
+    conversion?.TargetCRS
+  );
+  const target = targetCrsExpressId === null ? null : api.GetLine(modelId, targetCrsExpressId, false);
+  const eastings = finiteScalar(conversion?.Eastings);
+  const northings = finiteScalar(conversion?.Northings);
+  const orthogonalHeight = finiteScalar(
+    conversion?.OrthogonalHeight
+  );
+  const xAxisAbscissa = finiteScalar(
+    conversion?.XAxisAbscissa,
+    1
+  );
+  const xAxisOrdinate = finiteScalar(
+    conversion?.XAxisOrdinate,
+    0
+  );
+  const scale = finiteScalar(conversion?.Scale, 1);
+  const axisLength = Math.hypot(
+    xAxisAbscissa,
+    xAxisOrdinate
+  );
+  if (sourceContextExpressId === null || targetCrsExpressId === null || target === null || [
+    eastings,
+    northings,
+    orthogonalHeight,
+    xAxisAbscissa,
+    xAxisOrdinate,
+    scale
+  ].some((value) => value === void 0) || scale <= 0 || axisLength === 0) {
+    return {
+      status: "invalid",
+      diagnostics: [
+        {
+          code: "invalid-map-conversion",
+          expressId: conversions[0]
+        }
+      ]
+    };
+  }
+  const axisX = xAxisAbscissa / axisLength;
+  const axisY = xAxisOrdinate / axisLength;
+  return {
+    status: "mapped",
+    projectedCrs: {
+      expressId: targetCrsExpressId,
+      name: textValue(target.Name),
+      description: textValue(target.Description),
+      geodeticDatum: textValue(target.GeodeticDatum),
+      verticalDatum: textValue(target.VerticalDatum),
+      mapProjection: textValue(target.MapProjection),
+      mapZone: textValue(target.MapZone),
+      mapUnit: propertyUnit(api, modelId, target.MapUnit)
+    },
+    mapConversion: {
+      expressId: conversions[0],
+      sourceContextExpressId,
+      targetCrsExpressId,
+      eastings,
+      northings,
+      orthogonalHeight,
+      xAxisAbscissa,
+      xAxisOrdinate,
+      scale,
+      normalizedXAxis: [axisX, axisY],
+      mapFromIfcWorld: [
+        scale * axisX,
+        scale * axisY,
+        0,
+        0,
+        -scale * axisY,
+        scale * axisX,
+        0,
+        0,
+        0,
+        0,
+        scale,
+        0,
+        eastings,
+        northings,
+        orthogonalHeight,
+        1
+      ],
+      numericPrecision: "float64-metadata"
+    }
+  };
+}
 async function createWebIfcSourceArtifact(sourceBytes, {
   adapterBackend = "node-wasm-source-artifact",
   documentId,
@@ -687,6 +1014,9 @@ async function createWebIfcSourceArtifact(sourceBytes, {
   maximumDetailBytes = DEFAULT_LIMITS.maximumDetailBytes,
   maximumDetailRangeBytes = DEFAULT_LIMITS.maximumDetailRangeBytes,
   maximumDetailRanges = DEFAULT_LIMITS.maximumDetailRanges,
+  maximumPropertyDetailBytes = DEFAULT_LIMITS.maximumPropertyDetailBytes,
+  maximumPropertyDetailRangeBytes = DEFAULT_LIMITS.maximumPropertyDetailRangeBytes,
+  maximumPropertyDetailRanges = DEFAULT_LIMITS.maximumPropertyDetailRanges,
   maximumRelationEntries = DEFAULT_LIMITS.maximumRelationEntries,
   maximumTreeNodes = DEFAULT_LIMITS.maximumTreeNodes,
   maximumMetadataBytes = DEFAULT_LIMITS.maximumMetadataBytes,
@@ -704,6 +1034,9 @@ async function createWebIfcSourceArtifact(sourceBytes, {
     maximumDetailBytes,
     maximumDetailRangeBytes,
     maximumDetailRanges,
+    maximumPropertyDetailBytes,
+    maximumPropertyDetailRangeBytes,
+    maximumPropertyDetailRanges,
     maximumRelationEntries,
     maximumTreeNodes,
     maximumMetadataBytes
@@ -928,6 +1261,21 @@ async function createWebIfcSourceArtifact(sourceBytes, {
         maximumDetailRanges
       }
     );
+    const propertyDetails = await encodePropertyDetailRanges(
+      entities.map((entity) => ({
+        expressId: entity.expressId,
+        propertySets: entity.semantics.propertySetValues
+      })),
+      {
+        maximumPropertyDetailBytes,
+        maximumPropertyDetailRangeBytes,
+        maximumPropertyDetailRanges
+      }
+    );
+    const propertySlices = entities.map((entity) => ({
+      expressId: entity.expressId,
+      ...propertyDetails.slices.get(entity.expressId)
+    }));
     for (const entity of entities) {
       entity.detailSlice = semanticDetails.slices.get(
         entity.expressId
@@ -990,6 +1338,7 @@ async function createWebIfcSourceArtifact(sourceBytes, {
           1
         ]
       },
+      georeferencing: georeferencingMetadata(api, modelId),
       coverage: {
         supported: [
           "geometry-products",
@@ -1038,6 +1387,24 @@ async function createWebIfcSourceArtifact(sourceBytes, {
       entities,
       ranges: encoded.ranges,
       detailRanges: semanticDetails.ranges,
+      propertyDetails: {
+        mediaType: WEB_IFC_PROPERTY_DETAIL_MEDIA_TYPE,
+        ranges: propertyDetails.ranges,
+        slices: propertySlices,
+        resources: {
+          limits: {
+            maximumBytes: maximumPropertyDetailBytes,
+            maximumRangeBytes: maximumPropertyDetailRangeBytes,
+            maximumRanges: maximumPropertyDetailRanges
+          },
+          observed: {
+            bytes: propertyDetails.totalBytes,
+            ranges: propertyDetails.ranges.length,
+            largestRangeBytes: propertyDetails.largestRangeBytes,
+            records: propertySlices.length
+          }
+        }
+      },
       resources: {
         limits: {
           maximumSourceBytes,
@@ -1685,12 +2052,14 @@ function sha256Hex(value) {
 // packages/bim-model-source/src/index.mjs
 var BIM_SOURCE_PROTOCOL_VERSION = "bim-explorer-bim-source/0.2";
 var BIM_ENTITY_DETAILS_SCHEMA = "bim-explorer-bim-entity-details/0.1";
+var BIM_PROPERTY_SET_VALUES_SCHEMA = "bim-explorer-bim-property-set-values/0.1";
 var SHA256 = /^[0-9a-f]{64}$/u;
 var IFC_GLOBAL_ID2 = /^[0-3][0-9A-Za-z_$]{21}$/u;
 var DOCUMENT_ID = /^document:[a-z0-9][a-z0-9:._-]*$/u;
 var RANGE_ID = /^range:[a-z0-9][a-z0-9:._-]*$/u;
 var GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v1";
 var SEMANTIC_DETAIL_MEDIA_TYPE = "application/vnd.bim-explorer.semantic-detail-range.v1";
+var PROPERTY_DETAIL_MEDIA_TYPE = "application/vnd.bim-explorer.property-detail-range.v1";
 function plainRecord(value, label) {
   if (value === null || typeof value !== "object" || Array.isArray(value) || ArrayBuffer.isView(value)) {
     throw new TypeError(`${label} must be an object`);
@@ -1890,6 +2259,126 @@ function validateSemanticDetails(value, label) {
     classifications: classifications2
   };
 }
+function validatePropertySetValues(value, label) {
+  const details = plainRecord(value, label);
+  if (!Array.isArray(details.propertySets)) {
+    throw new TypeError(
+      `${label}.propertySets must be a list`
+    );
+  }
+  const propertySets = details.propertySets.map(
+    (value2, setIndex) => {
+      const setLabel = `${label}.propertySets[${setIndex}]`;
+      const propertySet = plainRecord(value2, setLabel);
+      positiveInteger2(
+        propertySet.expressId,
+        `${setLabel}.expressId`
+      );
+      nonEmptyString(propertySet.name, `${setLabel}.name`);
+      if (!["occurrence", "type"].includes(propertySet.scope)) {
+        throw new TypeError(`${setLabel}.scope is invalid`);
+      }
+      if (!Array.isArray(propertySet.properties)) {
+        throw new TypeError(
+          `${setLabel}.properties must be a list`
+        );
+      }
+      const properties = propertySet.properties.map(
+        (value3, propertyIndex) => {
+          const propertyLabel = `${setLabel}.properties[${propertyIndex}]`;
+          const property = plainRecord(
+            value3,
+            propertyLabel
+          );
+          positiveInteger2(
+            property.expressId,
+            `${propertyLabel}.expressId`
+          );
+          nonEmptyString(
+            property.name,
+            `${propertyLabel}.name`
+          );
+          nonEmptyString(
+            property.propertyClass,
+            `${propertyLabel}.propertyClass`
+          );
+          const nominal = plainRecord(
+            property.nominalValue,
+            `${propertyLabel}.nominalValue`
+          );
+          if (!["value", "null", "opaque"].includes(
+            nominal.status
+          )) {
+            throw new TypeError(
+              `${propertyLabel}.nominalValue.status is invalid`
+            );
+          }
+          nonEmptyString(
+            nominal.ifcType,
+            `${propertyLabel}.nominalValue.ifcType`
+          );
+          if (nominal.status === "value" && !(typeof nominal.value === "string" || typeof nominal.value === "boolean" || typeof nominal.value === "number" && Number.isFinite(nominal.value)) || nominal.status !== "value" && nominal.value !== null) {
+            throw new TypeError(
+              `${propertyLabel}.nominalValue.value is invalid`
+            );
+          }
+          let unit = null;
+          if (property.unit !== null) {
+            const unitValue = plainRecord(
+              property.unit,
+              `${propertyLabel}.unit`
+            );
+            positiveInteger2(
+              unitValue.expressId,
+              `${propertyLabel}.unit.expressId`
+            );
+            for (const field of [
+              "ifcClass",
+              "unitType",
+              "prefix",
+              "name"
+            ]) {
+              if (typeof unitValue[field] !== "string") {
+                throw new TypeError(
+                  `${propertyLabel}.unit.${field} must be a string`
+                );
+              }
+            }
+            unit = structuredClone(unitValue);
+          }
+          return {
+            expressId: property.expressId,
+            name: property.name,
+            propertyClass: property.propertyClass,
+            nominalValue: structuredClone(nominal),
+            unit
+          };
+        }
+      );
+      if (new Set(
+        properties.map((property) => property.expressId)
+      ).size !== properties.length) {
+        throw new Error(
+          `${setLabel} property Express IDs must be unique`
+        );
+      }
+      return {
+        expressId: propertySet.expressId,
+        name: propertySet.name,
+        scope: propertySet.scope,
+        properties
+      };
+    }
+  );
+  if (new Set(
+    propertySets.map((propertySet) => `${propertySet.scope}:${propertySet.expressId}`)
+  ).size !== propertySets.length) {
+    throw new Error(
+      `${label} property-set identities must be unique`
+    );
+  }
+  return { propertySets };
+}
 function parseSemanticDetailRange(bytes, label) {
   const headerBytes = 16;
   const recordHeaderBytes = 8;
@@ -1965,6 +2454,83 @@ function parseSemanticDetailRange(bytes, label) {
   if (offset !== bytes.byteLength) {
     throw new Error(
       `${label} has unindexed semantic detail bytes`
+    );
+  }
+  return records;
+}
+function parsePropertyDetailRange(bytes, label) {
+  const headerBytes = 16;
+  const recordHeaderBytes = 8;
+  if (bytes.byteLength < headerBytes) {
+    throw new RangeError(
+      `${label} property detail header is truncated`
+    );
+  }
+  if (new TextDecoder().decode(bytes.slice(0, 8)) !== "BEXPRP01") {
+    throw new Error(
+      `${label} property detail magic is invalid`
+    );
+  }
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength
+  );
+  if (view.getUint32(8, true) !== 1) {
+    throw new Error(
+      `${label} property detail version is unsupported`
+    );
+  }
+  const recordCount = view.getUint32(12, true);
+  if (recordCount === 0) {
+    throw new Error(
+      `${label} property detail records must be non-empty`
+    );
+  }
+  const records = /* @__PURE__ */ new Map();
+  const decoder = new TextDecoder("utf-8", {
+    fatal: true
+  });
+  let offset = headerBytes;
+  for (let index = 0; index < recordCount; index += 1) {
+    const recordLabel = `${label} property detail record ${index}`;
+    if (offset + recordHeaderBytes > bytes.byteLength) {
+      throw new RangeError(
+        `${recordLabel} header is truncated`
+      );
+    }
+    const expressId = view.getUint32(offset, true);
+    const byteLength = view.getUint32(offset + 4, true);
+    offset += recordHeaderBytes;
+    if (expressId === 0 || byteLength === 0 || offset + byteLength > bytes.byteLength) {
+      throw new RangeError(
+        `${recordLabel} payload is malformed`
+      );
+    }
+    let value;
+    try {
+      value = JSON.parse(
+        decoder.decode(bytes.slice(offset, offset + byteLength))
+      );
+    } catch {
+      throw new Error(`${recordLabel} JSON is malformed`);
+    }
+    validatePropertySetValues(value, recordLabel);
+    if (records.has(expressId)) {
+      throw new Error(
+        `${label} property detail Express IDs must be unique`
+      );
+    }
+    records.set(expressId, {
+      expressId,
+      offset,
+      byteLength
+    });
+    offset += byteLength;
+  }
+  if (offset !== bytes.byteLength) {
+    throw new Error(
+      `${label} has unindexed property detail bytes`
     );
   }
   return records;
@@ -2067,6 +2633,242 @@ function validateDetailRange(value, index) {
     bytes,
     records: parseSemanticDetailRange(bytes, label)
   };
+}
+function validatePropertyDetailRange(value, index) {
+  const label = `artifact.propertyDetails.ranges[${index}]`;
+  const range = plainRecord(value, label);
+  if (!RANGE_ID.test(range.rangeId ?? "")) {
+    throw new TypeError(`${label}.rangeId is invalid`);
+  }
+  if (range.mediaType !== PROPERTY_DETAIL_MEDIA_TYPE) {
+    throw new Error(`${label}.mediaType is unsupported`);
+  }
+  if (!(range.bytes instanceof Uint8Array) || range.bytes.byteLength === 0) {
+    throw new TypeError(
+      `${label}.bytes must be a non-empty Uint8Array`
+    );
+  }
+  const bytes = Uint8Array.from(range.bytes);
+  const sha2562 = digest(bytes);
+  if (range.sha256 !== sha2562) {
+    throw new Error(
+      `${label} digest does not match its bytes`
+    );
+  }
+  return {
+    rangeId: range.rangeId,
+    mediaType: range.mediaType,
+    sha256: sha2562,
+    bytes,
+    records: parsePropertyDetailRange(bytes, label)
+  };
+}
+function validatePropertyDetails(value, entities, occupiedRangeIds) {
+  const details = plainRecord(
+    value,
+    "artifact.propertyDetails"
+  );
+  if (details.mediaType !== PROPERTY_DETAIL_MEDIA_TYPE) {
+    throw new Error(
+      "artifact.propertyDetails.mediaType is unsupported"
+    );
+  }
+  if (!Array.isArray(details.ranges) || details.ranges.length === 0) {
+    throw new TypeError(
+      "artifact.propertyDetails.ranges must be non-empty"
+    );
+  }
+  const ranges = details.ranges.map(
+    validatePropertyDetailRange
+  );
+  const rangeById = new Map(
+    ranges.map((range) => [range.rangeId, range])
+  );
+  if (rangeById.size !== ranges.length || ranges.some((range) => occupiedRangeIds.has(range.rangeId))) {
+    throw new Error(
+      "artifact property range IDs must be globally unique"
+    );
+  }
+  if (!Array.isArray(details.slices) || details.slices.length !== entities.length) {
+    throw new Error(
+      "artifact property slices must match entities"
+    );
+  }
+  const slices = details.slices.map((value2, index) => {
+    const label = `artifact.propertyDetails.slices[${index}]`;
+    const slice = plainRecord(value2, label);
+    positiveInteger2(slice.expressId, `${label}.expressId`);
+    const range = rangeById.get(slice.rangeId);
+    if (range === void 0) {
+      throw new RangeError(
+        `${label}.rangeId is outside property ranges`
+      );
+    }
+    nonNegativeInteger(slice.offset, `${label}.offset`);
+    positiveInteger2(slice.byteLength, `${label}.byteLength`);
+    const record = range.records.get(slice.expressId);
+    if (record === void 0 || record.offset !== slice.offset || record.byteLength !== slice.byteLength) {
+      throw new Error(
+        `${label} does not match its property record`
+      );
+    }
+    return structuredClone(slice);
+  });
+  if (new Set(slices.map((slice) => slice.expressId)).size !== slices.length || entities.some(
+    (entity) => !slices.some((slice) => slice.expressId === entity.expressId)
+  )) {
+    throw new Error(
+      "artifact property detail identities are incomplete"
+    );
+  }
+  const resources = structuredClone(
+    plainRecord(
+      details.resources,
+      "artifact.propertyDetails.resources"
+    )
+  );
+  const limits = plainRecord(
+    resources.limits,
+    "artifact.propertyDetails.resources.limits"
+  );
+  const observed = plainRecord(
+    resources.observed,
+    "artifact.propertyDetails.resources.observed"
+  );
+  for (const field of [
+    "maximumBytes",
+    "maximumRangeBytes",
+    "maximumRanges"
+  ]) {
+    positiveInteger2(
+      limits[field],
+      `artifact.propertyDetails.resources.limits.${field}`
+    );
+  }
+  for (const field of [
+    "bytes",
+    "ranges",
+    "largestRangeBytes",
+    "records"
+  ]) {
+    nonNegativeInteger(
+      observed[field],
+      `artifact.propertyDetails.resources.observed.${field}`
+    );
+  }
+  const totalBytes = ranges.reduce(
+    (sum, range) => sum + range.bytes.byteLength,
+    0
+  );
+  const largestRangeBytes = Math.max(
+    ...ranges.map((range) => range.bytes.byteLength)
+  );
+  if (observed.bytes !== totalBytes || observed.ranges !== ranges.length || observed.largestRangeBytes !== largestRangeBytes || observed.records !== slices.length || observed.bytes > limits.maximumBytes || observed.ranges > limits.maximumRanges || observed.largestRangeBytes > limits.maximumRangeBytes) {
+    throw new Error(
+      "artifact property detail resources do not match content"
+    );
+  }
+  return {
+    mediaType: details.mediaType,
+    ranges,
+    slices,
+    resources
+  };
+}
+function validateGeoreferencing(value) {
+  const georeferencing = plainRecord(
+    value,
+    "artifact.georeferencing"
+  );
+  if (georeferencing.status === "absent") {
+    if (georeferencing.reason !== "no-ifc-map-conversion") {
+      throw new Error(
+        "absent georeferencing requires a bounded reason"
+      );
+    }
+    return structuredClone(georeferencing);
+  }
+  if (georeferencing.status === "invalid") {
+    if (!Array.isArray(georeferencing.diagnostics) || georeferencing.diagnostics.length === 0 || georeferencing.diagnostics.some(
+      (diagnostic) => typeof diagnostic?.code !== "string" || diagnostic.code.length === 0
+    )) {
+      throw new Error(
+        "invalid georeferencing requires diagnostics"
+      );
+    }
+    return structuredClone(georeferencing);
+  }
+  if (georeferencing.status !== "mapped") {
+    throw new Error(
+      "artifact georeferencing status is unsupported"
+    );
+  }
+  const crs = plainRecord(
+    georeferencing.projectedCrs,
+    "artifact.georeferencing.projectedCrs"
+  );
+  positiveInteger2(
+    crs.expressId,
+    "artifact.georeferencing.projectedCrs.expressId"
+  );
+  for (const field of [
+    "name",
+    "description",
+    "geodeticDatum",
+    "verticalDatum",
+    "mapProjection",
+    "mapZone"
+  ]) {
+    if (typeof crs[field] !== "string") {
+      throw new TypeError(
+        `artifact.georeferencing.projectedCrs.${field} must be a string`
+      );
+    }
+  }
+  const conversion = plainRecord(
+    georeferencing.mapConversion,
+    "artifact.georeferencing.mapConversion"
+  );
+  for (const field of [
+    "expressId",
+    "sourceContextExpressId",
+    "targetCrsExpressId"
+  ]) {
+    positiveInteger2(
+      conversion[field],
+      `artifact.georeferencing.mapConversion.${field}`
+    );
+  }
+  for (const field of [
+    "eastings",
+    "northings",
+    "orthogonalHeight",
+    "xAxisAbscissa",
+    "xAxisOrdinate",
+    "scale"
+  ]) {
+    if (typeof conversion[field] !== "number" || !Number.isFinite(conversion[field])) {
+      throw new TypeError(
+        `artifact.georeferencing.mapConversion.${field} must be finite`
+      );
+    }
+  }
+  if (conversion.scale <= 0 || conversion.targetCrsExpressId !== crs.expressId || conversion.numericPrecision !== "float64-metadata") {
+    throw new Error(
+      "artifact map conversion identity or scale is invalid"
+    );
+  }
+  finiteVector(
+    conversion.normalizedXAxis,
+    2,
+    "artifact.georeferencing.mapConversion.normalizedXAxis"
+  );
+  finiteVector(
+    conversion.mapFromIfcWorld,
+    16,
+    "artifact.georeferencing.mapConversion.mapFromIfcWorld"
+  );
+  return structuredClone(georeferencing);
 }
 function validateSemanticSummary(value, label) {
   const semantics = plainRecord(value, label);
@@ -2388,6 +3190,9 @@ function validateArtifact(value) {
     16,
     "artifact.coordinateSystem.sourceFromStorage"
   );
+  const georeferencing = validateGeoreferencing(
+    artifact.georeferencing
+  );
   const coverage = structuredClone(
     plainRecord(artifact.coverage, "artifact.coverage")
   );
@@ -2435,6 +3240,14 @@ function validateArtifact(value) {
       "artifact semantic details do not match entities"
     );
   }
+  const propertyDetails = validatePropertyDetails(
+    artifact.propertyDetails,
+    entities,
+    /* @__PURE__ */ new Set([
+      ...rangeById.keys(),
+      ...detailRangeById.keys()
+    ])
+  );
   for (const [field, values] of [
     ["Express ID", entities.map((entity) => entity.expressId)],
     ["GlobalId", entities.map((entity) => entity.globalId)]
@@ -2511,13 +3324,15 @@ function validateArtifact(value) {
     source,
     adapter,
     coordinateSystem,
+    georeferencing,
     coverage,
     tree,
     geometry,
     resources,
     entities,
     ranges,
-    detailRanges
+    detailRanges,
+    propertyDetails
   };
 }
 function projection(artifact) {
@@ -2559,7 +3374,10 @@ var BimModelSource = class {
   #artifact;
   #rangeById;
   #detailRangeById;
+  #propertyRangeById;
+  #propertySliceByExpressId;
   #detailByExpressId = /* @__PURE__ */ new Map();
+  #propertyByExpressId = /* @__PURE__ */ new Map();
   #entityByExpressId;
   #entityByGlobalId;
   #entityByRenderId;
@@ -2575,16 +3393,24 @@ var BimModelSource = class {
   #pickResolutions = 0;
   #detailReads = 0;
   #detailBytesRead = 0;
+  #propertyReads = 0;
+  #propertyBytesRead = 0;
   constructor(artifact, {
     maximumRequestBytes = 1048576,
     maximumDetailRequestBytes = 1048576,
+    maximumPropertyRequestBytes = 1048576,
     detailReadBudgetBytes,
+    propertyReadBudgetBytes,
     sessionReadBudgetBytes
   } = {}) {
     positiveInteger2(maximumRequestBytes, "maximumRequestBytes");
     positiveInteger2(
       maximumDetailRequestBytes,
       "maximumDetailRequestBytes"
+    );
+    positiveInteger2(
+      maximumPropertyRequestBytes,
+      "maximumPropertyRequestBytes"
     );
     this.#artifact = validateArtifact(artifact);
     const totalRangeBytes = this.#artifact.ranges.reduce(
@@ -2595,12 +3421,21 @@ var BimModelSource = class {
       (sum, range) => sum + range.bytes.byteLength,
       0
     );
+    const totalPropertyRangeBytes = this.#artifact.propertyDetails.ranges.reduce(
+      (sum, range) => sum + range.bytes.byteLength,
+      0
+    );
     const readBudget = sessionReadBudgetBytes ?? totalRangeBytes;
     const detailBudget = detailReadBudgetBytes ?? totalDetailRangeBytes;
+    const propertyBudget = propertyReadBudgetBytes ?? totalPropertyRangeBytes;
     positiveInteger2(readBudget, "sessionReadBudgetBytes");
     positiveInteger2(
       detailBudget,
       "detailReadBudgetBytes"
+    );
+    positiveInteger2(
+      propertyBudget,
+      "propertyReadBudgetBytes"
     );
     const sourceDigest = this.#artifact.source.sha256;
     this.sourceFingerprint = `sha256:${sourceDigest}`;
@@ -2608,6 +3443,26 @@ var BimModelSource = class {
     this.cacheFingerprint = `sha256:${sha256Hex(
       new TextEncoder().encode(
         canonicalJson(projection(this.#artifact))
+      )
+    )}`;
+    this.semanticCacheFingerprint = `sha256:${sha256Hex(
+      new TextEncoder().encode(
+        canonicalJson({
+          cacheFingerprint: this.cacheFingerprint,
+          georeferencing: this.#artifact.georeferencing,
+          propertyDetails: {
+            mediaType: this.#artifact.propertyDetails.mediaType,
+            slices: this.#artifact.propertyDetails.slices,
+            ranges: this.#artifact.propertyDetails.ranges.map(
+              (range) => ({
+                rangeId: range.rangeId,
+                mediaType: range.mediaType,
+                byteLength: range.bytes.byteLength,
+                sha256: range.sha256
+              })
+            )
+          }
+        })
       )
     )}`;
     this.sourceId = `source:ifc:${sourceDigest.slice(0, 24)}`;
@@ -2623,6 +3478,16 @@ var BimModelSource = class {
     this.#detailRangeById = new Map(
       this.#artifact.detailRanges.map(
         (range) => [range.rangeId, range]
+      )
+    );
+    this.#propertyRangeById = new Map(
+      this.#artifact.propertyDetails.ranges.map(
+        (range) => [range.rangeId, range]
+      )
+    );
+    this.#propertySliceByExpressId = new Map(
+      this.#artifact.propertyDetails.slices.map(
+        (slice) => [slice.expressId, slice]
       )
     );
     const idPrefix = sourceDigest.slice(0, 16);
@@ -2692,6 +3557,19 @@ var BimModelSource = class {
       expiresAt: null,
       disposeWithSession: true
     }));
+    const propertyRangeHandles = this.#artifact.propertyDetails.ranges.map((range) => deepFreeze2({
+      ...baseContext,
+      handleId: range.rangeId,
+      mediaType: range.mediaType,
+      byteLength: range.bytes.byteLength,
+      maximumRequestBytes: Math.min(
+        maximumPropertyRequestBytes,
+        range.bytes.byteLength
+      ),
+      sha256: range.sha256,
+      expiresAt: null,
+      disposeWithSession: true
+    }));
     const descriptor = {
       documentId: this.#artifact.source.documentId,
       fingerprint: this.sourceFingerprint,
@@ -2704,8 +3582,10 @@ var BimModelSource = class {
       ...baseContext,
       sequence: 0,
       cacheFingerprint: this.cacheFingerprint,
+      semanticCacheFingerprint: this.semanticCacheFingerprint,
       source: descriptor,
       coordinateSystem: this.#artifact.coordinateSystem,
+      georeferencing: this.#artifact.georeferencing,
       coverage: this.#artifact.coverage,
       tree,
       geometry: this.#artifact.geometry,
@@ -2727,6 +3607,39 @@ var BimModelSource = class {
         mediaType: SEMANTIC_DETAIL_MEDIA_TYPE,
         rangeHandles: detailRangeHandles
       },
+      propertyDetails: {
+        schema: BIM_PROPERTY_SET_VALUES_SCHEMA,
+        mediaType: PROPERTY_DETAIL_MEDIA_TYPE,
+        rangeHandles: propertyRangeHandles,
+        deferred: true
+      },
+      geometryRepresentations: {
+        sourcePrecision: {
+          authority: "external-source-document",
+          documentId: descriptor.documentId,
+          fingerprint: descriptor.fingerprint,
+          numericEncoding: "ifc-step-source-defined",
+          geometryRangeExposed: false,
+          mutable: false
+        },
+        displayTessellation: {
+          authority: "derived-render-cache",
+          mediaType: GEOMETRY_MEDIA_TYPE,
+          numericEncoding: "float32-position-normal-uint32-index",
+          adapterId: descriptor.adapter.id,
+          adapterVersion: descriptor.adapter.version,
+          lossiness: "lossy",
+          sourceMutationAuthority: false,
+          rangeIds: rangeHandles.map(
+            (handle2) => handle2.handleId
+          )
+        }
+      },
+      extensionCoverage: {
+        propertySetValues: "deferred-bounded",
+        georeferencing: this.#artifact.georeferencing.status,
+        sourcePrecisionDisplaySeparation: "explicit"
+      },
       loadPlan: {
         firstFrameRangeIds: rangeHandles.slice(0, 1).map((handle2) => handle2.handleId),
         deferredRangeIds: rangeHandles.slice(1).map((handle2) => handle2.handleId),
@@ -2735,10 +3648,13 @@ var BimModelSource = class {
     });
     this.maximumRequestBytes = maximumRequestBytes;
     this.maximumDetailRequestBytes = maximumDetailRequestBytes;
+    this.maximumPropertyRequestBytes = maximumPropertyRequestBytes;
     this.sessionReadBudgetBytes = readBudget;
     this.detailReadBudgetBytes = detailBudget;
+    this.propertyReadBudgetBytes = propertyBudget;
     this.totalRangeBytes = totalRangeBytes;
     this.totalDetailRangeBytes = totalDetailRangeBytes;
+    this.totalPropertyRangeBytes = totalPropertyRangeBytes;
   }
   get state() {
     return Object.freeze({
@@ -2758,6 +3674,12 @@ var BimModelSource = class {
       remainingDetailReadBytes: Math.max(
         0,
         this.detailReadBudgetBytes - this.#detailBytesRead
+      ),
+      propertyReads: this.#propertyReads,
+      propertyBytesRead: this.#propertyBytesRead,
+      remainingPropertyReadBytes: Math.max(
+        0,
+        this.propertyReadBudgetBytes - this.#propertyBytesRead
       )
     });
   }
@@ -2797,6 +3719,7 @@ var BimModelSource = class {
       lastSuccessfulRevisionId: this.revisionId,
       sourceFingerprint: this.sourceFingerprint,
       cacheFingerprint: this.cacheFingerprint,
+      semanticCacheFingerprint: this.semanticCacheFingerprint,
       capabilities: [
         "immutable-snapshot",
         "tree-index",
@@ -2804,13 +3727,17 @@ var BimModelSource = class {
         "binary-range-read",
         "entity-resolve",
         "deferred-entity-details",
+        "deferred-property-set-values",
+        "georeferencing-metadata",
+        "source-display-geometry-separation",
         "pick-resolve",
         "bounded-tree-query",
         "bounded-semantic-search",
         "bounded-relation-query"
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
-      detailResourceBudgetBytes: this.detailReadBudgetBytes
+      detailResourceBudgetBytes: this.detailReadBudgetBytes,
+      propertyResourceBudgetBytes: this.propertyReadBudgetBytes
     });
     return {
       descriptor,
@@ -2932,6 +3859,83 @@ var BimModelSource = class {
         this.#detailByExpressId.set(entity.expressId, result);
         return result;
       },
+      getPropertySetValues: async (request, { signal: propertySignal } = {}) => {
+        this.#assertSessionOpen();
+        aborted2(propertySignal);
+        this.#assertContext(
+          request,
+          "property detail request"
+        );
+        if (!Number.isSafeInteger(request?.expressId) || request.expressId <= 0) {
+          throw new TypeError(
+            "property detail request must contain an Express ID"
+          );
+        }
+        const entity = this.#entityByExpressId.get(
+          request.expressId
+        );
+        if (entity === void 0) {
+          throw new RangeError(
+            "property detail identity is outside the snapshot"
+          );
+        }
+        const cached = this.#propertyByExpressId.get(
+          entity.expressId
+        );
+        if (cached !== void 0) {
+          return cached;
+        }
+        const slice = this.#propertySliceByExpressId.get(
+          entity.expressId
+        );
+        const range = this.#propertyRangeById.get(
+          slice?.rangeId
+        );
+        if (slice === void 0 || range === void 0 || slice.byteLength > this.maximumPropertyRequestBytes || this.#propertyBytesRead + slice.byteLength > this.propertyReadBudgetBytes) {
+          throw new RangeError(
+            "property detail range exceeds its read budget"
+          );
+        }
+        let propertyValues;
+        try {
+          propertyValues = validatePropertySetValues(
+            JSON.parse(
+              new TextDecoder("utf-8", {
+                fatal: true
+              }).decode(
+                range.bytes.slice(
+                  slice.offset,
+                  slice.offset + slice.byteLength
+                )
+              )
+            ),
+            "entity property details"
+          );
+        } catch {
+          throw new Error(
+            "entity property detail payload is malformed"
+          );
+        }
+        this.#propertyReads += 1;
+        this.#propertyBytesRead += slice.byteLength;
+        const result = deepFreeze2({
+          schema: BIM_PROPERTY_SET_VALUES_SCHEMA,
+          ...contextFields(this),
+          expressId: entity.expressId,
+          globalId: entity.globalId,
+          ...propertyValues,
+          receipt: {
+            handleId: range.rangeId,
+            offset: slice.offset,
+            byteLength: slice.byteLength
+          }
+        });
+        this.#propertyByExpressId.set(
+          entity.expressId,
+          result
+        );
+        return result;
+      },
       resolvePick: async (request, { signal: pickSignal } = {}) => {
         this.#assertSessionOpen();
         aborted2(pickSignal);
@@ -2988,9 +3992,15 @@ var BimModelSource = class {
     for (const range of this.#detailRangeById.values()) {
       range.bytes.fill(0);
     }
+    for (const range of this.#propertyRangeById.values()) {
+      range.bytes.fill(0);
+    }
     this.#rangeById.clear();
     this.#detailRangeById.clear();
+    this.#propertyRangeById.clear();
+    this.#propertySliceByExpressId.clear();
     this.#detailByExpressId.clear();
+    this.#propertyByExpressId.clear();
     this.#entityByExpressId.clear();
     this.#entityByGlobalId.clear();
     this.#entityByRenderId.clear();
@@ -3009,6 +4019,7 @@ var MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 var OPERATIONS = /* @__PURE__ */ new Set([
   "getEntity",
   "getEntityDetails",
+  "getPropertySetValues",
   "queryRelations",
   "queryTree",
   "readRange",
@@ -3099,6 +4110,9 @@ async function openSource(request) {
     for (const range of artifact.detailRanges) {
       range.bytes.fill(0);
     }
+    for (const range of artifact.propertyDetails.ranges) {
+      range.bytes.fill(0);
+    }
     const session = await source.open({
       protocolVersion: BIM_SOURCE_PROTOCOL_VERSION
     });
@@ -3127,6 +4141,8 @@ async function openSource(request) {
         detailBytes: artifact.resources.observed.detailBytes,
         detailRanges: artifact.resources.observed.detailRanges,
         largestDetailRangeBytes: artifact.resources.observed.largestDetailRangeBytes,
+        propertyDetailBytes: artifact.propertyDetails.resources.observed.bytes,
+        propertyDetailRanges: artifact.propertyDetails.resources.observed.ranges,
         ranges: artifact.resources.observed.ranges,
         products: artifact.resources.observed.products,
         wasmHeapCapacityBytes: artifact.resources.wasmHeapCapacityBytes ?? null
@@ -3139,6 +4155,9 @@ async function openSource(request) {
       range.bytes.fill(0);
     }
     for (const range of artifact?.detailRanges ?? []) {
+      range.bytes.fill(0);
+    }
+    for (const range of artifact?.propertyDetails?.ranges ?? []) {
       range.bytes.fill(0);
     }
   }

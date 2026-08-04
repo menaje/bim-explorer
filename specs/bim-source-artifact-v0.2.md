@@ -5,6 +5,9 @@ authority:
   - internal-bim-source-artifact
   - geometry-range-encoding
   - semantic-detail-range-encoding
+  - property-detail-range-encoding
+  - georeferencing-projection
+  - source-display-precision-boundary
   - source-local-identity
 last_reviewed: 2026-08-04
 ---
@@ -21,11 +24,17 @@ v0.2는 v0.1의 geometry range와 identity를 유지하면서 다음을 추가�
 
 - snapshot의 eager semantic summary와 deferred semantic detail 분리
 - `application/vnd.bim-explorer.semantic-detail-range.v1`
+- `application/vnd.bim-explorer.property-detail-range.v1`
 - source protocol `bim-explorer-bim-source/0.2`의
-  `getEntityDetails`
-- geometry와 semantic detail의 독립 request/session read budget
+  `getEntityDetails`와 `getPropertySetValues`
+- geometry, semantic detail과 property detail의 독립 request/session read
+  budget
 - detail digest, binary directory, JSON payload와 Express ID의 fail-closed
   admission
+- IFC4 projected CRS/MapConversion의 명시적 `mapped`·`absent`·`invalid`
+  상태
+- fingerprinted IFC source와 lossy Float32 display tessellation의 authority
+  분리
 
 v0.1 consumer는 새 artifact를 암묵적으로 열 수 없습니다. consumer는
 artifact schema와 source protocol을 모두 명시적으로 협상해야 합니다.
@@ -40,6 +49,8 @@ projection만 전달합니다.
 - containment, type, property-set name과 semantic summary
 - source-local geometry range와 occurrence transform
 - deferred quantity, direct material과 classification detail
+- occurrence/type `IfcPropertySingleValue`의 deferred primitive value
+- projected CRS와 normalized IFC world→map conversion metadata
 - 지원/미지원 projection의 명시적 목록과 cleanup receipt
 
 각 entity는 `detailSlice`를 가집니다.
@@ -55,7 +66,9 @@ projection만 전달합니다.
 eager `semantics`는 container, type, property-set names, quantity names,
 material names와 classification names만 보존합니다. quantity value,
 direct material과 classification record는 detail slice에 둡니다.
-property-set의 value-level payload는 v0.2에서도 지원하지 않습니다.
+property-set primitive value는 별도의 `propertyDetails` slice에 두며 complex,
+bounded, enumerated, list와 table property kind는 이름을 보존하고
+`opaque`로 남깁니다.
 
 ## Revision과 cache identity
 
@@ -67,10 +80,13 @@ sha256:<64 lowercase hex>
 source-snapshot:<sourceFingerprint>
 ```
 
-cache fingerprint는 source descriptor, adapter identity, projection
+legacy `cacheFingerprint`는 source descriptor, adapter identity, projection
 metadata, geometry/detail range byte length와 digest의 canonical JSON
-SHA-256입니다. detail directory나 payload가 달라지면 cache fingerprint도
-달라집니다. 기존 digest의 bytes를 덮어쓰지 않습니다.
+SHA-256입니다. 기존 geometry/detail consumer의 identity를 깨지 않도록
+property/georeferencing extension은 별도 `semanticCacheFingerprint`에
+포함합니다. raw source가 달라지면 두 fingerprint 모두 달라지며
+property/georeferencing만 달라도 semantic cache는 달라집니다. 기존
+digest의 bytes를 덮어쓰지 않습니다.
 
 ## Identity
 
@@ -157,12 +173,81 @@ record는 Express ID 순서로 정렬하며 record 경계를 나누지 않습니
 digest, magic/version, UTF-8/JSON shape, unique Express ID와 entity
 `detailSlice`의 exact offset/length가 모두 일치해야 snapshot을 공개합니다.
 
+## Property detail range v1
+
+media type:
+
+```text
+application/vnd.bim-explorer.property-detail-range.v1
+```
+
+directory는 little-endian `BEXPRP01`, version `1`, record count로
+시작합니다. 각 record는 product Express ID, UTF-8 JSON byte length와
+exact JSON payload를 가집니다. payload는 source-bound
+`bim-explorer-bim-property-set-values/0.1`이며 occurrence/type scope,
+property set/property Express ID, 이름, property class, unit과 nominal
+value를 보존합니다.
+
+```json
+{
+  "propertySets": [
+    {
+      "scope": "occurrence",
+      "name": "Pset_WallCommon",
+      "properties": [
+        {
+          "name": "Reference",
+          "propertyClass": "IFCPROPERTYSINGLEVALUE",
+          "nominalValue": {
+            "status": "value",
+            "ifcType": "IFCLABEL",
+            "value": "MW-SHARED"
+          },
+          "unit": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+property detail은 최대 64 MiB/4,096 ranges, range당 1 MiB 기본 한도를
+적용합니다. digest, directory, UTF-8/JSON shape, identity, exact slice와
+session 누적 read budget을 검증한 뒤에만 공개합니다. 같은 entity의 반복
+요청은 immutable result cache를 사용합니다.
+
+## Georeferencing과 정밀도 authority
+
+`georeferencing.status`는 다음 셋 중 하나입니다.
+
+- `mapped`: `IfcProjectedCRS`와 scalar `IfcMapConversion`을 보존하고
+  normalized X axis와 Float64 column-major `mapFromIfcWorld`를 제공합니다.
+- `absent`: source에 map conversion이 없다는 명시적 상태입니다.
+- `invalid`: 중복·불완전·비유한 값·0 이하 scale을 diagnostic과 함께
+  fail closed로 보고합니다.
+
+`mapped` metadata는 coordinate conversion을 위한 read-only projection이며
+GIS datum 변환이나 source mutation 권한이 아닙니다.
+
+snapshot의 `geometryRepresentations`는 두 authority를 분리합니다.
+
+- `sourcePrecision`: SHA-256으로 고정된 외부 IFC document가 authority이며
+  STEP source-defined numeric encoding을 보존합니다. source geometry
+  range나 mutation API는 노출하지 않습니다.
+- `displayTessellation`: web-ifc에서 파생한
+  Float32 position/normal + Uint32 index render cache입니다. 명시적으로
+  `lossy`이고 source mutation authority가 없습니다.
+
 ## Source protocol v0.2
 
 snapshot은 geometry handles와 별도로 다음을 노출합니다.
 
 ```text
 snapshot.details.rangeHandles
+snapshot.propertyDetails.rangeHandles
+snapshot.georeferencing
+snapshot.geometryRepresentations
+snapshot.semanticCacheFingerprint
 snapshot.loadPlan.deferredDetailRangeIds
 ```
 
@@ -171,10 +256,14 @@ snapshot.loadPlan.deferredDetailRangeIds
 slice만 읽고 검증하며, 같은 session의 반복 선택은 immutable parsed
 결과를 재사용합니다.
 
-geometry `readRange` budget과 detail budget은 독립적입니다. semantic
-선택이 first-frame geometry budget을 소모하지 않고, geometry loading도
-detail budget을 소모하지 않습니다. source/session dispose 뒤에는 두
-range directory와 cache 모두 접근할 수 없습니다.
+`getPropertySetValues`도 exact snapshot context와 product Express ID를
+요구하며 `bim-explorer-bim-property-set-values/0.1`을 반환합니다.
+
+geometry `readRange`, legacy semantic detail과 property detail budget은
+서로 독립적입니다. semantic 선택이 first-frame geometry budget을
+소모하지 않고, geometry loading도 두 detail budget을 소모하지 않습니다.
+source/session dispose 뒤에는 세 range directory와 cache 모두 접근할 수
+없습니다.
 
 ## 공개 대표 검증
 
@@ -188,11 +277,16 @@ range directory와 cache 모두 접근할 수 없습니다.
 
 이는 IFC2X3 production profile 승인이 아닙니다.
 
-## 현재 보류
+추가 generated IFC4 qualification은 1,026-byte property range에서 선택
+entity의 497-byte slice만 읽고 occurrence/type `IfcPropertySingleValue`
+두 개를 재현했습니다. EPSG:32652 projected CRS와 MapConversion의 Float64
+matrix, conversion 부재 상태, invalid scale 거부와 source/display
+authority 분리도 검증했습니다.
 
-- property-set value-level payload
-- IFC map conversion/georeferencing
-- source-precision geometry와 display tessellation 분리
+## 현재 제한
+
+- complex property kind의 value projection
+- 실제 측량 좌표 fixture와 datum/vertical transformation
+- source-precision geometry export
 - complex material graph와 connection relation
-- 공용 Viewer Core `RenderSource` conformance
 - write/mutation과 v0.1 cache migration

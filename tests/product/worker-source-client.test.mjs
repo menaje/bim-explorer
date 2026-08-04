@@ -153,6 +153,12 @@ test("product Worker client binds session operations and cleanup to one generati
     await opened.session.getEntityDetails({ expressId: 40 }),
     { operation: "getEntityDetails" },
   );
+  assert.deepEqual(
+    await opened.session.getPropertySetValues({
+      expressId: 40,
+    }),
+    { operation: "getPropertySetValues" },
+  );
   assert.equal(await opened.session.dispose(), true);
   assert.equal(await opened.session.dispose(), false);
   assert.equal(await opened.workerLease.dispose(), true);

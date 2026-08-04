@@ -7,7 +7,9 @@
     "sourceProtocol": "bim-explorer-bim-source/0.2",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
     "semanticDetailMediaType": "application/vnd.bim-explorer.semantic-detail-range.v1",
-    "entityDetailsSchema": "bim-explorer-bim-entity-details/0.1"
+    "entityDetailsSchema": "bim-explorer-bim-entity-details/0.1",
+    "propertyDetailMediaType": "application/vnd.bim-explorer.property-detail-range.v1",
+    "propertySetValuesSchema": "bim-explorer-bim-property-set-values/0.1"
   },
   "adapter": {
     "id": "web-ifc",
@@ -109,31 +111,35 @@
     "firstRenderedFrame": true,
     "deferredSemanticDetailRanges": true,
     "browserWorkerPackaging": true,
-    "fullPropertyValuePayload": false,
-    "georeferencingMapConversion": false,
-    "sourcePrecisionGeometry": false,
+    "fullPropertyValuePayload": true,
+    "georeferencingMapConversion": true,
+    "sourcePrecisionGeometry": true,
     "viewerCoreConformance": true
   },
   "evidence": {
     "syntheticMapped": "compatibility/evidence/bim-model-source-synthetic-mapped-2026-08-04.json",
+    "metadataExtension": "compatibility/evidence/bim-model-source-metadata-2026-08-04.json",
     "publicRepresentative": "compatibility/evidence/bim-model-source-public-representative-2026-08-04.json",
     "rendererVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json",
     "browserWorkerPackaging": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
     "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json"
   },
-  "blockers": [
-    "property-set values are not projected into the deferred semantic detail ranges",
-    "IFC map conversion and georeferencing metadata remain opaque",
-    "source-precision geometry is not separated from display tessellation"
+  "blockers": [],
+  "limitations": [
+    "property values cover bounded IfcPropertySingleValue primitives; complex property kinds remain opaque",
+    "map conversion is qualified with a synthetic IFC4 projected CRS; missing and invalid conversion remain explicit states",
+    "source-precision authority remains the fingerprinted external IFC document; only lossy Float32 display tessellation is range-exposed",
+    "write and mutation remain blocked"
   ],
   "policy": {
     "readOnly": true,
     "spatialAuthority": false,
     "claimRenderedFirstFrame": true,
     "claimDeferredSemanticDetails": true,
-    "claimFullPropertyValues": false,
-    "claimGeoreferencing": false,
-    "claimSourcePrecisionGeometry": false,
+    "claimFullPropertyValues": true,
+    "claimGeoreferencing": true,
+    "claimSourcePrecisionDisplaySeparation": true,
+    "claimSourcePrecisionGeometryExport": false,
     "claimViewerCoreCompatibility": true,
     "claimProductionIfcSupport": false
   }

@@ -28,6 +28,8 @@ authority를 소유하지 않습니다.
   material, classification, type, container를 검색합니다.
 - `queryRelations`: decomposition, spatial containment, type/occurrence,
   property set, quantity, material과 classification을 반환합니다.
+- `getPropertySetValues`: source가 제공할 때 선택 entity의 exact bounded
+  primitive property payload를 반환합니다.
 
 limit은 1..100이며 continuation cursor는 query와 source revision에
 결합됩니다. 다른 query나 revision의 cursor는 fail closed로 거부합니다.
@@ -57,7 +59,8 @@ storage key에 저장합니다. 다른 revision에서는 복원하지 않습니�
 
 ## 정보 손실 표시
 
-- property set value가 없으면 `lossy: property-set-name-only`
+- source가 property value API를 제공하지 않으면
+  `lossy: property-set-name-only`
 - source가 제공하지 않는 host/void/fill과 connection은 `opaque`
 - relation page, search aggregate나 DOM bound 밖은 `omitted`
 
@@ -66,7 +69,7 @@ storage key에 저장합니다. 다른 revision에서는 복원하지 않습니�
 ## 현재 보류
 
 - public representative model의 semantic DOM/search scale
-- deferred property-value payload
+- public Browser evidence의 deferred property-value payload
 - host/void/fill과 connection의 broader graph
 - public representative Browser/VS Code product scale
 - Viewer Core public conformance와 Spatial handoff

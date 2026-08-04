@@ -37,7 +37,8 @@ Viewer Core 3D mount도 검증했습니다. physical GPU qualification과 실제
 query를 spatial/product tree, search, inspector, relation navigation,
 revision-bound 3D selection, isolate와 source-local saved view로 투영합니다.
 generated semantic IFC의 실제 Chromium DOM/WebGL2 probe를 통과했지만
-public representative scale, value-level property payload와 advanced
+호환 source의 bounded primitive property value도 선택 시 lazy load합니다.
+public representative semantic scale, value-level Browser evidence와 advanced
 relation graph는 보류합니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의

@@ -18,13 +18,12 @@ const TRUE_GATES = [
   "firstRenderedFrame",
   "deferredSemanticDetailRanges",
   "browserWorkerPackaging",
-  "viewerCoreConformance",
-];
-const HELD_GATES = [
   "fullPropertyValuePayload",
   "georeferencingMapConversion",
   "sourcePrecisionGeometry",
+  "viewerCoreConformance",
 ];
+const HELD_GATES = [];
 const FAIL_CLOSED_ASSERTIONS = [
   "sourceSizeLimitRejected",
   "geometryBudgetRejected",
@@ -702,14 +701,183 @@ function validatePublicEvidence(manifest, evidence) {
   return geometry;
 }
 
+function validateMetadataEvidence(manifest, evidence) {
+  plainRecord(evidence, "BIM source metadata evidence");
+  const contract = manifest.contract;
+  if (
+    evidence.schema !==
+      "bim-explorer-bim-source-metadata-qualification/1" ||
+    evidence.status !== "passed-experimental" ||
+    evidence.asOf !== manifest.asOf ||
+    evidence.fixture?.id !== "synthetic-georeferenced-ifc4" ||
+    evidence.fixture.byteLength !== 4_191 ||
+    evidence.fixture.sha256 !==
+      "34e3038d63a3334f9c60b9c072ea7324fec238034bbe096da0d7fced751c8348" ||
+    evidence.fixture.schema !== "IFC4" ||
+    evidence.fixture.profile !== "ReferenceView_V1.2" ||
+    evidence.fixture.artifactCommitted !== false ||
+    evidence.fixture.thirdPartyContent !== false ||
+    evidence.contract?.sourceProtocol !==
+      contract.sourceProtocol ||
+    evidence.contract.propertySchema !==
+      contract.propertySetValuesSchema ||
+    evidence.contract.propertyMediaType !==
+      contract.propertyDetailMediaType
+  ) {
+    throw new Error(
+      "BIM source metadata evidence identity is invalid",
+    );
+  }
+  if (
+    evidence.snapshot?.sourceFingerprint !==
+      `sha256:${evidence.fixture.sha256}` ||
+    evidence.snapshot.cacheFingerprint !==
+      "sha256:f689e5da9119ae99c7c94cf82ac7399e95fa9b728c90f0ec8be96b6b90b369d5" ||
+    evidence.snapshot.semanticCacheFingerprint !==
+      "sha256:473894f12d762502cffbe9204b94804d08cf0af9d60a247579d6515c184068b4" ||
+    evidence.snapshot.deterministicBaseCache !== true ||
+    evidence.snapshot.deterministicSemanticCache !== true
+  ) {
+    throw new Error(
+      "BIM source metadata cache identity is invalid",
+    );
+  }
+  const property = plainRecord(
+    evidence.propertyDetails,
+    "property detail evidence",
+  );
+  if (
+    !equalJson(property.resources?.limits, {
+      maximumBytes: 67_108_864,
+      maximumRangeBytes: 1_048_576,
+      maximumRanges: 4_096,
+    }) ||
+    !equalJson(property.resources?.observed, {
+      bytes: 1_026,
+      ranges: 1,
+      largestRangeBytes: 1_026,
+      records: 2,
+    }) ||
+    property.range?.handleId !==
+      "range:ifc:property-detail:0" ||
+    property.range.byteLength !== 1_026 ||
+    property.range.sha256 !==
+      "cd5175a4cb2e548897b6d1d8a32d9422983915a9bc05699d1e65341e0388b919" ||
+    property.selectedEntity?.expressId !== 40 ||
+    property.selectedEntity.globalId !==
+      "0AAAAAAAAAAAAAAAAAAA16" ||
+    property.selectedEntity.schema !==
+      contract.propertySetValuesSchema ||
+    property.selectedEntity.receipt?.handleId !==
+      property.range.handleId ||
+    property.selectedEntity.receipt.offset !== 24 ||
+    property.selectedEntity.receipt.byteLength !== 497 ||
+    property.selectedEntity.propertySets?.length !== 2 ||
+    property.selectedEntity.propertySets[0]?.scope !==
+      "occurrence" ||
+    property.selectedEntity.propertySets[0]?.properties?.[0]
+      ?.nominalValue?.value !== "MW-SHARED" ||
+    property.selectedEntity.propertySets[1]?.scope !== "type" ||
+    property.selectedEntity.propertySets[1]?.properties?.[0]
+      ?.nominalValue?.value !== "90min" ||
+    property.reads !== 1 ||
+    property.bytesRead !== 497 ||
+    property.repeatedReadCacheHit !== true ||
+    property.geometryBytesRead !== 0 ||
+    property.legacyDetailBytesRead !== 0
+  ) {
+    throw new Error(
+      "BIM source deferred property evidence is invalid",
+    );
+  }
+  const mapped = evidence.georeferencing?.mapped;
+  if (
+    mapped?.status !== "mapped" ||
+    mapped.projectedCrs?.name !== "EPSG:32652" ||
+    mapped.projectedCrs.mapUnit?.name !== "METRE" ||
+    mapped.mapConversion?.sourceContextExpressId !== 12 ||
+    mapped.mapConversion.targetCrsExpressId !== 67 ||
+    mapped.mapConversion.eastings !== 500_000 ||
+    mapped.mapConversion.northings !== 4_100_000 ||
+    mapped.mapConversion.orthogonalHeight !== 100 ||
+    mapped.mapConversion.scale !== 1 ||
+    !equalJson(
+      mapped.mapConversion.normalizedXAxis,
+      [0.8660254037844386, 0.5],
+    ) ||
+    !equalJson(
+      mapped.mapConversion.mapFromIfcWorld.slice(12, 15),
+      [500_000, 4_100_000, 100],
+    ) ||
+    evidence.georeferencing.absent?.status !== "absent" ||
+    evidence.georeferencing.absent.reason !==
+      "no-ifc-map-conversion"
+  ) {
+    throw new Error(
+      "BIM source georeferencing evidence is invalid",
+    );
+  }
+  const representations = evidence.geometryRepresentations;
+  if (
+    representations?.sourcePrecision?.authority !==
+      "external-source-document" ||
+    representations.sourcePrecision.fingerprint !==
+      evidence.snapshot.sourceFingerprint ||
+    representations.sourcePrecision.numericEncoding !==
+      "ifc-step-source-defined" ||
+    representations.sourcePrecision.geometryRangeExposed !== false ||
+    representations.sourcePrecision.mutable !== false ||
+    representations.displayTessellation?.authority !==
+      "derived-render-cache" ||
+    representations.displayTessellation.mediaType !==
+      contract.geometryMediaType ||
+    representations.displayTessellation.numericEncoding !==
+      "float32-position-normal-uint32-index" ||
+    representations.displayTessellation.lossiness !== "lossy" ||
+    representations.displayTessellation
+      .sourceMutationAuthority !== false
+  ) {
+    throw new Error(
+      "BIM source precision/display separation is invalid",
+    );
+  }
+  if (
+    Object.values(evidence.failClosed ?? {})
+      .some((value) => value !== true) ||
+    Object.keys(evidence.failClosed ?? {}).length !== 3 ||
+    evidence.cleanup?.adapterModelClosed !== true ||
+    evidence.cleanup.adapterEngineDisposed !== true ||
+    Object.values(evidence.cleanup.first ?? {})
+      .some((value) => value !== true) ||
+    Object.values(evidence.cleanup.second ?? {})
+      .some((value) => value !== true) ||
+    evidence.decision?.propertySetValuePayload !==
+      "passed-deferred-bounded" ||
+    evidence.decision.georeferencingMapConversion !==
+      "passed-ifc4-synthetic" ||
+    evidence.decision.sourcePrecisionDisplaySeparation !==
+      "passed-contract" ||
+    evidence.decision.sourcePrecisionGeometryExport !==
+      "blocked" ||
+    evidence.decision.writeMutation !== "blocked" ||
+    evidence.decision.productionClaims !== false
+  ) {
+    throw new Error(
+      "BIM source metadata evidence overclaims support",
+    );
+  }
+}
+
 export function validateBimModelSourceCompatibility(
   manifest,
   syntheticEvidence,
   publicEvidence,
+  metadataEvidence,
 ) {
   plainRecord(manifest, "BIM model source manifest");
   plainRecord(syntheticEvidence, "synthetic BIM source evidence");
   plainRecord(publicEvidence, "public BIM source evidence");
+  plainRecord(metadataEvidence, "metadata BIM source evidence");
   if (
     manifest.schema !==
       "bim-explorer-bim-model-source-compatibility/1" ||
@@ -728,7 +896,11 @@ export function validateBimModelSourceCompatibility(
     contract.semanticDetailMediaType !==
       "application/vnd.bim-explorer.semantic-detail-range.v1" ||
     contract.entityDetailsSchema !==
-      "bim-explorer-bim-entity-details/0.1"
+      "bim-explorer-bim-entity-details/0.1" ||
+    contract.propertyDetailMediaType !==
+      "application/vnd.bim-explorer.property-detail-range.v1" ||
+    contract.propertySetValuesSchema !==
+      "bim-explorer-bim-property-set-values/0.1"
   ) {
     throw new Error("BIM model source contract identity is invalid");
   }
@@ -746,12 +918,17 @@ export function validateBimModelSourceCompatibility(
   if (
     Object.keys(gates).length !== TRUE_GATES.length + HELD_GATES.length ||
     !Array.isArray(manifest.blockers) ||
-    manifest.blockers.length !== HELD_GATES.length ||
+    manifest.blockers.length !== 0 ||
     !manifest.blockers.every((blocker) =>
       typeof blocker === "string" && blocker.length > 0) ||
+    !Array.isArray(manifest.limitations) ||
+    manifest.limitations.length < 4 ||
     manifest.evidence?.syntheticMapped !==
       "compatibility/evidence/" +
         "bim-model-source-synthetic-mapped-2026-08-04.json" ||
+    manifest.evidence?.metadataExtension !==
+      "compatibility/evidence/" +
+        "bim-model-source-metadata-2026-08-04.json" ||
     manifest.evidence?.publicRepresentative !==
       "compatibility/evidence/" +
         "bim-model-source-public-representative-2026-08-04.json" ||
@@ -784,9 +961,10 @@ export function validateBimModelSourceCompatibility(
     manifest.policy?.spatialAuthority !== false ||
     manifest.policy?.claimRenderedFirstFrame !== true ||
     manifest.policy?.claimDeferredSemanticDetails !== true ||
-    manifest.policy?.claimFullPropertyValues !== false ||
-    manifest.policy?.claimGeoreferencing !== false ||
-    manifest.policy?.claimSourcePrecisionGeometry !== false ||
+    manifest.policy?.claimFullPropertyValues !== true ||
+    manifest.policy?.claimGeoreferencing !== true ||
+    manifest.policy?.claimSourcePrecisionDisplaySeparation !== true ||
+    manifest.policy?.claimSourcePrecisionGeometryExport !== false ||
     manifest.policy?.claimViewerCoreCompatibility !== true ||
     manifest.policy?.claimProductionIfcSupport !== false
   ) {
@@ -800,10 +978,12 @@ export function validateBimModelSourceCompatibility(
     manifest,
     publicEvidence,
   );
+  validateMetadataEvidence(manifest, metadataEvidence);
   const serialized = JSON.stringify({
     manifest,
     syntheticEvidence,
     publicEvidence,
+    metadataEvidence,
   });
   if (/\/Volumes\/|\/Users\/|[A-Z]:\\/u.test(serialized)) {
     throw new Error("BIM model source compatibility data exposes a path");
@@ -836,10 +1016,15 @@ async function main() {
     path.join(root, manifest.evidence.publicRepresentative),
     "utf8",
   ));
+  const metadataEvidence = JSON.parse(await readFile(
+    path.join(root, manifest.evidence.metadataExtension),
+    "utf8",
+  ));
   const result = validateBimModelSourceCompatibility(
     manifest,
     syntheticEvidence,
     publicEvidence,
+    metadataEvidence,
   );
   console.log(
     "BIM model source compatibility check passed: " +

@@ -37,6 +37,7 @@
     "qualify:ifc:license-profile": "node scripts/qualify-ifc-license-profile.mjs",
     "qualify:viewer-core": "node scripts/qualify-viewer-core-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
+    "qualify:bim-source:metadata": "node scripts/qualify-bim-source-metadata.mjs",
     "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",
     "qualify:product:web": "node scripts/qualify-bim-product-shell.mjs",
     "qualify:product:web:public": "node scripts/qualify-bim-product-shell.mjs --fixture public",

@@ -148,6 +148,23 @@ function text(tag, value, className = null) {
   return element;
 }
 
+function propertySetLabel(propertySet) {
+  const values = (propertySet.properties ?? []).map(
+    (property) => {
+      const nominalValue = property.nominalValue;
+      const value = nominalValue?.status === "value"
+        ? String(nominalValue.value)
+        : nominalValue?.status ?? "opaque";
+      return `${property.name}: ${value}`;
+    },
+  );
+  return [
+    propertySet.name,
+    propertySet.valueStatus,
+    ...values,
+  ].join(" · ");
+}
+
 function setStatus(state, message) {
   elements.status.dataset.state = state;
   elements.status.textContent = message;
@@ -296,10 +313,7 @@ function renderInspector(state) {
     inspectorSection(
       "Property sets",
       inspector.groups.propertySets,
-      (item) => text(
-        "span",
-        `${item.name} · ${item.valueStatus}`,
-      ),
+      (item) => text("span", propertySetLabel(item)),
     ),
     inspectorSection(
       "Quantities",

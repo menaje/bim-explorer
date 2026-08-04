@@ -10,6 +10,7 @@ import {
   createBimModelSource,
 } from "../../packages/bim-model-source/src/index.mjs";
 import {
+  syntheticGeoreferencedIfc,
   syntheticMappedIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
 
@@ -382,12 +383,203 @@ test("BimModelSource binds tree, entity, render, and pick to one revision", asyn
     detailReads: 1,
     detailBytesRead: 204,
     remainingDetailReadBytes: 236,
+    propertyReads: 0,
+    propertyBytesRead: 0,
+    remainingPropertyReadBytes: 1_026,
   });
   assert.equal(await session.dispose(), true);
   assert.equal(await session.dispose(), false);
   await assert.rejects(session.getSnapshot(), /session is disposed/u);
   assert.equal(await source.dispose(), true);
   assert.equal(await source.dispose(), false);
+});
+
+test("property values are deferred behind an independent bounded range", async () => {
+  const artifact = await createWebIfcSourceArtifact(mappedBytes(), {
+    profile: "ReferenceView_V1.2",
+  });
+  assert.deepEqual(artifact.georeferencing, {
+    status: "absent",
+    reason: "no-ifc-map-conversion",
+  });
+  assert.equal(
+    artifact.propertyDetails.mediaType,
+    "application/vnd.bim-explorer.property-detail-range.v1",
+  );
+  assert.deepEqual(artifact.propertyDetails.resources.observed, {
+    bytes: 1_026,
+    ranges: 1,
+    largestRangeBytes: 1_026,
+    records: 2,
+  });
+  assert.deepEqual(artifact.propertyDetails.slices[0], {
+    expressId: 40,
+    rangeId: "range:ifc:property-detail:0",
+    offset: 24,
+    byteLength: 497,
+  });
+
+  const limited = createBimModelSource(artifact, {
+    propertyReadBudgetBytes: 496,
+  });
+  const limitedSession = await limited.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const limitedSnapshot = await limitedSession.getSnapshot();
+  await assert.rejects(
+    limitedSession.getPropertySetValues({
+      ...requestContext(limitedSnapshot),
+      expressId: 40,
+    }),
+    /property detail range exceeds its read budget/u,
+  );
+  assert.equal(limited.state.propertyReads, 0);
+  await limitedSession.dispose();
+  await limited.dispose();
+
+  const source = createBimModelSource(artifact);
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = requestContext(snapshot);
+  assert.equal(
+    snapshot.propertyDetails.schema,
+    "bim-explorer-bim-property-set-values/0.1",
+  );
+  assert.equal(
+    snapshot.propertyDetails.rangeHandles[0].byteLength,
+    1_026,
+  );
+  assert.match(
+    snapshot.semanticCacheFingerprint,
+    /^sha256:[0-9a-f]{64}$/u,
+  );
+  assert.notEqual(
+    snapshot.semanticCacheFingerprint,
+    snapshot.cacheFingerprint,
+  );
+  const values = await session.getPropertySetValues({
+    ...context,
+    expressId: 40,
+  });
+  assert.equal(
+    values.schema,
+    "bim-explorer-bim-property-set-values/0.1",
+  );
+  assert.deepEqual(
+    values.propertySets.map((propertySet) => [
+      propertySet.scope,
+      propertySet.name,
+      propertySet.properties.map((property) => [
+        property.name,
+        property.nominalValue.ifcType,
+        property.nominalValue.value,
+      ]),
+    ]),
+    [
+      [
+        "occurrence",
+        "Pset_WallCommon",
+        [["Reference", "IFCLABEL", "MW-SHARED"]],
+      ],
+      [
+        "type",
+        "Pset_WallTypeCommon",
+        [["FireRating", "IFCLABEL", "90min"]],
+      ],
+    ],
+  );
+  assert.equal(
+    await session.getPropertySetValues({
+      ...context,
+      expressId: 40,
+    }),
+    values,
+  );
+  assert.equal(source.state.propertyReads, 1);
+  assert.equal(source.state.propertyBytesRead, 497);
+  assert.equal(source.state.remainingPropertyReadBytes, 529);
+  assert.equal(source.state.detailBytesRead, 0);
+  assert.equal(source.state.rangeBytesRead, 0);
+  await session.dispose();
+  await source.dispose();
+});
+
+test("georeferencing and display tessellation preserve separate authority", async () => {
+  const bytes = new TextEncoder().encode(
+    syntheticGeoreferencedIfc(),
+  );
+  const artifact = await createWebIfcSourceArtifact(bytes, {
+    profile: "ReferenceView_V1.2",
+  });
+  assert.equal(artifact.source.byteLength, 4_191);
+  assert.equal(
+    artifact.source.sha256,
+    "34e3038d63a3334f9c60b9c072ea7324fec238034bbe096da0d7fced751c8348",
+  );
+  assert.equal(artifact.georeferencing.status, "mapped");
+  assert.equal(
+    artifact.georeferencing.projectedCrs.name,
+    "EPSG:32652",
+  );
+  assert.deepEqual(
+    artifact.georeferencing.mapConversion.normalizedXAxis,
+    [0.8660254037844386, 0.5],
+  );
+  assert.deepEqual(
+    artifact.georeferencing.mapConversion
+      .mapFromIfcWorld.slice(12, 15),
+    [500_000, 4_100_000, 100],
+  );
+
+  const source = createBimModelSource(artifact);
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  assert.equal(snapshot.georeferencing.status, "mapped");
+  assert.deepEqual(
+    snapshot.geometryRepresentations.sourcePrecision,
+    {
+      authority: "external-source-document",
+      documentId: snapshot.source.documentId,
+      fingerprint: snapshot.source.fingerprint,
+      numericEncoding: "ifc-step-source-defined",
+      geometryRangeExposed: false,
+      mutable: false,
+    },
+  );
+  assert.equal(
+    snapshot.geometryRepresentations.displayTessellation
+      .authority,
+    "derived-render-cache",
+  );
+  assert.equal(
+    snapshot.geometryRepresentations.displayTessellation
+      .lossiness,
+    "lossy",
+  );
+  assert.equal(
+    snapshot.geometryRepresentations.displayTessellation
+      .sourceMutationAuthority,
+    false,
+  );
+  await session.dispose();
+  await source.dispose();
+
+  const invalidMap = structuredClone(artifact);
+  invalidMap.georeferencing.mapConversion.scale = -1;
+  assert.throws(
+    () => createBimModelSource(invalidMap),
+    /map conversion identity or scale is invalid/u,
+  );
+  const badPropertyDigest = structuredClone(artifact);
+  badPropertyDigest.propertyDetails.ranges[0].bytes[24] ^= 0xff;
+  assert.throws(
+    () => createBimModelSource(badPropertyDigest),
+    /digest does not match its bytes/u,
+  );
 });
 
 test("BimModelSource pages tree, search, and typed relations", async () => {

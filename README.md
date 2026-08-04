@@ -32,11 +32,14 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > profile에 clean install한 뒤 설치본으로 같은 fixture, WebGL2와 close
 > cleanup을 다시 통과했습니다. 이어 46.77MB 공개 IFC도 Browser와
 > clean-installed VSIX에서 각각 3,569 products·261,424 triangles·3 ranges로
-> 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다. physical
-> GPU qualification, property-set value range, georeferencing,
-> source-precision 분리, engine-cooperative cancellation, forced-exit
-> 내부 cleanup과 Browser/native resource exhaustion은 아직 확정되지
-> 않았습니다. 첫 engine은 exact `web-ifc@0.0.77`, 첫 profile은 IFC4
+> 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다.
+> occurrence/type primitive property value는 별도 lazy range로 읽고,
+> IFC4 projected CRS/MapConversion과 fingerprinted source
+> precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
+> property, 실제 측량 좌표/datum 변환과 source-precision geometry export는
+> 제한합니다. physical GPU qualification, engine-cooperative cancellation,
+> forced-exit 내부 cleanup과 Browser/native resource exhaustion은 아직
+> 확정되지 않았습니다. 첫 engine은 exact `web-ifc@0.0.77`, 첫 profile은 IFC4
 > `ReferenceView_V1.2`의 local read-only exploration으로 experimental
 > admission했습니다. IfcOpenShell은 bundle하지 않는 qualification
 > reference oracle로 유지합니다. 공개 `@menaje/viewer-core`와 render
@@ -55,8 +58,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
-> Chromium에서 검증했습니다. public semantic scale과 value-level property
-> payload는 아직 보류합니다.
+> Chromium에서 검증했습니다. source session과 제품 UI는 선택 entity의
+> bounded primitive property value도 lazy load합니다. public semantic
+> scale과 advanced relation graph는 아직 보류합니다.
 
 ## 첫 사용자 흐름
 

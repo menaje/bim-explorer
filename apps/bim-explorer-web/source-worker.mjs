@@ -14,6 +14,7 @@ const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const OPERATIONS = new Set([
   "getEntity",
   "getEntityDetails",
+  "getPropertySetValues",
   "queryRelations",
   "queryTree",
   "readRange",
@@ -140,6 +141,9 @@ async function openSource(request) {
     for (const range of artifact.detailRanges) {
       range.bytes.fill(0);
     }
+    for (const range of artifact.propertyDetails.ranges) {
+      range.bytes.fill(0);
+    }
     const session = await source.open({
       protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
     });
@@ -173,6 +177,10 @@ async function openSource(request) {
           artifact.resources.observed.detailRanges,
         largestDetailRangeBytes:
           artifact.resources.observed.largestDetailRangeBytes,
+        propertyDetailBytes:
+          artifact.propertyDetails.resources.observed.bytes,
+        propertyDetailRanges:
+          artifact.propertyDetails.resources.observed.ranges,
         ranges: artifact.resources.observed.ranges,
         products: artifact.resources.observed.products,
         wasmHeapCapacityBytes:
@@ -186,6 +194,11 @@ async function openSource(request) {
       range.bytes.fill(0);
     }
     for (const range of artifact?.detailRanges ?? []) {
+      range.bytes.fill(0);
+    }
+    for (
+      const range of artifact?.propertyDetails?.ranges ?? []
+    ) {
       range.bytes.fill(0);
     }
   }

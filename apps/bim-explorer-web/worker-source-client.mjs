@@ -151,6 +151,14 @@ class WorkerRangeSemanticSession {
     );
   }
 
+  getPropertySetValues(request, options = {}) {
+    aborted(options.signal);
+    return this.#call(
+      "getPropertySetValues",
+      [request, {}],
+    );
+  }
+
   queryTree(request, options = {}) {
     aborted(options.signal);
     return this.#call("queryTree", [request, {}]);

@@ -52,16 +52,20 @@ tree/property/Render/Pick identity, bounded tree/search/relation query와
 immutable geometry range 결과는
 [`bim-model-source.json`](bim-model-source.json)과
 [`synthetic mapped source evidence`](evidence/bim-model-source-synthetic-mapped-2026-08-04.json),
+[`metadata extension evidence`](evidence/bim-model-source-metadata-2026-08-04.json),
 [`public representative source evidence`](evidence/bim-model-source-public-representative-2026-08-04.json)가
 소유합니다. 고정된 46.77MB IFC2X3에서는 3개 bounded geometry range와
 6개 deferred semantic detail range를 만들었습니다. 첫 geometry range를
 읽는 동안 detail은 0 bytes이고, 선택 제품은 2,575-byte detail slice만
 읽습니다. 3,504 renderable/65 non-renderable product의 identity와 cleanup도
-두 번 재현했습니다. rendered first-frame과 Browser/VS Code packaging은
-별도 evidence에서 통과했습니다. property-set value payload,
-georeferencing, source-precision 분리와 IFC2X3 profile admission은 계속
-보류합니다. 별도 Viewer Core release evidence로 source conformance는
-통과했습니다.
+두 번 재현했습니다. generated IFC4 metadata extension에서는 별도
+1,026-byte property range의 선택 entity 497-byte slice만 읽어
+occurrence/type primitive 값을 재현했고, EPSG:32652 MapConversion,
+conversion 부재/invalid 거부와 external source precision·lossy Float32
+display tessellation 분리를 통과했습니다. complex property, 실제 측량
+좌표/datum 변환, source-precision geometry export와 IFC2X3 profile admission은
+보류합니다. rendered first-frame, Browser/VS Code packaging과 Viewer Core
+source conformance는 별도 evidence에서 통과했습니다.
 
 내부 semantic explorer의 spatial tree, decomposition/containment,
 occurrence/type 왕복, Pset/Qto/material/classification panel, bounded search,
@@ -71,8 +75,10 @@ revision-bound WebGL2 pick selection, isolate, saved view와 keyboard/ARIA
 [`synthetic Browser evidence`](evidence/bim-semantic-explorer-browser-synthetic-2026-08-04.json)가
 소유합니다. 4,030-byte generated IFC4에서 7-node
 Project→Site→Building→Storey→Space→Wall tree와 두 Wall 검색을 검증했고
-DOM은 8 rows, query는 20회 이하로 제한했습니다. public representative
-scale, value-level property payload와 advanced relation graph는 보류합니다.
+DOM은 8 rows, query는 20회 이하로 제한했습니다. 호환 source session은
+선택 entity의 bounded property value를 lazy load하고, 지원하지 않는
+source는 name-only limitation을 유지합니다. public representative scale과
+advanced relation graph는 보류합니다.
 
 내부 3D renderer draft의 source-neutral decode, bounded initial range,
 Render/Pick revision binding, headless resource lifecycle과 Browser WebGL2
