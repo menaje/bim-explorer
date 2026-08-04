@@ -74,6 +74,12 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const resourceExhaustionEvidence = JSON.parse(
+    await readFile(
+      manifest.resourceExhaustion.evidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -87,6 +93,7 @@ async function fixtures() {
     negativeBrowserEvidence,
     inCallNodeEvidence,
     inCallBrowserEvidence,
+    resourceExhaustionEvidence,
   };
 }
 
@@ -104,6 +111,7 @@ function validateFixtures(value) {
     value.negativeBrowserEvidence,
     value.inCallNodeEvidence,
     value.inCallBrowserEvidence,
+    value.resourceExhaustionEvidence,
   );
 }
 
@@ -126,6 +134,8 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.forcedIsolationCancellation, true);
   assert.equal(manifest.gates.cancellation, true);
   assert.equal(manifest.gates.corruptInputCleanup, true);
+  assert.equal(manifest.gates.processRssLimitRecovery, true);
+  assert.equal(manifest.gates.resourceExhaustion, false);
   assert.equal(manifest.gates.browserPackaging, false);
 });
 
@@ -248,5 +258,25 @@ test("forced Browser cancellation requires a bounded termination receipt", async
   assert.throws(
     () => validateFixtures(fixtureSet),
     /receipt is incomplete/u,
+  );
+});
+
+test("process RSS evidence cannot promote engine memory safety", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.resourceExhaustionEvidence
+    .decision.engineMemorySafety = "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /overclaims/u,
+  );
+});
+
+test("process RSS evidence requires observed limit enforcement", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.resourceExhaustionEvidence.engines[0].runs[0]
+    .receipt.residentSetLimitExceeded = false;
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /termination receipt is incomplete/u,
   );
 });

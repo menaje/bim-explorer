@@ -31,6 +31,9 @@ process에서 각각 두 번 거부하고 cleanup 경계와 정상 IFC recovery�
 검사합니다. 별도 in-call qualification은 공개 IFC call-start checkpoint
 뒤 process 강제 종료와 fresh-process recovery를 검증합니다. engine
 cooperative cancellation이나 resource exhaustion 증거로 승격하지 않습니다.
+RSS qualification은 실제 두 engine process의 sampled 상한 초과,
+`rss-limit` 종료와 fresh-process recovery를 검사합니다. Browser heap,
+native allocator와 parser memory safety는 승격하지 않습니다.
 
 Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
 Worker client의 report validation, path-free failure, ordered checkpoint,

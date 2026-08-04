@@ -38,6 +38,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 내부 cleanup, resource exhaustion, engine 선정, 공용 Viewer Core
 > package와 지원 profile은 아직 확정되지 않았습니다. 공개 IFC call-start
 > 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.
+> 같은 공개 IFC의 256MiB process RSS 상한 감지·강제 종료·새 process
+> 복구도 통과했지만 Browser heap과 native allocator/parser memory safety는
+> 아직 검증되지 않았습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를

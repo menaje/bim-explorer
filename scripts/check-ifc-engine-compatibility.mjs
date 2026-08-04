@@ -1496,6 +1496,168 @@ function validateInCallCancellation(
   };
 }
 
+function validateResourceExhaustion(manifest, evidence) {
+  const qualification = plainRecord(
+    manifest.resourceExhaustion,
+    "resourceExhaustion",
+  );
+  if (
+    qualification.status !== "experimental" ||
+    qualification.scope !==
+      "process-rss-limit-and-fresh-process-recovery" ||
+    qualification.fixture !==
+      "fixtures/ifc/public-schependomlaan/manifest.json" ||
+    qualification.maxResidentSetBytes !== 256 * 1024 * 1024 ||
+    qualification.resourceSampleIntervalMs !== 10 ||
+    qualification.processRssLimitQualified !== true ||
+    qualification.browserHeapExhaustionQualified !== false ||
+    qualification.engineMemorySafetyQualified !== false ||
+    qualification.explicitCleanupAfterKillQualified !== false
+  ) {
+    throw new Error("resource-exhaustion manifest is invalid");
+  }
+  plainRecord(evidence, "resource-exhaustion evidence");
+  const publicSource = {
+    byteLength: 46_766_968,
+    id: "public-schependomlaan-complete-ifc2x3",
+    sha256:
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+  };
+  const recoveryCleanup = {
+    "web-ifc": {
+      engineDisposed: true,
+      modelClosed: true,
+    },
+    ifcopenshell: {
+      engineDisposed: false,
+      modelClosed: false,
+    },
+  };
+  const backends = {
+    "web-ifc": "node-wasm-process",
+    ifcopenshell: "python-native-process",
+  };
+  if (
+    evidence.schema !==
+      "bim-explorer-ifc-resource-exhaustion-evidence/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.fixture?.id !== publicSource.id ||
+    evidence.fixture?.byteLength !== publicSource.byteLength ||
+    evidence.fixture?.sha256 !== publicSource.sha256 ||
+    evidence.fixture?.schema !== "IFC2X3" ||
+    evidence.fixture?.artifactCommitted !== false ||
+    evidence.fixture?.bundlingApproved !== false ||
+    evidence.fixture?.customerContent !== false ||
+    evidence.environment?.sampler !== "ps-rss-kibibytes" ||
+    evidence.policy?.callStartCheckpoint !==
+      "model-open-call-starting" ||
+    evidence.policy?.maxResidentSetBytes !==
+      qualification.maxResidentSetBytes ||
+    evidence.policy?.resourceSampleIntervalMs !==
+      qualification.resourceSampleIntervalMs ||
+    evidence.policy?.timeoutMs !== 30_000 ||
+    !Array.isArray(evidence.engines) ||
+    evidence.engines.length !== CANDIDATES.length
+  ) {
+    throw new Error("resource-exhaustion evidence identity mismatch");
+  }
+  for (const engineId of CANDIDATES) {
+    const engine = evidence.engines
+      .find((candidate) => candidate.engine === engineId);
+    if (
+      engine?.status !== "passed-process-rss-limit" ||
+      !Array.isArray(engine.runs) ||
+      engine.runs.length !== 2
+    ) {
+      throw new Error(`${engineId} RSS-limit evidence is missing`);
+    }
+    for (let index = 0; index < engine.runs.length; index += 1) {
+      const run = engine.runs[index];
+      if (
+        run.attempt !== index + 1 ||
+        run.checkpoint?.schema !==
+          "bim-explorer-ifc-in-call-progress/0.1" ||
+        run.checkpoint?.phase !== "model-open-call-starting" ||
+        run.checkpoint?.engine?.id !== engineId ||
+        run.checkpoint?.engine?.version !==
+          manifest.candidates[engineId].version ||
+        run.checkpoint?.engine?.backend !== backends[engineId] ||
+        run.checkpoint?.source?.id !== publicSource.id ||
+        run.checkpoint?.source?.byteLength !==
+          publicSource.byteLength ||
+        run.checkpoint?.source?.sha256 !== publicSource.sha256 ||
+        typeof run.checkpoint?.observedAfterStartMs !== "number" ||
+        !Number.isFinite(run.checkpoint.observedAfterStartMs) ||
+        run.checkpoint.observedAfterStartMs <= 0 ||
+        run.receipt?.outcome !== "rss-limit" ||
+        run.receipt?.processExited !== true ||
+        run.receipt?.signal !== "SIGKILL" ||
+        run.receipt?.timedOut !== false ||
+        run.receipt?.cancelled !== false ||
+        run.receipt?.outputLimitExceeded !== false ||
+        run.receipt?.residentSetLimitExceeded !== true ||
+        run.receipt?.maxResidentSetBytes !==
+          qualification.maxResidentSetBytes ||
+        run.receipt?.peakResidentSetBytes <=
+          qualification.maxResidentSetBytes ||
+        run.receipt?.resourceSampleIntervalMs !==
+          qualification.resourceSampleIntervalMs ||
+        typeof run.receipt?.wallClockMs !== "number" ||
+        !Number.isFinite(run.receipt.wallClockMs) ||
+        run.receipt.wallClockMs <=
+          run.checkpoint.observedAfterStartMs
+      ) {
+        throw new Error(
+          `${engineId} RSS-limit termination receipt is incomplete`,
+        );
+      }
+    }
+    const recovery = engine.recovery;
+    if (
+      recovery?.source?.id !== "synthetic-small-ifc4" ||
+      recovery.source.byteLength !== 2_855 ||
+      recovery.source.sha256 !==
+        "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+      recovery.source.schema !== "IFC4" ||
+      recovery.source.view !== "ReferenceView_V1.2" ||
+      recovery.semantics?.projects !== 1 ||
+      recovery.semantics?.walls !== 1 ||
+      recovery.geometry?.products !== 1 ||
+      recovery.geometry?.triangles !== 12 ||
+      !sameJson(recovery.cleanup, recoveryCleanup[engineId]) ||
+      recovery.process?.outcome !== "completed" ||
+      recovery.process?.processExited !== true ||
+      recovery.process?.exitCode !== 0 ||
+      recovery.process?.timedOut !== false ||
+      recovery.process?.cancelled !== false
+    ) {
+      throw new Error(`${engineId} post-RSS recovery is incomplete`);
+    }
+  }
+  if (
+    !Object.values(evidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(evidence.conformance ?? {}).length !== 7 ||
+    evidence.decision?.boundedProcessRssTermination !== "passed" ||
+    evidence.decision?.resourceExhaustion !==
+      "partial-process-rss-only" ||
+    evidence.decision?.browserHeapExhaustion !== "blocked" ||
+    evidence.decision?.engineMemorySafety !== "blocked" ||
+    evidence.decision?.explicitCleanupAfterKill !== "blocked" ||
+    evidence.decision?.productionPackaging !== "blocked" ||
+    evidence.decision?.productionClaims !== false ||
+    !Array.isArray(evidence.limits) ||
+    evidence.limits.length < 5 ||
+    /(?:\/Users\/|\/Volumes\/|[A-Z]:\\)/u.test(
+      JSON.stringify(evidence),
+    )
+  ) {
+    throw new Error(
+      "resource-exhaustion evidence is incomplete or overclaims",
+    );
+  }
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -1509,6 +1671,7 @@ export function validateIfcEngineCompatibility(
   negativeBrowserEvidence,
   inCallNodeEvidence,
   inCallBrowserEvidence,
+  resourceExhaustionEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -1607,6 +1770,8 @@ export function validateIfcEngineCompatibility(
     gates.forcedIsolationCancellation !== true ||
     gates.cancellation !== true ||
     gates.corruptInputCleanup !== true ||
+    gates.processRssLimitRecovery !== true ||
+    gates.resourceExhaustion !== false ||
     gates.browserPackaging !== false
   ) {
     throw new Error("Browser Worker prototype Gate must match its evidence");
@@ -1620,6 +1785,10 @@ export function validateIfcEngineCompatibility(
     manifest,
     inCallNodeEvidence,
     inCallBrowserEvidence,
+  );
+  validateResourceExhaustion(
+    manifest,
+    resourceExhaustionEvidence,
   );
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
@@ -1856,6 +2025,12 @@ async function main() {
       "utf8",
     ),
   );
+  const resourceExhaustionEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.resourceExhaustion.evidence),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -1869,6 +2044,7 @@ async function main() {
     negativeBrowserEvidence,
     inCallNodeEvidence,
     inCallBrowserEvidence,
+    resourceExhaustionEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

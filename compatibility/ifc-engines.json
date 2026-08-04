@@ -80,6 +80,18 @@
     "explicitCleanupDuringCallQualified": false,
     "resourceExhaustionQualified": false
   },
+  "resourceExhaustion": {
+    "status": "experimental",
+    "scope": "process-rss-limit-and-fresh-process-recovery",
+    "fixture": "fixtures/ifc/public-schependomlaan/manifest.json",
+    "evidence": "compatibility/evidence/ifc-engine-resource-exhaustion-2026-08-04.json",
+    "maxResidentSetBytes": 268435456,
+    "resourceSampleIntervalMs": 10,
+    "processRssLimitQualified": true,
+    "browserHeapExhaustionQualified": false,
+    "engineMemorySafetyQualified": false,
+    "explicitCleanupAfterKillQualified": false
+  },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
     "status": "experimental",
@@ -247,6 +259,8 @@
     "forcedIsolationCancellation": true,
     "cancellation": true,
     "corruptInputCleanup": true,
+    "processRssLimitRecovery": true,
+    "resourceExhaustion": false,
     "macosPackaging": true,
     "linuxPackaging": false,
     "browserPackaging": false,
@@ -257,14 +271,14 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "resource-exhaustion-and-linux-package-matrix",
+    "nextPrototype": "browser-resource-boundary-and-linux-package-matrix",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus and repeated forced process-isolation cancellation after a public-model call-start checkpoint with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, physical GPU memory, context-loss recovery, resource exhaustion, production packaging and product redistribution review remain unqualified."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus, repeated forced process-isolation cancellation and a sampled 256 MiB process RSS limit after a public-model call-start checkpoint, each with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, Browser/native allocator exhaustion safety, physical GPU memory, context-loss recovery, production packaging and product redistribution review remain unqualified."
   },
   "blockers": [
     "Browser WebGL2 exploration passes, but physical GPU memory and context-loss recovery are unqualified",
-    "Forced isolation cancellation passes, but engine-cooperative cancellation, explicit cleanup after forced exit and resource exhaustion remain unqualified",
+    "Forced isolation and process RSS-limit recovery pass, but engine-cooperative cancellation, explicit cleanup after forced exit, Browser heap exhaustion and native allocator/parser memory safety remain unqualified",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",

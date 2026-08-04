@@ -1,4 +1,7 @@
-import { spawn } from "node:child_process";
+import {
+  execFile,
+  spawn,
+} from "node:child_process";
 
 const SAFE_ENVIRONMENT_NAMES = [
   "PATH",
@@ -44,6 +47,21 @@ function validateOptions(options) {
     (
       options.onProgress !== undefined &&
       typeof options.onProgress !== "function"
+    ) ||
+    (
+      options.maxResidentSetBytes !== undefined &&
+      (
+        !Number.isSafeInteger(options.maxResidentSetBytes) ||
+        options.maxResidentSetBytes <= 0
+      )
+    ) ||
+    (
+      options.resourceSampleIntervalMs !== undefined &&
+      (
+        options.maxResidentSetBytes === undefined ||
+        !Number.isSafeInteger(options.resourceSampleIntervalMs) ||
+        options.resourceSampleIntervalMs <= 0
+      )
     )
   ) {
     throw new TypeError("invalid isolated adapter process options");
@@ -55,6 +73,9 @@ export async function runAdapterProcess(options) {
   const timeoutMs = options.timeoutMs ?? 60_000;
   const maxOutputBytes = options.maxOutputBytes ?? 2 * 1024 * 1024;
   const cancellationGraceMs = options.cancellationGraceMs ?? 250;
+  const maxResidentSetBytes = options.maxResidentSetBytes ?? null;
+  const resourceSampleIntervalMs =
+    options.resourceSampleIntervalMs ?? 25;
   if (
     !Number.isSafeInteger(timeoutMs) ||
     timeoutMs <= 0 ||
@@ -95,9 +116,23 @@ export async function runAdapterProcess(options) {
     let timedOut = false;
     let cancelled = false;
     let outputLimitExceeded = false;
+    let peakResidentSetBytes = 0;
+    let residentSetLimitExceeded = false;
+    let resourceSampleRunning = false;
     let cancellationEscalation = null;
+    let resourceSampler = null;
     let settled = false;
 
+    const withResourceObservation = (receipt) =>
+      maxResidentSetBytes === null
+        ? receipt
+        : {
+          ...receipt,
+          maxResidentSetBytes,
+          peakResidentSetBytes,
+          residentSetLimitExceeded,
+          resourceSampleIntervalMs,
+        };
     const kill = (signal) => {
       if (child.exitCode === null && child.signalCode === null) {
         child.kill(signal);
@@ -123,9 +158,64 @@ export async function runAdapterProcess(options) {
     if (options.signal?.aborted) {
       onAbort();
     }
+    const sampleResidentSet = () => {
+      if (
+        maxResidentSetBytes === null ||
+        resourceSampleRunning ||
+        settled ||
+        child.exitCode !== null ||
+        child.signalCode !== null
+      ) {
+        return;
+      }
+      resourceSampleRunning = true;
+      execFile(
+        "ps",
+        [
+          "-o",
+          "rss=",
+          "-p",
+          String(child.pid),
+        ],
+        {
+          encoding: "utf8",
+          env: safeEnvironment(),
+          maxBuffer: 1024,
+          timeout: 1_000,
+        },
+        (error, stdout) => {
+          resourceSampleRunning = false;
+          if (settled || error) {
+            return;
+          }
+          const kibibytes = Number.parseInt(stdout.trim(), 10);
+          if (!Number.isSafeInteger(kibibytes) || kibibytes <= 0) {
+            return;
+          }
+          peakResidentSetBytes = Math.max(
+            peakResidentSetBytes,
+            kibibytes * 1024,
+          );
+          if (peakResidentSetBytes > maxResidentSetBytes) {
+            residentSetLimitExceeded = true;
+            kill("SIGKILL");
+          }
+        },
+      );
+    };
+    if (maxResidentSetBytes !== null) {
+      sampleResidentSet();
+      resourceSampler = setInterval(
+        sampleResidentSet,
+        resourceSampleIntervalMs,
+      );
+    }
 
     const cleanup = () => {
       clearTimeout(timeout);
+      if (resourceSampler !== null) {
+        clearInterval(resourceSampler);
+      }
       if (cancellationEscalation !== null) {
         clearTimeout(cancellationEscalation);
       }
@@ -175,7 +265,7 @@ export async function runAdapterProcess(options) {
       reject(
         new AdapterProcessError(
           `${options.id} adapter could not start`,
-          {
+          withResourceObservation({
             outcome: "spawn-error",
             exitCode: null,
             signal: null,
@@ -187,7 +277,7 @@ export async function runAdapterProcess(options) {
             stderrBytes,
             stderrCaptured: stderrBytes > 0,
             wallClockMs: performance.now() - started,
-          },
+          }),
         ),
       );
     });
@@ -201,14 +291,16 @@ export async function runAdapterProcess(options) {
         ? "cancelled"
         : timedOut
           ? "timeout"
-          : outputLimitExceeded
-            ? "output-limit"
+          : residentSetLimitExceeded
+            ? "rss-limit"
+            : outputLimitExceeded
+              ? "output-limit"
             : exitCode === 0
               ? "completed"
               : signal
                 ? "signal"
                 : "nonzero-exit";
-      const receipt = {
+      const receipt = withResourceObservation({
         outcome,
         exitCode,
         signal,
@@ -220,7 +312,7 @@ export async function runAdapterProcess(options) {
         stderrBytes,
         stderrCaptured: stderrBytes > 0,
         wallClockMs: performance.now() - started,
-      };
+      });
       if (outcome !== "completed") {
         reject(
           new AdapterProcessError(

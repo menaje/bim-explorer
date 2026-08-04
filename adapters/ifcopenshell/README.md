@@ -22,6 +22,9 @@ reference release·process exit 뒤 정상 IFC recovery를 확인했습니다.
 engine-cooperative cancellation, 강제 종료 뒤 내부 cleanup, resource
 exhaustion, large-model resource budget과 production redistribution은
 아직 검증하지 않았습니다.
+공개 IFC process의 sampled 256MiB RSS 상한·강제 종료·fresh-process
+recovery는 두 번 통과했지만 native allocator/OOM behavior와 parser memory
+safety는 검증하지 않았습니다.
 
 Dependency와 upstream license 사실은
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)에 기록합니다.

@@ -119,6 +119,11 @@ process cleanup·recovery는
 모두 prototype 결과이며 IFC2X3 profile, physical GPU, engine-cooperative
 cancellation, 강제 종료 뒤 내부 explicit cleanup, resource exhaustion 또는
 `packagingBrowser` capability를 승격하지 않습니다.
+두 후보 process의 256MiB RSS 상한 초과·강제 종료와 fresh-process recovery는
+[`process RSS evidence`](evidence/ifc-engine-resource-exhaustion-2026-08-04.json)에
+기록합니다. 이는 `processRssLimitRecovery`만 통과시키며 Browser heap
+exhaustion, native allocator/OOM behavior와 parser memory safety를 포함한
+전체 `resourceExhaustion` Gate는 계속 보류합니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 

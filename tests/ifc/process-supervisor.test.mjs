@@ -127,6 +127,54 @@ test("adapter supervisor applies time and output budgets", async (t) => {
   });
 });
 
+test("adapter supervisor terminates a child above its RSS budget", async () => {
+  await assert.rejects(
+    runAdapterProcess({
+      id: "rss-limit-stub",
+      executable: process.execPath,
+      arguments: [
+        "--input-type=module",
+        "--eval",
+        "const chunks=[]; setInterval(() => {" +
+          "chunks.push(Buffer.alloc(8*1024*1024,1));" +
+          "}, 10)",
+      ],
+      maxResidentSetBytes: 64 * 1024 * 1024,
+      resourceSampleIntervalMs: 10,
+      timeoutMs: 5_000,
+    }),
+    (error) => {
+      assert.ok(error instanceof AdapterProcessError);
+      assert.equal(error.receipt.outcome, "rss-limit");
+      assert.equal(error.receipt.processExited, true);
+      assert.equal(error.receipt.signal, "SIGKILL");
+      assert.equal(error.receipt.timedOut, false);
+      assert.equal(error.receipt.residentSetLimitExceeded, true);
+      assert.equal(
+        error.receipt.maxResidentSetBytes,
+        64 * 1024 * 1024,
+      );
+      assert.ok(
+        error.receipt.peakResidentSetBytes >
+          error.receipt.maxResidentSetBytes,
+      );
+      return true;
+    },
+  );
+});
+
+test("adapter supervisor rejects an invalid RSS sampler budget", async () => {
+  await assert.rejects(
+    runAdapterProcess({
+      id: "rss-invalid-stub",
+      executable: process.execPath,
+      arguments: ["--version"],
+      resourceSampleIntervalMs: 10,
+    }),
+    /invalid isolated adapter process options/u,
+  );
+});
+
 test("adapter supervisor rejects cancellation before spawn", async () => {
   const cancellation = new AbortController();
   cancellation.abort();

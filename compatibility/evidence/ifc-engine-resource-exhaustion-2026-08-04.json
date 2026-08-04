@@ -1,0 +1,274 @@
+{
+  "schema": "bim-explorer-ifc-resource-exhaustion-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "fixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "schema": "IFC2X3",
+    "cacheHit": true,
+    "artifactCommitted": false,
+    "bundlingApproved": false,
+    "customerContent": false
+  },
+  "environment": {
+    "architecture": "arm64",
+    "node": "v24.11.1",
+    "platform": "darwin",
+    "sampler": "ps-rss-kibibytes"
+  },
+  "policy": {
+    "callStartCheckpoint": "model-open-call-starting",
+    "maxResidentSetBytes": 268435456,
+    "resourceSampleIntervalMs": 10,
+    "timeoutMs": 30000
+  },
+  "engines": [
+    {
+      "engine": "web-ifc",
+      "status": "passed-process-rss-limit",
+      "runs": [
+        {
+          "attempt": 1,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 246.51233299999998
+          },
+          "receipt": {
+            "outcome": "rss-limit",
+            "exitCode": null,
+            "signal": "SIGKILL",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": false,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 315,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 441.903292,
+            "maxResidentSetBytes": 268435456,
+            "peakResidentSetBytes": 269615104,
+            "residentSetLimitExceeded": true,
+            "resourceSampleIntervalMs": 10
+          }
+        },
+        {
+          "attempt": 2,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "web-ifc",
+              "version": "0.0.77",
+              "backend": "node-wasm-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 231.45587500000005
+          },
+          "receipt": {
+            "outcome": "rss-limit",
+            "exitCode": null,
+            "signal": "SIGKILL",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": false,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 315,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 427.34991700000006,
+            "maxResidentSetBytes": 268435456,
+            "peakResidentSetBytes": 270008320,
+            "residentSetLimitExceeded": true,
+            "resourceSampleIntervalMs": 10
+          }
+        }
+      ],
+      "recovery": {
+        "source": {
+          "id": "synthetic-small-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "cancelled": false,
+          "outputLimitExceeded": false,
+          "stdoutBytes": 2668,
+          "stderrBytes": 0,
+          "stderrCaptured": false,
+          "wallClockMs": 214.92224999999996
+        }
+      }
+    },
+    {
+      "engine": "ifcopenshell",
+      "status": "passed-process-rss-limit",
+      "runs": [
+        {
+          "attempt": 1,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 403.4480839999999
+          },
+          "receipt": {
+            "outcome": "rss-limit",
+            "exitCode": null,
+            "signal": "SIGKILL",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": false,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 329,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 893.6513340000001,
+            "maxResidentSetBytes": 268435456,
+            "peakResidentSetBytes": 270090240,
+            "residentSetLimitExceeded": true,
+            "resourceSampleIntervalMs": 10
+          }
+        },
+        {
+          "attempt": 2,
+          "checkpoint": {
+            "schema": "bim-explorer-ifc-in-call-progress/0.1",
+            "phase": "model-open-call-starting",
+            "engine": {
+              "id": "ifcopenshell",
+              "version": "0.8.4.post1",
+              "backend": "python-native-process"
+            },
+            "source": {
+              "id": "public-schependomlaan-complete-ifc2x3",
+              "byteLength": 46766968,
+              "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4"
+            },
+            "observedAfterStartMs": 180.50158299999998
+          },
+          "receipt": {
+            "outcome": "rss-limit",
+            "exitCode": null,
+            "signal": "SIGKILL",
+            "processExited": true,
+            "timedOut": false,
+            "cancelled": false,
+            "outputLimitExceeded": false,
+            "stdoutBytes": 329,
+            "stderrBytes": 0,
+            "stderrCaptured": false,
+            "wallClockMs": 662.1736249999999,
+            "maxResidentSetBytes": 268435456,
+            "peakResidentSetBytes": 270172160,
+            "residentSetLimitExceeded": true,
+            "resourceSampleIntervalMs": 10
+          }
+        }
+      ],
+      "recovery": {
+        "source": {
+          "id": "synthetic-small-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semantics": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": false,
+          "engineDisposed": false
+        },
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "cancelled": false,
+          "outputLimitExceeded": false,
+          "stdoutBytes": 2729,
+          "stderrBytes": 0,
+          "stderrCaptured": false,
+          "wallClockMs": 240.97366699999975
+        }
+      }
+    }
+  ],
+  "conformance": {
+    "publicFixtureIdentityVerified": true,
+    "callStartCheckpointObserved": true,
+    "processRssBudgetEnforced": true,
+    "forcedProcessTermination": true,
+    "processExitObserved": true,
+    "postTerminationRecovery": true,
+    "diagnosticRedaction": true
+  },
+  "decision": {
+    "boundedProcessRssTermination": "passed",
+    "resourceExhaustion": "partial-process-rss-only",
+    "browserHeapExhaustion": "blocked",
+    "engineMemorySafety": "blocked",
+    "explicitCleanupAfterKill": "blocked",
+    "productionPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "RSS is sampled by the parent process and may overshoot between samples.",
+    "The observation does not identify the engine allocation that crossed the limit.",
+    "SIGKILL cannot return model-close or engine-dispose receipts.",
+    "Fresh-process recovery does not prove same-process reuse.",
+    "Browser heap exhaustion, native allocator safety and adversarial parser memory safety remain unqualified."
+  ]
+}

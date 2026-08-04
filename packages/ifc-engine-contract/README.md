@@ -25,6 +25,9 @@ probe를 별도 process로 실행합니다. 환경 변수와 출력 크기를 �
 timeout·취소·signal·비정상 종료를 구분하는 path-free receipt만 반환합니다.
 선택적 path-free JSON progress callback으로 call-start checkpoint 뒤
 AbortSignal을 요청할 수 있습니다.
+선택적 RSS byte 상한은 parent `ps` sampler로 process를 관찰하고 초과 시
+`rss-limit`과 peak observation을 반환합니다. 샘플 사이 overshoot와
+platform별 RSS 의미는 evidence에 남겨야 합니다.
 stderr 내용과 실행 인자는 public error 또는 evidence에 포함하지 않습니다.
 
 이 supervisor의 일반 process lifecycle 검증만으로 특정 IFC engine의
@@ -35,3 +38,6 @@ explicit close/dispose와 IfcOpenShell의 process-exit 경계, 반복 거부와
 call-start 뒤 process 강제 종료와 fresh-process recovery를 검증합니다.
 이는 engine-cooperative cancellation, 강제 종료 뒤 내부 close/dispose나
 resource exhaustion을 승인하지 않습니다.
+별도 RSS qualification은 공개 IFC 처리 중 두 후보의 sampled process
+상한·강제 종료·fresh-process recovery만 승인하며 Browser heap, native
+allocator와 parser memory safety를 승인하지 않습니다.

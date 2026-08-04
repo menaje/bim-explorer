@@ -56,6 +56,8 @@ Native와 WASM은 같은 adapter contract를 구현하는 backend 선택입니�
 
 - 별도 process와 bounded IPC를 사용합니다.
 - crash, timeout, cancellation과 exit receipt를 구분합니다.
+- parent가 configured interval로 RSS를 관찰하고 상한 초과를 별도
+  `rss-limit` outcome으로 강제 종료합니다.
 - native pointer와 engine object는 process 밖으로 전달하지 않습니다.
 - output range와 cache는 source/engine/options fingerprint에 묶습니다.
 
@@ -82,7 +84,8 @@ conformance로 비교합니다. WASM을 위해 source identity나 geometry 의�
 낮은 공통분모로 축소하지 않습니다. forced isolation은 동기 호출 중
 process/Worker를 회수하는 전략이며 engine-cooperative cancellation,
 강제 종료 뒤 explicit cleanup 또는 resource-exhaustion 복구를 의미하지
-않습니다.
+않습니다. sampled process RSS 상한은 별도 통과했지만 Browser/native
+allocator exhaustion과 parser memory safety는 계속 별도 Gate입니다.
 
 현재 공통 report와 capability vocabulary는
 [IFC engine adapter v0.2 draft](../specs/ifc-engine-adapter-v0.2.md)가

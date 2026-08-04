@@ -33,10 +33,11 @@ IfcOpenShell 격리 process에서 각각 두 번 거부·정리하고 정상 sou
 recovery를 통과했습니다. 공개 IFC call-start checkpoint 뒤에는 두 후보를
 각각 두 번 강제 process 종료하고 새 process에서 정상 IFC를 복구했습니다.
 web-ifc는 실제 Chromium에서도 50ms grace의 강제 Worker 종료와 새 Worker
-복구를 통과했습니다. 다만 engine-cooperative cancellation, 강제 종료된
-runtime 내부의 explicit cleanup, production packaging, resource exhaustion과
-법률 Gate가 남아 있으므로 IfcOpenShell native process를 desktop fallback으로
-계속 유지합니다.
+복구를 통과했습니다. 두 후보의 sampled 256MiB process RSS 상한과
+fresh-process recovery도 통과했습니다. 다만 engine-cooperative cancellation,
+강제 종료된 runtime 내부의 explicit cleanup, production packaging,
+Browser/native allocator exhaustion과 법률 Gate가 남아 있으므로
+IfcOpenShell native process를 desktop fallback으로 계속 유지합니다.
 
 같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
 [`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
@@ -65,7 +66,8 @@ Browser 관찰값은
 [`negative process corpus`](../compatibility/evidence/ifc-engine-negative-corpus-2026-08-04.json)와
 [`negative Browser corpus`](../compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json),
 [`in-call process isolation`](../compatibility/evidence/ifc-engine-in-call-cancellation-2026-08-04.json)과
-[`in-call Browser isolation`](../compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json)이
+[`in-call Browser isolation`](../compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json),
+[`process RSS limit`](../compatibility/evidence/ifc-engine-resource-exhaustion-2026-08-04.json)이
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -229,6 +231,22 @@ runtime은 model close·engine dispose 영수증을 반환할 수 없습니다.
 same-runtime reuse, resource exhaustion과 parser memory safety도 승인하지
 않습니다.
 
+## Process RSS limit과 recovery
+
+같은 공개 IFC를 처리하는 두 후보 process에 268,435,456-byte RSS 상한과
+10ms parent sampler를 적용했습니다. web-ifc는 269,615,104와 270,008,320
+bytes, IfcOpenShell은 270,090,240과 270,172,160 bytes가 관찰된 시점에
+각각 `SIGKILL`됐습니다. 네 실행 모두 call-start checkpoint 이후였고 timeout
+또는 output-limit과 구분된 `rss-limit` 영수증을 반환했습니다. 이어서 새
+process에서 정상 IFC4의 1 Project, 1 Wall과 12 triangles를 복구했습니다.
+
+따라서 `processRssLimitRecovery` Gate는 통과합니다. 샘플 사이 overshoot가
+가능하고 어느 engine allocation이 상한을 넘겼는지는 식별하지 못합니다.
+`SIGKILL`된 runtime 내부의 close/dispose, Browser heap exhaustion, native
+allocator/OOM behavior, adversarial parser memory safety와 same-process
+reuse를 증명하지 않으므로 전체 `resourceExhaustion` Gate는 계속
+`blocked`입니다.
+
 ## Draft implementation profile
 
 현재 profile은 다음만 `experimental`입니다.
@@ -246,6 +264,7 @@ same-runtime reuse, resource exhaustion과 parser memory safety도 승인하지
 - 유효한 IFC의 model-opened checkpoint cooperative cleanup prototype
 - 공개 IFC call-start 뒤 process/Worker forced-isolation cancellation과
   fresh-runtime recovery prototype
+- 공개 IFC 처리 중 sampled process RSS limit과 fresh-process recovery
 - generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
 공개 IFC2X3 관찰은 engine의 대표 parse/geometry 성능을 재기 위한
@@ -257,7 +276,8 @@ scenario에 포함하지 않습니다.
 - IFC2X3, IFC4.3와 그 외 exchange scenario
 - connection, system, opening과 broader object/relation corpus
 - engine-cooperative in-call cancellation과 강제 종료 뒤 explicit cleanup
-- resource exhaustion, parser memory safety와 same-runtime recovery
+- Browser/native resource exhaustion, parser memory safety와 same-runtime
+  recovery
 - visibility 기반 first frame, physical GPU memory와 context-loss recovery
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
@@ -280,6 +300,7 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 | mapped/shared/Qto/classification | mapped | mapped |
 | corrupt-input adapter cleanup | mapped | mapped |
 | forced-isolation cancellation | mapped | mapped |
+| sampled process RSS-limit recovery | mapped | mapped |
 | engine-cooperative cancellation | blocked | blocked |
 | write/round-trip | blocked | blocked |
 | verified packaging | macOS Node only | macOS Python wheel only |
@@ -325,6 +346,7 @@ npm run qualify:ifc:mapped
 npm run qualify:ifc:negative
 npm run fetch:ifc:public
 npm run qualify:ifc:cancel-in-call
+npm run qualify:ifc:rss-limit
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
@@ -352,6 +374,9 @@ node scripts/qualify-ifc-engine.mjs \
 node scripts/qualify-ifc-in-call-cancellation.mjs \
   --engine all \
   --python .qualification-venv/bin/python
+node scripts/qualify-ifc-resource-exhaustion.mjs \
+  --engine all \
+  --python .qualification-venv/bin/python
 ```
 
 synthetic qualification command는 매번 임시 `.ifc`를 생성하고 종료 시
@@ -365,18 +390,21 @@ stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니�
 qualification은 두 engine의 반복 rejection·cleanup·recovery를 검증합니다.
 in-call qualification은 공개 IFC call-start checkpoint 뒤 두 engine
 process를 반복 강제 종료하고 fresh-process recovery를 검증합니다.
+RSS qualification은 같은 process의 256MiB sampled 상한을 강제하고
+fresh-process recovery를 검증합니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
 time/WASM-capacity budget과 negative corpus disposal도 통과했습니다. 공개
 대표 fixture의 Node CPU/RSS와 Browser parse/geometry도 분리해
 통과했습니다. forced-isolation cancellation Gate는 `mapped`로
-통과했지만 engine-cooperative cancellation, 강제 종료 뒤 내부 cleanup,
-resource exhaustion, physical GPU memory와 cross-Host engine budget은
-계속 `blocked`입니다.
+통과했고 process RSS-limit recovery도 통과했습니다. engine-cooperative
+cancellation, 강제 종료 뒤 내부 cleanup, Browser/native allocator
+exhaustion safety, physical GPU memory와 cross-Host engine budget은 계속
+`blocked`입니다.
 
 ## 다음 Gate
 
-1. 각 engine의 resource exhaustion과 필요 시 cooperative cancellation
+1. Browser/native allocator exhaustion과 필요 시 cooperative cancellation
 2. connection/system/opening을 포함한 broader semantic corpus
 3. Linux Browser CI와 macOS/Linux package matrix
 4. VS Code engine isolation과 clean-package proof
