@@ -14,6 +14,7 @@ const TRUE_GATES = [
   "publicRepresentativeSourceArtifact",
   "multiRangeGeometryDirectory",
   "nonRenderableProductDiagnostic",
+  "boundedSemanticQueries",
 ];
 const HELD_GATES = [
   "firstRenderedFrame",
@@ -35,6 +36,7 @@ const FAIL_CLOSED_ASSERTIONS = [
   "malformedRangeDigestRejected",
   "malformedRangeStructureRejected",
   "duplicateGlobalIdRejected",
+  "semanticCursorMismatchRejected",
 ];
 const PUBLIC_CONFORMANCE_ASSERTIONS = [
   "repeatedSnapshotIdentity",
@@ -191,6 +193,48 @@ function validateSyntheticEvidence(manifest, evidence) {
       "BE-WALL"
   ) {
     throw new Error("BIM model source semantic identity is invalid");
+  }
+  if (
+    evidence.semanticQueries?.schema !==
+      "bim-explorer-bim-source-semantic-query-result/0.1" ||
+    !equalJson(evidence.semanticQueries?.capabilities, [
+      "bounded-tree-query",
+      "bounded-semantic-search",
+      "bounded-relation-query",
+    ]) ||
+    !equalJson(evidence.semanticQueries?.tree, {
+      total: 3,
+      firstExpressId: 21,
+      firstParentRelation: "decomposition",
+      secondExpressId: 40,
+      secondParentRelation: "spatial-containment",
+    }) ||
+    !equalJson(evidence.semanticQueries?.search, {
+      total: 2,
+      firstExpressId: 40,
+      secondExpressId: 44,
+      firstRemaining: 1,
+      finalRemaining: 0,
+    }) ||
+    !equalJson(
+      evidence.semanticQueries?.relations?.typeOccurrences,
+      [40, 44],
+    ) ||
+    !evidence.semanticQueries?.relations?.wallKinds?.includes(
+      "type-definition",
+    ) ||
+    !evidence.semanticQueries.relations.wallKinds.includes(
+      "property-set",
+    ) ||
+    !evidence.semanticQueries.relations.unavailable?.some(
+      (item) =>
+        item.capability === "connection-relation" &&
+        item.status === "opaque",
+    )
+  ) {
+    throw new Error(
+      "BIM model source bounded semantic queries are invalid",
+    );
   }
   const failClosed = plainRecord(
     evidence.failClosed,

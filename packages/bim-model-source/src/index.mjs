@@ -1,4 +1,8 @@
 import { createHash } from "node:crypto";
+import {
+  BIM_SOURCE_SEMANTIC_QUERY_RESULT,
+  BimSemanticIndex,
+} from "./semantic-index.mjs";
 
 export const BIM_SOURCE_ARTIFACT_SCHEMA =
   "bim-explorer-bim-source-artifact/0.1";
@@ -787,6 +791,7 @@ export class BimModelSource {
   #entityByGlobalId;
   #entityByRenderId;
   #entityByPickId;
+  #semanticIndex;
   #snapshot;
   #opened = false;
   #sessionDisposed = false;
@@ -871,6 +876,12 @@ export class BimModelSource {
         .map((entity) => [entity.pickId, entity]),
     );
     const baseContext = contextFields(this);
+    this.#semanticIndex = new BimSemanticIndex({
+      context: baseContext,
+      coverage: this.#artifact.coverage,
+      entities,
+      tree,
+    });
     const rangeHandles = this.#artifact.ranges.map((range) =>
       deepFreeze({
         ...baseContext,
@@ -992,6 +1003,9 @@ export class BimModelSource {
         "binary-range-read",
         "entity-resolve",
         "pick-resolve",
+        "bounded-tree-query",
+        "bounded-semantic-search",
+        "bounded-relation-query",
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
     });
@@ -1094,6 +1108,33 @@ export class BimModelSource {
           externalIdentityToken: entity.externalIdentityToken,
         });
       },
+      queryTree: async (
+        request,
+        { signal: querySignal } = {},
+      ) => {
+        this.#assertSessionOpen();
+        aborted(querySignal);
+        this.#assertContext(request, "tree query");
+        return this.#semanticIndex.queryTree(request);
+      },
+      searchEntities: async (
+        request,
+        { signal: querySignal } = {},
+      ) => {
+        this.#assertSessionOpen();
+        aborted(querySignal);
+        this.#assertContext(request, "semantic search");
+        return this.#semanticIndex.search(request);
+      },
+      queryRelations: async (
+        request,
+        { signal: querySignal } = {},
+      ) => {
+        this.#assertSessionOpen();
+        aborted(querySignal);
+        this.#assertContext(request, "relation query");
+        return this.#semanticIndex.queryRelations(request);
+      },
       dispose: async () => {
         if (this.#sessionDisposed) {
           return false;
@@ -1124,3 +1165,7 @@ export class BimModelSource {
 export function createBimModelSource(artifact, options) {
   return new BimModelSource(artifact, options);
 }
+
+export {
+  BIM_SOURCE_SEMANTIC_QUERY_RESULT,
+};

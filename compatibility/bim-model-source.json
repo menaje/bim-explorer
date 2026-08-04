@@ -70,6 +70,7 @@
     "publicRepresentativeSourceArtifact": true,
     "multiRangeGeometryDirectory": true,
     "nonRenderableProductDiagnostic": true,
+    "boundedSemanticQueries": true,
     "firstRenderedFrame": false,
     "deferredPropertyRanges": false,
     "viewerCoreConformance": false,

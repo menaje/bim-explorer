@@ -11,3 +11,4 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 - [IFC engine adapter contract v0.2](ifc-engine-adapter-v0.2.md)
 - [BIM source artifact v0.1](bim-source-artifact-v0.1.md)
 - [BIM renderer 3D v0.1](bim-renderer-3d-v0.1.md)
+- [BIM semantic explorer v0.1](bim-semantic-explorer-v0.1.md)

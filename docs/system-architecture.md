@@ -27,7 +27,7 @@ local BIM source
      - source-local identity map
   -> BimModelSource
   -> versioned Viewer Core/render protocol
-  -> generic 3D presentation
+  -> generic 3D presentation + BIM semantic explorer
   -> Browser Host or VS Code Host
 ```
 
@@ -108,6 +108,33 @@ stale context, 중복 identity와 cleanup을 강제합니다. 고정된 공개 I
 tessellation은 semantic identity와 diagnostic만 유지합니다. renderer
 first-frame은 별도 renderer evidence에서 검증하고, deferred property
 range와 Viewer Core conformance는 아직 보류합니다.
+
+`BimModelSource`는 exact snapshot context를 요구하는 bounded
+`queryTree`, `searchEntities`, `queryRelations`를 제공합니다. page는 최대
+100 items이며 cursor는 revision과 query에 결합됩니다. decomposition과
+spatial containment, occurrence/type, Pset/Qto, direct material과
+classification을 구분하고, 제공하지 않는 relation은 opaque coverage로
+반환합니다.
+
+## BIM semantic explorer
+
+내부
+[`bim-semantic-explorer/0.1`](../specs/bim-semantic-explorer-v0.1.md)은
+source query를 tree, search, inspector, relation navigation과 selection
+state로 투영합니다. DOM이나 renderer resource는 소유하지 않고, tree,
+search, relation 또는 renderer pick에서 시작한 selection을 같은 source
+fingerprint/revision에 묶습니다.
+
+generated semantic IFC의 실제 Chromium probe에서
+Project→Site→Building→Storey→Space→Wall hierarchy,
+decomposition/containment, Wall→Type→Occurrence 왕복,
+Pset/Qto/material/classification panel, paged search와 explicit omission,
+WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
+role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
+상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
+property set value는 현재 name-only `lossy`, host/void/fill과 connection은
+`opaque`입니다. public representative semantic scale과 product shell은
+보류합니다.
 
 ## Viewer Core와 3D presentation
 

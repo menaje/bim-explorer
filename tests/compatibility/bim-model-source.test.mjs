@@ -38,7 +38,7 @@ test("BIM model source compatibility records public multi-range evidence", async
   assert.equal(result.products, 3_569);
   assert.equal(result.triangles, 261_424);
   assert.equal(result.syntheticProducts, 2);
-  assert.equal(result.passedGates, 9);
+  assert.equal(result.passedGates, 10);
   assert.equal(result.heldGates, 4);
 });
 

@@ -103,6 +103,47 @@ async function qualify() {
     renderId: wall.renderId,
     pickId: wall.pickId,
   });
+  const firstTreePage = await session.queryTree({
+    ...requestContext,
+    parentExpressId: 19,
+    limit: 1,
+  });
+  const secondTreePage = await session.queryTree({
+    ...requestContext,
+    parentExpressId: 19,
+    limit: 1,
+    cursor: firstTreePage.page.nextCursor,
+  });
+  const firstSearchPage = await session.searchEntities({
+    ...requestContext,
+    query: "wall",
+    limit: 1,
+  });
+  const secondSearchPage = await session.searchEntities({
+    ...requestContext,
+    query: "wall",
+    limit: 1,
+    cursor: firstSearchPage.page.nextCursor,
+  });
+  const wallRelations = await session.queryRelations({
+    ...requestContext,
+    expressId: 40,
+    limit: 100,
+  });
+  const typeRelations = await session.queryRelations({
+    ...requestContext,
+    expressId: 55,
+    limit: 100,
+  });
+  const semanticCursorMismatchRejected = await rejected(
+    () => session.searchEntities({
+      ...requestContext,
+      query: "Concrete",
+      limit: 1,
+      cursor: firstSearchPage.page.nextCursor,
+    }),
+    /cursor is stale or mismatched/u,
+  );
 
   const handle = snapshot.layers[0].rangeHandles[0];
   const chunks = [];
@@ -239,6 +280,7 @@ async function qualify() {
     !relationIndexBudgetRejected ||
     !treeNodeBudgetRejected ||
     !metadataBudgetRejected ||
+    !semanticCursorMismatchRejected ||
     !identityConverged ||
     !treeEntityRenderPickIdentity ||
     !sessionDisposed ||
@@ -310,6 +352,39 @@ async function qualify() {
       treeEntityRenderPickIdentity,
     },
     semantics: wall.semantics,
+    semanticQueries: {
+      schema: firstTreePage.schema,
+      capabilities: session.descriptor.capabilities.filter(
+        (capability) => capability.startsWith("bounded-"),
+      ),
+      tree: {
+        total: firstTreePage.page.total,
+        firstExpressId: firstTreePage.items[0].expressId,
+        firstParentRelation:
+          firstTreePage.items[0].parentRelation,
+        secondExpressId: secondTreePage.items[0].expressId,
+        secondParentRelation:
+          secondTreePage.items[0].parentRelation,
+      },
+      search: {
+        total: firstSearchPage.page.total,
+        firstExpressId: firstSearchPage.items[0].expressId,
+        secondExpressId: secondSearchPage.items[0].expressId,
+        firstRemaining: firstSearchPage.page.remaining,
+        finalRemaining: secondSearchPage.page.remaining,
+      },
+      relations: {
+        wallKinds: [
+          ...new Set(
+            wallRelations.items.map((item) => item.kind),
+          ),
+        ].sort(),
+        typeOccurrences: typeRelations.items
+          .filter((item) => item.kind === "typed-occurrence")
+          .map((item) => item.target.expressId),
+        unavailable: wallRelations.informationCoverage.unavailable,
+      },
+    },
     failClosed: {
       sourceSizeLimitConfiguredBytes: 64 * 1024 * 1024,
       sourceSizeLimitRejected,
@@ -319,6 +394,7 @@ async function qualify() {
       relationIndexBudgetRejected,
       treeNodeBudgetRejected,
       metadataBudgetRejected,
+      semanticCursorMismatchRejected,
       budgetExhaustionRejected,
       staleRevisionRejected,
       mismatchedPickRejected,

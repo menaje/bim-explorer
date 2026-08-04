@@ -1,0 +1,285 @@
+{
+  "schema": "bim-explorer-semantic-explorer-browser-report/1",
+  "status": "passed",
+  "fixture": {
+    "id": "synthetic-semantic-ifc4",
+    "byteLength": 4030,
+    "ifcSchema": "IFC4",
+    "profile": "ReferenceView_V1.2",
+    "artifactCommitted": false
+  },
+  "source": {
+    "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "revisionId": "source-snapshot:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "snapshotId": "snapshot:bim-source:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0"
+  },
+  "renderer": {
+    "actualGpu": true,
+    "context": "webgl2",
+    "nonBackgroundPixels": 36912,
+    "sourceReadBytes": 996,
+    "pick": {
+      "schema": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+      "status": "hit",
+      "source": {
+        "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+        "revisionId": "source-snapshot:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+        "snapshotId": "snapshot:bim-source:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0",
+        "layerId": "layer:bim-source:base-3d"
+      },
+      "viewRevision": 1,
+      "coordinates": {
+        "x": 320,
+        "y": 120,
+        "origin": "canvas-top-left"
+      },
+      "identity": {
+        "expressId": 40,
+        "externalIdentityToken": "ifc-globalid:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0AAAAAAAAAAAAAAAAAAA16",
+        "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+        "pickId": "pick:ifc:4a07468afbed86fa:40",
+        "renderId": "render:ifc:4a07468afbed86fa:40"
+      },
+      "worldPosition": [
+        0.08150411389176959,
+        1.100100510439952,
+        1.748030025269462
+      ],
+      "backend": {
+        "backendId": "webgl2",
+        "frameId": "webgl2-pick:1:4",
+        "actualGpu": true,
+        "context": "webgl2",
+        "hit": true,
+        "identity": {
+          "expressId": 40,
+          "externalIdentityToken": "ifc-globalid:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999:0AAAAAAAAAAAAAAAAAAA16",
+          "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+          "pickId": "pick:ifc:4a07468afbed86fa:40",
+          "renderId": "render:ifc:4a07468afbed86fa:40"
+        },
+        "depth": 0.8762779625843073,
+        "worldPosition": [
+          0.08150411389176959,
+          1.100100510439952,
+          1.748030025269462
+        ],
+        "x": 320,
+        "y": 120,
+        "drawCalls": 2,
+        "temporaryTargetBytes": 1382400,
+        "temporaryReleased": true,
+        "frameMs": 15.899999976158142,
+        "glError": 0
+      }
+    }
+  },
+  "semantic": {
+    "hierarchy": [
+      {
+        "expressId": 13,
+        "parentRelation": "root"
+      },
+      {
+        "expressId": 15,
+        "parentRelation": "decomposition"
+      },
+      {
+        "expressId": 17,
+        "parentRelation": "decomposition"
+      },
+      {
+        "expressId": 19,
+        "parentRelation": "decomposition"
+      },
+      {
+        "expressId": 21,
+        "parentRelation": "decomposition"
+      },
+      {
+        "expressId": 40,
+        "parentRelation": "spatial-containment"
+      },
+      {
+        "expressId": 44,
+        "parentRelation": "spatial-containment"
+      }
+    ],
+    "panels": {
+      "classifications": [
+        "BE-WALL"
+      ],
+      "limitations": [
+        "host-void-fill-relation:opaque",
+        "connection-relation:opaque",
+        "write-mutation:opaque",
+        "full-ifc-object-graph:opaque",
+        "complex-material-graph:opaque",
+        "connection-relation-index:opaque",
+        "georeferencing-map-conversion:opaque",
+        "property-value:lossy"
+      ],
+      "materials": [
+        "Concrete"
+      ],
+      "propertySets": [
+        "Pset_WallCommon",
+        "Pset_WallTypeCommon"
+      ],
+      "quantities": [
+        "GrossSideArea",
+        "GrossVolume",
+        "Length"
+      ]
+    },
+    "pick": {
+      "receiptExpressId": 40,
+      "selectionExpressId": 40,
+      "selectionRevisionId": "source-snapshot:sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+      "sourceFingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999"
+    },
+    "savedView": {
+      "restored": true,
+      "selectionExpressId": 40
+    },
+    "search": {
+      "first": {
+        "loaded": 1,
+        "omitted": 1,
+        "total": 2
+      },
+      "complete": {
+        "loaded": 2,
+        "omitted": 0,
+        "total": 2
+      }
+    },
+    "selectionBeforeType": 40,
+    "type": {
+      "expressId": 55,
+      "occurrences": [
+        40,
+        44
+      ],
+      "returnedOccurrence": 40
+    },
+    "visibility": {
+      "renderIds": [
+        "render:ifc:4a07468afbed86fa:40",
+        "render:ifc:4a07468afbed86fa:44"
+      ],
+      "viewMode": "isolate"
+    }
+  },
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "keyboardEvents": [
+      "ArrowDown",
+      "Enter",
+      "SearchEnter"
+    ],
+    "roles": {
+      "labelledCanvas": true,
+      "labelledInspector": true,
+      "liveStatus": true,
+      "searchRole": true,
+      "treeItems": true,
+      "treeRole": true,
+      "resultListbox": true
+    },
+    "renderedTreeRows": 7,
+    "maximumDomRows": 8
+  },
+  "beforeCleanup": {
+    "backend": {
+      "disposed": false,
+      "mounts": 1,
+      "picks": 4,
+      "releasedBytes": 0,
+      "unmounts": 0,
+      "contextInitialized": true,
+      "contextLost": false,
+      "contextGeneration": 1,
+      "contextLosses": 0,
+      "contextInvalidated": false,
+      "activeHandleId": "webgl2-mount:1",
+      "activeBytes": 1120,
+      "residentRanges": 1,
+      "frames": 3,
+      "cameraProjection": "perspective",
+      "clippingPlanes": 0,
+      "hiddenRenderIds": 0,
+      "selectedPickIds": 1,
+      "worldOrigin": [
+        2,
+        3,
+        1.5
+      ]
+    },
+    "explorer": {
+      "initialized": true,
+      "disposed": false
+    },
+    "session": {
+      "disposed": false,
+      "rangeBytes": 996,
+      "rangeReads": 8,
+      "relationQueries": 7,
+      "searchQueries": 3,
+      "treeQueries": 6
+    }
+  },
+  "cleanup": {
+    "backend": {
+      "disposed": true,
+      "mounts": 1,
+      "picks": 4,
+      "releasedBytes": 1120,
+      "unmounts": 1,
+      "contextInitialized": true,
+      "contextLost": false,
+      "contextGeneration": 1,
+      "contextLosses": 0,
+      "contextInvalidated": false,
+      "activeHandleId": null,
+      "activeBytes": 0,
+      "residentRanges": 0,
+      "frames": 0,
+      "cameraProjection": null,
+      "clippingPlanes": 0,
+      "hiddenRenderIds": 0,
+      "selectedPickIds": 0,
+      "worldOrigin": null
+    },
+    "explorerDisposed": true,
+    "rendererDisposed": true,
+    "session": {
+      "disposed": true,
+      "rangeBytes": 996,
+      "rangeReads": 8,
+      "relationQueries": 7,
+      "searchQueries": 3,
+      "treeQueries": 6
+    },
+    "sessionDisposed": true
+  },
+  "assertions": {
+    "accessibleRoles": true,
+    "actualBrowser": true,
+    "actualRendererPick": true,
+    "boundedDom": true,
+    "boundedSearch": true,
+    "decompositionAndContainment": true,
+    "deterministicCleanup": true,
+    "informationLimitsVisible": true,
+    "keyboardTreeNavigation": true,
+    "panelCoverage": true,
+    "revisionBoundSelection": true,
+    "savedLocalView": true,
+    "spatialRoundTrip": true,
+    "typeOccurrenceRoundTrip": true,
+    "visibilityScope": true,
+    "webGl2": true,
+    "pathFreeReport": true
+  }
+}

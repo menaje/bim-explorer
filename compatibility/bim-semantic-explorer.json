@@ -1,0 +1,67 @@
+{
+  "schema": "bim-explorer-bim-semantic-explorer-compatibility/1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "contract": {
+    "explorer": "bim-explorer-bim-semantic-explorer/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.1",
+    "semanticQueryResult": "bim-explorer-bim-source-semantic-query-result/0.1",
+    "rendererPickReceipt": "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+    "savedView": "bim-explorer-bim-semantic-saved-view/0.1"
+  },
+  "fixture": {
+    "id": "synthetic-semantic-ifc4",
+    "byteLength": 4030,
+    "sha256": "4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "schema": "IFC4",
+    "profile": "ReferenceView_V1.2",
+    "artifactCommitted": false,
+    "thirdPartyContent": false
+  },
+  "limits": {
+    "maximumDomRows": 8,
+    "maximumLoadedTreeItems": 32,
+    "maximumRelations": 100,
+    "maximumSearchResults": 10,
+    "searchPageSize": 1,
+    "treePageSize": 2,
+    "maximumSourceReadBytes": 1024,
+    "maximumSemanticQueries": 20
+  },
+  "gates": {
+    "sourceBoundSemanticQueries": true,
+    "spatialHierarchy": true,
+    "decompositionContainmentDistinction": true,
+    "typeOccurrenceRoundTrip": true,
+    "propertyQuantityMaterialClassificationPanels": true,
+    "boundedSearchContinuation": true,
+    "treeProperty3dSelectionSync": true,
+    "resultVisibilityScope": true,
+    "unsupportedInformationDisplay": true,
+    "sourceLocalSavedView": true,
+    "keyboardNavigation": true,
+    "accessibleRoles": true,
+    "boundedDomLifecycle": true,
+    "actualBrowserWebGl2Pick": true,
+    "deterministicCleanup": true,
+    "publicRepresentativeScale": false,
+    "fullPropertyValuePayload": false,
+    "advancedRelationGraph": false
+  },
+  "evidence": {
+    "browserSynthetic": "compatibility/evidence/bim-semantic-explorer-browser-synthetic-2026-08-04.json"
+  },
+  "blockers": [
+    "public representative semantic DOM and search scale are not qualified",
+    "property sets preserve names but not deferred value-level payloads",
+    "host/void/fill and connection graphs remain opaque in the source adapter"
+  ],
+  "policy": {
+    "readOnly": true,
+    "spatialAuthority": false,
+    "claimPublicScale": false,
+    "claimFullPropertyValues": false,
+    "claimAdvancedRelationGraph": false,
+    "claimProductionUx": false
+  }
+}

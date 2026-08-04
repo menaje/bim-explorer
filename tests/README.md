@@ -42,10 +42,18 @@ fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engin
 `bim-model-source` test는 generated mapped IFC에서 raw source fingerprint,
 spatial tree와 product semantics, shared·multi-range geometry payload,
 Express ID/GlobalId/Render/Pick lookup, 비렌더링 product identity,
-bounded range read와 stale·malformed artifact 거부를 검사합니다. 별도 공개
+bounded tree/search/relation query, query-bound cursor, bounded range read와
+stale·malformed artifact 거부를 검사합니다. 별도 공개
 fixture qualification은 46.77MB IFC2X3의 3개 range와 첫 range 단독 read를
 두 번 확인합니다. 공용 Viewer Core conformance나 rendered first-frame
 test는 아닙니다.
+
+`semantic` test는 Storey→Space→Wall→Type→Occurrence 왕복, Pset/Qto,
+material/classification panel, paged search와 explicit omission,
+revision-bound 3D pick, isolate, saved view와 DOM/search aggregate bound를
+검사합니다. Browser probe server test는 strict same-origin CSP와 bounded
+geometry range만 노출하는지 검사합니다. 실제 Chromium 키보드·ARIA와
+WebGL2 pick은 별도 compatibility evidence로 고정합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

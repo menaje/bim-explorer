@@ -109,9 +109,29 @@ metadata의 configured limit과 observed value를 함께 기록합니다. adapte
 geometry range allocation 전에 누적 payload limit을 검사하며 product,
 relation, tree 또는 metadata limit을 넘으면 snapshot을 공개하지 않습니다.
 
+## Bounded semantic query
+
+`BimModelSource` session은 같은 snapshot context에 묶인 다음 read-only
+query를 제공합니다.
+
+| Query | Ordering | 최대 page |
+| --- | --- | ---: |
+| direct tree child | Express ID | 100 |
+| semantic search | Express ID | 100 |
+| relation | kind, target, name/value | 100 |
+
+cursor는 revision과 정규화된 query/scope에 결합된 opaque token입니다.
+stale revision, 다른 query의 cursor, 중복·10,000개 초과 search scope와
+256자 초과 query는 거부합니다. 결과는 전체 수, 현재 offset, 반환 수,
+remaining과 next cursor를 포함합니다.
+
+decomposition과 spatial containment를 별도 relation으로 유지하고,
+occurrence/type, property-set name, quantity, direct material,
+classification을 탐색합니다. source projection에 없는 host/void/fill,
+connection과 broader object graph는 `opaque` coverage로 반환합니다.
+
 ## 현재 보류
 
-- 실제 renderer의 visibility 기반 first-frame range 선택과 GPU 측정
 - property/relation payload의 deferred range partition
 - complex material graph와 connection relation
 - IFC map conversion/georeferencing

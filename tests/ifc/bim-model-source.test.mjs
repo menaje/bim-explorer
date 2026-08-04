@@ -338,6 +338,126 @@ test("BimModelSource binds tree, entity, render, and pick to one revision", asyn
   assert.equal(await source.dispose(), false);
 });
 
+test("BimModelSource pages tree, search, and typed relations", async () => {
+  const artifact = await createWebIfcSourceArtifact(mappedBytes(), {
+    profile: "ReferenceView_V1.2",
+  });
+  const source = createBimModelSource(artifact);
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = requestContext(snapshot);
+
+  const storeyChildren = await session.queryTree({
+    ...context,
+    parentExpressId: 19,
+    limit: 10,
+  });
+  assert.equal(
+    storeyChildren.schema,
+    "bim-explorer-bim-source-semantic-query-result/0.1",
+  );
+  assert.deepEqual(
+    storeyChildren.items.map((item) => [
+      item.expressId,
+      item.parentRelation,
+    ]),
+    [
+      [21, "decomposition"],
+      [40, "spatial-containment"],
+      [44, "spatial-containment"],
+    ],
+  );
+  assert.equal(storeyChildren.page.hasMore, false);
+
+  const firstSearchPage = await session.searchEntities({
+    ...context,
+    query: "wall",
+    limit: 1,
+  });
+  const secondSearchPage = await session.searchEntities({
+    ...context,
+    query: "wall",
+    limit: 1,
+    cursor: firstSearchPage.page.nextCursor,
+  });
+  assert.equal(firstSearchPage.page.total, 2);
+  assert.equal(firstSearchPage.page.remaining, 1);
+  assert.equal(firstSearchPage.items[0].expressId, 40);
+  assert.equal(secondSearchPage.items[0].expressId, 44);
+  assert.equal(secondSearchPage.page.nextCursor, null);
+  await assert.rejects(
+    session.searchEntities({
+      ...context,
+      query: "Concrete",
+      limit: 1,
+      cursor: firstSearchPage.page.nextCursor,
+    }),
+    /cursor is stale or mismatched/u,
+  );
+
+  const propertySearch = await session.searchEntities({
+    ...context,
+    query: "Pset_WallCommon",
+    limit: 10,
+  });
+  assert.equal(propertySearch.page.total, 2);
+  assert.deepEqual(
+    propertySearch.items[0].matchedFields,
+    ["propertySet"],
+  );
+
+  const wallRelations = await session.queryRelations({
+    ...context,
+    expressId: 40,
+    limit: 100,
+  });
+  assert.ok(wallRelations.items.some((relation) =>
+    relation.kind === "spatial-container" &&
+    relation.target.expressId === 19));
+  assert.ok(wallRelations.items.some((relation) =>
+    relation.kind === "type-definition" &&
+    relation.target.expressId === 55));
+  assert.ok(wallRelations.items.some((relation) =>
+    relation.kind === "property-set" &&
+    relation.name === "Pset_WallCommon"));
+  assert.ok(wallRelations.items.some((relation) =>
+    relation.kind === "quantity" &&
+    relation.name === "GrossVolume" &&
+    relation.value === 2.4));
+  assert.ok(wallRelations.informationCoverage.unavailable.some(
+    (item) =>
+      item.capability === "connection-relation" &&
+      item.status === "opaque",
+  ));
+
+  const typeRelations = await session.queryRelations({
+    ...context,
+    expressId: 55,
+    limit: 10,
+  });
+  assert.equal(typeRelations.query.identityKind, "type");
+  assert.deepEqual(
+    typeRelations.items
+      .filter((relation) =>
+        relation.kind === "typed-occurrence")
+      .map((relation) => relation.target.expressId),
+    [40, 44],
+  );
+
+  await assert.rejects(
+    session.queryTree({
+      ...context,
+      revisionId: `${snapshot.revisionId}:stale`,
+      parentExpressId: 19,
+    }),
+    /revisionId is outside the snapshot/u,
+  );
+  await session.dispose();
+  await source.dispose();
+});
+
 test("BimModelSource cache fingerprint is deterministic and path-free", async () => {
   const firstArtifact = await createWebIfcSourceArtifact(mappedBytes(), {
     profile: "ReferenceView_V1.2",

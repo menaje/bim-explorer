@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+    <title>BIM Explorer · Semantic explorer probe</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">BIM Explorer · qualification surface</p>
+          <h1>Semantic model explorer</h1>
+        </div>
+        <div class="header-actions">
+          <p
+            id="status"
+            class="status"
+            data-state="running"
+            role="status"
+            aria-live="polite"
+          >Loading source-bound explorer…</p>
+          <button id="finalize-probe" type="button">
+            Finalize qualification
+          </button>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="BIM exploration workspace">
+        <aside class="panel tree-panel" aria-labelledby="tree-title">
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Structure</p>
+              <h2 id="tree-title">Model tree</h2>
+            </div>
+            <span id="tree-count" class="count">0</span>
+          </div>
+          <div
+            id="model-tree"
+            class="tree"
+            role="tree"
+            aria-label="IFC spatial and product hierarchy"
+          ></div>
+          <p id="tree-omission" class="omission"></p>
+        </aside>
+
+        <section class="center">
+          <form id="search-form" class="search" role="search">
+            <label for="search-input">Search model semantics</label>
+            <div>
+              <input
+                id="search-input"
+                name="query"
+                type="search"
+                value="wall"
+                autocomplete="off"
+              >
+              <button type="submit">Search</button>
+            </div>
+          </form>
+
+          <section class="viewport" aria-labelledby="viewport-title">
+            <div class="viewport-heading">
+              <div>
+                <p class="kicker">Revision-bound view</p>
+                <h2 id="viewport-title">3D selection</h2>
+              </div>
+              <button id="pick-model" type="button">
+                Pick visible element
+              </button>
+            </div>
+            <canvas
+              id="model-canvas"
+              width="640"
+              height="360"
+              aria-label="WebGL2 BIM model"
+            ></canvas>
+          </section>
+
+          <section class="results-panel" aria-labelledby="results-title">
+            <div class="panel-heading">
+              <div>
+                <p class="kicker">Bounded query</p>
+                <h2 id="results-title">Search results</h2>
+              </div>
+              <div class="actions">
+                <button id="more-results" type="button">
+                  More
+                </button>
+                <button id="isolate-results" type="button">
+                  Isolate
+                </button>
+              </div>
+            </div>
+            <div
+              id="search-results"
+              class="results"
+              role="listbox"
+              aria-label="Semantic search results"
+            ></div>
+            <p id="search-omission" class="omission"></p>
+          </section>
+        </section>
+
+        <aside
+          id="inspector"
+          class="panel inspector"
+          aria-labelledby="inspector-title"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Same source revision</p>
+              <h2 id="inspector-title">Properties</h2>
+            </div>
+            <span id="selection-origin" class="count">none</span>
+          </div>
+          <div id="inspector-content"></div>
+        </aside>
+      </section>
+
+      <details>
+        <summary>Qualification receipt</summary>
+        <pre id="receipt">Waiting for Browser interaction…</pre>
+      </details>
+    </main>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

@@ -22,3 +22,9 @@ performance budget을 확인하는 experimental surface입니다. 제품 shell,
 non-background pixel, camera/visibility view sequence와 disposal을 확인하는
 별도 qualification surface입니다. physical GPU, pointer/picking interaction
 이나 production Browser shell을 의미하지 않습니다.
+
+[`semantic-explorer-probe`](semantic-explorer-probe/README.md)는 generated
+semantic IFC의 같은 source session을 bounded semantic query와 WebGL2
+renderer에 연결합니다. spatial hierarchy, property/relation/search,
+실제 3D pick selection sync, 키보드·ARIA, DOM bound와 cleanup을 검증하는
+qualification surface이며 제품 shell은 아닙니다.

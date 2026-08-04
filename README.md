@@ -6,8 +6,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 첫 vertical slice는 read-only IFC입니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
-> 현재 상태: architecture, IFC engine qualification과 첫 read-only source
-> vertical slice 단계입니다.
+> 현재 상태: architecture, IFC engine qualification과 read-only
+> source·3D·semantic explorer vertical slice 단계입니다.
 > 두 후보는 base·mapped synthetic fixture를 통과했고 web-ifc local Browser
 > Worker smoke, bounded local-file/source-session과 model-opened checkpoint
 > 취소·정리, 1,024-Wall scale step과 46.77MB CC BY 4.0 공개 IFC의
@@ -25,6 +25,11 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > switch/editor-exit cleanup을 통과했습니다. physical GPU qualification,
 > 실제 VS Code extension shell, deferred property range, engine 선정, 공용
 > Viewer Core package와 지원 profile은 아직 확정되지 않았습니다.
+> generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
+> tree, occurrence/type, Pset/Qto/material/classification, bounded search,
+> 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
+> Chromium에서 검증했습니다. public semantic scale과 value-level property
+> payload는 아직 보류합니다.
 
 ## 첫 사용자 흐름
 
@@ -158,6 +163,9 @@ Viewer Core admission 상태는
 따릅니다.
 내부 3D renderer 계약의 상태는
 [compatibility/bim-renderer-3d.json](compatibility/bim-renderer-3d.json)을
+따릅니다.
+내부 semantic explorer 계약의 상태는
+[compatibility/bim-semantic-explorer.json](compatibility/bim-semantic-explorer.json)을
 따릅니다.
 실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
 않습니다.

@@ -20,7 +20,8 @@ mapped/shared/Qto/classification 비교는
 production redistribution 승인이 아닙니다.
 
 read-only `BimModelSource`의 raw source fingerprint, deterministic cache,
-tree/property/Render/Pick identity와 bounded immutable geometry range 결과는
+tree/property/Render/Pick identity, bounded tree/search/relation query와
+immutable geometry range 결과는
 [`bim-model-source.json`](bim-model-source.json)과
 [`synthetic mapped source evidence`](evidence/bim-model-source-synthetic-mapped-2026-08-04.json),
 [`public representative source evidence`](evidence/bim-model-source-public-representative-2026-08-04.json)가
@@ -29,6 +30,17 @@ tree/property/Render/Pick identity와 bounded immutable geometry range 결과는
 cleanup을 두 번 재현했습니다. rendered first-frame, deferred property
 range, Browser/VS Code packaging, Viewer Core conformance와 IFC2X3 profile
 admission은 계속 보류합니다.
+
+내부 semantic explorer의 spatial tree, decomposition/containment,
+occurrence/type 왕복, Pset/Qto/material/classification panel, bounded search,
+revision-bound WebGL2 pick selection, isolate, saved view와 keyboard/ARIA
+결과는
+[`bim-semantic-explorer.json`](bim-semantic-explorer.json)과
+[`synthetic Browser evidence`](evidence/bim-semantic-explorer-browser-synthetic-2026-08-04.json)가
+소유합니다. 4,030-byte generated IFC4에서 7-node
+Project→Site→Building→Storey→Space→Wall tree와 두 Wall 검색을 검증했고
+DOM은 8 rows, query는 20회 이하로 제한했습니다. public representative
+scale, value-level property payload와 advanced relation graph는 보류합니다.
 
 내부 3D renderer draft의 source-neutral decode, bounded initial range,
 Render/Pick revision binding, headless resource lifecycle과 Browser WebGL2
@@ -45,8 +57,10 @@ instances와 127,993 instanced triangles를 재현했습니다. 실제 Chromium
 WebGL2 API에 4,399,252 bytes를 upload해 3,182 draws와 67,153
 non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
 같은 allocation으로 perspective fit, orbit·pan·zoom, 64개 Render ID
-hide와 orthographic show-all fit을 4 frames로 검증했습니다. physical GPU
-qualification, visibility 기반 range 계획과 pointer input은 보류합니다.
+hide와 orthographic show-all fit을 4 frames로 검증했습니다. 이후
+visibility 기반 first range, DOM pointer input, progressive cache와
+Browser/VS Code Webview 내부 host lifecycle도 별도 evidence로 통과했습니다.
+physical GPU qualification과 실제 VS Code extension shell은 보류합니다.
 별도 offscreen WebGL2 pass의 화면 중앙 pick은 active revision의 Pick ID로
 해결됐고, 선택 frame은 7,507 highlight pixels를 만들었습니다. context
 loss를 관찰·복원한 뒤 같은 revision을 다시 upload하고 별도 IFC4 source로

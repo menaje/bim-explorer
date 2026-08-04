@@ -7,7 +7,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 
 - `bim-model-source`: bounded source snapshot, range와 source-local identity
 - `bim-renderer-3d`: bounded geometry staging과 generic 3D backend lifecycle
-- `bim-explorer-ui`: model tree, property/relation/search composition
+- `bim-semantic-explorer`: model tree, property/relation/search composition
 - `host-contracts`: Browser/VS Code Host adapter contract
 - `spatial-integration`: optional public handoff와 Spatial overlay bridge
 
@@ -34,6 +34,13 @@ range loading과 pointer/picking/section은 아직 없지만 perspective·
 orthographic fit, orbit·pan·zoom camera state와 revision-bound Render ID
 hide/show core를 검증했습니다. physical GPU qualification과 product Host는
 아직 없습니다.
+
+[`bim-semantic-explorer`](bim-semantic-explorer/README.md)는 bounded source
+query를 spatial/product tree, search, inspector, relation navigation,
+revision-bound 3D selection, isolate와 source-local saved view로 투영합니다.
+generated semantic IFC의 실제 Chromium DOM/WebGL2 probe를 통과했지만
+public representative scale, value-level property payload와 advanced
+relation graph는 보류합니다.
 
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public

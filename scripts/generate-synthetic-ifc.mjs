@@ -228,6 +228,18 @@ export function syntheticMappedIfc() {
   return lines.join("\n");
 }
 
+export function syntheticSemanticIfc() {
+  return syntheticMappedIfc()
+    .replace(
+      "synthetic-mapped.ifc",
+      "synthetic-semantic.ifc",
+    )
+    .replace(
+      ",(#40,#44),#19);",
+      ",(#40,#44),#21);",
+    );
+}
+
 export function syntheticLargeCoordinateIfc() {
   return syntheticMappedIfc()
     .replace(

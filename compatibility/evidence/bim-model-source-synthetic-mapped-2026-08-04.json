@@ -146,6 +146,72 @@
       }
     ]
   },
+  "semanticQueries": {
+    "schema": "bim-explorer-bim-source-semantic-query-result/0.1",
+    "capabilities": [
+      "bounded-tree-query",
+      "bounded-semantic-search",
+      "bounded-relation-query"
+    ],
+    "tree": {
+      "total": 3,
+      "firstExpressId": 21,
+      "firstParentRelation": "decomposition",
+      "secondExpressId": 40,
+      "secondParentRelation": "spatial-containment"
+    },
+    "search": {
+      "total": 2,
+      "firstExpressId": 40,
+      "secondExpressId": 44,
+      "firstRemaining": 1,
+      "finalRemaining": 0
+    },
+    "relations": {
+      "wallKinds": [
+        "classification",
+        "material",
+        "property-set",
+        "quantity",
+        "spatial-container",
+        "type-definition"
+      ],
+      "typeOccurrences": [
+        40,
+        44
+      ],
+      "unavailable": [
+        {
+          "capability": "host-void-fill-relation",
+          "status": "opaque"
+        },
+        {
+          "capability": "connection-relation",
+          "status": "opaque"
+        },
+        {
+          "capability": "write-mutation",
+          "status": "opaque"
+        },
+        {
+          "capability": "full-ifc-object-graph",
+          "status": "opaque"
+        },
+        {
+          "capability": "complex-material-graph",
+          "status": "opaque"
+        },
+        {
+          "capability": "connection-relation-index",
+          "status": "opaque"
+        },
+        {
+          "capability": "georeferencing-map-conversion",
+          "status": "opaque"
+        }
+      ]
+    }
+  },
   "failClosed": {
     "sourceSizeLimitConfiguredBytes": 67108864,
     "sourceSizeLimitRejected": true,
@@ -155,6 +221,7 @@
     "relationIndexBudgetRejected": true,
     "treeNodeBudgetRejected": true,
     "metadataBudgetRejected": true,
+    "semanticCursorMismatchRejected": true,
     "budgetExhaustionRejected": true,
     "staleRevisionRejected": true,
     "mismatchedPickRejected": true,
