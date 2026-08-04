@@ -38,8 +38,8 @@ test("BIM model source compatibility records public multi-range evidence", async
   assert.equal(result.products, 3_569);
   assert.equal(result.triangles, 261_424);
   assert.equal(result.syntheticProducts, 2);
-  assert.equal(result.passedGates, 13);
-  assert.equal(result.heldGates, 4);
+  assert.equal(result.passedGates, 14);
+  assert.equal(result.heldGates, 3);
 });
 
 test("source evidence cannot promote held gates", async () => {
@@ -49,7 +49,7 @@ test("source evidence cannot promote held gates", async () => {
     publicEvidence,
   } = await fixtures();
   const promoted = structuredClone(manifest);
-  promoted.gates.viewerCoreConformance = true;
+  promoted.gates.georeferencingMapConversion = true;
 
   assert.throws(
     () => validateBimModelSourceCompatibility(
@@ -57,7 +57,25 @@ test("source evidence cannot promote held gates", async () => {
       syntheticEvidence,
       publicEvidence,
     ),
-    /viewerCoreConformance must remain held/u,
+    /georeferencingMapConversion must remain held/u,
+  );
+});
+
+test("source Viewer Core claim requires release evidence", async () => {
+  const {
+    manifest,
+    syntheticEvidence,
+    publicEvidence,
+  } = await fixtures();
+  manifest.evidence.viewerCoreRelease =
+    "compatibility/evidence/missing.json";
+  assert.throws(
+    () => validateBimModelSourceCompatibility(
+      manifest,
+      syntheticEvidence,
+      publicEvidence,
+    ),
+    /policy overclaims compatibility/u,
   );
 });
 

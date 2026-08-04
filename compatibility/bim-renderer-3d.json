@@ -158,7 +158,7 @@
     "actualGpuFirstFrame": true,
     "cameraInteraction": true,
     "browserVscodeConformance": true,
-    "viewerCoreConformance": false
+    "viewerCoreConformance": true
   },
   "evidence": {
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
@@ -173,18 +173,17 @@
     "browserCameraInput": "compatibility/evidence/bim-renderer-3d-public-browser-camera-input-2026-08-04.json",
     "browserVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json",
     "browserVscodeHost": "compatibility/evidence/bim-renderer-3d-browser-vscode-host-2026-08-04.json",
-    "browserWorkerLifecycle": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json"
+    "browserWorkerLifecycle": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
+    "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json"
   },
-  "blockers": [
-    "durable Viewer Core package and 3D conformance remain unresolved"
-  ],
+  "blockers": [],
   "policy": {
     "sourceNeutral": true,
     "readOnly": true,
     "spatialAuthority": false,
     "claimRenderedFirstFrame": true,
     "claimPhysicalGpuQualification": false,
-    "claimViewerCoreCompatibility": false,
+    "claimViewerCoreCompatibility": true,
     "claimProductionRenderer": false
   }
 }

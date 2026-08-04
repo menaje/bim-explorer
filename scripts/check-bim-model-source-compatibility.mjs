@@ -18,12 +18,12 @@ const TRUE_GATES = [
   "firstRenderedFrame",
   "deferredSemanticDetailRanges",
   "browserWorkerPackaging",
+  "viewerCoreConformance",
 ];
 const HELD_GATES = [
   "fullPropertyValuePayload",
   "georeferencingMapConversion",
   "sourcePrecisionGeometry",
-  "viewerCoreConformance",
 ];
 const FAIL_CLOSED_ASSERTIONS = [
   "sourceSizeLimitRejected",
@@ -762,6 +762,9 @@ export function validateBimModelSourceCompatibility(
     manifest.evidence?.browserWorkerPackaging !==
       "compatibility/evidence/" +
         "bim-product-shell-browser-public-2026-08-04.json" ||
+    manifest.evidence?.viewerCoreRelease !==
+      "compatibility/evidence/" +
+        "viewer-core-release-2026-08-04.json" ||
     !/^sha256:[0-9a-f]{64}$/u.test(
       manifest.expected?.synthetic?.cacheFingerprint ?? "",
     ) ||
@@ -784,7 +787,7 @@ export function validateBimModelSourceCompatibility(
     manifest.policy?.claimFullPropertyValues !== false ||
     manifest.policy?.claimGeoreferencing !== false ||
     manifest.policy?.claimSourcePrecisionGeometry !== false ||
-    manifest.policy?.claimViewerCoreCompatibility !== false ||
+    manifest.policy?.claimViewerCoreCompatibility !== true ||
     manifest.policy?.claimProductionIfcSupport !== false
   ) {
     throw new Error("BIM model source policy overclaims compatibility");

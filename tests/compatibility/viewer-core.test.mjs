@@ -6,52 +6,78 @@ import {
   validateViewerCoreManifest,
 } from "../../scripts/check-viewer-core-compatibility.mjs";
 
-async function manifest() {
-  return JSON.parse(
+async function inputs() {
+  const manifest = JSON.parse(
     await readFile("compatibility/viewer-core.json", "utf8"),
   );
+  const evidence = JSON.parse(
+    await readFile(
+      manifest.observations.releaseArtifactProbe.evidence,
+      "utf8",
+    ),
+  );
+  return { evidence, manifest };
 }
 
-test("Viewer Core compatibility is explicitly unresolved", async () => {
-  const report = validateViewerCoreManifest(await manifest());
-  assert.equal(report.status, "unresolved");
-  assert.equal(report.passedGates, 0);
-  assert.ok(report.blockerCount >= 4);
-  assert.equal(report.localProbe, "passed-local-workspace-only");
+test("public Viewer Core release is admitted as experimental", async () => {
+  const { evidence, manifest } = await inputs();
+  const report = validateViewerCoreManifest(
+    manifest,
+    evidence,
+  );
+  assert.equal(report.status, "experimental");
+  assert.equal(report.passedGates, 8);
+  assert.equal(report.blockerCount, 3);
+  assert.equal(
+    report.localProbe,
+    "passed-local-workspace-only",
+  );
 });
 
-test("local workspace evidence cannot be promoted to admission evidence", async () => {
-  const value = await manifest();
-  value.observations.localWorkspaceProbe.admissionEvidence = true;
+test("local workspace evidence cannot become admission evidence", async () => {
+  const { evidence, manifest } = await inputs();
+  manifest.observations.localWorkspaceProbe.admissionEvidence =
+    true;
   assert.throws(
-    () => validateViewerCoreManifest(value),
+    () => validateViewerCoreManifest(manifest, evidence),
     /must remain non-admission evidence/u,
   );
 });
 
-test("an unresolved manifest rejects an invented version pin", async () => {
-  const value = await manifest();
-  value.pin = {
-    viewerCore: "@dwg-viewer/viewer-core@0.1.0",
-  };
+test("Viewer Core release evidence rejects a changed artifact", async () => {
+  const { evidence, manifest } = await inputs();
+  evidence.packages.viewerCore.installedContent.sha256 =
+    "0".repeat(64);
   assert.throws(
-    () => validateViewerCoreManifest(value),
-    /cannot have a pin/u,
+    () => validateViewerCoreManifest(manifest, evidence),
+    /release identity is invalid/u,
   );
 });
 
-test("an unresolved manifest rejects optimistic compatibility claims", async () => {
-  const value = await manifest();
-  value.admissionGates.durableArtifact = true;
+test("Viewer Core compatibility rejects a changed package pin", async () => {
+  const { evidence, manifest } = await inputs();
+  manifest.pin.renderProtocol.sha256 = "0".repeat(64);
   assert.throws(
-    () => validateViewerCoreManifest(value),
-    /cannot claim passed admission gates/u,
+    () => validateViewerCoreManifest(manifest, evidence),
+    /compatibility pin is invalid/u,
+  );
+});
+
+test("public preview cannot claim production compatibility", async () => {
+  const { evidence, manifest } = await inputs();
+  manifest.policy.productionClaims = true;
+  assert.throws(
+    () => validateViewerCoreManifest(manifest, evidence),
+    /must remain preview-only/u,
   );
 
-  value.admissionGates.durableArtifact = false;
-  value.policy.claimCompatibility = true;
+  const second = await inputs();
+  second.manifest.status = "qualified";
   assert.throws(
-    () => validateViewerCoreManifest(value),
-    /must fail closed/u,
+    () => validateViewerCoreManifest(
+      second.manifest,
+      second.evidence,
+    ),
+    /upstream identity is invalid/u,
   );
 });

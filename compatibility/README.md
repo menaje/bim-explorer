@@ -9,6 +9,12 @@
 
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
+공개 `@menaje/viewer-core`와 render protocol 0.1.0 prerelease의 exact
+release URL·SHA-256·lock integrity·installed content digest, 실제 BIM
+source/renderer와 Browser/VS Code host conformance는
+[`release evidence`](evidence/viewer-core-release-2026-08-04.json)에
+기록합니다. 상태는 `experimental`이며 stable/production이나 Coni Spatial
+consumer 적용을 주장하지 않습니다.
 
 Browser 제품 shell과 VS Code `.ifc` read-only Custom Editor의 동일
 source/render projection, 실제 Chromium WebGL2, local Worker lifecycle,
@@ -25,8 +31,9 @@ model/renderer projection, path-free bridge와 close cleanup을 다시
 통과했습니다. 46.77MB CC BY 4.0 공개 IFC도 두 제품 runtime에서
 3,569 products·261,424 triangles·3 ranges와 같은 4,193,868-byte 첫-range
 WebGL2 projection으로 열고 정리했습니다. 계정·upload·telemetry·Coni
-Spatial 의존성은 없으며, public Viewer Core conformance, IFC2X3 profile
-admission, physical GPU와 marketplace release는 계속 보류합니다.
+Spatial 의존성은 없으며, 제품 entrypoint의 public Viewer Core 채택,
+IFC2X3 profile admission, physical GPU와 marketplace release는 계속
+보류합니다.
 
 IFC engine 후보와 draft profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
@@ -49,8 +56,9 @@ immutable geometry range 결과는
 읽습니다. 3,504 renderable/65 non-renderable product의 identity와 cleanup도
 두 번 재현했습니다. rendered first-frame과 Browser/VS Code packaging은
 별도 evidence에서 통과했습니다. property-set value payload,
-georeferencing, source-precision 분리, Viewer Core conformance와 IFC2X3
-profile admission은 계속 보류합니다.
+georeferencing, source-precision 분리와 IFC2X3 profile admission은 계속
+보류합니다. 별도 Viewer Core release evidence로 source conformance는
+통과했습니다.
 
 내부 semantic explorer의 spatial tree, decomposition/containment,
 occurrence/type 왕복, Pset/Qto/material/classification panel, bounded search,
@@ -81,14 +89,15 @@ non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
 hide와 orthographic show-all fit을 4 frames로 검증했습니다. 이후
 visibility 기반 first range, DOM pointer input, progressive cache와
 Browser/VS Code Webview 내부 host lifecycle도 별도 evidence로 통과했습니다.
-physical GPU qualification과 실제 VS Code extension shell은 보류합니다.
+physical GPU qualification은 보류합니다.
 별도 offscreen WebGL2 pass의 화면 중앙 pick은 active revision의 Pick ID로
 해결됐고, 선택 frame은 7,507 highlight pixels를 만들었습니다. context
 loss를 관찰·복원한 뒤 같은 revision을 다시 upload하고 별도 IFC4 source로
 전환해 세 mount의 allocation을 모두 회수했습니다. section frame은
 single plane과 six-plane box로 pixel을 줄이고 복구했으며, GPU depth로
 복원한 source-world 점에서 distance·area·angle을 계산했습니다. 단위는
-source-coordinate-unit이며 Host conformance는 계속 보류합니다.
+source-coordinate-unit입니다. Browser/VS Code Webview host와 Viewer Core
+contract host conformance는 각각 별도 evidence에서 통과했습니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
@@ -139,3 +148,7 @@ Sibling checkout을 이용한 local probe는
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만
 durable artifact, clean install 또는 public compatibility를 증명하지
 않습니다.
+
+public compatibility admission에는 sibling checkout 결과를 사용하지 않고
+[`evidence/viewer-core-release-2026-08-04.json`](evidence/viewer-core-release-2026-08-04.json)의
+immutable release install과 실제 BIM 3D conformance만 사용합니다.

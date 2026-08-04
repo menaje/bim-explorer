@@ -22,7 +22,7 @@ last_reviewed: 2026-08-03
 | [IFC engine qualification](ifc-engine-qualification.md) | `qualification` · `active` | 후보 측정, draft profile과 선정 Gate |
 | [결정 대장](decision-register.md) | `register` · `active` | 사실, 결정과 열린 질문 |
 | [ADR-0001](adr/ADR-0001-independent-product-boundary.md) | `adr` · `accepted` | 독립 제품·저장소·release 결정 |
-| [ADR-0002](adr/ADR-0002-viewer-core-consumer-admission.md) | `adr` · `accepted` | 공용 Viewer Core consumer admission과 namespace 보류 |
+| [ADR-0002](adr/ADR-0002-viewer-core-consumer-admission.md) | `adr` · `accepted` | 공용 Viewer Core artifact와 3D consumer admission |
 
 ## 문서 상태
 

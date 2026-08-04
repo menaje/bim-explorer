@@ -398,7 +398,11 @@ test("Browser Worker client force-terminates an unresponsive cancellation", asyn
     assert.equal(error.receipt.outcome, "cancelled-forced");
     assert.equal(error.receipt.cancelled, true);
     assert.equal(error.receipt.cooperativeCancellation, false);
-    assert.ok(error.receipt.cancellationWaitMs >= 1);
+    assert.ok(
+      Number.isFinite(error.receipt.cancellationWaitMs) &&
+        error.receipt.cancellationWaitMs >= 0 &&
+        error.receipt.cancellationWaitMs <= 250,
+    );
     assert.equal(worker.terminated, true);
     return true;
   });
@@ -467,7 +471,11 @@ test("Browser Worker force-terminates after the model-open call checkpoint", asy
     assert.equal(error.receipt.outcome, "cancelled-forced");
     assert.equal(error.receipt.cancelled, true);
     assert.equal(error.receipt.cooperativeCancellation, false);
-    assert.ok(error.receipt.cancellationWaitMs >= 1);
+    assert.ok(
+      Number.isFinite(error.receipt.cancellationWaitMs) &&
+        error.receipt.cancellationWaitMs >= 0 &&
+        error.receipt.cancellationWaitMs <= 250,
+    );
     assert.equal(
       error.receipt.lastPhase,
       "model-open-call-starting",

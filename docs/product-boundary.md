@@ -6,7 +6,7 @@ authority:
   - product-responsibility
   - source-identity-boundary
   - standalone-product-invariants
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # 제품과 저장소 경계
@@ -40,9 +40,10 @@ IFC입니다.
 | revision/diff | 없음 | source snapshot만 | authority |
 | accept/publish/export | 없음 | 없음 | human-only authority |
 
-Viewer Core와 render protocol은 source-neutral public contract가 준비되면 세
-제품이 공유합니다. 상대 제품의 설치된 extension, process 또는 private
-message를 기본 integration으로 사용하지 않습니다.
+Viewer Core와 render protocol은 공개 `@menaje/*` 0.1 contract를 exact
+artifact로 공유합니다. 상대 제품의 설치된 extension, process 또는 private
+message를 기본 integration으로 사용하지 않습니다. prerelease 소비와 각
+제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다.
 
 ## Identity 경계
 

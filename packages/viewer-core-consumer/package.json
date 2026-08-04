@@ -2,10 +2,15 @@
   "name": "@bim-explorer/viewer-core-consumer",
   "version": "0.0.0",
   "private": true,
-  "description": "Pre-conformance BIM 3D consumer probe for an external Viewer Core artifact",
+  "description": "BIM 3D consumer for the public Viewer Core artifact",
   "license": "UNLICENSED",
   "type": "module",
   "exports": "./src/index.mjs",
+  "dependencies": {
+    "@bim-explorer/bim-model-source": "0.0.0",
+    "@menaje/viewer-core": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-core-0.1.0.tgz",
+    "@menaje/viewer-render-protocol": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-render-protocol-0.1.0.tgz"
+  },
   "engines": {
     "node": ">=24"
   }

@@ -12,3 +12,9 @@ export {
   createPerspectiveCamera,
 } from "./mock-3d-presentation.mjs";
 export { MockViewerHost } from "./mock-host.mjs";
+export {
+  VIEWER_RENDER_PROTOCOL_VERSION,
+  ViewerCoreBimRenderSource,
+  createViewerCoreBimRendererMount,
+  createViewerCoreBimRenderSource,
+} from "./bim-model-render-source.mjs";

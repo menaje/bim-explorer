@@ -5,7 +5,7 @@ authority:
   - open-source-product-boundary
   - spatial-commercial-boundary
   - license-decision-gates
-last_reviewed: 2026-08-03
+last_reviewed: 2026-08-04
 ---
 
 # 오픈소스 Explorer와 유료 Spatial 경계
@@ -44,7 +44,9 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 
 ## 공개 전 Gate
 
-- exact Viewer Core와 IFC engine dependency 고정
+- exact Viewer Core dependency 고정
+  (`@menaje/*` 0.1.0 prerelease Gate 통과)
+- exact IFC engine dependency와 production package 고정
 - static/dynamic/WASM/process 결합 방식 기록
 - LICENSE, NOTICE와 source 제공 의무 검토
 - synthetic fixture redistribution 확인

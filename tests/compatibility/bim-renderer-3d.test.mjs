@@ -100,8 +100,21 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
     "browser",
     "vscode-webview",
   ]);
-  assert.equal(result.passedGates, 20);
-  assert.equal(result.heldGates, 1);
+  assert.equal(result.passedGates, 21);
+  assert.equal(result.heldGates, 0);
+});
+
+test("BIM renderer Viewer Core claim requires release evidence", async () => {
+  const { manifest, evidence } = await fixtures();
+  manifest.evidence.viewerCoreRelease =
+    "compatibility/evidence/missing.json";
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(
+      manifest,
+      evidence,
+    ),
+    /policy overclaims compatibility/u,
+  );
 });
 
 test("Browser evidence is required for the GPU first-frame gate", async () => {

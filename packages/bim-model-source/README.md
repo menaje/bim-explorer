@@ -42,5 +42,7 @@ session의 반복 선택은 immutable 결과를 재사용합니다. property set
 [`bim-source-artifact/0.2`](../../specs/bim-source-artifact-v0.2.md)와
 `bim-explorer-bim-source/0.2`입니다.
 
-공용 Viewer Core의 durable package와 conformance가 아직 없으므로 이
-package는 Viewer Core 호환성을 주장하지 않습니다.
+공개 `@menaje/viewer-core` 0.1.0 prerelease의 conformance runner에서 이
+source의 3D projection, bounded range, identity, stale 거부와 disposal을
+통과했습니다. stable/production compatibility와 제품 entrypoint 채택은
+별도 Gate입니다.

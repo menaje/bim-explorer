@@ -3,20 +3,23 @@ type: adr
 status: accepted
 authority:
   - viewer-core-consumer-admission
-  - viewer-namespace-hold
-last_reviewed: 2026-08-03
+  - viewer-namespace-admission
+last_reviewed: 2026-08-04
 decision_id: ADR-0002
 ---
 
-# ADR-0002: Viewer Core consumer admission과 namespace 보류
+# ADR-0002: Viewer Core consumer admission
 
 ## Context
 
 `menaje/dwg-viewer`는 source-neutral lifecycle, range, identity, selection과
-delta contract의 첫 구현을 갖고 있습니다. 그러나 2026-08-03 관찰한
-package는 `@dwg-viewer/viewer-core`와 `@dwg-viewer/render-protocol` 0.1.0,
-`private`, `workspace-only`, `experimental`입니다. protocol ID도
-`dwg-viewer-render-protocol/0.1.0`입니다.
+delta contract의 첫 구현을 갖고 있습니다. 2026-08-03 최초 관찰에서는
+`@dwg-viewer/*` private workspace package뿐이어서 외부 소비가 불가능했습니다.
+
+2026-08-04 upstream은 중립 namespace의 `@menaje/viewer-core`와
+`@menaje/viewer-render-protocol` 0.1.0을 immutable GitHub prerelease
+asset으로 발행했습니다. protocol ID는
+`menaje-viewer-render-protocol/0.1.0`입니다.
 
 BIM Explorer가 이를 상대 checkout의 `file:`/`workspace:` dependency로
 사용하면 standalone clean install과 durable compatibility를 증명하지
@@ -34,23 +37,28 @@ protocol이 생깁니다.
 
 ## Decision
 
-대안 4를 선택합니다.
+대안 4를 선택했고, 2026-08-04 admission 조건을 public preview 범위에서
+충족했습니다.
 
 - Viewer Core 구현과 conformance fixture를 복사하지 않습니다.
 - root와 package manifest에 sibling checkout `file:`, `link:` 또는
   `workspace:` dependency를 추가하지 않습니다.
-- current `@dwg-viewer/*` 이름과 protocol ID를 BIM Explorer의 public
-  compatibility로 주장하지 않습니다.
+- `@menaje/*` package와 protocol ID를 producer가 발행한 exact identity로
+  소비합니다.
 - `compatibility/viewer-core.json`이 observed upstream 상태, blocker와
   admission Gate를 소유합니다.
-- durable artifact가 준비되면 exact artifact digest/version을 pin하고
-  upstream conformance runner를 실제 `BimModelSource`와 3D Host에
-  실행합니다.
-- neutral namespace는 DWG Viewer, BIM Explorer와 Coni Spatial이 같은
-  breaking release/migration fixture에 합의한 뒤 확정합니다.
+- release asset URL, SHA-256, npm integrity와 installed content digest를
+  pin합니다.
+- upstream conformance runner를 실제 `BimModelSource`, bounded 3D
+  renderer와 Browser/VS Code Host에 실행합니다.
+- `experimental` compatibility만 주장하며 prerelease를 stable/production
+  compatibility로 자동 승격하지 않습니다.
+- Coni Spatial은 자신의 저장소에서 같은 artifact를 별도로 pin하고
+  consumer conformance를 통과해야 합니다.
 
-현재 상태 검증은 성공적인 호환성 주장이 아니라 과장된 pin과 relative
-checkout 결합을 막는 repository Gate입니다.
+현재 admission은 package/source/renderer contract의 public preview입니다.
+Browser/VS Code 제품 entrypoint 채택과 Coni Spatial integration은 이
+결정만으로 완료되지 않습니다.
 
 ## 거부 이유
 
@@ -65,19 +73,19 @@ consumer가 발명해 상호운용성을 거짓으로 주장합니다.
 
 ## 영향 범위
 
-- #3은 compatibility manifest와 admission checker부터 진행합니다.
-- `BimModelSource` conformance, renderer contract와 cross-repository CI는
-  durable upstream artifact 전까지 미완료로 남습니다.
+- #3은 exact artifact와 3D consumer conformance로 완료할 수 있습니다.
+- `BimModelSource`와 renderer의 Viewer Core Gate는 통과합니다.
+- Browser/VS Code 제품 entrypoint 채택은 #9 integration Gate에 남습니다.
 - #4 IFC engine qualification은 Viewer Core source를 import하지 않는
   독립 process/fixture spike로 진행할 수 있습니다.
-- public package가 나오기 전 BIM Explorer source/renderer 구현은 internal
-  interface일 수 있지만 Viewer Core 호환을 표시하지 않습니다.
+- BIM Explorer의 internal source protocol과 renderer contract는 그대로
+  유지하고 얇은 public Viewer Core adapter에서 변환합니다.
 
 ## Rollback과 revisit
 
-upstream이 public package 또는 immutable GitHub Release artifact, exact
-protocol version, license metadata와 reusable conformance runner를 제공하면
-manifest를 `experimental`로 올리고 실제 3D consumer test를 실행합니다.
+upstream stable release가 나오면 새 asset digest, license/NOTICE와 migration
+fixture를 재검증한 뒤 `qualified` 승격을 별도로 결정합니다. prerelease tag
+이동이나 semver 범위만으로 자동 승격하지 않습니다.
 
 3D consumer가 current contract의 2D camera/renderer assumption을 발견하면
 기존 0.1 의미를 조용히 확장하지 않고 neutral next version과 migration

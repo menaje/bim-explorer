@@ -1,0 +1,219 @@
+{
+  "schema": "bim-explorer-viewer-core-release-qualification/1",
+  "status": "passed-public-preview",
+  "asOf": "2026-08-04",
+  "release": {
+    "repository": "menaje/dwg-viewer",
+    "tag": "viewer-core-v0.1.0",
+    "tagCommit": "fb25718468f1f0b1a9bac666035a0c8277f51a19",
+    "releaseUrl": "https://github.com/menaje/dwg-viewer/releases/tag/viewer-core-v0.1.0",
+    "publishedAt": "2026-08-03T21:35:56Z",
+    "releaseStage": "prerelease",
+    "tagPublicationApproved": true,
+    "automaticStablePromotion": false
+  },
+  "packages": {
+    "viewerCore": {
+      "package": "@menaje/viewer-core",
+      "version": "0.1.0",
+      "public": true,
+      "license": "MPL-2.0",
+      "licenseSha256": "eb5d29267fb807449697736cbcff74acfeebf36f9cb5305417dc440545a1fef9",
+      "releaseAsset": {
+        "file": "menaje-viewer-core-0.1.0.tgz",
+        "url": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-core-0.1.0.tgz",
+        "publishedSha256": "2a04c367b5b2cf5870f5f18f33e2a1d8e545f099f0dd735c7e5d90f8224b698d",
+        "publishedBytes": 44323
+      },
+      "lock": {
+        "resolved": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-core-0.1.0.tgz",
+        "integrity": "sha512-GPHRWsXuE5feI/+gTeBuBFIrEmG0pNSYr83qRFkFCDYQHQ5wuH7U/g5RktH1H9inpjr83AZRTtiKtW9R5K9oBA=="
+      },
+      "installedContent": {
+        "entries": 30,
+        "sha256": "db4edb620f5f34c355d3030a16b703fed0f76f4f602d03737303683ce8269adb"
+      }
+    },
+    "renderProtocol": {
+      "package": "@menaje/viewer-render-protocol",
+      "version": "0.1.0",
+      "public": true,
+      "license": "MPL-2.0",
+      "licenseSha256": "eb5d29267fb807449697736cbcff74acfeebf36f9cb5305417dc440545a1fef9",
+      "releaseAsset": {
+        "file": "menaje-viewer-render-protocol-0.1.0.tgz",
+        "url": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-render-protocol-0.1.0.tgz",
+        "publishedSha256": "60e952677c17333fbdb07193ef87cafb1a0be9923573ac5366297a19cfc8b9ed",
+        "publishedBytes": 11158
+      },
+      "lock": {
+        "resolved": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.0/menaje-viewer-render-protocol-0.1.0.tgz",
+        "integrity": "sha512-oVO2anfxt7TUv4JTdeZ/Lca+Y9khLuSkjztlQXxzYkjR8JAg8WLiiZXd4I8avQGuiGbqKrUACwl5yLAo9PptMQ=="
+      },
+      "installedContent": {
+        "entries": 9,
+        "sha256": "cf86c55a3d6f1afc64d42d3de6e80f5796fbe00b0b8e3eb0b15af465e0f78c09"
+      }
+    }
+  },
+  "identities": {
+    "viewerCoreApi": "menaje-viewer-core/0.1",
+    "renderProtocol": "menaje-viewer-render-protocol/0.1.0",
+    "consumerPackage": "@bim-explorer/viewer-core-consumer",
+    "bimSourceProtocol": "bim-explorer-bim-source/0.2",
+    "bimRendererContract": "bim-explorer-bim-renderer-3d/0.1"
+  },
+  "conformance": {
+    "mockLifecycle": {
+      "protocolVersion": "0.1.0",
+      "sessionId": "session:bim-explorer:mock",
+      "sourceId": "source:bim-explorer:mock-ifc",
+      "revisionId": "source-snapshot:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "snapshotId": "snapshot:bim-explorer:mock-ifc:0",
+      "layers": 1,
+      "rangeBytes": 4,
+      "disposed": true
+    },
+    "mockDelta": {
+      "protocolVersion": "0.1.0",
+      "sessionId": "session:bim-explorer:delta",
+      "sourceId": "source:bim-explorer:delta",
+      "revisionId": "source-snapshot:sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "snapshotId": "snapshot:bim-explorer:delta:base",
+      "layers": 1,
+      "rangeBytes": 0,
+      "disposed": true,
+      "baseSnapshotId": "snapshot:bim-explorer:delta:base",
+      "deltaCount": 2,
+      "staleRejected": true,
+      "operations": 2
+    },
+    "actualBimLifecycle": {
+      "protocolVersion": "0.1.0",
+      "sessionId": "session:bim-source:400071d0a99f14ef37c46560",
+      "sourceId": "source:ifc:400071d0a99f14ef37c46560",
+      "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "snapshotId": "snapshot:bim-source:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0",
+      "layers": 1,
+      "rangeBytes": 4,
+      "disposed": true
+    },
+    "actualBimRendererHosts": [
+      {
+        "host": "browser",
+        "protocolVersion": "0.1.0",
+        "representation": "3d",
+        "source": {
+          "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+          "ifcSchema": "IFC4",
+          "profile": "ReferenceView_V1.2",
+          "sourceBytes": 4028,
+          "geometryRangeBytes": 996
+        },
+        "renderer": {
+          "backend": "headless",
+          "actualGpu": false,
+          "rangeIds": [
+            "range:ifc:geometry:0"
+          ],
+          "geometryRecords": 1,
+          "instances": 2,
+          "instancedTriangles": 24,
+          "drawCalls": 2,
+          "uploadedBytes": 1120
+        },
+        "identity": {
+          "expressId": 40,
+          "renderId": "render:ifc:400071d0a99f14ef:40",
+          "pickId": "pick:ifc:400071d0a99f14ef:40",
+          "externalIdentityToken": "ifc-globalid:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0AAAAAAAAAAAAAAAAAAA16"
+        },
+        "stalePick": {
+          "rejected": true,
+          "code": "VIEWER_RENDER_STALE_REVISION"
+        },
+        "hostEvents": 1,
+        "cleanup": {
+          "runtimeDisposed": true,
+          "hostDisposed": true,
+          "sourceDisposed": true,
+          "sourceSessionDisposed": true,
+          "rendererDisposed": true,
+          "rendererUnmounts": 1,
+          "backendDisposed": true,
+          "backendUnmounts": 1,
+          "backendActiveBytes": 0,
+          "repeatedDisposalIdempotent": true
+        }
+      },
+      {
+        "host": "vscode",
+        "protocolVersion": "0.1.0",
+        "representation": "3d",
+        "source": {
+          "sha256": "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+          "ifcSchema": "IFC4",
+          "profile": "ReferenceView_V1.2",
+          "sourceBytes": 4028,
+          "geometryRangeBytes": 996
+        },
+        "renderer": {
+          "backend": "headless",
+          "actualGpu": false,
+          "rangeIds": [
+            "range:ifc:geometry:0"
+          ],
+          "geometryRecords": 1,
+          "instances": 2,
+          "instancedTriangles": 24,
+          "drawCalls": 2,
+          "uploadedBytes": 1120
+        },
+        "identity": {
+          "expressId": 40,
+          "renderId": "render:ifc:400071d0a99f14ef:40",
+          "pickId": "pick:ifc:400071d0a99f14ef:40",
+          "externalIdentityToken": "ifc-globalid:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243:0AAAAAAAAAAAAAAAAAAA16"
+        },
+        "stalePick": {
+          "rejected": true,
+          "code": "VIEWER_RENDER_STALE_REVISION"
+        },
+        "hostEvents": 1,
+        "cleanup": {
+          "runtimeDisposed": true,
+          "hostDisposed": true,
+          "sourceDisposed": true,
+          "sourceSessionDisposed": true,
+          "rendererDisposed": true,
+          "rendererUnmounts": 1,
+          "backendDisposed": true,
+          "backendUnmounts": 1,
+          "backendActiveBytes": 0,
+          "repeatedDisposalIdempotent": true
+        }
+      }
+    ],
+    "assertions": {
+      "immutableReleaseInstall": true,
+      "neutralNamespace": true,
+      "sourceLifecycle": true,
+      "boundedRangeRead": true,
+      "threeDimensionalRendererMount": true,
+      "externalIdentity": true,
+      "staleRevisionRejected": true,
+      "orderedDelta": true,
+      "browserHostLifecycle": true,
+      "vscodeHostLifecycle": true,
+      "deterministicDisposal": true,
+      "pathFreeEvidence": true
+    }
+  },
+  "decision": {
+    "compatibility": "passed-public-preview",
+    "productionStableRelease": "held-upstream-prerelease",
+    "actualGpuQualification": "held-existing-product-evidence-only",
+    "coniSpatialConsumerQualification": "held-consumer-owned",
+    "productionClaims": false
+  }
+}

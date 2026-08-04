@@ -24,10 +24,9 @@ const TRUE_GATES = [
   "cameraInteraction",
   "visibilityDrivenFirstFrame",
   "browserVscodeConformance",
-];
-const HELD_GATES = [
   "viewerCoreConformance",
 ];
+const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
   "repeatedMountIdentity",
   "boundedInitialRangeRead",
@@ -2647,7 +2646,7 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "web-ifc-browser-public-representative-" +
         "performance-2026-08-03.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 13 ||
+    Object.keys(manifest.evidence ?? {}).length !== 14 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2657,7 +2656,10 @@ export function validateBimRenderer3dCompatibility(
     manifest.policy?.spatialAuthority !== false ||
     manifest.policy?.claimRenderedFirstFrame !== true ||
     manifest.policy?.claimPhysicalGpuQualification !== false ||
-    manifest.policy?.claimViewerCoreCompatibility !== false ||
+    manifest.evidence?.viewerCoreRelease !==
+      "compatibility/evidence/" +
+        "viewer-core-release-2026-08-04.json" ||
+    manifest.policy?.claimViewerCoreCompatibility !== true ||
     manifest.policy?.claimProductionRenderer !== false
   ) {
     throw new Error("BIM renderer policy overclaims compatibility");

@@ -76,7 +76,7 @@
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json"
   },
   "blockers": [
-    "public Viewer Core artifact and conformance remain unresolved in issue #3",
+    "product entrypoints have not adopted the qualified public Viewer Core consumer",
     "actual physical GPU qualification is not claimed",
     "marketplace release remains behind license and release gates"
   ],

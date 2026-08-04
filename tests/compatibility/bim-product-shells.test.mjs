@@ -64,7 +64,7 @@ test("product shells pin the same source and render projection", async () => {
   );
 });
 
-test("product shells cannot promote unresolved Viewer Core", async () => {
+test("product shells cannot claim unintegrated Viewer Core", async () => {
   const values = await fixtures();
   values.manifest.gates.publicViewerCoreConformance = true;
   assert.throws(

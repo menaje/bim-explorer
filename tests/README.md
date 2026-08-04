@@ -57,8 +57,13 @@ Express ID/GlobalId/Render/Pick lookup, 비렌더링 product identity,
 bounded tree/search/relation query, query-bound cursor, bounded range read와
 stale·malformed artifact 거부를 검사합니다. 별도 공개
 fixture qualification은 46.77MB IFC2X3의 3개 range와 첫 range 단독 read를
-두 번 확인합니다. 공용 Viewer Core conformance나 rendered first-frame
-test는 아닙니다.
+두 번 확인합니다. 공용 Viewer Core와 rendered first-frame은 별도 release
+qualification/evidence가 소유합니다.
+
+`viewer-core-release` test는 exact public release package의 설치 content
+digest, upstream source/delta conformance와 실제 IFC→BIM source→3D renderer
+Browser/VS Code host lifecycle을 검사합니다. prerelease를 stable 또는
+production compatibility로 승격하지 않습니다.
 
 `semantic` test는 Storey→Space→Wall→Type→Occurrence 왕복, Pset/Qto,
 material/classification panel, paged search와 explicit omission,
