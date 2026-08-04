@@ -190,7 +190,7 @@
   "decision": {
     "explorerProviderContract": "passed-synthetic-bridge",
     "actualSpatialConsumer": "held-consumer-owned",
-    "publicBimPackage": "held-community-release",
+    "publicBimPackage": "held-consumer-package-admission",
     "spatialBundleIndependence": "held-spatial-product-evidence",
     "productionClaims": false
   }

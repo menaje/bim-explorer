@@ -451,7 +451,7 @@ export async function qualifySpatialIntegration() {
       actualSpatialConsumer:
         "held-consumer-owned",
       publicBimPackage:
-        "held-community-release",
+        "held-consumer-package-admission",
       spatialBundleIndependence:
         "held-spatial-product-evidence",
       productionClaims: false,

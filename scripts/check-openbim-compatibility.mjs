@@ -272,7 +272,7 @@ export function validateOpenBimCompatibility(
     evidence.decision.spatialRevisionDiagnosticLinkage !==
       "held-spatial-owned" ||
     evidence.decision.publicPackage !==
-      "held-community-release" ||
+      "held-independent-package-admission" ||
     evidence.decision.productionClaims !== false
   ) {
     throw new Error(

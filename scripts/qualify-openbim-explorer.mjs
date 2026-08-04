@@ -449,7 +449,7 @@ export async function qualifyOpenBimExplorer() {
       automaticBsddLookup: "prohibited",
       spatialRevisionDiagnosticLinkage:
         "held-spatial-owned",
-      publicPackage: "held-community-release",
+      publicPackage: "held-independent-package-admission",
       productionClaims: false,
     },
   };

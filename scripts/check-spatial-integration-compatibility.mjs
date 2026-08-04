@@ -190,7 +190,7 @@ function validateEvidence(evidence) {
     evidence.decision?.actualSpatialConsumer !==
       "held-consumer-owned" ||
     evidence.decision?.publicBimPackage !==
-      "held-community-release" ||
+      "held-consumer-package-admission" ||
     evidence.decision?.spatialBundleIndependence !==
       "held-spatial-product-evidence" ||
     evidence.decision?.productionClaims !== false

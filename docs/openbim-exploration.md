@@ -77,4 +77,4 @@ HTTP URI, offline cache miss, 404와 service unavailable을 다른 상태로
 - live bSDD service를 CI/제품 가용성 전제에 포함
 - Spatial validation-to-revision diagnostic linkage
 - BCF API collaboration과 mutation
-- Community public package
+- independently versioned public package admission

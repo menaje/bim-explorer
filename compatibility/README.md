@@ -171,7 +171,8 @@ Context Reference, BIM base + Spatial live/diff layer와 authority-free handoff�
 [`synthetic bridge evidence`](evidence/spatial-integration-synthetic-2026-08-04.json)가
 소유합니다. Explorer provider contract는 통과했지만 실제 Spatial service
 consumer, standalone Spatial bundle과 public integration package는
-consumer/release-owned Gate로 계속 보류합니다.
+consumer package admission Gate로 계속 보류합니다. MPL-2.0 source 자체는
+Community v0.1.0 source archive에 공개돼 있습니다.
 
 BCF XML 3.0 local archive, IDS 1.0 document/result와 bSDD URI의 source-bound
 read-only 탐색은

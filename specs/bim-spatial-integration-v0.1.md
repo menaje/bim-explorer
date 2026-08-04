@@ -117,7 +117,7 @@ generated IFC4와 deterministic synthetic Spatial bridge에서 source mapping,
 
 - 실제 Coni Spatial service bridge conformance
 - BIM Explorer 설치가 없는 Spatial bundle qualification
-- Community release의 public BIM integration package
+- independently versioned public consumer package admission
 
 이 Gate가 없으면 `experimental` provider contract 이상을 주장하지
 않습니다.

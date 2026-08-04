@@ -325,4 +325,4 @@ source/revision/owner를 합치지 않습니다.
 
 현재 generated IFC4와 synthetic bridge provider conformance만 통과했습니다.
 실제 Spatial consumer, standalone Spatial bundle과 public BIM package는
-각각 Spatial #8/#16과 Community release Gate가 소유합니다.
+각각 Spatial #8/#16과 consumer package admission Gate가 소유합니다.
