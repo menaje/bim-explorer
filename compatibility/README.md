@@ -7,6 +7,10 @@
 - `qualified`: 공개 profile과 release Gate를 통과
 - `blocked`: 필수 license, safety 또는 conformance Gate 실패
 
+Community 제품 공개 상태는
+[`community-release.json`](community-release.json)이 license, privacy,
+SBOM, reproducibility와 remote publication Gate를 분리해 소유합니다.
+
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
 공개 `@menaje/viewer-core`와 render protocol package 0.1.2 prerelease의 exact

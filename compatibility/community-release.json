@@ -1,0 +1,65 @@
+{
+  "schema": "bim-explorer-community-release-compatibility/1",
+  "status": "release-candidate",
+  "asOf": "2026-08-04",
+  "release": {
+    "product": "BIM Explorer Community",
+    "version": "0.1.0",
+    "expectedTag": "v0.1.0",
+    "officialChannel": "https://github.com/menaje/bim-explorer/releases",
+    "implementationLicense": "MPL-2.0",
+    "specificationLicense": "Apache-2.0"
+  },
+  "gates": {
+    "ownCodeMpl20": true,
+    "publicSpecsApache20": true,
+    "packageSpdxDeclared": true,
+    "exactDependencyIntegrity": true,
+    "thirdPartyNotices": true,
+    "correspondingSourceOffer": true,
+    "runtimeSpdxSbom": true,
+    "sourceSpdxSbom": true,
+    "runtimeVulnerabilityAudit": true,
+    "historyCustomerArtifactReview": true,
+    "historyCredentialPatternReview": true,
+    "accountFreeUsefulFlow": true,
+    "unsupportedCapabilitiesDocumented": true,
+    "securityReportingDocumented": true,
+    "trademarkAndOfficialBuildPolicy": true,
+    "deterministicLocalReleaseBundle": true,
+    "macosTagBuild": false,
+    "linuxTagBuild": false,
+    "crossPlatformByteIdentity": false,
+    "publicRepository": false,
+    "privateVulnerabilityReporting": false,
+    "taggedRelease": false,
+    "artifactAttestation": false,
+    "publishedAssetsVerified": false
+  },
+  "evidence": {
+    "qualificationCommand": "npm run qualify:community-release",
+    "releaseWorkflow": ".github/workflows/release.yml",
+    "releasePolicy": "docs/community-release.md",
+    "releaseEvidence": null
+  },
+  "held": [
+    "public repository visibility",
+    "private vulnerability reporting enablement",
+    "v0.1.0 annotated tag",
+    "macOS tag build",
+    "Linux tag build",
+    "cross-platform byte identity in tag workflow",
+    "GitHub artifact attestations and published asset verification"
+  ],
+  "policy": {
+    "readOnly": true,
+    "localFirst": true,
+    "accountRequired": false,
+    "telemetry": false,
+    "cloudUpload": false,
+    "nativeWrite": false,
+    "paidSupport": false,
+    "spatialAuthority": false,
+    "claimProductionBim": false
+  }
+}

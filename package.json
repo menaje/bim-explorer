@@ -21,7 +21,7 @@
     "check:repository": "node scripts/check-repository.mjs",
     "check:docs": "node scripts/check-docs.mjs",
     "check:generated": "node scripts/build-vscode-worker.mjs --check",
-    "check:compatibility": "node scripts/check-viewer-core-compatibility.mjs && node scripts/check-ifc-engine-compatibility.mjs && node scripts/check-bim-model-source-compatibility.mjs && node scripts/check-bim-renderer-3d-compatibility.mjs && node scripts/check-bim-semantic-explorer-compatibility.mjs && node scripts/check-bim-product-shell-compatibility.mjs && node scripts/check-spatial-integration-compatibility.mjs && node scripts/check-openbim-compatibility.mjs",
+    "check:compatibility": "node scripts/check-viewer-core-compatibility.mjs && node scripts/check-ifc-engine-compatibility.mjs && node scripts/check-bim-model-source-compatibility.mjs && node scripts/check-bim-renderer-3d-compatibility.mjs && node scripts/check-bim-semantic-explorer-compatibility.mjs && node scripts/check-bim-product-shell-compatibility.mjs && node scripts/check-spatial-integration-compatibility.mjs && node scripts/check-openbim-compatibility.mjs && node scripts/check-community-release-compatibility.mjs",
     "fetch:ifc:public": "node scripts/fetch-public-ifc-fixture.mjs",
     "probe:browser-gpu": "node scripts/serve-browser-gpu-probe.mjs",
     "probe:browser-worker": "node scripts/serve-browser-worker-probe.mjs",
