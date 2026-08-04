@@ -194,6 +194,13 @@ LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate 8개는 보류합니다. registry�
 format 이름과 view/query/write/round-trip 상태를 기록할 뿐 비 IFC
 source 지원을 주장하지 않습니다.
 
+bounded glTF 2.0/GLB reference mesh는
+[`gltf-reference-source.json`](gltf-reference-source.json)이 별도
+관리합니다. Khronos Box GLB, 공식 Validator, source-native identity와
+headless generic renderer evidence만 현재 통과했으며 Browser WebGL2,
+federation admission과 제품 file-open은 독립 Gate로 남습니다. GLB는
+ignored cache에서만 사용하고 release에는 포함하지 않습니다.
+
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만

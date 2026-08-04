@@ -1,0 +1,43 @@
+{
+  "schema": "bim-explorer-public-gltf-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-box-glb",
+  "purpose": "redistributable glTF 2.0 core-profile parser, source and renderer qualification",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "path": "Models/Box/glTF-Binary/Box.glb",
+    "modelOwner": "Cesium",
+    "modelYear": 2017
+  },
+  "entry": {
+    "name": "Box.glb",
+    "mediaType": "model/gltf-binary",
+    "byteLength": 1664,
+    "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/glTF-Binary/Box.glb"
+  },
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "attribution": "Box © 2017 Cesium, licensed under CC BY 4.0"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "COLLADA2GLTF",
+    "drawCalls": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "materials": 1,
+    "textures": false,
+    "skins": false,
+    "animations": 0
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

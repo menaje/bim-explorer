@@ -71,6 +71,23 @@ notice를 포함해 macOS/Linux의 offline clean install과 byte identity를
 별도 VSIX/source bundle, runtime/source SBOM, checksums와 provenance Gate를
 통과해야 합니다.
 
+glTF reference source qualification은 Khronos Group의 공식 Validator를
+제품 runtime과 분리된 exact dev dependency로 사용합니다.
+
+- `gltf-validator@2.0.0-dev.3.10`
+- Apache-2.0
+- <https://github.com/KhronosGroup/glTF-Validator>
+- npm integrity:
+  `sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==`
+- [Apache License 2.0 full text](specs/LICENSE)
+
+공개 qualification fixture는 Khronos Group
+`glTF-Sample-Assets`의 Cesium Box GLB이며 CC-BY-4.0입니다. 고정된 source,
+digest와 attribution은
+[`public glTF fixture manifest`](fixtures/gltf/public-khronos-box/manifest.json)에
+기록합니다. GLB 자체는 ignored private cache에만 두며 release에 포함하지
+않습니다.
+
 - exact package와 version
 - upstream source와 license
 - static/dynamic/WASM/process 결합 방식

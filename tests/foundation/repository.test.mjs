@@ -28,7 +28,10 @@ test("private BIM and generated cache patterns are ignored", async () => {
     "fixtures/customer/",
     ".bim-explorer-cache/",
     ".ifc-cache/",
+    ".gltf-cache/",
     "*.ifc",
+    "*.gltf",
+    "*.glb",
     "*.rvt",
   ]) {
     assert.match(gitignore, new RegExp(

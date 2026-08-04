@@ -15,6 +15,7 @@ build/
 
 .bim-explorer-cache/
 .ifc-cache/
+.gltf-cache/
 fixtures/private/
 fixtures/customer/
 artifacts/
@@ -22,6 +23,8 @@ artifacts/
 *.ifc
 *.ifczip
 *.ifcxml
+*.gltf
+*.glb
 *.rvt
 *.nwd
 *.nwc

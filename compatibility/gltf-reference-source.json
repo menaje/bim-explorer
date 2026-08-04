@@ -1,0 +1,62 @@
+{
+  "schema": "bim-explorer-gltf-reference-source-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-04",
+  "contract": "bim-explorer-gltf-reference-source/0.1",
+  "profile": "gltf-2.0-bounded-reference-mesh-v0.1",
+  "gates": {
+    "gltf2Container": true,
+    "glb2Container": true,
+    "embeddedBufferOnly": true,
+    "boundedParser": true,
+    "boundedRangeSession": true,
+    "nodeHierarchyTransforms": true,
+    "indexedTriangleGeometry": true,
+    "sourceNativeIdentity": true,
+    "noInventedIfcGlobalId": true,
+    "referenceOnlyAuthority": true,
+    "genericHeadlessRenderer": true,
+    "officialKhronosValidator": true,
+    "publicKhronosFixture": true,
+    "dependencyLicenseAndIntegrity": true,
+    "deterministicCleanup": true,
+    "browserWebGl2": false,
+    "federationReferenceAdmission": false,
+    "browserProductOpen": false,
+    "vscodeProductOpen": false,
+    "externalResourceBundle": false,
+    "requiredExtensions": false,
+    "write": false,
+    "roundTrip": false,
+    "bimSemanticAuthority": false
+  },
+  "evidence": {
+    "publicKhronosBox": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
+    "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json"
+  },
+  "blockers": [
+    "actual Browser WebGL2 rasterization and GPU cleanup are not yet qualified",
+    "federation source admission remains held until Browser evidence is pinned",
+    "Browser and VS Code product file-open surfaces remain IFC-only",
+    "external resource bundles and required extensions remain unsupported",
+    "product-scale geometry and cross-platform package evidence are not available"
+  ],
+  "limitations": [
+    "the public qualification uses the 1664-byte Khronos Box core-profile GLB",
+    "synthetic JSON glTF covers only embedded base64 buffer data",
+    "the output is a lossy display cache and has no source write authority",
+    "glTF node and mesh metadata is not promoted to BIM semantics"
+  ],
+  "policy": {
+    "readOnly": true,
+    "networkAtRuntime": false,
+    "allowExternalUri": false,
+    "allowRequiredExtensions": false,
+    "inventIfcGlobalId": false,
+    "allowBimSemanticAuthority": false,
+    "nativeWrite": false,
+    "roundTrip": false,
+    "claimProductSupport": false,
+    "claimProduction": false
+  }
+}

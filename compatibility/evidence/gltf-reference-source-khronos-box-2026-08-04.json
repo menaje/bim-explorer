@@ -1,0 +1,124 @@
+{
+  "schema": "bim-explorer-gltf-reference-source-qualification/1",
+  "asOf": "2026-08-04",
+  "contract": "bim-explorer-gltf-reference-source/0.1",
+  "fixture": {
+    "fixtureId": "khronos-gltf-sample-assets-box-glb",
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "path": "Models/Box/glTF-Binary/Box.glb",
+    "byteLength": 1664,
+    "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "license": "CC-BY-4.0",
+    "attribution": "Box © 2017 Cesium, licensed under CC BY 4.0",
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "validator": {
+    "package": "gltf-validator",
+    "version": "2.0.0-dev.3.10",
+    "license": "Apache-2.0",
+    "integrity": "sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==",
+    "source": "https://github.com/KhronosGroup/glTF-Validator",
+    "externalResourceFunction": "not-provided",
+    "issues": {
+      "errors": 0,
+      "warnings": 0,
+      "infos": 0,
+      "hints": 0,
+      "truncated": false
+    },
+    "projection": {
+      "gltfVersion": "2.0",
+      "generator": "COLLADA2GLTF",
+      "drawCalls": 1,
+      "vertices": 24,
+      "triangles": 12,
+      "materials": 1,
+      "textures": false,
+      "skins": false,
+      "animations": 0
+    }
+  },
+  "source": {
+    "format": "glb",
+    "profile": "gltf-2.0-bounded-reference-mesh-v0.1",
+    "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "sourceRole": "derived-or-reference-mesh",
+    "semanticAuthority": false,
+    "writeAuthority": false,
+    "roundTripAuthority": false,
+    "coordinateSystem": "gltf-local-meter-y-up"
+  },
+  "geometry": {
+    "bounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "records": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "representationAuthority": "derived-display-cache",
+    "rangeBytes": 756,
+    "maximumRequestBytes": 256
+  },
+  "identity": {
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "globalId": null,
+    "localNumericId": 1,
+    "entityResolved": true,
+    "pickResolved": true,
+    "externalIdentityTokenBound": true
+  },
+  "renderer": {
+    "backend": "headless",
+    "rendered": false,
+    "sourceReadBytes": 756,
+    "sourceReads": 3,
+    "geometryPayloadBytes": 720,
+    "geometryRecords": 1,
+    "instances": 1,
+    "instancedTriangles": 12,
+    "uploadedBytes": 800,
+    "drawCalls": 1
+  },
+  "cleanup": {
+    "rendererDisposed": true,
+    "sessionDisposed": true,
+    "sourceDisposed": true,
+    "rangeReads": 3,
+    "rangeBytesRead": 756,
+    "remainingReadBytes": 0,
+    "activeBackendBytes": 0,
+    "residentRanges": 0
+  },
+  "assertions": {
+    "officialValidatorZeroIssues": true,
+    "exactValidatorArtifact": true,
+    "publicFixtureDigestVerified": true,
+    "boundedRangeReads": true,
+    "geometryPrimitiveConformance": true,
+    "sourceNativeIdentity": true,
+    "noInventedIfcGlobalId": true,
+    "referenceOnlyAuthority": true,
+    "headlessRendererMount": true,
+    "deterministicCleanup": true,
+    "artifactNotTrackedOrBundled": true,
+    "pathFreeEvidence": true
+  },
+  "limitations": [
+    "headless backend does not prove Browser WebGL2 rasterization",
+    "Box is a small core-profile GLB, not product-scale geometry",
+    "mesh metadata is not BIM semantic authority",
+    "external resources, required extensions, write and round-trip remain blocked"
+  ]
+}
