@@ -9,7 +9,8 @@
     "sourceWorkerResponse": "bim-explorer-product-source-worker-response/0.1",
     "sourceProtocol": "bim-explorer-bim-source/0.2",
     "rendererHost": "bim-explorer-bim-renderer-3d-host/0.1",
-    "semanticExplorer": "bim-explorer-bim-semantic-explorer/0.1"
+    "semanticExplorer": "bim-explorer-bim-semantic-explorer/0.1",
+    "referenceExplorer": "bim-explorer-reference-mesh-explorer/0.1"
   },
   "fixture": {
     "id": "synthetic-semantic-ifc4",
@@ -32,6 +33,20 @@
     "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
     "license": "CC-BY-4.0",
     "profileAdmission": false
+  },
+  "referenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-glb",
+    "byteLength": 1664,
+    "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "format": "glb",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "CC-BY-4.0"
   },
   "limits": {
     "maximumSourceBytes": 67108864,
@@ -65,6 +80,9 @@
     "spatialIndependent": true,
     "publicRepresentativeProductScale": true,
     "deferredSemanticDetailDiagnostics": true,
+    "browserReadonlyGltfGlbAdmission": true,
+    "vscodeReadonlyGltfGlbAssociation": true,
+    "cleanVsixGltfGlbOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -72,6 +90,7 @@
   "evidence": {
     "browserSynthetic": "compatibility/evidence/bim-product-shell-browser-synthetic-2026-08-04.json",
     "browserPublic": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
+    "browserReference": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json"
   },
@@ -85,6 +104,7 @@
     "localOnly": true,
     "spatialAuthority": false,
     "claimDeferredSemanticDetails": true,
+    "claimQualifiedReferenceOpen": true,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

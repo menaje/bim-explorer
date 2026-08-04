@@ -23,6 +23,9 @@ const PASSED_GATES = [
   "spatialIndependent",
   "publicRepresentativeProductScale",
   "deferredSemanticDetailDiagnostics",
+  "browserReadonlyGltfGlbAdmission",
+  "vscodeReadonlyGltfGlbAssociation",
+  "cleanVsixGltfGlbOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -95,12 +98,60 @@ function equalPublicProjection(browserPublic, installedRuntime) {
   return true;
 }
 
+function exactReferenceFixture(value, fixture) {
+  return (
+    value?.id === fixture?.id &&
+    value?.committed === false &&
+    value?.format === fixture?.format &&
+    value?.sourceBytes === fixture?.byteLength &&
+    value?.fingerprint === `sha256:${fixture?.sha256}` &&
+    value?.gltfVersion === fixture?.gltfVersion &&
+    value?.nativeId === fixture?.nativeId &&
+    value?.provenance?.repository === fixture?.repository &&
+    value?.provenance?.commit === fixture?.commit &&
+    value?.provenance?.license === fixture?.license &&
+    value?.provenance?.bundled === false
+  );
+}
+
+function exactReferenceObservation(value, hostKind, nativeId) {
+  return (
+    value?.hostKind === hostKind &&
+    JSON.stringify(value?.model) === JSON.stringify({
+      entities: 1,
+      geometryRecords: 1,
+      instances: 1,
+      triangles: 12,
+      ranges: 1,
+    }) &&
+    value?.resources?.sourceBytes === 1_664 &&
+    value?.resources?.geometryBytes === 756 &&
+    value?.resources?.metadataBytes === 1_093 &&
+    value?.resources?.detailBytes === 0 &&
+    value?.resources?.detailRanges === 0 &&
+    value?.resources?.ranges === 1 &&
+    value?.resources?.products === 0 &&
+    value?.resources?.referenceEntities === 1 &&
+    value?.renderer?.actualGpu === true &&
+    value?.renderer?.nonBackgroundPixels > 0 &&
+    value?.renderer?.sourceReadBytes === 756 &&
+    value?.renderer?.uploadedBytes === 800 &&
+    value?.reference?.globalId === null &&
+    value?.reference?.selectedNativeId === nativeId &&
+    value?.reference?.treeRows === 1 &&
+    value?.reference?.maximumDomRows === 64 &&
+    value?.lifecycle?.opened === "ready" &&
+    value?.lifecycle?.closed === "disposed"
+  );
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
   vscode,
   browserPublic,
   installation,
+  browserReference,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -110,6 +161,10 @@ export function validateBimProductShellCompatibility(
     "public Browser product shell evidence",
   );
   plainRecord(installation, "VSIX install evidence");
+  plainRecord(
+    browserReference,
+    "reference Browser product shell evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -118,6 +173,8 @@ export function validateBimProductShellCompatibility(
     browser.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
     browserPublic.schema !==
+      "bim-explorer-product-shell-browser-evidence/1" ||
+    browserReference.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
     vscode.schema !==
       "bim-explorer-vscode-custom-editor-evidence/1" ||
@@ -143,7 +200,9 @@ export function validateBimProductShellCompatibility(
     contracts?.rendererHost !==
       "bim-explorer-bim-renderer-3d-host/0.1" ||
     contracts?.semanticExplorer !==
-      "bim-explorer-bim-semantic-explorer/0.1"
+      "bim-explorer-bim-semantic-explorer/0.1" ||
+    contracts?.referenceExplorer !==
+      "bim-explorer-reference-mesh-explorer/0.1"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -230,6 +289,36 @@ export function validateBimProductShellCompatibility(
       "public BIM product fixture policy is invalid",
     );
   }
+  const referenceFixture = manifest.referenceFixture;
+  const installedReference =
+    installation.observation?.referenceRuntime;
+  for (const evidenceFixture of [
+    browserReference.fixture,
+    vscode.referenceFixture,
+    installedReference?.fixture,
+  ]) {
+    if (!exactReferenceFixture(
+      evidenceFixture,
+      referenceFixture,
+    )) {
+      throw new Error(
+        "reference product fixture identity is invalid",
+      );
+    }
+  }
+  if (
+    referenceFixture?.artifactCommitted !== false ||
+    referenceFixture?.thirdPartyContent !== true ||
+    referenceFixture?.bundled !== false ||
+    referenceFixture?.format !== "glb" ||
+    referenceFixture?.gltfVersion !== "2.0" ||
+    referenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0"
+  ) {
+    throw new Error(
+      "reference product fixture policy is invalid",
+    );
+  }
   const gates = plainRecord(
     manifest.gates,
     "product shell gates",
@@ -275,10 +364,13 @@ export function validateBimProductShellCompatibility(
   if (
     !everyTrue(browser.assertions) ||
     !everyTrue(browserPublic.assertions) ||
+    !everyTrue(browserReference.assertions) ||
     !everyTrue(vscode.assertions) ||
+    !everyTrue(vscode.referenceAssertions) ||
     !everyTrue(installation.assertions) ||
     browser.observation?.hostKind !== "browser" ||
     browserPublic.observation?.hostKind !== "browser" ||
+    browserReference.observation?.hostKind !== "browser" ||
     vscode.observation?.hostKind !== "vscode-webview" ||
     vscode.environment?.runtimeLayout !== "staged" ||
     installedRuntime?.environment?.runtimeLayout !==
@@ -289,7 +381,9 @@ export function validateBimProductShellCompatibility(
     vscode.observation?.renderer?.actualGpu !== true ||
     installedRuntime?.renderer?.actualGpu !== true ||
     browserPublic.observation?.renderer?.actualGpu !== true ||
+    browserReference.observation?.renderer?.actualGpu !== true ||
     installedPublic?.renderer?.actualGpu !== true ||
+    installedReference?.renderer?.actualGpu !== true ||
     !(browser.observation.renderer.nonBackgroundPixels > 0) ||
     !(vscode.observation.renderer.nonBackgroundPixels > 0) ||
     !(installedRuntime.renderer.nonBackgroundPixels > 0) ||
@@ -297,7 +391,12 @@ export function validateBimProductShellCompatibility(
       browserPublic.observation.renderer
         .nonBackgroundPixels > 0
     ) ||
+    !(
+      browserReference.observation.renderer
+        .nonBackgroundPixels > 0
+    ) ||
     !(installedPublic.renderer.nonBackgroundPixels > 0) ||
+    !(installedReference.renderer.nonBackgroundPixels > 0) ||
     browser.observation?.lifecycle?.closed !== "disposed" ||
     vscode.observation?.lifecycle?.closed !== "disposed" ||
     installedRuntime?.lifecycle?.opened !== "ready" ||
@@ -305,8 +404,13 @@ export function validateBimProductShellCompatibility(
     browserPublic.observation?.lifecycle?.opened !== "ready" ||
     browserPublic.observation?.lifecycle?.closed !==
       "disposed" ||
+    browserReference.observation?.lifecycle?.opened !== "ready" ||
+    browserReference.observation?.lifecycle?.closed !==
+      "disposed" ||
     installedPublic?.lifecycle?.opened !== "ready" ||
-    installedPublic?.lifecycle?.closed !== "disposed"
+    installedPublic?.lifecycle?.closed !== "disposed" ||
+    installedReference?.lifecycle?.opened !== "ready" ||
+    installedReference?.lifecycle?.closed !== "disposed"
   ) {
     throw new Error(
       "BIM product shell runtime evidence is incomplete",
@@ -323,6 +427,49 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell host projections diverge",
+    );
+  }
+  if (
+    !exactReferenceObservation(
+      browserReference.observation,
+      "browser",
+      referenceFixture.nativeId,
+    ) ||
+    !exactReferenceObservation(
+      vscode.referenceObservation,
+      "vscode-webview",
+      referenceFixture.nativeId,
+    ) ||
+    !exactReferenceObservation(
+      installedReference,
+      "vscode-webview",
+      referenceFixture.nativeId,
+    ) ||
+    browserReference.environment?.headless !== true ||
+    browserReference.observation?.interaction
+      ?.selectedNativeId !== referenceFixture.nativeId ||
+    browserReference.observation?.interaction
+      ?.selectionOrigin !== "3d" ||
+    browserReference.observation?.network
+      ?.externalOrigins?.length !== 0 ||
+    browserReference.observation?.runtimeErrors?.length !== 0 ||
+    browserReference.observation?.lifecycle
+      ?.backendDisposed !== true ||
+    browserReference.observation?.lifecycle
+      ?.clientDisposed !== true ||
+    vscode.referenceObservation?.externalUpload !== false ||
+    vscode.referenceObservation?.telemetry !== false ||
+    installedReference?.externalUpload !== false ||
+    installedReference?.telemetry !== false ||
+    browserReference.decision?.referenceProductOpen !==
+      "passed-bounded-read-only" ||
+    browserReference.decision?.actualPhysicalGpu !==
+      "not-claimed" ||
+    installation.decision?.referenceFixtureOpen !==
+      "passed-bounded-read-only"
+  ) {
+    throw new Error(
+      "reference product shell evidence is incomplete",
     );
   }
   if (
@@ -373,20 +520,25 @@ export function validateBimProductShellCompatibility(
     vscode.observation?.externalUpload !== false ||
     vscode.observation?.telemetry !== false ||
     installation.package?.id !== "menaje.bim-explorer" ||
-    installation.package?.version !== "0.0.0" ||
+    installation.package?.version !== "0.1.0" ||
     installation.package?.byteLength <= 0 ||
-    installation.package?.installedRuntimeFiles !== 6 ||
+    installation.package?.installedRuntimeFiles !== 7 ||
     !/^[0-9a-f]{64}$/u.test(
       installation.package?.workerBundleSha256 ?? "",
     ) ||
     installation.environment?.cleanUserData !== true ||
     installation.environment?.cleanExtensionsDirectory !== true ||
     installation.observation?.installedExtensions?.[0] !==
-      "menaje.bim-explorer@0.0.0" ||
+      "menaje.bim-explorer@0.1.0" ||
     installation.observation?.association?.viewType !==
       "bimExplorer.ifcEditor" ||
-    installation.observation?.association?.selector?.[0]
-      ?.filenamePattern !== "*.ifc" ||
+    JSON.stringify(
+      installation.observation?.association?.selector,
+    ) !== JSON.stringify([
+      { filenamePattern: "*.ifc" },
+      { filenamePattern: "*.gltf" },
+      { filenamePattern: "*.glb" },
+    ]) ||
     installation.observation?.association?.priority !== "default" ||
     installation.observation?.dependencies?.["web-ifc"] !==
       "0.0.77" ||
@@ -405,6 +557,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.browserPublic !==
       "compatibility/evidence/" +
         "bim-product-shell-browser-public-2026-08-04.json" ||
+    manifest.evidence?.browserReference !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-khronos-box-browser-product-2026-08-04.json" ||
     manifest.evidence?.vscodeSynthetic !==
       "compatibility/evidence/" +
         "bim-product-shell-vscode-synthetic-2026-08-04.json" ||
@@ -415,6 +570,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
     manifest.policy?.claimDeferredSemanticDetails !== true ||
+    manifest.policy?.claimQualifiedReferenceOpen !== true ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||
@@ -429,6 +585,7 @@ export function validateBimProductShellCompatibility(
       JSON.stringify({
         browser,
         browserPublic,
+        browserReference,
         installation,
         manifest,
         vscode,
@@ -466,6 +623,7 @@ async function main() {
   const [
     browser,
     browserPublic,
+    browserReference,
     vscode,
     installation,
   ] = await Promise.all([
@@ -475,6 +633,10 @@ async function main() {
     ).then(JSON.parse),
     readFile(
       path.join(root, manifest.evidence.browserPublic),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.browserReference),
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -492,6 +654,7 @@ async function main() {
     vscode,
     browserPublic,
     installation,
+    browserReference,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

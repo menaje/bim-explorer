@@ -13,6 +13,9 @@ import {
 import {
   prepareVscodeExtensionStage,
 } from "./package-vscode-extension.mjs";
+import {
+  acquirePublicGltfFixture,
+} from "./public-gltf-fixture.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
@@ -34,6 +37,8 @@ function executable() {
 }
 
 export async function qualifyVscodeCustomEditor() {
+  const referenceFixture = await acquirePublicGltfFixture();
+  referenceFixture.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : process.cwd(),
@@ -71,6 +76,8 @@ export async function qualifyVscodeCustomEditor() {
       extensionTestsEnv: {
         BIM_EXPLORER_ROOT: ROOT,
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
+        BIM_EXPLORER_VSCODE_GLTF_SOURCE:
+          referenceFixture.cachePath,
         BIM_EXPLORER_VSCODE_EVIDENCE: evidencePath,
       },
     });

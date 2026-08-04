@@ -22,6 +22,9 @@ import {
   ensurePublicIfcFixture,
   loadPublicIfcFixtureManifest,
 } from "./public-ifc-fixture.mjs";
+import {
+  acquirePublicGltfFixture,
+} from "./public-gltf-fixture.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EXTENSION_VERSION = JSON.parse(
@@ -92,6 +95,8 @@ export async function qualifyVscodeVsixInstall() {
   const publicFixture = await ensurePublicIfcFixture({
     manifest: publicManifest,
   });
+  const referenceFixture = await acquirePublicGltfFixture();
+  referenceFixture.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -157,6 +162,7 @@ export async function qualifyVscodeVsixInstall() {
       "extension.js",
       "src/provider.js",
       "apps/bim-explorer-web/app.mjs",
+      "apps/bim-explorer-web/reference-mesh-explorer.mjs",
       "apps/bim-explorer-web/source-worker.bundle.mjs",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
@@ -216,6 +222,8 @@ export async function qualifyVscodeVsixInstall() {
         BIM_EXPLORER_ROOT: ROOT,
         BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
           publicFixture.input,
+        BIM_EXPLORER_VSCODE_GLTF_SOURCE:
+          referenceFixture.cachePath,
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -239,6 +247,14 @@ export async function qualifyVscodeVsixInstall() {
       readOnlyIfcAssociation:
         manifest.contributes.customEditors[0]
           .selector[0].filenamePattern === "*.ifc",
+      readOnlyGltfGlbAssociation:
+        JSON.stringify(
+          manifest.contributes.customEditors[0].selector,
+        ) === JSON.stringify([
+          { filenamePattern: "*.ifc" },
+          { filenamePattern: "*.gltf" },
+          { filenamePattern: "*.glb" },
+        ]),
       installedPackageOpensFixture:
         runtime.assertions?.localSourceOpened === true,
       installedPackageUsesWebGl2:
@@ -263,6 +279,24 @@ export async function qualifyVscodeVsixInstall() {
       installedPublicFixtureClosesCleanly:
         runtime.publicAssertions
           ?.publicEditorCloseObserved === true,
+      installedPackageOpensReferenceFixture:
+        runtime.referenceAssertions
+          ?.localReferenceSourceOpened === true,
+      installedReferenceIdentityExact:
+        runtime.referenceAssertions
+          ?.referenceSourceIdentityExact === true,
+      installedReferenceHasNoBimAuthority:
+        runtime.referenceAssertions
+          ?.referenceHasNoBimSemanticAuthority === true,
+      installedReferenceUsesWebGl2:
+        runtime.referenceAssertions
+          ?.referenceVscodeChromiumWebGl2 === true,
+      installedReferenceBridgeIsPathFree:
+        runtime.referenceAssertions
+          ?.referencePathFreeHostBridge === true,
+      installedReferenceClosesCleanly:
+        runtime.referenceAssertions
+          ?.referenceEditorCloseObserved === true,
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -313,11 +347,32 @@ export async function qualifyVscodeVsixInstall() {
           telemetry:
             runtime.publicObservation?.telemetry,
         },
+        referenceRuntime: {
+          fixture: runtime.referenceFixture,
+          hostKind:
+            runtime.referenceObservation?.hostKind,
+          model: runtime.referenceObservation?.model,
+          performance:
+            runtime.referenceObservation?.performance,
+          resources:
+            runtime.referenceObservation?.resources,
+          renderer:
+            runtime.referenceObservation?.renderer,
+          reference:
+            runtime.referenceObservation?.reference,
+          lifecycle:
+            runtime.referenceObservation?.lifecycle,
+          externalUpload:
+            runtime.referenceObservation?.externalUpload,
+          telemetry:
+            runtime.referenceObservation?.telemetry,
+        },
       },
       assertions,
       decision: {
         cleanInstall: "passed",
         publicFixtureOpen: "passed",
+        referenceFixtureOpen: "passed-bounded-read-only",
         marketplaceRelease: "held",
       },
     });

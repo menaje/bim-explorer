@@ -7,6 +7,9 @@ import {
   createBimSemanticExplorer,
 } from "../../packages/bim-semantic-explorer/src/index.mjs";
 import {
+  createReferenceMeshExplorer,
+} from "./reference-mesh-explorer.mjs";
+import {
   createBimProductSourceWorkerClient,
 } from "./worker-source-client.mjs";
 
@@ -38,14 +41,18 @@ const elements = {
   retry: document.querySelector("#retry-open"),
   searchForm: document.querySelector("#search-form"),
   searchInput: document.querySelector("#search-input"),
+  searchLabel: document.querySelector("#search-label"),
   searchOmission: document.querySelector("#search-omission"),
   selectionOrigin: document.querySelector("#selection-origin"),
   showAll: document.querySelector("#show-all"),
   sourceIdentity: document.querySelector("#source-identity"),
   status: document.querySelector("#status"),
+  subtitle: document.querySelector("#product-subtitle"),
   tree: document.querySelector("#model-tree"),
   treeCount: document.querySelector("#tree-count"),
+  treeTitle: document.querySelector("#tree-title"),
   treeOmission: document.querySelector("#tree-omission"),
+  inspectorTitle: document.querySelector("#inspector-title"),
 };
 
 function meta(name) {
@@ -87,6 +94,7 @@ const vscodeApi =
     : null;
 let active = null;
 let lastFailedBytes = null;
+let lastFailedFormat = "ifc";
 let openingClient = null;
 let openingSequence = 0;
 let hostGeneration = 0;
@@ -215,6 +223,9 @@ function renderTree(state) {
     button.dataset.childCount = String(row.childCount);
     button.dataset.depth = String(row.depth);
     button.dataset.expressId = String(row.expressId);
+    if (typeof row.nativeId === "string") {
+      button.dataset.nativeId = row.nativeId;
+    }
     button.setAttribute("role", "treeitem");
     button.setAttribute("aria-level", String(row.depth + 1));
     button.setAttribute(
@@ -298,7 +309,9 @@ function renderInspector(state) {
     inspectorSection("Identity", [inspector.identity], (item) =>
       text(
         "span",
-        `${item.ifcClass} · ${item.name} · #${item.expressId}`,
+        item.nativeId === undefined
+          ? `${item.ifcClass} · ${item.name} · #${item.expressId}`
+          : `${item.ifcClass} · ${item.name} · ${item.nativeId}`,
       )),
     inspectorSection(
       "Container",
@@ -333,6 +346,18 @@ function renderInspector(state) {
         `${item.identification} · ${item.name}`,
       ),
     ),
+    ...(Array.isArray(
+      inspector.groups.referenceMetadata,
+    )
+      ? [inspectorSection(
+          "Reference metadata",
+          inspector.groups.referenceMetadata,
+          (item) => text(
+            "span",
+            `${item.label}: ${item.value}`,
+          ),
+        )]
+      : []),
     inspectorSection(
       "Relations",
       inspector.groups.relations,
@@ -376,19 +401,39 @@ function render() {
     return;
   }
   const state = active.explorer.state;
+  const reference = active.format !== "ifc";
+  elements.treeTitle.textContent =
+    reference ? "Reference nodes" : "Model tree";
+  elements.searchLabel.textContent =
+    reference
+      ? "Search reference node and mesh metadata"
+      : "Search model semantics";
+  elements.inspectorTitle.textContent =
+    reference ? "Reference metadata" : "Properties";
+  elements.subtitle.textContent =
+    reference
+      ? "Open bounded glTF/GLB reference geometry locally."
+      : "Open IFC spatial structure, semantics, and 3D locally.";
   renderTree(state);
   renderResults(state);
   renderInspector(state);
 }
 
 function contextLabel(snapshot) {
+  const format = snapshot.source.format ?? "ifc";
+  const schema = format === "ifc"
+    ? snapshot.source.ifcSchema
+    : `glTF ${snapshot.source.gltfVersion}`;
   return snapshot.source.fingerprint.slice(0, 23) +
-    `… · ${snapshot.source.ifcSchema}`;
+    `… · ${schema}`;
 }
 
 function updateDiagnostics(opened, mount) {
   const snapshot = opened.snapshot;
   const report = opened.report;
+  const reference =
+    snapshot.source.sourceRole ===
+      "derived-or-reference-mesh";
   elements.diagHost.textContent = runtime.hostKind;
   elements.diagSource.textContent =
     snapshot.source.fingerprint.slice(0, 20) + "…";
@@ -398,7 +443,11 @@ function updateDiagnostics(opened, mount) {
     `${report.resources.sourceBytes} source · ` +
     `${report.resources.geometryBytes} geometry · ` +
     `${report.resources.metadataBytes} metadata · ` +
-    `${report.resources.detailBytes} deferred detail`;
+    (
+      reference
+        ? `${snapshot.entities.length} reference entities`
+        : `${report.resources.detailBytes} deferred detail`
+    );
   elements.diagGpu.textContent =
     `${mount.renderer.backend.uploadedBytes} bytes · ` +
     `${mount.renderer.backend.nonBackgroundPixels} pixels`;
@@ -451,6 +500,12 @@ function firstRenderable(snapshot) {
 }
 
 async function revealFirstProduct(explorer, snapshot, entity) {
+  if (!Array.isArray(snapshot.tree?.nodes)) {
+    await explorer.selectExpressId(entity.expressId, {
+      origin: "tree",
+    });
+    return;
+  }
   const nodeById = new Map(
     snapshot.tree.nodes.map((node) => [
       node.expressId,
@@ -644,7 +699,8 @@ async function client({
   value.onProgress((event) => {
     const labels = {
       "source-admitted": "Source admitted; starting isolated conversion…",
-      "artifact-created": "IFC indexed; creating immutable source…",
+      "artifact-created": "Source indexed; creating immutable snapshot…",
+      "gltf-validating": "Validating bounded glTF reference profile…",
       "snapshot-ready": "Snapshot ready; mounting WebGL2…",
       "web-ifc-imported": "web-ifc ready; initializing WASM…",
       "web-ifc-importing": "Loading local web-ifc module…",
@@ -653,13 +709,14 @@ async function client({
     latestSourceCheckpoint = event.phase;
     setStatus(
       "opening",
-      labels[event.phase] ?? "Opening IFC locally…",
+      labels[event.phase] ?? "Opening source locally…",
     );
   });
   return value;
 }
 
 async function openBytes(bytesValue, {
+  format = "ifc",
   limits = {},
   origin,
   profile = runtime.profile,
@@ -670,14 +727,20 @@ async function openBytes(bytesValue, {
     bytesValue.byteLength > MAXIMUM_SOURCE_BYTES
   ) {
     throw new RangeError(
-      "Selected IFC exceeds the 64 MiB local admission limit",
+      "Selected source exceeds the 64 MiB local admission limit",
     );
+  }
+  if (!["ifc", "gltf", "glb"].includes(format)) {
+    throw new TypeError("Selected source format is unsupported");
   }
   const sequence = openingSequence + 1;
   openingSequence = sequence;
   controls("opening");
   latestSourceCheckpoint = "client-creating";
-  setStatus("opening", "Opening IFC locally…");
+  setStatus(
+    "opening",
+    `Opening ${format.toUpperCase()} locally…`,
+  );
   elements.diagLife.textContent = "opening isolated Worker";
   const priorCleanup = await disposeActive("source-switch");
   if (openingClient !== null) {
@@ -690,6 +753,7 @@ async function openBytes(bytesValue, {
   let phase = "source-open";
   try {
     const opened = await sourceClient.open(bytesValue, {
+      format,
       profile,
     });
     if (sequence !== openingSequence) {
@@ -716,19 +780,32 @@ async function openBytes(bytesValue, {
       workerLease: opened.workerLease,
     });
     phase = "semantic-initialize";
-    const explorer = createBimSemanticExplorer({
-      session: opened.session,
-      snapshot: opened.snapshot,
-      storage: localStorageAdapter(),
-      limits: {
-        maximumDomRows: 64,
-        maximumLoadedTreeItems: 2_000,
-        maximumRelations: 100,
-        maximumSearchResults: 500,
-        searchPageSize: 25,
-        treePageSize: 25,
-      },
-    });
+    const reference =
+      opened.snapshot.source.sourceRole ===
+        "derived-or-reference-mesh";
+    const explorer = reference
+      ? createReferenceMeshExplorer({
+          session: opened.session,
+          snapshot: opened.snapshot,
+          limits: {
+            maximumDomRows: 64,
+            maximumSearchResults: 500,
+            searchPageSize: 25,
+          },
+        })
+      : createBimSemanticExplorer({
+          session: opened.session,
+          snapshot: opened.snapshot,
+          storage: localStorageAdapter(),
+          limits: {
+            maximumDomRows: 64,
+            maximumLoadedTreeItems: 2_000,
+            maximumRelations: 100,
+            maximumSearchResults: 500,
+            searchPageSize: 25,
+            treePageSize: 25,
+          },
+        });
     await explorer.initialize();
     const entity = firstRenderable(opened.snapshot);
     if (entity !== null) {
@@ -743,6 +820,7 @@ async function openBytes(bytesValue, {
       camera: mount.renderer.backend.camera,
       client: sourceClient,
       explorer,
+      format,
       host,
       mount,
       opened,
@@ -751,27 +829,60 @@ async function openBytes(bytesValue, {
     openingClient = null;
     lastFailedBytes?.fill(0);
     lastFailedBytes = null;
+    lastFailedFormat = "ifc";
     render();
     updateDiagnostics(opened, mount);
     elements.sourceIdentity.textContent =
       contextLabel(opened.snapshot);
-    setStatus("ready", "Ready: local IFC is open read-only.");
+    setStatus(
+      "ready",
+      `Ready: local ${format.toUpperCase()} is open read-only.`,
+    );
     controls("ready");
+    const sourceReport = reference
+      ? {
+          fingerprint:
+            opened.snapshot.source.fingerprint,
+          revisionId: opened.snapshot.revisionId,
+          snapshotId: opened.snapshot.snapshotId,
+          byteLength: opened.snapshot.source.byteLength,
+          format: opened.snapshot.source.format,
+          gltfVersion:
+            opened.snapshot.source.gltfVersion,
+          profile: opened.snapshot.source.profile,
+          sourceRole:
+            opened.snapshot.source.sourceRole,
+          semanticAuthority:
+            opened.snapshot.source.semanticAuthority,
+        }
+      : {
+          fingerprint:
+            opened.snapshot.source.fingerprint,
+          revisionId: opened.snapshot.revisionId,
+          snapshotId: opened.snapshot.snapshotId,
+          byteLength: opened.snapshot.source.byteLength,
+          ifcSchema: opened.snapshot.source.ifcSchema,
+        };
+    const modelReport = reference
+      ? {
+          entities: opened.snapshot.entities.length,
+          geometryRecords:
+            opened.snapshot.geometry.records,
+          instances: opened.snapshot.geometry.instances,
+          triangles: opened.snapshot.geometry.triangles,
+          ranges:
+            opened.snapshot.layers[0].rangeHandles.length,
+        }
+      : {
+          products: opened.snapshot.geometry.products,
+          treeNodes: opened.snapshot.tree.nodes.length,
+          triangles: opened.snapshot.geometry.triangles,
+          ranges:
+            opened.snapshot.layers[0].rangeHandles.length,
+        };
     publishReport("ready", {
-      source: {
-        fingerprint: opened.snapshot.source.fingerprint,
-        revisionId: opened.snapshot.revisionId,
-        snapshotId: opened.snapshot.snapshotId,
-        byteLength: opened.snapshot.source.byteLength,
-        ifcSchema: opened.snapshot.source.ifcSchema,
-      },
-      model: {
-        products: opened.snapshot.geometry.products,
-        treeNodes: opened.snapshot.tree.nodes.length,
-        triangles: opened.snapshot.geometry.triangles,
-        ranges:
-          opened.snapshot.layers[0].rangeHandles.length,
-      },
+      source: sourceReport,
+      model: modelReport,
       performance: opened.report.performance,
       resources: opened.report.resources,
       renderer: {
@@ -781,13 +892,27 @@ async function openBytes(bytesValue, {
         sourceReadBytes: mount.renderer.metrics.sourceReadBytes,
         uploadedBytes: mount.renderer.backend.uploadedBytes,
       },
-      semantic: {
-        selectedExpressId:
-          explorer.state.selection?.expressId ?? null,
-        treeRows: explorer.state.tree.rows.length,
-        maximumDomRows:
-          explorer.state.tree.maximumDomRows,
-      },
+      ...(reference
+        ? {
+            reference: {
+              globalId:
+                explorer.state.selection?.globalId ?? null,
+              selectedNativeId:
+                explorer.state.selection?.nativeId ?? null,
+              treeRows: explorer.state.tree.rows.length,
+              maximumDomRows:
+                explorer.state.tree.maximumDomRows,
+            },
+          }
+        : {
+            semantic: {
+              selectedExpressId:
+                explorer.state.selection?.expressId ?? null,
+              treeRows: explorer.state.tree.rows.length,
+              maximumDomRows:
+                explorer.state.tree.maximumDomRows,
+            },
+          }),
       priorCleanup,
     });
     return active;
@@ -829,13 +954,26 @@ async function openBytes(bytesValue, {
   }
 }
 
+function localFileFormat(file) {
+  const extension = file.name
+    .toLocaleLowerCase()
+    .match(/\.([a-z0-9]+)$/u)?.[1] ?? "";
+  if (!["ifc", "gltf", "glb"].includes(extension)) {
+    throw new TypeError(
+      "Selected file must be IFC, glTF, or GLB",
+    );
+  }
+  return extension;
+}
+
 async function readLocalFile(file) {
+  const format = localFileFormat(file);
   if (
     file.size <= 0 ||
     file.size > MAXIMUM_SOURCE_BYTES
   ) {
     throw new RangeError(
-      "Selected IFC exceeds the 64 MiB local admission limit",
+      "Selected source exceeds the 64 MiB local admission limit",
     );
   }
   const buffer = await file.arrayBuffer();
@@ -844,10 +982,13 @@ async function readLocalFile(file) {
     buffer.byteLength > MAXIMUM_SOURCE_BYTES
   ) {
     throw new RangeError(
-      "Selected IFC changed during local admission",
+      "Selected source changed during local admission",
     );
   }
-  return new Uint8Array(buffer);
+  return {
+    bytes: new Uint8Array(buffer),
+    format,
+  };
 }
 
 elements.file.addEventListener("change", async () => {
@@ -856,11 +997,16 @@ elements.file.addEventListener("change", async () => {
   if (file === null) {
     return;
   }
+  lastFailedBytes?.fill(0);
+  lastFailedBytes = null;
+  lastFailedFormat = "ifc";
+  let admitted = null;
   try {
-    const bytes = await readLocalFile(file);
-    lastFailedBytes?.fill(0);
-    lastFailedBytes = Uint8Array.from(bytes);
-    await openBytes(bytes, {
+    admitted = await readLocalFile(file);
+    lastFailedBytes = Uint8Array.from(admitted.bytes);
+    lastFailedFormat = admitted.format;
+    await openBytes(admitted.bytes, {
+      format: admitted.format,
       origin: "local-file",
     });
   } catch (error) {
@@ -871,10 +1017,15 @@ elements.file.addEventListener("change", async () => {
       );
       controls("failed");
     }
+  } finally {
+    admitted?.bytes.fill(0);
   }
 });
 
 elements.fixture.addEventListener("click", async () => {
+  lastFailedBytes?.fill(0);
+  lastFailedBytes = null;
+  lastFailedFormat = "ifc";
   try {
     const response = await fetch("/qualification-fixture.ifc", {
       cache: "no-store",
@@ -886,9 +1037,9 @@ elements.fixture.addEventListener("click", async () => {
     const bytes = new Uint8Array(
       await response.arrayBuffer(),
     );
-    lastFailedBytes?.fill(0);
     lastFailedBytes = Uint8Array.from(bytes);
     await openBytes(bytes, {
+      format: "ifc",
       origin: "qualification-fixture",
     });
   } catch {
@@ -926,6 +1077,7 @@ elements.retry.addEventListener("click", async () => {
   if (lastFailedBytes !== null) {
     try {
       await openBytes(lastFailedBytes, {
+        format: lastFailedFormat,
         origin: "retry",
       });
     } catch {
@@ -1077,6 +1229,7 @@ globalThis.addEventListener("message", async (event) => {
     }
     try {
       await openBytes(bytes, {
+        format: message.format ?? "ifc",
         limits: message.limits ?? {},
         origin: "vscode-custom-editor",
         profile: message.profile ?? runtime.profile,

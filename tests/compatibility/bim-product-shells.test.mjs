@@ -14,6 +14,7 @@ async function fixtures() {
   const [
     browser,
     browserPublic,
+    browserReference,
     vscode,
     installation,
   ] = await Promise.all([
@@ -23,6 +24,10 @@ async function fixtures() {
     ).then(JSON.parse),
     readFile(
       manifest.evidence.browserPublic,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.browserReference,
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -37,6 +42,7 @@ async function fixtures() {
   return {
     browser,
     browserPublic,
+    browserReference,
     installation,
     manifest,
     vscode,
@@ -52,12 +58,13 @@ test("product shells pin the same source and render projection", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 20,
+      passedGates: 23,
       publicProducts: 3_569,
       status: "experimental",
     },
@@ -74,6 +81,7 @@ test("product shells cannot claim unintegrated Viewer Core", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /publicViewerCoreConformance must remain held/u,
   );
@@ -89,6 +97,7 @@ test("product shells reject divergent host projections", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /host projections diverge/u,
   );
@@ -104,6 +113,7 @@ test("product shells require a clean read-only VSIX install", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /runtime evidence is incomplete/u,
   );
@@ -119,6 +129,7 @@ test("product shells require the installed VSIX runtime projection", async () =>
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /host projections diverge/u,
   );
@@ -135,6 +146,7 @@ test("product shells reject a staged-only clean install claim", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /runtime evidence is incomplete/u,
   );
@@ -151,6 +163,7 @@ test("product shells require public Browser and installed projections", async ()
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /host projections diverge/u,
   );
@@ -166,6 +179,7 @@ test("product shells keep public IFC2X3 profile admission held", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /public BIM product fixture policy is invalid/u,
   );
@@ -181,7 +195,25 @@ test("product shells pin public deferred detail diagnostics", async () => {
       values.vscode,
       values.browserPublic,
       values.installation,
+      values.browserReference,
     ),
     /host projections diverge|public BIM product scale/u,
+  );
+});
+
+test("product shells preserve reference-native identity", async () => {
+  const values = await fixtures();
+  values.browserReference.observation.reference.globalId =
+    "invented-global-id";
+  assert.throws(
+    () => validateBimProductShellCompatibility(
+      values.manifest,
+      values.browser,
+      values.vscode,
+      values.browserPublic,
+      values.installation,
+      values.browserReference,
+    ),
+    /reference product shell evidence is incomplete/u,
   );
 });

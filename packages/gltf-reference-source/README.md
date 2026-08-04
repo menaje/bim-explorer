@@ -19,8 +19,11 @@ glTF/GLB의 source authority가 아닙니다.
 
 Khronos Box GLB는 공식 Validator의 issue 0개와 실제 headless Chrome
 WebGL2의 98,412 rasterized pixels, revision-bound native pick 및 800-byte
-GPU allocation 전량 회수로 검증했습니다. 이는 SwiftShader Browser API
-evidence이며 physical GPU나 제품 file-open 지원을 뜻하지 않습니다.
+GPU allocation 전량 회수로 source/renderer를 검증했습니다. 같은 공개
+GLB는 Browser local file input, staged VS Code와 clean-installed VSIX에서
+12 triangles, 86,486 product pixels, source-native selection,
+path-free bridge와 cleanup을 통과했습니다. 모두 SwiftShader Chromium API
+evidence이며 physical GPU나 broader glTF profile을 뜻하지 않습니다.
 
 qualified snapshot은 BIM federation에 `gltf`/`glb` reference slot으로
 등록할 수 있습니다. selection은 source slot, exact revision과

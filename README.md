@@ -3,7 +3,8 @@
 raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계를 탐색하는
 독립 오픈소스 제품입니다.
 
-첫 vertical slice는 read-only IFC입니다. 제품명과 저장소 이름은
+첫 semantic vertical slice는 read-only IFC이고, 첫 비 IFC format은
+bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
 > 현재 상태: 공개·immutable v0.1.0 Community release와 read-only
@@ -26,13 +27,17 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > revision-bound pick/highlight, section/measurement, large-coordinate origin,
 > progressive range cache, isolate/show-all, affected-bounds atomic redraw와
 > visibility-first range도 실제 Browser에서 재현했습니다. Browser 제품
-> shell과 staged VS Code `.ifc` read-only Custom Editor는 같은 source
+> shell과 staged VS Code read-only Custom Editor는 같은 IFC source
 > fingerprint, model/renderer projection, 실제 Chromium WebGL2와
 > source switch/editor-exit cleanup을 통과했습니다. 독립 VSIX도 빈
 > profile에 clean install한 뒤 설치본으로 같은 fixture, WebGL2와 close
 > cleanup을 다시 통과했습니다. 이어 46.77MB 공개 IFC도 Browser와
 > clean-installed VSIX에서 각각 3,569 products·261,424 triangles·3 ranges로
 > 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다.
+> bounded glTF/GLB도 같은 제품 shell의 격리 Worker와 generic renderer로
+> 열립니다. Khronos Box GLB는 Browser, staged VS Code와 clean-installed
+> VSIX에서 source-native identity, `globalId: null`, 12 triangles,
+> 86,486 pixels, path-free bridge와 Worker/GPU/editor cleanup을 통과했습니다.
 > occurrence/type primitive property value는 별도 lazy range로 읽고,
 > IFC4 projected CRS/MapConversion과 fingerprinted source
 > precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
@@ -74,11 +79,11 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 ## 첫 사용자 흐름
 
 ```text
-local IFC 선택
+local IFC 또는 bounded glTF/GLB 선택
 -> isolated adapter가 immutable source snapshot 생성
 -> model tree와 3D overview 표시
 -> 객체 선택
--> property·type·containment·relation 탐색
+-> IFC semantics 또는 source-native reference metadata 탐색
 -> section/isolate/measure
 -> viewpoint 또는 선택 가능한 handoff descriptor 저장
 ```
@@ -107,6 +112,7 @@ BIM Explorer가 소유할 범위:
 - model tree, property, relation과 search
 - standalone Browser diagnostic surface와 VS Code Custom Editor
 - IFC engine, format, license, 성능과 compatibility qualification
+- bounded glTF/GLB reference source와 source-native identity exploration
 - BCF viewpoint, IDS result와 bSDD reference의 read-only exploration
 
 Coni Spatial이 계속 소유하는 범위:
@@ -138,8 +144,10 @@ identity·visibility·partial/stale·alignment, incremental refresh와
 cross-source saved view를 분리합니다. glTF/GLB는 source-native identity만
 사용하며 BIM semantic authority를 갖지 않습니다. LAS/LAZ/E57, 3D Tiles,
 RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
-열기를 거부합니다. 이 기능은 immutable Community v0.1.0 asset에
-포함되지 않으며 제품 file-open 지원과도 별도입니다.
+열기를 거부합니다. 이 기능은 immutable Community v0.1.0 asset에는
+포함되지 않습니다. 현재 main의 bounded glTF/GLB profile은 Browser,
+VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
+통과했습니다.
 
 ## 비목표
 
@@ -168,6 +176,7 @@ RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
 -> #10 openBIM exploration
 -> #11 public release Gate
 -> #12 federation/reference formats
+-> #13 bounded glTF/GLB reference product surfaces
 ```
 
 세부 이슈:
@@ -183,6 +192,7 @@ RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
 - [#10 BCF·IDS·bSDD exploration](https://github.com/menaje/bim-explorer/issues/10)
 - [#11 Open-source release Gate](https://github.com/menaje/bim-explorer/issues/11)
 - [#12 Federation·reference formats](https://github.com/menaje/bim-explorer/issues/12)
+- [#13 glTF/GLB reference source](https://github.com/menaje/bim-explorer/issues/13)
 
 ## 오픈소스 방향
 
@@ -224,6 +234,7 @@ npm run check
 npm run start:web
 npm run qualify:product:web:public
 npm run qualify:product:vscode-install
+npm run qualify:gltf:product
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core

@@ -209,7 +209,9 @@ affected bounds만 scissor redraw한 뒤 atomic commit합니다.
 switch와 editor-exit cleanup의 normalized 결과가 같았고 GPU, range session,
 Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도 같은
 generated source fingerprint, model/renderer projection과 WebGL2 frame을
-재현했습니다.
+재현했습니다. bounded glTF/GLB는 같은 Host lifecycle에서 reference source와
+source-native explorer로 분기하며 IFC semantic authority를 사용하지
+않습니다.
 
 공개 `@menaje/viewer-core`와
 `@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
@@ -237,17 +239,18 @@ message나 Browser DOM event를 cross-product API로 안정화하지 않습니�
 
 VS Code extension host는 exact local `file:` URI를 regular non-symlink로
 검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
-`ArrayBuffer`, generation과 bounded setting만 전달하며 report는
+`ArrayBuffer`, normalized `ifc`/`gltf`/`glb` format, generation과 bounded
+setting만 전달하며 report는
 fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
 diagnostic에 넣지 않습니다.
 
 webview CSP가 local resource URL의 직접 Worker 생성을 제한하므로 package는
-source Worker bundle을 고정합니다. webview가 exact bundle, web-ifc module과
-WASM을 bounded read한 뒤 `blob:` capability로 module Worker에 주입합니다.
-Browser는 같은 Worker source를 same-origin module로 직접 실행합니다. 두
-Host의 결과는
+IFC와 glTF/GLB dispatcher를 포함한 source Worker bundle을 고정합니다.
+webview가 exact bundle, web-ifc module과 WASM을 bounded read한 뒤 `blob:`
+capability로 module Worker에 주입합니다. Browser는 같은 Worker source를
+same-origin module로 직접 실행합니다. 두 Host의 IFC와 reference 결과는
 [product shell compatibility](../compatibility/bim-product-shells.json)가
-같은 fingerprint와 projection으로 비교합니다.
+각각 같은 fingerprint와 role-specific projection으로 비교합니다.
 
 ## openBIM exploration
 

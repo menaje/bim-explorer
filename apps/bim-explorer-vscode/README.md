@@ -1,8 +1,9 @@
 # BIM Explorer for VS Code
 
-`.ifc`를 같은 `bim-explorer-web` application, isolated source Worker,
-`BimModelSource`, semantic explorer와 WebGL2 renderer로 여는 read-only
-Custom Editor host입니다.
+`.ifc`, `.gltf`, `.glb`를 같은 `bim-explorer-web` application, isolated
+source Worker와 WebGL2 renderer로 여는 read-only Custom Editor host입니다.
+IFC는 `BimModelSource`와 semantic explorer를 사용하고, glTF/GLB는
+source-native reference mesh explorer를 사용합니다.
 
 - source URI는 extension host 안에서만 사용하며 webview message와
   diagnostics에 넣지 않습니다.
@@ -18,7 +19,9 @@ Custom Editor host입니다.
 개발 소스는 저장소 공용 runtime을 직접 사용합니다. `npm run
 package:vscode`는 동일 파일을 staging한 뒤 독립 설치 가능한 VSIX를
 생성합니다. clean-install 검증은 빈 profile에 설치된 확장 자체로 generated
-IFC와 on-demand 공개 IFC를 다시 열어 source/render projection과 close
-cleanup까지 확인하며, 공개 fixture를 VSIX에 포함하지 않습니다. package
+IFC, on-demand 공개 IFC와 Khronos Box GLB를 다시 열어 source/render
+projection과 close cleanup까지 확인하며, 공개 fixture를 VSIX에 포함하지
+않습니다. glTF/GLB bridge는 정규화된 format과 bytes만 보내며 local URI나
+IFC GlobalId를 전달하거나 합성하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다.

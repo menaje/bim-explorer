@@ -7,6 +7,9 @@
   incremental refresh, cross-source selection and saved views;
 - add a bounded glTF 2.0/GLB read-only reference source with Khronos Validator,
   generic renderer, Browser WebGL2 and federation admission evidence;
+- open bounded local glTF/GLB reference meshes in the Browser product, staged
+  VS Code Custom Editor and clean-installed VSIX with source-native identity,
+  path-free bridging and deterministic Worker/GPU cleanup;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

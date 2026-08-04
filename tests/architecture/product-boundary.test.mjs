@@ -13,7 +13,14 @@ test("authority documents preserve the three-product boundary", async () => {
   for (const name of ["DWG Viewer", "BIM Explorer", "Coni Spatial"]) {
     assert.match(product, new RegExp(name, "u"));
   }
-  assert.match(product, /GlobalId·snapshot-scoped Express ID/u);
+  assert.match(
+    product,
+    /IFC GlobalId·Express ID 또는 reference native ID/u,
+  );
+  assert.match(
+    product,
+    /glTF\/GLB native ID: exact reference snapshot/u,
+  );
   assert.match(product, /Viewer UI와 event로 Spatial authority/u);
   assert.match(architecture, /Native process/u);
   assert.match(architecture, /WASM Worker/u);

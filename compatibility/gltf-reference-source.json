@@ -22,8 +22,8 @@
     "deterministicCleanup": true,
     "browserWebGl2": true,
     "federationReferenceAdmission": true,
-    "browserProductOpen": false,
-    "vscodeProductOpen": false,
+    "browserProductOpen": true,
+    "vscodeProductOpen": true,
     "externalResourceBundle": false,
     "requiredExtensions": false,
     "write": false,
@@ -33,17 +33,20 @@
   "evidence": {
     "publicKhronosBox": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
     "browserWebGl2": "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
+    "browserProduct": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
+    "vscodeProduct": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
+    "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json"
   },
   "blockers": [
-    "Browser and VS Code product file-open surfaces remain IFC-only",
     "external resource bundles and required extensions remain unsupported",
-    "product-scale geometry and cross-platform package evidence are not available"
+    "product-scale reference geometry and physical or cross-platform GPU evidence are not available"
   ],
   "limitations": [
     "the public qualification uses the 1664-byte Khronos Box core-profile GLB",
     "synthetic JSON glTF covers only embedded base64 buffer data",
+    "actual Browser and VS Code product qualification uses headless macOS Chromium with SwiftShader and does not claim a physical GPU",
     "the output is a lossy display cache and has no source write authority",
     "glTF node and mesh metadata is not promoted to BIM semantics"
   ],
@@ -56,7 +59,7 @@
     "allowBimSemanticAuthority": false,
     "nativeWrite": false,
     "roundTrip": false,
-    "claimProductSupport": false,
+    "claimProductSupport": true,
     "claimProduction": false
   }
 }

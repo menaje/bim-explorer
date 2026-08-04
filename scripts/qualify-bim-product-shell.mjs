@@ -11,6 +11,9 @@ import {
   ensurePublicIfcFixture,
   loadPublicIfcFixtureManifest,
 } from "./public-ifc-fixture.mjs";
+import {
+  acquirePublicGltfFixture,
+} from "./public-gltf-fixture.mjs";
 
 const CHROME =
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -264,6 +267,7 @@ function assertions(
   errors,
   fixture,
 ) {
+  const reference = fixture.format !== "ifc";
   return Object.freeze({
     actualBrowserWebGl2:
       opened.renderer.actualGpu === true &&
@@ -278,11 +282,26 @@ function assertions(
       interaction.externalOrigins.length === 0,
     pathFree:
       interaction.serializedReport.includes(".ifc") === false &&
+      interaction.serializedReport.includes(".gltf") === false &&
+      interaction.serializedReport.includes(".glb") === false &&
       interaction.serializedReport.includes("file:") === false,
-    semanticAnd3dSync:
-      interaction.searchResults > 0 &&
-      interaction.selectionOrigin === "3d" &&
-      interaction.selectedExpressId !== null,
+    ...(reference
+      ? {
+          referenceAnd3dSync:
+            interaction.searchResults > 0 &&
+            interaction.selectionOrigin === "3d" &&
+            interaction.selectedNativeId ===
+              fixture.nativeId &&
+            opened.reference?.globalId === null &&
+            opened.reference?.selectedNativeId ===
+              fixture.nativeId,
+        }
+      : {
+          semanticAnd3dSync:
+            interaction.searchResults > 0 &&
+            interaction.selectionOrigin === "3d" &&
+            interaction.selectedExpressId !== null,
+        }),
     workerAndGpuCleanup:
       cleanup.status === "disposed" &&
       cleanup.cleanup?.backend?.disposed === true &&
@@ -291,9 +310,26 @@ function assertions(
     fixtureIdentity:
       opened.source.byteLength === fixture.sourceBytes &&
       opened.source.fingerprint === fixture.fingerprint &&
-      opened.source.ifcSchema === fixture.ifcSchema &&
-      opened.model.products === fixture.products &&
-      opened.model.treeNodes === fixture.treeNodes &&
+      (
+        reference
+          ? (
+              opened.source.format === fixture.format &&
+              opened.source.gltfVersion ===
+                fixture.gltfVersion &&
+              opened.source.sourceRole ===
+                "derived-or-reference-mesh" &&
+              opened.source.semanticAuthority === false &&
+              opened.model.entities === fixture.entities &&
+              opened.model.geometryRecords ===
+                fixture.geometryRecords &&
+              opened.model.instances === fixture.instances
+            )
+          : (
+              opened.source.ifcSchema === fixture.ifcSchema &&
+              opened.model.products === fixture.products &&
+              opened.model.treeNodes === fixture.treeNodes
+            )
+      ) &&
       opened.model.triangles === fixture.triangles &&
       opened.model.ranges === fixture.ranges,
   });
@@ -307,6 +343,7 @@ async function qualificationFixture(kind) {
       input: null,
       id: "synthetic-semantic-ifc4",
       committed: false,
+      format: "ifc",
       sourceBytes: 4_030,
       fingerprint:
         "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
@@ -315,6 +352,7 @@ async function qualificationFixture(kind) {
       treeNodes: 7,
       triangles: 24,
       ranges: 1,
+      searchQuery: "Wall",
       provenance: null,
     });
   }
@@ -327,6 +365,7 @@ async function qualificationFixture(kind) {
       input: fixture.input,
       id: manifest.fixtureId,
       committed: false,
+      format: "ifc",
       sourceBytes: manifest.entry.byteLength,
       fingerprint: `sha256:${manifest.entry.sha256}`,
       ifcSchema: manifest.ifc.schema,
@@ -334,6 +373,7 @@ async function qualificationFixture(kind) {
       treeNodes: 3_578,
       triangles: manifest.expected.triangles,
       ranges: 3,
+      searchQuery: "Wall",
       provenance: Object.freeze({
         repository: manifest.provenance.repository,
         commit: manifest.provenance.commit,
@@ -343,8 +383,38 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "gltf-public") {
+    const acquired = await acquirePublicGltfFixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      gltfVersion: "2.0",
+      entities: 1,
+      geometryRecords: 1,
+      instances: 1,
+      triangles: 12,
+      ranges: 1,
+      nativeId: "node:1/mesh:0/primitive:0",
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+      }),
+    });
+  }
   throw new TypeError(
-    "BIM product qualification fixture must be synthetic or public",
+    "BIM product qualification fixture must be synthetic, public, or gltf-public",
   );
 }
 
@@ -417,7 +487,7 @@ export async function qualifyBimProductShell({
       );
       if (!Number.isSafeInteger(sourceInput.nodeId)) {
         throw new Error(
-          "Browser local IFC input is unavailable",
+          "Browser local source input is unavailable",
         );
       }
       await client.send("DOM.setFileInputFiles", {
@@ -443,7 +513,7 @@ export async function qualifyBimProductShell({
     );
     await client.evaluate(`(() => {
       const input = document.querySelector("#search-input");
-      input.value = "Wall";
+      input.value = ${JSON.stringify(fixture.searchQuery)};
       document.querySelector("#search-form").requestSubmit();
       return true;
     })()`);
@@ -476,6 +546,10 @@ export async function qualifyBimProductShell({
             "#model-tree [aria-selected=true]"
           )?.dataset.expressId
         ) || null,
+        selectedNativeId:
+          document.querySelector(
+            "#model-tree [aria-selected=true]"
+          )?.dataset.nativeId || null,
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
         serializedReport: JSON.stringify(report),
@@ -524,9 +598,15 @@ export async function qualifyBimProductShell({
       fixture: {
         id: fixture.id,
         committed: fixture.committed,
+        format: fixture.format,
         sourceBytes: opened.source.byteLength,
         fingerprint: opened.source.fingerprint,
-        ifcSchema: opened.source.ifcSchema,
+        ...(fixture.format === "ifc"
+          ? { ifcSchema: opened.source.ifcSchema }
+          : {
+              gltfVersion: opened.source.gltfVersion,
+              nativeId: fixture.nativeId,
+            }),
         ...(fixture.provenance === null
           ? {}
           : { provenance: fixture.provenance }),
@@ -537,11 +617,15 @@ export async function qualifyBimProductShell({
         performance: opened.performance,
         resources: opened.resources,
         renderer: opened.renderer,
-        semantic: opened.semantic,
+        ...(fixture.format === "ifc"
+          ? { semantic: opened.semantic }
+          : { reference: opened.reference }),
         interaction: {
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,
+          selectedNativeId:
+            interaction.selectedNativeId,
           selectionOrigin:
             interaction.selectionOrigin,
           treeRows: interaction.treeRows,
@@ -563,6 +647,10 @@ export async function qualifyBimProductShell({
       assertions: gates,
       decision: {
         browserProductShell: "passed",
+        referenceProductOpen:
+          fixture.format === "ifc"
+            ? "not-applicable"
+            : "passed-bounded-read-only",
         actualPhysicalGpu: "not-claimed",
         publicViewerCoreConformance: "held",
         vscodeChromiumRuntime: "separate-gate",
@@ -598,13 +686,13 @@ function parseFixtureArguments(values) {
   if (
     values.length === 2 &&
     values[0] === "--fixture" &&
-    ["public", "synthetic"].includes(values[1])
+    ["gltf-public", "public", "synthetic"].includes(values[1])
   ) {
     return values[1];
   }
   throw new TypeError(
     "usage: node scripts/qualify-bim-product-shell.mjs " +
-      "[--fixture synthetic|public]",
+      "[--fixture synthetic|public|gltf-public]",
   );
 }
 

@@ -54,7 +54,7 @@
   "limitations": [
     "the passing federation evidence uses three generated IFC4 snapshots, including one refresh revision, plus one generated GLB source",
     "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
-    "glTF/GLB admission is a bounded reference-mesh source and does not imply Browser or VS Code product file-open",
+    "federation admission remains independent from product support; bounded Browser and VS Code file-open is qualified by separate product evidence",
     "point-cloud, GIS and native SDK format entries remain held capability records",
     "source identity, GlobalId and ownership remain scoped to each federation source slot",
     "the foundation grants no native mutation, Spatial acceptance, publish or Canonical Entity authority"

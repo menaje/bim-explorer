@@ -28,12 +28,13 @@ source/renderer와 Browser/VS Code host conformance는
 않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
 고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
 
-Browser 제품 shell과 VS Code `.ifc` read-only Custom Editor의 동일
-source/render projection, 실제 Chromium WebGL2, local Worker lifecycle,
+Browser 제품 shell과 VS Code IFC/glTF/GLB read-only Custom Editor의
+source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,
 path-free host bridge와 clean VSIX install 결과는
 [`bim-product-shells.json`](bim-product-shells.json),
 [`Browser product evidence`](evidence/bim-product-shell-browser-synthetic-2026-08-04.json),
 [`public Browser product evidence`](evidence/bim-product-shell-browser-public-2026-08-04.json),
+[`reference Browser product evidence`](evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json),
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
@@ -43,9 +44,11 @@ model/renderer projection, path-free bridge와 close cleanup을 다시
 통과했습니다. 46.77MB CC BY 4.0 공개 IFC도 두 제품 runtime에서
 3,569 products·261,424 triangles·3 ranges와 같은 4,193,868-byte 첫-range
 WebGL2 projection으로 열고 정리했습니다. 계정·upload·telemetry·Coni
-Spatial 의존성은 없으며, 제품 entrypoint의 public Viewer Core 채택,
-IFC2X3 profile admission, physical GPU와 marketplace release는 계속
-보류합니다.
+Spatial 의존성은 없습니다. Khronos Box GLB도 Browser, staged VS Code와
+clean-installed VSIX에서 1 reference entity·12 triangles·86,486 pixels,
+source-native selection, `globalId: null`과 cleanup을 재현했습니다. 제품
+entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
+glTF profile, physical GPU와 marketplace release는 계속 보류합니다.
 
 IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
@@ -199,9 +202,11 @@ bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도
 관리합니다. Khronos Box GLB, 공식 Validator, source-native identity와
 headless generic renderer, 실제 Chrome WebGL2와 federation reference
-admission을 통과했습니다. Browser/VS Code 제품 file-open, external
-resource와 required extension은 독립 Gate로 남습니다. GLB는 ignored
-cache에서만 사용하고 release에는 포함하지 않습니다.
+admission을 통과했습니다. bounded Browser/VS Code/clean-installed VSIX
+제품 file-open도 별도 evidence로 통과했습니다. external resource,
+required extension, product-scale reference model과 physical GPU는 독립
+Gate로 남습니다. GLB는 ignored cache에서만 사용하고 release에는
+포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

@@ -1612,12 +1612,12 @@ var BimSemanticIndex = class {
   #nodeByExpressId;
   #typeByExpressId = /* @__PURE__ */ new Map();
   constructor({
-    context,
+    context: context2,
     coverage,
     entities,
     tree
   }) {
-    this.#context = deepFreeze({ ...context });
+    this.#context = deepFreeze({ ...context2 });
     this.#coverage = deepFreeze(structuredClone(coverage));
     this.#entityByExpressId = new Map(
       entities.map((entity) => [entity.expressId, entity])
@@ -2587,8 +2587,8 @@ function validateRange(value, index) {
     );
   }
   const bytes = Uint8Array.from(range.bytes);
-  const sha2562 = digest(bytes);
-  if (range.sha256 !== sha2562) {
+  const sha2563 = digest(bytes);
+  if (range.sha256 !== sha2563) {
     throw new Error(
       `artifact.ranges[${index}] digest does not match its bytes`
     );
@@ -2600,7 +2600,7 @@ function validateRange(value, index) {
   return {
     rangeId: range.rangeId,
     mediaType: range.mediaType,
-    sha256: sha2562,
+    sha256: sha2563,
     bytes,
     geometryRecords
   };
@@ -2620,8 +2620,8 @@ function validateDetailRange(value, index) {
     );
   }
   const bytes = Uint8Array.from(range.bytes);
-  const sha2562 = digest(bytes);
-  if (range.sha256 !== sha2562) {
+  const sha2563 = digest(bytes);
+  if (range.sha256 !== sha2563) {
     throw new Error(
       `${label} digest does not match its bytes`
     );
@@ -2629,7 +2629,7 @@ function validateDetailRange(value, index) {
   return {
     rangeId: range.rangeId,
     mediaType: range.mediaType,
-    sha256: sha2562,
+    sha256: sha2563,
     bytes,
     records: parseSemanticDetailRange(bytes, label)
   };
@@ -2649,8 +2649,8 @@ function validatePropertyDetailRange(value, index) {
     );
   }
   const bytes = Uint8Array.from(range.bytes);
-  const sha2562 = digest(bytes);
-  if (range.sha256 !== sha2562) {
+  const sha2563 = digest(bytes);
+  if (range.sha256 !== sha2563) {
     throw new Error(
       `${label} digest does not match its bytes`
     );
@@ -2658,7 +2658,7 @@ function validatePropertyDetailRange(value, index) {
   return {
     rangeId: range.rangeId,
     mediaType: range.mediaType,
-    sha256: sha2562,
+    sha256: sha2563,
     bytes,
     records: parsePropertyDetailRange(bytes, label)
   };
@@ -4012,10 +4012,1331 @@ function createBimModelSource(artifact, options) {
   return new BimModelSource(artifact, options);
 }
 
+// packages/gltf-reference-source/src/geometry.mjs
+var BIM_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v1";
+function encodeGltfGeometryRange(records) {
+  if (!Array.isArray(records) || records.length === 0) {
+    throw new TypeError("glTF geometry records must be non-empty");
+  }
+  const headerBytes = 16;
+  const recordHeaderBytes = 20;
+  const byteLength = records.reduce(
+    (total, record) => total + recordHeaderBytes + record.positions.byteLength + record.normals.byteLength + record.indices.length * Uint32Array.BYTES_PER_ELEMENT,
+    headerBytes
+  );
+  const bytes = new Uint8Array(byteLength);
+  bytes.set(new TextEncoder().encode("BEXGEO01"), 0);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(8, 1, true);
+  view.setUint32(12, records.length, true);
+  const metadata = /* @__PURE__ */ new Map();
+  let offset = headerBytes;
+  for (const [index, record] of records.entries()) {
+    const geometryExpressId = index + 1;
+    const recordOffset = offset;
+    const vertexCount = record.positions.length / 3;
+    const vertexFloatCount = vertexCount * 6;
+    const vertexByteLength = vertexFloatCount * Float32Array.BYTES_PER_ELEMENT;
+    const indexByteLength = record.indices.length * Uint32Array.BYTES_PER_ELEMENT;
+    view.setUint32(offset, geometryExpressId, true);
+    view.setUint32(offset + 4, vertexFloatCount, true);
+    view.setUint32(offset + 8, record.indices.length, true);
+    view.setUint32(offset + 12, vertexByteLength, true);
+    view.setUint32(offset + 16, indexByteLength, true);
+    offset += recordHeaderBytes;
+    for (let vertex = 0; vertex < vertexCount; vertex += 1) {
+      for (let axis = 0; axis < 3; axis += 1) {
+        view.setFloat32(
+          offset,
+          record.positions[vertex * 3 + axis],
+          true
+        );
+        offset += 4;
+      }
+      for (let axis = 0; axis < 3; axis += 1) {
+        view.setFloat32(
+          offset,
+          record.normals[vertex * 3 + axis],
+          true
+        );
+        offset += 4;
+      }
+    }
+    for (const value of record.indices) {
+      view.setUint32(offset, value, true);
+      offset += 4;
+    }
+    metadata.set(record.key, Object.freeze({
+      geometryExpressId,
+      vertexCount,
+      indexCount: record.indices.length,
+      triangles: record.indices.length / 3,
+      slice: Object.freeze({
+        offset: recordOffset,
+        byteLength: offset - recordOffset
+      })
+    }));
+  }
+  if (offset !== byteLength) {
+    throw new Error("glTF geometry encoder byte count is invalid");
+  }
+  return {
+    bytes,
+    metadata
+  };
+}
+
+// packages/gltf-reference-source/src/math.mjs
+var IDENTITY = Object.freeze([
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  1
+]);
+function finiteVector2(value, length, label) {
+  if (!Array.isArray(value) || value.length !== length || value.some((item) => typeof item !== "number" || !Number.isFinite(item))) {
+    throw new TypeError(`${label} must contain ${length} finite numbers`);
+  }
+  return [...value];
+}
+function identityMatrix() {
+  return [...IDENTITY];
+}
+function multiplyMatrices(left, right) {
+  const result = new Array(16).fill(0);
+  for (let column = 0; column < 4; column += 1) {
+    for (let row = 0; row < 4; row += 1) {
+      for (let cursor = 0; cursor < 4; cursor += 1) {
+        result[column * 4 + row] += left[cursor * 4 + row] * right[column * 4 + cursor];
+      }
+    }
+  }
+  return result;
+}
+function nodeMatrix(node, label) {
+  if (node.matrix !== void 0) {
+    if (node.translation !== void 0 || node.rotation !== void 0 || node.scale !== void 0) {
+      throw new Error(`${label} cannot combine matrix and TRS`);
+    }
+    const matrix = finiteVector2(node.matrix, 16, `${label}.matrix`);
+    if (Math.abs(matrix[15]) < Number.EPSILON) {
+      throw new RangeError(`${label}.matrix is not projectable`);
+    }
+    return matrix;
+  }
+  const translation = node.translation === void 0 ? [0, 0, 0] : finiteVector2(node.translation, 3, `${label}.translation`);
+  const rotation = node.rotation === void 0 ? [0, 0, 0, 1] : finiteVector2(node.rotation, 4, `${label}.rotation`);
+  const scale = node.scale === void 0 ? [1, 1, 1] : finiteVector2(node.scale, 3, `${label}.scale`);
+  if (scale.some((value) => Math.abs(value) < Number.EPSILON)) {
+    throw new RangeError(`${label}.scale cannot collapse an axis`);
+  }
+  const magnitude = Math.hypot(...rotation);
+  if (!(magnitude > 0) || Math.abs(magnitude - 1) > 1e-5) {
+    throw new RangeError(`${label}.rotation must be a unit quaternion`);
+  }
+  const [x, y, z, w] = rotation;
+  const [sx, sy, sz] = scale;
+  const xx = x * x;
+  const yy = y * y;
+  const zz = z * z;
+  const xy = x * y;
+  const xz = x * z;
+  const yz = y * z;
+  const wx = w * x;
+  const wy = w * y;
+  const wz = w * z;
+  return [
+    (1 - 2 * (yy + zz)) * sx,
+    2 * (xy + wz) * sx,
+    2 * (xz - wy) * sx,
+    0,
+    2 * (xy - wz) * sy,
+    (1 - 2 * (xx + zz)) * sy,
+    2 * (yz + wx) * sy,
+    0,
+    2 * (xz + wy) * sz,
+    2 * (yz - wx) * sz,
+    (1 - 2 * (xx + yy)) * sz,
+    0,
+    translation[0],
+    translation[1],
+    translation[2],
+    1
+  ];
+}
+function transformPoint(matrix, point) {
+  const x = matrix[0] * point[0] + matrix[4] * point[1] + matrix[8] * point[2] + matrix[12];
+  const y = matrix[1] * point[0] + matrix[5] * point[1] + matrix[9] * point[2] + matrix[13];
+  const z = matrix[2] * point[0] + matrix[6] * point[1] + matrix[10] * point[2] + matrix[14];
+  const w = matrix[3] * point[0] + matrix[7] * point[1] + matrix[11] * point[2] + matrix[15];
+  if (!Number.isFinite(w) || Math.abs(w) < Number.EPSILON) {
+    throw new RangeError("node transform produced an invalid point");
+  }
+  const result = [x / w, y / w, z / w];
+  if (result.some((value) => !Number.isFinite(value))) {
+    throw new RangeError("node transform produced a non-finite point");
+  }
+  return result;
+}
+function transformedBounds(matrix, bounds) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (const x of [bounds.min[0], bounds.max[0]]) {
+    for (const y of [bounds.min[1], bounds.max[1]]) {
+      for (const z of [bounds.min[2], bounds.max[2]]) {
+        const point = transformPoint(matrix, [x, y, z]);
+        for (let axis = 0; axis < 3; axis += 1) {
+          min[axis] = Math.min(min[axis], point[axis]);
+          max[axis] = Math.max(max[axis], point[axis]);
+        }
+      }
+    }
+  }
+  return { min, max };
+}
+function unionBounds(target, addition) {
+  for (let axis = 0; axis < 3; axis += 1) {
+    target.min[axis] = Math.min(
+      target.min[axis],
+      addition.min[axis]
+    );
+    target.max[axis] = Math.max(
+      target.max[axis],
+      addition.max[axis]
+    );
+  }
+  return target;
+}
+
+// packages/gltf-reference-source/src/profile.mjs
+var GLB_MAGIC = 1179937895;
+var JSON_CHUNK = 1313821514;
+var BIN_CHUNK = 5130562;
+var COMPONENT_BYTES = /* @__PURE__ */ new Map([
+  [5121, 1],
+  [5123, 2],
+  [5125, 4],
+  [5126, 4]
+]);
+var DEFAULT_LIMITS2 = Object.freeze({
+  maximumSourceBytes: 64 * 1024 * 1024,
+  maximumJsonBytes: 4 * 1024 * 1024,
+  maximumBufferBytes: 64 * 1024 * 1024,
+  maximumNodes: 4096,
+  maximumNodeDepth: 256,
+  maximumMeshes: 4096,
+  maximumPrimitives: 16384,
+  maximumAccessors: 16384,
+  maximumBufferViews: 16384,
+  maximumVertices: 2e6,
+  maximumTriangles: 4e6,
+  maximumInstances: 1e5
+});
+function plainRecord2(value, label) {
+  if (value === null || typeof value !== "object" || Array.isArray(value) || ArrayBuffer.isView(value)) {
+    throw new TypeError(`${label} must be an object`);
+  }
+  return value;
+}
+function positiveInteger3(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new TypeError(`${label} must be a positive safe integer`);
+  }
+}
+function arrayIndex(value, length, label) {
+  if (!Number.isSafeInteger(value) || value < 0 || value >= length) {
+    throw new RangeError(`${label} is outside its collection`);
+  }
+  return value;
+}
+function collection(value, limit, label, { nonEmpty = true } = {}) {
+  if (!Array.isArray(value) || nonEmpty && value.length === 0 || value.length > limit) {
+    throw new RangeError(`${label} exceeds the bounded profile`);
+  }
+  return value;
+}
+function validatedLimits(overrides = {}) {
+  const value = plainRecord2(overrides, "glTF limits");
+  for (const key of Object.keys(value)) {
+    if (!(key in DEFAULT_LIMITS2)) {
+      throw new TypeError(`glTF limit ${key} is unsupported`);
+    }
+  }
+  const limits = { ...DEFAULT_LIMITS2, ...value };
+  for (const [key, limit] of Object.entries(limits)) {
+    positiveInteger3(limit, `glTF limits.${key}`);
+  }
+  return limits;
+}
+function decodeJson(bytes, maximumJsonBytes, label) {
+  if (bytes.byteLength === 0 || bytes.byteLength > maximumJsonBytes) {
+    throw new RangeError(`${label} exceeds the JSON byte limit`);
+  }
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error(`${label} is not valid UTF-8`);
+  }
+  text = text.replace(/[\u0000\u0020]+$/u, "");
+  let document;
+  try {
+    document = JSON.parse(text);
+  } catch {
+    throw new Error(`${label} is not valid JSON`);
+  }
+  return plainRecord2(document, label);
+}
+function parseContainer(bytes, limits) {
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength
+  );
+  if (bytes.byteLength >= 4 && view.getUint32(0, true) === GLB_MAGIC) {
+    if (bytes.byteLength < 20) {
+      throw new RangeError("GLB header or JSON chunk is truncated");
+    }
+    if (view.getUint32(4, true) !== 2) {
+      throw new Error("GLB version is not 2");
+    }
+    if (view.getUint32(8, true) !== bytes.byteLength) {
+      throw new RangeError("GLB declared length does not match input");
+    }
+    const chunks = [];
+    let offset = 12;
+    while (offset < bytes.byteLength) {
+      if (offset + 8 > bytes.byteLength) {
+        throw new RangeError("GLB chunk header is truncated");
+      }
+      const byteLength = view.getUint32(offset, true);
+      const type = view.getUint32(offset + 4, true);
+      offset += 8;
+      if (byteLength === 0 || byteLength % 4 !== 0 || offset + byteLength > bytes.byteLength) {
+        throw new RangeError("GLB chunk length is invalid");
+      }
+      chunks.push({
+        type,
+        bytes: bytes.slice(offset, offset + byteLength)
+      });
+      offset += byteLength;
+    }
+    if (chunks.length === 0 || chunks.length > 2 || chunks[0].type !== JSON_CHUNK || chunks.length === 2 && chunks[1].type !== BIN_CHUNK) {
+      throw new Error("GLB chunk profile is unsupported");
+    }
+    return {
+      format: "glb",
+      document: decodeJson(
+        chunks[0].bytes,
+        limits.maximumJsonBytes,
+        "GLB JSON chunk"
+      ),
+      binaryChunk: chunks[1]?.bytes ?? null
+    };
+  }
+  return {
+    format: "gltf",
+    document: decodeJson(
+      bytes,
+      limits.maximumJsonBytes,
+      "glTF document"
+    ),
+    binaryChunk: null
+  };
+}
+function decodeBase64(value, maximumBytes) {
+  if (value.length === 0 || value.length > Math.ceil(maximumBytes / 3) * 4 + 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(value)) {
+    throw new Error("glTF buffer data URI has invalid base64");
+  }
+  let binary;
+  try {
+    binary = globalThis.atob(value);
+  } catch {
+    throw new Error("glTF buffer data URI has invalid base64");
+  }
+  if (binary.length > maximumBytes) {
+    throw new RangeError("glTF decoded buffer exceeds its byte limit");
+  }
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+function loadBuffers(document, binaryChunk, format, limits) {
+  const buffers = collection(
+    document.buffers,
+    limits.maximumAccessors,
+    "glTF buffers"
+  );
+  let totalBytes = 0;
+  return buffers.map((bufferValue, index) => {
+    const buffer = plainRecord2(
+      bufferValue,
+      `glTF buffers[${index}]`
+    );
+    positiveInteger3(
+      buffer.byteLength,
+      `glTF buffers[${index}].byteLength`
+    );
+    if (buffer.byteLength > limits.maximumBufferBytes) {
+      throw new RangeError("glTF buffer exceeds its byte limit");
+    }
+    let bytes;
+    if (buffer.uri === void 0) {
+      if (format !== "glb" || index !== 0 || binaryChunk === null) {
+        throw new Error("glTF external buffer URI is required");
+      }
+      if (binaryChunk.byteLength < buffer.byteLength || binaryChunk.byteLength > buffer.byteLength + 3) {
+        throw new RangeError("GLB BIN chunk length is inconsistent");
+      }
+      bytes = binaryChunk.slice(0, buffer.byteLength);
+    } else {
+      if (typeof buffer.uri !== "string") {
+        throw new TypeError("glTF buffer URI must be a string");
+      }
+      const match = /^data:application\/(?:octet-stream|gltf-buffer);base64,([A-Za-z0-9+/=]+)$/u.exec(buffer.uri);
+      if (match === null) {
+        throw new DOMException(
+          "external glTF buffer URI is blocked",
+          "NotSupportedError"
+        );
+      }
+      bytes = decodeBase64(match[1], limits.maximumBufferBytes);
+      if (bytes.byteLength !== buffer.byteLength) {
+        throw new RangeError(
+          "glTF data URI length does not match buffer.byteLength"
+        );
+      }
+    }
+    totalBytes += bytes.byteLength;
+    if (totalBytes > limits.maximumBufferBytes) {
+      throw new RangeError("glTF aggregate buffer bytes exceed the limit");
+    }
+    return bytes;
+  });
+}
+function accessorLayout(document, buffers, accessorIndex, {
+  componentType,
+  type,
+  label
+}) {
+  const accessors = collection(
+    document.accessors,
+    DEFAULT_LIMITS2.maximumAccessors,
+    "glTF accessors"
+  );
+  const bufferViews = collection(
+    document.bufferViews,
+    DEFAULT_LIMITS2.maximumBufferViews,
+    "glTF bufferViews"
+  );
+  const accessor = plainRecord2(
+    accessors[arrayIndex(
+      accessorIndex,
+      accessors.length,
+      `${label} accessor`
+    )],
+    `${label} accessor`
+  );
+  if (accessor.componentType !== componentType || accessor.type !== type || accessor.normalized === true || accessor.sparse !== void 0) {
+    throw new Error(`${label} accessor profile is unsupported`);
+  }
+  positiveInteger3(accessor.count, `${label} accessor.count`);
+  const viewIndex = arrayIndex(
+    accessor.bufferView,
+    bufferViews.length,
+    `${label} bufferView`
+  );
+  const bufferView = plainRecord2(
+    bufferViews[viewIndex],
+    `${label} bufferView`
+  );
+  const bufferIndex = arrayIndex(
+    bufferView.buffer,
+    buffers.length,
+    `${label} buffer`
+  );
+  const byteOffset = bufferView.byteOffset ?? 0;
+  const accessorOffset = accessor.byteOffset ?? 0;
+  const componentBytes = COMPONENT_BYTES.get(componentType);
+  const components = type === "VEC3" ? 3 : 1;
+  const elementBytes = componentBytes * components;
+  const stride = bufferView.byteStride ?? elementBytes;
+  if (!Number.isSafeInteger(byteOffset) || byteOffset < 0 || !Number.isSafeInteger(accessorOffset) || accessorOffset < 0 || !Number.isSafeInteger(bufferView.byteLength) || bufferView.byteLength <= 0 || !Number.isSafeInteger(stride) || stride < elementBytes || stride > 252 || stride % componentBytes !== 0 || accessorOffset + stride * (accessor.count - 1) + elementBytes > bufferView.byteLength || byteOffset + bufferView.byteLength > buffers[bufferIndex].byteLength) {
+    throw new RangeError(`${label} accessor byte layout is invalid`);
+  }
+  return {
+    accessor,
+    buffer: buffers[bufferIndex],
+    offset: byteOffset + accessorOffset,
+    stride
+  };
+}
+function readVec3(document, buffers, index, label) {
+  const layout = accessorLayout(
+    document,
+    buffers,
+    index,
+    { componentType: 5126, type: "VEC3", label }
+  );
+  const result = new Float32Array(layout.accessor.count * 3);
+  const view = new DataView(
+    layout.buffer.buffer,
+    layout.buffer.byteOffset,
+    layout.buffer.byteLength
+  );
+  for (let item = 0; item < layout.accessor.count; item += 1) {
+    const offset = layout.offset + item * layout.stride;
+    for (let component = 0; component < 3; component += 1) {
+      const value = view.getFloat32(offset + component * 4, true);
+      if (!Number.isFinite(value)) {
+        throw new Error(`${label} contains a non-finite value`);
+      }
+      result[item * 3 + component] = value;
+    }
+  }
+  return result;
+}
+function readIndices(document, buffers, index, vertexCount, label) {
+  const accessors = collection(
+    document.accessors,
+    DEFAULT_LIMITS2.maximumAccessors,
+    "glTF accessors"
+  );
+  const accessor = plainRecord2(
+    accessors[arrayIndex(index, accessors.length, `${label} accessor`)],
+    `${label} accessor`
+  );
+  if (![5121, 5123, 5125].includes(accessor.componentType)) {
+    throw new Error(`${label} component type is unsupported`);
+  }
+  const layout = accessorLayout(
+    document,
+    buffers,
+    index,
+    {
+      componentType: accessor.componentType,
+      type: "SCALAR",
+      label
+    }
+  );
+  if (layout.accessor.count % 3 !== 0) {
+    throw new Error(`${label} count is not triangles`);
+  }
+  const result = new Uint32Array(layout.accessor.count);
+  const view = new DataView(
+    layout.buffer.buffer,
+    layout.buffer.byteOffset,
+    layout.buffer.byteLength
+  );
+  const getter = accessor.componentType === 5121 ? (offset) => view.getUint8(offset) : accessor.componentType === 5123 ? (offset) => view.getUint16(offset, true) : (offset) => view.getUint32(offset, true);
+  for (let item = 0; item < layout.accessor.count; item += 1) {
+    const value = getter(layout.offset + item * layout.stride);
+    if (value >= vertexCount) {
+      throw new RangeError(`${label} contains an out-of-range index`);
+    }
+    result[item] = value;
+  }
+  return result;
+}
+function localBounds(positions) {
+  const bounds = {
+    min: [Infinity, Infinity, Infinity],
+    max: [-Infinity, -Infinity, -Infinity]
+  };
+  for (let offset = 0; offset < positions.length; offset += 3) {
+    for (let axis = 0; axis < 3; axis += 1) {
+      bounds.min[axis] = Math.min(
+        bounds.min[axis],
+        positions[offset + axis]
+      );
+      bounds.max[axis] = Math.max(
+        bounds.max[axis],
+        positions[offset + axis]
+      );
+    }
+  }
+  return bounds;
+}
+function materialColor(document, index) {
+  if (index === void 0) {
+    return [1, 1, 1, 1];
+  }
+  const materials = collection(
+    document.materials,
+    DEFAULT_LIMITS2.maximumPrimitives,
+    "glTF materials",
+    { nonEmpty: false }
+  );
+  const material = plainRecord2(
+    materials[arrayIndex(index, materials.length, "glTF material")],
+    "glTF material"
+  );
+  const color = material.pbrMetallicRoughness?.baseColorFactor ?? [1, 1, 1, 1];
+  if (!Array.isArray(color) || color.length !== 4 || color.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)) {
+    throw new TypeError("glTF material baseColorFactor is invalid");
+  }
+  return [...color];
+}
+function primitiveRecord(document, buffers, meshIndex, primitiveIndex, limits) {
+  const mesh = plainRecord2(
+    document.meshes[meshIndex],
+    `glTF meshes[${meshIndex}]`
+  );
+  const primitives = collection(
+    mesh.primitives,
+    limits.maximumPrimitives,
+    `glTF meshes[${meshIndex}].primitives`
+  );
+  const primitive = plainRecord2(
+    primitives[primitiveIndex],
+    `glTF mesh ${meshIndex} primitive ${primitiveIndex}`
+  );
+  const label = `glTF mesh ${meshIndex} primitive ${primitiveIndex}`;
+  if ((primitive.mode ?? 4) !== 4 || primitive.indices === void 0 || primitive.targets !== void 0 || primitive.extensions !== void 0) {
+    throw new DOMException(
+      `${label} uses an unsupported primitive profile`,
+      "NotSupportedError"
+    );
+  }
+  const attributes = plainRecord2(
+    primitive.attributes,
+    `${label}.attributes`
+  );
+  if (attributes.POSITION === void 0 || attributes.NORMAL === void 0) {
+    throw new Error(`${label} requires POSITION and NORMAL`);
+  }
+  const positions = readVec3(
+    document,
+    buffers,
+    attributes.POSITION,
+    `${label} POSITION`
+  );
+  const normals = readVec3(
+    document,
+    buffers,
+    attributes.NORMAL,
+    `${label} NORMAL`
+  );
+  if (positions.length !== normals.length || positions.length === 0) {
+    throw new Error(`${label} vertex attribute counts do not match`);
+  }
+  for (let offset = 0; offset < normals.length; offset += 3) {
+    if (Math.hypot(
+      normals[offset],
+      normals[offset + 1],
+      normals[offset + 2]
+    ) < Number.EPSILON) {
+      throw new RangeError(`${label} contains a zero normal`);
+    }
+  }
+  const indices = readIndices(
+    document,
+    buffers,
+    primitive.indices,
+    positions.length / 3,
+    `${label} indices`
+  );
+  return {
+    key: `${meshIndex}:${primitiveIndex}`,
+    meshIndex,
+    primitiveIndex,
+    positions,
+    normals,
+    indices,
+    bounds: localBounds(positions),
+    color: materialColor(document, primitive.material)
+  };
+}
+function boundedName(value, fallback) {
+  if (value === void 0) {
+    return fallback;
+  }
+  if (typeof value !== "string" || value.length === 0 || value.length > 256 || /[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new TypeError("glTF node name must be a bounded string");
+  }
+  return value;
+}
+function validateAsset(document) {
+  const asset = plainRecord2(document.asset, "glTF asset");
+  if (asset.version !== "2.0") {
+    throw new DOMException(
+      "only glTF 2.0 is supported",
+      "NotSupportedError"
+    );
+  }
+  if (asset.minVersion !== void 0 && asset.minVersion !== "2.0") {
+    throw new DOMException(
+      "glTF minVersion is unsupported",
+      "NotSupportedError"
+    );
+  }
+  if (document.extensionsRequired !== void 0 && (!Array.isArray(document.extensionsRequired) || document.extensionsRequired.length > 0)) {
+    throw new DOMException(
+      "required glTF extensions are unsupported",
+      "NotSupportedError"
+    );
+  }
+  for (const field of ["animations", "skins"]) {
+    if (document[field] !== void 0 && (!Array.isArray(document[field]) || document[field].length > 0)) {
+      throw new DOMException(
+        `glTF ${field} are unsupported`,
+        "NotSupportedError"
+      );
+    }
+  }
+  return asset;
+}
+function parseGltfReferenceProfile(input, { limits: limitOverrides = {} } = {}) {
+  if (!(input instanceof Uint8Array)) {
+    throw new TypeError("glTF input must be a Uint8Array");
+  }
+  const limits = validatedLimits(limitOverrides);
+  if (input.byteLength === 0 || input.byteLength > limits.maximumSourceBytes) {
+    throw new RangeError("glTF input exceeds the source byte limit");
+  }
+  const bytes = Uint8Array.from(input);
+  const ownedBuffers = [];
+  try {
+    const {
+      format,
+      document,
+      binaryChunk
+    } = parseContainer(bytes, limits);
+    const asset = validateAsset(document);
+    const nodes = collection(
+      document.nodes,
+      limits.maximumNodes,
+      "glTF nodes"
+    );
+    const meshes = collection(
+      document.meshes,
+      limits.maximumMeshes,
+      "glTF meshes"
+    );
+    collection(
+      document.accessors,
+      limits.maximumAccessors,
+      "glTF accessors"
+    );
+    collection(
+      document.bufferViews,
+      limits.maximumBufferViews,
+      "glTF bufferViews"
+    );
+    const scenes = collection(
+      document.scenes,
+      limits.maximumNodes,
+      "glTF scenes"
+    );
+    const sceneIndex = document.scene ?? 0;
+    const scene = plainRecord2(
+      scenes[arrayIndex(
+        sceneIndex,
+        scenes.length,
+        "glTF default scene"
+      )],
+      "glTF default scene"
+    );
+    const roots = collection(
+      scene.nodes,
+      limits.maximumNodes,
+      "glTF scene roots"
+    );
+    const buffers = loadBuffers(
+      document,
+      binaryChunk,
+      format,
+      limits
+    );
+    ownedBuffers.push(...buffers);
+    const records = /* @__PURE__ */ new Map();
+    const occurrences = [];
+    const parentByNode = /* @__PURE__ */ new Map();
+    const visiting = /* @__PURE__ */ new Set();
+    const visited = /* @__PURE__ */ new Set();
+    let vertices = 0;
+    let triangles = 0;
+    const bounds = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity]
+    };
+    const visit = (nodeIndex, parentMatrix, depth, parentIndex) => {
+      arrayIndex(nodeIndex, nodes.length, "glTF node");
+      if (depth > limits.maximumNodeDepth) {
+        throw new RangeError("glTF node depth exceeds the limit");
+      }
+      if (visiting.has(nodeIndex)) {
+        throw new Error("glTF node graph contains a cycle");
+      }
+      if (parentByNode.has(nodeIndex)) {
+        throw new Error("glTF node has more than one parent");
+      }
+      parentByNode.set(nodeIndex, parentIndex);
+      if (visited.has(nodeIndex)) {
+        throw new Error("glTF node occurs more than once");
+      }
+      visiting.add(nodeIndex);
+      const node = plainRecord2(
+        nodes[nodeIndex],
+        `glTF nodes[${nodeIndex}]`
+      );
+      if (node.skin !== void 0 || node.weights !== void 0 || node.extensions !== void 0) {
+        throw new DOMException(
+          `glTF nodes[${nodeIndex}] uses an unsupported profile`,
+          "NotSupportedError"
+        );
+      }
+      const world = multiplyMatrices(
+        parentMatrix,
+        nodeMatrix(node, `glTF nodes[${nodeIndex}]`)
+      );
+      if (node.mesh !== void 0) {
+        const meshIndex = arrayIndex(
+          node.mesh,
+          meshes.length,
+          `glTF nodes[${nodeIndex}].mesh`
+        );
+        const mesh = plainRecord2(
+          meshes[meshIndex],
+          `glTF meshes[${meshIndex}]`
+        );
+        const primitives = collection(
+          mesh.primitives,
+          limits.maximumPrimitives,
+          `glTF meshes[${meshIndex}].primitives`
+        );
+        for (let primitiveIndex = 0; primitiveIndex < primitives.length; primitiveIndex += 1) {
+          const key = `${meshIndex}:${primitiveIndex}`;
+          let record = records.get(key);
+          if (record === void 0) {
+            record = primitiveRecord(
+              document,
+              buffers,
+              meshIndex,
+              primitiveIndex,
+              limits
+            );
+            vertices += record.positions.length / 3;
+            triangles += record.indices.length / 3;
+            if (vertices > limits.maximumVertices || triangles > limits.maximumTriangles || records.size + 1 > limits.maximumPrimitives) {
+              throw new RangeError(
+                "glTF geometry exceeds the bounded profile"
+              );
+            }
+            records.set(key, record);
+          }
+          const occurrenceBounds = transformedBounds(
+            world,
+            record.bounds
+          );
+          unionBounds(bounds, occurrenceBounds);
+          occurrences.push({
+            nativeId: `node:${nodeIndex}/mesh:${meshIndex}/primitive:${primitiveIndex}`,
+            name: boundedName(
+              node.name,
+              `glTF node ${nodeIndex} primitive ${primitiveIndex}`
+            ),
+            nodeIndex,
+            meshIndex,
+            primitiveIndex,
+            geometryKey: key,
+            transform: world,
+            color: record.color,
+            bounds: occurrenceBounds
+          });
+          if (occurrences.length > limits.maximumInstances) {
+            throw new RangeError(
+              "glTF instances exceed the bounded profile"
+            );
+          }
+        }
+      }
+      const children = node.children ?? [];
+      if (!Array.isArray(children) || children.length > limits.maximumNodes || new Set(children).size !== children.length) {
+        throw new RangeError(
+          `glTF nodes[${nodeIndex}].children is invalid`
+        );
+      }
+      for (const child of children) {
+        visit(child, world, depth + 1, nodeIndex);
+      }
+      visiting.delete(nodeIndex);
+      visited.add(nodeIndex);
+    };
+    for (const root of roots) {
+      visit(root, identityMatrix(), 0, null);
+    }
+    if (occurrences.length === 0 || records.size === 0) {
+      throw new Error("glTF default scene has no supported geometry");
+    }
+    return {
+      format,
+      asset: {
+        version: asset.version,
+        generator: typeof asset.generator === "string" && asset.generator.length <= 256 ? asset.generator : null
+      },
+      records: [...records.values()],
+      occurrences,
+      bounds,
+      statistics: {
+        nodes: visited.size,
+        meshes: new Set(
+          occurrences.map((item) => item.meshIndex)
+        ).size,
+        geometryRecords: records.size,
+        instances: occurrences.length,
+        vertices,
+        triangles,
+        sourceBytes: input.byteLength
+      },
+      extensionsUsed: Array.isArray(document.extensionsUsed) ? [...document.extensionsUsed] : []
+    };
+  } finally {
+    bytes.fill(0);
+    for (const buffer of ownedBuffers) {
+      buffer.fill(0);
+    }
+  }
+}
+
+// packages/gltf-reference-source/src/index.mjs
+var GLTF_REFERENCE_SOURCE_CONTRACT = "bim-explorer-gltf-reference-source/0.1";
+var BIM_SOURCE_PROTOCOL_VERSION2 = "bim-explorer-bim-source/0.2";
+var IDENTITY_MATRIX = Object.freeze([
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  1
+]);
+function deepFreeze3(value) {
+  if (value !== null && typeof value === "object" && !ArrayBuffer.isView(value) && !Object.isFrozen(value)) {
+    for (const item of Object.values(value)) {
+      deepFreeze3(item);
+    }
+    Object.freeze(value);
+  }
+  return value;
+}
+function positiveInteger4(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new TypeError(`${label} must be a positive safe integer`);
+  }
+}
+function aborted3(signal) {
+  signal?.throwIfAborted?.();
+  if (signal?.aborted) {
+    throw signal.reason ?? new DOMException(
+      "operation aborted",
+      "AbortError"
+    );
+  }
+}
+function invalidState2(message) {
+  return new DOMException(message, "InvalidStateError");
+}
+function context(source) {
+  return {
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION2,
+    sessionId: source.sessionId,
+    sourceId: source.sourceId,
+    revisionId: source.revisionId,
+    snapshotId: source.snapshotId,
+    layerId: source.layerId
+  };
+}
+async function sha2562(bytes) {
+  if (globalThis.crypto?.subtle === void 0) {
+    throw new Error("SHA-256 Web Crypto is unavailable");
+  }
+  const digest2 = await globalThis.crypto.subtle.digest(
+    "SHA-256",
+    bytes
+  );
+  return [...new Uint8Array(digest2)].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+var GltfReferenceSource = class {
+  #geometryBytes;
+  #snapshot;
+  #entityIndexes;
+  #opened = false;
+  #sessionDisposed = false;
+  #disposed = false;
+  #reads = 0;
+  #bytesRead = 0;
+  constructor({
+    profile,
+    sourceDigest,
+    geometryBytes,
+    geometryDigest,
+    geometryMetadata,
+    maximumRequestBytes = 1024 * 1024,
+    sessionReadBudgetBytes = geometryBytes.byteLength
+  }) {
+    positiveInteger4(maximumRequestBytes, "maximumRequestBytes");
+    positiveInteger4(
+      sessionReadBudgetBytes,
+      "sessionReadBudgetBytes"
+    );
+    this.#geometryBytes = Uint8Array.from(geometryBytes);
+    this.sourceFingerprint = `sha256:${sourceDigest}`;
+    this.sourceId = `source:${profile.format}:${sourceDigest.slice(0, 24)}`;
+    this.revisionId = `source-snapshot:${this.sourceFingerprint}`;
+    this.sessionId = `session:gltf-reference:${sourceDigest.slice(0, 24)}`;
+    this.snapshotId = `snapshot:gltf-reference:${sourceDigest}:0`;
+    this.layerId = "layer:gltf-reference:base-3d";
+    this.maximumRequestBytes = Math.min(
+      maximumRequestBytes,
+      geometryBytes.byteLength
+    );
+    this.sessionReadBudgetBytes = sessionReadBudgetBytes;
+    const idPrefix = sourceDigest.slice(0, 16);
+    const rangeId = "range:gltf-reference:geometry:0";
+    const baseContext = context(this);
+    const entities = profile.occurrences.map(
+      (occurrence, index) => {
+        const record = geometryMetadata.get(
+          occurrence.geometryKey
+        );
+        const localNumericId = index + 1;
+        return deepFreeze3({
+          expressId: localNumericId,
+          localNumericId,
+          globalId: null,
+          nativeId: occurrence.nativeId,
+          name: occurrence.name,
+          sourceClass: "gltf-mesh-primitive",
+          semanticAuthority: false,
+          renderable: true,
+          renderId: `render:${profile.format}:${idPrefix}:${localNumericId}`,
+          pickId: `pick:${profile.format}:${idPrefix}:${localNumericId}`,
+          externalIdentityToken: `gltf-native:${this.sourceFingerprint}:` + occurrence.nativeId,
+          bounds: occurrence.bounds,
+          primitives: [{
+            geometryExpressId: record.geometryExpressId,
+            vertexCount: record.vertexCount,
+            indexCount: record.indexCount,
+            triangles: record.triangles,
+            slice: {
+              rangeId,
+              offset: record.slice.offset,
+              byteLength: record.slice.byteLength
+            },
+            transform: occurrence.transform,
+            color: occurrence.color
+          }],
+          provenance: {
+            format: profile.format,
+            nodeIndex: occurrence.nodeIndex,
+            meshIndex: occurrence.meshIndex,
+            primitiveIndex: occurrence.primitiveIndex
+          }
+        });
+      }
+    );
+    this.#entityIndexes = {
+      expressId: new Map(
+        entities.map((entity) => [entity.expressId, entity])
+      ),
+      nativeId: new Map(
+        entities.map((entity) => [entity.nativeId, entity])
+      ),
+      renderId: new Map(
+        entities.map((entity) => [entity.renderId, entity])
+      ),
+      pickId: new Map(
+        entities.map((entity) => [entity.pickId, entity])
+      )
+    };
+    const handle2 = deepFreeze3({
+      ...baseContext,
+      handleId: rangeId,
+      mediaType: BIM_GEOMETRY_MEDIA_TYPE,
+      byteLength: this.#geometryBytes.byteLength,
+      maximumRequestBytes: this.maximumRequestBytes,
+      sha256: geometryDigest,
+      expiresAt: null,
+      disposeWithSession: true
+    });
+    this.#snapshot = deepFreeze3({
+      ...baseContext,
+      sequence: 0,
+      source: {
+        documentId: `document:${profile.format}:${sourceDigest.slice(0, 32)}`,
+        fingerprint: this.sourceFingerprint,
+        byteLength: profile.statistics.sourceBytes,
+        format: profile.format,
+        mediaType: profile.format === "glb" ? "model/gltf-binary" : "model/gltf+json",
+        gltfVersion: profile.asset.version,
+        profile: "gltf-2.0-bounded-reference-mesh-v0.1",
+        sourceRole: "derived-or-reference-mesh",
+        semanticAuthority: false,
+        writeAuthority: false,
+        roundTripAuthority: false,
+        adapter: {
+          id: "@bim-explorer/gltf-reference-source",
+          version: "0.1.0",
+          backend: "bounded-native-js",
+          license: "MPL-2.0"
+        }
+      },
+      coordinateSystem: {
+        storage: "gltf-local-meter-y-up",
+        source: "gltf-local-meter-y-up",
+        sourceFromStorage: IDENTITY_MATRIX
+      },
+      geometry: {
+        bounds: profile.bounds,
+        records: profile.statistics.geometryRecords,
+        instances: profile.statistics.instances,
+        vertices: profile.statistics.vertices,
+        triangles: profile.statistics.triangles,
+        representationAuthority: "derived-display-cache"
+      },
+      entities,
+      layers: [{
+        layerId: this.layerId,
+        sourceId: this.sourceId,
+        revisionId: this.revisionId,
+        kind: "reference",
+        representation: "3d",
+        order: 0,
+        visible: true,
+        rangeHandles: [handle2]
+      }],
+      loadPlan: {
+        firstFrameRangeIds: [rangeId],
+        deferredRangeIds: []
+      },
+      referenceMetadata: {
+        schema: GLTF_REFERENCE_SOURCE_CONTRACT,
+        generator: profile.asset.generator,
+        extensionsUsed: profile.extensionsUsed,
+        nodeCount: profile.statistics.nodes,
+        meshCount: profile.statistics.meshes,
+        metadataQuery: "bounded-node-mesh-material-projection"
+      }
+    });
+  }
+  get state() {
+    return Object.freeze({
+      opened: this.#opened,
+      sessionDisposed: this.#sessionDisposed,
+      disposed: this.#disposed,
+      rangeReads: this.#reads,
+      rangeBytesRead: this.#bytesRead,
+      remainingReadBytes: Math.max(
+        0,
+        this.sessionReadBudgetBytes - this.#bytesRead
+      )
+    });
+  }
+  #assertSourceOpen() {
+    if (this.#disposed) {
+      throw invalidState2("glTF reference source is disposed");
+    }
+  }
+  #assertSessionOpen() {
+    this.#assertSourceOpen();
+    if (this.#sessionDisposed) {
+      throw invalidState2("glTF reference session is disposed");
+    }
+  }
+  #assertContext(value, label) {
+    for (const [field, expected] of Object.entries(context(this))) {
+      if (value?.[field] !== expected) {
+        throw new RangeError(`${label} is outside the snapshot`);
+      }
+    }
+  }
+  async open({ protocolVersion, signal } = {}) {
+    this.#assertSourceOpen();
+    aborted3(signal);
+    if (this.#opened) {
+      throw invalidState2("glTF reference source supports one session");
+    }
+    if (protocolVersion !== BIM_SOURCE_PROTOCOL_VERSION2) {
+      throw new RangeError(
+        `unsupported BIM source protocol ${protocolVersion}`
+      );
+    }
+    this.#opened = true;
+    const descriptor = deepFreeze3({
+      protocolVersion,
+      sessionId: this.sessionId,
+      sourceId: this.sourceId,
+      currentRevisionId: this.revisionId,
+      lastSuccessfulRevisionId: this.revisionId,
+      sourceFingerprint: this.sourceFingerprint,
+      capabilities: [
+        "immutable-snapshot",
+        "binary-range-read",
+        "entity-resolve",
+        "bounded-reference-metadata",
+        "source-display-geometry-separation",
+        "pick-resolve"
+      ],
+      resourceBudgetBytes: this.sessionReadBudgetBytes,
+      sourceRole: "derived-or-reference-mesh",
+      semanticAuthority: false,
+      writeAuthority: false
+    });
+    return {
+      descriptor,
+      getSnapshot: async ({ signal: snapshotSignal } = {}) => {
+        this.#assertSessionOpen();
+        aborted3(snapshotSignal);
+        return this.#snapshot;
+      },
+      readRange: async (handle2, offset, length, { signal: rangeSignal } = {}) => {
+        this.#assertSessionOpen();
+        aborted3(rangeSignal);
+        this.#assertContext(handle2, "glTF range handle");
+        const expected = this.#snapshot.layers[0].rangeHandles[0];
+        if (handle2?.handleId !== expected.handleId || handle2.mediaType !== expected.mediaType || handle2.byteLength !== expected.byteLength || handle2.maximumRequestBytes !== expected.maximumRequestBytes || handle2.sha256 !== expected.sha256) {
+          throw new RangeError(
+            "glTF range handle is outside the snapshot"
+          );
+        }
+        if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(length) || offset < 0 || length <= 0 || length > this.maximumRequestBytes || offset + length > this.#geometryBytes.byteLength) {
+          throw new RangeError("glTF range request is invalid");
+        }
+        if (this.#bytesRead + length > this.sessionReadBudgetBytes) {
+          throw new RangeError(
+            "glTF reference read budget is exhausted"
+          );
+        }
+        this.#reads += 1;
+        this.#bytesRead += length;
+        return this.#geometryBytes.slice(offset, offset + length);
+      },
+      getEntity: async (request, { signal: entitySignal } = {}) => {
+        this.#assertSessionOpen();
+        aborted3(entitySignal);
+        this.#assertContext(request, "glTF entity request");
+        const lookups = Object.entries(this.#entityIndexes).filter(([field2]) => request?.[field2] !== void 0);
+        if (lookups.length !== 1) {
+          throw new TypeError(
+            "glTF entity request requires one source-local identity"
+          );
+        }
+        const [field, index] = lookups[0];
+        const entity = index.get(request[field]);
+        if (entity === void 0) {
+          throw new RangeError(
+            "glTF entity identity is outside the snapshot"
+          );
+        }
+        return entity;
+      },
+      resolvePick: async (request, { signal: pickSignal } = {}) => {
+        this.#assertSessionOpen();
+        aborted3(pickSignal);
+        this.#assertContext(request, "glTF pick request");
+        const entity = this.#entityIndexes.pickId.get(
+          request?.pickId
+        );
+        if (entity === void 0 || request.renderId !== entity.renderId) {
+          throw new RangeError(
+            "glTF pick identity is outside the snapshot"
+          );
+        }
+        return deepFreeze3({
+          ...context(this),
+          nativeId: entity.nativeId,
+          globalId: null,
+          localNumericId: entity.localNumericId,
+          renderId: entity.renderId,
+          pickId: entity.pickId,
+          externalIdentityToken: entity.externalIdentityToken
+        });
+      },
+      dispose: async () => {
+        if (this.#sessionDisposed) {
+          return false;
+        }
+        this.#sessionDisposed = true;
+        return true;
+      }
+    };
+  }
+  async dispose() {
+    if (this.#disposed) {
+      return false;
+    }
+    this.#disposed = true;
+    this.#geometryBytes.fill(0);
+    this.#geometryBytes = new Uint8Array();
+    for (const index of Object.values(this.#entityIndexes)) {
+      index.clear();
+    }
+    return true;
+  }
+};
+async function createGltfReferenceSource(bytes, {
+  limits,
+  maximumRequestBytes,
+  sessionReadBudgetBytes,
+  signal
+} = {}) {
+  aborted3(signal);
+  if (!(bytes instanceof Uint8Array)) {
+    throw new TypeError("glTF input must be a Uint8Array");
+  }
+  const [sourceDigest, profile] = await Promise.all([
+    sha2562(bytes),
+    Promise.resolve().then(() => parseGltfReferenceProfile(bytes, { limits }))
+  ]);
+  aborted3(signal);
+  const encoded = encodeGltfGeometryRange(profile.records);
+  try {
+    const geometryDigest = await sha2562(encoded.bytes);
+    aborted3(signal);
+    return new GltfReferenceSource({
+      profile,
+      sourceDigest,
+      geometryBytes: encoded.bytes,
+      geometryDigest,
+      geometryMetadata: encoded.metadata,
+      maximumRequestBytes,
+      sessionReadBudgetBytes
+    });
+  } finally {
+    encoded.bytes.fill(0);
+    for (const record of profile.records) {
+      record.positions.fill(0);
+      record.normals.fill(0);
+      record.indices.fill(0);
+    }
+  }
+}
+
 // apps/bim-explorer-web/source-worker.mjs
 var REQUEST_SCHEMA = "bim-explorer-product-source-worker-request/0.1";
 var RESPONSE_SCHEMA = "bim-explorer-product-source-worker-response/0.1";
 var MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+var SOURCE_FORMATS = /* @__PURE__ */ new Set(["ifc", "gltf", "glb"]);
 var OPERATIONS = /* @__PURE__ */ new Set([
   "getEntity",
   "getEntityDetails",
@@ -4068,7 +5389,56 @@ async function releaseActive() {
 }
 function validOpen(request) {
   const options = request?.options;
-  return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES && typeof options?.webIfcModuleUrl === "string" && options.webIfcModuleUrl.length > 0 && typeof options?.wasmPath === "string" && options.wasmPath.length > 0 && (options.wasmUrl === null || typeof options.wasmUrl === "string" && options.wasmUrl.length > 0) && typeof options?.profile === "string" && options.profile.length > 0;
+  return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES && SOURCE_FORMATS.has(options?.format) && typeof options?.webIfcModuleUrl === "string" && options.webIfcModuleUrl.length > 0 && typeof options?.wasmPath === "string" && options.wasmPath.length > 0 && (options.wasmUrl === null || typeof options.wasmUrl === "string" && options.wasmUrl.length > 0) && typeof options?.profile === "string" && options.profile.length > 0;
+}
+function ifcResources(artifact) {
+  return {
+    sourceBytes: artifact.resources.observed.sourceBytes,
+    geometryBytes: artifact.resources.observed.geometryBytes,
+    metadataBytes: artifact.resources.observed.metadataBytes,
+    detailBytes: artifact.resources.observed.detailBytes,
+    detailRanges: artifact.resources.observed.detailRanges,
+    largestDetailRangeBytes: artifact.resources.observed.largestDetailRangeBytes,
+    propertyDetailBytes: artifact.propertyDetails.resources.observed.bytes,
+    propertyDetailRanges: artifact.propertyDetails.resources.observed.ranges,
+    ranges: artifact.resources.observed.ranges,
+    products: artifact.resources.observed.products,
+    wasmHeapCapacityBytes: artifact.resources.wasmHeapCapacityBytes ?? null
+  };
+}
+function referenceResources(snapshot) {
+  const handles = snapshot.layers.flatMap((layer) => layer.rangeHandles ?? []);
+  const geometryBytes = handles.reduce(
+    (total, handle2) => total + handle2.byteLength,
+    0
+  );
+  const metadataBytes = new TextEncoder().encode(
+    JSON.stringify({
+      entities: snapshot.entities.map((entity) => ({
+        localNumericId: entity.localNumericId,
+        name: entity.name,
+        nativeId: entity.nativeId,
+        provenance: entity.provenance
+      })),
+      geometry: snapshot.geometry,
+      referenceMetadata: snapshot.referenceMetadata,
+      source: snapshot.source
+    })
+  ).byteLength;
+  return {
+    sourceBytes: snapshot.source.byteLength,
+    geometryBytes,
+    metadataBytes,
+    detailBytes: 0,
+    detailRanges: 0,
+    largestDetailRangeBytes: 0,
+    propertyDetailBytes: 0,
+    propertyDetailRanges: 0,
+    ranges: handles.length,
+    products: 0,
+    referenceEntities: snapshot.entities.length,
+    wasmHeapCapacityBytes: null
+  };
 }
 async function openSource(request) {
   if (!validOpen(request)) {
@@ -4078,77 +5448,96 @@ async function openSource(request) {
   const started = performance.now();
   const bytes = new Uint8Array(request.bytes);
   let artifact = null;
+  let candidateSession = null;
+  let candidateSource = null;
   progress(request.requestId, "source-admitted", {
-    byteLength: bytes.byteLength
+    byteLength: bytes.byteLength,
+    format: request.options.format
   });
   try {
     const artifactStarted = performance.now();
-    progress(request.requestId, "web-ifc-importing");
-    const webIfcModule = await import(request.options.webIfcModuleUrl);
-    progress(request.requestId, "web-ifc-imported");
-    artifact = await createWebIfcSourceArtifact(bytes, {
-      adapterBackend: "browser-wasm-product-source",
-      forceSingleThread: true,
-      maximumSourceBytes: MAXIMUM_SOURCE_BYTES,
-      profile: request.options.profile,
-      wasmPath: request.options.wasmPath,
-      wasmUrl: request.options.wasmUrl,
-      webIfcModule
-    });
+    if (request.options.format === "ifc") {
+      progress(request.requestId, "web-ifc-importing");
+      const webIfcModule = await import(request.options.webIfcModuleUrl);
+      progress(request.requestId, "web-ifc-imported");
+      artifact = await createWebIfcSourceArtifact(bytes, {
+        adapterBackend: "browser-wasm-product-source",
+        forceSingleThread: true,
+        maximumSourceBytes: MAXIMUM_SOURCE_BYTES,
+        profile: request.options.profile,
+        wasmPath: request.options.wasmPath,
+        wasmUrl: request.options.wasmUrl,
+        webIfcModule
+      });
+      progress(request.requestId, "artifact-created", {
+        format: "ifc",
+        products: artifact.geometry.products,
+        ranges: artifact.ranges.length
+      });
+      candidateSource = createBimModelSource(artifact, {
+        maximumRequestBytes: 1024 * 1024
+      });
+    } else {
+      progress(request.requestId, "gltf-validating", {
+        format: request.options.format
+      });
+      candidateSource = await createGltfReferenceSource(bytes, {
+        maximumRequestBytes: 1024 * 1024
+      });
+      progress(request.requestId, "artifact-created", {
+        format: request.options.format,
+        products: 0,
+        ranges: 1
+      });
+    }
     const artifactMs = performance.now() - artifactStarted;
-    progress(request.requestId, "artifact-created", {
-      products: artifact.geometry.products,
-      ranges: artifact.ranges.length
-    });
     const sourceStarted = performance.now();
-    const source = createBimModelSource(artifact, {
-      maximumRequestBytes: 1024 * 1024
-    });
-    for (const range of artifact.ranges) {
+    for (const range of artifact?.ranges ?? []) {
       range.bytes.fill(0);
     }
-    for (const range of artifact.detailRanges) {
+    for (const range of artifact?.detailRanges ?? []) {
       range.bytes.fill(0);
     }
-    for (const range of artifact.propertyDetails.ranges) {
+    for (const range of artifact?.propertyDetails?.ranges ?? []) {
       range.bytes.fill(0);
     }
-    const session = await source.open({
+    candidateSession = await candidateSource.open({
       protocolVersion: BIM_SOURCE_PROTOCOL_VERSION
     });
-    const snapshot = await session.getSnapshot();
+    const snapshot = await candidateSession.getSnapshot();
+    const observedFormat = snapshot.source.format ?? "ifc";
+    if (observedFormat !== request.options.format) {
+      throw new TypeError(
+        "source bytes do not match the declared format"
+      );
+    }
     const sourceMs = performance.now() - sourceStarted;
     active = {
-      session,
+      session: candidateSession,
       snapshot,
-      source
+      source: candidateSource
     };
+    candidateSession = null;
+    candidateSource = null;
     progress(request.requestId, "snapshot-ready", {
+      format: observedFormat,
       revisionId: snapshot.revisionId
     });
     post(request.requestId, "result", {
-      descriptor: session.descriptor,
+      descriptor: active.session.descriptor,
       diagnostics: [],
       performance: {
         artifactMs,
         sourceMs,
         totalMs: performance.now() - started
       },
-      resources: {
-        sourceBytes: artifact.resources.observed.sourceBytes,
-        geometryBytes: artifact.resources.observed.geometryBytes,
-        metadataBytes: artifact.resources.observed.metadataBytes,
-        detailBytes: artifact.resources.observed.detailBytes,
-        detailRanges: artifact.resources.observed.detailRanges,
-        largestDetailRangeBytes: artifact.resources.observed.largestDetailRangeBytes,
-        propertyDetailBytes: artifact.propertyDetails.resources.observed.bytes,
-        propertyDetailRanges: artifact.propertyDetails.resources.observed.ranges,
-        ranges: artifact.resources.observed.ranges,
-        products: artifact.resources.observed.products,
-        wasmHeapCapacityBytes: artifact.resources.wasmHeapCapacityBytes ?? null
-      },
+      resources: observedFormat === "ifc" ? ifcResources(artifact) : referenceResources(snapshot),
       snapshot
     });
+  } catch (error) {
+    await candidateSession?.dispose();
+    await candidateSource?.dispose();
+    throw error;
   } finally {
     bytes.fill(0);
     for (const range of artifact?.ranges ?? []) {

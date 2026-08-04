@@ -6,8 +6,8 @@
 
 - [`bim-explorer-web`](bim-explorer-web/README.md): local Browser product
   surface
-- [`bim-explorer-vscode`](bim-explorer-vscode/README.md): `.ifc` read-only
-  Custom Editor
+- [`bim-explorer-vscode`](bim-explorer-vscode/README.md): IFC와 bounded
+  glTF/GLB read-only Custom Editor
 
 App은 IFC parser, source identity authority나 generic 3D implementation을
 직접 소유하지 않습니다. Host capability와 lifecycle을 package/adapters에
@@ -22,6 +22,13 @@ bridge와 close cleanup까지 재검증했습니다. public Viewer Core conforma
 3,569-product source/model projection과 첫-range WebGL2 결과로
 재현했습니다. IFC2X3 profile admission, physical GPU와 release는 이
 product-scale 결과로 승격하지 않습니다.
+
+같은 두 Host는 bounded glTF/GLB를 BIM semantic source가 아닌 reference
+mesh로 분기합니다. 공개 Khronos Box GLB는 Browser local file input,
+staged VS Code와 clean-installed VSIX에서 12 triangles, source-native
+selection, `globalId: null`, 실제 Chromium WebGL2, path-free bridge와
+cleanup을 재현했습니다. external resource/required extension, physical
+GPU와 product-scale reference model은 계속 보류합니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과
@@ -43,5 +50,6 @@ qualification surface이며 제품 shell은 아닙니다.
 
 [`gltf-browser-probe`](gltf-browser-probe/README.md)는 Khronos Box GLB에서
 투영한 generic geometry range를 실제 Chrome WebGL2로 render하고
-source-native pick과 cleanup을 확인합니다. 원본 GLB나 제품 file-open
-surface를 Browser에 노출하지 않습니다.
+source-native pick과 cleanup을 확인하는 source/renderer qualification
+surface입니다. 제품 file-open은 별도 Browser·VS Code evidence가
+소유합니다.

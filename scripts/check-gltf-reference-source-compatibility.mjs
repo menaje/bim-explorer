@@ -19,6 +19,18 @@ const browserEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.browserWebGl2),
   "utf8",
 ));
+const browserProductEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.browserProduct),
+  "utf8",
+));
+const vscodeProductEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.vscodeProduct),
+  "utf8",
+));
+const vscodeInstallEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.vscodeCleanInstall),
+  "utf8",
+));
 const federationEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.federation),
   "utf8",
@@ -46,10 +58,10 @@ const trueGates = [
   "deterministicCleanup",
   "browserWebGl2",
   "federationReferenceAdmission",
-];
-const heldGates = [
   "browserProductOpen",
   "vscodeProductOpen",
+];
+const heldGates = [
   "externalResourceBundle",
   "requiredExtensions",
   "write",
@@ -70,6 +82,68 @@ const assertions = [
   "artifactNotTrackedOrBundled",
   "pathFreeEvidence",
 ];
+
+function everyTrue(value) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0 &&
+    Object.values(value).every((item) => item === true)
+  );
+}
+
+function exactReferenceFixture(value) {
+  return (
+    value?.id === fixture.fixtureId &&
+    value?.committed === false &&
+    value?.format === "glb" &&
+    value?.sourceBytes === fixture.entry.byteLength &&
+    value?.fingerprint === `sha256:${fixture.entry.sha256}` &&
+    value?.gltfVersion === fixture.expected.gltfVersion &&
+    value?.nativeId ===
+      "node:1/mesh:0/primitive:0" &&
+    value?.provenance?.repository ===
+      fixture.provenance.repository &&
+    value?.provenance?.commit === fixture.provenance.commit &&
+    value?.provenance?.license === fixture.license.spdx &&
+    value?.provenance?.bundled === false
+  );
+}
+
+function exactReferenceObservation(value, hostKind) {
+  return (
+    value?.hostKind === hostKind &&
+    JSON.stringify(value?.model) === JSON.stringify({
+      entities: 1,
+      geometryRecords: 1,
+      instances: 1,
+      triangles: 12,
+      ranges: 1,
+    }) &&
+    value?.resources?.sourceBytes === 1_664 &&
+    value?.resources?.geometryBytes === 756 &&
+    value?.resources?.metadataBytes === 1_093 &&
+    value?.resources?.detailBytes === 0 &&
+    value?.resources?.detailRanges === 0 &&
+    value?.resources?.largestDetailRangeBytes === 0 &&
+    value?.resources?.ranges === 1 &&
+    value?.resources?.products === 0 &&
+    value?.resources?.referenceEntities === 1 &&
+    value?.renderer?.actualGpu === true &&
+    value?.renderer?.nonBackgroundPixels > 0 &&
+    value?.renderer?.sourceReadBytes === 756 &&
+    value?.renderer?.uploadedBytes === 800 &&
+    value?.reference?.globalId === null &&
+    value?.reference?.selectedNativeId ===
+      "node:1/mesh:0/primitive:0" &&
+    value?.reference?.treeRows === 1 &&
+    value?.reference?.maximumDomRows === 64 &&
+    value?.lifecycle?.opened === "ready" &&
+    value?.lifecycle?.closed === "disposed"
+  );
+}
+
 if (
   manifest.schema !==
     "bim-explorer-gltf-reference-source-compatibility/1" ||
@@ -85,10 +159,19 @@ if (
   manifest.policy.allowBimSemanticAuthority !== false ||
   manifest.policy.nativeWrite !== false ||
   manifest.policy.roundTrip !== false ||
-  manifest.policy.claimProductSupport !== false ||
+  manifest.policy.claimProductSupport !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
-  manifest.blockers.length !== 3 ||
+  manifest.blockers.length !== 2 ||
+  manifest.evidence.browserProduct !==
+    "compatibility/evidence/" +
+      "gltf-reference-source-khronos-box-browser-product-2026-08-04.json" ||
+  manifest.evidence.vscodeProduct !==
+    "compatibility/evidence/" +
+      "bim-product-shell-vscode-synthetic-2026-08-04.json" ||
+  manifest.evidence.vscodeCleanInstall !==
+    "compatibility/evidence/" +
+      "bim-product-shell-vscode-vsix-install-2026-08-04.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -174,6 +257,86 @@ if (
   browserEvidence.network.runtimeErrors.length !== 0 ||
   Object.values(browserEvidence.assertions)
     .some((value) => value !== true) ||
+  browserProductEvidence.schema !==
+    "bim-explorer-product-shell-browser-evidence/1" ||
+  browserProductEvidence.environment?.headless !== true ||
+  !exactReferenceFixture(browserProductEvidence.fixture) ||
+  !exactReferenceObservation(
+    browserProductEvidence.observation,
+    "browser",
+  ) ||
+  browserProductEvidence.observation?.interaction
+    ?.selectedNativeId !==
+      "node:1/mesh:0/primitive:0" ||
+  browserProductEvidence.observation?.interaction
+    ?.selectionOrigin !== "3d" ||
+  browserProductEvidence.observation?.network
+    ?.externalOrigins?.length !== 0 ||
+  browserProductEvidence.observation?.runtimeErrors
+    ?.length !== 0 ||
+  browserProductEvidence.observation?.lifecycle
+    ?.backendDisposed !== true ||
+  browserProductEvidence.observation?.lifecycle
+    ?.clientDisposed !== true ||
+  !everyTrue(browserProductEvidence.assertions) ||
+  browserProductEvidence.decision?.referenceProductOpen !==
+    "passed-bounded-read-only" ||
+  browserProductEvidence.decision?.actualPhysicalGpu !==
+    "not-claimed" ||
+  vscodeProductEvidence.schema !==
+    "bim-explorer-vscode-custom-editor-evidence/1" ||
+  vscodeProductEvidence.environment?.runtimeLayout !==
+    "staged" ||
+  !exactReferenceFixture(
+    vscodeProductEvidence.referenceFixture,
+  ) ||
+  !exactReferenceObservation(
+    vscodeProductEvidence.referenceObservation,
+    "vscode-webview",
+  ) ||
+  vscodeProductEvidence.referenceObservation
+    ?.externalUpload !== false ||
+  vscodeProductEvidence.referenceObservation?.telemetry !==
+    false ||
+  !everyTrue(vscodeProductEvidence.referenceAssertions) ||
+  vscodeInstallEvidence.schema !==
+    "bim-explorer-vscode-vsix-install-evidence/1" ||
+  vscodeInstallEvidence.package?.id !==
+    "menaje.bim-explorer" ||
+  vscodeInstallEvidence.package?.version !== "0.1.0" ||
+  vscodeInstallEvidence.package?.byteLength <= 0 ||
+  vscodeInstallEvidence.package?.installedRuntimeFiles !== 7 ||
+  !/^[0-9a-f]{64}$/u.test(
+    vscodeInstallEvidence.package?.workerBundleSha256 ?? "",
+  ) ||
+  vscodeInstallEvidence.environment?.cleanUserData !== true ||
+  vscodeInstallEvidence.environment
+    ?.cleanExtensionsDirectory !== true ||
+  vscodeInstallEvidence.observation?.installedExtensions?.[0] !==
+    "menaje.bim-explorer@0.1.0" ||
+  vscodeInstallEvidence.observation?.association?.viewType !==
+    "bimExplorer.ifcEditor" ||
+  JSON.stringify(
+    vscodeInstallEvidence.observation?.association?.selector,
+  ) !== JSON.stringify([
+    { filenamePattern: "*.ifc" },
+    { filenamePattern: "*.gltf" },
+    { filenamePattern: "*.glb" },
+  ]) ||
+  !exactReferenceFixture(
+    vscodeInstallEvidence.observation?.referenceRuntime?.fixture,
+  ) ||
+  !exactReferenceObservation(
+    vscodeInstallEvidence.observation?.referenceRuntime,
+    "vscode-webview",
+  ) ||
+  vscodeInstallEvidence.observation?.referenceRuntime
+    ?.externalUpload !== false ||
+  vscodeInstallEvidence.observation?.referenceRuntime
+    ?.telemetry !== false ||
+  !everyTrue(vscodeInstallEvidence.assertions) ||
+  vscodeInstallEvidence.decision?.referenceFixtureOpen !==
+    "passed-bounded-read-only" ||
   federationEvidence.referenceMesh?.format !== "glb" ||
   federationEvidence.referenceMesh?.sourceRole !==
     "derived-or-reference-mesh" ||
@@ -193,7 +356,10 @@ if (
 const serialized = JSON.stringify({
   evidence,
   browserEvidence,
+  browserProductEvidence,
   federationEvidence,
+  vscodeInstallEvidence,
+  vscodeProductEvidence,
 });
 if (
   serialized.includes("/Users/") ||

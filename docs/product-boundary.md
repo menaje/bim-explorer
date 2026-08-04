@@ -14,12 +14,14 @@ last_reviewed: 2026-08-04
 ## 제품 정의
 
 BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조,
-속성과 관계를 탐색하는 독립 제품입니다. 첫 vertical slice는 read-only
-IFC입니다.
+속성과 관계를 탐색하는 독립 제품입니다. 첫 semantic vertical slice는
+read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
+추가했습니다.
 
 제품 성공의 최소 기준은 다음과 같습니다.
 
-- 계정과 Coni Spatial 없이 local IFC를 연다.
+- 계정과 Coni Spatial 없이 qualified local IFC 또는 reference source를
+  연다.
 - model tree와 3D selection이 같은 immutable source snapshot을 가리킨다.
 - 선택한 객체의 property, type, containment와 relation을 bounded query로
   탐색한다.
@@ -31,10 +33,10 @@ IFC입니다.
 
 | 책임 | DWG Viewer | BIM Explorer | Coni Spatial |
 | --- | --- | --- | --- |
-| raw source | DWG | BIM/IFC | registered multi-source |
+| raw source | DWG | IFC + qualified BIM reference | registered multi-source |
 | 기본 표현 | 2D drawing review | generic 3D/BIM exploration | 2D/3D revision review |
-| source adapter | DWG Scene Cache | BIM source snapshot | native change/reconcile adapter |
-| source-local identity | DWG handle | GlobalId·snapshot-scoped Express ID | native reference mapping |
+| source adapter | DWG Scene Cache | semantic/reference source snapshot | native change/reconcile adapter |
+| source-local identity | DWG handle | IFC GlobalId·Express ID 또는 reference native ID | native reference mapping |
 | Canonical Entity ID | 없음 | 없음 | authority |
 | Agent change | 없음 | 없음 | query/proposal/build/check |
 | revision/diff | 없음 | source snapshot만 | authority |
@@ -53,6 +55,7 @@ source bytes
 -> native identity
    - IFC GlobalId: profile이 허용하는 durable source identity
    - Express ID: exact source snapshot 안에서만 유효
+   - glTF/GLB native ID: exact reference snapshot 안에서만 유효
 -> Render/Pick ID: exact snapshot/layer에 묶인 projection
 -> optional Spatial mapping
    -> Workspace + Spatial Revision + Canonical Entity ID

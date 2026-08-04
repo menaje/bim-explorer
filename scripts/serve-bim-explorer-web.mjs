@@ -59,6 +59,10 @@ const ROUTES = new Map([
     file: path.join(APP, "worker-source-client.mjs"),
     type: JAVASCRIPT,
   }],
+  ["/reference-mesh-explorer.mjs", {
+    file: path.join(APP, "reference-mesh-explorer.mjs"),
+    type: JAVASCRIPT,
+  }],
   ["/styles.css", {
     file: path.join(APP, "styles.css"),
     type: "text/css; charset=utf-8",
@@ -91,6 +95,34 @@ const ROUTES = new Map([
   [
     "/packages/bim-model-source/src/sha256.mjs",
     route("packages/bim-model-source/src/sha256.mjs", JAVASCRIPT),
+  ],
+  [
+    "/packages/gltf-reference-source/src/geometry.mjs",
+    route(
+      "packages/gltf-reference-source/src/geometry.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/gltf-reference-source/src/index.mjs",
+    route(
+      "packages/gltf-reference-source/src/index.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/gltf-reference-source/src/math.mjs",
+    route(
+      "packages/gltf-reference-source/src/math.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/gltf-reference-source/src/profile.mjs",
+    route(
+      "packages/gltf-reference-source/src/profile.mjs",
+      JAVASCRIPT,
+    ),
   ],
   [
     "/packages/bim-renderer-3d/src/camera-controls.mjs",

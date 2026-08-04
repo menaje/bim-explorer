@@ -18,6 +18,7 @@ const DEFAULTS = Object.freeze({
   openTimeoutMs: 30_000,
   profile: "ReferenceView_V1.2",
 });
+const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 
 function boundedInteger(value, fallback, minimum, maximum) {
   return Number.isSafeInteger(value)
@@ -99,6 +100,18 @@ function numericRecord(value, keys) {
   );
 }
 
+function sourceFormat(uri) {
+  const extension = path.extname(uri.path)
+    .slice(1)
+    .toLowerCase();
+  if (!SOURCE_FORMATS.has(extension)) {
+    throw new Error(
+      "BIM Explorer supports local IFC, glTF, and GLB files",
+    );
+  }
+  return extension;
+}
+
 function sanitizeReport(value) {
   if (
     value?.schema !== REPORT_SCHEMA ||
@@ -107,6 +120,7 @@ function sanitizeReport(value) {
   ) {
     return null;
   }
+  const format = stringOrNull(value.source?.format);
   const source = value.source === undefined
     ? null
     : {
@@ -118,6 +132,33 @@ function sanitizeReport(value) {
         snapshotId: stringOrNull(value.source?.snapshotId),
         byteLength: numberOrNull(value.source?.byteLength),
         ifcSchema: stringOrNull(value.source?.ifcSchema),
+        format,
+        gltfVersion: stringOrNull(
+          value.source?.gltfVersion,
+        ),
+        profile: stringOrNull(value.source?.profile),
+        sourceRole: stringOrNull(
+          value.source?.sourceRole,
+        ),
+        semanticAuthority:
+          typeof value.source?.semanticAuthority === "boolean"
+            ? value.source.semanticAuthority
+            : null,
+      };
+  const reference = value.reference === undefined
+    ? null
+    : {
+        globalId:
+          value.reference?.globalId === null
+            ? null
+            : stringOrNull(value.reference?.globalId),
+        selectedNativeId: stringOrNull(
+          value.reference?.selectedNativeId,
+        ),
+        ...numericRecord(value.reference, [
+          "treeRows",
+          "maximumDomRows",
+        ]),
       };
   return Object.freeze({
     schema: REPORT_SCHEMA,
@@ -126,28 +167,55 @@ function sanitizeReport(value) {
     externalUpload: value.externalUpload === true,
     telemetry: value.telemetry === true,
     source,
-    model: numericRecord(value.model, [
-      "products",
-      "treeNodes",
-      "triangles",
-      "ranges",
-    ]),
+    model: numericRecord(
+      value.model,
+      ["gltf", "glb"].includes(format)
+        ? [
+            "entities",
+            "geometryRecords",
+            "instances",
+            "triangles",
+            "ranges",
+          ]
+        : [
+            "products",
+            "treeNodes",
+            "triangles",
+            "ranges",
+          ],
+    ),
     performance: numericRecord(value.performance, [
       "artifactMs",
       "sourceMs",
       "totalMs",
     ]),
-    resources: numericRecord(value.resources, [
-      "sourceBytes",
-      "geometryBytes",
-      "metadataBytes",
-      "detailBytes",
-      "detailRanges",
-      "largestDetailRangeBytes",
-      "ranges",
-      "products",
-      "wasmHeapCapacityBytes",
-    ]),
+    resources: numericRecord(
+      value.resources,
+      ["gltf", "glb"].includes(format)
+        ? [
+            "sourceBytes",
+            "geometryBytes",
+            "metadataBytes",
+            "detailBytes",
+            "detailRanges",
+            "largestDetailRangeBytes",
+            "ranges",
+            "products",
+            "referenceEntities",
+            "wasmHeapCapacityBytes",
+          ]
+        : [
+            "sourceBytes",
+            "geometryBytes",
+            "metadataBytes",
+            "detailBytes",
+            "detailRanges",
+            "largestDetailRangeBytes",
+            "ranges",
+            "products",
+            "wasmHeapCapacityBytes",
+          ],
+    ),
     renderer: value.renderer === undefined
       ? null
       : {
@@ -163,6 +231,7 @@ function sanitizeReport(value) {
       "treeRows",
       "maximumDomRows",
     ]),
+    reference,
     diagnostic: value.diagnostic === undefined
       ? null
       : {
@@ -271,6 +340,7 @@ class BimExplorerReadonlyEditorProvider {
         "BIM Explorer only opens explicit local file URIs",
       );
     }
+    sourceFormat(uri);
     const document = new BimExplorerDocument(uri);
     const fileName = uri.path.split("/").at(-1);
     const base = this.#vscode.Uri.joinPath(uri, "..");
@@ -342,6 +412,7 @@ class BimExplorerReadonlyEditorProvider {
     return {
       bytes,
       configured,
+      format: sourceFormat(document.uri),
     };
   }
 
@@ -363,6 +434,7 @@ class BimExplorerReadonlyEditorProvider {
         type: "source-bytes",
         generation,
         bytes: messageBytes,
+        format: admitted.format,
         profile: admitted.configured.profile,
         limits: {
           maximumSourceBytes:
@@ -531,7 +603,9 @@ function activateBimExplorerExtension(vscode, context) {
         const selected = uri ??
           vscode.window.activeTextEditor?.document?.uri;
         if (selected === undefined) {
-          throw new Error("Choose a local IFC file first");
+          throw new Error(
+            "Choose a local IFC, glTF, or GLB file first",
+          );
         }
         return await vscode.commands.executeCommand(
           "vscode.openWith",

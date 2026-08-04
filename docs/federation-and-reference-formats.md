@@ -88,15 +88,19 @@ Gate입니다.
 다음 실제 format은 사용자 과업, redistribution 가능한 fixture, exact
 parser/SDK license, coordinate profile, first-frame/memory/cleanup evidence가
 함께 생긴 뒤 선택합니다. glTF external resource와 required extension,
-Browser/VS Code 제품 file-open은 별도 Gate입니다. RVT/DGN은 SDK 권리와
-platform packaging, reopen qualification까지 요구합니다.
+product-scale reference model은 별도 Gate입니다. bounded local
+Browser/VS Code 제품 file-open은 product-shell evidence에서 통과했습니다.
+RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
+요구합니다.
 
 ## 제품과 release 상태
 
 이 foundation과 glTF/GLB admission은 `v0.1.0` immutable Community asset
 이후 main에 추가된 experimental 계약입니다. 따라서 v0.1.0에서
 multi-model 또는 비 IFC format이 지원된다고 표현하지 않습니다. 현재
-admission도 Browser/VS Code 제품 file-open 지원을 뜻하지 않습니다.
+main에서는 federation admission과 독립된 product Gate로 bounded glTF/GLB
+Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
+이 결과는 v0.1.0 asset이나 broader glTF profile을 소급 승인하지 않습니다.
 
 실제 Spatial consumer와 standalone Spatial bundle은 Explorer 저장소가
 완료로 만들 수 없는 consumer-owned Gate입니다. 관련 진행은 Explorer

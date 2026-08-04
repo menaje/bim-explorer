@@ -59,14 +59,13 @@ function fakeWatcher() {
 }
 
 function fakeVscode({
+  sourcePath = "/private/customer/acme-building.ifc",
   sourceBytes = new TextEncoder().encode(
     "ISO-10303-21;\nEND-ISO-10303-21;\n",
   ),
   sourceType = 1,
 } = {}) {
-  const sourceUri = new FakeUri(
-    "/private/customer/acme-building.ifc",
-  );
+  const sourceUri = new FakeUri(sourcePath);
   const output = [];
   const configuration = {
     ifcProfile: "ReferenceView_V1.2",
@@ -189,7 +188,7 @@ function fakePanel() {
   };
 }
 
-test("VS Code manifest associates IFC with a read-only product host", async () => {
+test("VS Code manifest associates IFC and glTF with a read-only product host", async () => {
   const manifest = JSON.parse(
     await readFile(
       path.join(
@@ -208,7 +207,11 @@ test("VS Code manifest associates IFC with a read-only product host", async () =
   );
   assert.deepEqual(
     manifest.contributes.customEditors[0].selector,
-    [{ filenamePattern: "*.ifc" }],
+    [
+      { filenamePattern: "*.ifc" },
+      { filenamePattern: "*.gltf" },
+      { filenamePattern: "*.glb" },
+    ],
   );
   assert.equal(
     manifest.contributes.customEditors[0].priority,
@@ -291,6 +294,7 @@ test("Custom Editor sends bounded bytes but never the source URI", async () => {
     (message) => message.type === "source-bytes",
   );
   assert.equal(sourceMessage.generation, 1);
+  assert.equal(sourceMessage.format, "ifc");
   assert.ok(sourceMessage.bytes instanceof ArrayBuffer);
   assert.equal(sourceMessage.bytes.byteLength > 0, true);
   assert.equal(
@@ -302,6 +306,47 @@ test("Custom Editor sends bounded bytes but never the source URI", async () => {
     openTimeoutMs: 30_000,
   });
   host.dispose();
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends only the normalized GLB format hint", async () => {
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/acme-reference.glb",
+    sourceBytes: Uint8Array.from([
+      0x67, 0x6c, 0x54, 0x46,
+    ]),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    {
+      runtimeRoot: new FakeUri(ROOT),
+    },
+  );
+  const document = await provider.openCustomDocument(
+    sourceUri,
+  );
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "glb");
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("acme-reference"),
+    false,
+  );
   document.dispose();
   provider.dispose();
 });
@@ -376,6 +421,52 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
   );
 });
 
+test("extension diagnostics preserve bounded reference identity only", () => {
+  const report = sanitizeReport({
+    schema: "bim-explorer-product-shell-report/0.1",
+    status: "ready",
+    hostKind: "vscode-webview",
+    externalUpload: false,
+    telemetry: false,
+    source: {
+      fingerprint: `sha256:${"b".repeat(64)}`,
+      revisionId: "source-snapshot:test",
+      snapshotId: "snapshot:test",
+      byteLength: 1664,
+      format: "glb",
+      gltfVersion: "2.0",
+      profile: "gltf-2.0-bounded-reference-mesh-v0.1",
+      sourceRole: "derived-or-reference-mesh",
+      semanticAuthority: false,
+      path: "/private/customer/acme.glb",
+    },
+    model: {
+      entities: 1,
+      geometryRecords: 1,
+      instances: 1,
+      triangles: 12,
+      ranges: 1,
+    },
+    reference: {
+      globalId: null,
+      selectedNativeId: "node:1/mesh:0/primitive:0",
+      treeRows: 1,
+      maximumDomRows: 64,
+    },
+  });
+  assert.equal(report.source.format, "glb");
+  assert.equal(report.source.semanticAuthority, false);
+  assert.equal(report.reference.globalId, null);
+  assert.equal(
+    report.reference.selectedNativeId,
+    "node:1/mesh:0/primitive:0",
+  );
+  assert.equal(
+    JSON.stringify(report).includes("/private"),
+    false,
+  );
+});
+
 test("extension staging is complete and independently path-safe", async () => {
   const destination = await mkdtemp(
     path.join(tmpdir(), "bim-explorer-stage-test-"),
@@ -388,9 +479,11 @@ test("extension staging is complete and independently path-safe", async () => {
       "extension.js",
       "src/provider.js",
       "apps/bim-explorer-web/app.mjs",
+      "apps/bim-explorer-web/reference-mesh-explorer.mjs",
       "apps/bim-explorer-web/source-worker.mjs",
       "adapters/web-ifc/src/create-source-artifact.mjs",
       "packages/bim-model-source/src/index.mjs",
+      "packages/gltf-reference-source/src/index.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
       "packages/bim-semantic-explorer/src/index.mjs",
       "node_modules/web-ifc/web-ifc-api.js",

@@ -5,12 +5,16 @@ import {
   BIM_SOURCE_PROTOCOL_VERSION,
   createBimModelSource,
 } from "../../packages/bim-model-source/src/index.mjs";
+import {
+  createGltfReferenceSource,
+} from "../../packages/gltf-reference-source/src/index.mjs";
 
 const REQUEST_SCHEMA =
   "bim-explorer-product-source-worker-request/0.1";
 const RESPONSE_SCHEMA =
   "bim-explorer-product-source-worker-response/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 const OPERATIONS = new Set([
   "getEntity",
   "getEntityDetails",
@@ -83,6 +87,7 @@ function validOpen(request) {
     request.bytes instanceof ArrayBuffer &&
     request.bytes.byteLength > 0 &&
     request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES &&
+    SOURCE_FORMATS.has(options?.format) &&
     typeof options?.webIfcModuleUrl === "string" &&
     options.webIfcModuleUrl.length > 0 &&
     typeof options?.wasmPath === "string" &&
@@ -99,6 +104,66 @@ function validOpen(request) {
   );
 }
 
+function ifcResources(artifact) {
+  return {
+    sourceBytes: artifact.resources.observed.sourceBytes,
+    geometryBytes:
+      artifact.resources.observed.geometryBytes,
+    metadataBytes:
+      artifact.resources.observed.metadataBytes,
+    detailBytes:
+      artifact.resources.observed.detailBytes,
+    detailRanges:
+      artifact.resources.observed.detailRanges,
+    largestDetailRangeBytes:
+      artifact.resources.observed.largestDetailRangeBytes,
+    propertyDetailBytes:
+      artifact.propertyDetails.resources.observed.bytes,
+    propertyDetailRanges:
+      artifact.propertyDetails.resources.observed.ranges,
+    ranges: artifact.resources.observed.ranges,
+    products: artifact.resources.observed.products,
+    wasmHeapCapacityBytes:
+      artifact.resources.wasmHeapCapacityBytes ?? null,
+  };
+}
+
+function referenceResources(snapshot) {
+  const handles = snapshot.layers.flatMap((layer) =>
+    layer.rangeHandles ?? []);
+  const geometryBytes = handles.reduce(
+    (total, handle) => total + handle.byteLength,
+    0,
+  );
+  const metadataBytes = new TextEncoder().encode(
+    JSON.stringify({
+      entities: snapshot.entities.map((entity) => ({
+        localNumericId: entity.localNumericId,
+        name: entity.name,
+        nativeId: entity.nativeId,
+        provenance: entity.provenance,
+      })),
+      geometry: snapshot.geometry,
+      referenceMetadata: snapshot.referenceMetadata,
+      source: snapshot.source,
+    }),
+  ).byteLength;
+  return {
+    sourceBytes: snapshot.source.byteLength,
+    geometryBytes,
+    metadataBytes,
+    detailBytes: 0,
+    detailRanges: 0,
+    largestDetailRangeBytes: 0,
+    propertyDetailBytes: 0,
+    propertyDetailRanges: 0,
+    ranges: handles.length,
+    products: 0,
+    referenceEntities: snapshot.entities.length,
+    wasmHeapCapacityBytes: null,
+  };
+}
+
 async function openSource(request) {
   if (!validOpen(request)) {
     throw new TypeError("product source open request is invalid");
@@ -107,87 +172,103 @@ async function openSource(request) {
   const started = performance.now();
   const bytes = new Uint8Array(request.bytes);
   let artifact = null;
+  let candidateSession = null;
+  let candidateSource = null;
   progress(request.requestId, "source-admitted", {
     byteLength: bytes.byteLength,
+    format: request.options.format,
   });
   try {
     const artifactStarted = performance.now();
-    progress(request.requestId, "web-ifc-importing");
-    const webIfcModule = await import(
-      request.options.webIfcModuleUrl
-    );
-    progress(request.requestId, "web-ifc-imported");
-    artifact = await createWebIfcSourceArtifact(bytes, {
-      adapterBackend: "browser-wasm-product-source",
-      forceSingleThread: true,
-      maximumSourceBytes: MAXIMUM_SOURCE_BYTES,
-      profile: request.options.profile,
-      wasmPath: request.options.wasmPath,
-      wasmUrl: request.options.wasmUrl,
-      webIfcModule,
-    });
+    if (request.options.format === "ifc") {
+      progress(request.requestId, "web-ifc-importing");
+      const webIfcModule = await import(
+        request.options.webIfcModuleUrl
+      );
+      progress(request.requestId, "web-ifc-imported");
+      artifact = await createWebIfcSourceArtifact(bytes, {
+        adapterBackend: "browser-wasm-product-source",
+        forceSingleThread: true,
+        maximumSourceBytes: MAXIMUM_SOURCE_BYTES,
+        profile: request.options.profile,
+        wasmPath: request.options.wasmPath,
+        wasmUrl: request.options.wasmUrl,
+        webIfcModule,
+      });
+      progress(request.requestId, "artifact-created", {
+        format: "ifc",
+        products: artifact.geometry.products,
+        ranges: artifact.ranges.length,
+      });
+      candidateSource = createBimModelSource(artifact, {
+        maximumRequestBytes: 1024 * 1024,
+      });
+    } else {
+      progress(request.requestId, "gltf-validating", {
+        format: request.options.format,
+      });
+      candidateSource = await createGltfReferenceSource(bytes, {
+        maximumRequestBytes: 1024 * 1024,
+      });
+      progress(request.requestId, "artifact-created", {
+        format: request.options.format,
+        products: 0,
+        ranges: 1,
+      });
+    }
     const artifactMs = performance.now() - artifactStarted;
-    progress(request.requestId, "artifact-created", {
-      products: artifact.geometry.products,
-      ranges: artifact.ranges.length,
-    });
     const sourceStarted = performance.now();
-    const source = createBimModelSource(artifact, {
-      maximumRequestBytes: 1024 * 1024,
-    });
-    for (const range of artifact.ranges) {
+    for (const range of artifact?.ranges ?? []) {
       range.bytes.fill(0);
     }
-    for (const range of artifact.detailRanges) {
+    for (const range of artifact?.detailRanges ?? []) {
       range.bytes.fill(0);
     }
-    for (const range of artifact.propertyDetails.ranges) {
+    for (
+      const range of artifact?.propertyDetails?.ranges ?? []
+    ) {
       range.bytes.fill(0);
     }
-    const session = await source.open({
+    candidateSession = await candidateSource.open({
       protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
     });
-    const snapshot = await session.getSnapshot();
+    const snapshot = await candidateSession.getSnapshot();
+    const observedFormat =
+      snapshot.source.format ?? "ifc";
+    if (observedFormat !== request.options.format) {
+      throw new TypeError(
+        "source bytes do not match the declared format",
+      );
+    }
     const sourceMs = performance.now() - sourceStarted;
     active = {
-      session,
+      session: candidateSession,
       snapshot,
-      source,
+      source: candidateSource,
     };
+    candidateSession = null;
+    candidateSource = null;
     progress(request.requestId, "snapshot-ready", {
+      format: observedFormat,
       revisionId: snapshot.revisionId,
     });
     post(request.requestId, "result", {
-      descriptor: session.descriptor,
+      descriptor: active.session.descriptor,
       diagnostics: [],
       performance: {
         artifactMs,
         sourceMs,
         totalMs: performance.now() - started,
       },
-      resources: {
-        sourceBytes: artifact.resources.observed.sourceBytes,
-        geometryBytes:
-          artifact.resources.observed.geometryBytes,
-        metadataBytes:
-          artifact.resources.observed.metadataBytes,
-        detailBytes:
-          artifact.resources.observed.detailBytes,
-        detailRanges:
-          artifact.resources.observed.detailRanges,
-        largestDetailRangeBytes:
-          artifact.resources.observed.largestDetailRangeBytes,
-        propertyDetailBytes:
-          artifact.propertyDetails.resources.observed.bytes,
-        propertyDetailRanges:
-          artifact.propertyDetails.resources.observed.ranges,
-        ranges: artifact.resources.observed.ranges,
-        products: artifact.resources.observed.products,
-        wasmHeapCapacityBytes:
-          artifact.resources.wasmHeapCapacityBytes ?? null,
-      },
+      resources: observedFormat === "ifc"
+        ? ifcResources(artifact)
+        : referenceResources(snapshot),
       snapshot,
     });
+  } catch (error) {
+    await candidateSession?.dispose();
+    await candidateSource?.dispose();
+    throw error;
   } finally {
     bytes.fill(0);
     for (const range of artifact?.ranges ?? []) {

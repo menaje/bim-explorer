@@ -113,7 +113,7 @@ GPU allocation은 source가 소유하지 않습니다.
 - animation, skin과 morph target
 - source write, conversion과 round-trip
 - BIM property/classification authority
-- product-scale Browser/VS Code surface admission
+- product-scale reference geometry와 physical/cross-platform GPU
 
 ## 현재 conformance evidence
 
@@ -127,5 +127,17 @@ pick, selection highlight와 800-byte persistent allocation 전량 회수를
 같은 bounded snapshot은 IFC semantic source 두 개와 함께 federation
 reference slot으로 admission했습니다. `nativeId` 선택, `globalId: null`,
 unaligned shared-coordinate 거부, exact revision refresh와 deterministic
-cleanup을 재현했습니다. 이 결과는 제품 file-open이나 broader glTF
-profile을 승인하지 않습니다.
+cleanup을 재현했습니다.
+
+같은 공개 GLB는 실제 Browser local file input, staged VS Code Custom
+Editor와 빈 profile에 설치한 VSIX에서도 열었습니다. 세 제품 경로는
+1 entity·1 geometry record·1 instance·12 triangles, 86,486
+non-background pixels, 756-byte source read, 800-byte GPU upload,
+source-native selection과 `globalId: null`을 재현하고 path-free bridge,
+Worker/session/GPU/editor cleanup을 통과했습니다. `.gltf` association과
+embedded data URI dispatch는 synthetic conformance가 보완합니다.
+
+이 제품 결과는 bounded local read-only profile만 승인합니다. external
+resource bundle, required extension, broader material/geometry fidelity,
+product-scale reference model, physical GPU, write와 round-trip은 승인하지
+않습니다.

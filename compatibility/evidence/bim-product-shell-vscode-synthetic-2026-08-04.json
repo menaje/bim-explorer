@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-custom-editor-evidence/1",
-  "capturedAt": "2026-08-04T02:31:55.644Z",
+  "capturedAt": "2026-08-04T08:34:58.009Z",
   "environment": {
     "vscode": "1.131.0",
     "platform": "darwin-arm64",
@@ -22,9 +22,9 @@
       "ranges": 1
     },
     "performance": {
-      "artifactMs": 102.79999995231628,
-      "sourceMs": 3.799999952316284,
-      "totalMs": 106.69999992847443
+      "artifactMs": 113.09999990463257,
+      "sourceMs": 0.10000002384185791,
+      "totalMs": 113.29999995231628
     },
     "resources": {
       "sourceBytes": 4030,
@@ -55,6 +55,74 @@
     "commandCount": 4,
     "externalUpload": false,
     "telemetry": false
+  },
+  "referenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-glb",
+    "committed": false,
+    "format": "glb",
+    "sourceBytes": 1664,
+    "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "bundled": false
+    }
+  },
+  "referenceObservation": {
+    "hostKind": "vscode-webview",
+    "model": {
+      "entities": 1,
+      "geometryRecords": 1,
+      "instances": 1,
+      "triangles": 12,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 1.5,
+      "sourceMs": 0,
+      "totalMs": 1.5
+    },
+    "resources": {
+      "sourceBytes": 1664,
+      "geometryBytes": 756,
+      "metadataBytes": 1093,
+      "detailBytes": 0,
+      "detailRanges": 0,
+      "largestDetailRangeBytes": 0,
+      "ranges": 1,
+      "products": 0,
+      "referenceEntities": 1,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 86486,
+      "sourceReadBytes": 756,
+      "uploadedBytes": 800
+    },
+    "reference": {
+      "globalId": null,
+      "selectedNativeId": "node:1/mesh:0/primitive:0",
+      "treeRows": 1,
+      "maximumDomRows": 64
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed"
+    },
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "referenceAssertions": {
+    "localReferenceSourceOpened": true,
+    "referenceSourceIdentityExact": true,
+    "referenceHasNoBimSemanticAuthority": true,
+    "referenceVscodeChromiumWebGl2": true,
+    "referencePathFreeHostBridge": true,
+    "referenceEditorCloseObserved": true
   },
   "assertions": {
     "actualVscodeChromiumWebGl2": true,

@@ -11,6 +11,7 @@ class FakeWorker {
   #listeners = new Map();
   #silent;
   terminated = false;
+  openFormat = null;
 
   constructor({ silent = false } = {}) {
     this.#silent = silent;
@@ -38,6 +39,7 @@ class FakeWorker {
     }
     queueMicrotask(() => {
       if (request.type === "open") {
+        this.openFormat = request.options.format;
         this.#emit("message", {
           schema: BIM_PRODUCT_SOURCE_WORKER_RESPONSE,
           requestId: request.requestId,
@@ -139,6 +141,7 @@ test("product Worker client binds session operations and cleanup to one generati
     Uint8Array.from([1, 2, 3, 4]),
   );
 
+  assert.equal(workers[0].openFormat, "ifc");
   assert.equal(opened.snapshot.revisionId, "revision:fake");
   assert.deepEqual(progress, ["source-admitted"]);
   assert.deepEqual(
@@ -166,6 +169,29 @@ test("product Worker client binds session operations and cleanup to one generati
   assert.equal(client.state.workerActive, false);
   assert.equal(await client.dispose(), true);
   assert.equal(await client.dispose(), false);
+});
+
+test("product Worker client sends an explicit glTF source format", async () => {
+  const worker = new FakeWorker();
+  const client = createBimProductSourceWorkerClient(
+    options(() => worker),
+  );
+  const opened = await client.open(
+    Uint8Array.from([0x67, 0x6c, 0x54, 0x46]),
+    { format: "glb" },
+  );
+  assert.equal(worker.openFormat, "glb");
+  await opened.session.dispose();
+  await opened.workerLease.dispose();
+  await client.dispose();
+  await assert.rejects(
+    createBimProductSourceWorkerClient(
+      options(() => new FakeWorker()),
+    ).open(Uint8Array.from([1]), {
+      format: "rvt",
+    }),
+    /format is unsupported/u,
+  );
 });
 
 test("source switch invalidates the prior Worker session", async () => {

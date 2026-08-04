@@ -27,17 +27,17 @@
         <div>
           <p class="eyebrow">Local-first · read-only</p>
           <h1>BIM Explorer</h1>
-          <p class="subtitle">
-            Open IFC spatial structure, semantics, and 3D locally.
+          <p id="product-subtitle" class="subtitle">
+            Open IFC semantics or glTF/GLB reference geometry locally.
           </p>
         </div>
         <div class="header-actions">
           <label id="open-source" class="primary-action">
-            Open IFC
+            Open BIM
             <input
               id="source-file"
               type="file"
-              accept=".ifc,application/x-step"
+              accept=".ifc,.gltf,.glb,application/x-step,model/gltf+json,model/gltf-binary"
             >
           </label>
           <button id="open-fixture" type="button">
@@ -61,7 +61,7 @@
           role="status"
           aria-live="polite"
           data-state="idle"
-        >Choose a local IFC file.</p>
+        >Choose a local IFC, glTF, or GLB file.</p>
         <p id="source-identity">No active source</p>
       </section>
 
@@ -78,20 +78,22 @@
             id="model-tree"
             class="tree"
             role="tree"
-            aria-label="IFC spatial and product hierarchy"
+            aria-label="Source hierarchy"
           ></div>
           <p id="tree-omission" class="omission"></p>
         </aside>
 
         <section class="center">
           <form id="search-form" class="search" role="search">
-            <label for="search-input">Search model semantics</label>
+            <label id="search-label" for="search-input">
+              Search model semantics
+            </label>
             <div>
               <input
                 id="search-input"
                 type="search"
                 autocomplete="off"
-                placeholder="GlobalId, name, class, property…"
+                placeholder="Name, class, native ID, property…"
               >
               <button type="submit">Search</button>
             </div>
@@ -116,7 +118,7 @@
               id="model-canvas"
               width="800"
               height="450"
-              aria-label="WebGL2 BIM model"
+              aria-label="WebGL2 BIM or reference model"
             ></canvas>
           </section>
 

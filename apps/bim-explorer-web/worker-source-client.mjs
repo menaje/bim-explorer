@@ -8,6 +8,7 @@ const DEFAULT_LIMITS = Object.freeze({
   openTimeoutMs: 30_000,
   operationTimeoutMs: 10_000,
 });
+const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 
 function invalidState(message) {
   return new DOMException(message, "InvalidStateError");
@@ -382,6 +383,7 @@ export class BimProductSourceWorkerClient {
   }
 
   async open(bytesValue, {
+    format = "ifc",
     profile = "ReferenceView_V1.2",
   } = {}) {
     this.#assertOpen();
@@ -399,6 +401,11 @@ export class BimProductSourceWorkerClient {
         "BIM product source exceeds its byte limit",
       );
     }
+    if (!SOURCE_FORMATS.has(format)) {
+      throw new TypeError(
+        "BIM product source format is unsupported",
+      );
+    }
     if (this.#worker !== null) {
       this.terminate(this.#generation);
     }
@@ -410,6 +417,7 @@ export class BimProductSourceWorkerClient {
       const result = await this.#request("open", {
         bytes: bytes.buffer,
         options: {
+          format,
           profile,
           wasmPath: this.#options.wasmPath,
           wasmUrl: this.#options.wasmUrl ?? null,

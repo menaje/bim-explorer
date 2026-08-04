@@ -54,11 +54,13 @@ test("product server exposes only its same-origin allowlist", async () => {
       "/app.mjs",
       "/source-worker.mjs",
       "/worker-source-client.mjs",
+      "/reference-mesh-explorer.mjs",
       "/styles.css",
       "/vendor/web-ifc-api.js",
       "/vendor/web-ifc.wasm",
       "/adapters/web-ifc/src/create-source-artifact.mjs",
       "/packages/bim-model-source/src/index.mjs",
+      "/packages/gltf-reference-source/src/index.mjs",
       "/packages/bim-renderer-3d/src/index.mjs",
       "/packages/bim-semantic-explorer/src/index.mjs",
     ]) {

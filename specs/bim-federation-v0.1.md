@@ -164,6 +164,7 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 실제 사용자 과업의 두 format 이상 수요
 - 측량 control point와 datum transformation
 - product-scale multi-source first-frame, memory와 cleanup
-- glTF/GLB external resource bundle, required extension와 제품 file-open
+- glTF/GLB external resource bundle와 required extension; bounded 제품
+  file-open은 별도 product-shell evidence에서 통과
 - LAS/LAZ/E57와 3D Tiles parser/engine
 - RVT/DGN native SDK bridge와 reopen qualification

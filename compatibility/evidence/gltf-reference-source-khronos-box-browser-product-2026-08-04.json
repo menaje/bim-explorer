@@ -1,0 +1,102 @@
+{
+  "schema": "bim-explorer-product-shell-browser-evidence/1",
+  "capturedAt": "2026-08-04T08:34:51.199Z",
+  "environment": {
+    "browser": "Google Chrome 150.0.7871.187",
+    "headless": true,
+    "platform": "darwin-arm64",
+    "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
+  },
+  "fixture": {
+    "id": "khronos-gltf-sample-assets-box-glb",
+    "committed": false,
+    "format": "glb",
+    "sourceBytes": 1664,
+    "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "cacheHit": true,
+      "bundled": false
+    }
+  },
+  "observation": {
+    "hostKind": "browser",
+    "model": {
+      "entities": 1,
+      "geometryRecords": 1,
+      "instances": 1,
+      "triangles": 12,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 5.6600000858306885,
+      "sourceMs": 0.0849999189376831,
+      "totalMs": 5.7799999713897705
+    },
+    "resources": {
+      "sourceBytes": 1664,
+      "geometryBytes": 756,
+      "metadataBytes": 1093,
+      "detailBytes": 0,
+      "detailRanges": 0,
+      "largestDetailRangeBytes": 0,
+      "propertyDetailBytes": 0,
+      "propertyDetailRanges": 0,
+      "ranges": 1,
+      "products": 0,
+      "referenceEntities": 1,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 86486,
+      "sourceReadBytes": 756,
+      "uploadedBytes": 800
+    },
+    "reference": {
+      "globalId": null,
+      "selectedNativeId": "node:1/mesh:0/primitive:0",
+      "treeRows": 1,
+      "maximumDomRows": 64
+    },
+    "interaction": {
+      "searchResults": 1,
+      "selectedExpressId": 1,
+      "selectedNativeId": "node:1/mesh:0/primitive:0",
+      "selectionOrigin": "3d",
+      "treeRows": 1
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed",
+      "backendDisposed": true,
+      "clientDisposed": true
+    },
+    "network": {
+      "externalOrigins": [],
+      "localRequestCount": 13
+    },
+    "runtimeErrors": []
+  },
+  "assertions": {
+    "actualBrowserWebGl2": true,
+    "boundedLocalSource": true,
+    "localOnly": true,
+    "pathFree": true,
+    "referenceAnd3dSync": true,
+    "workerAndGpuCleanup": true,
+    "noRuntimeErrors": true,
+    "fixtureIdentity": true
+  },
+  "decision": {
+    "browserProductShell": "passed",
+    "referenceProductOpen": "passed-bounded-read-only",
+    "actualPhysicalGpu": "not-claimed",
+    "publicViewerCoreConformance": "held",
+    "vscodeChromiumRuntime": "separate-gate"
+  }
+}
