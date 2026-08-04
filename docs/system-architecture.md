@@ -275,6 +275,33 @@ bSDD reference는 import 중 offline 상태로 유지합니다. explicit
 validation-to-revision diagnostic linkage는 Spatial authority이며 Explorer
 결과는 source baseline, acceptance나 publish를 변경하지 않습니다.
 
+## BIM federation
+
+[`bim-explorer-federation/0.1`](../specs/bim-federation-v0.1.md)은 여러
+immutable source snapshot을 stable source slot 아래 배치합니다.
+
+```text
+federationSourceId
+  -> exact native fingerprint/revision
+  -> per-source visibility + ready/partial/stale
+  -> explicit Float64 source-to-federation transform
+  -> source-bound selection + saved view
+```
+
+서로 다른 source의 같은 GlobalId를 합치지 않습니다. source 하나를
+refresh하면 그 slot의 prior selection과 saved view만 stale boundary에
+걸리고 다른 source revision은 유지됩니다.
+
+same-CRS IFC MapConversion과 provenance가 있는 explicit matrix만
+admission합니다. datum transformation은 수행하지 않습니다. glTF/GLB,
+LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 capability registry에 view/query/write/
+round-trip Gate를 분리해 기록하지만 실제 codec/SDK evidence 전에는
+source admission을 거부합니다.
+
+현재 generated IFC4 두 source의 synthetic foundation만 통과했습니다.
+실제 측량 coordinate, product-scale multi-source 성능, 실제 사용자 수요와
+Spatial consumer는 별도 Gate입니다.
+
 ## Spatial integration
 
 [`bim-spatial-integration/0.1`](../specs/bim-spatial-integration-v0.1.md)은

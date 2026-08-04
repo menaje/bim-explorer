@@ -1,0 +1,120 @@
+{
+  "schema": "bim-explorer-federation-qualification/1",
+  "status": "passed-foundation",
+  "asOf": "2026-08-04",
+  "contract": {
+    "federation": "bim-explorer-federation/0.1",
+    "source": "bim-explorer-federation-source/0.1",
+    "alignment": "bim-explorer-federation-alignment/0.1",
+    "selection": "bim-explorer-federation-selection/0.1",
+    "savedView": "bim-explorer-federation-saved-view/0.1",
+    "referenceFormats": "bim-explorer-reference-format-registry/0.1",
+    "bimSourceProtocol": "bim-explorer-bim-source/0.2"
+  },
+  "federation": {
+    "federationId": "federation:synthetic-campus",
+    "sourceSlots": [
+      "source-slot:architecture",
+      "source-slot:mep"
+    ],
+    "disciplines": [
+      "architecture",
+      "mep"
+    ],
+    "initialSources": 2,
+    "sourceIdentityMerged": false,
+    "duplicateGlobalId": "0AAAAAAAAAAAAAAAAAAA16",
+    "duplicateGlobalIdOccurrences": 2,
+    "distinctSelectionKeys": 2,
+    "sourceVisibility": [
+      {
+        "federationSourceId": "source-slot:architecture",
+        "visible": true
+      },
+      {
+        "federationSourceId": "source-slot:mep",
+        "visible": false
+      }
+    ]
+  },
+  "coordinates": {
+    "federationCoordinateSystem": "EPSG:32652",
+    "federationOrigin": [
+      500000,
+      4100000,
+      100
+    ],
+    "sourceMethod": "projected-same-crs",
+    "numericPrecision": "float64",
+    "datumTransformation": "not-performed",
+    "explicitAlignmentProvenance": "explicit-user-input",
+    "architectureOrigin": [
+      0,
+      0,
+      0
+    ],
+    "mappedSources": 2
+  },
+  "refresh": {
+    "partialStateObserved": true,
+    "staleStateObserved": true,
+    "refreshedSource": "source-slot:mep",
+    "previousRevisionId": "source-snapshot:sha256:ad37899ba9487fa6fcaae0c2052cbb87200a058335f0b0eaa92ca36931528d11",
+    "currentRevisionId": "source-snapshot:sha256:8e8f2b5544c187406899487b8bfec1abfb7ca82b9bc3c44039324428f35d144a",
+    "unchangedFederationSources": 1,
+    "architectureRevisionPreserved": "source-snapshot:sha256:dd6a1f1220ca7f6e9508ee81e8084a5ae5deba9d3f50b592f4d5283e36c73469",
+    "priorIdentityPolicy": "all-prior-source-selections-are-stale"
+  },
+  "savedView": {
+    "schema": "bim-explorer-federation-saved-view/0.1",
+    "selectedSources": 2,
+    "sourceStates": 2,
+    "crossSource": true
+  },
+  "referenceFormats": {
+    "registered": 9,
+    "admitted": [
+      "ifc"
+    ],
+    "held": [
+      "gltf",
+      "glb",
+      "las",
+      "laz",
+      "e57",
+      "3d-tiles",
+      "rvt",
+      "dgn"
+    ],
+    "nonIfcSemanticAuthority": false,
+    "allWritesBlocked": true,
+    "allRoundTripsBlocked": true
+  },
+  "failClosed": {
+    "staleSavedViewRejected": true,
+    "staleSelectionRejected": true,
+    "heldGlbRejected": true,
+    "sourceIdentityMergeRejectedByPolicy": true,
+    "nativeMutationNotGranted": true,
+    "spatialAuthorityNotGranted": true
+  },
+  "lifecycle": {
+    "releasedFederationSources": 2,
+    "federationDisposed": true,
+    "sourceSessionsDisposed": 3,
+    "sourcesDisposed": 3
+  },
+  "decision": {
+    "multiIfcFoundation": "passed-synthetic",
+    "sameCrsAlignment": "passed-ifc-map-conversion",
+    "actualSpatialConsumer": "held-consumer-owned",
+    "actualMultiFormatUserDemand": "held-external-evidence",
+    "pointCloudCodec": "held-codec-crs-scale-evidence",
+    "gltfGlbCodec": "held-codec-license-cleanup-evidence",
+    "gis3dTiles": "held-engine-network-precision-evidence",
+    "rvtDgnNativeBridge": "held-sdk-rights-reopen-qualification",
+    "surveyedDatumTransformation": "held-survey-evidence",
+    "productScalePerformance": "held-multi-source-fixture",
+    "productionClaims": false
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/bim-federation",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bounded multi-source BIM federation and reference-format capability contract",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}

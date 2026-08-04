@@ -131,6 +131,14 @@ Context Reference를 발급합니다. 현재 synthetic provider conformance는
 통과했으며 실제 Spatial consumer와 독립 Spatial bundle 검증은 Spatial
 저장소 이슈가 소유합니다.
 
+post-v0.1 federation foundation은
+[`bim-explorer-federation/0.1`](specs/bim-federation-v0.1.md)로
+두 IFC source의 identity·visibility·partial/stale·same-CRS alignment,
+incremental refresh와 cross-source saved view를 분리합니다. glTF/GLB,
+LAS/LAZ/E57, 3D Tiles, RVT/DGN은 capability Gate만 등록했고 실제
+codec/SDK evidence 전에는 열기를 거부합니다. 이 기능은 immutable
+Community v0.1.0 asset에 포함되지 않습니다.
+
 ## 비목표
 
 - IFC/RVT authoring과 production write 지원을 미리 주장하지 않습니다.
@@ -218,6 +226,7 @@ npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core
 npm run qualify:openbim
+npm run qualify:federation
 npm run qualify:community-release
 npm run package:vscode
 npm run release:bundle
@@ -242,6 +251,9 @@ Browser/VS Code 제품 Host 계약의 상태는
 따릅니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을
+따릅니다.
+multi-source와 후속 format Gate 상태는
+[compatibility/bim-federation.json](compatibility/bim-federation.json)을
 따릅니다.
 실제 IFC, 고객 모델, credential과 generated cache는 Git에 추적하지
 않습니다.

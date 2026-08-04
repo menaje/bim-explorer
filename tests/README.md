@@ -99,3 +99,9 @@ requirement와 3-state result provenance, failing entity selection을
 검사합니다. bSDD는 import 중 offline이며 explicit lookup에서만 injected
 network와 bounded cache를 사용합니다. full XSD/IDS validator나 live
 service test가 아닙니다.
+
+`federation` test는 generated georeferenced IFC 세 개로 두 active source
+slot, duplicate GlobalId isolation, per-source visibility, partial/stale,
+same-CRS·explicit Float64 alignment, single-source refresh와 cross-source
+saved view stale rejection을 검사합니다. non-IFC registry entry는 codec
+evidence 없이 source admission되지 않는지 확인합니다.

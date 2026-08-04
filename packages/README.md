@@ -11,6 +11,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `host-contracts`: Browser/VS Code Host adapter contract
 - `spatial-integration`: optional public handoff와 Spatial overlay bridge
 - `openbim-explorer`: source-bound BCF·IDS·bSDD read-only exploration
+- `bim-federation`: multi-source identity·alignment·reference-format Gate
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
@@ -56,3 +57,9 @@ bridge입니다. Spatial private package나 설치된 extension에 의존하지
 local import/export, IDS 1.0 document/result와 explicit bSDD lookup을 같은
 source fingerprint/revision에 묶습니다. full IDS validator, 자동 network,
 Spatial Revision이나 acceptance authority는 소유하지 않습니다.
+
+[`bim-federation`](bim-federation/README.md)은 stable source slot 아래
+서로 다른 native revision/identity를 유지하고, source별 visibility와
+partial/stale 상태, Float64 alignment, cross-source saved view를 제공합니다.
+후속 format은 view/query/write/round-trip Gate만 등록하며 codec이 없는
+format을 지원 대상으로 표현하지 않습니다.

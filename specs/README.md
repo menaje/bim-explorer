@@ -19,3 +19,4 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 - [BIM product hosts v0.1](bim-product-hosts-v0.1.md)
 - [BIM Spatial integration v0.1](bim-spatial-integration-v0.1.md)
 - [openBIM Explorer v0.1](openbim-explorer-v0.1.md)
+- [BIM federation v0.1](bim-federation-v0.1.md)

@@ -13,6 +13,7 @@ const FIRST_PARTY_MANIFESTS = Object.freeze([
   "adapters/web-ifc/package.json",
   "apps/bim-explorer-vscode/package.json",
   "packages/bim-model-source/package.json",
+  "packages/bim-federation/package.json",
   "packages/bim-renderer-3d/package.json",
   "packages/bim-semantic-explorer/package.json",
   "packages/ifc-engine-contract/package.json",

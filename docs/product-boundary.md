@@ -111,6 +111,14 @@ validation result를 active source fingerprint/revision에 묶어 탐색하지�
 source baseline을 바꾸지 않습니다. `spatial` provenance가 있는 IDS
 result도 Spatial Revision reference일 뿐 acceptance capability가 아닙니다.
 
+multi-source 탐색도 같은 identity 경계를 유지합니다.
+[`bim-explorer-federation/0.1`](../specs/bim-federation-v0.1.md)은 stable
+source slot 아래 exact native fingerprint/revision을 보존하고, 서로 다른
+source의 같은 GlobalId를 합치지 않습니다. source별 visibility,
+partial/stale와 saved view는 Explorer read-only state지만 Workspace
+registration, identity reconcile과 Canonical mapping은 Spatial
+authority입니다.
+
 ## 비목표
 
 - production IFC/RVT write를 첫 제품 범위로 주장하지 않습니다.

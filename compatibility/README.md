@@ -183,6 +183,16 @@ highlight, bSDD offline-default·explicit cached lookup을 통과했습니다. f
 BCF XSD, native IDS IFC validation, live bSDD와 Spatial revision diagnostic
 linkage는 보류합니다.
 
+multi-source IFC identity, visibility, same-CRS Float64 alignment,
+partial/stale, incremental refresh와 cross-source saved view foundation은
+[`bim-federation.json`](bim-federation.json)과
+[`synthetic federation evidence`](evidence/bim-federation-synthetic-2026-08-04.json)가
+소유합니다. 14개 foundation Gate는 통과했고 actual Spatial consumer,
+사용자 수요, 측량 datum, product-scale federation과 glTF/GLB,
+LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate 8개는 보류합니다. registry는
+format 이름과 view/query/write/round-trip 상태를 기록할 뿐 비 IFC
+source 지원을 주장하지 않습니다.
+
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만

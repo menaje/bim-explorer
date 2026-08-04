@@ -1,0 +1,97 @@
+---
+type: architecture
+status: accepted
+authority:
+  - federation-source-identity
+  - coordinate-alignment-boundary
+  - reference-format-admission
+  - federation-refresh-lifecycle
+last_reviewed: 2026-08-04
+---
+
+# Federation과 reference format 경계
+
+## 현재 결정
+
+BIM Explorer는 여러 raw source를 하나의 read-only 탐색 context에 배치할
+수 있지만 source document identity와 ownership을 합치지 않습니다.
+`federationSourceId`는 stable slot이고 실제 fingerprint/revision은 그
+아래에서 교체됩니다.
+
+현재 통과한 foundation은 generated IFC4 source 두 개를 동시에 등록하고
+다음을 재현합니다.
+
+- architecture/MEP source별 identity, owner, visibility
+- 두 source에 같은 GlobalId가 있어도 서로 다른 selection key
+- EPSG:32652 MapConversion의 same-CRS Float64 alignment
+- explicit control-point matrix의 provenance
+- `partial`과 `stale` source 상태
+- MEP source만 새 revision으로 교체하는 incremental refresh
+- architecture revision 보존과 이전 MEP selection/saved view 거부
+- federation descriptor와 세 source session의 deterministic cleanup
+
+고정 결과는
+[`bim-federation.json`](../compatibility/bim-federation.json)과
+[`synthetic evidence`](../compatibility/evidence/bim-federation-synthetic-2026-08-04.json)가
+소유합니다.
+
+## Identity와 Spatial 경계
+
+```text
+federation source slot
+  -> exact native source fingerprint/revision
+  -> source-scoped GlobalId/Express ID
+  -> source-scoped Render/Pick projection
+  -> optional Spatial service mapping
+```
+
+federation은 GlobalId를 source 사이에서 deduplicate하지 않습니다.
+Canonical Entity ID, Workspace ownership, revision reconcile, accept/publish는
+계속 Coni Spatial authority입니다.
+
+source refresh는 새 immutable source snapshot을 stable slot에 교체할 뿐,
+native file을 patch하거나 이전 identity를 자동 reconcile하지 않습니다.
+
+## Coordinate와 precision 경계
+
+same-CRS alignment는 IFC MapConversion의 Float64 matrix에서 federation
+origin을 빼 large coordinate를 bounded local context로 옮깁니다.
+
+CRS 이름이 다르면 자동 변환하지 않습니다. 별도 geospatial engine이나
+측량 workflow가 만든 matrix도 source/target coordinate system과 path-free
+provenance가 있어야 `explicit`로 받을 수 있습니다. 현재 계약은
+`datumTransformation: not-performed`만 허용합니다.
+
+이 matrix는 display projection metadata입니다. fingerprinted native
+document가 source authority이고, renderer의 Float32 mesh는 계속 lossy
+cache입니다.
+
+## Format admission
+
+“registry에 이름이 있다”와 “제품에서 열 수 있다”를 분리합니다.
+
+| 후보 | 현재 역할 | 현재 admission |
+| --- | --- | --- |
+| IFC4 ReferenceView | semantic BIM source | 기존 bounded read-only profile |
+| glTF/GLB | derived/reference mesh | held |
+| LAS/LAZ/E57 | point-cloud/survey reference | held |
+| 3D Tiles/GIS | site context reference | held |
+| RVT/DGN | native SDK reference | held |
+
+비 IFC reference source는 semantic BIM authority가 아닙니다. 모든 후보의
+write와 round-trip은 별도 Gate입니다.
+
+다음 실제 format은 사용자 과업, redistribution 가능한 fixture, exact
+parser/SDK license, coordinate profile, first-frame/memory/cleanup evidence가
+함께 생긴 뒤 선택합니다. RVT/DGN은 SDK 권리와 platform packaging, reopen
+qualification까지 요구합니다.
+
+## 제품과 release 상태
+
+이 foundation은 `v0.1.0` immutable Community asset 이후 main에 추가된
+experimental 계약입니다. 따라서 v0.1.0에서 multi-model 또는 비 IFC
+format이 지원된다고 표현하지 않습니다.
+
+실제 Spatial consumer와 standalone Spatial bundle은 Explorer 저장소가
+완료로 만들 수 없는 consumer-owned Gate입니다. 관련 진행은 Explorer
+#9/#12와 Coni Spatial #13에 evidence URL과 exact contract로만 게시합니다.

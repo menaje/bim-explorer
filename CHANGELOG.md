@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- add an experimental multi-IFC federation contract with source-scoped
+  identity, visibility, partial/stale state, explicit Float64 alignment,
+  incremental refresh, cross-source selection and saved views;
+- add fail-closed capability Gates for glTF/GLB, LAS/LAZ/E57, 3D Tiles and
+  RVT/DGN without claiming codec or SDK support.
+
 ## 0.1.0 - 2026-08-04
 
 First Community release.

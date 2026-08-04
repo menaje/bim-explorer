@@ -1,0 +1,71 @@
+{
+  "schema": "bim-explorer-federation-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-04",
+  "contract": {
+    "federation": "bim-explorer-federation/0.1",
+    "source": "bim-explorer-federation-source/0.1",
+    "alignment": "bim-explorer-federation-alignment/0.1",
+    "selection": "bim-explorer-federation-selection/0.1",
+    "savedView": "bim-explorer-federation-saved-view/0.1",
+    "referenceFormats": "bim-explorer-reference-format-registry/0.1",
+    "bimSourceProtocol": "bim-explorer-bim-source/0.2"
+  },
+  "gates": {
+    "multiIfcSourceSlots": true,
+    "nativeSourceIdentityIsolation": true,
+    "perSourceVisibility": true,
+    "sameCrsFloat64Alignment": true,
+    "explicitAlignmentProvenance": true,
+    "partialSourceState": true,
+    "staleSourceState": true,
+    "incrementalSingleSourceRefresh": true,
+    "crossSourceSelection": true,
+    "crossSourceSavedView": true,
+    "staleRevisionFailClosed": true,
+    "referenceFormatCapabilityMatrix": true,
+    "ifcOnlyAdmission": true,
+    "boundedLifecycle": true,
+    "actualSpatialConsumerConformance": false,
+    "actualMultiFormatUserDemand": false,
+    "surveyedCoordinateDatumEvidence": false,
+    "productScaleFederationPerformance": false,
+    "pointCloudCodec": false,
+    "gltfGlbCodec": false,
+    "gis3dTilesEngine": false,
+    "rvtDgnNativeBridge": false
+  },
+  "evidence": {
+    "syntheticFederation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
+    "sourceMetadata": "compatibility/evidence/bim-model-source-metadata-2026-08-04.json"
+  },
+  "blockers": [
+    "actual Coni Spatial consumer composition remains consumer-owned",
+    "two-format user demand must be evidenced without publishing customer models",
+    "surveyed control points and datum transformation need qualified geospatial evidence",
+    "product-scale multi-source first-frame, memory and cleanup need a redistributable fixture",
+    "LAS, LAZ and E57 require codec, CRS, chunking and cleanup qualification",
+    "glTF and GLB require codec, license, precision and cleanup qualification",
+    "3D Tiles and GIS context require engine, network and precision qualification",
+    "RVT and DGN require SDK rights, platform packaging and reopen qualification"
+  ],
+  "limitations": [
+    "the passing federation evidence uses three generated IFC4 snapshots with one same-CRS MapConversion",
+    "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
+    "non-IFC format entries are held capability records, not parsers or supported product formats",
+    "source identity, GlobalId and ownership remain scoped to each federation source slot",
+    "the foundation grants no native mutation, Spatial acceptance, publish or Canonical Entity authority"
+  ],
+  "policy": {
+    "readOnly": true,
+    "mergeNativeIdentity": false,
+    "allowImplicitDatumTransformation": false,
+    "allowNonIfcSemanticAuthority": false,
+    "claimActualNonIfcCodec": false,
+    "claimActualSpatialConsumer": false,
+    "claimUserDemand": false,
+    "claimProductionFederation": false,
+    "nativeWrite": false,
+    "roundTrip": false
+  }
+}
