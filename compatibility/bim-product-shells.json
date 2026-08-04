@@ -20,6 +20,19 @@
     "artifactCommitted": false,
     "thirdPartyContent": false
   },
+  "publicFixture": {
+    "id": "public-schependomlaan-complete-ifc2x3",
+    "byteLength": 46766968,
+    "sha256": "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "schema": "IFC2X3",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "buildingsmart-community/Community-Sample-Test-Files",
+    "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+    "license": "CC-BY-4.0",
+    "profileAdmission": false
+  },
   "limits": {
     "maximumSourceBytes": 67108864,
     "openTimeoutMs": 30000,
@@ -49,19 +62,19 @@
     "packagedRuntimeIndependent": true,
     "noAccountUploadTelemetry": true,
     "spatialIndependent": true,
+    "publicRepresentativeProductScale": true,
     "publicViewerCoreConformance": false,
-    "publicRepresentativeProductScale": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
   },
   "evidence": {
     "browserSynthetic": "compatibility/evidence/bim-product-shell-browser-synthetic-2026-08-04.json",
+    "browserPublic": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json"
   },
   "blockers": [
     "public Viewer Core artifact and conformance remain unresolved in issue #3",
-    "public representative end-to-end product scale is not qualified",
     "actual physical GPU qualification is not claimed",
     "marketplace release remains behind license and release gates"
   ],
@@ -70,7 +83,7 @@
     "localOnly": true,
     "spatialAuthority": false,
     "claimPublicViewerCore": false,
-    "claimPublicScale": false,
+    "claimPublicScale": true,
     "claimPhysicalGpu": false,
     "claimMarketplaceRelease": false
   }

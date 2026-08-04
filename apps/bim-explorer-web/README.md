@@ -13,4 +13,6 @@ read-only product shell입니다.
 
 `npm run start:web`은 loopback-only local server를 실행합니다. generated
 qualification fixture는 `--fixture synthetic`을 명시한 경우에만 노출합니다.
-실제 고객 IFC는 저장하거나 Git에 추적하지 않습니다.
+`npm run qualify:product:web:public`은 고정 digest의 공개 IFC를 실제 local
+file input으로 선택하며 server가 모델 bytes를 제공하지 않습니다. 공개
+fixture와 실제 고객 IFC는 package에 포함하거나 Git에 추적하지 않습니다.

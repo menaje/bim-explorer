@@ -21,10 +21,10 @@ const PASSED_GATES = [
   "packagedRuntimeIndependent",
   "noAccountUploadTelemetry",
   "spatialIndependent",
+  "publicRepresentativeProductScale",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
-  "publicRepresentativeProductScale",
   "physicalGpuQualification",
   "marketplaceRelease",
 ];
@@ -77,15 +77,37 @@ function equalInstalledProjection(installedRuntime, vscode) {
   return true;
 }
 
+function equalPublicProjection(browserPublic, installedRuntime) {
+  for (const field of [
+    "model",
+    "resources",
+    "renderer",
+    "semantic",
+  ]) {
+    if (
+      JSON.stringify(browserPublic.observation?.[field]) !==
+      JSON.stringify(installedRuntime?.[field])
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
   vscode,
+  browserPublic,
   installation,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
   plainRecord(vscode, "VS Code product shell evidence");
+  plainRecord(
+    browserPublic,
+    "public Browser product shell evidence",
+  );
   plainRecord(installation, "VSIX install evidence");
   if (
     manifest.schema !==
@@ -93,6 +115,8 @@ export function validateBimProductShellCompatibility(
     manifest.asOf !== "2026-08-04" ||
     manifest.status !== "experimental" ||
     browser.schema !==
+      "bim-explorer-product-shell-browser-evidence/1" ||
+    browserPublic.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
     vscode.schema !==
       "bim-explorer-vscode-custom-editor-evidence/1" ||
@@ -153,6 +177,58 @@ export function validateBimProductShellCompatibility(
       "BIM product shell fixture policy is invalid",
     );
   }
+  const publicFixture = manifest.publicFixture;
+  const publicFingerprint =
+    `sha256:${publicFixture?.sha256}`;
+  const installedPublic =
+    installation.observation?.publicRuntime;
+  for (const evidenceFixture of [
+    browserPublic.fixture,
+    installedPublic?.fixture,
+  ]) {
+    if (
+      evidenceFixture?.id !== publicFixture?.id ||
+      evidenceFixture?.sourceBytes !==
+        publicFixture?.byteLength ||
+      evidenceFixture?.fingerprint !== publicFingerprint ||
+      evidenceFixture?.ifcSchema !== publicFixture?.schema ||
+      evidenceFixture?.committed !== false ||
+      evidenceFixture?.provenance?.repository !==
+        publicFixture?.repository ||
+      evidenceFixture?.provenance?.commit !==
+        publicFixture?.commit ||
+      evidenceFixture?.provenance?.license !==
+        publicFixture?.license ||
+      evidenceFixture?.provenance?.bundled !== false
+    ) {
+      throw new Error(
+        "public BIM product fixture identity is invalid",
+      );
+    }
+  }
+  if (
+    publicFixture?.artifactCommitted !== false ||
+    publicFixture?.thirdPartyContent !== true ||
+    publicFixture?.bundled !== false ||
+    publicFixture?.id !==
+      "public-schependomlaan-complete-ifc2x3" ||
+    publicFixture?.byteLength !== 46_766_968 ||
+    publicFixture?.sha256 !==
+      "5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4" ||
+    publicFixture?.schema !== "IFC2X3" ||
+    publicFixture?.repository !==
+      "buildingsmart-community/Community-Sample-Test-Files" ||
+    publicFixture?.commit !==
+      "7ddf57a201f88a0c213d5322b02ed15e94a60a40" ||
+    publicFixture?.license !== "CC-BY-4.0" ||
+    publicFixture?.profileAdmission !== false ||
+    typeof browserPublic.fixture?.provenance?.cacheHit !==
+      "boolean"
+  ) {
+    throw new Error(
+      "public BIM product fixture policy is invalid",
+    );
+  }
   const gates = plainRecord(
     manifest.gates,
     "product shell gates",
@@ -196,24 +272,39 @@ export function validateBimProductShellCompatibility(
   }
   if (
     !everyTrue(browser.assertions) ||
+    !everyTrue(browserPublic.assertions) ||
     !everyTrue(vscode.assertions) ||
     !everyTrue(installation.assertions) ||
     browser.observation?.hostKind !== "browser" ||
+    browserPublic.observation?.hostKind !== "browser" ||
     vscode.observation?.hostKind !== "vscode-webview" ||
     vscode.environment?.runtimeLayout !== "staged" ||
     installedRuntime?.environment?.runtimeLayout !==
       "installed-vsix" ||
     installedRuntime?.hostKind !== "vscode-webview" ||
+    installedPublic?.hostKind !== "vscode-webview" ||
     browser.observation?.renderer?.actualGpu !== true ||
     vscode.observation?.renderer?.actualGpu !== true ||
     installedRuntime?.renderer?.actualGpu !== true ||
+    browserPublic.observation?.renderer?.actualGpu !== true ||
+    installedPublic?.renderer?.actualGpu !== true ||
     !(browser.observation.renderer.nonBackgroundPixels > 0) ||
     !(vscode.observation.renderer.nonBackgroundPixels > 0) ||
     !(installedRuntime.renderer.nonBackgroundPixels > 0) ||
+    !(
+      browserPublic.observation.renderer
+        .nonBackgroundPixels > 0
+    ) ||
+    !(installedPublic.renderer.nonBackgroundPixels > 0) ||
     browser.observation?.lifecycle?.closed !== "disposed" ||
     vscode.observation?.lifecycle?.closed !== "disposed" ||
     installedRuntime?.lifecycle?.opened !== "ready" ||
-    installedRuntime?.lifecycle?.closed !== "disposed"
+    installedRuntime?.lifecycle?.closed !== "disposed" ||
+    browserPublic.observation?.lifecycle?.opened !== "ready" ||
+    browserPublic.observation?.lifecycle?.closed !==
+      "disposed" ||
+    installedPublic?.lifecycle?.opened !== "ready" ||
+    installedPublic?.lifecycle?.closed !== "disposed"
   ) {
     throw new Error(
       "BIM product shell runtime evidence is incomplete",
@@ -222,6 +313,7 @@ export function validateBimProductShellCompatibility(
   if (
     !equalProjection(browser, vscode) ||
     !equalInstalledProjection(installedRuntime, vscode) ||
+    !equalPublicProjection(browserPublic, installedPublic) ||
     browser.fixture.fingerprint !== vscode.fixture.fingerprint ||
     browser.observation?.interaction?.selectionOrigin !== "3d" ||
     browser.observation.interaction.selectedExpressId !==
@@ -229,6 +321,43 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell host projections diverge",
+    );
+  }
+  if (
+    JSON.stringify(browserPublic.observation?.model) !==
+      JSON.stringify({
+        products: 3_569,
+        treeNodes: 3_578,
+        triangles: 261_424,
+        ranges: 3,
+      }) ||
+    browserPublic.observation?.resources?.sourceBytes !==
+      46_766_968 ||
+    browserPublic.observation?.resources?.geometryBytes !==
+      9_290_696 ||
+    browserPublic.observation?.resources?.metadataBytes !==
+      10_007_872 ||
+    browserPublic.observation?.renderer?.sourceReadBytes !==
+      4_193_868 ||
+    browserPublic.observation?.renderer?.uploadedBytes !==
+      4_399_252 ||
+    browserPublic.observation?.semantic?.maximumDomRows !== 64 ||
+    browserPublic.observation?.interaction?.searchResults !== 25 ||
+    browserPublic.observation?.interaction?.selectionOrigin !==
+      "3d" ||
+    browserPublic.observation?.network?.externalOrigins?.length !==
+      0 ||
+    browserPublic.observation?.runtimeErrors?.length !== 0 ||
+    installedPublic?.externalUpload !== false ||
+    installedPublic?.telemetry !== false ||
+    browserPublic.decision?.browserProductShell !== "passed" ||
+    browserPublic.decision?.actualPhysicalGpu !==
+      "not-claimed" ||
+    browserPublic.decision?.publicViewerCoreConformance !==
+      "held"
+  ) {
+    throw new Error(
+      "public BIM product scale evidence is incomplete",
     );
   }
   if (
@@ -255,6 +384,7 @@ export function validateBimProductShellCompatibility(
     installation.observation?.dependencies?.["web-ifc"] !==
       "0.0.77" ||
     installation.decision?.cleanInstall !== "passed" ||
+    installation.decision?.publicFixtureOpen !== "passed" ||
     installation.decision?.marketplaceRelease !== "held"
   ) {
     throw new Error(
@@ -265,6 +395,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.browserSynthetic !==
       "compatibility/evidence/" +
         "bim-product-shell-browser-synthetic-2026-08-04.json" ||
+    manifest.evidence?.browserPublic !==
+      "compatibility/evidence/" +
+        "bim-product-shell-browser-public-2026-08-04.json" ||
     manifest.evidence?.vscodeSynthetic !==
       "compatibility/evidence/" +
         "bim-product-shell-vscode-synthetic-2026-08-04.json" ||
@@ -275,7 +408,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
-    manifest.policy?.claimPublicScale !== false ||
+    manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||
     manifest.policy?.claimMarketplaceRelease !== false
   ) {
@@ -287,6 +420,7 @@ export function validateBimProductShellCompatibility(
     /\/Volumes\/|\/Users\/|[A-Z]:\\|file:\/\//u.test(
       JSON.stringify({
         browser,
+        browserPublic,
         installation,
         manifest,
         vscode,
@@ -305,6 +439,8 @@ export function validateBimProductShellCompatibility(
       vscode.observation.hostKind,
     ]),
     passedGates: PASSED_GATES.length,
+    publicProducts:
+      browserPublic.observation.model.products,
     status: manifest.status,
   });
 }
@@ -319,9 +455,18 @@ async function main() {
     ),
     "utf8",
   ));
-  const [browser, vscode, installation] = await Promise.all([
+  const [
+    browser,
+    browserPublic,
+    vscode,
+    installation,
+  ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.browserPublic),
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -337,6 +482,7 @@ async function main() {
     manifest,
     browser,
     vscode,
+    browserPublic,
     installation,
   );
   console.log(

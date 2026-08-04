@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-product-shell-browser-evidence/1",
-  "capturedAt": "2026-08-04T01:59:31.223Z",
+  "capturedAt": "2026-08-04T01:53:31.274Z",
   "environment": {
     "browser": "Google Chrome 150.0.7871.187",
     "headless": true,
@@ -8,49 +8,56 @@
     "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
   },
   "fixture": {
-    "id": "synthetic-semantic-ifc4",
+    "id": "public-schependomlaan-complete-ifc2x3",
     "committed": false,
-    "sourceBytes": 4030,
-    "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
-    "ifcSchema": "IFC4"
+    "sourceBytes": 46766968,
+    "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+    "ifcSchema": "IFC2X3",
+    "provenance": {
+      "repository": "buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "license": "CC-BY-4.0",
+      "cacheHit": true,
+      "bundled": false
+    }
   },
   "observation": {
     "hostKind": "browser",
     "model": {
-      "products": 2,
-      "treeNodes": 7,
-      "triangles": 24,
-      "ranges": 1
+      "products": 3569,
+      "treeNodes": 3578,
+      "triangles": 261424,
+      "ranges": 3
     },
     "performance": {
-      "artifactMs": 221.0700000524521,
-      "sourceMs": 4.019999980926514,
-      "totalMs": 225.13499999046326
+      "artifactMs": 2243.475000023842,
+      "sourceMs": 722.8250000476837,
+      "totalMs": 2966.3799999952316
     },
     "resources": {
-      "sourceBytes": 4030,
-      "geometryBytes": 996,
-      "metadataBytes": 2868,
-      "ranges": 1,
-      "products": 2,
+      "sourceBytes": 46766968,
+      "geometryBytes": 9290696,
+      "metadataBytes": 10007872,
+      "ranges": 3,
+      "products": 3569,
       "wasmHeapCapacityBytes": null
     },
     "renderer": {
       "actualGpu": true,
-      "nonBackgroundPixels": 57585,
-      "sourceReadBytes": 996,
-      "uploadedBytes": 1120
+      "nonBackgroundPixels": 39871,
+      "sourceReadBytes": 4193868,
+      "uploadedBytes": 4399252
     },
     "semantic": {
-      "selectedExpressId": 40,
-      "treeRows": 7,
+      "selectedExpressId": 224,
+      "treeRows": 58,
       "maximumDomRows": 64
     },
     "interaction": {
-      "searchResults": 2,
-      "selectedExpressId": 40,
+      "searchResults": 25,
+      "selectedExpressId": 317690,
       "selectionOrigin": "3d",
-      "treeRows": 7
+      "treeRows": 64
     },
     "lifecycle": {
       "opened": "ready",
@@ -60,7 +67,7 @@
     },
     "network": {
       "externalOrigins": [],
-      "localRequestCount": 13
+      "localRequestCount": 12
     },
     "runtimeErrors": []
   },

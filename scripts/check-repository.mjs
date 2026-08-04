@@ -60,6 +60,7 @@ const REQUIRED_PATHS = [
   "compatibility/bim-semantic-explorer.json",
   "compatibility/evidence/bim-semantic-explorer-browser-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-browser-synthetic-2026-08-04.json",
+  "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
   "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",

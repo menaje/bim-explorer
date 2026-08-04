@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-custom-editor-evidence/1",
-  "capturedAt": "2026-08-04T01:46:55.571Z",
+  "capturedAt": "2026-08-04T01:59:36.116Z",
   "environment": {
     "vscode": "1.131.0",
     "platform": "darwin-arm64",
@@ -22,9 +22,9 @@
       "ranges": 1
     },
     "performance": {
-      "artifactMs": 109.10000002384186,
-      "sourceMs": 4,
-      "totalMs": 113.20000004768372
+      "artifactMs": 108.30000007152557,
+      "sourceMs": 3.6999999284744263,
+      "totalMs": 112.19999992847443
     },
     "resources": {
       "sourceBytes": 4030,

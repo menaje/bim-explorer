@@ -133,8 +133,9 @@ WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
 상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
 property set value는 현재 name-only `lossy`, host/void/fill과 connection은
-`opaque`입니다. generated fixture의 Browser/VS Code product shell은
-통과했지만 public representative semantic/product scale은 보류합니다.
+`opaque`입니다. generated fixture의 semantic conformance와 46.77MB 공개
+fixture의 Browser/clean-installed VSIX product scale은 통과했지만,
+value-level public semantic conformance는 보류합니다.
 
 ## Viewer Core와 3D presentation
 

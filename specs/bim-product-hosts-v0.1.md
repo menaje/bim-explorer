@@ -80,13 +80,16 @@ third-party notice와 Worker bundle을 독립 staging한 뒤 VSIX를 생성합�
 package manifest는 Coni Spatial이나 sibling checkout dependency를
 포함하지 않습니다. `npm run qualify:product:vscode-install`은 빈 user data와
 extension directory에 VSIX를 설치한 뒤 설치본 Custom Editor로 generated
-IFC를 엽니다. association과 runtime digest뿐 아니라 동일 source/render
-projection, 실제 VS Code Chromium WebGL2, path-free bridge와 editor close
-cleanup을 확인합니다.
+IFC와 on-demand 공개 IFC를 엽니다. association과 runtime digest뿐 아니라
+동일 source/render projection, 실제 VS Code Chromium WebGL2, path-free
+bridge와 editor close cleanup을 확인합니다. 공개 IFC는 package에
+포함하지 않습니다.
 
 ## 현재 보류
 
 - public Viewer Core artifact와 cross-repository conformance
-- public representative model의 end-to-end product scale
 - physical GPU와 cross-platform GPU/memory qualification
 - license, signing과 marketplace release
+
+공개 IFC2X3 product-scale open은 통과했지만 engine/profile admission으로
+승격하지 않습니다.

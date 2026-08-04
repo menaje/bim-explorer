@@ -18,6 +18,10 @@ import {
 import {
   packageVscodeExtension,
 } from "./package-vscode-extension.mjs";
+import {
+  ensurePublicIfcFixture,
+  loadPublicIfcFixtureManifest,
+} from "./public-ifc-fixture.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
@@ -73,6 +77,10 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall() {
+  const publicManifest = await loadPublicIfcFixtureManifest();
+  const publicFixture = await ensurePublicIfcFixture({
+    manifest: publicManifest,
+  });
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -189,6 +197,8 @@ export async function qualifyVscodeVsixInstall() {
       extensionTestsEnv: {
         BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
         BIM_EXPLORER_ROOT: ROOT,
+        BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
+          publicFixture.input,
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -221,6 +231,21 @@ export async function qualifyVscodeVsixInstall() {
         runtime.assertions?.pathFreeHostBridge === true,
       installedPackageClosesCleanly:
         runtime.assertions?.editorCloseObserved === true,
+      installedPackageOpensPublicFixture:
+        runtime.publicAssertions
+          ?.localPublicSourceOpened === true,
+      installedPublicFixtureIdentityExact:
+        runtime.publicAssertions
+          ?.publicSourceIdentityExact === true,
+      installedPublicFixtureUsesWebGl2:
+        runtime.publicAssertions
+          ?.publicVscodeChromiumWebGl2 === true,
+      installedPublicBridgeIsPathFree:
+        runtime.publicAssertions
+          ?.publicPathFreeHostBridge === true,
+      installedPublicFixtureClosesCleanly:
+        runtime.publicAssertions
+          ?.publicEditorCloseObserved === true,
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -256,10 +281,26 @@ export async function qualifyVscodeVsixInstall() {
           renderer: runtime.observation?.renderer,
           lifecycle: runtime.observation?.lifecycle,
         },
+        publicRuntime: {
+          fixture: runtime.publicFixture,
+          hostKind: runtime.publicObservation?.hostKind,
+          model: runtime.publicObservation?.model,
+          performance:
+            runtime.publicObservation?.performance,
+          resources: runtime.publicObservation?.resources,
+          renderer: runtime.publicObservation?.renderer,
+          semantic: runtime.publicObservation?.semantic,
+          lifecycle: runtime.publicObservation?.lifecycle,
+          externalUpload:
+            runtime.publicObservation?.externalUpload,
+          telemetry:
+            runtime.publicObservation?.telemetry,
+        },
       },
       assertions,
       decision: {
         cleanInstall: "passed",
+        publicFixtureOpen: "passed",
         marketplaceRelease: "held",
       },
     });

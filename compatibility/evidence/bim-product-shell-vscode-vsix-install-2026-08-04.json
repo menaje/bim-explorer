@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-vscode-vsix-install-evidence/1",
-  "capturedAt": "2026-08-04T01:46:43.585Z",
+  "capturedAt": "2026-08-04T02:00:39.343Z",
   "environment": {
     "platform": "darwin-arm64",
     "cleanUserData": true,
@@ -9,7 +9,7 @@
   "package": {
     "id": "menaje.bim-explorer",
     "version": "0.0.0",
-    "byteLength": 1092794,
+    "byteLength": 1093014,
     "installedRuntimeFiles": 6,
     "workerBundleSha256": "0d24ba7b64655b24c175f2ef3f9a2d207a9f9a604d71472fd01373af42690440"
   },
@@ -60,6 +60,58 @@
         "opened": "ready",
         "closed": "disposed"
       }
+    },
+    "publicRuntime": {
+      "fixture": {
+        "id": "public-schependomlaan-complete-ifc2x3",
+        "committed": false,
+        "sourceBytes": 46766968,
+        "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+        "ifcSchema": "IFC2X3",
+        "provenance": {
+          "repository": "buildingsmart-community/Community-Sample-Test-Files",
+          "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "hostKind": "vscode-webview",
+      "model": {
+        "products": 3569,
+        "treeNodes": 3578,
+        "triangles": 261424,
+        "ranges": 3
+      },
+      "performance": {
+        "artifactMs": 2268.100000023842,
+        "sourceMs": 413.7000000476837,
+        "totalMs": 2681.8000000715256
+      },
+      "resources": {
+        "sourceBytes": 46766968,
+        "geometryBytes": 9290696,
+        "metadataBytes": 10007872,
+        "ranges": 3,
+        "products": 3569,
+        "wasmHeapCapacityBytes": null
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 39871,
+        "sourceReadBytes": 4193868,
+        "uploadedBytes": 4399252
+      },
+      "semantic": {
+        "selectedExpressId": 224,
+        "treeRows": 58,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      },
+      "externalUpload": false,
+      "telemetry": false
     }
   },
   "assertions": {
@@ -72,10 +124,16 @@
     "installedPackageOpensFixture": true,
     "installedPackageUsesWebGl2": true,
     "installedPackageBridgeIsPathFree": true,
-    "installedPackageClosesCleanly": true
+    "installedPackageClosesCleanly": true,
+    "installedPackageOpensPublicFixture": true,
+    "installedPublicFixtureIdentityExact": true,
+    "installedPublicFixtureUsesWebGl2": true,
+    "installedPublicBridgeIsPathFree": true,
+    "installedPublicFixtureClosesCleanly": true
   },
   "decision": {
     "cleanInstall": "passed",
+    "publicFixtureOpen": "passed",
     "marketplaceRelease": "held"
   }
 }

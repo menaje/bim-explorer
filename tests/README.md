@@ -60,12 +60,15 @@ WebGL2 pick은 별도 compatibility evidence로 고정합니다.
 runtime-neutral digest, VS Code manifest/CSP, non-symlink exact-file
 admission, path-free report와 독립 package staging을 검사합니다.
 `npm run qualify:product:web`은 실제 Chrome에서 local Worker, semantic
-search, 3D pick과 cleanup을 실행합니다. `npm run qualify:product:vscode`는
+search, 3D pick과 cleanup을 실행합니다. `npm run
+qualify:product:web:public`은 digest가 고정된 공개 IFC를 실제 local file
+input으로 열어 대표 product scale을 확인합니다. `npm run
+qualify:product:vscode`는
 독립 staging을 실제 VS Code Custom Editor로 열고 같은 source/render
 projection과 editor close를 확인합니다. `npm run
 qualify:product:vscode-install`은 생성한 VSIX를 빈 profile에 설치한 뒤
-설치본 Custom Editor로 같은 fixture를 열어 WebGL2, path-free bridge와
-editor close를 다시 확인합니다.
+설치본 Custom Editor로 generated fixture와 같은 공개 IFC를 연속으로 열어
+WebGL2, path-free bridge와 editor close를 다시 확인합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

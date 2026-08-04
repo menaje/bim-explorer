@@ -18,7 +18,10 @@ explorer와 WebGL2 projection을 실제 Chrome/VS Code Chromium에서
 재현했습니다. VSIX는 빈 user data/extension directory에 clean install
 한 뒤 설치본 Custom Editor에서 같은 fixture와 WebGL2 projection, path-free
 bridge와 close cleanup까지 재검증했습니다. public Viewer Core conformance와
-public representative product scale은 별도 Gate입니다.
+별개로, 46.77MB 공개 IFC도 Browser와 clean-installed VSIX에서 같은
+3,569-product source/model projection과 첫-range WebGL2 결과로
+재현했습니다. IFC2X3 profile admission, physical GPU와 release는 이
+product-scale 결과로 승격하지 않습니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과

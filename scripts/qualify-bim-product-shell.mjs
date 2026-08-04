@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 import {
   createBimExplorerWebServer,
 } from "./serve-bim-explorer-web.mjs";
+import {
+  ensurePublicIfcFixture,
+  loadPublicIfcFixtureManifest,
+} from "./public-ifc-fixture.mjs";
 
 const CHROME =
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -253,7 +257,13 @@ async function poll(client, expression, {
   throw timeoutError(expression);
 }
 
-function assertions(opened, interaction, cleanup, errors) {
+function assertions(
+  opened,
+  interaction,
+  cleanup,
+  errors,
+  fixture,
+) {
   return Object.freeze({
     actualBrowserWebGl2:
       opened.renderer.actualGpu === true &&
@@ -278,12 +288,72 @@ function assertions(opened, interaction, cleanup, errors) {
       cleanup.cleanup?.backend?.disposed === true &&
       cleanup.cleanup?.client?.disposed === true,
     noRuntimeErrors: errors.length === 0,
+    fixtureIdentity:
+      opened.source.byteLength === fixture.sourceBytes &&
+      opened.source.fingerprint === fixture.fingerprint &&
+      opened.source.ifcSchema === fixture.ifcSchema &&
+      opened.model.products === fixture.products &&
+      opened.model.treeNodes === fixture.treeNodes &&
+      opened.model.triangles === fixture.triangles &&
+      opened.model.ranges === fixture.ranges,
   });
 }
 
-export async function qualifyBimProductShell() {
+async function qualificationFixture(kind) {
+  if (kind === "synthetic") {
+    return Object.freeze({
+      kind,
+      serverFixture: "synthetic",
+      input: null,
+      id: "synthetic-semantic-ifc4",
+      committed: false,
+      sourceBytes: 4_030,
+      fingerprint:
+        "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+      ifcSchema: "IFC4",
+      products: 2,
+      treeNodes: 7,
+      triangles: 24,
+      ranges: 1,
+      provenance: null,
+    });
+  }
+  if (kind === "public") {
+    const manifest = await loadPublicIfcFixtureManifest();
+    const fixture = await ensurePublicIfcFixture({ manifest });
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: fixture.input,
+      id: manifest.fixtureId,
+      committed: false,
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      ifcSchema: manifest.ifc.schema,
+      products: manifest.expected.geometryProducts,
+      treeNodes: 3_578,
+      triangles: manifest.expected.triangles,
+      ranges: 3,
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.provenance.license,
+        cacheHit: fixture.receipt.cacheHit,
+        bundled: false,
+      }),
+    });
+  }
+  throw new TypeError(
+    "BIM product qualification fixture must be synthetic or public",
+  );
+}
+
+export async function qualifyBimProductShell({
+  fixture: fixtureKind = "synthetic",
+} = {}) {
+  const fixture = await qualificationFixture(fixtureKind);
   const server = createBimExplorerWebServer({
-    fixture: "synthetic",
+    fixture: fixture.serverFixture,
   });
   const origin = await listen(server);
   const userDataDirectory = await mkdtemp(
@@ -329,9 +399,32 @@ export async function qualifyBimProductShell() {
         timeoutMs: 10_000,
       },
     );
-    await client.evaluate(
-      `document.querySelector("#open-fixture").click(); true`,
-    );
+    if (fixture.input === null) {
+      await client.evaluate(
+        `document.querySelector("#open-fixture").click(); true`,
+      );
+    } else {
+      await client.send("DOM.enable");
+      const document = await client.send("DOM.getDocument", {
+        depth: 1,
+      });
+      const sourceInput = await client.send(
+        "DOM.querySelector",
+        {
+          nodeId: document.root.nodeId,
+          selector: "#source-file",
+        },
+      );
+      if (!Number.isSafeInteger(sourceInput.nodeId)) {
+        throw new Error(
+          "Browser local IFC input is unavailable",
+        );
+      }
+      await client.send("DOM.setFileInputFiles", {
+        nodeId: sourceInput.nodeId,
+        files: [fixture.input],
+      });
+    }
     const opened = await poll(
       client,
       `(() => {
@@ -344,7 +437,8 @@ export async function qualifyBimProductShell() {
           : null;
       })()`,
       {
-        timeoutMs: 30_000,
+        timeoutMs:
+          fixture.kind === "public" ? 60_000 : 30_000,
       },
     );
     await client.evaluate(`(() => {
@@ -407,6 +501,7 @@ export async function qualifyBimProductShell() {
       interaction,
       cleanup,
       errors,
+      fixture,
     );
     if (Object.values(gates).some((value) => value !== true)) {
       throw new Error(
@@ -427,11 +522,14 @@ export async function qualifyBimProductShell() {
           "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed",
       },
       fixture: {
-        id: "synthetic-semantic-ifc4",
-        committed: false,
+        id: fixture.id,
+        committed: fixture.committed,
         sourceBytes: opened.source.byteLength,
         fingerprint: opened.source.fingerprint,
         ifcSchema: opened.source.ifcSchema,
+        ...(fixture.provenance === null
+          ? {}
+          : { provenance: fixture.provenance }),
       },
       observation: {
         hostKind: opened.hostKind,
@@ -493,11 +591,30 @@ export async function qualifyBimProductShell() {
   }
 }
 
+function parseFixtureArguments(values) {
+  if (values.length === 0) {
+    return "synthetic";
+  }
+  if (
+    values.length === 2 &&
+    values[0] === "--fixture" &&
+    ["public", "synthetic"].includes(values[1])
+  ) {
+    return values[1];
+  }
+  throw new TypeError(
+    "usage: node scripts/qualify-bim-product-shell.mjs " +
+      "[--fixture synthetic|public]",
+  );
+}
+
 if (
   process.argv[1] &&
   path.resolve(process.argv[1]) ===
     fileURLToPath(import.meta.url)
 ) {
-  const evidence = await qualifyBimProductShell();
+  const evidence = await qualifyBimProductShell({
+    fixture: parseFixtureArguments(process.argv.slice(2)),
+  });
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
 }

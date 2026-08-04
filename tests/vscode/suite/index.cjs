@@ -1,7 +1,12 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const { mkdtemp, rm, writeFile } = require("node:fs/promises");
+const {
+  mkdtemp,
+  rm,
+  stat,
+  writeFile,
+} = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
@@ -38,6 +43,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_EVIDENCE;
   const runtimeLayout =
     process.env.BIM_EXPLORER_PACKAGE_RUNTIME;
+  const publicSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_PUBLIC_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -121,6 +128,124 @@ async function run() {
       const report = api.qualificationReports().at(-1);
       return report?.status === "disposed" ? report : null;
     }, "Custom Editor disposal");
+    let publicQualification = null;
+    if (
+      typeof publicSourcePath === "string" &&
+      publicSourcePath.length > 0
+    ) {
+      const publicFixtureModule = await import(
+        pathToFileURL(
+          path.join(root, "scripts", "public-ifc-fixture.mjs"),
+        ).href
+      );
+      const manifest =
+        await publicFixtureModule.loadPublicIfcFixtureManifest();
+      const publicMetadata = await stat(publicSourcePath);
+      assert.equal(publicMetadata.isFile(), true);
+      assert.equal(publicMetadata.size, manifest.entry.byteLength);
+      const publicSource = vscode.Uri.file(publicSourcePath);
+      await vscode.commands.executeCommand(
+        "vscode.openWith",
+        publicSource,
+        "bimExplorer.ifcEditor",
+      );
+      const publicReady = await waitFor(() => {
+        const report = api.qualificationReports().at(-1);
+        if (report?.status === "failed") {
+          throw new Error(
+            `Public Custom Editor failed: ` +
+              `${JSON.stringify(report)}`,
+          );
+        }
+        return report?.status === "ready" ? report : null;
+      }, "public Custom Editor ready report");
+      assert.equal(publicReady.hostKind, "vscode-webview");
+      assert.equal(publicReady.externalUpload, false);
+      assert.equal(publicReady.telemetry, false);
+      assert.equal(
+        publicReady.source.fingerprint,
+        `sha256:${manifest.entry.sha256}`,
+      );
+      assert.equal(
+        publicReady.source.byteLength,
+        manifest.entry.byteLength,
+      );
+      assert.equal(
+        publicReady.source.ifcSchema,
+        manifest.ifc.schema,
+      );
+      assert.deepEqual(publicReady.model, {
+        products: manifest.expected.geometryProducts,
+        treeNodes: 3_578,
+        triangles: manifest.expected.triangles,
+        ranges: 3,
+      });
+      assert.equal(publicReady.renderer.actualGpu, true);
+      assert.ok(
+        publicReady.renderer.nonBackgroundPixels > 0,
+      );
+      assert.equal(
+        publicReady.renderer.sourceReadBytes,
+        4_193_868,
+      );
+      assert.equal(
+        publicReady.renderer.uploadedBytes,
+        4_399_252,
+      );
+      const publicSerialized = JSON.stringify(publicReady);
+      assert.equal(
+        publicSerialized.includes(publicSourcePath),
+        false,
+      );
+      assert.equal(
+        publicSerialized.includes(path.basename(publicSourcePath)),
+        false,
+      );
+      await vscode.commands.executeCommand(
+        "workbench.action.closeActiveEditor",
+      );
+      const publicDisposed = await waitFor(() => {
+        const report = api.qualificationReports().at(-1);
+        return report?.status === "disposed" ? report : null;
+      }, "public Custom Editor disposal");
+      publicQualification = {
+        fixture: {
+          id: manifest.fixtureId,
+          committed: false,
+          sourceBytes: publicReady.source.byteLength,
+          fingerprint: publicReady.source.fingerprint,
+          ifcSchema: publicReady.source.ifcSchema,
+          provenance: {
+            repository: manifest.provenance.repository,
+            commit: manifest.provenance.commit,
+            license: manifest.provenance.license,
+            bundled: false,
+          },
+        },
+        observation: {
+          hostKind: publicReady.hostKind,
+          model: publicReady.model,
+          performance: publicReady.performance,
+          resources: publicReady.resources,
+          renderer: publicReady.renderer,
+          semantic: publicReady.semantic,
+          lifecycle: {
+            opened: publicReady.status,
+            closed: publicDisposed.status,
+          },
+          externalUpload: publicReady.externalUpload,
+          telemetry: publicReady.telemetry,
+        },
+        assertions: {
+          localPublicSourceOpened: true,
+          publicSourceIdentityExact: true,
+          publicVscodeChromiumWebGl2: true,
+          publicPathFreeHostBridge: true,
+          publicEditorCloseObserved:
+            publicDisposed.status === "disposed",
+        },
+      };
+    }
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -153,6 +278,15 @@ async function run() {
         externalUpload: ready.externalUpload,
         telemetry: ready.telemetry,
       },
+      ...(publicQualification === null
+        ? {}
+        : {
+            publicFixture: publicQualification.fixture,
+            publicObservation:
+              publicQualification.observation,
+            publicAssertions:
+              publicQualification.assertions,
+          }),
       assertions: {
         actualVscodeChromiumWebGl2:
           ready.renderer.actualGpu === true &&
@@ -177,6 +311,11 @@ async function run() {
     assert.ok(
       Object.values(evidence.assertions).every(Boolean),
     );
+    if (evidence.publicAssertions !== undefined) {
+      assert.ok(
+        Object.values(evidence.publicAssertions).every(Boolean),
+      );
+    }
     await writeFile(
       evidencePath,
       `${JSON.stringify(evidence, null, 2)}\n`,
