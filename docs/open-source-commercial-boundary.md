@@ -50,6 +50,7 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 - synthetic fixture redistribution 확인
 - SBOM과 artifact provenance
 - macOS/Linux/Browser package 검증
+  (`web-ifc` private Node/WASM macOS/Linux stage만 통과)
 - security/privacy review
 - standalone clean install과 uninstall/cleanup
 

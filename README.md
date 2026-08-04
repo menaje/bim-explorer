@@ -35,12 +35,15 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다. physical
 > GPU qualification, property-set value range, georeferencing,
 > source-precision 분리, engine-cooperative cancellation, forced-exit
-> 내부 cleanup, resource exhaustion, engine 선정, 공용 Viewer Core
+> 내부 cleanup, Browser/native resource exhaustion, engine 선정, 공용 Viewer Core
 > package와 지원 profile은 아직 확정되지 않았습니다. 공개 IFC call-start
 > 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.
 > 같은 공개 IFC의 256MiB process RSS 상한 감지·강제 종료·새 process
 > 복구도 통과했지만 Browser heap과 native allocator/parser memory safety는
-> 아직 검증되지 않았습니다.
+> 아직 검증되지 않았습니다. exact web-ifc Node/WASM private stage는
+> macOS arm64와 Linux x64에서 offline clean install·실행을 통과했고,
+> 두 CI가 만든 989,965-byte tgz도 byte-identical이었습니다. 이는
+> production Browser/VS Code package나 redistribution 승인이 아닙니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를
@@ -170,6 +173,7 @@ npm run check
 npm run start:web
 npm run qualify:product:web:public
 npm run qualify:product:vscode-install
+npm run qualify:ifc:platform-package
 npm run package:vscode
 ```
 

@@ -1,0 +1,186 @@
+{
+  "schema": "bim-explorer-web-ifc-platform-package-matrix/0.1",
+  "status": "experimental",
+  "source": {
+    "repository": "menaje/bim-explorer",
+    "workflow": "CI",
+    "runId": 30875603346,
+    "runUrl": "https://github.com/menaje/bim-explorer/actions/runs/30875603346",
+    "commit": "2775d7ac1c72542417e00424386d3ab9faab8205"
+  },
+  "package": {
+    "name": "@bim-explorer/web-ifc-platform-stage",
+    "version": "0.0.0-qualification",
+    "private": true,
+    "license": "UNLICENSED",
+    "dependency": {
+      "name": "web-ifc",
+      "version": "0.0.77",
+      "license": "MPL-2.0"
+    }
+  },
+  "platforms": [
+    {
+      "os": "darwin",
+      "architecture": "arm64",
+      "node": "v24.18.0",
+      "stage": {
+        "fileCount": 10,
+        "totalBytes": 7273290,
+        "sha256": "84710fde2959eb285042522d1d0fd662661cfde9f352e48f835aab0691e45067"
+      },
+      "artifact": {
+        "file": "bim-explorer-web-ifc-platform-stage-0.0.0-qualification.tgz",
+        "byteLength": 989965,
+        "sha256": "b759bbba3daa21c5b241016a9584ce148f2420f1c12df87a7949816819ef1e47"
+      },
+      "observation": {
+        "engine": {
+          "id": "web-ifc",
+          "version": "0.0.77",
+          "backend": "node-wasm-process",
+          "license": "MPL-2.0"
+        },
+        "fixture": {
+          "id": "synthetic-platform-package-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semanticCounts": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "reportFingerprint": "8af5f9cc0fcc8ed088c2523f8f0e17b9a281ed7eccff56f4736440f20f1a4aac",
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "outputLimitExceeded": false,
+          "stderrCaptured": false
+        }
+      },
+      "conformance": {
+        "exactDependency": true,
+        "bundledLicenseText": true,
+        "cleanOfflineInstall": true,
+        "executionOutsidePackageDirectory": true,
+        "pathFreeReport": true,
+        "modelClosed": true,
+        "engineDisposed": true,
+        "artifactMatchesStageInventory": true
+      }
+    },
+    {
+      "os": "linux",
+      "architecture": "x64",
+      "node": "v24.18.0",
+      "stage": {
+        "fileCount": 10,
+        "totalBytes": 7273290,
+        "sha256": "84710fde2959eb285042522d1d0fd662661cfde9f352e48f835aab0691e45067"
+      },
+      "artifact": {
+        "file": "bim-explorer-web-ifc-platform-stage-0.0.0-qualification.tgz",
+        "byteLength": 989965,
+        "sha256": "b759bbba3daa21c5b241016a9584ce148f2420f1c12df87a7949816819ef1e47"
+      },
+      "observation": {
+        "engine": {
+          "id": "web-ifc",
+          "version": "0.0.77",
+          "backend": "node-wasm-process",
+          "license": "MPL-2.0"
+        },
+        "fixture": {
+          "id": "synthetic-platform-package-ifc4",
+          "schema": "IFC4",
+          "view": "ReferenceView_V1.2",
+          "byteLength": 2855,
+          "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+        },
+        "semanticCounts": {
+          "projects": 1,
+          "walls": 1
+        },
+        "geometry": {
+          "products": 1,
+          "triangles": 12
+        },
+        "cleanup": {
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "reportFingerprint": "470db5fc815aae415795f12514d9728d754c53b0e8f463b67b843d87854557ea",
+        "process": {
+          "outcome": "completed",
+          "exitCode": 0,
+          "signal": null,
+          "processExited": true,
+          "timedOut": false,
+          "outputLimitExceeded": false,
+          "stderrCaptured": false
+        }
+      },
+      "conformance": {
+        "exactDependency": true,
+        "bundledLicenseText": true,
+        "cleanOfflineInstall": true,
+        "executionOutsidePackageDirectory": true,
+        "pathFreeReport": true,
+        "modelClosed": true,
+        "engineDisposed": true,
+        "artifactMatchesStageInventory": true
+      }
+    }
+  ],
+  "crossPlatform": {
+    "requiredPlatforms": [
+      "darwin-arm64",
+      "linux-x64"
+    ],
+    "stageInventoryIdentical": true,
+    "archiveByteIdentical": true,
+    "portableObservationProjection": [
+      "engine",
+      "fixture",
+      "semanticCounts",
+      "geometry",
+      "cleanup"
+    ],
+    "portableObservationSha256": "b2b30f71b94768de52b301e5b39ee3b966d77fbd9deed5ddd6f95802f58e980f",
+    "reportFingerprintDifference": "platform-packaging-capability-only"
+  },
+  "decision": {
+    "webIfcMacosStage": "passed-experimental",
+    "webIfcLinuxStage": "passed-experimental",
+    "stageArtifactIntegrity": "passed",
+    "productionPackage": "blocked",
+    "browserPackage": "blocked",
+    "vscodePackage": "blocked",
+    "ifcOpenShellLinuxPackage": "blocked",
+    "publicLicense": "blocked",
+    "artifactSigning": "blocked",
+    "sbom": "blocked",
+    "redistributionReview": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "The byte-identical tgz is a private qualification artifact.",
+    "Only the web-ifc Node/WASM inspect adapter is included.",
+    "Browser and VS Code production bundles are not qualified.",
+    "IfcOpenShell Linux wheels are not qualified.",
+    "Legal review, public license, SBOM and signing remain blocked."
+  ]
+}

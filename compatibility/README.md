@@ -124,6 +124,13 @@ cancellation, 강제 종료 뒤 내부 explicit cleanup, resource exhaustion 또
 기록합니다. 이는 `processRssLimitRecovery`만 통과시키며 Browser heap
 exhaustion, native allocator/OOM behavior와 parser memory safety를 포함한
 전체 `resourceExhaustion` Gate는 계속 보류합니다.
+exact web-ifc Node/WASM private stage의 macOS arm64·Linux x64 offline
+clean install과 실행, 동일한 10-file inventory 및 byte-identical tgz는
+[`platform package matrix`](evidence/web-ifc-platform-package-matrix-2026-08-04.json)에
+기록합니다. 이는 `crossPlatformWebIfcStage`와
+`stageArtifactIntegrity`만 통과시킵니다. production Browser/VS Code
+package, IfcOpenShell Linux wheel, public license, SBOM, signing과
+redistribution review는 계속 보류합니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 

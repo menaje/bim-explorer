@@ -20,11 +20,17 @@ cooperative cleanup, 1,024-Wall bounded Browser performance prototype은
 공개 IFC call-start 뒤 process 강제 종료를 두 번, 실제 Chromium Worker
 강제 종료를 한 번 수행하고 각각 fresh runtime 복구를 확인했습니다.
 engine-cooperative cancellation, 강제 종료 뒤 내부 close/dispose,
-Browser heap/native allocator exhaustion, physical GPU memory, clean package와 production
+Browser heap/native allocator exhaustion, physical GPU memory와 production
 redistribution은 아직 검증하지 않았습니다. engine object, source path와
 파일명은 report에 포함하지 않습니다.
 공개 IFC process는 별도 256MiB RSS 상한에서 두 번 강제 종료하고 fresh
 process recovery를 통과했지만 parser memory safety를 의미하지 않습니다.
+
+exact Node API/WASM, 이 adapter와 report contract만 포함한 private
+qualification tgz는 macOS arm64와 Linux x64 CI에서 offline clean install과
+실행을 통과했습니다. 두 OS의 stage inventory와 989,965-byte tgz SHA-256이
+일치합니다. Browser/VS Code production bundle, IfcOpenShell Linux wheel,
+public license, SBOM, signing과 redistribution은 계속 blocked입니다.
 
 ```sh
 npm run fetch:ifc:public
@@ -32,6 +38,7 @@ npm run qualify:ifc:public
 npm run qualify:ifc:negative
 npm run qualify:ifc:cancel-in-call
 npm run qualify:ifc:rss-limit
+npm run qualify:ifc:platform-package
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
 ```

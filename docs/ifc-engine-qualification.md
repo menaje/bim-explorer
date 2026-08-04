@@ -67,7 +67,8 @@ Browser 관찰값은
 [`negative Browser corpus`](../compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json),
 [`in-call process isolation`](../compatibility/evidence/ifc-engine-in-call-cancellation-2026-08-04.json)과
 [`in-call Browser isolation`](../compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json),
-[`process RSS limit`](../compatibility/evidence/ifc-engine-resource-exhaustion-2026-08-04.json)이
+[`process RSS limit`](../compatibility/evidence/ifc-engine-resource-exhaustion-2026-08-04.json),
+[`platform package matrix`](../compatibility/evidence/web-ifc-platform-package-matrix-2026-08-04.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -247,6 +248,29 @@ allocator/OOM behavior, adversarial parser memory safety와 same-process
 reuse를 증명하지 않으므로 전체 `resourceExhaustion` Gate는 계속
 `blocked`입니다.
 
+## macOS/Linux clean-install stage
+
+exact web-ifc Node API/WASM, inspect adapter, engine report contract와
+MPL-2.0 license text만 포함한 private qualification package를 만들었습니다.
+GitHub Actions CI 30875603346의 macOS arm64와 Linux x64 runner는 각각
+tgz를 만든 뒤 네트워크 없이 깨끗한 임시 host에 설치했습니다. package
+디렉터리 밖의 별도 cwd/source에서 IFC4 1 Project, 1 Wall과 12 triangles를
+재현하고 model close·engine dispose까지 통과했습니다.
+
+두 runner의 stage는 10 files, 7,273,290 bytes와 SHA-256
+`84710fde2959eb285042522d1d0fd662661cfde9f352e48f835aab0691e45067`로
+일치했습니다. 생성한 989,965-byte tgz도 SHA-256
+`b759bbba3daa21c5b241016a9584ce148f2420f1c12df87a7949816819ef1e47`로
+byte-identical이었습니다. OS별 report fingerprint는 packaging capability가
+달라 서로 다르며, engine/fixture/semantic/geometry/cleanup portable
+projection은 동일합니다.
+
+따라서 web-ifc의 `packagingMacos`와 `packagingLinux`는 experimental
+Node/WASM stage 범위에서 `native`입니다. package는 `private: true`,
+`UNLICENSED`이고 CI artifact retention도 임시이므로 production release,
+Browser/VS Code bundle, IfcOpenShell Linux wheel, public license, SBOM,
+signing과 redistribution을 승인하지 않습니다.
+
 ## Draft implementation profile
 
 현재 profile은 다음만 `experimental`입니다.
@@ -265,6 +289,7 @@ reuse를 증명하지 않으므로 전체 `resourceExhaustion` Gate는 계속
 - 공개 IFC call-start 뒤 process/Worker forced-isolation cancellation과
   fresh-runtime recovery prototype
 - 공개 IFC 처리 중 sampled process RSS limit과 fresh-process recovery
+- macOS/Linux의 private web-ifc Node/WASM clean-install stage
 - generated 1,024-Wall fixture의 bounded Browser time/WASM-capacity prototype
 
 공개 IFC2X3 관찰은 engine의 대표 parse/geometry 성능을 재기 위한
@@ -279,7 +304,7 @@ scenario에 포함하지 않습니다.
 - Browser/native resource exhaustion, parser memory safety와 same-runtime
   recovery
 - visibility 기반 first frame, physical GPU memory와 context-loss recovery
-- production Browser, Linux와 VS Code packaging
+- production Browser/VS Code packaging과 IfcOpenShell Linux packaging
 - IFC write, mutation과 round-trip
 
 따라서 “IFC 지원”이나 “BIM 전체 지원”이라고 표현하지 않습니다. 해당
@@ -303,7 +328,7 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 | sampled process RSS-limit recovery | mapped | mapped |
 | engine-cooperative cancellation | blocked | blocked |
 | write/round-trip | blocked | blocked |
-| verified packaging | macOS Node only | macOS Python wheel only |
+| verified packaging | macOS/Linux private Node stage | macOS Python wheel only |
 
 전체 machine-readable matrix는 compatibility manifest를 따릅니다.
 
@@ -311,7 +336,10 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 
 web-ifc upstream은 Node와 Browser용 WASM engine이며 저장소 license를
 MPL-2.0으로 공개합니다. 현재 npm dependency는 exact version과 integrity로
-고정했습니다.
+고정했습니다. private stage에는 upstream MPL-2.0 text와 dependency
+notice를 함께 넣었고 macOS/Linux artifact identity를 확인했습니다. 이는
+BIM Explorer 자체의 public license, MPL source 제공 절차, SBOM, signing
+또는 production redistribution 검토를 대신하지 않습니다.
 
 IfcOpenShell은 공식 설치 문서가 Python package 설치를 안내하고, upstream
 repository는 library와 executable의 license 범위를 구분합니다. 이번
@@ -347,6 +375,7 @@ npm run qualify:ifc:negative
 npm run fetch:ifc:public
 npm run qualify:ifc:cancel-in-call
 npm run qualify:ifc:rss-limit
+npm run qualify:ifc:platform-package
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
@@ -392,6 +421,10 @@ in-call qualification은 공개 IFC call-start checkpoint 뒤 두 engine
 process를 반복 강제 종료하고 fresh-process recovery를 검증합니다.
 RSS qualification은 같은 process의 256MiB sampled 상한을 강제하고
 fresh-process recovery를 검증합니다.
+platform package qualification은 exact Node/WASM stage를 tgz로 만들고
+offline clean install 뒤 package 밖에서 adapter를 실행합니다. CI는
+macOS arm64와 Linux x64 artifact를 별도로 보존하며 committed matrix가
+두 SHA-256의 일치를 고정합니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
 time/WASM-capacity budget과 negative corpus disposal도 통과했습니다. 공개
@@ -406,7 +439,7 @@ exhaustion safety, physical GPU memory와 cross-Host engine budget은 계속
 
 1. Browser/native allocator exhaustion과 필요 시 cooperative cancellation
 2. connection/system/opening을 포함한 broader semantic corpus
-3. Linux Browser CI와 macOS/Linux package matrix
-4. VS Code engine isolation과 clean-package proof
-5. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
+3. Linux Browser CI와 production Browser/VS Code engine package proof
+4. IfcOpenShell Linux wheel integrity 또는 desktop fallback 범위 확정
+5. dependency 결합·NOTICE·source 제공·SBOM·signing 법률 검토
 6. 결과를 근거로 engine/profile go/no-go 결정

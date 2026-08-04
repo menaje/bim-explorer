@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -5,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import {
   CAPABILITY_NAMES,
   CAPABILITY_STATUSES,
+  canonicalJson,
   FINGERPRINT_PROJECTION,
   REPORT_SCHEMA,
   validateIfcEngineReport,
@@ -1658,6 +1660,214 @@ function validateResourceExhaustion(manifest, evidence) {
   }
 }
 
+function validatePlatformPackaging(manifest, evidence) {
+  const qualification = plainRecord(
+    manifest.platformPackaging,
+    "platformPackaging",
+  );
+  if (
+    qualification.status !== "experimental" ||
+    qualification.scope !==
+      "private-web-ifc-node-wasm-clean-install-stage" ||
+    qualification.evidence !==
+      "compatibility/evidence/web-ifc-platform-package-matrix-2026-08-04.json" ||
+    qualification.webIfcMacosStageQualified !== true ||
+    qualification.webIfcLinuxStageQualified !== true ||
+    qualification.stageArtifactIntegrityQualified !== true ||
+    qualification.productionPackageQualified !== false ||
+    qualification.ifcOpenShellLinuxQualified !== false ||
+    qualification.publicLicenseQualified !== false ||
+    qualification.artifactSigningQualified !== false ||
+    qualification.sbomQualified !== false ||
+    qualification.redistributionReviewQualified !== false
+  ) {
+    throw new Error("platform-package manifest is invalid");
+  }
+  plainRecord(evidence, "platform-package evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-web-ifc-platform-package-matrix/0.1" ||
+    evidence.status !== "experimental" ||
+    evidence.source?.repository !== "menaje/bim-explorer" ||
+    evidence.source?.workflow !== "CI" ||
+    evidence.source?.runId !== 30_875_603_346 ||
+    evidence.source?.runUrl !==
+      "https://github.com/menaje/bim-explorer/actions/runs/30875603346" ||
+    evidence.source?.commit !==
+      "2775d7ac1c72542417e00424386d3ab9faab8205" ||
+    !sameJson(evidence.package, {
+      name: "@bim-explorer/web-ifc-platform-stage",
+      version: "0.0.0-qualification",
+      private: true,
+      license: "UNLICENSED",
+      dependency: {
+        name: "web-ifc",
+        version: manifest.candidates["web-ifc"].version,
+        license: manifest.candidates["web-ifc"].license,
+      },
+    }) ||
+    !Array.isArray(evidence.platforms) ||
+    evidence.platforms.length !== 2
+  ) {
+    throw new Error("platform-package evidence identity mismatch");
+  }
+
+  const expectedStage = {
+    fileCount: 10,
+    totalBytes: 7_273_290,
+    sha256:
+      "84710fde2959eb285042522d1d0fd662661cfde9f352e48f835aab0691e45067",
+  };
+  const expectedArtifact = {
+    file:
+      "bim-explorer-web-ifc-platform-stage-0.0.0-qualification.tgz",
+    byteLength: 989_965,
+    sha256:
+      "b759bbba3daa21c5b241016a9584ce148f2420f1c12df87a7949816819ef1e47",
+  };
+  const expectedObservation = {
+    engine: {
+      id: "web-ifc",
+      version: manifest.candidates["web-ifc"].version,
+      backend: "node-wasm-process",
+      license: manifest.candidates["web-ifc"].license,
+    },
+    fixture: {
+      id: "synthetic-platform-package-ifc4",
+      schema: "IFC4",
+      view: "ReferenceView_V1.2",
+      byteLength: 2_855,
+      sha256:
+        "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+    },
+    semanticCounts: {
+      projects: 1,
+      walls: 1,
+    },
+    geometry: {
+      products: 1,
+      triangles: 12,
+    },
+    cleanup: {
+      modelClosed: true,
+      engineDisposed: true,
+    },
+  };
+  const expectedPlatforms = {
+    "darwin-arm64": {
+      node: "v24.18.0",
+      reportFingerprint:
+        "8af5f9cc0fcc8ed088c2523f8f0e17b9a281ed7eccff56f4736440f20f1a4aac",
+    },
+    "linux-x64": {
+      node: "v24.18.0",
+      reportFingerprint:
+        "470db5fc815aae415795f12514d9728d754c53b0e8f463b67b843d87854557ea",
+    },
+  };
+  const portableObservations = [];
+  for (const platform of evidence.platforms) {
+    const key = `${platform.os}-${platform.architecture}`;
+    const expectedPlatform = expectedPlatforms[key];
+    const observation = platform.observation;
+    const portableObservation = {
+      engine: observation?.engine,
+      fixture: observation?.fixture,
+      semanticCounts: observation?.semanticCounts,
+      geometry: observation?.geometry,
+      cleanup: observation?.cleanup,
+    };
+    if (
+      expectedPlatform === undefined ||
+      platform.node !== expectedPlatform.node ||
+      !sameJson(platform.stage, expectedStage) ||
+      !sameJson(platform.artifact, expectedArtifact) ||
+      !sameJson(portableObservation, expectedObservation) ||
+      observation?.reportFingerprint !==
+        expectedPlatform.reportFingerprint ||
+      observation?.process?.outcome !== "completed" ||
+      observation.process.exitCode !== 0 ||
+      observation.process.signal !== null ||
+      observation.process.processExited !== true ||
+      observation.process.timedOut !== false ||
+      observation.process.outputLimitExceeded !== false ||
+      observation.process.stderrCaptured !== false ||
+      !Object.values(platform.conformance ?? {})
+        .every((value) => value === true) ||
+      Object.keys(platform.conformance ?? {}).length !== 8
+    ) {
+      throw new Error(`${key} platform-package evidence is incomplete`);
+    }
+    portableObservations.push(portableObservation);
+  }
+  if (
+    new Set(
+      evidence.platforms.map(
+        (platform) => `${platform.os}-${platform.architecture}`,
+      ),
+    ).size !== 2 ||
+    !sameJson(portableObservations[0], portableObservations[1])
+  ) {
+    throw new Error("platform-package portable observations differ");
+  }
+  const portableDigest = createHash("sha256")
+    .update(canonicalJson(portableObservations[0]))
+    .digest("hex");
+  if (
+    !sameJson(evidence.crossPlatform?.requiredPlatforms, [
+      "darwin-arm64",
+      "linux-x64",
+    ]) ||
+    evidence.crossPlatform.stageInventoryIdentical !== true ||
+    evidence.crossPlatform.archiveByteIdentical !== true ||
+    !sameJson(
+      evidence.crossPlatform.portableObservationProjection,
+      [
+        "engine",
+        "fixture",
+        "semanticCounts",
+        "geometry",
+        "cleanup",
+      ],
+    ) ||
+    portableDigest !==
+      "b2b30f71b94768de52b301e5b39ee3b966d77fbd9deed5ddd6f95802f58e980f" ||
+    evidence.crossPlatform.portableObservationSha256 !==
+      portableDigest ||
+    evidence.crossPlatform.reportFingerprintDifference !==
+      "platform-packaging-capability-only"
+  ) {
+    throw new Error("platform-package cross-platform identity differs");
+  }
+  if (
+    evidence.decision?.webIfcMacosStage !== "passed-experimental" ||
+    evidence.decision?.webIfcLinuxStage !== "passed-experimental" ||
+    evidence.decision?.stageArtifactIntegrity !== "passed" ||
+    evidence.decision?.productionPackage !== "blocked" ||
+    evidence.decision?.browserPackage !== "blocked" ||
+    evidence.decision?.vscodePackage !== "blocked" ||
+    evidence.decision?.ifcOpenShellLinuxPackage !== "blocked" ||
+    evidence.decision?.publicLicense !== "blocked" ||
+    evidence.decision?.artifactSigning !== "blocked" ||
+    evidence.decision?.sbom !== "blocked" ||
+    evidence.decision?.redistributionReview !== "blocked" ||
+    evidence.decision?.productionClaims !== false ||
+    !Array.isArray(evidence.limits) ||
+    evidence.limits.length < 5 ||
+    /(?:\/Users\/|\/Volumes\/|[A-Z]:\\)/u.test(
+      JSON.stringify(evidence),
+    )
+  ) {
+    throw new Error(
+      "platform-package evidence is incomplete or overclaims",
+    );
+  }
+  return Object.freeze({
+    packagingMacos: "native",
+    packagingLinux: "native",
+  });
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -1672,6 +1882,7 @@ export function validateIfcEngineCompatibility(
   inCallNodeEvidence,
   inCallBrowserEvidence,
   resourceExhaustionEvidence,
+  platformPackagingEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -1772,9 +1983,14 @@ export function validateIfcEngineCompatibility(
     gates.corruptInputCleanup !== true ||
     gates.processRssLimitRecovery !== true ||
     gates.resourceExhaustion !== false ||
-    gates.browserPackaging !== false
+    gates.browserPackaging !== false ||
+    gates.linuxPackaging !== false ||
+    gates.crossPlatformWebIfcStage !== true ||
+    gates.stageArtifactIntegrity !== true ||
+    gates.artifactIntegrity !== false ||
+    gates.redistributionReview !== false
   ) {
-    throw new Error("Browser Worker prototype Gate must match its evidence");
+    throw new Error("IFC engine qualification gates must match evidence");
   }
   const negativeCapability = validateNegativeCorpus(
     manifest,
@@ -1789,6 +2005,10 @@ export function validateIfcEngineCompatibility(
   validateResourceExhaustion(
     manifest,
     resourceExhaustionEvidence,
+  );
+  const platformPackagingCapabilities = validatePlatformPackaging(
+    manifest,
+    platformPackagingEvidence,
   );
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
@@ -1907,6 +2127,23 @@ export function validateIfcEngineCompatibility(
         ) {
           throw new Error(
             `${id} forced isolation cancellation differs from the matrix`,
+          );
+        }
+        continue;
+      }
+      if (
+        id === "web-ifc" &&
+        (
+          capability === "packagingMacos" ||
+          capability === "packagingLinux"
+        )
+      ) {
+        if (
+          matrix[capability][id] !==
+            platformPackagingCapabilities[capability]
+        ) {
+          throw new Error(
+            `web-ifc ${capability} differs from platform evidence`,
           );
         }
         continue;
@@ -2031,6 +2268,12 @@ async function main() {
       "utf8",
     ),
   );
+  const platformPackagingEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.platformPackaging.evidence),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -2045,6 +2288,7 @@ async function main() {
     inCallNodeEvidence,
     inCallBrowserEvidence,
     resourceExhaustionEvidence,
+    platformPackagingEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

@@ -80,6 +80,12 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const platformPackagingEvidence = JSON.parse(
+    await readFile(
+      manifest.platformPackaging.evidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -94,6 +100,7 @@ async function fixtures() {
     inCallNodeEvidence,
     inCallBrowserEvidence,
     resourceExhaustionEvidence,
+    platformPackagingEvidence,
   };
 }
 
@@ -112,6 +119,7 @@ function validateFixtures(value) {
     value.inCallNodeEvidence,
     value.inCallBrowserEvidence,
     value.resourceExhaustionEvidence,
+    value.platformPackagingEvidence,
   );
 }
 
@@ -137,6 +145,10 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.processRssLimitRecovery, true);
   assert.equal(manifest.gates.resourceExhaustion, false);
   assert.equal(manifest.gates.browserPackaging, false);
+  assert.equal(manifest.gates.linuxPackaging, false);
+  assert.equal(manifest.gates.crossPlatformWebIfcStage, true);
+  assert.equal(manifest.gates.stageArtifactIntegrity, true);
+  assert.equal(manifest.gates.artifactIntegrity, false);
 });
 
 test("IFC engine compatibility rejects an unmeasured pin", async () => {
@@ -278,5 +290,25 @@ test("process RSS evidence requires observed limit enforcement", async () => {
   assert.throws(
     () => validateFixtures(fixtureSet),
     /termination receipt is incomplete/u,
+  );
+});
+
+test("platform stage cannot promote a production package", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.platformPackagingEvidence
+    .decision.productionPackage = "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /incomplete or overclaims/u,
+  );
+});
+
+test("platform stage requires byte-identical macOS and Linux artifacts", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.platformPackagingEvidence
+    .platforms[1].artifact.sha256 = "0".repeat(64);
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /platform-package evidence is incomplete/u,
   );
 });

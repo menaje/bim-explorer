@@ -92,6 +92,20 @@
     "engineMemorySafetyQualified": false,
     "explicitCleanupAfterKillQualified": false
   },
+  "platformPackaging": {
+    "status": "experimental",
+    "scope": "private-web-ifc-node-wasm-clean-install-stage",
+    "evidence": "compatibility/evidence/web-ifc-platform-package-matrix-2026-08-04.json",
+    "webIfcMacosStageQualified": true,
+    "webIfcLinuxStageQualified": true,
+    "stageArtifactIntegrityQualified": true,
+    "productionPackageQualified": false,
+    "ifcOpenShellLinuxQualified": false,
+    "publicLicenseQualified": false,
+    "artifactSigningQualified": false,
+    "sbomQualified": false,
+    "redistributionReviewQualified": false
+  },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
     "status": "experimental",
@@ -220,7 +234,7 @@
       "ifcopenshell": "native"
     },
     "packagingLinux": {
-      "web-ifc": "blocked",
+      "web-ifc": "native",
       "ifcopenshell": "blocked"
     },
     "packagingBrowser": {
@@ -265,21 +279,23 @@
     "linuxPackaging": false,
     "browserPackaging": false,
     "vscodePackaging": false,
+    "crossPlatformWebIfcStage": true,
+    "stageArtifactIntegrity": true,
     "artifactIntegrity": false,
     "redistributionReview": false
   },
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "browser-resource-boundary-and-linux-package-matrix",
+    "nextPrototype": "browser-resource-boundary-and-release-legal-profile",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus, repeated forced process-isolation cancellation and a sampled 256 MiB process RSS limit after a public-model call-start checkpoint, each with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, Browser/native allocator exhaustion safety, physical GPU memory, context-loss recovery, production packaging and product redistribution review remain unqualified."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts, a three-case generated negative corpus, repeated forced process-isolation cancellation and a sampled 256 MiB process RSS limit after a public-model call-start checkpoint, each with fresh-process recovery. web-ifc additionally passes forced Worker isolation and fresh-Worker recovery in actual Chromium, the same negative corpus with explicit cleanup, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing, WebGL2 exploration and byte-identical private Node/WASM clean-install stages on macOS arm64 and Linux x64. Engine-cooperative in-call cancellation, explicit cleanup after forced exit, Browser/native allocator exhaustion safety, physical GPU memory, context-loss recovery, production Browser/VS Code packaging, IfcOpenShell Linux packaging and product redistribution review remain unqualified."
   },
   "blockers": [
     "Browser WebGL2 exploration passes, but physical GPU memory and context-loss recovery are unqualified",
     "Forced isolation and process RSS-limit recovery pass, but engine-cooperative cancellation, explicit cleanup after forced exit, Browser heap exhaustion and native allocator/parser memory safety remain unqualified",
-    "No production Browser or VS Code package proof",
+    "Private web-ifc Node/WASM stages pass on macOS/Linux, but no production Browser or VS Code package proof exists",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",
     "No broader connection, system, opening or non-wall relation corpus"

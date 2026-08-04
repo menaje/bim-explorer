@@ -78,6 +78,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/ifc-engine-negative-corpus-2026-08-04.json",
   "compatibility/evidence/ifc-engine-in-call-cancellation-2026-08-04.json",
   "compatibility/evidence/ifc-engine-resource-exhaustion-2026-08-04.json",
+  "compatibility/evidence/web-ifc-platform-package-matrix-2026-08-04.json",
   "compatibility/evidence/viewer-core-local-probe-2026-08-03.json",
   "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
   "compatibility/evidence/web-ifc-browser-in-call-cancellation-2026-08-04.json",

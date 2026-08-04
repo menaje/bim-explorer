@@ -26,6 +26,11 @@ cache에서만 사용합니다. 정확한 source·digest·사용 경계는
 받지 않았습니다. 후보를 release dependency로 승격할 때 다음을 같은 변경에서
 기록해야 합니다.
 
+`packaging/web-ifc-platform-stage`는 exact Node API/WASM, MPL-2.0 text와
+notice를 포함해 macOS/Linux의 offline clean install과 byte identity만
+검증하는 private qualification package입니다. public release, SBOM,
+signing 또는 redistribution 승인을 의미하지 않습니다.
+
 - exact package와 version
 - upstream source와 license
 - static/dynamic/WASM/process 결합 방식
