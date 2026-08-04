@@ -25,6 +25,9 @@ import {
 import { createBrowserWorkerProbeServer } from
   "../../scripts/serve-browser-worker-probe.mjs";
 import {
+  syntheticNegativeIfcCorpus,
+} from "../../scripts/generate-negative-ifc-corpus.mjs";
+import {
   syntheticIfc,
   syntheticPerformanceIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
@@ -116,6 +119,51 @@ function cancellationReport(requestId, byteLength, source, phase) {
   };
 }
 
+function rejectionReport(
+  requestId,
+  byteLength,
+  source,
+  {
+    cleanupComplete = true,
+  } = {},
+) {
+  return {
+    schema: BROWSER_WORKER_RESULT_SCHEMA,
+    requestId,
+    status: "failed",
+    engine: {
+      id: "web-ifc",
+      version: "0.0.77",
+      backend: "browser-wasm-worker-prototype",
+      license: "MPL-2.0",
+    },
+    source: {
+      id: source.id,
+      kind: source.kind,
+      byteLength,
+      sha256: "0".repeat(64),
+      schema: null,
+    },
+    failure: {
+      code: "BROWSER_IFC_INPUT_REJECTED",
+      phase: "source-envelope",
+    },
+    resources: {
+      inputBytes: byteLength,
+    },
+    cleanup: {
+      modelOpened: false,
+      modelClosed: false,
+      engineDisposed: cleanupComplete,
+    },
+    diagnostics: [
+      {
+        code: "BROWSER_IFC_INPUT_REJECTED",
+      },
+    ],
+  };
+}
+
 class FakeWorker {
   constructor(action = "success") {
     this.action = action;
@@ -147,7 +195,9 @@ class FakeWorker {
       if (
         this.action === "success" ||
         this.action === "invalid-resource" ||
-        this.action === "cooperative-cancel"
+        this.action === "cooperative-cancel" ||
+        this.action === "rejected" ||
+        this.action === "invalid-rejection"
       ) {
         this.phaseIndex = 0;
         queueMicrotask(() => {
@@ -171,6 +221,28 @@ class FakeWorker {
           });
         });
       }
+      return;
+    }
+    if (
+      message.type === "continue" &&
+      (
+        this.action === "rejected" ||
+        this.action === "invalid-rejection"
+      )
+    ) {
+      queueMicrotask(() => {
+        this.emit("message", {
+          data: rejectionReport(
+            message.requestId,
+            this.request.bytes.byteLength,
+            this.request.source,
+            {
+              cleanupComplete:
+                this.action !== "invalid-rejection",
+            },
+          ),
+        });
+      });
       return;
     }
     if (
@@ -398,6 +470,57 @@ test("Browser Worker rejects an invalid resource receipt", async () => {
     (error) => {
       assert.ok(error instanceof BrowserWorkerError);
       assert.equal(error.receipt.outcome, "invalid-report");
+      assert.equal(worker.terminated, true);
+      return true;
+    },
+  );
+});
+
+test("Browser Worker accepts a bounded negative cleanup receipt", async () => {
+  const worker = new FakeWorker("rejected");
+  await assert.rejects(
+    inspectIfcInBrowserWorker(new Uint8Array([1, 2, 3]).buffer, {
+      sourceId: "negative-truncated-data",
+      sourceKind: "synthetic",
+      workerFactory: () => worker,
+    }),
+    (error) => {
+      assert.ok(error instanceof BrowserWorkerError);
+      assert.equal(error.receipt.outcome, "inspection-rejected");
+      assert.equal(error.receipt.lastPhase, "engine-initialized");
+      assert.deepEqual(error.receipt.cleanup, {
+        modelOpened: false,
+        modelClosed: false,
+        engineDisposed: true,
+      });
+      assert.equal(
+        error.receipt.rejection.diagnosticCode,
+        "BROWSER_IFC_INPUT_REJECTED",
+      );
+      assert.equal(
+        error.receipt.rejection.phase,
+        "source-envelope",
+      );
+      assert.equal(
+        error.receipt.rejection.source.id,
+        "negative-truncated-data",
+      );
+      assert.equal(error.receipt.workerTerminationRequested, true);
+      assert.equal(worker.terminated, true);
+      return true;
+    },
+  );
+});
+
+test("Browser Worker rejects an incomplete negative cleanup receipt", async () => {
+  const worker = new FakeWorker("invalid-rejection");
+  await assert.rejects(
+    inspectIfcInBrowserWorker(new Uint8Array([1]).buffer, {
+      workerFactory: () => worker,
+    }),
+    (error) => {
+      assert.ok(error instanceof BrowserWorkerError);
+      assert.equal(error.receipt.outcome, "invalid-rejection");
       assert.equal(worker.terminated, true);
       return true;
     },
@@ -744,6 +867,7 @@ test("loopback probe server exposes only bounded same-origin resources", async (
   const pageHtml = await page.text();
   assert.match(pageHtml, /Run synthetic IFC probe/u);
   assert.match(pageHtml, /Run cancellation probe/u);
+  assert.match(pageHtml, /Run negative corpus probe/u);
   assert.match(pageHtml, /Run performance probe/u);
   assert.match(pageHtml, /Run public representative probe/u);
   assert.match(pageHtml, /Open local IFC/u);
@@ -774,6 +898,28 @@ test("loopback probe server exposes only bounded same-origin resources", async (
     performanceBytes.toString("utf8"),
     syntheticPerformanceIfc(),
   );
+  const negativeManifestResponse = await fetch(
+    `${origin}/fixture/negative-corpus.json`,
+  );
+  const negativeManifest = await negativeManifestResponse.json();
+  const negativeCorpus = syntheticNegativeIfcCorpus();
+  assert.equal(
+    negativeManifest.fixtureId,
+    "synthetic-negative-ifc-corpus",
+  );
+  assert.equal(negativeManifest.cases.length, negativeCorpus.length);
+  for (const negative of negativeCorpus) {
+    const response = await fetch(
+      `${origin}/fixture/negative/${negative.id}.ifc`,
+    );
+    const negativeBytes = Buffer.from(await response.arrayBuffer());
+    assert.equal(response.headers.get("content-type"), "model/vnd.ifc");
+    assert.equal(negativeBytes.byteLength, negative.byteLength);
+    assert.equal(
+      createHash("sha256").update(negativeBytes).digest("hex"),
+      negative.sha256,
+    );
+  }
   const publicFixture = await fetch(
     `${origin}/fixture/public-representative.ifc`,
   );

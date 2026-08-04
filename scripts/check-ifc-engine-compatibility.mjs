@@ -12,6 +12,35 @@ import {
 
 const CANDIDATES = ["web-ifc", "ifcopenshell"];
 const STATUS_SET = new Set(CAPABILITY_STATUSES);
+const NEGATIVE_CASES = Object.freeze([
+  {
+    browserExpectedFailurePhase: "source-envelope",
+    byteLength: 89,
+    description:
+      "Complete STEP sections with an invalid exchange-file preamble",
+    id: "invalid-step-preamble",
+    sha256:
+      "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee",
+  },
+  {
+    browserExpectedFailurePhase: "source-envelope",
+    byteLength: 1781,
+    description:
+      "Repository-authored IFC4 truncated inside the DATA section",
+    id: "truncated-data-section",
+    sha256:
+      "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7",
+  },
+  {
+    browserExpectedFailurePhase: "semantic-admission",
+    byteLength: 2817,
+    description:
+      "Complete IFC4 envelope with the Project root replaced by a non-root entity",
+    id: "missing-project-root",
+    sha256:
+      "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa",
+  },
+]);
 
 function plainRecord(value, label) {
   if (
@@ -35,6 +64,25 @@ function aggregateCapability(values, label) {
     throw new Error(`${label} has conflicting evidenced statuses`);
   }
   return evidenced[0];
+}
+
+function sameJson(left, right) {
+  const normalize = (value) => {
+    if (Array.isArray(value)) {
+      return value.map(normalize);
+    }
+    if (value !== null && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([leftKey], [rightKey]) =>
+            leftKey.localeCompare(rightKey))
+          .map(([key, item]) => [key, normalize(item)]),
+      );
+    }
+    return value;
+  };
+  return JSON.stringify(normalize(left)) ===
+    JSON.stringify(normalize(right));
 }
 
 function validateBrowserWorkerPrototype(manifest, evidence) {
@@ -61,7 +109,9 @@ function validateBrowserWorkerPrototype(manifest, evidence) {
     typeof prototype.cancellationEvidence !== "string" ||
     prototype.cancellationEvidence.length === 0 ||
     typeof prototype.performanceEvidence !== "string" ||
-    prototype.performanceEvidence.length === 0
+    prototype.performanceEvidence.length === 0 ||
+    typeof prototype.negativeEvidence !== "string" ||
+    prototype.negativeEvidence.length === 0
   ) {
     throw new Error("Browser Worker prototype must remain experimental");
   }
@@ -832,6 +882,311 @@ function validatePublicBrowserPerformance(manifest, evidence) {
   }
 }
 
+function validateNegativeCorpus(
+  manifest,
+  nodeEvidence,
+  browserEvidence,
+) {
+  const negative = plainRecord(
+    manifest.negativeCorpus,
+    "negativeCorpus",
+  );
+  const prototype = plainRecord(
+    manifest.prototypes?.webIfcBrowserWorker,
+    "prototypes.webIfcBrowserWorker",
+  );
+  if (
+    negative.id !== "synthetic-negative-ifc-corpus" ||
+    negative.status !== "experimental" ||
+    negative.scope !==
+      "adapter-process-and-browser-worker-rejection-cleanup" ||
+    negative.manifest !==
+      "fixtures/ifc/negative-corpus/manifest.json" ||
+    prototype.negativeEvidence !== negative.browserEvidence ||
+    negative.artifactCommitted !== false ||
+    negative.thirdPartyContent !== false ||
+    negative.resourceExhaustionQualified !== false ||
+    negative.inCallCancellationQualified !== false
+  ) {
+    throw new Error("negative IFC corpus manifest is invalid");
+  }
+
+  plainRecord(nodeEvidence, "negative IFC Node evidence");
+  if (
+    nodeEvidence.schema !==
+      "bim-explorer-ifc-negative-corpus-evidence/0.1" ||
+    nodeEvidence.status !== "experimental" ||
+    nodeEvidence.fixture?.id !== negative.id ||
+    nodeEvidence.fixture?.kind !==
+      "repository-authored-generated-negative-corpus" ||
+    nodeEvidence.fixture?.artifactCommitted !== false ||
+    nodeEvidence.fixture?.thirdPartyContent !== false ||
+    !sameJson(
+      nodeEvidence.fixture?.cases,
+      NEGATIVE_CASES.map((fixture) => ({
+        ...fixture,
+        expected: "rejected",
+      })),
+    ) ||
+    !Array.isArray(nodeEvidence.engines) ||
+    nodeEvidence.engines.length !== CANDIDATES.length
+  ) {
+    throw new Error("negative IFC Node evidence identity mismatch");
+  }
+  for (const engineId of CANDIDATES) {
+    const engine = nodeEvidence.engines
+      .find((candidate) => candidate.engine === engineId);
+    if (
+      engine?.status !== "passed-negative-corpus" ||
+      !Array.isArray(engine.cases) ||
+      engine.cases.length !== NEGATIVE_CASES.length
+    ) {
+      throw new Error(`${engineId} negative corpus evidence is missing`);
+    }
+    for (const fixture of NEGATIVE_CASES) {
+      const observation = engine.cases
+        .find((candidate) => candidate.id === fixture.id);
+      if (
+        observation?.deterministicRejection !== true ||
+        !Array.isArray(observation.runs) ||
+        observation.runs.length !== 2 ||
+        !sameJson(
+          observation.runs[0]?.report,
+          observation.runs[1]?.report,
+        )
+      ) {
+        throw new Error(
+          `${engineId} ${fixture.id} rejection is not deterministic`,
+        );
+      }
+      for (const run of observation.runs) {
+        const report = run.report;
+        if (
+          report?.schema !==
+            "bim-explorer-ifc-negative-result/0.1" ||
+          report.status !== "rejected" ||
+          report.engine?.id !== engineId ||
+          report.engine?.version !==
+            manifest.candidates[engineId].version ||
+          report.fixture?.id !== fixture.id ||
+          report.fixture?.byteLength !== fixture.byteLength ||
+          report.fixture?.sha256 !== fixture.sha256 ||
+          report.failure?.code !== "IFC_INPUT_REJECTED" ||
+          typeof report.failure?.phase !== "string" ||
+          report.cleanup?.engineInitialized !== true ||
+          run.process?.outcome !== "completed" ||
+          run.process?.processExited !== true ||
+          run.process?.exitCode !== 0 ||
+          run.process?.timedOut !== false
+        ) {
+          throw new Error(
+            `${engineId} ${fixture.id} rejection receipt is incomplete`,
+          );
+        }
+        if (
+          engineId === "web-ifc"
+            ? (
+              report.cleanup.strategy !== "explicit-api" ||
+              report.cleanup.modelOpened !== true ||
+              report.cleanup.modelClosed !== true ||
+              report.cleanup.engineDisposed !== true ||
+              report.cleanup.processExitRequired !== false
+            )
+            : (
+              report.cleanup.strategy !== "process-isolation" ||
+              report.cleanup.processExitRequired !== true ||
+              (
+                report.cleanup.modelOpened &&
+                report.cleanup.modelReferenceReleased !== true
+              )
+            )
+        ) {
+          throw new Error(
+            `${engineId} ${fixture.id} cleanup boundary is invalid`,
+          );
+        }
+      }
+      const recovery = observation.recovery;
+      if (
+        recovery?.source?.id !== "synthetic-small-ifc4" ||
+        recovery.source.byteLength !== 2855 ||
+        recovery.source.sha256 !==
+          "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+        recovery.source.schema !== "IFC4" ||
+        recovery.semantics?.projects !== 1 ||
+        recovery.semantics?.walls !== 1 ||
+        recovery.geometry?.products !== 1 ||
+        recovery.geometry?.triangles !== 12 ||
+        recovery.process?.outcome !== "completed" ||
+        recovery.process?.processExited !== true ||
+        recovery.process?.exitCode !== 0 ||
+        (
+          engineId === "web-ifc" &&
+          (
+            recovery.cleanup?.modelClosed !== true ||
+            recovery.cleanup?.engineDisposed !== true
+          )
+        )
+      ) {
+        throw new Error(`${engineId} post-negative recovery is invalid`);
+      }
+    }
+  }
+  if (
+    !Object.values(nodeEvidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(nodeEvidence.conformance ?? {}).length !== 7 ||
+    nodeEvidence.decision?.corruptInputCleanup !==
+      "passed-adapter-boundary" ||
+    nodeEvidence.decision?.browserWorkerCorruptInputCleanup !==
+      "separate-evidence-required" ||
+    nodeEvidence.decision?.inCallCancellation !== "blocked" ||
+    nodeEvidence.decision?.resourceExhaustion !== "blocked" ||
+    nodeEvidence.decision?.productionPackaging !== "blocked" ||
+    nodeEvidence.decision?.productionClaims !== false
+  ) {
+    throw new Error("negative IFC Node evidence overclaims support");
+  }
+
+  plainRecord(browserEvidence, "negative IFC Browser evidence");
+  if (
+    browserEvidence.schema !==
+      "bim-explorer-browser-negative-corpus-evidence/0.1" ||
+    browserEvidence.status !== "experimental" ||
+    browserEvidence.contract?.requestSchema !==
+      "bim-explorer-browser-worker-request/0.4" ||
+    browserEvidence.contract?.resultSchema !==
+      "bim-explorer-browser-worker-result/0.4" ||
+    browserEvidence.contract?.progressSchema !==
+      "bim-explorer-browser-worker-progress/0.1" ||
+    browserEvidence.engine?.id !== "web-ifc" ||
+    browserEvidence.engine?.version !==
+      manifest.candidates["web-ifc"].version ||
+    browserEvidence.engine?.backend !== prototype.backend ||
+    browserEvidence.engine?.license !==
+      manifest.candidates["web-ifc"].license ||
+    browserEvidence.fixture?.id !== negative.id ||
+    browserEvidence.fixture?.manifest !== negative.manifest ||
+    browserEvidence.fixture?.artifactCommitted !== false ||
+    browserEvidence.fixture?.thirdPartyContent !== false ||
+    !sameJson(
+      browserEvidence.fixture?.cases,
+      NEGATIVE_CASES.map((fixture) => ({
+        id: fixture.id,
+        byteLength: fixture.byteLength,
+        sha256: fixture.sha256,
+        expectedFailurePhase:
+          fixture.browserExpectedFailurePhase,
+      })),
+    ) ||
+    !Array.isArray(browserEvidence.observations) ||
+    browserEvidence.observations.length !== NEGATIVE_CASES.length
+  ) {
+    throw new Error("negative IFC Browser evidence identity mismatch");
+  }
+  for (const fixture of NEGATIVE_CASES) {
+    const observation = browserEvidence.observations
+      .find((candidate) => candidate.id === fixture.id);
+    const modelOpened =
+      fixture.browserExpectedFailurePhase === "semantic-admission";
+    const expectedPhases = modelOpened
+      ? ["engine-initialized", "model-opened"]
+      : ["engine-initialized"];
+    if (
+      observation?.source?.id !== `negative-${fixture.id}` ||
+      observation.source.kind !== "synthetic" ||
+      observation.source.byteLength !== fixture.byteLength ||
+      observation.source.sha256 !== fixture.sha256 ||
+      !sameJson(observation.observedPhases, expectedPhases) ||
+      observation.receipt?.outcome !== "inspection-rejected" ||
+      observation.receipt?.lastPhase !== expectedPhases.at(-1) ||
+      observation.receipt?.cleanup?.modelOpened !== modelOpened ||
+      observation.receipt?.cleanup?.modelClosed !== modelOpened ||
+      observation.receipt?.cleanup?.engineDisposed !== true ||
+      observation.receipt?.rejection?.diagnosticCode !==
+        "BROWSER_IFC_INPUT_REJECTED" ||
+      observation.receipt?.rejection?.phase !==
+        fixture.browserExpectedFailurePhase ||
+      observation.receipt?.workerTerminationRequested !== true ||
+      typeof observation.receipt?.wallClockMs !== "number" ||
+      observation.receipt.wallClockMs <= 0
+    ) {
+      throw new Error(
+        `Browser ${fixture.id} rejection cleanup is incomplete`,
+      );
+    }
+  }
+  const recovery = browserEvidence.recoveryObservation;
+  if (
+    recovery?.source?.id !== "synthetic-negative-recovery-ifc4" ||
+    recovery.source.kind !== "synthetic" ||
+    recovery.source.byteLength !== 2855 ||
+    recovery.source.sha256 !==
+      "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2" ||
+    recovery.source.schema !== "IFC4" ||
+    recovery.semantics?.projects !== 1 ||
+    recovery.semantics?.walls !== 1 ||
+    recovery.geometry?.products !== 1 ||
+    recovery.geometry?.triangles !== 12 ||
+    recovery.resources?.inputBytes !== 2855 ||
+    recovery.cleanup?.modelClosed !== true ||
+    recovery.cleanup?.engineDisposed !== true ||
+    recovery.worker?.outcome !== "completed" ||
+    recovery.worker?.lastPhase !== "inspection-complete" ||
+    recovery.worker?.cleanup?.modelClosed !== true ||
+    recovery.worker?.cleanup?.engineDisposed !== true ||
+    recovery.worker?.workerTerminationRequested !== true ||
+    recovery.sourceSession?.outcome !== "completed" ||
+    recovery.sourceSession?.workerStarted !== true ||
+    recovery.sourceSession?.cancelled !== false ||
+    recovery.sourceSession?.disposed !== false
+  ) {
+    throw new Error("Browser post-negative recovery is incomplete");
+  }
+  for (const [label, value] of Object.entries({
+    initializationMs: recovery.performance?.initializationMs,
+    inspectionMs: recovery.performance?.inspectionMs,
+    openMs: recovery.performance?.openMs,
+    totalMs: recovery.performance?.totalMs,
+    workerWallClockMs: recovery.worker?.wallClockMs,
+    sessionWallClockMs: recovery.sourceSession?.wallClockMs,
+  })) {
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value <= 0
+    ) {
+      throw new Error(`Browser negative recovery ${label} is invalid`);
+    }
+  }
+  if (
+    !Object.values(browserEvidence.conformance ?? {})
+      .every((value) => value === true) ||
+    Object.keys(browserEvidence.conformance ?? {}).length !== 8 ||
+    browserEvidence.diagnostics?.consoleWarnings !== 0 ||
+    browserEvidence.diagnostics?.consoleErrors !== 0 ||
+    browserEvidence.decision?.browserCorruptInputCleanup !== "passed" ||
+    browserEvidence.decision?.adapterCorruptInputCleanup !==
+      "paired-node-evidence" ||
+    browserEvidence.decision?.inCallCancellation !== "blocked" ||
+    browserEvidence.decision?.resourceExhaustion !== "blocked" ||
+    browserEvidence.decision?.browserPackaging !== "blocked" ||
+    browserEvidence.decision?.productionClaims !== false ||
+    /(?:\/Users\/|\/Volumes\/|[A-Z]:\\)/u.test(
+      JSON.stringify({
+        browserEvidence,
+        nodeEvidence,
+      }),
+    )
+  ) {
+    throw new Error("negative IFC evidence is incomplete or overclaims");
+  }
+  return {
+    "web-ifc": "mapped",
+    ifcopenshell: "mapped",
+  };
+}
+
 export function validateIfcEngineCompatibility(
   manifest,
   evidenceList,
@@ -841,6 +1196,8 @@ export function validateIfcEngineCompatibility(
   browserPerformanceEvidence,
   publicNodePerformanceEvidence,
   publicBrowserPerformanceEvidence,
+  negativeNodeEvidence,
+  negativeBrowserEvidence,
 ) {
   plainRecord(manifest, "IFC engine compatibility manifest");
   if (manifest.schema !== "bim-explorer-ifc-engine-compatibility/2") {
@@ -937,11 +1294,16 @@ export function validateIfcEngineCompatibility(
     gates.browserRepresentativeWebGl2FirstFrame !== true ||
     gates.largeModelPerformance !== false ||
     gates.cancellation !== false ||
-    gates.corruptInputCleanup !== false ||
+    gates.corruptInputCleanup !== true ||
     gates.browserPackaging !== false
   ) {
     throw new Error("Browser Worker prototype Gate must match its evidence");
   }
+  const negativeCapability = validateNegativeCorpus(
+    manifest,
+    negativeNodeEvidence,
+    negativeBrowserEvidence,
+  );
   validateBrowserWorkerPrototype(manifest, browserWorkerEvidence);
   validateBrowserFileLifecycle(manifest, browserLifecycleEvidence);
   validateBrowserCheckpointCancellation(
@@ -1042,6 +1404,16 @@ export function validateIfcEngineCompatibility(
       reports.push(engine.runs[0].report);
     }
     for (const capability of CAPABILITY_NAMES) {
+      if (capability === "corruptInputCleanup") {
+        if (
+          matrix[capability][id] !== negativeCapability[id]
+        ) {
+          throw new Error(
+            `${id} negative cleanup differs from the matrix`,
+          );
+        }
+        continue;
+      }
       const aggregate = aggregateCapability(
         reports.map((report) => report.capabilities[capability]),
         `${id}.${capability}`,
@@ -1129,6 +1501,18 @@ async function main() {
       "utf8",
     ),
   );
+  const negativeNodeEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.negativeCorpus.nodeEvidence),
+      "utf8",
+    ),
+  );
+  const negativeBrowserEvidence = JSON.parse(
+    await readFile(
+      path.join(root, manifest.negativeCorpus.browserEvidence),
+      "utf8",
+    ),
+  );
   const report = validateIfcEngineCompatibility(
     manifest,
     evidence,
@@ -1138,6 +1522,8 @@ async function main() {
     browserPerformanceEvidence,
     publicNodePerformanceEvidence,
     publicBrowserPerformanceEvidence,
+    negativeNodeEvidence,
+    negativeBrowserEvidence,
   );
   console.log(
     `IFC engine compatibility check passed: ${report.status}, ` +

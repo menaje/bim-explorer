@@ -1,0 +1,52 @@
+{
+  "schema": "bim-explorer-ifc-negative-corpus-manifest/1",
+  "fixtureId": "synthetic-negative-ifc-corpus",
+  "kind": "repository-authored-generated-negative-corpus",
+  "tracking": {
+    "artifactCommitted": false,
+    "generator": "scripts/generate-negative-ifc-corpus.mjs"
+  },
+  "redistribution": {
+    "thirdPartyContent": false,
+    "status": "project-authored-pending-release-license"
+  },
+  "cases": [
+    {
+      "id": "invalid-step-preamble",
+      "description": "Complete STEP sections with an invalid exchange-file preamble",
+      "browserExpectedFailurePhase": "source-envelope",
+      "byteLength": 89,
+      "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee",
+      "expected": "rejected"
+    },
+    {
+      "id": "truncated-data-section",
+      "description": "Repository-authored IFC4 truncated inside the DATA section",
+      "browserExpectedFailurePhase": "source-envelope",
+      "byteLength": 1781,
+      "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7",
+      "expected": "rejected"
+    },
+    {
+      "id": "missing-project-root",
+      "description": "Complete IFC4 envelope with the Project root replaced by a non-root entity",
+      "browserExpectedFailurePhase": "semantic-admission",
+      "byteLength": 2817,
+      "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa",
+      "expected": "rejected"
+    }
+  ],
+  "qualificationUse": [
+    "bounded-rejection",
+    "engine-cleanup",
+    "process-worker-exit",
+    "post-failure-recovery",
+    "path-free-diagnostic"
+  ],
+  "notQualified": [
+    "resource-exhaustion",
+    "synchronous-in-call-cancellation",
+    "memory-safety-proof",
+    "production-packaging"
+  ]
+}

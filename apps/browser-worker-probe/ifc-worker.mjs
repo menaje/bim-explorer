@@ -9,6 +9,27 @@ const SOURCE_KINDS = new Set([
   "public-fixture",
   "synthetic",
 ]);
+const EXCHANGE_START = Uint8Array.from(
+  "ISO-10303-21;",
+  (value) => value.charCodeAt(0),
+);
+const EXCHANGE_END = Uint8Array.from(
+  "END-ISO-10303-21;",
+  (value) => value.charCodeAt(0),
+);
+const HEADER_TOKEN = Uint8Array.from(
+  "HEADER;",
+  (value) => value.charCodeAt(0),
+);
+const DATA_TOKEN = Uint8Array.from(
+  "DATA;",
+  (value) => value.charCodeAt(0),
+);
+const END_SECTION_TOKEN = Uint8Array.from(
+  "ENDSEC;",
+  (value) => value.charCodeAt(0),
+);
+const MAX_HEADER_SCAN_BYTES = 1024 * 1024;
 const CANCELLED = Symbol("cancelled");
 let active = null;
 
@@ -80,6 +101,89 @@ function validInspectRequest(request) {
   );
 }
 
+function tokenAt(bytes, token, offset) {
+  if (offset < 0 || offset + token.length > bytes.length) {
+    return false;
+  }
+  for (let index = 0; index < token.length; index += 1) {
+    if (bytes[offset + index] !== token[index]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function indexOfToken(bytes, token, start, end) {
+  const maximum = Math.min(
+    end - token.length,
+    bytes.length - token.length,
+  );
+  for (let offset = start; offset <= maximum; offset += 1) {
+    if (tokenAt(bytes, token, offset)) {
+      return offset;
+    }
+  }
+  return -1;
+}
+
+function validIfcExchangeEnvelope(bytes) {
+  if (!tokenAt(bytes, EXCHANGE_START, 0)) {
+    return false;
+  }
+  let meaningfulEnd = bytes.length;
+  while (
+    meaningfulEnd > 0 &&
+    [
+      0x09,
+      0x0a,
+      0x0d,
+      0x20,
+    ].includes(bytes[meaningfulEnd - 1])
+  ) {
+    meaningfulEnd -= 1;
+  }
+  const exchangeEnd = meaningfulEnd - EXCHANGE_END.length;
+  if (!tokenAt(bytes, EXCHANGE_END, exchangeEnd)) {
+    return false;
+  }
+  const headerScanEnd = Math.min(
+    exchangeEnd,
+    MAX_HEADER_SCAN_BYTES,
+  );
+  const header = indexOfToken(
+    bytes,
+    HEADER_TOKEN,
+    EXCHANGE_START.length,
+    headerScanEnd,
+  );
+  const firstEndSection = indexOfToken(
+    bytes,
+    END_SECTION_TOKEN,
+    header + HEADER_TOKEN.length,
+    headerScanEnd,
+  );
+  const data = indexOfToken(
+    bytes,
+    DATA_TOKEN,
+    firstEndSection + END_SECTION_TOKEN.length,
+    headerScanEnd,
+  );
+  let secondEndSection = exchangeEnd - END_SECTION_TOKEN.length;
+  while (
+    secondEndSection > data &&
+    !tokenAt(bytes, END_SECTION_TOKEN, secondEndSection)
+  ) {
+    secondEndSection -= 1;
+  }
+  return (
+    header >= EXCHANGE_START.length &&
+    firstEndSection > header &&
+    data > firstEndSection &&
+    secondEndSection > data &&
+    exchangeEnd > secondEndSection
+  );
+}
+
 async function checkpoint(state, phase) {
   state.phase = phase;
   const waiting = new Promise((resolve) => {
@@ -112,7 +216,9 @@ async function inspectRequest(request, state) {
   let digest;
   let initialized = false;
   let modelId = null;
+  let modelOpened = false;
   let modelSchema = null;
+  let failurePhase = "request-validation";
   let wasmHeapAfterInitialization = null;
   let wasmHeapAfterInspection = null;
   let wasmHeapAfterOpen = null;
@@ -134,20 +240,32 @@ async function inspectRequest(request, state) {
     const initializationMs = performance.now() - initializationStarted;
     await checkpoint(state, "engine-initialized");
 
+    failurePhase = "source-envelope";
+    if (!validIfcExchangeEnvelope(bytes)) {
+      throw new Error("invalid IFC exchange envelope");
+    }
+
+    failurePhase = "model-open";
     const openStarted = performance.now();
     modelId = api.OpenModel(bytes, {
       COORDINATE_TO_ORIGIN: false,
     });
+    modelOpened = true;
     const openMs = performance.now() - openStarted;
     modelSchema = api.GetModelSchema(modelId);
     wasmHeapAfterOpen = wasmHeapCapacity(api);
     await checkpoint(state, "model-opened");
 
+    failurePhase = "model-inspection";
     const inspectionStarted = performance.now();
     const semantics = {
       projects: entityCount(api, modelId, WebIFC.IFCPROJECT),
       walls: entityCount(api, modelId, WebIFC.IFCWALL),
     };
+    if (semantics.projects === 0) {
+      failurePhase = "semantic-admission";
+      throw new Error("IFC source has no project root");
+    }
     const geometry = geometryCounts(api, modelId);
     const inspectionMs = performance.now() - inspectionStarted;
     wasmHeapAfterInspection = wasmHeapCapacity(api);
@@ -217,18 +335,64 @@ async function inspectRequest(request, state) {
         diagnostics: [],
       };
     } else {
-      report = {
-        schema: RESULT_SCHEMA,
-        requestId,
-        status: "failed",
-        diagnostic: {
-          code: "BROWSER_IFC_INSPECTION_FAILED",
-        },
-        cleanup: {
-          modelClosed: false,
-          engineDisposed: false,
-        },
-      };
+      report =
+        bytes instanceof Uint8Array &&
+        typeof digest === "string" &&
+        request?.source !== null &&
+        typeof request?.source === "object"
+          ? {
+            schema: RESULT_SCHEMA,
+            requestId,
+            status: "failed",
+            engine: engineIdentity(),
+            source: {
+              id: request.source.id,
+              kind: request.source.kind,
+              byteLength: bytes.byteLength,
+              sha256: digest,
+              schema:
+                typeof modelSchema === "string" &&
+                modelSchema.length > 0
+                  ? modelSchema
+                  : null,
+            },
+            failure: {
+              code: "BROWSER_IFC_INPUT_REJECTED",
+              phase: failurePhase,
+            },
+            resources: {
+              inputBytes: bytes.byteLength,
+            },
+            cleanup: {
+              modelOpened,
+              modelClosed: false,
+              engineDisposed: false,
+            },
+            diagnostics: [
+              {
+                code: "BROWSER_IFC_INPUT_REJECTED",
+              },
+            ],
+          }
+          : {
+            schema: RESULT_SCHEMA,
+            requestId,
+            status: "failed",
+            failure: {
+              code: "BROWSER_IFC_REQUEST_REJECTED",
+              phase: "request-validation",
+            },
+            cleanup: {
+              modelOpened: false,
+              modelClosed: false,
+              engineDisposed: false,
+            },
+            diagnostics: [
+              {
+                code: "BROWSER_IFC_REQUEST_REJECTED",
+              },
+            ],
+          };
     }
   } finally {
     if (modelId !== null) {
@@ -249,10 +413,16 @@ async function inspectRequest(request, state) {
     }
   }
 
-  report.cleanup = {
-    modelClosed,
-    engineDisposed,
-  };
+  report.cleanup = report.status === "failed"
+    ? {
+      modelOpened,
+      modelClosed,
+      engineDisposed,
+    }
+    : {
+      modelClosed,
+      engineDisposed,
+    };
   self.postMessage(report);
 }
 

@@ -30,7 +30,7 @@
     "held": [
       "IFC2X3 and IFC4.3",
       "visibility-driven range planning, physical GPU memory and picking/input",
-      "cancellation and corrupt-input cleanup",
+      "synchronous in-call cancellation and resource-exhaustion recovery",
       "write and round-trip"
     ]
   },
@@ -56,6 +56,18 @@
     "artifactCommitted": false,
     "thirdPartyContent": false,
     "redistributionReleaseApproved": false
+  },
+  "negativeCorpus": {
+    "id": "synthetic-negative-ifc-corpus",
+    "status": "experimental",
+    "scope": "adapter-process-and-browser-worker-rejection-cleanup",
+    "manifest": "fixtures/ifc/negative-corpus/manifest.json",
+    "nodeEvidence": "compatibility/evidence/ifc-engine-negative-corpus-2026-08-04.json",
+    "browserEvidence": "compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "resourceExhaustionQualified": false,
+    "inCallCancellationQualified": false
   },
   "publicPerformanceFixture": {
     "id": "public-schependomlaan-complete-ifc2x3",
@@ -110,6 +122,7 @@
       "cancellationEvidence": "compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json",
       "performanceEvidence": "compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json",
       "publicPerformanceEvidence": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
+      "negativeEvidence": "compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json",
       "productionPackaging": false
     }
   },
@@ -175,8 +188,8 @@
       "ifcopenshell": "blocked"
     },
     "corruptInputCleanup": {
-      "web-ifc": "blocked",
-      "ifcopenshell": "blocked"
+      "web-ifc": "mapped",
+      "ifcopenshell": "mapped"
     },
     "packagingMacos": {
       "web-ifc": "native",
@@ -220,7 +233,7 @@
     "browserRepresentativeWebGl2FirstFrame": true,
     "largeModelPerformance": false,
     "cancellation": false,
-    "corruptInputCleanup": false,
+    "corruptInputCleanup": true,
     "macosPackaging": true,
     "linuxPackaging": false,
     "browserPackaging": false,
@@ -231,14 +244,14 @@
   "decision": {
     "selection": "held",
     "goNoGo": "held",
-    "nextPrototype": "negative-corpus-and-in-call-cancellation",
+    "nextPrototype": "in-call-cancellation-and-linux-package-matrix",
     "fallbackPrototype": "ifcopenshell-native-process",
     "productionClaims": false,
-    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts. web-ifc also passes local Browser Worker lifecycle/cancellation, a generated 1,024-wall scale step, pinned CC BY 4.0 representative IFC Node CPU/RSS and Browser parse/geometry budgets, plus bounded Browser WebGL2 first-frame and camera/Render-ID visibility state. Visibility-driven range planning, pointer/picking input, physical GPU memory, production packaging, in-call cancellation, negative cleanup and product redistribution review are still missing."
+    "rationale": "Both candidates pass the small and mapped semantic/geometry contracts plus a three-case generated negative corpus with isolated-process cleanup and valid-source recovery. web-ifc additionally passes the same negative corpus in actual Chromium Workers with explicit model close/engine dispose, local Worker lifecycle/checkpoint cancellation, bounded performance, representative Node/Browser parsing and WebGL2 exploration. Physical GPU memory, context-loss recovery, production packaging, synchronous in-call cancellation, resource exhaustion and product redistribution review are still missing."
   },
   "blockers": [
-    "Browser WebGL2 camera/view state passes, but visibility-driven loading, pointer/picking input, physical GPU memory and context-loss recovery are unqualified",
-    "No synchronous in-call cancellation or corrupt-input cleanup conformance",
+    "Browser WebGL2 exploration passes, but physical GPU memory and context-loss recovery are unqualified",
+    "No synchronous in-call cancellation or resource-exhaustion conformance",
     "No production Browser or VS Code package proof",
     "IfcOpenShell wheel integrity and production redistribution review are incomplete",
     "No write or round-trip qualification",

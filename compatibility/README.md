@@ -105,9 +105,14 @@ CPU/RSS는
 [`public Node performance`](evidence/web-ifc-public-representative-node-performance-2026-08-03.json),
 실제 Chromium Worker parse/geometry는
 [`public Browser performance`](evidence/web-ifc-browser-public-representative-performance-2026-08-03.json)에
-분리합니다. 모두 prototype 결과입니다. IFC2X3 profile, GPU upload·render
-first-frame, checkpoint 사이에서 실행 중인 동기 engine 호출의 선점, 손상
-입력 cleanup 또는 `packagingBrowser` capability를 승격하지 않습니다.
+분리합니다. 세 가지 generated malformed/truncated source의 두 후보
+process cleanup·recovery는
+[`negative corpus evidence`](evidence/ifc-engine-negative-corpus-2026-08-04.json),
+실제 Chromium Worker dispose·recovery는
+[`Browser negative evidence`](evidence/web-ifc-browser-negative-corpus-2026-08-04.json)에
+분리합니다. 모두 prototype 결과입니다. IFC2X3 profile, physical GPU,
+checkpoint 사이에서 실행 중인 동기 engine 호출의 선점, resource exhaustion
+또는 `packagingBrowser` capability를 승격하지 않습니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 

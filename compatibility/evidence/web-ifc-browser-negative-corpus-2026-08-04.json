@@ -1,0 +1,213 @@
+{
+  "schema": "bim-explorer-browser-negative-corpus-evidence/0.1",
+  "status": "experimental",
+  "observedAt": "2026-08-04T12:03:42+09:00",
+  "contract": {
+    "requestSchema": "bim-explorer-browser-worker-request/0.4",
+    "resultSchema": "bim-explorer-browser-worker-result/0.4",
+    "progressSchema": "bim-explorer-browser-worker-progress/0.1"
+  },
+  "engine": {
+    "id": "web-ifc",
+    "version": "0.0.77",
+    "backend": "browser-wasm-worker-prototype",
+    "license": "MPL-2.0"
+  },
+  "fixture": {
+    "id": "synthetic-negative-ifc-corpus",
+    "kind": "repository-authored-generated-negative-corpus",
+    "manifest": "fixtures/ifc/negative-corpus/manifest.json",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "cases": [
+      {
+        "id": "invalid-step-preamble",
+        "byteLength": 89,
+        "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee",
+        "expectedFailurePhase": "source-envelope"
+      },
+      {
+        "id": "truncated-data-section",
+        "byteLength": 1781,
+        "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7",
+        "expectedFailurePhase": "source-envelope"
+      },
+      {
+        "id": "missing-project-root",
+        "byteLength": 2817,
+        "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa",
+        "expectedFailurePhase": "semantic-admission"
+      }
+    ]
+  },
+  "observations": [
+    {
+      "id": "invalid-step-preamble",
+      "source": {
+        "id": "negative-invalid-step-preamble",
+        "kind": "synthetic",
+        "byteLength": 89,
+        "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee",
+        "schema": null
+      },
+      "observedPhases": [
+        "engine-initialized"
+      ],
+      "receipt": {
+        "outcome": "inspection-rejected",
+        "lastPhase": "engine-initialized",
+        "cleanup": {
+          "modelOpened": false,
+          "modelClosed": false,
+          "engineDisposed": true
+        },
+        "rejection": {
+          "diagnosticCode": "BROWSER_IFC_INPUT_REJECTED",
+          "phase": "source-envelope"
+        },
+        "workerTerminationRequested": true,
+        "wallClockMs": 103.3
+      }
+    },
+    {
+      "id": "truncated-data-section",
+      "source": {
+        "id": "negative-truncated-data-section",
+        "kind": "synthetic",
+        "byteLength": 1781,
+        "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7",
+        "schema": null
+      },
+      "observedPhases": [
+        "engine-initialized"
+      ],
+      "receipt": {
+        "outcome": "inspection-rejected",
+        "lastPhase": "engine-initialized",
+        "cleanup": {
+          "modelOpened": false,
+          "modelClosed": false,
+          "engineDisposed": true
+        },
+        "rejection": {
+          "diagnosticCode": "BROWSER_IFC_INPUT_REJECTED",
+          "phase": "source-envelope"
+        },
+        "workerTerminationRequested": true,
+        "wallClockMs": 94.3
+      }
+    },
+    {
+      "id": "missing-project-root",
+      "source": {
+        "id": "negative-missing-project-root",
+        "kind": "synthetic",
+        "byteLength": 2817,
+        "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa",
+        "schema": "IFC4"
+      },
+      "observedPhases": [
+        "engine-initialized",
+        "model-opened"
+      ],
+      "receipt": {
+        "outcome": "inspection-rejected",
+        "lastPhase": "model-opened",
+        "cleanup": {
+          "modelOpened": true,
+          "modelClosed": true,
+          "engineDisposed": true
+        },
+        "rejection": {
+          "diagnosticCode": "BROWSER_IFC_INPUT_REJECTED",
+          "phase": "semantic-admission"
+        },
+        "workerTerminationRequested": true,
+        "wallClockMs": 98.9
+      }
+    }
+  ],
+  "recoveryObservation": {
+    "source": {
+      "id": "synthetic-negative-recovery-ifc4",
+      "kind": "synthetic",
+      "byteLength": 2855,
+      "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2",
+      "schema": "IFC4"
+    },
+    "semantics": {
+      "projects": 1,
+      "walls": 1
+    },
+    "geometry": {
+      "products": 1,
+      "triangles": 12
+    },
+    "performance": {
+      "initializationMs": 11.1,
+      "openMs": 2.1,
+      "inspectionMs": 4.6,
+      "totalMs": 18.3
+    },
+    "resources": {
+      "inputBytes": 2855,
+      "wasmHeapCapacityBytes": {
+        "afterInitialization": 16777216,
+        "afterInspection": 139788288,
+        "afterOpen": 139788288,
+        "peakObserved": 139788288
+      }
+    },
+    "cleanup": {
+      "modelClosed": true,
+      "engineDisposed": true
+    },
+    "worker": {
+      "outcome": "completed",
+      "lastPhase": "inspection-complete",
+      "cleanup": {
+        "modelClosed": true,
+        "engineDisposed": true
+      },
+      "workerTerminationRequested": true,
+      "wallClockMs": 107.8
+    },
+    "sourceSession": {
+      "outcome": "completed",
+      "sourceBytes": 2855,
+      "workerStarted": true,
+      "cancelled": false,
+      "disposed": false,
+      "wallClockMs": 107.9
+    }
+  },
+  "conformance": {
+    "manifestIdentityVerified": true,
+    "orderedProgress": true,
+    "boundedRejection": true,
+    "engineDisposed": true,
+    "openedModelClosed": true,
+    "workerTerminationRequested": true,
+    "postFailureRecovery": true,
+    "diagnosticRedaction": true
+  },
+  "diagnostics": {
+    "consoleWarnings": 0,
+    "consoleErrors": 0
+  },
+  "decision": {
+    "browserCorruptInputCleanup": "passed",
+    "adapterCorruptInputCleanup": "paired-node-evidence",
+    "inCallCancellation": "blocked",
+    "resourceExhaustion": "blocked",
+    "browserPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "Three small repository-authored malformed or truncated inputs were exercised.",
+    "Envelope rejection occurs after engine initialization but before model open.",
+    "The semantic-admission case opens and explicitly closes a model before engine disposal.",
+    "Each source uses a fresh dedicated Worker; synchronous engine calls were not preempted.",
+    "No resource-exhaustion, memory-safety or production-package claim is made."
+  ]
+}

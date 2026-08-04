@@ -1,0 +1,901 @@
+{
+  "schema": "bim-explorer-ifc-negative-corpus-evidence/0.1",
+  "asOf": "2026-08-04",
+  "status": "experimental",
+  "fixture": {
+    "id": "synthetic-negative-ifc-corpus",
+    "kind": "repository-authored-generated-negative-corpus",
+    "artifactCommitted": false,
+    "thirdPartyContent": false,
+    "cases": [
+      {
+        "id": "invalid-step-preamble",
+        "description": "Complete STEP sections with an invalid exchange-file preamble",
+        "browserExpectedFailurePhase": "source-envelope",
+        "byteLength": 89,
+        "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee",
+        "expected": "rejected"
+      },
+      {
+        "id": "truncated-data-section",
+        "description": "Repository-authored IFC4 truncated inside the DATA section",
+        "browserExpectedFailurePhase": "source-envelope",
+        "byteLength": 1781,
+        "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7",
+        "expected": "rejected"
+      },
+      {
+        "id": "missing-project-root",
+        "description": "Complete IFC4 envelope with the Project root replaced by a non-root entity",
+        "browserExpectedFailurePhase": "semantic-admission",
+        "byteLength": 2817,
+        "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa",
+        "expected": "rejected"
+      }
+    ]
+  },
+  "environment": {
+    "architecture": "arm64",
+    "node": "v24.11.1",
+    "platform": "darwin"
+  },
+  "engines": [
+    {
+      "engine": "web-ifc",
+      "status": "passed-negative-corpus",
+      "cases": [
+        {
+          "id": "invalid-step-preamble",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "invalid-step-preamble",
+                  "byteLength": 89,
+                  "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-index"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 560,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 225.145125
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "invalid-step-preamble",
+                  "byteLength": 89,
+                  "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-index"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 560,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 217.995417
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": true,
+              "engineDisposed": true
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2667,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 219.346875
+            }
+          }
+        },
+        {
+          "id": "truncated-data-section",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "truncated-data-section",
+                  "byteLength": 1781,
+                  "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "report-validation"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 566,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 218.95349999999996
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "truncated-data-section",
+                  "byteLength": 1781,
+                  "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "report-validation"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 566,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 219.01850000000013
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": true,
+              "engineDisposed": true
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2659,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 215.37920899999995
+            }
+          }
+        },
+        {
+          "id": "missing-project-root",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "missing-project-root",
+                  "byteLength": 2817,
+                  "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-index"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 561,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 213.36075000000005
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "web-ifc",
+                  "version": "0.0.77",
+                  "backend": "node-wasm-process",
+                  "license": "MPL-2.0"
+                },
+                "fixture": {
+                  "id": "missing-project-root",
+                  "byteLength": 2817,
+                  "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-index"
+                },
+                "cleanup": {
+                  "strategy": "explicit-api",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": true,
+                  "engineDisposed": true,
+                  "processExitRequired": false
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 561,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 213.50775
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": true,
+              "engineDisposed": true
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2662,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 220.31266699999992
+            }
+          }
+        }
+      ]
+    },
+    {
+      "engine": "ifcopenshell",
+      "status": "passed-negative-corpus",
+      "cases": [
+        {
+          "id": "invalid-step-preamble",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "invalid-step-preamble",
+                  "byteLength": 89,
+                  "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "model-open"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": false,
+                  "modelClosed": false,
+                  "modelReferenceReleased": false,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 618,
+                "stderrBytes": 338,
+                "stderrCaptured": true,
+                "wallClockMs": 278.90587500000015
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "invalid-step-preamble",
+                  "byteLength": 89,
+                  "sha256": "de38cf3e586386343c3e77eaf1234193017d1f08e655869d876f21c86dd9a7ee"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "model-open"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": false,
+                  "modelClosed": false,
+                  "modelReferenceReleased": false,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 618,
+                "stderrBytes": 339,
+                "stderrCaptured": true,
+                "wallClockMs": 171.6353750000003
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": false,
+              "engineDisposed": false
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2729,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 221.6122919999998
+            }
+          }
+        },
+        {
+          "id": "truncated-data-section",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "truncated-data-section",
+                  "byteLength": 1781,
+                  "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-admission"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": false,
+                  "modelReferenceReleased": true,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 627,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 172.69112499999983
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "truncated-data-section",
+                  "byteLength": 1781,
+                  "sha256": "fe5b79f68b10ef0d3dd784663594f0add98fc8cc00fdb3a4de2d63b819e2bdc7"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-admission"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": false,
+                  "modelReferenceReleased": true,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 627,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 172.13549999999987
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": false,
+              "engineDisposed": false
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2731,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 193.28237499999977
+            }
+          }
+        },
+        {
+          "id": "missing-project-root",
+          "deterministicRejection": true,
+          "runs": [
+            {
+              "attempt": 1,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "missing-project-root",
+                  "byteLength": 2817,
+                  "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-admission"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": false,
+                  "modelReferenceReleased": true,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 625,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 174.07287499999984
+              }
+            },
+            {
+              "attempt": 2,
+              "report": {
+                "schema": "bim-explorer-ifc-negative-result/0.1",
+                "status": "rejected",
+                "engine": {
+                  "id": "ifcopenshell",
+                  "version": "0.8.4.post1",
+                  "backend": "python-native-process",
+                  "license": "LGPL-3.0-or-later"
+                },
+                "fixture": {
+                  "id": "missing-project-root",
+                  "byteLength": 2817,
+                  "sha256": "d1833b12414b2d4396a24037034367b4597417d29acb3173bbac232841f8bcfa"
+                },
+                "failure": {
+                  "code": "IFC_INPUT_REJECTED",
+                  "phase": "semantic-admission"
+                },
+                "cleanup": {
+                  "strategy": "process-isolation",
+                  "engineInitialized": true,
+                  "modelOpened": true,
+                  "modelClosed": false,
+                  "modelReferenceReleased": true,
+                  "engineDisposed": false,
+                  "processExitRequired": true
+                },
+                "diagnostics": [
+                  {
+                    "code": "IFC_INPUT_REJECTED"
+                  }
+                ]
+              },
+              "process": {
+                "outcome": "completed",
+                "exitCode": 0,
+                "signal": null,
+                "processExited": true,
+                "timedOut": false,
+                "cancelled": false,
+                "outputLimitExceeded": false,
+                "stdoutBytes": 625,
+                "stderrBytes": 0,
+                "stderrCaptured": false,
+                "wallClockMs": 172.42958299999964
+              }
+            }
+          ],
+          "recovery": {
+            "source": {
+              "id": "synthetic-small-ifc4",
+              "schema": "IFC4",
+              "view": "ReferenceView_V1.2",
+              "byteLength": 2855,
+              "sha256": "ad3ed676d52c2c49d2a18e8ca2c03b56f54cf1d4de41aada8db55dbdd473a6a2"
+            },
+            "semantics": {
+              "projects": 1,
+              "walls": 1
+            },
+            "geometry": {
+              "products": 1,
+              "triangles": 12
+            },
+            "cleanup": {
+              "modelClosed": false,
+              "engineDisposed": false
+            },
+            "process": {
+              "outcome": "completed",
+              "exitCode": 0,
+              "signal": null,
+              "processExited": true,
+              "timedOut": false,
+              "cancelled": false,
+              "outputLimitExceeded": false,
+              "stdoutBytes": 2731,
+              "stderrBytes": 0,
+              "stderrCaptured": false,
+              "wallClockMs": 192.0346669999999
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "conformance": {
+    "manifestIntegrity": true,
+    "boundedGeneratedInputs": true,
+    "repeatedDeterministicRejection": true,
+    "explicitOrProcessIsolatedCleanup": true,
+    "processExitObserved": true,
+    "postFailureRecovery": true,
+    "diagnosticRedaction": true
+  },
+  "decision": {
+    "corruptInputCleanup": "passed-adapter-boundary",
+    "browserWorkerCorruptInputCleanup": "separate-evidence-required",
+    "inCallCancellation": "blocked",
+    "resourceExhaustion": "blocked",
+    "productionPackaging": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "Three small repository-authored syntax and truncation cases were exercised.",
+    "IfcOpenShell cleanup is bounded by process exit, not an explicit close API.",
+    "No resource-exhaustion or memory-safety proof was performed.",
+    "Synchronous engine calls were not preempted."
+  ]
+}

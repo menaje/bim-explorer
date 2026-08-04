@@ -15,6 +15,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   quantity, classification과 Express ID mapping을 포함
 - `ifc/synthetic-performance`: 1,024 Wall이 하나의 representation map을
   사용하는 388,316-byte bounded Browser scale step
+- `ifc/negative-corpus`: invalid STEP preamble, truncated DATA section과
+  missing Project root의 작은 generated rejection/cleanup corpus
 - `ifc/public-schependomlaan`: buildingSMART Community Sample Test Files의
   46,766,968-byte IFC2X3를 parse/source/headless-renderer 성능에 사용하는
   CC BY 4.0 manifest
@@ -27,6 +29,7 @@ fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
 ```sh
 npm run fetch:ifc:public
 npm run qualify:ifc:public
+npm run qualify:ifc:negative
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
 ```

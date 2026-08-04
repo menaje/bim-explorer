@@ -32,9 +32,12 @@ stderr 원문, executable, argument와 working directory를 포함하지 않고
 invalid-report` 결과와 계측값만 기록합니다.
 
 이 계약의 일반 process supervisor test는 격리·redaction·강제 종료
-mechanism의 증거입니다. 실제 web-ifc/IfcOpenShell 손상 입력 cleanup,
-engine별 cancellation과 Browser Worker cancellation은 각각 별도 fixture와
-runtime evidence를 통과해야 합니다. Browser prototype은
+mechanism의 증거입니다. 실제 web-ifc/IfcOpenShell 손상 입력 cleanup은
+별도 3-case generated corpus에서 반복 거부, explicit 또는 process-isolated
+cleanup과 정상 IFC recovery를 통과했습니다. 실제 Chromium Worker도 같은
+corpus의 bounded rejection과 dispose/recovery를 통과했습니다. engine별
+in-call cancellation과 resource exhaustion은 별도 runtime evidence를
+통과해야 합니다. Browser prototype은
 `engine-initialized`, `model-opened`, `inspection-complete` checkpoint와
 bounded grace를 두고, 유효한 IFC의 `model-opened` 취소에서 model close와
 engine dispose를 확인했습니다. 이는 공통 candidate matrix의 cancellation
@@ -80,7 +83,8 @@ v0.2 report 통과는 synthetic fixture에 대한 engine 관찰 증거입니다.
 자동으로 의미하지 않습니다.
 
 - public IFC implementation profile
-- large/corrupt model safety
+- large/resource-exhaustion safety
+- synchronous in-call cancellation
 - Browser/VS Code packaging
 - write/round-trip 가능성
 - license 또는 production redistribution 승인

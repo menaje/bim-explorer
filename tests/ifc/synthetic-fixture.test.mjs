@@ -8,6 +8,9 @@ import {
   BROWSER_PERFORMANCE_FIXTURE,
 } from "../../apps/browser-worker-probe/performance-budget.mjs";
 import {
+  syntheticNegativeIfcCorpus,
+} from "../../scripts/generate-negative-ifc-corpus.mjs";
+import {
   SYNTHETIC_PERFORMANCE_WALLS,
   syntheticIfc,
   syntheticLargeCoordinateIfc,
@@ -158,4 +161,39 @@ test("performance fixture manifest separates bounded and large claims", async ()
     manifest.notQualified.includes("production-large-model-performance"),
   );
   assert.ok(manifest.notQualified.includes("redistribution-release"));
+});
+
+test("negative IFC corpus matches its bounded generated manifest", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      "fixtures/ifc/negative-corpus/manifest.json",
+      "utf8",
+    ),
+  );
+  const corpus = syntheticNegativeIfcCorpus();
+  assert.equal(manifest.fixtureId, "synthetic-negative-ifc-corpus");
+  assert.equal(manifest.tracking.artifactCommitted, false);
+  assert.equal(manifest.redistribution.thirdPartyContent, false);
+  assert.equal(corpus.length, 3);
+  assert.deepEqual(
+    corpus.map((fixture) => ({
+      browserExpectedFailurePhase:
+        fixture.browserExpectedFailurePhase,
+      byteLength: fixture.byteLength,
+      description: fixture.description,
+      expected: "rejected",
+      id: fixture.id,
+      sha256: fixture.sha256,
+    })),
+    manifest.cases,
+  );
+  assert.equal(
+    new Set(corpus.map((fixture) => fixture.sha256)).size,
+    corpus.length,
+  );
+  assert.ok(
+    manifest.notQualified.includes(
+      "synchronous-in-call-cancellation",
+    ),
+  );
 });

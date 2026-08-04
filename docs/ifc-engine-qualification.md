@@ -27,9 +27,12 @@ IFC2X3 46.77MB를 고정 digest로 검증하고 Node CPU/RSS와 실제 Chromium
 Worker parse/geometry budget을 통과했습니다. JavaScript/WASM 경로를
 Browser와 VS Code surface에서 공유할 가능성을 확인한 것이며 선정 결정이나
 IFC2X3 profile 승격은 아닙니다. Browser WebGL2 first-frame prototype도
-통과했지만 Browser packaging, visibility·interaction, 실행 중 동기 engine
-호출의 취소와 negative-input cleanup을 통과하지 못하면 IfcOpenShell
-native process를 desktop fallback으로 재평가합니다.
+통과했습니다. 세 가지 generated malformed/truncated source는 web-ifc와
+IfcOpenShell 격리 process에서 각각 두 번 거부·정리하고 정상 source recovery를
+재현했으며, web-ifc는 실제 Chromium Worker에서도 explicit dispose와
+recovery를 통과했습니다. 다만 production packaging, 실행 중 동기 engine
+호출의 선점, resource exhaustion과 법률 Gate가 남아 있으므로 IfcOpenShell
+native process를 desktop fallback으로 계속 유지합니다.
 
 같은 공개 fixture를 별도 `BimModelSource` artifact로 투영한 결과는
 [`public source evidence`](../compatibility/evidence/bim-model-source-public-representative-2026-08-04.json)가
@@ -54,7 +57,9 @@ Browser 관찰값은
 [`checkpoint cancellation`](../compatibility/evidence/web-ifc-browser-checkpoint-cancellation-2026-08-03.json),
 [`bounded performance`](../compatibility/evidence/web-ifc-browser-bounded-performance-2026-08-03.json),
 [`public Node performance`](../compatibility/evidence/web-ifc-public-representative-node-performance-2026-08-03.json)와
-[`public Browser performance`](../compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json)가
+[`public Browser performance`](../compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json),
+[`negative process corpus`](../compatibility/evidence/ifc-engine-negative-corpus-2026-08-04.json)와
+[`negative Browser corpus`](../compatibility/evidence/web-ifc-browser-negative-corpus-2026-08-04.json)가
 소유합니다.
 
 ## 동일 fixture 관찰
@@ -161,11 +166,37 @@ warning/error는 없었습니다.
 GPU memory가 아니며 Worker는 mesh를 renderer에 upload하거나 frame을 그리지
 않습니다. checkpoint cleanup도 실행 중인 synchronous `web-ifc` 호출을
 선점하는 증거가 아닙니다. 별도 WebGL2 renderer evidence가 GPU API
-first-frame을 검증했지만 physical GPU memory, visibility·interaction,
-negative model, clean-install bundle, Linux Browser CI와 VS Code isolation을
-검증하지 않았으므로 `largeModelPerformance`, candidate operation matrix의
-`cancellation`, `corruptInputCleanup`과 `packagingBrowser`는 계속
-`blocked`입니다.
+first-frame을 검증했지만 physical GPU memory, clean-install engine
+packaging, Linux Browser CI와 VS Code engine isolation은 별도 Gate입니다.
+
+## Negative corpus cleanup과 recovery
+
+repository-authored generator는 artifact를 추적하지 않고 다음 세 case를
+결정적으로 만듭니다.
+
+| Case | Bytes | Node/process 결과 | Browser Worker 결과 |
+| --- | ---: | --- | --- |
+| invalid STEP preamble | 89 | 두 후보 모두 2회 거부 | init 뒤 envelope 거부·dispose |
+| truncated DATA section | 1,781 | 두 후보 모두 2회 거부 | init 뒤 envelope 거부·dispose |
+| missing Project root | 2,817 | 두 후보 모두 2회 거부 | model open 뒤 close·dispose |
+
+web-ifc Node adapter는 세 case 모두 model을 닫고 engine을 dispose했습니다.
+IfcOpenShell은 명시적 close API 대신 열린 model reference를 release한 뒤
+child process exit를 cleanup 경계로 사용했습니다. 각 negative run 뒤 새
+process에서 2,855-byte 정상 IFC4의 1 Project, 1 Wall과 12 triangles를 다시
+확인했습니다.
+
+실제 local Chromium에서도 세 source를 각각 새 Worker에 전달했습니다.
+envelope 두 case는 `engine-initialized`, missing Project case는
+`model-opened`까지 ordered progress를 관찰한 뒤 path-free rejection
+receipt를 반환했습니다. 열린 model close, engine dispose, Worker 종료 뒤
+새 Worker의 정상 IFC recovery가 통과했고 console warning/error는
+관찰되지 않았습니다.
+
+따라서 adapter-boundary `corruptInputCleanup`은 두 후보 모두 `mapped`로
+승격합니다. 이는 세 개의 작은 rejection corpus에 한정됩니다.
+resource-exhaustion, parser memory safety, 실행 중 동기 호출의 선점,
+same-process engine reuse와 production package는 승인하지 않습니다.
 
 ## Draft implementation profile
 
@@ -192,8 +223,8 @@ scenario에 포함하지 않습니다.
 
 - IFC2X3, IFC4.3와 그 외 exchange scenario
 - connection, system, opening과 broader object/relation corpus
-- corrupt/truncated input과 resource exhaustion cleanup
 - 실행 중 동기 engine 호출의 취소와 candidate-level cancellation 승인
+- resource exhaustion, parser memory safety와 same-process recovery
 - visibility 기반 first frame, physical GPU memory와 context-loss recovery
 - production Browser, Linux와 VS Code packaging
 - IFC write, mutation과 round-trip
@@ -214,7 +245,8 @@ profile을 통과한 read-only exploration만 단계적으로 지원 대상으�
 | type/Pset/material | mapped | mapped |
 | relations | mapped | native |
 | mapped/shared/Qto/classification | mapped | mapped |
-| cancellation/corrupt cleanup | blocked | blocked |
+| corrupt-input adapter cleanup | mapped | mapped |
+| synchronous in-call cancellation | blocked | blocked |
 | write/round-trip | blocked | blocked |
 | verified packaging | macOS Node only | macOS Python wheel only |
 
@@ -256,6 +288,7 @@ web-ifc는 repository lockfile만 사용합니다.
 npm ci
 npm run qualify:ifc:web
 npm run qualify:ifc:mapped
+npm run qualify:ifc:negative
 npm run fetch:ifc:public
 npm run qualify:ifc:public
 npm run qualify:bim-source:public
@@ -264,10 +297,11 @@ npm run probe:browser-worker
 ```
 
 Browser probe에서는 **Run cancellation probe**로 model-opened checkpoint
-cleanup을 확인합니다. **Run performance probe**로 1,024-Wall budget을
-검사합니다. **Run public representative probe**로 고정 digest의 46.77MB
-IFC2X3 parse/geometry budget을 검사하고, 이어서 **Run synthetic IFC
-probe**로 새 Worker의 정상 복구를 확인합니다.
+cleanup을 확인하고 **Run negative corpus probe**로 세 source의
+dispose/recovery를 확인합니다. **Run performance probe**로 1,024-Wall
+budget을 검사합니다. **Run public representative probe**로 고정 digest의
+46.77MB IFC2X3 parse/geometry budget을 검사하고, 이어서 **Run synthetic
+IFC probe**로 새 Worker의 정상 복구를 확인합니다.
 
 두 후보 비교에는 별도 Python environment를 주입합니다.
 
@@ -287,22 +321,21 @@ third-party IFC bytes는 저장소와 evidence에 포함하지 않습니다.
 
 qualification harness는 공통 process supervisor를 사용해 최소 환경,
 stdout/stderr byte budget, timeout과 AbortSignal cancellation을 적용합니다.
-일반 Node stub으로 redaction과 종료 승격을 검증했지만 이는 engine별
-corrupt-input cleanup이나 cooperative cancellation을 검증한 것이 아닙니다.
+일반 Node stub으로 redaction과 종료 승격을 검증하고, 별도 negative
+qualification은 두 engine의 반복 rejection·cleanup·recovery를 검증합니다.
 Browser Worker는 유효한 IFC의 model-opened checkpoint 취소와 cleanup을
 별도 actual-browser evidence로 검증했고, 1,024-Wall bounded fixture의
-time/WASM-capacity budget도 통과했습니다. 공개 대표 fixture의 Node
-CPU/RSS와 Browser parse/geometry도 분리해 통과했습니다. 다만 동기 engine
-호출 중 선점, 승인된 negative corpus cleanup, visibility·physical GPU
-memory와 cross-Host budget을 검증하지 않았으므로 compatibility matrix의
-cancellation/corrupt cleanup과 large-model Gate는 계속 `blocked`입니다.
+time/WASM-capacity budget과 negative corpus disposal도 통과했습니다. 공개
+대표 fixture의 Node CPU/RSS와 Browser parse/geometry도 분리해
+통과했습니다. 다만 동기 engine 호출 중 선점, resource exhaustion,
+physical GPU memory와 cross-Host engine budget을 검증하지 않았으므로
+candidate cancellation과 large-model Gate는 계속 `blocked`입니다.
 
 ## 다음 Gate
 
-1. #6 generic 3D renderer의 visibility, camera와 picking vertical slice
-2. 각 engine의 in-call cancel과 승인된 negative corpus에서 cleanup 검증
-3. connection/system/opening을 포함한 broader semantic corpus
-4. Browser in-call engine cancellation, approved negative cleanup과 Linux CI
-5. VS Code isolation/package와 WebGL2 cross-Host proof
-6. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
-7. 결과를 근거로 engine/profile go/no-go 결정
+1. 각 engine의 synchronous in-call cancellation과 resource exhaustion
+2. connection/system/opening을 포함한 broader semantic corpus
+3. Linux Browser CI와 macOS/Linux package matrix
+4. VS Code engine isolation과 clean-package proof
+5. dependency 결합·NOTICE·source 제공·artifact integrity 법률 검토
+6. 결과를 근거로 engine/profile go/no-go 결정

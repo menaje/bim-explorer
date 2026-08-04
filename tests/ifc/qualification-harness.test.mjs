@@ -48,3 +48,52 @@ test("qualification harness repeats and validates web-ifc in a process", () => {
     /\/Volumes\/|\/Users\/|[A-Z]:\\/u,
   );
 });
+
+test("negative qualification repeats rejection and valid recovery", () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      "scripts/qualify-ifc-negative-corpus.mjs",
+      "--engine",
+      "web-ifc",
+    ],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      timeout: 30_000,
+      maxBuffer: 4 * 1024 * 1024,
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const evidence = JSON.parse(result.stdout);
+  assert.equal(
+    evidence.schema,
+    "bim-explorer-ifc-negative-corpus-evidence/0.1",
+  );
+  assert.equal(evidence.engines.length, 1);
+  assert.equal(evidence.engines[0].engine, "web-ifc");
+  assert.equal(evidence.engines[0].cases.length, 3);
+  for (const fixture of evidence.engines[0].cases) {
+    assert.equal(fixture.deterministicRejection, true);
+    assert.equal(fixture.runs.length, 2);
+    assert.equal(
+      fixture.runs[0].report.cleanup.engineDisposed,
+      true,
+    );
+    assert.equal(
+      fixture.runs[0].process.processExited,
+      true,
+    );
+    assert.equal(fixture.recovery.geometry.triangles, 12);
+    assert.equal(fixture.recovery.process.processExited, true);
+  }
+  assert.equal(evidence.conformance.postFailureRecovery, true);
+  assert.equal(
+    evidence.decision.inCallCancellation,
+    "blocked",
+  );
+  assert.doesNotMatch(
+    result.stdout,
+    /\/Volumes\/|\/Users\/|[A-Z]:\\/u,
+  );
+});

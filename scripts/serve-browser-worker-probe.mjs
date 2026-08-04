@@ -8,6 +8,9 @@ import {
   syntheticPerformanceIfc,
 } from "./generate-synthetic-ifc.mjs";
 import {
+  syntheticNegativeIfcCase,
+} from "./generate-negative-ifc-corpus.mjs";
+import {
   ensurePublicIfcFixture,
 } from "./public-ifc-fixture.mjs";
 
@@ -41,6 +44,16 @@ const ROUTES = new Map([
   ["/styles.css", {
     file: path.join(APP, "styles.css"),
     type: "text/css; charset=utf-8",
+  }],
+  ["/fixture/negative-corpus.json", {
+    file: path.join(
+      ROOT,
+      "fixtures",
+      "ifc",
+      "negative-corpus",
+      "manifest.json",
+    ),
+    type: "application/json; charset=utf-8",
   }],
   ["/vendor/web-ifc-api.js", {
     file: path.join(ROOT, "node_modules", "web-ifc", "web-ifc-api.js"),
@@ -103,6 +116,16 @@ async function responseFor(pathname, publicFixtureProvider) {
     }
     return {
       body,
+      type: "model/vnd.ifc",
+    };
+  }
+  const negativeMatch = pathname.match(
+    /^\/fixture\/negative\/([a-z0-9][a-z0-9-]+)\.ifc$/u,
+  );
+  if (negativeMatch) {
+    const fixture = syntheticNegativeIfcCase(negativeMatch[1]);
+    return {
+      body: fixture.bytes,
       type: "model/vnd.ifc",
     };
   }

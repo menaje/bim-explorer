@@ -5,11 +5,15 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  WebIfcInspectionError,
   inspectWebIfc,
 } from "../../adapters/web-ifc/src/inspect.mjs";
 import {
   validateIfcEngineReport,
 } from "../../packages/ifc-engine-contract/src/index.mjs";
+import {
+  syntheticNegativeIfcCorpus,
+} from "../../scripts/generate-negative-ifc-corpus.mjs";
 import {
   syntheticIfc,
   syntheticPerformanceIfc,
@@ -75,6 +79,51 @@ test("web-ifc adapter parses the bounded performance fixture", async () => {
     assert.equal(report.geometry.triangles, 12_288);
     assert.equal(report.cleanup.modelClosed, true);
     assert.equal(report.cleanup.engineDisposed, true);
+  } finally {
+    await rm(temporary, {
+      recursive: true,
+      force: true,
+    });
+  }
+});
+
+test("web-ifc adapter rejects the generated negative corpus with cleanup", async () => {
+  const temporary = await mkdtemp(
+    path.join(os.tmpdir(), "bim-explorer-web-ifc-negative-"),
+  );
+  try {
+    for (const fixture of syntheticNegativeIfcCorpus()) {
+      const input = path.join(temporary, `${fixture.id}.source`);
+      await writeFile(input, fixture.bytes);
+      await assert.rejects(
+        inspectWebIfc(input, fixture.id),
+        (error) => {
+          assert.ok(error instanceof WebIfcInspectionError);
+          assert.equal(error.receipt.status, "rejected");
+          assert.deepEqual(error.receipt.fixture, {
+            id: fixture.id,
+            byteLength: fixture.byteLength,
+            sha256: fixture.sha256,
+          });
+          assert.equal(
+            error.receipt.failure.code,
+            "IFC_INPUT_REJECTED",
+          );
+          assert.equal(
+            error.receipt.cleanup.engineInitialized,
+            true,
+          );
+          assert.equal(error.receipt.cleanup.modelOpened, true);
+          assert.equal(error.receipt.cleanup.modelClosed, true);
+          assert.equal(error.receipt.cleanup.engineDisposed, true);
+          assert.doesNotMatch(
+            JSON.stringify(error.receipt),
+            /\/Volumes\/|\/Users\/|[A-Z]:\\/u,
+          );
+          return true;
+        },
+      );
+    }
   } finally {
     await rm(temporary, {
       recursive: true,

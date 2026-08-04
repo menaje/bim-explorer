@@ -10,6 +10,18 @@ import {
 } from "@bim-explorer/ifc-engine-contract";
 import * as WebIFC from "web-ifc";
 
+export const WEB_IFC_NEGATIVE_RESULT_SCHEMA =
+  "bim-explorer-ifc-negative-result/0.1";
+
+export class WebIfcInspectionError extends Error {
+  constructor(receipt) {
+    super("web-ifc rejected the IFC source");
+    this.name = "WebIfcInspectionError";
+    this.code = "BIM_EXPLORER_WEB_IFC_REJECTED";
+    this.receipt = Object.freeze(receipt);
+  }
+}
+
 const ENTITY_TYPES = Object.freeze({
   IfcProject: WebIFC.IFCPROJECT,
   IfcSite: WebIFC.IFCSITE,
@@ -581,32 +593,47 @@ export async function inspectWebIfc(
 ) {
   const totalStarted = performance.now();
   const bytes = await readFile(input);
+  const sourceDigest = createHash("sha256").update(bytes).digest("hex");
   const api = new WebIFC.IfcAPI();
+  let engineInitialized = false;
   let modelId = null;
+  let modelOpened = false;
   let modelClosed = false;
   let engineDisposed = false;
+  let failurePhase = "engine-initialization";
+  let inspectionFailed = false;
   let report;
-
-  const initializationStarted = performance.now();
-  await api.Init();
-  const initializationMs = performance.now() - initializationStarted;
+  let initializationMs = 0;
 
   try {
+    const initializationStarted = performance.now();
+    await api.Init();
+    engineInitialized = true;
+    initializationMs = performance.now() - initializationStarted;
+
+    failurePhase = "model-open";
     const openStarted = performance.now();
     modelId = api.OpenModel(bytes, {
       COORDINATE_TO_ORIGIN: false,
     });
+    modelOpened = true;
     const openMs = performance.now() - openStarted;
 
+    failurePhase = "semantic-index";
     const semanticStarted = performance.now();
     const semantic = semanticSnapshot(api, modelId);
+    if (semantic.semantics.entityCounts.IfcProject === 0) {
+      throw new Error("IFC source has no project root");
+    }
     const sharing = representationSharing(api, modelId);
     const semanticMs = performance.now() - semanticStarted;
 
+    failurePhase = "geometry";
     const geometryStarted = performance.now();
     const geometry = geometrySnapshot(api, modelId);
     const geometryMs = performance.now() - geometryStarted;
 
+    failurePhase = "report-validation";
     report = {
       schema: REPORT_SCHEMA,
       engine: {
@@ -620,7 +647,7 @@ export async function inspectWebIfc(
         schema: api.GetModelSchema(modelId),
         view: "ReferenceView_V1.2",
         byteLength: bytes.byteLength,
-        sha256: createHash("sha256").update(bytes).digest("hex"),
+        sha256: sourceDigest,
       },
       capabilities: capabilities(semantic.semantics, sharing),
       ...semantic,
@@ -641,20 +668,73 @@ export async function inspectWebIfc(
       },
       diagnostics: [],
     };
+  } catch {
+    inspectionFailed = true;
   } finally {
     if (modelId !== null) {
-      api.CloseModel(modelId);
-      modelClosed = true;
+      try {
+        api.CloseModel(modelId);
+        modelClosed = true;
+      } catch {
+        modelClosed = false;
+      }
     }
-    api.Dispose();
-    engineDisposed = true;
+    if (engineInitialized) {
+      try {
+        api.Dispose();
+        engineDisposed = true;
+      } catch {
+        engineDisposed = false;
+      }
+    }
+  }
+
+  const rejectionReceipt = () => ({
+    schema: WEB_IFC_NEGATIVE_RESULT_SCHEMA,
+    status: "rejected",
+    engine: {
+      id: "web-ifc",
+      version: "0.0.77",
+      backend: "node-wasm-process",
+      license: "MPL-2.0",
+    },
+    fixture: {
+      id: fixtureId,
+      byteLength: bytes.byteLength,
+      sha256: sourceDigest,
+    },
+    failure: {
+      code: "IFC_INPUT_REJECTED",
+      phase: failurePhase,
+    },
+    cleanup: {
+      strategy: "explicit-api",
+      engineInitialized,
+      modelOpened,
+      modelClosed,
+      engineDisposed,
+      processExitRequired: false,
+    },
+    diagnostics: [
+      {
+        code: "IFC_INPUT_REJECTED",
+      },
+    ],
+  });
+
+  if (inspectionFailed) {
+    throw new WebIfcInspectionError(rejectionReceipt());
   }
 
   report.cleanup = {
     modelClosed,
     engineDisposed,
   };
-  return finalizeReport(report);
+  try {
+    return finalizeReport(report);
+  } catch {
+    throw new WebIfcInspectionError(rejectionReceipt());
+  }
 }
 
 async function main() {

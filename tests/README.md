@@ -25,8 +25,11 @@ classification fixture까지 검사합니다. IfcOpenShell은 repository depende
 `scripts/qualify-ifc-engine.mjs --python ...`에 주입할 때만 실행합니다.
 
 일반 process supervisor test는 harmless Node stub으로 성공, redacted failure,
-timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니다. 특정 IFC
-engine의 손상 입력·취소 또는 Browser Worker cleanup 증거로 승격하지 않습니다.
+timeout, output budget과 AbortSignal 취소 후 강제 종료를 검사합니다. 별도
+negative qualification은 generated 3-case corpus를 web-ifc/IfcOpenShell
+process에서 각각 두 번 거부하고 cleanup 경계와 정상 IFC recovery를
+검사합니다. 이는 synchronous in-call cancellation이나 resource exhaustion
+증거로 승격하지 않습니다.
 
 Browser Worker probe test는 loopback server의 strict route/CSP와 main-thread
 Worker client의 report validation, path-free failure, ordered checkpoint,
@@ -34,10 +37,11 @@ model-opened cooperative cleanup과 응답 없는 취소의 bounded 강제 종�
 검사합니다. source-session test는 size-before-read admission, 파일명 비노출,
 active source 교체, stale 결과 억제, 중첩 cancellation receipt와 terminal
 disposal을 검사합니다. 실제 Chromium ESM/WASM, file chooser와 checkpoint
-취소, 1,024-Wall bounded performance 관찰은 별도 evidence로 기록합니다.
+취소, negative corpus dispose/recovery, 1,024-Wall bounded performance
+관찰은 별도 evidence로 기록합니다.
 성능 test는 fixture identity, 시간 budget, WASM heap capacity와 cleanup을
 fail-closed로 검사합니다. 대표 대형 모델, 실행 중인 동기 engine 호출의
-선점, 손상 입력 cleanup과 production Browser packaging Gate는 계속
+선점, resource exhaustion과 production Browser packaging Gate는 계속
 분리합니다.
 
 `bim-model-source` test는 generated mapped IFC에서 raw source fingerprint,

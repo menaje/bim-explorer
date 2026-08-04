@@ -12,6 +12,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > Worker smoke, bounded local-file/source-session과 model-opened checkpoint
 > 취소·정리, 1,024-Wall scale step과 46.77MB CC BY 4.0 공개 IFC의
 > Node CPU/RSS·Browser parse/geometry budget도 통과했습니다. generated
+> malformed/truncated 3-case corpus는 두 후보의 격리 process에서 반복
+> 거부·종료·정상 IFC 복구를 통과했고, web-ifc는 실제 Chromium Worker에서
+> model close·engine dispose·Worker 종료와 후속 정상 parse를 재현했습니다.
 > mapped IFC에서는 raw fingerprint, spatial tree/property identity, shared
 > binary geometry range와 stale/budget 거부를 통과했습니다. 같은 공개
 > IFC를 read-only source artifact로 투영해 3,569 products, 3개 bounded
@@ -31,8 +34,9 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > clean-installed VSIX에서 각각 3,569 products·261,424 triangles·3 ranges로
 > 열고 같은 첫-range WebGL2 projection과 cleanup을 재현했습니다. physical
 > GPU qualification, property-set value range, georeferencing,
-> source-precision 분리, engine 선정, 공용 Viewer Core package와 지원 profile은
-> 아직 확정되지 않았습니다.
+> source-precision 분리, synchronous in-call cancellation, resource
+> exhaustion, engine 선정, 공용 Viewer Core package와 지원 profile은 아직
+> 확정되지 않았습니다.
 > generated semantic IFC에서는 Project→Site→Building→Storey→Space→Wall
 > tree, occurrence/type, Pset/Qto/material/classification, bounded search,
 > 같은 revision의 실제 WebGL2 pick, isolate, saved view와 keyboard/ARIA를

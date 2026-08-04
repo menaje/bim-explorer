@@ -23,6 +23,12 @@ const SOURCE_KINDS = new Set([
   "public-fixture",
   "synthetic",
 ]);
+const FAILURE_PHASES = new Set([
+  "model-inspection",
+  "model-open",
+  "semantic-admission",
+  "source-envelope",
+]);
 
 export class BrowserWorkerError extends Error {
   constructor(message, receipt) {
@@ -241,6 +247,80 @@ function validateBrowserWorkerCancellationReport(
   return value;
 }
 
+function validateBrowserWorkerFailureReport(
+  value,
+  {
+    byteLength,
+    sourceId,
+    sourceKind,
+  },
+  requestId,
+  lastPhase,
+) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    value.schema !== BROWSER_WORKER_RESULT_SCHEMA ||
+    value.requestId !== requestId ||
+    value.status !== "failed"
+  ) {
+    throw new Error("Browser Worker returned invalid rejection");
+  }
+  pathFree(value);
+  if (
+    value.engine?.id !== "web-ifc" ||
+    value.engine?.version !== "0.0.77" ||
+    value.engine?.backend !== "browser-wasm-worker-prototype" ||
+    value.engine?.license !== "MPL-2.0" ||
+    value.source?.id !== sourceId ||
+    value.source?.kind !== sourceKind ||
+    value.source?.byteLength !== byteLength ||
+    !SHA256.test(value.source?.sha256 ?? "") ||
+    (
+      value.source.schema !== null &&
+      (
+        typeof value.source.schema !== "string" ||
+        value.source.schema.length === 0
+      )
+    ) ||
+    value.resources?.inputBytes !== byteLength ||
+    value.failure?.code !== "BROWSER_IFC_INPUT_REJECTED" ||
+    !FAILURE_PHASES.has(value.failure?.phase) ||
+    JSON.stringify(value.diagnostics) !==
+      JSON.stringify([
+        {
+          code: "BROWSER_IFC_INPUT_REJECTED",
+        },
+      ]) ||
+    typeof value.cleanup?.modelOpened !== "boolean" ||
+    typeof value.cleanup?.modelClosed !== "boolean" ||
+    value.cleanup?.engineDisposed !== true ||
+    (
+      value.cleanup.modelOpened &&
+      value.cleanup.modelClosed !== true
+    )
+  ) {
+    throw new Error("Browser Worker rejection receipt is incomplete");
+  }
+  const phaseConsistent =
+    value.failure.phase === "source-envelope"
+      ? (
+        lastPhase === "engine-initialized" &&
+        value.cleanup.modelOpened === false
+      )
+      : value.failure.phase === "model-open"
+        ? lastPhase === "engine-initialized"
+        : (
+          lastPhase === "model-opened" &&
+          value.cleanup.modelOpened === true
+        );
+  if (!phaseConsistent) {
+    throw new Error("Browser Worker rejection phase is inconsistent");
+  }
+  return value;
+}
+
 function defaultWorkerFactory() {
   return new Worker(new URL("./ifc-worker.mjs", import.meta.url), {
     name: "bim-explorer-ifc-probe",
@@ -249,7 +329,7 @@ function defaultWorkerFactory() {
 }
 
 function receipt(outcome, started, overrides = {}) {
-  return {
+  const value = {
     outcome,
     workerTerminationRequested:
       overrides.workerTerminationRequested ?? false,
@@ -264,6 +344,13 @@ function receipt(outcome, started, overrides = {}) {
     },
     wallClockMs: performance.now() - started,
   };
+  if (typeof overrides.cleanup?.modelOpened === "boolean") {
+    value.cleanup.modelOpened = overrides.cleanup.modelOpened;
+  }
+  if (overrides.rejection !== undefined) {
+    value.rejection = overrides.rejection;
+  }
+  return value;
 }
 
 export async function inspectIfcInBrowserWorker(
@@ -453,6 +540,48 @@ export async function inspectIfcInBrowserWorker(
               cleanup: report.cleanup,
               cooperativeCancellation: true,
               lastPhase,
+              workerTerminationRequested,
+            }),
+          ),
+        );
+        return;
+      }
+      if (event.data.status === "failed") {
+        if (cancelling) {
+          fail("cancelled-without-receipt", {
+            cancelled: true,
+          });
+          return;
+        }
+        let report;
+        try {
+          report = validateBrowserWorkerFailureReport(
+            event.data,
+            expectedSource,
+            requestId,
+            lastPhase,
+          );
+        } catch {
+          fail("invalid-rejection");
+          return;
+        }
+        if (settled) {
+          return;
+        }
+        settled = true;
+        cleanup();
+        const workerTerminationRequested = terminate();
+        reject(
+          new BrowserWorkerError(
+            "Browser IFC Worker rejected the source",
+            receipt("inspection-rejected", started, {
+              cleanup: report.cleanup,
+              lastPhase,
+              rejection: {
+                diagnosticCode: report.failure.code,
+                phase: report.failure.phase,
+                source: report.source,
+              },
               workerTerminationRequested,
             }),
           ),

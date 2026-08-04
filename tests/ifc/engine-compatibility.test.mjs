@@ -50,6 +50,18 @@ async function fixtures() {
       "utf8",
     ),
   );
+  const negativeNodeEvidence = JSON.parse(
+    await readFile(
+      manifest.negativeCorpus.nodeEvidence,
+      "utf8",
+    ),
+  );
+  const negativeBrowserEvidence = JSON.parse(
+    await readFile(
+      manifest.negativeCorpus.browserEvidence,
+      "utf8",
+    ),
+  );
   return {
     manifest,
     evidence,
@@ -59,6 +71,8 @@ async function fixtures() {
     browserPerformanceEvidence,
     publicNodePerformanceEvidence,
     publicBrowserPerformanceEvidence,
+    negativeNodeEvidence,
+    negativeBrowserEvidence,
   };
 }
 
@@ -72,6 +86,8 @@ function validateFixtures(value) {
     value.browserPerformanceEvidence,
     value.publicNodePerformanceEvidence,
     value.publicBrowserPerformanceEvidence,
+    value.negativeNodeEvidence,
+    value.negativeBrowserEvidence,
   );
 }
 
@@ -92,6 +108,7 @@ test("IFC engine compatibility remains experimental and held", async () => {
   assert.equal(manifest.gates.browserRepresentativeParsing, true);
   assert.equal(manifest.gates.largeModelPerformance, false);
   assert.equal(manifest.gates.cancellation, false);
+  assert.equal(manifest.gates.corruptInputCleanup, true);
   assert.equal(manifest.gates.browserPackaging, false);
 });
 
@@ -174,5 +191,25 @@ test("public Browser parse evidence cannot promote rendered first-frame", async 
   assert.throws(
     () => validateFixtures(fixtureSet),
     /public Browser evidence overclaims support/u,
+  );
+});
+
+test("negative cleanup evidence rejects an incomplete engine dispose", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.negativeBrowserEvidence.observations[0]
+    .receipt.cleanup.engineDisposed = false;
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /rejection cleanup is incomplete/u,
+  );
+});
+
+test("negative cleanup cannot promote in-call cancellation", async () => {
+  const fixtureSet = await fixtures();
+  fixtureSet.negativeNodeEvidence.decision.inCallCancellation =
+    "passed";
+  assert.throws(
+    () => validateFixtures(fixtureSet),
+    /overclaims support/u,
   );
 });

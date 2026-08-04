@@ -21,6 +21,7 @@ const elements = {
   engine: document.querySelector("#engine"),
   geometry: document.querySelector("#geometry"),
   localFile: document.querySelector("#local-file"),
+  negativeProbe: document.querySelector("#run-negative-probe"),
   performanceProbe: document.querySelector("#run-performance-probe"),
   publicPerformanceProbe: document.querySelector(
     "#run-public-performance-probe",
@@ -154,6 +155,193 @@ function publicPerformanceSource(signal) {
   );
 }
 
+async function negativeCorpusManifest(signal) {
+  const response = await fetch("/fixture/negative-corpus.json", {
+    cache: "no-store",
+    credentials: "omit",
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error("negative corpus manifest unavailable");
+  }
+  const manifest = await response.json();
+  if (
+    manifest?.schema !==
+      "bim-explorer-ifc-negative-corpus-manifest/1" ||
+    manifest.fixtureId !== "synthetic-negative-ifc-corpus" ||
+    !Array.isArray(manifest.cases) ||
+    manifest.cases.length !== 3 ||
+    !manifest.cases.every((fixture) =>
+      fixture !== null &&
+      typeof fixture === "object" &&
+      /^[a-z0-9][a-z0-9-]+$/u.test(fixture.id) &&
+      Number.isSafeInteger(fixture.byteLength) &&
+      fixture.byteLength > 0 &&
+      /^[0-9a-f]{64}$/u.test(fixture.sha256) &&
+      fixture.expected === "rejected" &&
+      [
+        "semantic-admission",
+        "source-envelope",
+      ].includes(fixture.browserExpectedFailurePhase))
+  ) {
+    throw new Error("negative corpus manifest is invalid");
+  }
+  return manifest;
+}
+
+function negativeSource(id, signal) {
+  return fixtureSource(`/fixture/negative/${id}.ifc`, signal);
+}
+
+function assertExpectedNegativeResult(error, fixture) {
+  if (!(error instanceof BrowserWorkerError)) {
+    throw new Error("negative IFC did not return a Worker receipt");
+  }
+  const receipt = error.receipt;
+  const source = receipt.rejection?.source;
+  const expectedLastPhase =
+    fixture.browserExpectedFailurePhase === "source-envelope"
+      ? "engine-initialized"
+      : "model-opened";
+  const expectedModelOpened = expectedLastPhase === "model-opened";
+  if (
+    receipt.outcome !== "inspection-rejected" ||
+    receipt.lastPhase !== expectedLastPhase ||
+    receipt.cleanup?.modelOpened !== expectedModelOpened ||
+    receipt.cleanup?.modelClosed !== expectedModelOpened ||
+    receipt.cleanup?.engineDisposed !== true ||
+    receipt.workerTerminationRequested !== true ||
+    receipt.rejection?.diagnosticCode !==
+      "BROWSER_IFC_INPUT_REJECTED" ||
+    receipt.rejection?.phase !==
+      fixture.browserExpectedFailurePhase ||
+    source?.id !== `negative-${fixture.id}` ||
+    source?.kind !== "synthetic" ||
+    source?.byteLength !== fixture.byteLength ||
+    source?.sha256 !== fixture.sha256
+  ) {
+    throw new Error("negative IFC cleanup receipt is incomplete");
+  }
+  return {
+    id: fixture.id,
+    source,
+    receipt: {
+      outcome: receipt.outcome,
+      lastPhase: receipt.lastPhase,
+      cleanup: receipt.cleanup,
+      rejection: {
+        diagnosticCode: receipt.rejection.diagnosticCode,
+        phase: receipt.rejection.phase,
+      },
+      workerTerminationRequested:
+        receipt.workerTerminationRequested,
+      wallClockMs: receipt.wallClockMs,
+    },
+  };
+}
+
+async function runNegativeCorpusProbe() {
+  const run = ++currentRun;
+  currentSourceCancellation?.abort();
+  sourceSession.cancel("source-replaced");
+  const sourceCancellation = new AbortController();
+  currentSourceCancellation = sourceCancellation;
+  setRunning(true);
+  elements.status.dataset.state = "running";
+  elements.status.textContent = "Running malformed IFC corpus…";
+  try {
+    const manifest = await negativeCorpusManifest(
+      sourceCancellation.signal,
+    );
+    const observations = [];
+    for (const fixture of manifest.cases) {
+      if (run !== currentRun) {
+        return;
+      }
+      elements.status.textContent =
+        `Expecting rejection: ${fixture.id}`;
+      try {
+        await sourceSession.inspect(
+          await negativeSource(
+            fixture.id,
+            sourceCancellation.signal,
+          ),
+          {
+            sourceId: `negative-${fixture.id}`,
+            sourceKind: "synthetic",
+          },
+        );
+        throw new Error("negative IFC was unexpectedly accepted");
+      } catch (error) {
+        observations.push(
+          assertExpectedNegativeResult(error, fixture),
+        );
+      }
+    }
+
+    elements.status.textContent =
+      "Running valid IFC after negative corpus…";
+    const recovery = await sourceSession.inspect(
+      await syntheticSource(sourceCancellation.signal),
+      {
+        sourceId: "synthetic-negative-recovery-ifc4",
+        sourceKind: "synthetic",
+      },
+    );
+    if (
+      recovery.report.semantics.projects !== 1 ||
+      recovery.report.semantics.walls !== 1 ||
+      recovery.report.geometry.products !== 1 ||
+      recovery.report.geometry.triangles !== 12 ||
+      recovery.report.cleanup.modelClosed !== true ||
+      recovery.report.cleanup.engineDisposed !== true
+    ) {
+      throw new Error("post-negative recovery assertion failed");
+    }
+    if (run === currentRun) {
+      renderResult(recovery, {
+        successStatus:
+          "Passed: negative corpus cleanup and recovery",
+      });
+      elements.source.textContent =
+        `${observations.length} rejected · valid recovery`;
+      elements.receipt.textContent = JSON.stringify(
+        {
+          negativeCorpus: {
+            id: manifest.fixtureId,
+            cases: observations,
+          },
+          recovery: {
+            report: recovery.report,
+            worker: recovery.receipt,
+            sourceSession: recovery.sourceSession,
+          },
+        },
+        null,
+        2,
+      );
+    }
+  } catch (error) {
+    if (run === currentRun) {
+      renderFailure(
+        sourceCancellation.signal.aborted
+          ? new BrowserSourceSessionError(
+              "Browser IFC source cancelled",
+              {
+                outcome: "cancelled",
+              },
+            )
+          : error,
+      );
+    }
+  } finally {
+    if (run === currentRun) {
+      currentSourceCancellation = null;
+      setRunning(false);
+    }
+  }
+}
+
 async function runSource(
   sourceFactory,
   {
@@ -275,6 +463,9 @@ elements.cancelProbe.addEventListener("click", () => {
     sourceKind: "synthetic",
     status: "Opening IFC before cooperative cancellation…",
   });
+});
+elements.negativeProbe.addEventListener("click", () => {
+  void runNegativeCorpusProbe();
 });
 elements.performanceProbe.addEventListener("click", () => {
   void runSource(performanceSource, {

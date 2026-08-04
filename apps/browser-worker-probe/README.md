@@ -10,7 +10,8 @@ npm run probe:browser-worker
 
 브라우저에서 `http://127.0.0.1:4173`을 열고 **Open local IFC**,
 **Run synthetic IFC probe**, **Run cancellation probe** 또는
-**Run performance probe**, **Run public representative probe**를
+**Run negative corpus probe**, **Run performance probe**,
+**Run public representative probe**를
 실행합니다. local source는 64 MiB를 넘으면 읽기 전에 거부합니다. 파일명과
 path는 Worker request/result에 넣지 않고, 선택 직후 input의 파일명도
 지웁니다. 외부 upload, 계정 또는 telemetry를 사용하지 않습니다.
@@ -26,6 +27,9 @@ path는 Worker request/result에 넣지 않고, 선택 직후 input의 파일명
   checkpoint/continue handshake
 - `model-opened` checkpoint 취소 시 model close와 engine dispose 영수증
 - 취소 요청 뒤 500ms grace와 응답하지 않는 Worker의 강제 종료 fallback
+- invalid STEP preamble, truncated DATA와 missing Project root를 각각 새
+  Worker에서 거부하고 opened model close·engine dispose·Worker 종료 확인
+- 세 negative source 뒤 정상 IFC를 새 Worker에서 다시 parse/inspect
 - generated 1,024-Wall/12,288-triangle fixture의 시간 budget과 WASM linear
   memory capacity 관찰
 - CC BY 4.0 public Schependomlaan IFC2X3 fixture를 pinned digest로 내려받아
@@ -44,7 +48,8 @@ upstream archive나 추출 IFC는 Git 또는 배포 bundle에 포함하지 않�
 30초 timeout, 25초 Worker total과 512 MiB WASM heap capacity를 적용합니다.
 
 checkpoint 취소는 유효한 작은 IFC가 열린 뒤 adapter가 제어권을 돌려준
-지점의 cooperative cleanup만 증명합니다. 실행 중인 synchronous `web-ifc`
-호출을 선점하는 cancellation, 손상 입력 cleanup, production Browser
-packaging, GPU upload·render first-frame과 VS Code lifecycle은 계속 검증
-대상입니다.
+지점의 cooperative cleanup만 증명합니다. negative corpus도 작은 generated
+syntax/semantic rejection과 후속 recovery만 증명합니다. 실행 중인
+synchronous `web-ifc` 호출을 선점하는 cancellation, resource exhaustion,
+production Browser packaging, physical GPU memory와 VS Code engine
+isolation은 계속 검증 대상입니다.
