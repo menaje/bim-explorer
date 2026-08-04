@@ -30,7 +30,7 @@ headless backend의 frame은 실제 GPU render나 화면 표시가 아닙니다.
 WebGL2 backend는 실제 Browser GPU API 경로와 rasterized pixel을 검증하지만
 physical GPU를 식별하거나 보장하지 않습니다. Browser와
 `vscode-webview`는 동일한 내부 host contract를 실제 Chromium WebGL2에서
-검증했습니다. 공개 Viewer Core 0.1.0 prerelease에서는 실제 BIM source와
+검증했습니다. 공개 Viewer Core 0.1.2 prerelease에서는 실제 BIM source와
 headless renderer를 Browser/VS Code host lifecycle로 mount하고 전량
 회수했습니다. 실제 제품 entrypoint 채택과 stable/production 호환은 별도
 Gate입니다. measurement 단위는 source-coordinate-unit이며 IFC unit 해석을

@@ -17,9 +17,10 @@ package manifest와 root lock은 공개 prerelease의 immutable GitHub Release
 asset을 직접 고정합니다.
 
 ```text
-@menaje/viewer-core@0.1.0
-@menaje/viewer-render-protocol@0.1.0
-tag commit fb25718468f1f0b1a9bac666035a0c8277f51a19
+@menaje/viewer-core@0.1.2
+@menaje/viewer-render-protocol@0.1.2
+protocol menaje-viewer-render-protocol/0.1.0
+tag commit e225c2c8531e1f5e9677238d85adf6f686203026
 ```
 
 `npm run qualify:viewer-core`는 설치 content digest와 license metadata,

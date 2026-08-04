@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -10,7 +11,7 @@ test("public Viewer Core release mounts the actual BIM 3D stack", async () => {
   assert.equal(report.status, "passed-public-preview");
   assert.equal(
     report.release.tagCommit,
-    "fb25718468f1f0b1a9bac666035a0c8277f51a19",
+    "e225c2c8531e1f5e9677238d85adf6f686203026",
   );
   assert.equal(
     report.packages.viewerCore.package,
@@ -34,4 +35,14 @@ test("public Viewer Core release mounts the actual BIM 3D stack", async () => {
     ),
   );
   assert.equal(report.decision.productionClaims, false);
+  assert.deepEqual(
+    report,
+    JSON.parse(
+      await readFile(
+        "compatibility/evidence/" +
+          "viewer-core-release-2026-08-04.json",
+        "utf8",
+      ),
+    ),
+  );
 });

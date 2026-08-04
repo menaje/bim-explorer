@@ -50,53 +50,53 @@ const repositoryRoot = path.resolve(
 const SOURCE_SHA256 =
   "400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243";
 const LICENSE_SHA256 =
-  "eb5d29267fb807449697736cbcff74acfeebf36f9cb5305417dc440545a1fef9";
+  "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04";
 const RELEASE = Object.freeze({
   repository: "menaje/dwg-viewer",
-  tag: "viewer-core-v0.1.0",
-  tagCommit: "fb25718468f1f0b1a9bac666035a0c8277f51a19",
+  tag: "viewer-core-v0.1.2",
+  tagCommit: "e225c2c8531e1f5e9677238d85adf6f686203026",
   releaseUrl:
     "https://github.com/menaje/dwg-viewer/releases/tag/" +
-    "viewer-core-v0.1.0",
-  publishedAt: "2026-08-03T21:35:56Z",
+    "viewer-core-v0.1.2",
+  publishedAt: "2026-08-04T04:36:50Z",
   releaseStage: "prerelease",
 });
 const PACKAGE_DEFINITIONS = Object.freeze([
   Object.freeze({
     key: "viewerCore",
     package: "@menaje/viewer-core",
-    version: "0.1.0",
-    file: "menaje-viewer-core-0.1.0.tgz",
+    version: "0.1.2",
+    file: "menaje-viewer-core-0.1.2.tgz",
     url:
       "https://github.com/menaje/dwg-viewer/releases/download/" +
-      "viewer-core-v0.1.0/menaje-viewer-core-0.1.0.tgz",
+      "viewer-core-v0.1.2/menaje-viewer-core-0.1.2.tgz",
     sha256:
-      "2a04c367b5b2cf5870f5f18f33e2a1d8e545f099f0dd735c7e5d90f8224b698d",
-    bytes: 44_323,
+      "69bedf751ef718eb8e37bb06718d5a956f33f567225bf64468d25e42c5a82c4c",
+    bytes: 49_537,
     contentSha256:
-      "db4edb620f5f34c355d3030a16b703fed0f76f4f602d03737303683ce8269adb",
-    entries: 30,
+      "fd46b69f95a831c518be2ccff5f08d2d0170b5a79f18cfcdfc6c198f78b8af19",
+    entries: 31,
     integrity:
-      "sha512-GPHRWsXuE5feI/+gTeBuBFIrEmG0pNSYr83qRFkFCDYQHQ5wuH7U/" +
-      "g5RktH1H9inpjr83AZRTtiKtW9R5K9oBA==",
+      "sha512-REN+i3+b894/pzhjOhT7Al0TXCrzgteBCqrHlmYdrcSI4E6HFA3dGg8x" +
+      "XX21Vj//VNgjr3xUDdMqd3USX9Vl7A==",
   }),
   Object.freeze({
     key: "renderProtocol",
     package: "@menaje/viewer-render-protocol",
-    version: "0.1.0",
-    file: "menaje-viewer-render-protocol-0.1.0.tgz",
+    version: "0.1.2",
+    file: "menaje-viewer-render-protocol-0.1.2.tgz",
     url:
       "https://github.com/menaje/dwg-viewer/releases/download/" +
-      "viewer-core-v0.1.0/menaje-viewer-render-protocol-0.1.0.tgz",
+      "viewer-core-v0.1.2/menaje-viewer-render-protocol-0.1.2.tgz",
     sha256:
-      "60e952677c17333fbdb07193ef87cafb1a0be9923573ac5366297a19cfc8b9ed",
-    bytes: 11_158,
+      "6534ec7d021e06d3ea616ae15fb995ece57a7c3292fc37e892a28db8e2a91d42",
+    bytes: 16_424,
     contentSha256:
-      "cf86c55a3d6f1afc64d42d3de6e80f5796fbe00b0b8e3eb0b15af465e0f78c09",
-    entries: 9,
+      "6b02978d161a61f4ed8b3453b941c13a2c6a7f2f58bb8477e980a0ab34e0d1d2",
+    entries: 10,
     integrity:
-      "sha512-oVO2anfxt7TUv4JTdeZ/Lca+Y9khLuSkjztlQXxzYkjR8JAg8WLiiZXd4I8a" +
-      "vQGuiGbqKrUACwl5yLAo9PptMQ==",
+      "sha512-Vf73Tyd+q0vmlHvsEtXizF3C6Y0nKyxR8jT32yUO2/hUaeUmDYGxObwj" +
+      "3D9ETt8eobKoL8t19zaIH8fIUtx0jA==",
   }),
 ]);
 
@@ -371,7 +371,7 @@ async function qualifyRuntime(kind) {
 }
 
 export async function qualifyViewerCoreRelease() {
-  assert.equal(ViewerCoreVersion, "0.1.0");
+  assert.equal(ViewerCoreVersion, "0.1.2");
   assert.equal(ViewerCoreApi, "menaje-viewer-core/0.1");
   assert.equal(RenderProtocolVersion, "0.1.0");
   assert.equal(

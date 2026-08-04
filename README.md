@@ -43,7 +43,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 > `ReferenceView_V1.2`의 local read-only exploration으로 experimental
 > admission했습니다. IfcOpenShell은 bundle하지 않는 qualification
 > reference oracle로 유지합니다. 공개 `@menaje/viewer-core`와 render
-> protocol 0.1.0 prerelease는 exact release asset으로 고정했고, 실제 BIM
+> protocol package 0.1.2 prerelease는 exact release asset으로 고정했고,
+> wire protocol 0.1.0에서 실제 BIM
 > source·3D renderer의 Browser/VS Code 호스트 conformance를 통과했습니다.
 > 제품 entrypoint 적용과 stable/production 주장은 별도 Gate입니다. 공개 IFC call-start
 > 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.

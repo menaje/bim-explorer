@@ -13,7 +13,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
-`@menaje/viewer-core`와 `@menaje/viewer-render-protocol` 0.1.0의 immutable
+`@menaje/viewer-core`와 `@menaje/viewer-render-protocol` package 0.1.2의 immutable
 GitHub Release asset을 exact URL, SHA-256과 lock integrity로 소비합니다.
 실제 `BimModelSource`와 3D renderer를 upstream conformance/runtime에 연결한
 결과는 `compatibility/viewer-core.json`의 `experimental` admission이

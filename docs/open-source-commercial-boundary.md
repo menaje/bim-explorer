@@ -45,7 +45,7 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 ## 공개 전 Gate
 
 - exact Viewer Core dependency 고정
-  (`@menaje/*` 0.1.0 prerelease Gate 통과)
+  (`@menaje/*` 0.1.2 prerelease Gate 통과)
 - exact IFC engine dependency와 production package 고정
 - static/dynamic/WASM/process 결합 방식 기록
 - LICENSE, NOTICE와 source 제공 의무 검토

@@ -212,10 +212,11 @@ generated source fingerprint, model/renderer projection과 WebGL2 frame을
 재현했습니다.
 
 공개 `@menaje/viewer-core`와
-`@menaje/viewer-render-protocol` 0.1.0 prerelease를 immutable release
+`@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
 asset으로 고정했습니다. 실제 `BimModelSource` 3D projection과 bounded
 renderer를 upstream runtime에 연결해 Browser/VS Code host lifecycle,
-identity, stale 거부와 disposal을 통과했습니다. compatibility 상태는
+wire protocol 0.1.0 identity, stale 거부와 disposal을 통과했습니다.
+compatibility 상태는
 [`experimental`](../compatibility/viewer-core.json)이며 제품 entrypoint
 채택, stable upstream release와 production 주장은 별도 Gate입니다.
 

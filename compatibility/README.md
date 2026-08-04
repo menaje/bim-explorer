@@ -9,12 +9,14 @@
 
 현재 Viewer Core 상태는
 [`viewer-core.json`](viewer-core.json)이 소유합니다.
-공개 `@menaje/viewer-core`와 render protocol 0.1.0 prerelease의 exact
+공개 `@menaje/viewer-core`와 render protocol package 0.1.2 prerelease의 exact
 release URL·SHA-256·lock integrity·installed content digest, 실제 BIM
 source/renderer와 Browser/VS Code host conformance는
 [`release evidence`](evidence/viewer-core-release-2026-08-04.json)에
-기록합니다. 상태는 `experimental`이며 stable/production이나 Coni Spatial
-consumer 적용을 주장하지 않습니다.
+기록합니다. wire protocol ID는 `menaje-viewer-render-protocol/0.1.0`으로
+유지됩니다. 상태는 `experimental`이며 stable/production을 주장하지
+않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
+고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
 
 Browser 제품 shell과 VS Code `.ifc` read-only Custom Editor의 동일
 source/render projection, 실제 Chromium WebGL2, local Worker lifecycle,

@@ -17,8 +17,8 @@ delta contract의 첫 구현을 갖고 있습니다. 2026-08-03 최초 관찰에
 `@dwg-viewer/*` private workspace package뿐이어서 외부 소비가 불가능했습니다.
 
 2026-08-04 upstream은 중립 namespace의 `@menaje/viewer-core`와
-`@menaje/viewer-render-protocol` 0.1.0을 immutable GitHub prerelease
-asset으로 발행했습니다. protocol ID는
+`@menaje/viewer-render-protocol` package 0.1.2를 immutable GitHub prerelease
+asset으로 발행했습니다. 현재 protocol ID는
 `menaje-viewer-render-protocol/0.1.0`입니다.
 
 BIM Explorer가 이를 상대 checkout의 `file:`/`workspace:` dependency로

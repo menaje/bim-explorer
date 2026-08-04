@@ -49,7 +49,7 @@ ID의 독립 bounded slice를 읽고 같은 session의 반복 선택은 immutabl
 [`bim-source-artifact/0.2`](../../specs/bim-source-artifact-v0.2.md)와
 `bim-explorer-bim-source/0.2`입니다.
 
-공개 `@menaje/viewer-core` 0.1.0 prerelease의 conformance runner에서 이
+공개 `@menaje/viewer-core` 0.1.2 prerelease의 conformance runner에서 이
 source의 3D projection, bounded range, identity, stale 거부와 disposal을
 통과했습니다. stable/production compatibility와 제품 entrypoint 채택은
 별도 Gate입니다.
