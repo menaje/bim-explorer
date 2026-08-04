@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -743,9 +743,18 @@ async function main() {
   process.stdout.write(`${JSON.stringify(report)}\n`);
 }
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+async function isMainModule() {
+  if (!process.argv[1]) {
+    return false;
+  }
+  try {
+    return await realpath(path.resolve(process.argv[1])) ===
+      await realpath(fileURLToPath(import.meta.url));
+  } catch {
+    return path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  }
+}
+
+if (await isMainModule()) {
   await main();
 }

@@ -1,0 +1,27 @@
+{
+  "name": "@bim-explorer/web-ifc-platform-stage",
+  "version": "0.0.0-qualification",
+  "private": true,
+  "description": "Experimental clean-install stage for the web-ifc adapter",
+  "license": "UNLICENSED",
+  "type": "module",
+  "bin": {
+    "bim-explorer-ifc-inspect": "./bin/inspect.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "dependencies": {
+    "@bim-explorer/ifc-engine-contract": "0.1.0",
+    "web-ifc": "0.0.77"
+  },
+  "bundledDependencies": [
+    "@bim-explorer/ifc-engine-contract",
+    "web-ifc"
+  ],
+  "engines": {
+    "node": ">=24"
+  }
+}

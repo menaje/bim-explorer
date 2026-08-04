@@ -131,6 +131,9 @@ const REQUIRED_PATHS = [
   "packages/viewer-core-consumer/src/index.mjs",
   "packages/viewer-core-consumer/src/mock-3d-presentation.mjs",
   "packages/viewer-core-consumer/src/mock-host.mjs",
+  "packaging/web-ifc-platform-stage/package.json",
+  "packaging/web-ifc-platform-stage/README.md",
+  "packaging/web-ifc-platform-stage/THIRD_PARTY_NOTICES.md",
   "scripts/check-bim-model-source-compatibility.mjs",
   "scripts/check-bim-product-shell-compatibility.mjs",
   "scripts/check-bim-renderer-3d-compatibility.mjs",
@@ -154,6 +157,7 @@ const REQUIRED_PATHS = [
   "scripts/qualify-ifc-in-call-cancellation.mjs",
   "scripts/qualify-ifc-resource-exhaustion.mjs",
   "scripts/qualify-ifc-negative-corpus.mjs",
+  "scripts/qualify-web-ifc-platform-package.mjs",
   "scripts/qualify-public-ifc-performance.mjs",
   "scripts/qualify-viewer-core-local.mjs",
   "scripts/qualify-vscode-custom-editor.mjs",
@@ -184,6 +188,7 @@ const REQUIRED_PATHS = [
   "tests/ifc/engine-contract.test.mjs",
   "tests/ifc/browser-worker-probe.test.mjs",
   "tests/ifc/process-supervisor.test.mjs",
+  "tests/ifc/platform-package.test.mjs",
   "tests/ifc/public-ifc-fixture.test.mjs",
   "tests/ifc/qualification-harness.test.mjs",
   "tests/ifc/synthetic-fixture.test.mjs",
@@ -234,6 +239,7 @@ const PACKAGE_MANIFESTS = [
   "packages/bim-semantic-explorer/package.json",
   "packages/ifc-engine-contract/package.json",
   "packages/viewer-core-consumer/package.json",
+  "packaging/web-ifc-platform-stage/package.json",
 ];
 for (const manifestPath of PACKAGE_MANIFESTS) {
   const packageJson = JSON.parse(

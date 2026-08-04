@@ -34,3 +34,19 @@ jobs:
 
       - name: Check
         run: npm run check
+
+      - name: Qualify web-ifc platform package
+        run: >-
+          npm run qualify:ifc:platform-package --
+          --output web-ifc-platform-${{ runner.os }}.json
+          --artifact-directory web-ifc-platform-${{ runner.os }}
+
+      - name: Upload web-ifc platform evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-ifc-platform-${{ runner.os }}
+          path: |
+            web-ifc-platform-${{ runner.os }}.json
+            web-ifc-platform-${{ runner.os }}/*.tgz
+          if-no-files-found: error
+          retention-days: 7
