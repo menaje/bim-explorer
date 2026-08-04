@@ -1,0 +1,69 @@
+{
+  "schema": "bim-explorer-spatial-integration-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-04",
+  "contract": {
+    "integration": "bim-explorer-spatial-integration/0.1",
+    "handoff": "bim-explorer-spatial-handoff/0.1",
+    "selection": "bim-explorer-spatial-selection-sync/0.1",
+    "context": "bim-explorer-spatial-context-reference/0.1",
+    "review": "bim-explorer-spatial-review/0.1",
+    "bimSourceProtocol": "bim-explorer-bim-source/0.2",
+    "viewerCorePackageVersion": "0.1.2",
+    "renderProtocolPackageVersion": "0.1.2",
+    "renderProtocolId": "menaje-viewer-render-protocol/0.1.0",
+    "spatialProtocolVersion": "0.1.0"
+  },
+  "consumerObservation": {
+    "repository": "menaje/coni-spatial",
+    "trackingIssues": [
+      8,
+      10,
+      12,
+      16
+    ],
+    "viewerCorePackageVersion": "0.1.2",
+    "renderProtocolPackageVersion": "0.1.2",
+    "spatialProtocolVersion": "0.1.0",
+    "status": "consumer-owned-unverified-in-this-repository"
+  },
+  "gates": {
+    "exactViewerPackagePin": true,
+    "versionedBridgeContract": true,
+    "bimBaseSpatialLayerComposition": true,
+    "sourceIdentityCanonicalMapping": true,
+    "synchronized2d3dSelection": true,
+    "opaqueContextReference": true,
+    "semanticAndRenderDiffReview": true,
+    "staleSourceAndRevisionRejection": true,
+    "optionalAuthorityFreeHandoff": true,
+    "standaloneExplorer": true,
+    "actualSpatialConsumerConformance": false,
+    "standaloneSpatialBundle": false,
+    "publicBimIntegrationPackage": false
+  },
+  "evidence": {
+    "syntheticBridge": "compatibility/evidence/spatial-integration-synthetic-2026-08-04.json",
+    "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json"
+  },
+  "blockers": [
+    "Coni Spatial must run the bridge contract against its actual service-owned identity, Context Reference and diff implementation",
+    "standalone Spatial bundle qualification remains owned by menaje/coni-spatial#8 and #16",
+    "the BIM integration package remains private and UNLICENSED until the Community release Gate"
+  ],
+  "limitations": [
+    "the current bridge evidence uses generated IFC4 and a deterministic synthetic Spatial service",
+    "Context Reference authority, Canonical mapping and accept/publish remain exclusively service-owned",
+    "the handoff contains no credential, arbitrary path, Workspace capability, acceptance or source-mutation grant"
+  ],
+  "policy": {
+    "readOnly": true,
+    "spatialAuthority": false,
+    "allowSpatialPrivateDependency": false,
+    "allowInstalledExtensionDependency": false,
+    "claimExplorerProviderContract": true,
+    "claimActualSpatialConsumer": false,
+    "claimPublicPackage": false,
+    "claimProductionIntegration": false
+  }
+}

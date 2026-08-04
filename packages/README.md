@@ -44,3 +44,9 @@ relation graph는 보류합니다.
 [`ifc-engine-contract`](ifc-engine-contract/README.md)는 candidate adapter의
 동일 fixture 비교에 사용하는 experimental report validator입니다. public
 package나 accepted IFC profile은 아닙니다.
+
+[`spatial-integration`](spatial-integration/README.md)은 source-bound IFC
+selection을 service-owned Canonical mapping, synchronized 2D/3D identity,
+opaque Context Reference와 BIM base + Spatial diff review로 연결하는 optional
+bridge입니다. Spatial private package나 설치된 extension에 의존하지
+않습니다.

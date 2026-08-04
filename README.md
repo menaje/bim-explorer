@@ -115,6 +115,14 @@ Spatial도 설치된 BIM Explorer extension/process를 필수 dependency로
 호출하지 않고, public compatibility가 검증된 package만 자신의 bundle에
 포함합니다.
 
+optional Spatial 연계는
+[`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
+bridge를 사용합니다. Explorer는 source-bound GlobalId와 viewpoint만
+제공하고 Spatial Service가 Canonical mapping, 2D/3D selection과 opaque
+Context Reference를 발급합니다. 현재 synthetic provider conformance는
+통과했으며 실제 Spatial consumer와 독립 Spatial bundle 검증은 Spatial
+저장소 이슈가 소유합니다.
+
 ## 비목표
 
 - IFC/RVT authoring과 production write 지원을 미리 주장하지 않습니다.

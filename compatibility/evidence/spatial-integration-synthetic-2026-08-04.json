@@ -1,0 +1,197 @@
+{
+  "schema": "bim-explorer-spatial-integration-qualification/1",
+  "status": "passed-experimental",
+  "asOf": "2026-08-04",
+  "contract": {
+    "integration": "bim-explorer-spatial-integration/0.1",
+    "handoff": "bim-explorer-spatial-handoff/0.1",
+    "selection": "bim-explorer-spatial-selection-sync/0.1",
+    "context": "bim-explorer-spatial-context-reference/0.1",
+    "review": "bim-explorer-spatial-review/0.1",
+    "viewerCorePackageVersion": "0.1.2",
+    "renderProtocolPackageVersion": "0.1.2",
+    "renderProtocolId": "menaje-viewer-render-protocol/0.1.0",
+    "spatialProtocolVersion": "0.1.0"
+  },
+  "source": {
+    "fingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "revisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "schema": "IFC4",
+    "profile": "ReferenceView_V1.2",
+    "products": 2
+  },
+  "standalone": {
+    "availability": "standalone",
+    "handoffSchema": "bim-explorer-spatial-handoff/0.1",
+    "contextReference": null,
+    "authority": {
+      "grants": [],
+      "acceptance": false,
+      "publish": false,
+      "sourceMutation": false
+    },
+    "disposed": true
+  },
+  "selection": {
+    "canonicalId": "entity:synthetic/main-wall",
+    "mappingStatus": "exact",
+    "views": [
+      {
+        "view": "2d",
+        "layerId": "layer:spatial:plan-live",
+        "renderId": "render:spatial:plan:main-wall",
+        "pickId": "pick:spatial:plan:main-wall"
+      },
+      {
+        "view": "3d",
+        "layerId": "layer:spatial:model-live",
+        "renderId": "render:spatial:model:main-wall",
+        "pickId": "pick:spatial:model:main-wall"
+      }
+    ],
+    "sourceFingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "sourceRevisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+    "spatialRevisionId": "spatial-revision:synthetic:1"
+  },
+  "context": {
+    "schema": "bim-explorer-spatial-context-reference/0.1",
+    "uri": "cadctx://local/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "expiresAt": "2026-08-04T06:00:00.000Z",
+    "authority": "opaque-service-record",
+    "requestContainsCanonicalId": false,
+    "requestContainsPathOrCredential": false
+  },
+  "review": {
+    "schema": "bim-explorer-spatial-review/0.1",
+    "bimBaseLayers": 1,
+    "spatialLayers": [
+      [
+        "live",
+        "2d",
+        "coni-spatial"
+      ],
+      [
+        "live",
+        "3d",
+        "coni-spatial"
+      ],
+      [
+        "modified",
+        "3d",
+        "coni-spatial"
+      ]
+    ],
+    "diff": {
+      "semantic": {
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "changedEntities": 1
+      },
+      "geometry": {
+        "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "changedEntities": 1
+      },
+      "representation": {
+        "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "changedEntities": 1
+      },
+      "render": {
+        "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "changedEntities": 1
+      },
+      "requirement": {
+        "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "changedEntities": 1
+      }
+    },
+    "authority": {
+      "bimBase": "bim-explorer-read-only-source",
+      "spatialRevision": "coni-spatial-service",
+      "acceptPublish": "not-granted"
+    }
+  },
+  "handoff": {
+    "schema": "bim-explorer-spatial-handoff/0.1",
+    "byteLength": 1526,
+    "target": {
+      "product": "coni-spatial",
+      "minimumSpatialProtocol": "0.1.0"
+    },
+    "contextReference": {
+      "uri": "cadctx://local/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "workspaceId": "workspace:synthetic-bim-integration",
+      "revisionId": "spatial-revision:synthetic:1",
+      "expiresAt": "2026-08-04T06:00:00.000Z"
+    },
+    "authority": {
+      "grants": [],
+      "acceptance": false,
+      "publish": false,
+      "sourceMutation": false
+    },
+    "containsPathOrCredential": false
+  },
+  "failClosed": {
+    "staleSourceRejected": true,
+    "staleSpatialRevisionRejected": true
+  },
+  "lifecycle": {
+    "beforeStale": {
+      "contract": "bim-explorer-spatial-integration/0.1",
+      "availability": "connected",
+      "disposed": false,
+      "sourceFingerprint": "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "sourceRevisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+      "workspaceId": "workspace:synthetic-bim-integration",
+      "spatialRevisionId": "spatial-revision:synthetic:1",
+      "mappings": 1,
+      "contexts": 1,
+      "reviews": 1,
+      "handoffs": 1
+    },
+    "bridge": {
+      "released": true,
+      "mappingRequests": 1,
+      "contextRequests": 1,
+      "reviewRequests": 1,
+      "contextRequest": {
+        "schema": "bim-explorer-spatial-bridge-context-request/0.1",
+        "protocolVersion": "0.1.0",
+        "workspaceId": "workspace:synthetic-bim-integration",
+        "revisionId": "spatial-revision:synthetic:1",
+        "renderMapId": "render-map:synthetic:1",
+        "selection": [
+          {
+            "view": "2d",
+            "layerId": "layer:spatial:plan-live",
+            "renderId": "render:spatial:plan:main-wall",
+            "pickId": "pick:spatial:plan:main-wall"
+          },
+          {
+            "view": "3d",
+            "layerId": "layer:spatial:model-live",
+            "renderId": "render:spatial:model:main-wall",
+            "pickId": "pick:spatial:model:main-wall"
+          }
+        ],
+        "viewport": {
+          "representation": "3d",
+          "viewId": "view:synthetic:model",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "currentRevisionId": "spatial-revision:synthetic:2",
+      "currentRenderMapId": "render-map:synthetic:2"
+    },
+    "integrationDisposed": true,
+    "sessionDisposed": true,
+    "sourceDisposed": true
+  },
+  "decision": {
+    "explorerProviderContract": "passed-synthetic-bridge",
+    "actualSpatialConsumer": "held-consumer-owned",
+    "publicBimPackage": "held-community-release",
+    "spatialBundleIndependence": "held-spatial-product-evidence",
+    "productionClaims": false
+  }
+}

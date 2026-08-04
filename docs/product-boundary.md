@@ -97,6 +97,14 @@ capability 또는 acceptance token을 넣지 않습니다. 수신 제품이 sour
 version과 identity를 다시 검증하며 stale/unsupported payload는
 fail-closed합니다.
 
+현재
+[`bim-explorer-spatial-integration/0.1`](../specs/bim-spatial-integration-v0.1.md)은
+Explorer provider 경계를 구현합니다. Spatial bridge만 GlobalId를
+Canonical Entity ID와 2D/3D Render/Pick reference로 resolve하며, Context
+Reference 요청에는 bridge가 반환한 Render/Pick ID와 viewport만 넣습니다.
+BIM base와 Spatial live/diff layer는 owner와 revision을 유지한 채
+composition하고 accept/publish authority는 발급하지 않습니다.
+
 ## 비목표
 
 - production IFC/RVT write를 첫 제품 범위로 주장하지 않습니다.

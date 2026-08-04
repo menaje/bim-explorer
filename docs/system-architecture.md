@@ -251,16 +251,25 @@ Host의 결과는
 
 ## Spatial integration
 
-Spatial integration package는 optional client입니다.
+[`bim-spatial-integration/0.1`](../specs/bim-spatial-integration-v0.1.md)은
+Spatial private package를 import하지 않는 host-neutral optional
+boundary입니다.
 
 ```text
-BIM source snapshot
- + Spatial Revision identity map
- + Spatial live/diff layers
- -> compatible 3D surface
- -> selection
- -> Spatial Service가 Context Reference 생성
+BIM source snapshot + source-bound selection
+  -> Spatial bridge descriptor 0.1.0
+  -> service-owned GlobalId/Canonical mapping
+  -> synchronized Spatial 2D/3D Render/Pick identity
+  -> opaque Context Reference
+  -> BIM base + Spatial live/diff review descriptor
 ```
 
-Explorer는 Context Reference를 직접 발급하지 않고 요청 intent만 전달합니다.
-Spatial Service가 Workspace, revision, source와 capability를 다시 검증합니다.
+bridge descriptor는 Viewer Core/Render Protocol package 0.1.2와 wire
+protocol 0.1.0을 exact pin합니다. Context request에는 Canonical ID를
+제출하지 않으며 Spatial Service가 현재 revision의 Identity Map으로
+Render/Pick ID를 다시 resolve합니다. BIM base layer와 Spatial layer는
+source/revision/owner를 합치지 않습니다.
+
+현재 generated IFC4와 synthetic bridge provider conformance만 통과했습니다.
+실제 Spatial consumer, standalone Spatial bundle과 public BIM package는
+각각 Spatial #8/#16과 Community release Gate가 소유합니다.

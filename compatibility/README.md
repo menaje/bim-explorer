@@ -154,6 +154,15 @@ redistribution review는 계속 보류합니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 
+optional Coni Spatial bridge의 exact Viewer package pin, source-bound
+GlobalId→Canonical mapping response, synchronized 2D/3D selection, opaque
+Context Reference, BIM base + Spatial live/diff layer와 authority-free handoff는
+[`spatial-integration.json`](spatial-integration.json)과
+[`synthetic bridge evidence`](evidence/spatial-integration-synthetic-2026-08-04.json)가
+소유합니다. Explorer provider contract는 통과했지만 실제 Spatial service
+consumer, standalone Spatial bundle과 public integration package는
+consumer/release-owned Gate로 계속 보류합니다.
+
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에
 기록합니다. 이 결과는 source lifecycle과 3D consumer shape를 검증하지만

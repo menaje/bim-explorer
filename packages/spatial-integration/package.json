@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/spatial-integration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Source-bound optional Coni Spatial integration contract for BIM Explorer",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}
