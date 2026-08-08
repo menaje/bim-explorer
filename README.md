@@ -139,10 +139,11 @@ Spatial도 설치된 BIM Explorer extension/process를 필수 dependency로
 [`bim-surface/0.1`](specs/bim-surface-v0.1.md)로 정의합니다. Browser와 VS
 Code의 IFC 경로가 이 surface로 source session, bounded 3D host, semantic
 explorer와 cleanup을 합성합니다. zero-runtime-dependency 0.1.0
-release-candidate는 deterministic pack과 offline clean install을 통과했지만,
-repository manifest는 private이며 public release asset과 실제 Spatial consumer
-exact-pin은 아직 보류합니다. Surface는 Workspace, Canonical Entity ID,
-mutation, accept, publish와 export authority를 발급하지 않습니다.
+package는 deterministic pack과 offline clean install을 통과했고
+`bim-surface-v0.1.0` immutable GitHub prerelease로 공개했습니다. repository
+manifest와 npm registry publication은 계속 private이며 실제 Spatial consumer
+exact-pin도 별도 Gate입니다. Surface는 Workspace, Canonical Entity ID, mutation,
+accept, publish와 export authority를 발급하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)

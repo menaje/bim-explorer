@@ -79,3 +79,11 @@ gh attestation verify \
 Spatial 같은 실제 consumer는 URL과 SHA-256을 exact-pin하고 자신의 composition
 conformance를 별도로 통과해야 합니다. 해당 consumer evidence가 없으면 Spatial
 호환성과 production support Gate는 계속 held입니다.
+
+## v0.1.0 publication evidence
+
+첫 package release의 exact tag, 9개 asset digest, 익명 download, hosted
+macOS/Linux 337/337 conformance, cross-platform byte identity와 두 attestation
+검증 결과는
+[release evidence](../compatibility/evidence/bim-surface-release-v0.1.0-2026-08-09.json)가
+소유합니다.

@@ -174,13 +174,15 @@ VS Code Webview 또는 외부 product shell이 같은 source identity와 lifecyc
 사용할 수 있습니다. Browser와 VS Code shared app의 IFC 경로가 이 surface를
 실제로 사용합니다.
 
-`@bim-explorer/bim-surface@0.1.0` release-candidate는 source, mesh renderer,
+`@bim-explorer/bim-surface@0.1.0`은 source, mesh renderer,
 semantic explorer와 optional Spatial provider contract를 하나의 zero-runtime-
 dependency ESM으로 묶습니다. repository manifest는 우발적 publication을 막기
 위해 private로 유지합니다. 별도 stage가 MPL-2.0, NOTICE와 SOURCE_OFFER를
 포함해 두 번 byte-identical pack하고 offline clean consumer에서 source open,
-selection, search와 exact cleanup을 재현했습니다. 이는 아직 public registry나
-immutable release asset, 실제 Spatial consumer conformance가 아닙니다.
+selection, search와 exact cleanup을 재현했습니다. 이 exact package는
+`bim-surface-v0.1.0` immutable GitHub prerelease에서 checksum, SPDX, macOS/Linux
+byte identity, release attestation과 workflow build provenance를 통과했습니다.
+public registry와 실제 Spatial consumer conformance는 아닙니다.
 
 E57/LAS/LAZ point reference runtime은 experimental source-neutral 경계로
 남겨 이 package entrypoint에 포함하지 않습니다. Surface의 authority record는
@@ -393,7 +395,7 @@ Render/Pick ID를 다시 resolve합니다. BIM base layer와 Spatial layer는
 source/revision/owner를 합치지 않습니다.
 
 현재 generated IFC4와 synthetic bridge provider conformance, 그리고
-Explorer 소유 `bim-surface` release-candidate의 offline clean install만
-통과했습니다. 실제 Spatial consumer, standalone Spatial bundle과 immutable
-public package exact-pin은 각각 Spatial #8/#16과 consumer package admission
-Gate가 소유합니다.
+Explorer 소유 `bim-surface-v0.1.0` public immutable package의 offline clean
+install, macOS/Linux byte identity와 attestations까지 통과했습니다. 실제 Spatial
+consumer와 standalone Spatial bundle의 exact-pin·composition은 Spatial #8/#16과
+consumer package admission Gate가 소유합니다.

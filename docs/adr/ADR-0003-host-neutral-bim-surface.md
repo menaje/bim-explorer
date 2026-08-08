@@ -44,10 +44,11 @@ accept, publish와 export authority는 모두 `false`입니다. optional Spatial
 integration factory는 public provider contract로만 포함하며 실제 bridge와
 authority는 소비자가 명시적으로 제공합니다.
 
-저장소 manifest는 `private: true`를 유지합니다. 별도 release-candidate
-stage만 publish 가능한 manifest로 바꾸고 MPL-2.0, NOTICE와 SOURCE_OFFER를
-포함해 두 번 패킹합니다. byte parity와 offline clean install은 package
-Gate지만 public release asset 또는 registry publication 주장은 아닙니다.
+저장소 manifest는 `private: true`를 유지합니다. 별도 release stage만 설치 가능한
+manifest로 바꾸고 MPL-2.0, NOTICE와 SOURCE_OFFER를 포함해 두 번 패킹합니다.
+byte parity와 offline clean install을 통과한 exact package만
+`bim-surface-v<semver>` immutable GitHub prerelease로 공개합니다. 이 채널은
+registry publication이나 stable support 주장이 아닙니다.
 
 experimental point reference renderer는 이 BIM surface entrypoint에
 포함하지 않습니다. 제품은 필요한 point runtime을 별도 source-neutral
@@ -77,5 +78,5 @@ surface가 둘 이상의 실제 host에서 공통 lifecycle을 유지하지 못�
 consumer가 더 작은 protocol-only 경계를 요구하면 package export와 contract
 version을 재검토합니다. 실제 Spatial consumer가 새 요구를 증명하기 전에는
 Workspace authority나 Spatial private implementation을 surface에 추가하지
-않습니다. public publication은 immutable release asset과 consumer admission
-Gate가 별도로 승인할 때만 진행합니다.
+않습니다. 후속 public version과 registry publication, actual consumer admission은
+각각 독립 Gate로 유지합니다.

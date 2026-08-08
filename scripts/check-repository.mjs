@@ -100,6 +100,7 @@ const REQUIRED_PATHS = [
   "compatibility/community-release.json",
   "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
   "compatibility/evidence/bim-surface-package-2026-08-09.json",
+  "compatibility/evidence/bim-surface-release-v0.1.0-2026-08-09.json",
   "compatibility/evidence/bim-federation-product-scale-2026-08-08.json",
   "compatibility/evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json",
   "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",

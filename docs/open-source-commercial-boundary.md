@@ -48,8 +48,9 @@ source license는 MPL-2.0입니다. `private`는 공개 소스 권리를 제한�
 semantic exploration을 외부 host가 재사용할 수 있게 합성합니다. 이 package가
 Workspace, Canonical ID, Agent change, accept/publish 또는 verified delivery를
 포함하지 않으므로 Spatial의 유료 상품 경계를 약화시키지 않습니다. 현재는
-deterministic pack과 offline clean install을 통과한 release-candidate이며,
-public artifact publication과 실제 Spatial 소비는 별도 Gate입니다.
+deterministic pack과 offline clean install을 통과했고
+`bim-surface-v0.1.0` immutable GitHub prerelease로 공개했습니다. public artifact
+publication과 실제 Spatial 소비·Workspace authority는 계속 독립 Gate입니다.
 
 ## Community 공개 Gate
 

@@ -92,11 +92,11 @@ selection이 authority가 되지 않습니다.
   result로만 주장합니다.
 
 현재 `@bim-explorer/bim-surface@0.1.0`은 Browser/VS Code 제품이 사용하는
-zero-runtime-dependency release-candidate까지 검증했습니다. 저장소 manifest는
-`private: true`이고 public registry/release asset은 아직 없으므로 Coni
-Spatial의 실제 bundle dependency나 consumer conformance를 주장하지 않습니다.
-그 승격은 immutable public artifact와 Spatial-owned exact-pin 검증 뒤에만
-가능합니다.
+zero-runtime-dependency package로 검증했고 `bim-surface-v0.1.0` immutable
+GitHub prerelease, checksum, SPDX, release/build attestation을 공개했습니다.
+저장소 manifest는 `private: true`로 유지하고 registry에는 게시하지 않습니다.
+따라서 public artifact 존재는 주장하지만 Coni Spatial의 실제 bundle dependency나
+consumer conformance는 Spatial-owned exact-pin 검증 전까지 주장하지 않습니다.
 
 ## Optional handoff
 

@@ -16,9 +16,15 @@ const TRUE_GATES = Object.freeze([
   "browserProductComposition",
   "vscodeProductComposition",
   "optionalSpatialProviderContract",
+  "immutablePublicReleaseAsset",
+  "publicRepository",
+  "anonymousPackageDownload",
+  "publishedAssetsVerified",
+  "macosLinuxReleaseByteIdentity",
+  "releaseAttestationVerified",
+  "workflowBuildProvenanceAttested",
 ]);
 const HELD_GATES = Object.freeze([
-  "immutablePublicReleaseAsset",
   "registryPublication",
   "actualSpatialConsumerConformance",
   "stableProductionSupport",
@@ -45,6 +51,39 @@ const EXPECTED_FILES = Object.freeze([
 ]);
 const SOURCE_FINGERPRINT =
   "sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243";
+const RELEASE_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "bim-surface-release-v0.1.0-2026-08-09.json";
+const RELEASE_ARTIFACTS = Object.freeze([
+  "LICENSE",
+  "NOTICE",
+  "RELEASE_NOTES.md",
+  "SHA256SUMS",
+  "SOURCE_OFFER.md",
+  "TRADEMARKS.md",
+  "bim-explorer-bim-surface-0.1.0.spdx.json",
+  "bim-explorer-bim-surface-0.1.0.tgz",
+  "release-manifest.json",
+]);
+const RELEASE_ASSERTIONS = Object.freeze([
+  "repositoryPublic",
+  "anonymousRepositoryAccessible",
+  "anonymousPackageDownloadVerified",
+  "releaseImmutable",
+  "annotatedTagExact",
+  "macosBuildPassed",
+  "linuxBuildPassed",
+  "fullConformancePassed",
+  "runtimeAuditClean",
+  "crossPlatformByteIdentical",
+  "downloadedAssetsMatchChecksums",
+  "releaseAttestationVerified",
+  "packageAssetVerified",
+  "buildProvenanceAttested",
+  "sourceAndNoticesPublished",
+  "communityLatestPreserved",
+  "authorityFreeBoundaryPreserved",
+]);
 
 function plainRecord(value, label) {
   if (
@@ -215,13 +254,186 @@ function validateEvidence(evidence, runtimeBytes) {
   return candidate;
 }
 
+export function validateBimSurfaceReleaseEvidence(
+  evidence,
+  candidate,
+) {
+  plainRecord(evidence, "BIM surface release evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-bim-surface-release-evidence/1" ||
+    evidence.capturedAt !== "2026-08-08T22:40:42Z" ||
+    evidence.source?.repository !== "menaje/bim-explorer" ||
+    evidence.source.commit !==
+      "8fc9ed1074f3299bf82eae5921b0a547b7d04814" ||
+    evidence.source.tag !== "bim-surface-v0.1.0" ||
+    evidence.source.annotatedTagObject !==
+      "532142afba21ecb9cca3d725b0639ae1a6d95c1e" ||
+    evidence.source.tagSignature !== "unsigned-annotated" ||
+    evidence.source.releaseProvenanceSigned !== true
+  ) {
+    throw new Error("BIM surface release source evidence is invalid");
+  }
+  if (
+    evidence.repository?.visibility !== "public" ||
+    evidence.repository.license !== "MPL-2.0" ||
+    evidence.repository.anonymousRepositoryAccess !== true ||
+    evidence.repository.immutableReleases !== true
+  ) {
+    throw new Error(
+      "BIM surface release repository evidence is invalid",
+    );
+  }
+  if (
+    evidence.workflow?.name !== "BIM Surface Release" ||
+    evidence.workflow.runId !== 31281892429 ||
+    evidence.workflow.attempt !== 2 ||
+    evidence.workflow.runUrl !==
+      "https://github.com/menaje/bim-explorer/actions/" +
+        "runs/31281892429/attempts/2" ||
+    evidence.workflow.conclusion !== "success" ||
+    evidence.workflow.event !== "push" ||
+    evidence.workflow.sourceRef !==
+      "refs/tags/bim-surface-v0.1.0" ||
+    evidence.workflow.initialAttempt?.conclusion !== "failure" ||
+    evidence.workflow.initialAttempt.runnerAssigned !== false ||
+    evidence.workflow.initialAttempt.stepsStarted !== 0 ||
+    evidence.workflow.linuxJob?.id !== 93165088225 ||
+    evidence.workflow.linuxJob.conclusion !== "success" ||
+    evidence.workflow.macosJob?.id !== 93165088182 ||
+    evidence.workflow.macosJob.conclusion !== "success" ||
+    evidence.workflow.publishJob?.id !== 93165186438 ||
+    evidence.workflow.publishJob.conclusion !== "success" ||
+    evidence.workflow.node !== "24" ||
+    evidence.workflow.fullConformanceTestsPerPlatform !== 337 ||
+    evidence.workflow.runtimeAuditVulnerabilities !== 0 ||
+    evidence.workflow.crossPlatformByteIdentity !== true
+  ) {
+    throw new Error(
+      "BIM surface release workflow evidence is invalid",
+    );
+  }
+  if (
+    evidence.release?.databaseId !== 367319269 ||
+    evidence.release.url !==
+      "https://github.com/menaje/bim-explorer/releases/tag/" +
+        "bim-surface-v0.1.0" ||
+    evidence.release.name !== "BIM Surface v0.1.0" ||
+    evidence.release.version !== CONTRACT.version ||
+    evidence.release.draft !== false ||
+    evidence.release.prerelease !== true ||
+    evidence.release.immutable !== true ||
+    evidence.release.publishedAt !== "2026-08-08T22:33:20Z" ||
+    evidence.release.assets !== RELEASE_ARTIFACTS.length ||
+    evidence.release.anonymousPageAccess !== true ||
+    evidence.release.anonymousPackageDownload !== true ||
+    evidence.release.releaseIntegrityVerified !== true ||
+    evidence.release.packageAssetVerified !== true ||
+    evidence.release.downloadedChecksumsVerified !== true ||
+    evidence.release.communityLatestPreserved !== true
+  ) {
+    throw new Error(
+      "BIM surface release publication evidence is invalid",
+    );
+  }
+  if (
+    evidence.supplyChain?.spdxPackages !== 1 ||
+    evidence.supplyChain.unknownRuntimeLicenses !== 0 ||
+    evidence.supplyChain.runtimeDependencies !== 0 ||
+    evidence.supplyChain.packageSha256 !== candidate.sha256 ||
+    evidence.supplyChain.packageIntegrity !== candidate.integrity ||
+    evidence.supplyChain.buildProvenanceAttested !== true ||
+    evidence.supplyChain.buildProvenanceSubjects !== 3 ||
+    evidence.supplyChain.releaseAttestationVerified !== true ||
+    evidence.supplyChain.packageBuildAttestationVerified !== true ||
+    evidence.supplyChain.packageReleaseAttestationVerified !== true ||
+    evidence.supplyChain.releaseSigner !==
+      "https://dotcom.releases.github.com" ||
+    evidence.supplyChain.buildSignerWorkflow !==
+      "menaje/bim-explorer/.github/workflows/" +
+        "bim-surface-release.yml" ||
+    evidence.supplyChain.buildSourceVisibility !== "public"
+  ) {
+    throw new Error(
+      "BIM surface release supply-chain evidence is invalid",
+    );
+  }
+  if (
+    !Array.isArray(evidence.artifacts) ||
+    evidence.artifacts.length !== RELEASE_ARTIFACTS.length ||
+    !equalJson(
+      evidence.artifacts.map((artifact) => artifact?.name).sort(),
+      [...RELEASE_ARTIFACTS].sort(),
+    ) ||
+    evidence.artifacts.some((artifact) =>
+      !Number.isSafeInteger(artifact?.byteLength) ||
+      artifact.byteLength <= 0 ||
+      !/^[a-f0-9]{64}$/u.test(artifact?.sha256 ?? ""),
+    ) ||
+    new Set(
+      evidence.artifacts.map((artifact) => artifact.sha256),
+    ).size !== RELEASE_ARTIFACTS.length
+  ) {
+    throw new Error(
+      "BIM surface release artifact evidence is invalid",
+    );
+  }
+  const packageArtifact = evidence.artifacts.find((artifact) =>
+    artifact.name === candidate.filename);
+  if (
+    packageArtifact?.byteLength !== candidate.byteLength ||
+    packageArtifact.sha256 !== candidate.sha256
+  ) {
+    throw new Error(
+      "BIM surface published package identity is invalid",
+    );
+  }
+  const assertions = plainRecord(
+    evidence.assertions,
+    "BIM surface release assertions",
+  );
+  const held = plainRecord(
+    evidence.held,
+    "BIM surface release held claims",
+  );
+  if (
+    !equalJson(
+      Object.keys(assertions).sort(),
+      [...RELEASE_ASSERTIONS].sort(),
+    ) ||
+    Object.values(assertions).some((value) => value !== true) ||
+    !equalJson(Object.keys(held).sort(), [
+      "actualSpatialConsumerConformance",
+      "publicRegistryPublication",
+      "stableProductionSupport",
+    ]) ||
+    Object.values(held).some((value) => value !== false) ||
+    /\/Users\/|\/Volumes\/|[A-Z]:\\/u.test(
+      JSON.stringify(evidence),
+    )
+  ) {
+    throw new Error(
+      "BIM surface release claims are invalid",
+    );
+  }
+  return Object.freeze({
+    artifacts: evidence.artifacts.length,
+    assertions: Object.keys(assertions).length,
+  });
+}
+
 export function validateBimSurfaceCompatibility(
   manifest,
   evidence,
+  releaseEvidence,
   runtimeBytes,
 ) {
   plainRecord(manifest, "BIM surface compatibility manifest");
   const candidate = validateEvidence(evidence, runtimeBytes);
+  validateBimSurfaceReleaseEvidence(
+    releaseEvidence,
+    candidate,
+  );
   if (
     manifest.schema !==
       "bim-explorer-bim-surface-compatibility/1" ||
@@ -238,12 +450,18 @@ export function validateBimSurfaceCompatibility(
     "BIM surface artifact",
   );
   if (
-    artifact.channel !== "release-candidate" ||
+    artifact.channel !== "public-github-prerelease" ||
     artifact.filename !== candidate.filename ||
     artifact.sha256 !== candidate.sha256 ||
     artifact.runtimeSha256 !== candidate.runtimeSha256 ||
     artifact.runtimeDependencies !== 0 ||
-    artifact.repositoryManifestPrivate !== true
+    artifact.repositoryManifestPrivate !== true ||
+    artifact.tag !== "bim-surface-v0.1.0" ||
+    artifact.releaseUrl !==
+      "https://github.com/menaje/bim-explorer/releases/tag/" +
+        "bim-surface-v0.1.0" ||
+    artifact.immutable !== true ||
+    artifact.prerelease !== true
   ) {
     throw new Error(
       "BIM surface compatibility artifact is invalid",
@@ -276,7 +494,8 @@ export function validateBimSurfaceCompatibility(
     manifest.limitations.length < 3 ||
     manifest.evidence?.package !==
       "compatibility/evidence/" +
-        "bim-surface-package-2026-08-09.json"
+        "bim-surface-package-2026-08-09.json" ||
+    manifest.evidence.release !== RELEASE_EVIDENCE_PATH
   ) {
     throw new Error(
       "BIM surface gate inventory is invalid",
@@ -293,7 +512,7 @@ export function validateBimSurfaceCompatibility(
     policy.allowSpatialPrivateDependency !== false ||
     policy.repositoryPublishDisabled !== true ||
     policy.claimReleaseCandidate !== true ||
-    policy.claimPublicPackage !== false ||
+    policy.claimPublicPackage !== true ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimProductionSupport !== false
   ) {
@@ -311,7 +530,12 @@ export function validateBimSurfaceCompatibility(
 }
 
 async function main() {
-  const [manifest, evidence, runtimeBytes] = await Promise.all([
+  const [
+    manifest,
+    evidence,
+    releaseEvidence,
+    runtimeBytes,
+  ] = await Promise.all([
     readFile("compatibility/bim-surface.json", "utf8")
       .then(JSON.parse),
     readFile(
@@ -319,11 +543,13 @@ async function main() {
         "bim-surface-package-2026-08-09.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(RELEASE_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile("packages/bim-surface/runtime/index.mjs"),
   ]);
   const result = validateBimSurfaceCompatibility(
     manifest,
     evidence,
+    releaseEvidence,
     runtimeBytes,
   );
   process.stdout.write(

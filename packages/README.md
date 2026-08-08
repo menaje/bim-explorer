@@ -37,8 +37,9 @@ read-only 경계입니다. Browser와 VS Code IFC 제품 경로가 generated run
 사용합니다. zero-runtime-dependency package의 byte-identical pack과 offline
 clean install을 통과했으며, public distribution은 npm registry가 아니라
 `bim-surface-v<semver>` immutable GitHub Release가 소유합니다. 실제 Spatial
-consumer exact-pin은 별도 Gate이고 experimental point reference runtime은 이
-entrypoint에 포함하지 않습니다.
+consumer exact-pin은 별도 Gate입니다. 0.1.0은 macOS/Linux byte identity,
+checksum, SPDX, release/build attestations까지 통과했으며 experimental point
+reference runtime은 이 entrypoint에 포함하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를

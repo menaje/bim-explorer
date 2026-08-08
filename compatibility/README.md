@@ -35,8 +35,12 @@ semantic explorer와 optional Spatial provider를 하나의 zero-runtime-depende
 ESM으로 구성합니다. 두 번의 byte-identical pack과 offline clean install,
 exact source identity·selection·search·cleanup 및 Browser/VS Code 제품
 composition을 통과했습니다. repository manifest는 private이고 public registry,
-immutable release asset과 실제 Spatial consumer는 아직 held입니다. exact
-결과는 [package evidence](evidence/bim-surface-package-2026-08-09.json)에
+실제 Spatial consumer와 stable support는 held입니다. package는 별도
+`bim-surface-v0.1.0` immutable GitHub prerelease로 공개했고 익명 download,
+macOS/Linux byte identity, checksum, release attestation과 workflow build
+provenance를 통과했습니다. exact 결과는
+[package evidence](evidence/bim-surface-package-2026-08-09.json)와
+[release evidence](evidence/bim-surface-release-v0.1.0-2026-08-09.json)에
 고정합니다.
 
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
