@@ -148,8 +148,9 @@ post-v0.1 federation foundation은
 identity·visibility·partial/stale·alignment, incremental refresh와
 cross-source saved view를 분리합니다. glTF/GLB는 source-native identity만
 사용하며 BIM semantic authority를 갖지 않습니다. LAS/LAZ/E57, 3D Tiles,
-RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
-열기를 거부합니다. 이 기능은 immutable Community v0.1.0 asset에는
+RVT/DGN은 capability Gate만 등록했고 제품 codec/SDK evidence 전에는
+열기를 거부합니다. cache-only decoder probe는 제품 codec/SDK evidence로
+간주하지 않습니다. 이 기능은 immutable Community v0.1.0 asset에는
 포함되지 않습니다. 현재 main의 bounded glTF/GLB profile은 Browser,
 VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
 통과했고, macOS arm64와 Linux x64 제품 매트릭스에서도 동일하게
@@ -173,8 +174,11 @@ semantic authority는 승인하지 않습니다. 다음 held format 제안은
 사용자 과업·public fixture·권리·좌표·lifecycle evidence를 접수하며, intake
 완료만으로 format 지원을 승인하지 않습니다.
 공개 sample은 재배포하지 않고 cache-only pre-admission probe에 사용할 수 있으며,
-현재 E57 envelope·page integrity·metadata profile까지만 검증했습니다. sample
-probe는 실제 point decode나 format admission을 뜻하지 않습니다.
+현재 E57 envelope·page integrity·metadata profile과, paired LAS 1.2/LAZ의
+10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
+parity를 검증했습니다. LAS/LAZ의 CRS, Worker cancellation·memory budget,
+point renderer와 제품 file-open은 검증하지 않았으므로 sample probe는 format
+admission이나 제품 지원을 뜻하지 않습니다.
 
 ## 비목표
 

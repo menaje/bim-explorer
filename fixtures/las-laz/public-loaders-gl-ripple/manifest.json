@@ -1,0 +1,77 @@
+{
+  "schema": "bim-explorer-public-las-laz-fixture/1",
+  "fixtureId": "loaders-gl-ripple-las-laz",
+  "format": "las-laz",
+  "purpose": "cache-only LAS 1.2 and LAZ point-record parity probe",
+  "provenance": {
+    "repository": "https://github.com/visgl/loaders.gl",
+    "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+    "paths": {
+      "las": "cpp/Model3DTiler/test/resources/ripple.las",
+      "laz": "cpp/Model3DTiler/test/resources/ripple.laz"
+    },
+    "sourcePages": {
+      "las": "https://github.com/visgl/loaders.gl/blob/44e7a4e978a63fad0ee257fedb688826f5f279e5/cpp/Model3DTiler/test/resources/ripple.las",
+      "laz": "https://github.com/visgl/loaders.gl/blob/44e7a4e978a63fad0ee257fedb688826f5f279e5/cpp/Model3DTiler/test/resources/ripple.laz"
+    }
+  },
+  "entries": {
+    "las": {
+      "name": "ripple.las",
+      "mediaType": "application/octet-stream",
+      "byteLength": 347061,
+      "sha256": "dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+      "rawUrl": "https://raw.githubusercontent.com/visgl/loaders.gl/44e7a4e978a63fad0ee257fedb688826f5f279e5/cpp/Model3DTiler/test/resources/ripple.las",
+      "compressed": false
+    },
+    "laz": {
+      "name": "ripple.laz",
+      "mediaType": "application/octet-stream",
+      "byteLength": 53952,
+      "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+      "rawUrl": "https://raw.githubusercontent.com/visgl/loaders.gl/44e7a4e978a63fad0ee257fedb688826f5f279e5/cpp/Model3DTiler/test/resources/ripple.laz",
+      "compressed": true
+    }
+  },
+  "use": {
+    "sourceRepositoryLicense": "MIT",
+    "licenseUrl": "https://github.com/visgl/loaders.gl/blob/44e7a4e978a63fad0ee257fedb688826f5f279e5/LICENSE",
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "tracking": {
+    "cacheRoot": ".bim-explorer-cache/public-reference/las-laz",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "testOnly": true,
+    "networkAtRuntime": false
+  },
+  "expected": {
+    "signature": "LASF",
+    "formatVersion": "1.2",
+    "pointFormat": 3,
+    "pointRecordLength": 34,
+    "pointRecords": 10201,
+    "scale": [1e-8, 1e-8, 1.7664101123809815e-9],
+    "offset": [-5, -5, -0.6664100289344788],
+    "headerBounds": {
+      "min": [-5, -5, -0.6664100289344788],
+      "max": [5, 5, 1.100000023841858]
+    },
+    "decodedBounds": {
+      "min": [-5, -5, -0.6664100289344788],
+      "max": [5, 5, 1.100000023388559]
+    },
+    "firstPosition": [-5, -5, -0.3533200030526521],
+    "lastPosition": [5, 5, -0.3533200030526521],
+    "colorRange": {
+      "min": [0, 17408, 0],
+      "max": [65280, 50944, 16128]
+    },
+    "firstColor": [2560, 30464, 14080],
+    "lastColor": [2560, 30464, 14080],
+    "intensityRange": [0, 0],
+    "classifications": [0],
+    "pointRecordSha256": "31124633910e8b01c3cbd7d159c85b7140b0ed20438fee70f9570ad2420c026e"
+  }
+}

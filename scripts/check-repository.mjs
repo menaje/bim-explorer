@@ -86,6 +86,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/bim-federation-product-scale-2026-08-08.json",
   "compatibility/evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json",
   "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
+  "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
@@ -156,6 +157,7 @@ const REQUIRED_PATHS = [
   "fixtures/gltf/public-khronos-box/manifest.json",
   "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json",
   "fixtures/e57/public-libe57-coloured-cube/manifest.json",
+  "fixtures/las-laz/public-loaders-gl-ripple/manifest.json",
   "package-lock.json",
   "package.json",
   "packages/README.md",
@@ -234,6 +236,7 @@ const REQUIRED_PATHS = [
   "scripts/fetch-public-ifc-fixture.mjs",
   "scripts/fetch-public-gltf-fixture.mjs",
   "scripts/fetch-public-e57-fixture.mjs",
+  "scripts/fetch-public-las-laz-fixture.mjs",
   "scripts/build-vscode-worker.mjs",
   "scripts/browser-qualification-runtime.mjs",
   "scripts/bim-federation-product-scale-platform-evidence.mjs",
@@ -246,12 +249,16 @@ const REQUIRED_PATHS = [
   "scripts/public-ifc-fixture.mjs",
   "scripts/public-gltf-fixture.mjs",
   "scripts/public-e57-fixture.mjs",
+  "scripts/public-las-laz-fixture.mjs",
   "scripts/e57-envelope-probe.mjs",
+  "scripts/las-header-probe.mjs",
+  "scripts/las-laz-point-probe.mjs",
   "scripts/package-vscode-extension.mjs",
   "scripts/qualify-bim-product-shell.mjs",
   "scripts/qualify-bim-federation.mjs",
   "scripts/qualify-bim-federation-product-scale.mjs",
   "scripts/qualify-e57-public-sample.mjs",
+  "scripts/qualify-las-laz-public-sample.mjs",
   "scripts/qualify-gltf-reference-source.mjs",
   "scripts/qualify-gltf-browser-webgl2.mjs",
   "scripts/qualify-gltf-product-scale-reference.mjs",
@@ -314,6 +321,7 @@ const REQUIRED_PATHS = [
   "tests/federation/bim-federation-qualification.test.mjs",
   "tests/federation/reference-format-intake.test.mjs",
   "tests/federation/e57-public-sample-probe.test.mjs",
+  "tests/federation/las-laz-public-sample-probe.test.mjs",
   "tests/federation/federated-renderer-projection.test.mjs",
   "tests/federation/gltf-reference-federation.test.mjs",
   "tests/gltf/gltf-reference-source.test.mjs",
@@ -351,7 +359,7 @@ const REQUIRED_PATHS = [
 const FORBIDDEN_TRACKED_PATTERNS = [
   /(^|\/)\.env(?:\.|$)/u,
   /(^|\/)(?:fixtures\/private|fixtures\/customer)(?:\/|$)/u,
-  /\.(?:ifc|ifczip|ifcxml|gltf|glb|rvt|nwd|nwc|bim)$/iu,
+  /\.(?:ifc|ifczip|ifcxml|gltf|glb|las|laz|e57|rvt|dgn|nwd|nwc|bim)$/iu,
   /(^|\/)__pycache__(?:\/|$)/u,
   /\.pyc$/iu,
   /(^|\/)(?:node_modules|coverage|dist|build|artifacts)(?:\/|$)/u,
@@ -453,6 +461,21 @@ for (const [name, version] of [
         "exact registry integrity",
     );
   }
+}
+
+const lazPerfLock = lockfile.packages?.["node_modules/laz-perf"];
+if (
+  lazPerfLock?.version !== "0.0.6" ||
+  lazPerfLock.integrity !==
+    "sha512-ZBqC+BBlofznDIY3SfjXDBVdIhYfz7bq8HAHztlw4XOnu++n" +
+      "HiWtCGPgzpdeAhPkByc68DaKNy3E3rY4XrdRtQ==" ||
+  lazPerfLock.license !== "Apache-2.0" ||
+  lazPerfLock.dev !== true
+) {
+  failures.push(
+    "package-lock.json: laz-perf 0.0.6 qualification dependency " +
+      "requires exact registry integrity and Apache-2.0 metadata",
+  );
 }
 
 const git = spawnSync("git", ["ls-files", "-z"], {

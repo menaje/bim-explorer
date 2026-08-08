@@ -4,6 +4,9 @@ import { pathToFileURL } from "node:url";
 import {
   validateE57PublicSampleProbe,
 } from "./qualify-e57-public-sample.mjs";
+import {
+  validateLasLazPublicSampleProbe,
+} from "./qualify-las-laz-public-sample.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -11,18 +14,29 @@ const PASSED_GATES = Object.freeze([
   "e57EnvelopeInspection",
   "e57PhysicalPageIntegrity",
   "e57MetadataProfile",
+  "lasHeaderInspection",
+  "lazHeaderInspection",
+  "lasPointDecode",
+  "lazPointDecode",
+  "lasLazPointRecordParity",
 ]);
 const HELD_GATES = Object.freeze([
   "e57PointDecode",
   "e57Renderer",
   "e57ProductOpen",
+  "lasLazCoordinateReference",
+  "lasLazWorkerLifecycle",
+  "lasLazRenderer",
+  "lasLazProductOpen",
 ]);
 
 export function validateReferenceFormatProbeCompatibility(
   manifest,
-  evidence,
+  e57Evidence,
+  lasLazEvidence,
 ) {
-  validateE57PublicSampleProbe(evidence);
+  validateE57PublicSampleProbe(e57Evidence);
+  validateLasLazPublicSampleProbe(lasLazEvidence);
   if (
     manifest?.schema !==
       "bim-explorer-reference-format-probes-compatibility/1" ||
@@ -30,7 +44,10 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.asOf !== "2026-08-08" ||
     manifest.evidence?.e57PublicSample !==
       "compatibility/evidence/" +
-        "e57-public-sample-probe-2026-08-08.json"
+        "e57-public-sample-probe-2026-08-08.json" ||
+    manifest.evidence?.lasLazPublicSample !==
+      "compatibility/evidence/" +
+        "las-laz-public-sample-probe-2026-08-08.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -58,7 +75,9 @@ export function validateReferenceFormatProbeCompatibility(
   }
   if (
     manifest.policy?.sampleArtifactTracked !== false ||
+    manifest.policy.sampleRedistributed !== false ||
     manifest.policy.releaseBundled !== false ||
+    manifest.policy.decoderProductBundled !== false ||
     manifest.policy.testOnly !== true ||
     manifest.policy.formatAdmission !== false ||
     manifest.policy.productSupport !== false ||
@@ -71,12 +90,12 @@ export function validateReferenceFormatProbeCompatibility(
     status: manifest.status,
     passedGates: PASSED_GATES.length,
     heldGates: HELD_GATES.length,
-    sampleFormats: 1,
+    sampleFormats: 3,
   });
 }
 
 async function main() {
-  const [manifest, evidence] = await Promise.all([
+  const [manifest, e57Evidence, lasLazEvidence] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
     readFile(
@@ -84,9 +103,18 @@ async function main() {
         "e57-public-sample-probe-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "las-laz-public-sample-probe-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
-    validateReferenceFormatProbeCompatibility(manifest, evidence),
+    validateReferenceFormatProbeCompatibility(
+      manifest,
+      e57Evidence,
+      lasLazEvidence,
+    ),
   ));
 }
 

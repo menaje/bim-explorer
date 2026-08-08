@@ -8,27 +8,45 @@
     "e57EnvelopeInspection": true,
     "e57PhysicalPageIntegrity": true,
     "e57MetadataProfile": true,
+    "lasHeaderInspection": true,
+    "lazHeaderInspection": true,
+    "lasPointDecode": true,
+    "lazPointDecode": true,
+    "lasLazPointRecordParity": true,
     "e57PointDecode": false,
     "e57Renderer": false,
-    "e57ProductOpen": false
+    "e57ProductOpen": false,
+    "lasLazCoordinateReference": false,
+    "lasLazWorkerLifecycle": false,
+    "lasLazRenderer": false,
+    "lasLazProductOpen": false
   },
   "evidence": {
-    "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json"
+    "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
+    "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json"
   },
   "blockers": [
     "E57 compressed point payload decode is not implemented",
-    "the bounded renderer has no point primitive contract",
-    "Browser and VS Code do not open E57 files"
+    "E57 has no qualified point renderer",
+    "Browser and VS Code do not open E57 files",
+    "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
+    "LAS/LAZ decode has no Browser Worker cancellation or memory-budget qualification",
+    "the bounded renderer has no LAS/LAZ point primitive contract",
+    "Browser and VS Code do not open LAS or LAZ files"
   ],
   "limitations": [
-    "the sample is downloaded on demand into an ignored digest cache",
-    "the sample file is not tracked or included in a release",
-    "the probe inspects only the E57 envelope, page CRCs and XML metadata",
+    "the samples are downloaded on demand into ignored digest caches",
+    "sample files are not tracked, redistributed or included in a release",
+    "the E57 probe inspects only its envelope, page CRCs and XML metadata",
+    "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
+    "laz-perf is a qualification-only dev dependency and not a product runtime",
     "sample-based testing does not establish user demand, surveyed accuracy or format admission"
   ],
   "policy": {
     "sampleArtifactTracked": false,
+    "sampleRedistributed": false,
     "releaseBundled": false,
+    "decoderProductBundled": false,
     "testOnly": true,
     "formatAdmission": false,
     "productSupport": false

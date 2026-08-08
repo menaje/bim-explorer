@@ -31,6 +31,10 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   CC0 E57을 envelope, 116-page CRC-32C와 XML metadata profile의 cache-only
   pre-admission probe에 사용하는 manifest. compressed point payload와 renderer는
   아직 검증하지 않음
+- `las-laz/public-loaders-gl-ripple`: `visgl/loaders.gl`의 paired 347,061-byte
+  LAS와 53,952-byte LAZ를 cache-only로 받아 LAS 1.2 point-format 3의
+  10,201개 record, Float64 좌표·RGB와 압축 해제 후 exact record SHA-256
+  parity를 검증하는 manifest. 샘플 binary는 재배포하지 않음
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로
@@ -40,6 +44,8 @@ fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
 원본 GLB를 Git 또는 release bundle에 포함하지 않습니다.
 E57 sample도 `.bim-explorer-cache/public-reference/e57`에만 내려받고 Git 또는
 release에 포함하지 않습니다. test-only 사용에는 샘플 재배포를 요구하지 않습니다.
+LAS/LAZ pair도 `.bim-explorer-cache/public-reference/las-laz`에만 내려받고 Git,
+Community runtime 또는 release에 포함하지 않습니다.
 
 ```sh
 npm run fetch:ifc:public
@@ -50,6 +56,8 @@ npm run qualify:renderer:public
 npm run fetch:gltf:product-scale
 npm run fetch:e57:public
 npm run qualify:e57:probe
+npm run fetch:las-laz:public
+npm run qualify:las-laz:probe
 npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode

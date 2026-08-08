@@ -26,6 +26,7 @@
     "fetch:gltf:public": "node scripts/fetch-public-gltf-fixture.mjs",
     "fetch:gltf:product-scale": "node scripts/fetch-public-gltf-fixture.mjs --product-scale",
     "fetch:e57:public": "node scripts/fetch-public-e57-fixture.mjs",
+    "fetch:las-laz:public": "node scripts/fetch-public-las-laz-fixture.mjs",
     "probe:browser-gpu": "node scripts/serve-browser-gpu-probe.mjs",
     "probe:browser-worker": "node scripts/serve-browser-worker-probe.mjs",
     "probe:gltf:browser": "node scripts/serve-gltf-browser-probe.mjs",
@@ -57,6 +58,7 @@
     "qualify:federation": "node scripts/qualify-bim-federation.mjs",
     "qualify:federation:product-scale": "node scripts/qualify-bim-federation-product-scale.mjs",
     "qualify:e57:probe": "node scripts/qualify-e57-public-sample.mjs",
+    "qualify:las-laz:probe": "node scripts/qualify-las-laz-public-sample.mjs",
     "assemble:federation:product-scale:platform": "node scripts/assemble-bim-federation-product-scale-platform-matrix.mjs",
     "qualify:community-release": "node scripts/qualify-community-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
@@ -73,6 +75,7 @@
     "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "3.9.2",
     "esbuild": "0.28.1",
-    "gltf-validator": "2.0.0-dev.3.10"
+    "gltf-validator": "2.0.0-dev.3.10",
+    "laz-perf": "0.0.6"
   }
 }

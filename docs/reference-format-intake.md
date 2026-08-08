@@ -67,10 +67,19 @@ engine 또는 SDK의 redistribution 권리는 여전히 별도 Gate입니다.
 point record 선언을 검증합니다. compressed point decode, renderer와 제품 file-open은
 검증하지 않으므로 E57 admission과 `pointCloudCodec`은 계속 held입니다.
 
+두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
+고정 commit에서 내려받습니다. exact `laz-perf@0.0.6` Apache-2.0 dev
+dependency로 LAZ를 해제하고, LAS 1.2 point-format 3의 10,201개 raw point
+record SHA-256가 원본 LAS와 일치하는지 확인합니다. Float64 좌표와 RGB
+attribute까지 읽지만 샘플에는 qualified CRS가 없고 Browser Worker
+cancellation·memory budget, point renderer와 제품 file-open도 없으므로
+LAS/LAZ admission과 `pointCloudCodec`은 계속 held입니다.
+
 ## 현재 상태
 
-intake 계약과 공개 issue form, cache-only E57 pre-admission probe는 준비됐지만
-실제 외부 packet과 point decoder는 아직 없습니다. 따라서
+intake 계약과 공개 issue form, cache-only E57 및 LAS/LAZ pre-admission probe는
+준비됐지만 실제 외부 packet과 제품 point-cloud source/renderer는 아직 없습니다.
+따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에
 추가해 이 상태를 우회하지 않습니다.

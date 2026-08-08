@@ -6,6 +6,9 @@
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing
   the binary; validate its header, all 116 page CRCs and 7,680-point XML profile;
+- download a paired public LAS 1.2/LAZ fixture into an ignored cache and prove
+  exact 10,201-point record parity, Float64 coordinates and RGB with a pinned
+  qualification-only `laz-perf@0.0.6` decoder;
 - add an experimental multi-IFC federation contract with source-scoped
   identity, visibility, partial/stale state, explicit Float64 alignment,
   incremental refresh, cross-source selection and saved views;

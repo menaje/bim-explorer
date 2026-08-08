@@ -1,0 +1,183 @@
+{
+  "schema": "bim-explorer-las-laz-public-sample-probe/1",
+  "status": "passed-pre-admission-point-decode",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "loaders-gl-ripple-las-laz",
+    "repository": "https://github.com/visgl/loaders.gl",
+    "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+    "entries": {
+      "las": {
+        "path": "cpp/Model3DTiler/test/resources/ripple.las",
+        "byteLength": 347061,
+        "sha256": "dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852"
+      },
+      "laz": {
+        "path": "cpp/Model3DTiler/test/resources/ripple.laz",
+        "byteLength": 53952,
+        "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034"
+      }
+    },
+    "sourceRepositoryLicense": "MIT",
+    "sampleRedistributed": false,
+    "testOnly": true,
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "decoder": {
+    "package": "laz-perf",
+    "version": "0.0.6",
+    "license": "Apache-2.0",
+    "npmIntegrity": "sha512-ZBqC+BBlofznDIY3SfjXDBVdIhYfz7bq8HAHztlw4XOnu++nHiWtCGPgzpdeAhPkByc68DaKNy3E3rY4XrdRtQ==",
+    "sourceRepository": "https://github.com/hobuinc/laz-perf",
+    "sourceCommit": "0e1443a34669739ef8a3fd7eb2278d9d7e586a77",
+    "role": "qualification-only-dev-dependency"
+  },
+  "headers": {
+    "las": {
+      "signature": "LASF",
+      "formatVersion": "1.2",
+      "compressed": false,
+      "pointDataOffset": 227,
+      "variableLengthRecordCount": 0
+    },
+    "laz": {
+      "signature": "LASF",
+      "formatVersion": "1.2",
+      "compressed": true,
+      "pointDataOffset": 333,
+      "variableLengthRecordCount": 1
+    },
+    "shared": {
+      "pointFormat": 3,
+      "pointRecordLength": 34,
+      "pointRecords": 10201,
+      "scale": [
+        1e-8,
+        1e-8,
+        1.7664101123809815e-9
+      ],
+      "offset": [
+        -5,
+        -5,
+        -0.6664100289344788
+      ],
+      "bounds": {
+        "min": [
+          -5,
+          -5,
+          -0.6664100289344788
+        ],
+        "max": [
+          5,
+          5,
+          1.100000023841858
+        ]
+      }
+    }
+  },
+  "profile": {
+    "pointRecords": 10201,
+    "decodedBounds": {
+      "min": [
+        -5,
+        -5,
+        -0.6664100289344788
+      ],
+      "max": [
+        5,
+        5,
+        1.100000023388559
+      ]
+    },
+    "firstPosition": [
+      -5,
+      -5,
+      -0.3533200030526521
+    ],
+    "lastPosition": [
+      5,
+      5,
+      -0.3533200030526521
+    ],
+    "intensityRange": [
+      0,
+      0
+    ],
+    "classifications": [
+      0
+    ],
+    "colorRange": {
+      "min": [
+        0,
+        17408,
+        0
+      ],
+      "max": [
+        65280,
+        50944,
+        16128
+      ]
+    },
+    "firstColor": [
+      2560,
+      30464,
+      14080
+    ],
+    "lastColor": [
+      2560,
+      30464,
+      14080
+    ],
+    "pointRecordSha256": "31124633910e8b01c3cbd7d159c85b7140b0ed20438fee70f9570ad2420c026e"
+  },
+  "capabilities": {
+    "lasPointDecode": true,
+    "lazPointDecode": true,
+    "exactPointRecordParity": true,
+    "float64Coordinates": true,
+    "rgbAttributes": true,
+    "crsAuthority": false,
+    "workerCancellation": false,
+    "boundedRenderer": false,
+    "browserProductOpen": false,
+    "vscodeProductOpen": false
+  },
+  "cleanup": {
+    "wasmAllocationsReleased": true,
+    "downloadBuffersCleared": true
+  },
+  "decision": {
+    "sampleUse": "cache-only-technical-test",
+    "formatAdmission": false,
+    "pointCloudCodec": "held",
+    "productSupport": false
+  },
+  "assertions": {
+    "pinnedPublicPairDownload": true,
+    "exactByteLengthsAndDigests": true,
+    "validLas12Headers": true,
+    "boundedPointProfile": true,
+    "lasPointRecordDecode": true,
+    "lazPointRecordDecode": true,
+    "exactLasLazPointRecordParity": true,
+    "float64CoordinateProjection": true,
+    "rgbAttributeDecode": true,
+    "exactDecoderArtifact": true,
+    "wasmAllocationsReleased": true,
+    "downloadBuffersCleared": true,
+    "cacheOnlyTestUse": true,
+    "artifactsNotTrackedOrBundled": true,
+    "noFormatAdmission": true,
+    "pathFreeEvidence": true
+  },
+  "limitations": [
+    "the probe covers a paired LAS 1.2 point-format 3 sample only",
+    "the sample has no qualified CRS or surveyed datum authority",
+    "laz-perf runs as a qualification-only dev dependency, not a product runtime",
+    "Browser Worker cancellation, memory budgets and malformed-input isolation are not qualified",
+    "the bounded renderer has no point primitive and products do not open LAS or LAZ",
+    "the downloaded sample files remain in an ignored digest cache and are not released",
+    "license metadata is technical due diligence and is not legal advice"
+  ]
+}

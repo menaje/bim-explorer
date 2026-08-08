@@ -124,6 +124,12 @@ path와 이미 admission된 format 재개방을 거부합니다.
 header, 모든 physical page CRC-32C와 XML point profile을 확인합니다. 샘플 원본,
 point decode와 renderer admission은 테스트 결과에 포함하지 않습니다.
 
+`las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest
+cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Float64
+좌표·RGB와 LAZ 해제 후 LAS raw record SHA-256 parity를 확인합니다. exact
+`laz-perf` WASM allocation은 회수하지만 CRS, Browser Worker lifecycle,
+point renderer와 제품 admission은 테스트 결과에 포함하지 않습니다.
+
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick
 revision binding, source switch, abort, invalid backend cleanup과 deterministic

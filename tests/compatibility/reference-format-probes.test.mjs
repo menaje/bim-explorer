@@ -6,7 +6,7 @@ import {
   validateReferenceFormatProbeCompatibility,
 } from "../../scripts/check-reference-format-probes-compatibility.mjs";
 
-const [manifest, evidence] = await Promise.all([
+const [manifest, e57Evidence, lasLazEvidence] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
     "utf8",
@@ -16,16 +16,25 @@ const [manifest, evidence] = await Promise.all([
       "e57-public-sample-probe-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "las-laz-public-sample-probe-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
   assert.deepEqual(
-    validateReferenceFormatProbeCompatibility(manifest, evidence),
+    validateReferenceFormatProbeCompatibility(
+      manifest,
+      e57Evidence,
+      lasLazEvidence,
+    ),
     {
       status: "pre-admission",
-      passedGates: 5,
-      heldGates: 3,
-      sampleFormats: 1,
+      passedGates: 10,
+      heldGates: 7,
+      sampleFormats: 3,
     },
   );
 });
@@ -36,7 +45,21 @@ test("an E57 sample probe cannot claim point decode", () => {
   assert.throws(
     () => validateReferenceFormatProbeCompatibility(
       overclaim,
-      evidence,
+      e57Evidence,
+      lasLazEvidence,
+    ),
+    /must be held/u,
+  );
+});
+
+test("a LAS/LAZ point probe cannot claim product open", () => {
+  const overclaim = structuredClone(manifest);
+  overclaim.gates.lasLazProductOpen = true;
+  assert.throws(
+    () => validateReferenceFormatProbeCompatibility(
+      overclaim,
+      e57Evidence,
+      lasLazEvidence,
     ),
     /must be held/u,
   );

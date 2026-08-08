@@ -300,8 +300,11 @@ admission합니다. datum transformation은 수행하지 않습니다. bounded
 glTF/GLB reference mesh는 source-native identity와 unaligned 상태로
 admission할 수 있지만 IFC semantic authority를 부여하지 않습니다.
 LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 capability registry에
-view/query/write/round-trip Gate를 분리해 기록하고 실제 codec/SDK
-evidence 전에는 source admission을 거부합니다.
+view/query/write/round-trip Gate를 분리해 기록하고 제품 codec/SDK,
+coordinate와 lifecycle evidence 전에는 source admission을 거부합니다.
+cache-only LAS/LAZ probe는 paired LAS 1.2 point record decode까지 통과했지만
+CRS, Worker isolation·cancellation·budget, point renderer와 제품 open이 없어
+source admission에는 영향을 주지 않습니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

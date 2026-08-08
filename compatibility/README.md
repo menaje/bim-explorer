@@ -209,10 +209,13 @@ projection을 고정하고 플랫폼별 bounded memory/time 관측을 보존합�
 `glb`만 admission하고 다른 format은 fail closed합니다.
 
 별도 [`reference-format-probes.json`](reference-format-probes.json)은 샘플 파일을
-배포하지 않는 pre-admission 기술 테스트를 기록합니다. 현재 E57 공개 샘플의
-고정 digest 다운로드, header, 116개 page CRC와 7,680-point XML metadata 선언까지
-5개 Gate가 통과했고 point decode·renderer·제품 open 3개 Gate는 held입니다.
-이 결과는 federation의 `pointCloudCodec` 또는 E57 admission을 바꾸지 않습니다.
+배포하지 않는 pre-admission 기술 테스트를 기록합니다. E57 공개 샘플의 고정
+digest 다운로드, header, 116개 page CRC와 7,680-point XML metadata 선언에
+더해 paired LAS 1.2/LAZ 10,201-point record를 exact `laz-perf@0.0.6`로 해제해
+raw record SHA-256 parity, Float64 좌표와 RGB를 확인했습니다. 전체 10개 Gate가
+통과했고 E57 decode/product, LAS/LAZ CRS·Worker lifecycle·renderer·제품 open
+7개 Gate는 held입니다. 이 결과는 federation의 `pointCloudCodec`이나 어떤
+point-cloud format admission도 바꾸지 않습니다.
 
 bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도
