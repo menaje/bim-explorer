@@ -81,11 +81,27 @@
       },
       "decode": {
         "bounds": {
-          "min": [-0.094689, 0.040011, -0.061873],
-          "max": [0.061008999999999994, 0.187321, 0.058799]
+          "min": [
+            -0.094689,
+            0.040011,
+            -0.061873
+          ],
+          "max": [
+            0.061008999999999994,
+            0.187321,
+            0.058799
+          ]
         },
-        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
-        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "firstPoint": [
+          -0.07063,
+          0.04015,
+          0.0012259999999999999
+        ],
+        "lastPoint": [
+          -0.037829,
+          0.12794,
+          0.004474
+        ],
         "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
         "dataPackets": 15,
         "indexPackets": 0,
@@ -159,11 +175,27 @@
       },
       "decode": {
         "bounds": {
-          "min": [-0.094689, 0.040011, -0.061873],
-          "max": [0.061008999999999994, 0.187321, 0.058799]
+          "min": [
+            -0.094689,
+            0.040011,
+            -0.061873
+          ],
+          "max": [
+            0.061008999999999994,
+            0.187321,
+            0.058799
+          ]
         },
-        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
-        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "firstPoint": [
+          -0.07063,
+          0.04015,
+          0.0012259999999999999
+        ],
+        "lastPoint": [
+          -0.037829,
+          0.12794,
+          0.004474
+        ],
         "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
         "dataPackets": 8,
         "indexPackets": 0,
@@ -226,7 +258,7 @@
   },
   "limitations": [
     "the two public samples contain only cartesianInvalidState zero records; a checksum-valid in-memory derivative qualifies state-one direction filtering",
-    "spherical coordinates, scan pose, multiple scans, extension records, point identity, picking and LOD streaming remain outside the bounded profile",
+    "spherical coordinates are qualified by separate evidence; scan pose, multiple scans, extension records, point identity, picking and LOD streaming remain outside this Cartesian matrix",
     "pye57/libE57Format was used only to capture the independent canonical position digest and is not a product or release dependency",
     "the public E57 binaries remain in an ignored digest cache and are not redistributed",
     "coordinate authority and E57 format admission remain held"

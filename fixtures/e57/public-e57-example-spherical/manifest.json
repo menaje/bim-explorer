@@ -1,0 +1,89 @@
+{
+  "schema": "bim-explorer-public-e57-spherical-fixture/1",
+  "fixtureId": "e57-example-pump-a-spherical",
+  "format": "e57",
+  "purpose": "cache-only spherical RAE, intensity, RGB and spherical validity qualification",
+  "provenance": {
+    "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+    "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+    "downloadPage": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/pumpASpherical.e57/download",
+    "publishedAt": "2011-05-04T23:26:44Z"
+  },
+  "license": {
+    "identifier": "LicenseRef-E57-Example-Test-Data",
+    "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+    "scope": "test-only remote sample; no redistribution"
+  },
+  "tracking": {
+    "cacheRoot": ".bim-explorer-cache/public-reference/e57",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "testOnly": true,
+    "networkAtRuntime": false
+  },
+  "referenceDecoder": {
+    "id": "pye57",
+    "version": "0.4.18",
+    "repository": "https://github.com/davidcaron/pye57",
+    "commit": "46713644bf28cffad721724c41d248b70eb697b5",
+    "libE57FormatCommit": "1914b8ea972251d3bb49a33828497dde683205d9",
+    "license": "MIT",
+    "positionEncoding": "record-major-cartesian-xyz-float64-little-endian",
+    "parityEncoding": "record-major-cartesian-xyz-nanometer-int64-little-endian",
+    "runtimeBundled": false,
+    "usedForExpectedResultsOnly": true
+  },
+  "entry": {
+    "name": "pumpASpherical.e57",
+    "rawUrl": "https://downloads.sourceforge.net/project/e57-3d-imgfmt/E57Example-data/pumpASpherical.e57",
+    "mediaType": "application/octet-stream",
+    "byteLength": 5168128,
+    "sha256": "268b42e69bbbad85703933f24626b97736ec703b0a7c34550dcb6ed0830317e3"
+  },
+  "expected": {
+    "formatVersion": "1.0",
+    "pageSize": 1024,
+    "pages": 5047,
+    "xmlPhysicalOffset": 5163876,
+    "xmlLogicalLength": 3988,
+    "sourcePointRecords": 370530,
+    "pointRecords": 155201,
+    "directionPointRecords": 0,
+    "invalidPointRecords": 215329,
+    "decodedPointBytes": 10745370,
+    "coordinateRepresentation": "spherical",
+    "prototype": [
+      { "name": "sphericalRange", "kind": "scaled-integer", "bitSize": 24, "minimum": -8388608, "maximum": 8388607, "scale": 0.000001, "offset": 0 },
+      { "name": "sphericalAzimuth", "kind": "scaled-integer", "bitSize": 23, "minimum": -4194304, "maximum": 4194303, "scale": 0.000001, "offset": 0 },
+      { "name": "sphericalElevation", "kind": "scaled-integer", "bitSize": 23, "minimum": -4194304, "maximum": 4194303, "scale": 0.000001, "offset": 0 },
+      { "name": "intensity", "kind": "scaled-integer", "bitSize": 15, "minimum": 0, "maximum": 32767, "scale": 0.00003051850947599719, "offset": 0 },
+      { "name": "colorRed", "kind": "integer", "bitSize": 8, "minimum": 0, "maximum": 255, "scale": 1, "offset": 0 },
+      { "name": "colorGreen", "kind": "integer", "bitSize": 8, "minimum": 0, "maximum": 255, "scale": 1, "offset": 0 },
+      { "name": "colorBlue", "kind": "integer", "bitSize": 8, "minimum": 0, "maximum": 255, "scale": 1, "offset": 0 },
+      { "name": "sphericalInvalidState", "kind": "integer", "bitSize": 2, "minimum": 0, "maximum": 2, "scale": 1, "offset": 0 }
+    ],
+    "bounds": {
+      "min": [-2.9037629619081056, -5.301102580971326, -1.8997026532643004],
+      "max": [1.7216047845518772, -0.7926476312450051, 1.8430029745831933]
+    },
+    "firstPoint": [1.7022875004552225, -3.193588581489893, -1.841841477589013],
+    "lastPoint": [-1.2676242355746532, -0.7964020267398209, -1.3817288473609723],
+    "firstColor": [51, 65, 49],
+    "lastColor": [26, 29, 19],
+    "colorRange": {
+      "min": [0, 2, 0],
+      "max": [255, 255, 255]
+    },
+    "rawSphericalFloat64LeSha256": "2541e4cbd88144393d9836911aa85e9d205fa1b84f147817842e490abf80aa05",
+    "referencePositionFloat64LeSha256": "4f336d56e8ffeb2c140c6230788740150f7435a1ef80173e4e7fc48e6b1b1846",
+    "projectedPositionFloat64LeSha256": "323b46c06adf0265a0e65654414e9beda5c6e455d876f6c90d40634d94c37138",
+    "positionNanometerInt64LeSha256": "25d3abf28dbf71fce25f55d524fcb81acdbc75b8a5d5ef5c47a268a3a82b6af6",
+    "validRgbSha256": "269e22fc74d4fe6336b9e594f7adfd7c46bb69e40c6f2b054a94f0cf6bb5c699",
+    "dataPackets": 104,
+    "indexPackets": 0,
+    "sectionLength": 5143660,
+    "pointRangeByteLength": 2483264,
+    "pointRangePayloadBytes": 2483216,
+    "pointRangeSha256": "b0a0c2cd5cb5f3a051d208332824318e7561e1098ef24a4dd718e460b3fd303f"
+  }
+}

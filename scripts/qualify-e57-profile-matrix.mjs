@@ -424,7 +424,7 @@ export async function qualifyE57ProfileMatrix() {
     ),
     limitations: [
       "the two public samples contain only cartesianInvalidState zero records; a checksum-valid in-memory derivative qualifies state-one direction filtering",
-      "spherical coordinates, scan pose, multiple scans, extension records, point identity, picking and LOD streaming remain outside the bounded profile",
+      "spherical coordinates are qualified by separate evidence; scan pose, multiple scans, extension records, point identity, picking and LOD streaming remain outside this Cartesian matrix",
       "pye57/libE57Format was used only to capture the independent canonical position digest and is not a product or release dependency",
       "the public E57 binaries remain in an ignored digest cache and are not redistributed",
       "coordinate authority and E57 format admission remain held"

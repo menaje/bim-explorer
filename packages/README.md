@@ -83,10 +83,13 @@ range로 투영합니다. exact `laz-perf@0.0.6`은 Browser 전용 Worker에서
 실행하며 CRS, point identity/picking·LOD, semantics, write 또는 round-trip
 authority를 제공하지 않습니다.
 
-[`e57-point-source`](e57-point-source/README.md)는 E57 1.0 단일 Cartesian
-scan의 default BitPack XYZ/RGB record를 모든 page CRC와 packet boundary를
-검증한 뒤 같은 source-neutral point range로 투영합니다. 자체 JavaScript
-decoder는 격리 Worker 실행을 전제로 하며 CRS, scan pose, semantics, write 또는
-round-trip authority를 제공하지 않습니다. 현재 main은 이 bounded profile의
-Browser, staged VS Code와 clean-installed VSIX 제품 open을 통과했지만 E57
-format family나 federation coordinate authority를 admission하지 않습니다.
+[`e57-point-source`](e57-point-source/README.md)는 E57 1.0 단일 scan의
+Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를
+모든 page CRC와 packet boundary를 검증한 뒤 같은 source-neutral point range로
+투영합니다. optional intensity는 stream alignment까지만 해제하고 lossy omitted로
+표시합니다. 자체 JavaScript decoder는 격리 Worker 실행을 전제로 하며 CRS,
+scan pose, semantics, write 또는 round-trip authority를 제공하지 않습니다.
+현재 main은 Cartesian bounded profile의 Browser, staged VS Code와
+clean-installed VSIX 제품 open 및 별도 spherical source qualification을
+통과했지만 E57 format family나 federation coordinate authority를 admission하지
+않습니다.

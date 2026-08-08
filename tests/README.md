@@ -129,8 +129,12 @@ header, 모든 physical page CRC-32C와 XML point profile, default-BitPack packe
 `e57-vscode-product` test는 bounded single-scan source projection, one-shot
 Worker transfer·termination, 실제 Browser local file input, staged VS Code와
 clean-installed VSIX의 exact range·visible projection과 cleanup을 검사합니다.
-제품 open만 experimental로 승인하며 CRS/scan pose/surveyed datum, broader
-profile, point identity/pick, LOD와 format admission은 계속 거부합니다.
+별도 `e57-spherical-profile` test는 370,530개 spherical RAE/intensity/RGB
+record의 Cartesian 변환, 215,329개 invalid filter, 독립 nanometer position/RGB
+digest와 intensity lossy omission을 검사합니다. Cartesian 제품 open과 bounded
+spherical source projection만 experimental로 승인하며 CRS/scan pose/surveyed
+datum, multiple scan/extension, point identity/pick, LOD와 format admission은
+계속 거부합니다.
 
 `las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest
 cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Float64

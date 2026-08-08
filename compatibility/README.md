@@ -231,6 +231,12 @@ digest 다운로드, header, 116개 page CRC와 7,680-point XML metadata 선언�
 `bunnyDouble.e57`·`bunnyInt32.e57`을 cache-only로 사용해 각 30,571-point
 Float64/ScaledInteger, indexless compressed-vector와 Cartesian validity 필터를
 검증하고 독립 `pye57/libE57Format` position digest와 exact parity를 고정합니다.
+별도 [`E57 spherical profile`](evidence/e57-spherical-profile-2026-08-08.json)은
+5,168,128-byte 공개 example의 370,530개 spherical RAE/intensity/RGB record를
+해제하고 215,329개 invalid record를 제거해 155,201개 Cartesian display point를
+만듭니다. nanometer-quantized position과 RGB digest는 독립
+`pye57@0.4.18/libE57Format` 기준과 일치하며 intensity omission은 lossy로
+기록합니다.
 paired LAS 1.2/LAZ
 10,201-point record를 exact `laz-perf@0.0.6`로 해제해
 raw record SHA-256 parity, Float64 좌표와 RGB를 확인했습니다. 별도
@@ -246,7 +252,7 @@ LAS와 LAZ 실제 local file input이 동일한 10,201 points·163,216-byte uplo
 [`VS Code product evidence`](evidence/las-laz-vscode-product-2026-08-08.json)는
 staged Custom Editor와 clean-installed VSIX가 같은 projection을 재현하고
 point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록합니다.
-전체 25개 Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
+전체 26개 Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
 admission 4개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.

@@ -1,0 +1,273 @@
+{
+  "schema": "bim-explorer-e57-spherical-profile-evidence/1",
+  "status": "passed-bounded-spherical-profile",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "e57-example-pump-a-spherical",
+    "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+    "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+    "publishedAt": "2011-05-04T23:26:44Z",
+    "byteLength": 5168128,
+    "sha256": "268b42e69bbbad85703933f24626b97736ec703b0a7c34550dcb6ed0830317e3",
+    "license": "LicenseRef-E57-Example-Test-Data",
+    "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+    "testOnly": true,
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "referenceDecoder": {
+    "id": "pye57",
+    "version": "0.4.18",
+    "repository": "https://github.com/davidcaron/pye57",
+    "commit": "46713644bf28cffad721724c41d248b70eb697b5",
+    "libE57FormatCommit": "1914b8ea972251d3bb49a33828497dde683205d9",
+    "license": "MIT",
+    "positionEncoding": "record-major-cartesian-xyz-float64-little-endian",
+    "parityEncoding": "record-major-cartesian-xyz-nanometer-int64-little-endian",
+    "runtimeBundled": false,
+    "usedForExpectedResultsOnly": true
+  },
+  "header": {
+    "coordinateRepresentation": "spherical",
+    "formatVersion": "1.0",
+    "pageSize": 1024,
+    "pages": 5047,
+    "validPageChecksums": 5047,
+    "xmlPhysicalOffset": 5163876,
+    "xmlLogicalLength": 3988,
+    "sourcePointRecords": 370530,
+    "pointRecords": 155201,
+    "directionPointRecords": 0,
+    "invalidPointRecords": 215329,
+    "decodedPointBytes": 10745370,
+    "prototype": [
+      {
+        "name": "sphericalRange",
+        "kind": "scaled-integer",
+        "bitSize": 24,
+        "minimum": -8388608,
+        "maximum": 8388607,
+        "scale": 0.000001,
+        "offset": 0
+      },
+      {
+        "name": "sphericalAzimuth",
+        "kind": "scaled-integer",
+        "bitSize": 23,
+        "minimum": -4194304,
+        "maximum": 4194303,
+        "scale": 0.000001,
+        "offset": 0
+      },
+      {
+        "name": "sphericalElevation",
+        "kind": "scaled-integer",
+        "bitSize": 23,
+        "minimum": -4194304,
+        "maximum": 4194303,
+        "scale": 0.000001,
+        "offset": 0
+      },
+      {
+        "name": "intensity",
+        "kind": "scaled-integer",
+        "bitSize": 15,
+        "minimum": 0,
+        "maximum": 32767,
+        "scale": 0.00003051850947599719,
+        "offset": 0
+      },
+      {
+        "name": "colorRed",
+        "kind": "integer",
+        "bitSize": 8,
+        "minimum": 0,
+        "maximum": 255,
+        "scale": 1,
+        "offset": 0
+      },
+      {
+        "name": "colorGreen",
+        "kind": "integer",
+        "bitSize": 8,
+        "minimum": 0,
+        "maximum": 255,
+        "scale": 1,
+        "offset": 0
+      },
+      {
+        "name": "colorBlue",
+        "kind": "integer",
+        "bitSize": 8,
+        "minimum": 0,
+        "maximum": 255,
+        "scale": 1,
+        "offset": 0
+      },
+      {
+        "name": "sphericalInvalidState",
+        "kind": "integer",
+        "bitSize": 2,
+        "minimum": 0,
+        "maximum": 2,
+        "scale": 1,
+        "offset": 0
+      }
+    ]
+  },
+  "decode": {
+    "bounds": {
+      "min": [
+        -2.9037629619081056,
+        -5.301102580971326,
+        -1.8997026532643004
+      ],
+      "max": [
+        1.7216047845518772,
+        -0.7926476312450051,
+        1.8430029745831933
+      ]
+    },
+    "colorRange": {
+      "min": [
+        0,
+        2,
+        0
+      ],
+      "max": [
+        255,
+        255,
+        255
+      ]
+    },
+    "firstPoint": [
+      1.7022875004552225,
+      -3.193588581489893,
+      -1.841841477589013
+    ],
+    "lastPoint": [
+      -1.2676242355746532,
+      -0.7964020267398209,
+      -1.3817288473609723
+    ],
+    "firstColor": [
+      51,
+      65,
+      49
+    ],
+    "lastColor": [
+      26,
+      29,
+      19
+    ],
+    "rawSphericalFloat64LeSha256": "2541e4cbd88144393d9836911aa85e9d205fa1b84f147817842e490abf80aa05",
+    "referencePositionFloat64LeSha256": "4f336d56e8ffeb2c140c6230788740150f7435a1ef80173e4e7fc48e6b1b1846",
+    "positionFloat64LeSha256": "323b46c06adf0265a0e65654414e9beda5c6e455d876f6c90d40634d94c37138",
+    "positionNanometerInt64LeSha256": "25d3abf28dbf71fce25f55d524fcb81acdbc75b8a5d5ef5c47a268a3a82b6af6",
+    "validRgbSha256": "269e22fc74d4fe6336b9e594f7adfd7c46bb69e40c6f2b054a94f0cf6bb5c699",
+    "dataPackets": 104,
+    "indexPackets": 0,
+    "sectionLength": 5143660,
+    "terminalPadding": [
+      {
+        "field": "sphericalRange",
+        "bits": 16,
+        "bytePaddingBits": 0
+      },
+      {
+        "field": "sphericalAzimuth",
+        "bits": 18,
+        "bytePaddingBits": 2
+      },
+      {
+        "field": "sphericalElevation",
+        "bits": 18,
+        "bytePaddingBits": 2
+      },
+      {
+        "field": "intensity",
+        "bits": 2,
+        "bytePaddingBits": 2
+      },
+      {
+        "field": "colorRed",
+        "bits": 0,
+        "bytePaddingBits": 0
+      },
+      {
+        "field": "colorGreen",
+        "bits": 0,
+        "bytePaddingBits": 0
+      },
+      {
+        "field": "colorBlue",
+        "bits": 0,
+        "bytePaddingBits": 0
+      },
+      {
+        "field": "sphericalInvalidState",
+        "bits": 4,
+        "bytePaddingBits": 4
+      }
+    ]
+  },
+  "pointSource": {
+    "contract": "bim-explorer-e57-point-source/0.1",
+    "decoder": "bim-explorer-e57-bitpack-reader",
+    "pointFormat": "spherical-rae-rgb",
+    "points": 155201,
+    "ranges": 1,
+    "pointRangeByteLength": 2483264,
+    "pointRangePayloadBytes": 2483216,
+    "pointRangeSha256": "b0a0c2cd5cb5f3a051d208332824318e7561e1098ef24a4dd718e460b3fd303f",
+    "ignoredFields": [
+      "intensity"
+    ],
+    "attributeLossiness": "lossy",
+    "coordinateReferenceStatus": "unqualified",
+    "maximumProjectionError": 1.191939629219263e-7
+  },
+  "capabilities": {
+    "sphericalCoordinates": true,
+    "sphericalInvalidState": true,
+    "intensityStreamAlignment": true,
+    "rgbProjection": true,
+    "pointRange": true
+  },
+  "cleanup": {
+    "downloadBufferCleared": true,
+    "decoderBuffersCleared": true,
+    "pointRangeCleared": true
+  },
+  "decision": {
+    "productProfileExpanded": true,
+    "coordinateReference": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false
+  },
+  "assertions": {
+    "pinnedPublicDownload": true,
+    "exactByteLengthAndDigest": true,
+    "allPhysicalPageChecksums": true,
+    "sphericalScaledIntegerDecode": true,
+    "sphericalToCartesianProjection": true,
+    "sphericalInvalidStateFiltering": true,
+    "intensityStreamAlignment": true,
+    "rgbProjection": true,
+    "boundedTerminalPadding": true,
+    "independentReferenceParity": true,
+    "boundedPointRange": true,
+    "decoderBuffersCleared": true,
+    "cacheOnlyTestUse": true,
+    "sampleNotTrackedOrBundled": true,
+    "formatAdmissionHeld": true,
+    "pathFreeEvidence": true
+  },
+  "limitations": [
+    "the public sample is downloaded to an ignored digest cache and is not redistributed",
+    "intensity is decoded for stream alignment but omitted from the RGBA point range as an explicit lossy attribute projection",
+    "nanometer-quantized Cartesian positions match pye57/libE57Format; the reference decoder is not a product dependency",
+    "the sample has an identity pose and does not qualify scan pose, CRS or surveyed datum authority",
+    "multiple scans, extension records, point identity, picking, LOD and E57 format admission remain held"
+  ]
+}

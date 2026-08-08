@@ -50,6 +50,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Qualify E57 spherical coordinate profile
+        run: >-
+          npm run qualify:e57:spherical --
+          --out e57-spherical-profile-${{ runner.os }}.json
+
+      - name: Upload E57 spherical coordinate evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e57-spherical-profile-${{ runner.os }}
+          path: e57-spherical-profile-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify LAS/LAZ point renderer on Linux
         if: runner.os == 'Linux'
         run: >-

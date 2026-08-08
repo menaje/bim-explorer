@@ -14,11 +14,16 @@ const MAXIMUM_XML_BYTES = 1024 * 1024;
 const SECTION_HEADER_BYTES = 32;
 const DATA_PACKET_HEADER_BYTES = 6;
 const INDEX_PACKET_HEADER_BYTES = 16;
-const MAXIMUM_PROTOTYPE_FIELDS = 7;
-const COORDINATES = Object.freeze([
+const MAXIMUM_PROTOTYPE_FIELDS = 8;
+const CARTESIAN_COORDINATES = Object.freeze([
   "cartesianX",
   "cartesianY",
   "cartesianZ",
+]);
+const SPHERICAL_COORDINATES = Object.freeze([
+  "sphericalRange",
+  "sphericalAzimuth",
+  "sphericalElevation",
 ]);
 const COLORS = Object.freeze([
   "colorRed",
@@ -26,10 +31,15 @@ const COLORS = Object.freeze([
   "colorBlue",
 ]);
 const CARTESIAN_INVALID_STATE = "cartesianInvalidState";
+const SPHERICAL_INVALID_STATE = "sphericalInvalidState";
+const INTENSITY = "intensity";
 const FIELDS = new Set([
-  ...COORDINATES,
+  ...CARTESIAN_COORDINATES,
+  ...SPHERICAL_COORDINATES,
   ...COLORS,
   CARTESIAN_INVALID_STATE,
+  SPHERICAL_INVALID_STATE,
+  INTENSITY,
 ]);
 const CRC32C_POLYNOMIAL = 0x82f63b78;
 
@@ -246,10 +256,25 @@ function prototypeFields(body) {
   if (
     body.slice(consumed).trim().length > 0 ||
     fields.length < 3 ||
-    fields.length > MAXIMUM_PROTOTYPE_FIELDS ||
-    COORDINATES.some((name) => !names.has(name))
+    fields.length > MAXIMUM_PROTOTYPE_FIELDS
   ) {
-    throw new TypeError("E57 Cartesian prototype is incomplete");
+    throw new TypeError("E57 point prototype is incomplete");
+  }
+  const hasCartesian = CARTESIAN_COORDINATES.every(
+    (name) => names.has(name),
+  );
+  const hasSpherical = SPHERICAL_COORDINATES.every(
+    (name) => names.has(name),
+  );
+  const partialCoordinateFields = [
+    ...CARTESIAN_COORDINATES,
+    ...SPHERICAL_COORDINATES,
+  ].filter((name) => names.has(name));
+  if (
+    hasCartesian === hasSpherical ||
+    partialCoordinateFields.length !== 3
+  ) {
+    throw new TypeError("E57 coordinate prototype is unsupported");
   }
   const colorFields = COLORS.filter((name) => names.has(name));
   if (![0, 3].includes(colorFields.length)) {
@@ -267,10 +292,23 @@ function prototypeFields(body) {
       throw new RangeError(`E57 ${field.name} bounds are invalid`);
     }
   }
+  const coordinateRepresentation = hasCartesian
+    ? "cartesian"
+    : "spherical";
+  const coordinateFields = hasCartesian
+    ? CARTESIAN_COORDINATES
+    : SPHERICAL_COORDINATES;
+  const invalidStateName = hasCartesian
+    ? CARTESIAN_INVALID_STATE
+    : SPHERICAL_INVALID_STATE;
+  const otherInvalidStateName = hasCartesian
+    ? SPHERICAL_INVALID_STATE
+    : CARTESIAN_INVALID_STATE;
   const invalidState = fields.find(
-    (field) => field.name === CARTESIAN_INVALID_STATE,
+    (field) => field.name === invalidStateName,
   );
   if (
+    names.has(otherInvalidStateName) ||
     invalidState !== undefined &&
     (
       invalidState.kind !== "integer" ||
@@ -281,19 +319,25 @@ function prototypeFields(body) {
     )
   ) {
     throw new TypeError(
-      "E57 cartesianInvalidState profile is unsupported",
+      `E57 ${invalidStateName} profile is unsupported`,
     );
   }
-  return Object.freeze(fields);
+  return Object.freeze({
+    coordinateFields,
+    coordinateRepresentation,
+    fields: Object.freeze(fields),
+    invalidStateName: invalidState === undefined
+      ? null
+      : invalidStateName,
+  });
 }
 
 function decodedPointBytes(fields, recordCount) {
   const names = new Set(fields.map((field) => field.name));
-  const hasColor = COLORS.every((name) => names.has(name));
-  const hasInvalidState = names.has(CARTESIAN_INVALID_STATE);
-  const bytesPerRecord = 28 +
-    (hasInvalidState ? 1 : 0) +
-    (hasColor && hasInvalidState ? 24 : 0);
+  const hasInvalidState =
+    names.has(CARTESIAN_INVALID_STATE) ||
+    names.has(SPHERICAL_INVALID_STATE);
+  const bytesPerRecord = 28 + (hasInvalidState ? 1 : 0);
   return recordCount * bytesPerRecord;
 }
 
@@ -380,14 +424,17 @@ function parseXml(xml, limits) {
   ) {
     throw new TypeError("E57 point metadata profile is unsupported");
   }
-  const fields = prototypeFields(prototypes[0][2]);
-  const decodedBytes = decodedPointBytes(fields, recordCount);
+  const prototype = prototypeFields(prototypes[0][2]);
+  const decodedBytes = decodedPointBytes(
+    prototype.fields,
+    recordCount,
+  );
   if (decodedBytes > limits.maximumDecodedPointBytes) {
     throw new RangeError("E57 point count exceeds its bounded profile");
   }
   return Object.freeze({
     decodedPointBytes: decodedBytes,
-    fields,
+    ...prototype,
     fileOffset,
     recordCount,
   });
@@ -550,6 +597,32 @@ function colorByte(value, bounds, label) {
   return Math.min(255, Math.max(0, Math.round(unit * 255)));
 }
 
+function cartesianPosition(values, representation) {
+  if (representation === "cartesian") {
+    return values;
+  }
+  const [range, azimuth, elevation] = values;
+  if (
+    range < 0 ||
+    azimuth < -Math.PI ||
+    azimuth > Math.PI ||
+    elevation < -Math.PI / 2 ||
+    elevation > Math.PI / 2
+  ) {
+    throw new RangeError("E57 spherical coordinate is invalid");
+  }
+  const cosineElevation = Math.cos(elevation);
+  const result = [
+    range * cosineElevation * Math.cos(azimuth),
+    range * cosineElevation * Math.sin(azimuth),
+    range * Math.sin(elevation),
+  ];
+  if (result.some((value) => !Number.isFinite(value))) {
+    throw new RangeError("E57 spherical projection is non-finite");
+  }
+  return result;
+}
+
 function decodePackets(logical, header, pointProfile) {
   const sectionStart = physicalToLogical(
     pointProfile.fileOffset,
@@ -618,31 +691,35 @@ function decodePackets(logical, header, pointProfile) {
   const names = new Set(fields.map((field) => field.name));
   const hasColor = COLORS.every((name) => names.has(name));
   const invalidStateField = fields.findIndex(
-    (field) => field.name === CARTESIAN_INVALID_STATE,
+    (field) => field.name === pointProfile.invalidStateName,
   );
-  const hasInvalidState = invalidStateField !== -1;
   const streams = fields.map(() => new BitStream());
   const rawPositions = new Float64Array(
     pointProfile.recordCount * 3,
   );
   const colors = new Uint8Array(pointProfile.recordCount * 4);
-  const invalidStates = hasInvalidState
-    ? new Uint8Array(pointProfile.recordCount)
-    : null;
-  const rawColorValues = hasColor && hasInvalidState
-    ? new Float64Array(pointProfile.recordCount * 3)
-    : null;
   const rawColorRange = {
     min: [Infinity, Infinity, Infinity],
     max: [-Infinity, -Infinity, -Infinity],
   };
   const coordinateIndex = new Map(
-    COORDINATES.map((name, index) => [name, index]),
+    pointProfile.coordinateFields.map(
+      (name, index) => [name, index],
+    ),
   );
   const colorIndex = new Map(
     COLORS.map((name, index) => [name, index]),
   );
+  const colorFieldIndices = COLORS.map((name) =>
+    fields.findIndex((field) => field.name === name));
+  const colorBounds = fields.map((field) =>
+    colorIndex.has(field.name) ? fieldBounds(field) : null);
+  const coordinateValues = [0, 0, 0];
+  const colorValues = [0, 0, 0];
   let records = 0;
+  let validPointRecords = 0;
+  let directionPointRecords = 0;
+  let invalidPointRecords = 0;
   let dataPackets = 0;
   let indexPackets = 0;
   try {
@@ -713,45 +790,67 @@ function decodePackets(logical, header, pointProfile) {
         available,
         pointProfile.recordCount - records,
       );
-      for (const [fieldIndex, field] of fields.entries()) {
-        const coordinate = coordinateIndex.get(field.name);
-        const color = colorIndex.get(field.name);
-        const bounds = fieldBounds(field);
-        for (let index = 0; index < count; index += 1) {
+      for (let index = 0; index < count; index += 1) {
+        coordinateValues.fill(0);
+        colorValues.fill(0);
+        let invalidState = 0;
+        for (const [fieldIndex, field] of fields.entries()) {
           const value = recordValue(streams[fieldIndex], field);
-          const target = records + index;
+          const coordinate = coordinateIndex.get(field.name);
+          const color = colorIndex.get(field.name);
           if (coordinate !== undefined) {
-            rawPositions[target * 3 + coordinate] = value;
+            coordinateValues[coordinate] = value;
           } else if (color !== undefined) {
-            colors[target * 4 + color] = colorByte(
-              value,
-              bounds,
-              `E57 ${field.name}`,
-            );
-            if (rawColorValues === null) {
-              rawColorRange.min[color] = Math.min(
-                rawColorRange.min[color],
-                value,
-              );
-              rawColorRange.max[color] = Math.max(
-                rawColorRange.max[color],
-                value,
-              );
-            } else {
-              rawColorValues[target * 3 + color] = value;
-            }
+            colorValues[color] = value;
           } else if (fieldIndex === invalidStateField) {
-            invalidStates[target] = value;
+            invalidState = value;
           }
         }
-      }
-      for (let index = 0; index < count; index += 1) {
-        const target = records + index;
-        if (!hasColor) {
-          colors.fill(255, target * 4, target * 4 + 4);
-        } else {
-          colors[target * 4 + 3] = 255;
+        if (invalidState === 1) {
+          directionPointRecords += 1;
+          continue;
         }
+        if (invalidState === 2) {
+          invalidPointRecords += 1;
+          continue;
+        }
+        if (invalidState !== 0) {
+          throw new RangeError(
+            `E57 ${pointProfile.invalidStateName} value is unsupported`,
+          );
+        }
+        const position = cartesianPosition(
+          coordinateValues,
+          pointProfile.coordinateRepresentation,
+        );
+        rawPositions.set(position, validPointRecords * 3);
+        if (hasColor) {
+          for (const [color, name] of COLORS.entries()) {
+            const fieldIndex = colorFieldIndices[color];
+            const value = colorValues[color];
+            colors[validPointRecords * 4 + color] = colorByte(
+              value,
+              colorBounds[fieldIndex],
+              `E57 ${name}`,
+            );
+            rawColorRange.min[color] = Math.min(
+              rawColorRange.min[color],
+              value,
+            );
+            rawColorRange.max[color] = Math.max(
+              rawColorRange.max[color],
+              value,
+            );
+          }
+          colors[validPointRecords * 4 + 3] = 255;
+        } else {
+          colors.fill(
+            255,
+            validPointRecords * 4,
+            validPointRecords * 4 + 4,
+          );
+        }
+        validPointRecords += 1;
       }
       records += count;
       dataPackets += 1;
@@ -759,14 +858,28 @@ function decodePackets(logical, header, pointProfile) {
     if (records !== pointProfile.recordCount || dataPackets === 0) {
       throw new Error("E57 decoded point count is incomplete");
     }
-    fields.forEach((field, index) => {
-      const remaining = streams[index].availableBits;
-      const expectedPadding = field.bitSize === 0
+    const terminalStreams = fields.map((field, index) => ({
+      expected: field.bitSize === 0
         ? 0
-        : (8 - pointProfile.recordCount * field.bitSize % 8) % 8;
-      if (remaining !== expectedPadding) {
-        throw new Error(`E57 ${field.name} stream has extra records`);
-      }
+        : (8 - pointProfile.recordCount * field.bitSize % 8) % 8,
+      field,
+      index,
+      remaining: streams[index].availableBits,
+    }));
+    const invalidTerminal = terminalStreams.find(
+      ({ expected, field, remaining }) =>
+        field.bitSize === 0
+          ? remaining !== 0
+          : remaining < expected ||
+            (remaining - expected) % 8 !== 0 ||
+            remaining - expected > 24,
+    );
+    if (invalidTerminal !== undefined) {
+      throw new Error(
+        `E57 ${invalidTerminal.field.name} terminal padding is invalid`,
+      );
+    }
+    terminalStreams.forEach(({ index, field, remaining }) => {
       if (
         remaining > 0 &&
         streams[index].extract(remaining) !== 0n
@@ -810,50 +923,11 @@ function decodePackets(logical, header, pointProfile) {
         throw new Error("E57 compressed-vector index is missing");
       }
     }
-    let validPointRecords = records;
-    let directionPointRecords = 0;
-    let invalidPointRecords = 0;
-    if (invalidStates !== null) {
-      let write = 0;
-      for (let read = 0; read < records; read += 1) {
-        const state = invalidStates[read];
-        if (state === 0) {
-          if (write !== read) {
-            rawPositions.copyWithin(
-              write * 3,
-              read * 3,
-              read * 3 + 3,
-            );
-            colors.copyWithin(
-              write * 4,
-              read * 4,
-              read * 4 + 4,
-            );
-            rawColorValues?.copyWithin(
-              write * 3,
-              read * 3,
-              read * 3 + 3,
-            );
-          }
-          write += 1;
-        } else if (state === 1) {
-          directionPointRecords += 1;
-        } else if (state === 2) {
-          invalidPointRecords += 1;
-        } else {
-          throw new RangeError(
-            "E57 cartesianInvalidState value is unsupported",
-          );
-        }
-      }
-      validPointRecords = write;
-      rawPositions.fill(0, write * 3);
-      colors.fill(0, write * 4);
-      rawColorValues?.fill(0, write * 3);
-    }
     if (validPointRecords === 0) {
-      throw new RangeError("E57 scan has no valid Cartesian points");
+      throw new RangeError("E57 scan has no valid point coordinates");
     }
+    rawPositions.fill(0, validPointRecords * 3);
+    colors.fill(0, validPointRecords * 4);
     const rawBounds = {
       min: [Infinity, Infinity, Infinity],
       max: [-Infinity, -Infinity, -Infinity],
@@ -863,17 +937,6 @@ function decodePackets(logical, header, pointProfile) {
         const value = rawPositions[point * 3 + axis];
         rawBounds.min[axis] = Math.min(rawBounds.min[axis], value);
         rawBounds.max[axis] = Math.max(rawBounds.max[axis], value);
-        if (rawColorValues !== null) {
-          const color = rawColorValues[point * 3 + axis];
-          rawColorRange.min[axis] = Math.min(
-            rawColorRange.min[axis],
-            color,
-          );
-          rawColorRange.max[axis] = Math.max(
-            rawColorRange.max[axis],
-            color,
-          );
-        }
       }
     }
     return {
@@ -884,6 +947,13 @@ function decodePackets(logical, header, pointProfile) {
         dataPackets,
         indexPackets,
         sectionLength,
+        terminalPadding: Object.freeze(terminalStreams.map(
+          ({ expected, field, remaining }) => Object.freeze({
+            field: field.name,
+            bits: remaining,
+            bytePaddingBits: expected,
+          }),
+        )),
       }),
       rawBounds: Object.freeze({
         min: Object.freeze([...rawBounds.min]),
@@ -904,12 +974,10 @@ function decodePackets(logical, header, pointProfile) {
   } catch (error) {
     rawPositions.fill(0);
     colors.fill(0);
-    invalidStates?.fill(0);
-    rawColorValues?.fill(0);
     throw error;
   } finally {
-    invalidStates?.fill(0);
-    rawColorValues?.fill(0);
+    coordinateValues.fill(0);
+    colorValues.fill(0);
     streams.forEach((stream) => stream.clear());
   }
 }
@@ -1018,6 +1086,8 @@ export function decodeE57PointSource(
     );
     const pointProfile = parseXml(xml, limits);
     const envelopeHeader = Object.freeze({
+      coordinateRepresentation:
+        pointProfile.coordinateRepresentation,
       decodedPointBytes: pointProfile.decodedPointBytes,
       fields: pointProfile.fields,
       formatVersion: `${major}.${minor}`,

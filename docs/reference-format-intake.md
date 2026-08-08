@@ -80,8 +80,17 @@ admission과 `pointCloudCodec`은 계속 held입니다.
 decoder의 30,571개 유효점은 독립 `pye57@0.4.19/libE57Format` 기준과 동일한
 record-major Float64 position SHA-256을 만들었습니다. checksum-valid in-memory
 derivative로 state 1 direction record가 bounds·range 투영 전에 제거되는 것도
-검증했습니다. spherical coordinate, pose 적용, multiple scan과 extension
-record는 여전히 profile 밖입니다.
+검증했습니다.
+
+추가 spherical profile은 E57 reference implementation이 공개한
+5,168,128-byte `pumpASpherical.e57`을 재배포하지 않고 digest cache에서만
+사용합니다. 370,530개 scale `1e-6` spherical range/azimuth/elevation record를
+Cartesian display 좌표로 변환하고 `sphericalInvalidState`의 215,329개 invalid
+record를 제거해 155,201개 점을 만들었습니다. nanometer-quantized position
+SHA-256와 RGB SHA-256는 독립 `pye57@0.4.18/libE57Format` 기준과 일치합니다.
+intensity는 stream alignment를 위해 해제하지만 point range에서 lossy omitted로
+보고합니다. pose 적용, multiple scan과 extension record는 여전히 profile
+밖입니다.
 
 두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
 고정 commit에서 내려받습니다. exact `laz-perf@0.0.6` Apache-2.0 dependency로
@@ -111,9 +120,9 @@ unqualified이며 point identity/picking·LOD는 제공하지 않습니다.
 intake 계약과 공개 issue form, cache-only E57 decode/source projection 및
 LAS/LAZ pre-admission decode/Worker/point-renderer probe가 준비됐고, LAS/LAZ는 bounded Browser,
 staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했습니다.
-E57도 bounded Browser, staged VS Code와 clean-installed VSIX 제품
-source/file-open까지 통과했지만 surveyed coordinate와 broader scan/profile
-evidence는 아직 없습니다.
+E57도 bounded Browser, staged VS Code와 clean-installed VSIX의 Cartesian 제품
+source/file-open 및 별도 spherical source projection까지 통과했지만 scan pose,
+multiple-scan/extension, surveyed coordinate evidence는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에

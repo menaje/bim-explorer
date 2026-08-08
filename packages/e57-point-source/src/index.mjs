@@ -125,6 +125,10 @@ export async function createE57PointSourceArtifact(
     const hasColor = ["colorRed", "colorGreen", "colorBlue"]
       .every((name) =>
         decoded.header.fields.some((field) => field.name === name));
+    const coordinateFormat =
+      decoded.header.coordinateRepresentation === "spherical"
+        ? "spherical-rae"
+        : "cartesian-xyz";
     return Object.freeze({
       schema: E57_POINT_SOURCE_CONTRACT,
       source: Object.freeze({
@@ -141,8 +145,8 @@ export async function createE57PointSourceArtifact(
         formatVersion: decoded.header.formatVersion,
         mediaType: "application/octet-stream",
         pointFormat: hasColor
-          ? "cartesian-xyz-rgb"
-          : "cartesian-xyz",
+          ? `${coordinateFormat}-rgb`
+          : coordinateFormat,
         revisionId,
         roundTripAuthority: false,
         semanticAuthority: false,
@@ -164,6 +168,19 @@ export async function createE57PointSourceArtifact(
         sha256: rangeDigest,
       },
       profile: Object.freeze({
+        attributeProjection: Object.freeze({
+          ignoredFields: Object.freeze(
+            decoded.header.fields
+              .map((field) => field.name)
+              .filter((name) => name === "intensity"),
+          ),
+          lossiness: decoded.header.fields.some(
+            (field) => field.name === "intensity",
+          )
+            ? "lossy"
+            : "lossless-for-admitted-fields",
+          method: "decode-for-stream-alignment-without-semantic-authority",
+        }),
         colorProjection: Object.freeze({
           method: hasColor
             ? "prototype-range-to-rgba8"
@@ -178,6 +195,8 @@ export async function createE57PointSourceArtifact(
           method: "float64-origin-plus-relative-float32",
           origin: projected.origin,
           rawBounds: decoded.rawBounds,
+          sourceRepresentation:
+            decoded.header.coordinateRepresentation,
         }),
         decoder: Object.freeze({
           backend: "bounded-native-js-product-source",
@@ -193,6 +212,8 @@ export async function createE57PointSourceArtifact(
           version: "0.1.0",
         }),
         header: Object.freeze({
+          coordinateRepresentation:
+            decoded.header.coordinateRepresentation,
           decodedPointBytes: decoded.header.decodedPointBytes,
           directionPointRecords:
             decoded.header.directionPointRecords,

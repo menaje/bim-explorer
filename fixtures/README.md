@@ -35,6 +35,11 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   Test Data License 대상 `bunnyDouble.e57`·`bunnyInt32.e57`을 cache-only로
   받아 30,571-point Float64/ScaledInteger parity, `cartesianInvalidState`,
   indexless compressed-vector와 source-neutral point range를 검증하는 manifest
+- `e57/public-e57-example-spherical`: E57 reference implementation의
+  5,168,128-byte `pumpASpherical.e57`을 cache-only로 받아 370,530개 spherical
+  RAE/intensity/RGB record, 215,329개 invalid filter와 155,201개 Cartesian
+  display point의 독립 `pye57/libE57Format` parity를 검증하는 manifest. 원본은
+  재배포하지 않음
 - `las-laz/public-loaders-gl-ripple`: `visgl/loaders.gl`의 paired 347,061-byte
   LAS와 53,952-byte LAZ를 cache-only로 받아 LAS 1.2 point-format 3의
   10,201개 record, Float64 좌표·RGB와 압축 해제 후 exact record SHA-256
@@ -63,6 +68,8 @@ npm run fetch:e57:public
 npm run qualify:e57:probe
 npm run fetch:e57:profiles
 npm run qualify:e57:profiles
+npm run fetch:e57:spherical
+npm run qualify:e57:spherical
 npm run fetch:las-laz:public
 npm run qualify:las-laz:probe
 npm run qualify:las-laz:worker
