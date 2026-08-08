@@ -36,7 +36,8 @@ path-free host bridge와 clean VSIX install 결과는
 [`public Browser product evidence`](evidence/bim-product-shell-browser-public-2026-08-04.json),
 [`reference Browser product evidence`](evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json),
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
-[`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json)가
+[`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
+[`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
 24 triangles, 57,585 non-background pixels와 1,120 uploaded bytes를
 재현했습니다. 빈 profile의 설치된 VSIX runtime도 같은 fixture와
@@ -47,6 +48,8 @@ WebGL2 projection으로 열고 정리했습니다. 계정·upload·telemetry·Co
 Spatial 의존성은 없습니다. Khronos Box GLB도 Browser, staged VS Code와
 clean-installed VSIX에서 1 reference entity·12 triangles·86,486 pixels,
 source-native selection, `globalId: null`과 cleanup을 재현했습니다. 제품
+세 경로는 macOS arm64와 Linux x64 CI에서 고정 VS Code 1.131.0으로 같은
+model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
 entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
 glTF profile, physical GPU와 marketplace release는 계속 보류합니다.
 
@@ -203,7 +206,8 @@ bounded glTF 2.0/GLB reference mesh는
 관리합니다. Khronos Box GLB, 공식 Validator, source-native identity와
 headless generic renderer, 실제 Chrome WebGL2와 federation reference
 admission을 통과했습니다. bounded Browser/VS Code/clean-installed VSIX
-제품 file-open도 별도 evidence로 통과했습니다. external resource,
+제품 file-open도 macOS arm64와 Linux x64 매트릭스로 통과했습니다.
+external resource,
 required extension, product-scale reference model과 physical GPU는 독립
 Gate로 남습니다. GLB는 ignored cache에서만 사용하고 release에는
 포함하지 않습니다.

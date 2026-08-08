@@ -10,6 +10,8 @@
 - open bounded local glTF/GLB reference meshes in the Browser product, staged
   VS Code Custom Editor and clean-installed VSIX with source-native identity,
   path-free bridging and deterministic Worker/GPU cleanup;
+- reproduce those three glTF product surfaces on macOS arm64 and Linux x64
+  CI with exact VS Code 1.131.0 and fail-closed platform evidence;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

@@ -64,7 +64,7 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 23,
+      passedGates: 24,
       publicProducts: 3_569,
       status: "experimental",
     },

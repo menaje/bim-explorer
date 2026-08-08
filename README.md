@@ -38,6 +38,8 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > 열립니다. Khronos Box GLB는 Browser, staged VS Code와 clean-installed
 > VSIX에서 source-native identity, `globalId: null`, 12 triangles,
 > 86,486 pixels, path-free bridge와 Worker/GPU/editor cleanup을 통과했습니다.
+> 같은 세 제품 경로는 macOS arm64와 Linux x64 CI에서도 고정 VS Code
+> 1.131.0·SwiftShader WebGL2로 동일한 projection과 cleanup을 재현했습니다.
 > occurrence/type primitive property value는 별도 lazy range로 읽고,
 > IFC4 projected CRS/MapConversion과 fingerprinted source
 > precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
@@ -147,7 +149,8 @@ RVT/DGN은 capability Gate만 등록했고 실제 codec/SDK evidence 전에는
 열기를 거부합니다. 이 기능은 immutable Community v0.1.0 asset에는
 포함되지 않습니다. 현재 main의 bounded glTF/GLB profile은 Browser,
 VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
-통과했습니다.
+통과했고, macOS arm64와 Linux x64 제품 매트릭스에서도 동일하게
+재현했습니다.
 
 ## 비목표
 

@@ -60,6 +60,7 @@ const trueGates = [
   "federationReferenceAdmission",
   "browserProductOpen",
   "vscodeProductOpen",
+  "crossPlatformProductOpen",
 ];
 const heldGates = [
   "externalResourceBundle",
@@ -148,6 +149,7 @@ if (
   manifest.schema !==
     "bim-explorer-gltf-reference-source-compatibility/1" ||
   manifest.status !== "experimental" ||
+  manifest.asOf !== "2026-08-08" ||
   manifest.contract !==
     "bim-explorer-gltf-reference-source/0.1" ||
   trueGates.some((name) => manifest.gates[name] !== true) ||
@@ -160,6 +162,7 @@ if (
   manifest.policy.nativeWrite !== false ||
   manifest.policy.roundTrip !== false ||
   manifest.policy.claimProductSupport !== true ||
+  manifest.policy.claimCrossPlatformProductOpen !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
   manifest.blockers.length !== 2 ||
@@ -172,6 +175,9 @@ if (
   manifest.evidence.vscodeCleanInstall !==
     "compatibility/evidence/" +
       "bim-product-shell-vscode-vsix-install-2026-08-04.json" ||
+  manifest.evidence.productPlatformMatrix !==
+    "compatibility/evidence/" +
+      "gltf-product-platform-matrix-2026-08-08.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||

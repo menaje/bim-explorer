@@ -26,6 +26,7 @@ const PASSED_GATES = [
   "browserReadonlyGltfGlbAdmission",
   "vscodeReadonlyGltfGlbAssociation",
   "cleanVsixGltfGlbOpen",
+  "crossPlatformGltfProductOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -168,7 +169,7 @@ export function validateBimProductShellCompatibility(
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
-    manifest.asOf !== "2026-08-04" ||
+    manifest.asOf !== "2026-08-08" ||
     manifest.status !== "experimental" ||
     browser.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
@@ -566,11 +567,15 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.vscodeCleanInstall !==
       "compatibility/evidence/" +
         "bim-product-shell-vscode-vsix-install-2026-08-04.json" ||
+    manifest.evidence?.gltfProductPlatformMatrix !==
+      "compatibility/evidence/" +
+        "gltf-product-platform-matrix-2026-08-08.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
     manifest.policy?.claimDeferredSemanticDetails !== true ||
     manifest.policy?.claimQualifiedReferenceOpen !== true ||
+    manifest.policy?.claimCrossPlatformGltfProductOpen !== true ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||

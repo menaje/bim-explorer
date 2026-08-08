@@ -1,0 +1,446 @@
+{
+  "schema": "bim-explorer-gltf-product-platform-matrix/1",
+  "status": "experimental",
+  "source": {
+    "repository": "menaje/bim-explorer",
+    "workflow": "CI",
+    "runId": 31239573856,
+    "runUrl": "https://github.com/menaje/bim-explorer/actions/runs/31239573856",
+    "commit": "4be1d6c85d9dd3947612fb980b3f418aad3a8007"
+  },
+  "platforms": [
+    {
+      "capturedAt": "2026-08-08T04:30:57.569Z",
+      "environment": {
+        "platform": "darwin-arm64",
+        "node": "v24.18.0",
+        "browser": "Google Chrome 150.0.7871.187",
+        "browserHeadless": true,
+        "vscode": "1.131.0",
+        "vscodeDownloadAttempts": 1,
+        "vscodeRuntimeSource": "exact-download",
+        "vscodeRequestedVersion": "1.131.0",
+        "physicalGpuClaimed": false,
+        "rendererQualification": "SwiftShader WebGL2"
+      },
+      "fixtureCacheHit": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 1664,
+        "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "browser": {
+        "hostKind": "browser",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "propertyDetailBytes": 0,
+          "propertyDetailRanges": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed",
+          "backendDisposed": true,
+          "clientDisposed": true
+        },
+        "externalOrigins": [],
+        "runtimeErrors": []
+      },
+      "vscode": {
+        "fixture": {
+          "id": "khronos-gltf-sample-assets-box-glb",
+          "committed": false,
+          "format": "glb",
+          "sourceBytes": 1664,
+          "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+          "gltfVersion": "2.0",
+          "nativeId": "node:1/mesh:0/primitive:0",
+          "provenance": {
+            "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+            "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+            "license": "CC-BY-4.0",
+            "bundled": false
+          }
+        },
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "vscodeInstall": {
+        "package": {
+          "id": "menaje.bim-explorer",
+          "version": "0.1.0",
+          "byteLength": 1168823,
+          "installedRuntimeFiles": 7,
+          "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f"
+        },
+        "fixture": {
+          "id": "khronos-gltf-sample-assets-box-glb",
+          "committed": false,
+          "format": "glb",
+          "sourceBytes": 1664,
+          "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+          "gltfVersion": "2.0",
+          "nativeId": "node:1/mesh:0/primitive:0",
+          "provenance": {
+            "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+            "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+            "license": "CC-BY-4.0",
+            "bundled": false
+          }
+        },
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "assertions": {
+        "browser": true,
+        "vscode": true,
+        "cleanInstall": true,
+        "sameFixtureIdentity": true,
+        "localOnly": true,
+        "physicalGpuNotClaimed": true
+      }
+    },
+    {
+      "capturedAt": "2026-08-08T04:30:43.487Z",
+      "environment": {
+        "platform": "linux-x64",
+        "node": "v24.18.0",
+        "browser": "Google Chrome 150.0.7871.128",
+        "browserHeadless": true,
+        "vscode": "1.131.0",
+        "vscodeDownloadAttempts": 1,
+        "vscodeRuntimeSource": "exact-download",
+        "vscodeRequestedVersion": "1.131.0",
+        "physicalGpuClaimed": false,
+        "rendererQualification": "SwiftShader WebGL2"
+      },
+      "fixtureCacheHit": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 1664,
+        "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "browser": {
+        "hostKind": "browser",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "propertyDetailBytes": 0,
+          "propertyDetailRanges": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed",
+          "backendDisposed": true,
+          "clientDisposed": true
+        },
+        "externalOrigins": [],
+        "runtimeErrors": []
+      },
+      "vscode": {
+        "fixture": {
+          "id": "khronos-gltf-sample-assets-box-glb",
+          "committed": false,
+          "format": "glb",
+          "sourceBytes": 1664,
+          "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+          "gltfVersion": "2.0",
+          "nativeId": "node:1/mesh:0/primitive:0",
+          "provenance": {
+            "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+            "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+            "license": "CC-BY-4.0",
+            "bundled": false
+          }
+        },
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "vscodeInstall": {
+        "package": {
+          "id": "menaje.bim-explorer",
+          "version": "0.1.0",
+          "byteLength": 1168823,
+          "installedRuntimeFiles": 7,
+          "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f"
+        },
+        "fixture": {
+          "id": "khronos-gltf-sample-assets-box-glb",
+          "committed": false,
+          "format": "glb",
+          "sourceBytes": 1664,
+          "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+          "gltfVersion": "2.0",
+          "nativeId": "node:1/mesh:0/primitive:0",
+          "provenance": {
+            "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+            "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+            "license": "CC-BY-4.0",
+            "bundled": false
+          }
+        },
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "assertions": {
+        "browser": true,
+        "vscode": true,
+        "cleanInstall": true,
+        "sameFixtureIdentity": true,
+        "localOnly": true,
+        "physicalGpuNotClaimed": true
+      }
+    }
+  ],
+  "crossPlatform": {
+    "requiredPlatforms": [
+      "darwin-arm64",
+      "linux-x64"
+    ],
+    "productSurfaces": [
+      "browser-local-file",
+      "staged-vscode-custom-editor",
+      "clean-installed-vsix"
+    ],
+    "portableProjection": [
+      "fixture",
+      "browser",
+      "vscode",
+      "vscodeInstall"
+    ],
+    "portableProjectionIdentical": true,
+    "portableProjectionSha256": "6645aeeaff7e221a0bc14d999ef165bbb1805730179337a0d403a7ba3a1d1c77"
+  },
+  "decision": {
+    "macosProductSurfaces": "passed-experimental",
+    "linuxProductSurfaces": "passed-experimental",
+    "crossPlatformGltfProductOpen": "passed-experimental",
+    "actualPhysicalGpu": "blocked",
+    "productScaleReference": "blocked",
+    "productionClaims": false
+  },
+  "limits": [
+    "Both runners use software WebGL2 through SwiftShader; physical GPU hardware is not qualified.",
+    "The Khronos Box GLB is a 1664-byte core-profile reference fixture, not product-scale geometry.",
+    "The matrix covers local Browser, staged VS Code and clean-installed VSIX read-only opens only.",
+    "External resources, required extensions, BIM semantic authority, write and round-trip remain blocked."
+  ]
+}

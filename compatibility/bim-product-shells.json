@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-product-shell-compatibility/1",
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-08",
   "status": "experimental",
   "contracts": {
     "hostMessage": "bim-explorer-product-host-message/0.1",
@@ -83,6 +83,7 @@
     "browserReadonlyGltfGlbAdmission": true,
     "vscodeReadonlyGltfGlbAssociation": true,
     "cleanVsixGltfGlbOpen": true,
+    "crossPlatformGltfProductOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -92,7 +93,8 @@
     "browserPublic": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
     "browserReference": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
-    "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json"
+    "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
+    "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json"
   },
   "blockers": [
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
@@ -105,6 +107,7 @@
     "spatialAuthority": false,
     "claimDeferredSemanticDetails": true,
     "claimQualifiedReferenceOpen": true,
+    "claimCrossPlatformGltfProductOpen": true,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

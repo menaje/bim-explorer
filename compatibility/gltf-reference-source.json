@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-gltf-reference-source-compatibility/1",
   "status": "experimental",
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-08",
   "contract": "bim-explorer-gltf-reference-source/0.1",
   "profile": "gltf-2.0-bounded-reference-mesh-v0.1",
   "gates": {
@@ -24,6 +24,7 @@
     "federationReferenceAdmission": true,
     "browserProductOpen": true,
     "vscodeProductOpen": true,
+    "crossPlatformProductOpen": true,
     "externalResourceBundle": false,
     "requiredExtensions": false,
     "write": false,
@@ -36,17 +37,18 @@
     "browserProduct": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
     "vscodeProduct": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
+    "productPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json"
   },
   "blockers": [
     "external resource bundles and required extensions remain unsupported",
-    "product-scale reference geometry and physical or cross-platform GPU evidence are not available"
+    "product-scale reference geometry and physical GPU evidence are not available"
   ],
   "limitations": [
     "the public qualification uses the 1664-byte Khronos Box core-profile GLB",
     "synthetic JSON glTF covers only embedded base64 buffer data",
-    "actual Browser and VS Code product qualification uses headless macOS Chromium with SwiftShader and does not claim a physical GPU",
+    "actual Browser and VS Code product qualification passes macOS arm64 and Linux x64 CI with SwiftShader and does not claim a physical GPU",
     "the output is a lossy display cache and has no source write authority",
     "glTF node and mesh metadata is not promoted to BIM semantics"
   ],
@@ -60,6 +62,7 @@
     "nativeWrite": false,
     "roundTrip": false,
     "claimProductSupport": true,
+    "claimCrossPlatformProductOpen": true,
     "claimProduction": false
   }
 }

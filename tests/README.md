@@ -95,6 +95,10 @@ WebGL2, path-free bridge와 editor close를 다시 확인합니다.
 `npm run qualify:gltf:product`는 공개 Khronos Box GLB를 Browser local file,
 staged VS Code와 clean-installed VSIX에서 열어 source-native identity,
 `globalId: null`, WebGL2 projection과 cleanup을 확인합니다.
+`npm run qualify:gltf:product:platform -- --output <file>`은 고정 VS Code
+1.131.0을 사용해 같은 세 제품 경로의 플랫폼 receipt를 만듭니다. macOS와
+Linux receipt는 `npm run assemble:gltf:product:platform`으로 합치며, 동일한
+portable projection과 physical-GPU 비주장을 검사합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick
