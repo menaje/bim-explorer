@@ -17,6 +17,8 @@
   SwiftShader WebGL2 first frame and deterministic resource cleanup;
 - open that product-scale GLB through the actual Browser local-file product
   path with bounded rendering, source-native search/pick and close cleanup;
+- reproduce the same product-scale projection in the staged VS Code Custom
+  Editor and a clean-installed VSIX without bundling the public fixture;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

@@ -137,7 +137,12 @@ source-native selection과 `globalId: null`을 재현하고 path-free bridge,
 Worker/session/GPU/editor cleanup을 통과했습니다. `.gltf` association과
 embedded data URI dispatch는 synthetic conformance가 보완합니다.
 
+별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
+staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
+573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
+upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 제품 bundle에
+포함하지 않습니다.
+
 이 제품 결과는 bounded local read-only profile만 승인합니다. external
 resource bundle, required extension, broader material/geometry fidelity,
-product-scale reference model, physical GPU, write와 round-trip은 승인하지
-않습니다.
+physical GPU, BIM semantic authority, write와 round-trip은 승인하지 않습니다.

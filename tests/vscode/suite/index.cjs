@@ -37,6 +37,181 @@ function waitFor(probe, label, timeoutMs = 60_000) {
   });
 }
 
+async function qualifyReference({
+  api,
+  manifestPath = undefined,
+  productScale = false,
+  root,
+  sourcePath,
+}) {
+  const fixtureModule = await import(
+    pathToFileURL(
+      path.join(root, "scripts", "public-gltf-fixture.mjs"),
+    ).href
+  );
+  const manifest = await fixtureModule
+    .loadPublicGltfFixtureManifest(manifestPath);
+  const metadata = await stat(sourcePath);
+  assert.equal(metadata.isFile(), true);
+  assert.equal(metadata.size, manifest.entry.byteLength);
+  if (productScale) {
+    await vscode.workspace
+      .getConfiguration("bimExplorer")
+      .update(
+        "openTimeoutMs",
+        manifest.browserQualification.timeoutMs,
+        vscode.ConfigurationTarget.Global,
+      );
+  }
+  const source = vscode.Uri.file(sourcePath);
+  await vscode.commands.executeCommand(
+    "vscode.openWith",
+    source,
+    "bimExplorer.ifcEditor",
+  );
+  const label = productScale
+    ? "product-scale reference"
+    : "reference";
+  const ready = await waitFor(
+    () => {
+      const report = api.qualificationReports().at(-1);
+      if (report?.status === "failed") {
+        throw new Error(
+          `${label} Custom Editor failed: ` +
+            `${JSON.stringify(report)}`,
+        );
+      }
+      return report?.status === "ready" ? report : null;
+    },
+    `${label} Custom Editor ready report`,
+    manifest.browserQualification.timeoutMs,
+  );
+  const nativeId = productScale
+    ? "node:0/mesh:0/primitive:0"
+    : "node:1/mesh:0/primitive:0";
+  const expectedModel = productScale
+    ? {
+        entities: manifest.expected.instances,
+        geometryRecords: manifest.expected.geometryRecords,
+        instances: manifest.expected.instances,
+        triangles: manifest.expected.triangles,
+        ranges: 1,
+      }
+    : {
+        entities: 1,
+        geometryRecords: 1,
+        instances: 1,
+        triangles: manifest.expected.triangles,
+        ranges: 1,
+      };
+  const expectedReadBytes = productScale
+    ? manifest.expected.geometryRangeBytes
+    : 756;
+  const expectedUploadedBytes = productScale
+    ? 16_900_016
+    : 800;
+  assert.equal(ready.hostKind, "vscode-webview");
+  assert.equal(ready.externalUpload, false);
+  assert.equal(ready.telemetry, false);
+  assert.equal(ready.source.format, "glb");
+  assert.equal(
+    ready.source.fingerprint,
+    `sha256:${manifest.entry.sha256}`,
+  );
+  assert.equal(
+    ready.source.byteLength,
+    manifest.entry.byteLength,
+  );
+  assert.equal(
+    ready.source.sourceRole,
+    "derived-or-reference-mesh",
+  );
+  assert.equal(ready.source.semanticAuthority, false);
+  assert.deepEqual(ready.model, expectedModel);
+  assert.equal(ready.reference.globalId, null);
+  assert.equal(ready.reference.selectedNativeId, nativeId);
+  assert.equal(ready.renderer.actualGpu, true);
+  assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(
+    ready.renderer.sourceReadBytes,
+    expectedReadBytes,
+  );
+  assert.equal(
+    ready.renderer.uploadedBytes,
+    expectedUploadedBytes,
+  );
+  const serialized = JSON.stringify(ready);
+  assert.equal(serialized.includes(sourcePath), false);
+  assert.equal(
+    serialized.includes(path.basename(sourcePath)),
+    false,
+  );
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
+  const disposed = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    return report?.status === "disposed" ? report : null;
+  }, `${label} Custom Editor disposal`);
+  return {
+    fixture: {
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: ready.source.byteLength,
+      fingerprint: ready.source.fingerprint,
+      gltfVersion: ready.source.gltfVersion,
+      nativeId,
+      ...(productScale
+        ? {
+            classification:
+              manifest.browserQualification.classification,
+            rendererLimits:
+              manifest.browserQualification.rendererLimits,
+          }
+        : {}),
+      provenance: {
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        bundled: false,
+      },
+    },
+    observation: {
+      hostKind: ready.hostKind,
+      model: ready.model,
+      performance: ready.performance,
+      resources: ready.resources,
+      renderer: ready.renderer,
+      reference: ready.reference,
+      lifecycle: {
+        opened: ready.status,
+        closed: disposed.status,
+      },
+      externalUpload: ready.externalUpload,
+      telemetry: ready.telemetry,
+    },
+    assertions: {
+      localSourceOpened: true,
+      sourceIdentityExact: true,
+      noBimSemanticAuthority: true,
+      vscodeChromiumWebGl2: true,
+      boundedRenderer:
+        !productScale ||
+        (
+          ready.renderer.sourceReadBytes <=
+            manifest.browserQualification.rendererLimits
+              .maximumSourceReadBytes &&
+          ready.renderer.uploadedBytes <=
+            manifest.browserQualification.rendererLimits
+              .maximumGpuCacheBytes
+        ),
+      pathFreeHostBridge: true,
+      editorCloseObserved: disposed.status === "disposed",
+    },
+  };
+}
+
 async function run() {
   const root = process.env.BIM_EXPLORER_ROOT;
   const evidencePath =
@@ -47,6 +222,9 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_PUBLIC_SOURCE;
   const referenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_SOURCE;
+  const productScaleReferenceSourcePath =
+    process.env
+      .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -253,145 +431,66 @@ async function run() {
       typeof referenceSourcePath === "string" &&
       referenceSourcePath.length > 0
     ) {
-      const referenceFixtureModule = await import(
+      const qualified = await qualifyReference({
+        api,
+        root,
+        sourcePath: referenceSourcePath,
+      });
+      referenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          referenceSourceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          referenceHasNoBimSemanticAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          referenceVscodeChromiumWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          referencePathFreeHostBridge:
+            qualified.assertions.pathFreeHostBridge,
+          referenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+        },
+      };
+    }
+    let productScaleReferenceQualification = null;
+    if (
+      typeof productScaleReferenceSourcePath === "string" &&
+      productScaleReferenceSourcePath.length > 0
+    ) {
+      const fixtureModule = await import(
         pathToFileURL(
           path.join(root, "scripts", "public-gltf-fixture.mjs"),
         ).href
       );
-      const manifest =
-        await referenceFixtureModule
-          .loadPublicGltfFixtureManifest();
-      const referenceMetadata = await stat(
-        referenceSourcePath,
-      );
-      assert.equal(referenceMetadata.isFile(), true);
-      assert.equal(
-        referenceMetadata.size,
-        manifest.entry.byteLength,
-      );
-      const referenceSource = vscode.Uri.file(
-        referenceSourcePath,
-      );
-      await vscode.commands.executeCommand(
-        "vscode.openWith",
-        referenceSource,
-        "bimExplorer.ifcEditor",
-      );
-      const referenceReady = await waitFor(() => {
-        const report = api.qualificationReports().at(-1);
-        if (report?.status === "failed") {
-          throw new Error(
-            `Reference Custom Editor failed: ` +
-              `${JSON.stringify(report)}`,
-          );
-        }
-        return report?.status === "ready" ? report : null;
-      }, "reference Custom Editor ready report");
-      assert.equal(
-        referenceReady.hostKind,
-        "vscode-webview",
-      );
-      assert.equal(referenceReady.externalUpload, false);
-      assert.equal(referenceReady.telemetry, false);
-      assert.equal(referenceReady.source.format, "glb");
-      assert.equal(
-        referenceReady.source.fingerprint,
-        `sha256:${manifest.entry.sha256}`,
-      );
-      assert.equal(
-        referenceReady.source.byteLength,
-        manifest.entry.byteLength,
-      );
-      assert.equal(
-        referenceReady.source.sourceRole,
-        "derived-or-reference-mesh",
-      );
-      assert.equal(
-        referenceReady.source.semanticAuthority,
-        false,
-      );
-      assert.deepEqual(referenceReady.model, {
-        entities: 1,
-        geometryRecords: 1,
-        instances: 1,
-        triangles: 12,
-        ranges: 1,
+      const qualified = await qualifyReference({
+        api,
+        manifestPath:
+          fixtureModule.PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
+        productScale: true,
+        root,
+        sourcePath: productScaleReferenceSourcePath,
       });
-      assert.equal(referenceReady.reference.globalId, null);
-      assert.equal(
-        referenceReady.reference.selectedNativeId,
-        "node:1/mesh:0/primitive:0",
-      );
-      assert.equal(referenceReady.renderer.actualGpu, true);
-      assert.ok(
-        referenceReady.renderer.nonBackgroundPixels > 0,
-      );
-      assert.equal(
-        referenceReady.renderer.sourceReadBytes,
-        756,
-      );
-      assert.equal(
-        referenceReady.renderer.uploadedBytes,
-        800,
-      );
-      const referenceSerialized = JSON.stringify(
-        referenceReady,
-      );
-      assert.equal(
-        referenceSerialized.includes(referenceSourcePath),
-        false,
-      );
-      assert.equal(
-        referenceSerialized.includes(
-          path.basename(referenceSourcePath),
-        ),
-        false,
-      );
-      await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor",
-      );
-      const referenceDisposed = await waitFor(() => {
-        const report = api.qualificationReports().at(-1);
-        return report?.status === "disposed" ? report : null;
-      }, "reference Custom Editor disposal");
-      referenceQualification = {
-        fixture: {
-          id: manifest.fixtureId,
-          committed: false,
-          format: "glb",
-          sourceBytes: referenceReady.source.byteLength,
-          fingerprint: referenceReady.source.fingerprint,
-          gltfVersion: referenceReady.source.gltfVersion,
-          nativeId: "node:1/mesh:0/primitive:0",
-          provenance: {
-            repository: manifest.provenance.repository,
-            commit: manifest.provenance.commit,
-            license: manifest.license.spdx,
-            bundled: false,
-          },
-        },
-        observation: {
-          hostKind: referenceReady.hostKind,
-          model: referenceReady.model,
-          performance: referenceReady.performance,
-          resources: referenceReady.resources,
-          renderer: referenceReady.renderer,
-          reference: referenceReady.reference,
-          lifecycle: {
-            opened: referenceReady.status,
-            closed: referenceDisposed.status,
-          },
-          externalUpload: referenceReady.externalUpload,
-          telemetry: referenceReady.telemetry,
-        },
+      productScaleReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
         assertions: {
-          localReferenceSourceOpened: true,
-          referenceSourceIdentityExact: true,
-          referenceHasNoBimSemanticAuthority: true,
-          referenceVscodeChromiumWebGl2: true,
-          referencePathFreeHostBridge: true,
-          referenceEditorCloseObserved:
-            referenceDisposed.status === "disposed",
+          localProductScaleReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          productScaleReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          productScaleReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          productScaleReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          productScaleReferenceRendererBounded:
+            qualified.assertions.boundedRenderer,
+          productScaleReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          productScaleReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
         },
       };
     }
@@ -446,6 +545,16 @@ async function run() {
             referenceAssertions:
               referenceQualification.assertions,
           }),
+      ...(productScaleReferenceQualification === null
+        ? {}
+        : {
+            productScaleReferenceFixture:
+              productScaleReferenceQualification.fixture,
+            productScaleReferenceObservation:
+              productScaleReferenceQualification.observation,
+            productScaleReferenceAssertions:
+              productScaleReferenceQualification.assertions,
+          }),
       assertions: {
         actualVscodeChromiumWebGl2:
           ready.renderer.actualGpu === true &&
@@ -479,6 +588,15 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.referenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (
+      evidence.productScaleReferenceAssertions !== undefined
+    ) {
+      assert.ok(
+        Object.values(
+          evidence.productScaleReferenceAssertions,
         ).every(Boolean),
       );
     }

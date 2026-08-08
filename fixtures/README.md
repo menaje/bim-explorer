@@ -24,7 +24,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   surface smoke에 사용하는 Cesium CC BY 4.0 manifest
 - `gltf/public-khronos-a-beautiful-game`: 42,977,928-byte embedded GLB의
   417,028 vertices·573,952 unique triangles를 product-scale reference
-  source, SwiftShader WebGL2와 Browser 제품 file-open에 사용하는
+  source, SwiftShader WebGL2와 Browser/VS Code/clean VSIX 제품 file-open에
+  사용하는
   ASWF/Ed Mackey CC BY 4.0 manifest
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
@@ -42,4 +43,7 @@ npm run qualify:bim-source:public
 npm run qualify:renderer:public
 npm run fetch:gltf:product-scale
 npm run qualify:gltf:product-scale
+npm run qualify:gltf:product-scale:web
+npm run qualify:gltf:product-scale:vscode
+npm run qualify:gltf:product-scale:vscode-install
 ```

@@ -1,7 +1,9 @@
 import {
+  mkdir,
   mkdtemp,
   readFile,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +17,7 @@ import {
 } from "./package-vscode-extension.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
   resolveVscodeQualificationRuntime,
@@ -22,13 +25,52 @@ import {
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
+function parseArguments(values) {
+  const options = {
+    includeProductScaleFixture: false,
+    output: null,
+  };
+  for (let index = 0; index < values.length; index += 1) {
+    const name = values[index];
+    if (name === "--product-scale") {
+      options.includeProductScaleFixture = true;
+      continue;
+    }
+    if (name === "--output") {
+      const value = values[index + 1];
+      if (
+        typeof value !== "string" ||
+        value.startsWith("-")
+      ) {
+        throw new TypeError("--output requires a file path");
+      }
+      options.output = path.resolve(value);
+      index += 1;
+      continue;
+    }
+    throw new TypeError(
+      "usage: node scripts/qualify-vscode-custom-editor.mjs " +
+        "[--product-scale] [--output path]",
+    );
+  }
+  return options;
+}
+
 export async function qualifyVscodeCustomEditor({
+  includeProductScaleFixture = false,
   vscodeRuntime = null,
 } = {}) {
   const runtime = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
+  const productScaleReferenceFixture =
+    includeProductScaleFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
+        })
+      : null;
+  productScaleReferenceFixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : process.cwd(),
@@ -68,6 +110,12 @@ export async function qualifyVscodeCustomEditor({
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
+        ...(productScaleReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE:
+                productScaleReferenceFixture.cachePath,
+            }),
         BIM_EXPLORER_VSCODE_EVIDENCE: evidencePath,
       },
     });
@@ -87,6 +135,17 @@ if (
   path.resolve(process.argv[1]) ===
     fileURLToPath(import.meta.url)
 ) {
-  const evidence = await qualifyVscodeCustomEditor();
+  const options = parseArguments(process.argv.slice(2));
+  const evidence = await qualifyVscodeCustomEditor(options);
+  if (options.output !== null) {
+    await mkdir(path.dirname(options.output), {
+      recursive: true,
+    });
+    await writeFile(
+      options.output,
+      `${JSON.stringify(evidence, null, 2)}\n`,
+      "utf8",
+    );
+  }
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
 }

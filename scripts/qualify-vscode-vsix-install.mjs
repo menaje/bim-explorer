@@ -1,9 +1,11 @@
 import {
+  mkdir,
   mkdtemp,
   readdir,
   readFile,
   rm,
   stat,
+  writeFile,
 } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
@@ -24,6 +26,7 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
   resolveVscodeQualificationRuntime,
@@ -41,6 +44,42 @@ const EXTENSION_VERSION = JSON.parse(
     "utf8",
   ),
 ).version;
+
+function parseArguments(values) {
+  const options = {
+    includeProductScaleFixture: false,
+    includePublicFixture: true,
+    output: null,
+  };
+  for (let index = 0; index < values.length; index += 1) {
+    const name = values[index];
+    if (name === "--product-scale") {
+      options.includeProductScaleFixture = true;
+      continue;
+    }
+    if (name === "--no-public") {
+      options.includePublicFixture = false;
+      continue;
+    }
+    if (name === "--output") {
+      const value = values[index + 1];
+      if (
+        typeof value !== "string" ||
+        value.startsWith("-")
+      ) {
+        throw new TypeError("--output requires a file path");
+      }
+      options.output = path.resolve(value);
+      index += 1;
+      continue;
+    }
+    throw new TypeError(
+      "usage: node scripts/qualify-vscode-vsix-install.mjs " +
+        "[--product-scale] [--no-public] [--output path]",
+    );
+  }
+  return options;
+}
 
 function runCode(cli, argumentsValue) {
   const [command, ...prefix] = cli;
@@ -65,6 +104,7 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall({
+  includeProductScaleFixture = false,
   includePublicFixture = true,
   vscodeRuntime = null,
 } = {}) {
@@ -80,6 +120,13 @@ export async function qualifyVscodeVsixInstall({
     : null;
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
+  const productScaleReferenceFixture =
+    includeProductScaleFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
+        })
+      : null;
+  productScaleReferenceFixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -211,6 +258,12 @@ export async function qualifyVscodeVsixInstall({
             }),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
+        ...(productScaleReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE:
+                productScaleReferenceFixture.cachePath,
+            }),
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -288,6 +341,31 @@ export async function qualifyVscodeVsixInstall({
       installedReferenceClosesCleanly:
         runtime.referenceAssertions
           ?.referenceEditorCloseObserved === true,
+      ...(includeProductScaleFixture
+        ? {
+            installedPackageOpensProductScaleReference:
+              runtime.productScaleReferenceAssertions
+                ?.localProductScaleReferenceSourceOpened === true,
+            installedProductScaleReferenceIdentityExact:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceIdentityExact === true,
+            installedProductScaleReferenceHasNoBimAuthority:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceHasNoBimAuthority === true,
+            installedProductScaleReferenceUsesWebGl2:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceVscodeWebGl2 === true,
+            installedProductScaleReferenceRendererBounded:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceRendererBounded === true,
+            installedProductScaleReferenceBridgeIsPathFree:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferencePathFreeBridge === true,
+            installedProductScaleReferenceClosesCleanly:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceEditorCloseObserved === true,
+          }
+        : {}),
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -367,6 +445,41 @@ export async function qualifyVscodeVsixInstall({
           telemetry:
             runtime.referenceObservation?.telemetry,
         },
+        ...(includeProductScaleFixture
+          ? {
+              productScaleReferenceRuntime: {
+                fixture:
+                  runtime.productScaleReferenceFixture,
+                hostKind:
+                  runtime.productScaleReferenceObservation
+                    ?.hostKind,
+                model:
+                  runtime.productScaleReferenceObservation
+                    ?.model,
+                performance:
+                  runtime.productScaleReferenceObservation
+                    ?.performance,
+                resources:
+                  runtime.productScaleReferenceObservation
+                    ?.resources,
+                renderer:
+                  runtime.productScaleReferenceObservation
+                    ?.renderer,
+                reference:
+                  runtime.productScaleReferenceObservation
+                    ?.reference,
+                lifecycle:
+                  runtime.productScaleReferenceObservation
+                    ?.lifecycle,
+                externalUpload:
+                  runtime.productScaleReferenceObservation
+                    ?.externalUpload,
+                telemetry:
+                  runtime.productScaleReferenceObservation
+                    ?.telemetry,
+              },
+            }
+          : {}),
       },
       assertions,
       decision: {
@@ -375,6 +488,10 @@ export async function qualifyVscodeVsixInstall({
           ? "passed"
           : "not-run",
         referenceFixtureOpen: "passed-bounded-read-only",
+        productScaleReferenceFixtureOpen:
+          includeProductScaleFixture
+            ? "passed-bounded-read-only"
+            : "not-run",
         marketplaceRelease: "held",
       },
     });
@@ -391,6 +508,17 @@ if (
   path.resolve(process.argv[1]) ===
     fileURLToPath(import.meta.url)
 ) {
-  const evidence = await qualifyVscodeVsixInstall();
+  const options = parseArguments(process.argv.slice(2));
+  const evidence = await qualifyVscodeVsixInstall(options);
+  if (options.output !== null) {
+    await mkdir(path.dirname(options.output), {
+      recursive: true,
+    });
+    await writeFile(
+      options.output,
+      `${JSON.stringify(evidence, null, 2)}\n`,
+      "utf8",
+    );
+  }
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
 }

@@ -108,7 +108,8 @@
     "cleanVsixGltfGlbOpen": true,
     "crossPlatformGltfProductOpen": true,
     "browserProductScaleGltfOpen": true,
-    "vscodeProductScaleGltfOpen": false,
+    "vscodeProductScaleGltfOpen": true,
+    "cleanVsixProductScaleGltfOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -118,12 +119,13 @@
     "browserPublic": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
     "browserReference": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
     "browserProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json",
+    "vscodeProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json",
+    "vscodeCleanInstallProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
     "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json"
   },
   "blockers": [
-    "product-scale GLB remains unqualified in the VS Code Custom Editor and clean-installed VSIX",
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
     "actual physical GPU qualification is not claimed",
     "marketplace release remains behind license and release gates"
@@ -136,7 +138,8 @@
     "claimQualifiedReferenceOpen": true,
     "claimCrossPlatformGltfProductOpen": true,
     "claimProductScaleBrowserOpen": true,
-    "claimProductScaleVscodeOpen": false,
+    "claimProductScaleVscodeOpen": true,
+    "claimProductScaleCleanVsixOpen": true,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

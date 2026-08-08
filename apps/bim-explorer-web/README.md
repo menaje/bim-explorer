@@ -25,3 +25,7 @@ reference projection을 확인합니다. 공개 GLB도 package나 Git에 포함�
 않습니다. `npm run qualify:gltf:product-scale:web`은 on-demand cache의
 42.98MB `A Beautiful Game` GLB를 실제 Browser local file input으로 열어
 bounded Worker/renderer, 검색·3D pick과 close cleanup을 확인합니다.
+`npm run qualify:gltf:product-scale:vscode`와
+`npm run qualify:gltf:product-scale:vscode-install`은 같은 파일을 staged
+Custom Editor와 빈 profile에 설치한 VSIX에서 열어 동일한 bounded reference
+projection과 editor cleanup을 확인합니다.

@@ -48,6 +48,24 @@ const productScaleBrowserProductEvidence = JSON.parse(
     "utf8",
   ),
 );
+const productScaleVscodeProductEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.productScaleVscodeProduct,
+    ),
+    "utf8",
+  ),
+);
+const productScaleCleanVsixProductEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.productScaleCleanVsixProduct,
+    ),
+    "utf8",
+  ),
+);
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -83,9 +101,10 @@ const trueGates = [
   "crossPlatformProductOpen",
   "productScaleReferenceGeometry",
   "productScaleBrowserProductOpen",
+  "productScaleVscodeProductOpen",
+  "productScaleCleanVsixProductOpen",
 ];
 const heldGates = [
-  "productScaleVscodeProductOpen",
   "physicalGpu",
   "externalResourceBundle",
   "requiredExtensions",
@@ -169,6 +188,79 @@ function exactReferenceObservation(value, hostKind) {
   );
 }
 
+function exactProductScaleFixture(value) {
+  return (
+    value?.id === productScaleFixture.fixtureId &&
+    value?.committed === false &&
+    value?.format === "glb" &&
+    value?.sourceBytes === productScaleFixture.entry.byteLength &&
+    value?.fingerprint ===
+      `sha256:${productScaleFixture.entry.sha256}` &&
+    value?.gltfVersion ===
+      productScaleFixture.expected.gltfVersion &&
+    value?.nativeId === "node:0/mesh:0/primitive:0" &&
+    value?.classification === "product-scale-reference" &&
+    JSON.stringify(value?.rendererLimits) === JSON.stringify(
+      productScaleFixture.browserQualification.rendererLimits,
+    ) &&
+    value?.provenance?.repository ===
+      productScaleFixture.provenance.repository &&
+    value?.provenance?.commit ===
+      productScaleFixture.provenance.commit &&
+    value?.provenance?.license ===
+      productScaleFixture.license.spdx &&
+    value?.provenance?.bundled === false
+  );
+}
+
+function exactProductScaleVscodeSurface(value) {
+  return (
+    value?.hostKind === "vscode-webview" &&
+    JSON.stringify(value?.model) === JSON.stringify({
+      entities: 49,
+      geometryRecords: 15,
+      instances: 49,
+      triangles: 573_952,
+      ranges: 1,
+    }) &&
+    value?.resources?.sourceBytes === 42_977_928 &&
+    value?.resources?.geometryBytes === 16_896_412 &&
+    value?.resources?.metadataBytes === 8_988 &&
+    value?.resources?.detailBytes === 0 &&
+    value?.resources?.detailRanges === 0 &&
+    value?.resources?.ranges === 1 &&
+    value?.resources?.products === 0 &&
+    value?.resources?.referenceEntities === 49 &&
+    value?.renderer?.actualGpu === true &&
+    value?.renderer?.nonBackgroundPixels > 0 &&
+    value?.renderer?.sourceReadBytes === 16_896_412 &&
+    value?.renderer?.uploadedBytes === 16_900_016 &&
+    value?.reference?.globalId === null &&
+    value?.reference?.selectedNativeId ===
+      "node:0/mesh:0/primitive:0" &&
+    value?.reference?.treeRows === 49 &&
+    value?.reference?.maximumDomRows === 64 &&
+    value?.lifecycle?.opened === "ready" &&
+    value?.lifecycle?.closed === "disposed" &&
+    value?.externalUpload === false &&
+    value?.telemetry === false
+  );
+}
+
+function equalProductScaleProjection(left, right) {
+  return JSON.stringify({
+    model: left?.model,
+    resources: left?.resources,
+    renderer: left?.renderer,
+    reference: left?.reference,
+  }) === JSON.stringify({
+    model: right?.model,
+    resources: right?.resources,
+    renderer: right?.renderer,
+    reference: right?.reference,
+  });
+}
+
 if (
   manifest.schema !==
     "bim-explorer-gltf-reference-source-compatibility/1" ||
@@ -189,7 +281,8 @@ if (
   manifest.policy.claimCrossPlatformProductOpen !== true ||
   manifest.policy.claimProductScaleReferenceGeometry !== true ||
   manifest.policy.claimProductScaleBrowserProductOpen !== true ||
-  manifest.policy.claimProductScaleVscodeProductOpen !== false ||
+  manifest.policy.claimProductScaleVscodeProductOpen !== true ||
+  manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
   manifest.policy.claimPhysicalGpu !== false ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -212,6 +305,12 @@ if (
   manifest.evidence.productScaleBrowserProduct !==
     "compatibility/evidence/" +
       "gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json" ||
+  manifest.evidence.productScaleVscodeProduct !==
+    "compatibility/evidence/" +
+      "gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json" ||
+  manifest.evidence.productScaleCleanVsixProduct !==
+    "compatibility/evidence/" +
+      "gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -509,7 +608,87 @@ if (
   productScaleBrowserProductEvidence.decision
     ?.referenceProductOpen !== "passed-bounded-read-only" ||
   productScaleBrowserProductEvidence.decision
-    ?.actualPhysicalGpu !== "not-claimed"
+    ?.actualPhysicalGpu !== "not-claimed" ||
+  productScaleVscodeProductEvidence.schema !==
+    "bim-explorer-vscode-custom-editor-evidence/1" ||
+  productScaleVscodeProductEvidence.environment
+    ?.runtimeLayout !== "staged" ||
+  typeof productScaleVscodeProductEvidence.environment
+    ?.vscode !== "string" ||
+  !exactProductScaleFixture(
+    productScaleVscodeProductEvidence
+      .productScaleReferenceFixture,
+  ) ||
+  !exactProductScaleVscodeSurface(
+    productScaleVscodeProductEvidence
+      .productScaleReferenceObservation,
+  ) ||
+  !everyTrue(productScaleVscodeProductEvidence.assertions) ||
+  !everyTrue(
+    productScaleVscodeProductEvidence
+      .productScaleReferenceAssertions,
+  ) ||
+  productScaleVscodeProductEvidence.decision
+    ?.vscodeCustomEditor !== "passed" ||
+  productScaleVscodeProductEvidence.decision
+    ?.actualPhysicalGpu !== "not-claimed" ||
+  productScaleCleanVsixProductEvidence.schema !==
+    "bim-explorer-vscode-vsix-install-evidence/1" ||
+  productScaleCleanVsixProductEvidence.environment
+    ?.cleanUserData !== true ||
+  productScaleCleanVsixProductEvidence.environment
+    ?.cleanExtensionsDirectory !== true ||
+  productScaleCleanVsixProductEvidence.package?.id !==
+    "menaje.bim-explorer" ||
+  productScaleCleanVsixProductEvidence.package?.version !==
+    "0.1.0" ||
+  productScaleCleanVsixProductEvidence.package?.byteLength <= 0 ||
+  productScaleCleanVsixProductEvidence.package
+    ?.installedRuntimeFiles !== 7 ||
+  !/^[0-9a-f]{64}$/u.test(
+    productScaleCleanVsixProductEvidence.package
+      ?.workerBundleSha256 ?? "",
+  ) ||
+  productScaleCleanVsixProductEvidence.observation
+    ?.installedExtensions?.length !== 1 ||
+  productScaleCleanVsixProductEvidence.observation
+    ?.installedExtensions?.[0] !== "menaje.bim-explorer@0.1.0" ||
+  productScaleCleanVsixProductEvidence.observation
+    ?.association?.viewType !== "bimExplorer.ifcEditor" ||
+  JSON.stringify(
+    productScaleCleanVsixProductEvidence.observation
+      ?.association?.selector,
+  ) !== JSON.stringify([
+    { filenamePattern: "*.ifc" },
+    { filenamePattern: "*.gltf" },
+    { filenamePattern: "*.glb" },
+  ]) ||
+  !exactProductScaleFixture(
+    productScaleCleanVsixProductEvidence.observation
+      ?.productScaleReferenceRuntime?.fixture,
+  ) ||
+  !exactProductScaleVscodeSurface(
+    productScaleCleanVsixProductEvidence.observation
+      ?.productScaleReferenceRuntime,
+  ) ||
+  !equalProductScaleProjection(
+    productScaleVscodeProductEvidence
+      .productScaleReferenceObservation,
+    productScaleCleanVsixProductEvidence.observation
+      ?.productScaleReferenceRuntime,
+  ) ||
+  !everyTrue(productScaleCleanVsixProductEvidence.assertions) ||
+  productScaleCleanVsixProductEvidence.decision
+    ?.cleanInstall !== "passed" ||
+  productScaleCleanVsixProductEvidence.decision
+    ?.publicFixtureOpen !== "not-run" ||
+  productScaleCleanVsixProductEvidence.decision
+    ?.referenceFixtureOpen !== "passed-bounded-read-only" ||
+  productScaleCleanVsixProductEvidence.decision
+    ?.productScaleReferenceFixtureOpen !==
+      "passed-bounded-read-only" ||
+  productScaleCleanVsixProductEvidence.decision
+    ?.marketplaceRelease !== "held"
 ) {
   throw new Error(
     "glTF reference source compatibility check failed",
@@ -522,6 +701,8 @@ const serialized = JSON.stringify({
   federationEvidence,
   productScaleEvidence,
   productScaleBrowserProductEvidence,
+  productScaleCleanVsixProductEvidence,
+  productScaleVscodeProductEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

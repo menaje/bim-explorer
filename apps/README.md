@@ -27,8 +27,10 @@ product-scale 결과로 승격하지 않습니다.
 mesh로 분기합니다. 공개 Khronos Box GLB는 Browser local file input,
 staged VS Code와 clean-installed VSIX에서 12 triangles, source-native
 selection, `globalId: null`, 실제 Chromium WebGL2, path-free bridge와
-cleanup을 재현했습니다. external resource/required extension, physical
-GPU와 product-scale reference model은 계속 보류합니다.
+cleanup을 재현했습니다. 42.98MB product-scale reference GLB도 세 제품
+경로에서 49개 entity·573,952 unique triangles와 동일한 bounded render
+projection·cleanup을 통과했습니다. external resource/required extension과
+physical GPU는 계속 보류합니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과
@@ -52,5 +54,5 @@ qualification surface이며 제품 shell은 아닙니다.
 42.98MB `A Beautiful Game` GLB에서 투영한 generic geometry range를 실제
 Chrome WebGL2로 render합니다. Box의 source-native pick과 대형 reference의
 first-frame/range/allocation cleanup을 확인하는 source/renderer qualification
-surface입니다. 제품 file-open은 별도 evidence가 소유하며, Browser
-제품 경로는 같은 대형 GLB로 통과했고 VS Code 제품 경로는 보류 중입니다.
+surface입니다. 제품 file-open은 별도 evidence가 소유하며, Browser 제품,
+staged VS Code와 clean-installed VSIX 경로도 같은 대형 GLB로 통과했습니다.

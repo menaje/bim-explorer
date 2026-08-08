@@ -83,6 +83,8 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
   "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json",
   "compatibility/evidence/gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json",
+  "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json",
+  "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json",
   "compatibility/evidence/community-release-v0.1.0-2026-08-04.json",
   "compatibility/bim-product-shells.json",
   "compatibility/spatial-integration.json",

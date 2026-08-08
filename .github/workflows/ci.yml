@@ -109,3 +109,47 @@ jobs:
           path: gltf-product-scale-browser-${{ runner.os }}.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: Qualify product-scale glTF staged VS Code on Linux
+        if: runner.os == 'Linux'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          xvfb-run -a
+          npm run qualify:gltf:product-scale:vscode --
+          --output gltf-product-scale-vscode-${{ runner.os }}.json
+
+      - name: Qualify product-scale glTF staged VS Code on macOS
+        if: runner.os == 'macOS'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          npm run qualify:gltf:product-scale:vscode --
+          --output gltf-product-scale-vscode-${{ runner.os }}.json
+
+      - name: Qualify product-scale glTF clean VSIX on Linux
+        if: runner.os == 'Linux'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          xvfb-run -a
+          npm run qualify:gltf:product-scale:vscode-install --
+          --output gltf-product-scale-vsix-${{ runner.os }}.json
+
+      - name: Qualify product-scale glTF clean VSIX on macOS
+        if: runner.os == 'macOS'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          npm run qualify:gltf:product-scale:vscode-install --
+          --output gltf-product-scale-vsix-${{ runner.os }}.json
+
+      - name: Upload product-scale glTF VS Code evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gltf-product-scale-vscode-${{ runner.os }}
+          path: |
+            gltf-product-scale-vscode-${{ runner.os }}.json
+            gltf-product-scale-vsix-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7

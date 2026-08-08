@@ -16,6 +16,8 @@ async function fixtures() {
     browserPublic,
     browserReference,
     browserProductScaleReference,
+    vscodeProductScaleReference,
+    vscodeCleanInstallProductScaleReference,
     vscode,
     installation,
   ] = await Promise.all([
@@ -36,6 +38,14 @@ async function fixtures() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      manifest.evidence.vscodeProductScaleReference,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.vscodeCleanInstallProductScaleReference,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       manifest.evidence.vscodeSynthetic,
       "utf8",
     ).then(JSON.parse),
@@ -49,29 +59,37 @@ async function fixtures() {
     browserPublic,
     browserReference,
     browserProductScaleReference,
+    vscodeProductScaleReference,
+    vscodeCleanInstallProductScaleReference,
     installation,
     manifest,
     vscode,
   };
 }
 
+function validate(values) {
+  return validateBimProductShellCompatibility(
+    values.manifest,
+    values.browser,
+    values.vscode,
+    values.browserPublic,
+    values.installation,
+    values.browserReference,
+    values.browserProductScaleReference,
+    values.vscodeProductScaleReference,
+    values.vscodeCleanInstallProductScaleReference,
+  );
+}
+
 test("product shells pin the same source and render projection", async () => {
   const values = await fixtures();
   assert.deepEqual(
-    validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    validate(values),
     {
       fixture: "synthetic-semantic-ifc4",
-      heldGates: 4,
+      heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 25,
+      passedGates: 27,
       publicProducts: 3_569,
       status: "experimental",
     },
@@ -82,15 +100,7 @@ test("product shells cannot claim unintegrated Viewer Core", async () => {
   const values = await fixtures();
   values.manifest.gates.publicViewerCoreConformance = true;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /publicViewerCoreConformance must remain held/u,
   );
 });
@@ -99,15 +109,7 @@ test("product shells reject divergent host projections", async () => {
   const values = await fixtures();
   values.vscode.observation.renderer.uploadedBytes += 1;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /host projections diverge/u,
   );
 });
@@ -116,15 +118,7 @@ test("product shells require a clean read-only VSIX install", async () => {
   const values = await fixtures();
   values.installation.assertions.cliAcceptedPackage = false;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /runtime evidence is incomplete/u,
   );
 });
@@ -133,15 +127,7 @@ test("product shells require the installed VSIX runtime projection", async () =>
   const values = await fixtures();
   values.installation.observation.runtime.model.products += 1;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /host projections diverge/u,
   );
 });
@@ -151,15 +137,7 @@ test("product shells reject a staged-only clean install claim", async () => {
   values.installation.observation.runtime.environment.runtimeLayout =
     "staged";
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /runtime evidence is incomplete/u,
   );
 });
@@ -169,15 +147,7 @@ test("product shells require public Browser and installed projections", async ()
   values.installation.observation.publicRuntime.renderer
     .uploadedBytes += 1;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /host projections diverge/u,
   );
 });
@@ -186,15 +156,7 @@ test("product shells keep public IFC2X3 profile admission held", async () => {
   const values = await fixtures();
   values.manifest.publicFixture.profileAdmission = true;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /public BIM product fixture policy is invalid/u,
   );
 });
@@ -203,15 +165,7 @@ test("product shells pin public deferred detail diagnostics", async () => {
   const values = await fixtures();
   values.browserPublic.observation.resources.detailRanges = 5;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /host projections diverge|public BIM product scale/u,
   );
 });
@@ -221,15 +175,7 @@ test("product shells preserve reference-native identity", async () => {
   values.browserReference.observation.reference.globalId =
     "invented-global-id";
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /reference product shell evidence is incomplete/u,
   );
 });
@@ -239,15 +185,28 @@ test("product shells pin product-scale Browser cleanup", async () => {
   values.browserProductScaleReference.observation.lifecycle
     .backendDisposed = false;
   assert.throws(
-    () => validateBimProductShellCompatibility(
-      values.manifest,
-      values.browser,
-      values.vscode,
-      values.browserPublic,
-      values.installation,
-      values.browserReference,
-      values.browserProductScaleReference,
-    ),
+    () => validate(values),
     /product-scale Browser product evidence is incomplete/u,
+  );
+});
+
+test("product shells pin product-scale VS Code rendering", async () => {
+  const values = await fixtures();
+  values.vscodeProductScaleReference
+    .productScaleReferenceObservation.renderer
+    .sourceReadBytes += 1;
+  assert.throws(
+    () => validate(values),
+    /product-scale VS Code product evidence is incomplete/u,
+  );
+});
+
+test("product shells require product-scale clean install", async () => {
+  const values = await fixtures();
+  values.vscodeCleanInstallProductScaleReference.assertions
+    .installedProductScaleReferenceClosesCleanly = false;
+  assert.throws(
+    () => validate(values),
+    /product-scale VS Code product evidence is incomplete/u,
   );
 });

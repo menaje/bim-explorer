@@ -27,7 +27,8 @@
     "crossPlatformProductOpen": true,
     "productScaleReferenceGeometry": true,
     "productScaleBrowserProductOpen": true,
-    "productScaleVscodeProductOpen": false,
+    "productScaleVscodeProductOpen": true,
+    "productScaleCleanVsixProductOpen": true,
     "physicalGpu": false,
     "externalResourceBundle": false,
     "requiredExtensions": false,
@@ -44,17 +45,19 @@
     "productPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
     "productScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json",
     "productScaleBrowserProduct": "compatibility/evidence/gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json",
+    "productScaleVscodeProduct": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json",
+    "productScaleCleanVsixProduct": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json",
     "productScaleFixtureManifest": "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json"
   },
   "blockers": [
     "external resource bundles and required extensions remain unsupported",
-    "product-scale VS Code product file-open and physical GPU evidence remain separate held gates"
+    "physical GPU evidence remains a separate held gate"
   ],
   "limitations": [
     "the 1664-byte Khronos Box remains the cross-platform product-surface smoke fixture",
-    "the 42.98MB A Beautiful Game GLB passes Browser product file-open; VS Code product file-open remains held",
+    "the 42.98MB A Beautiful Game GLB passes Browser, staged VS Code and clean-installed VSIX product file-open",
     "synthetic JSON glTF covers only embedded base64 buffer data",
     "actual Browser and VS Code product qualification passes macOS arm64 and Linux x64 CI with SwiftShader and does not claim a physical GPU",
     "the output is a lossy display cache and has no source write authority",
@@ -73,7 +76,8 @@
     "claimCrossPlatformProductOpen": true,
     "claimProductScaleReferenceGeometry": true,
     "claimProductScaleBrowserProductOpen": true,
-    "claimProductScaleVscodeProductOpen": false,
+    "claimProductScaleVscodeProductOpen": true,
+    "claimProductScaleCleanVsixProductOpen": true,
     "claimPhysicalGpu": false,
     "claimProduction": false
   }

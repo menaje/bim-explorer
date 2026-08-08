@@ -21,7 +21,12 @@ package:vscode`는 동일 파일을 staging한 뒤 독립 설치 가능한 VSIX�
 생성합니다. clean-install 검증은 빈 profile에 설치된 확장 자체로 generated
 IFC, on-demand 공개 IFC와 Khronos Box GLB를 다시 열어 source/render
 projection과 close cleanup까지 확인하며, 공개 fixture를 VSIX에 포함하지
-않습니다. glTF/GLB bridge는 정규화된 format과 bytes만 보내며 local URI나
-IFC GlobalId를 전달하거나 합성하지 않습니다. package
+않습니다. 42.98MB `A Beautiful Game` GLB도 staged Custom Editor와
+clean-installed VSIX에서 49개 source-native entity·573,952 unique triangles,
+bounded WebGL2 projection과 close cleanup을 재현합니다. 이 검증은
+`npm run qualify:gltf:product-scale:vscode`와
+`npm run qualify:gltf:product-scale:vscode-install`로 실행하며 원본 GLB를
+package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 bytes만
+보내며 local URI나 IFC GlobalId를 전달하거나 합성하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다.

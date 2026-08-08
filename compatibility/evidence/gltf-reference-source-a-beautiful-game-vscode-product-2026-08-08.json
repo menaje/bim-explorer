@@ -1,0 +1,219 @@
+{
+  "schema": "bim-explorer-vscode-custom-editor-evidence/1",
+  "capturedAt": "2026-08-08T05:45:18.252Z",
+  "environment": {
+    "vscode": "1.131.0",
+    "platform": "darwin-arm64",
+    "runtimeLayout": "staged"
+  },
+  "fixture": {
+    "id": "synthetic-semantic-ifc4",
+    "committed": false,
+    "sourceBytes": 4030,
+    "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+    "ifcSchema": "IFC4"
+  },
+  "observation": {
+    "hostKind": "vscode-webview",
+    "model": {
+      "products": 2,
+      "treeNodes": 7,
+      "triangles": 24,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 113.20000000298023,
+      "sourceMs": 0.09999999403953552,
+      "totalMs": 113.39999999850988
+    },
+    "resources": {
+      "sourceBytes": 4030,
+      "geometryBytes": 996,
+      "metadataBytes": 2899,
+      "detailBytes": 440,
+      "detailRanges": 1,
+      "largestDetailRangeBytes": 440,
+      "ranges": 1,
+      "products": 2,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 57585,
+      "sourceReadBytes": 996,
+      "uploadedBytes": 1120
+    },
+    "semantic": {
+      "selectedExpressId": 40,
+      "treeRows": 7,
+      "maximumDomRows": 64
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed"
+    },
+    "commandCount": 4,
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "referenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-glb",
+    "committed": false,
+    "format": "glb",
+    "sourceBytes": 1664,
+    "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "bundled": false
+    }
+  },
+  "referenceObservation": {
+    "hostKind": "vscode-webview",
+    "model": {
+      "entities": 1,
+      "geometryRecords": 1,
+      "instances": 1,
+      "triangles": 12,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 1.5,
+      "sourceMs": 0,
+      "totalMs": 1.5999999940395355
+    },
+    "resources": {
+      "sourceBytes": 1664,
+      "geometryBytes": 756,
+      "metadataBytes": 1093,
+      "detailBytes": 0,
+      "detailRanges": 0,
+      "largestDetailRangeBytes": 0,
+      "ranges": 1,
+      "products": 0,
+      "referenceEntities": 1,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 86486,
+      "sourceReadBytes": 756,
+      "uploadedBytes": 800
+    },
+    "reference": {
+      "globalId": null,
+      "selectedNativeId": "node:1/mesh:0/primitive:0",
+      "treeRows": 1,
+      "maximumDomRows": 64
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed"
+    },
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "referenceAssertions": {
+    "localReferenceSourceOpened": true,
+    "referenceSourceIdentityExact": true,
+    "referenceHasNoBimSemanticAuthority": true,
+    "referenceVscodeChromiumWebGl2": true,
+    "referencePathFreeHostBridge": true,
+    "referenceEditorCloseObserved": true
+  },
+  "productScaleReferenceFixture": {
+    "id": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+    "committed": false,
+    "format": "glb",
+    "sourceBytes": 42977928,
+    "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+    "gltfVersion": "2.0",
+    "nativeId": "node:0/mesh:0/primitive:0",
+    "classification": "product-scale-reference",
+    "rendererLimits": {
+      "maximumRangeBytes": 33554432,
+      "maximumSourceReadBytes": 33554432,
+      "maximumGeometryPayloadBytes": 25165824,
+      "maximumInstancedTriangles": 4000000,
+      "maximumCpuStagingBytes": 33554432,
+      "maximumGpuCacheBytes": 33554432
+    },
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "CC-BY-4.0",
+      "bundled": false
+    }
+  },
+  "productScaleReferenceObservation": {
+    "hostKind": "vscode-webview",
+    "model": {
+      "entities": 49,
+      "geometryRecords": 15,
+      "instances": 49,
+      "triangles": 573952,
+      "ranges": 1
+    },
+    "performance": {
+      "artifactMs": 107.29999999701977,
+      "sourceMs": 0.10000000149011612,
+      "totalMs": 107.39999999850988
+    },
+    "resources": {
+      "sourceBytes": 42977928,
+      "geometryBytes": 16896412,
+      "metadataBytes": 8988,
+      "detailBytes": 0,
+      "detailRanges": 0,
+      "largestDetailRangeBytes": 0,
+      "ranges": 1,
+      "products": 0,
+      "referenceEntities": 49,
+      "wasmHeapCapacityBytes": null
+    },
+    "renderer": {
+      "actualGpu": true,
+      "nonBackgroundPixels": 48765,
+      "sourceReadBytes": 16896412,
+      "uploadedBytes": 16900016
+    },
+    "reference": {
+      "globalId": null,
+      "selectedNativeId": "node:0/mesh:0/primitive:0",
+      "treeRows": 49,
+      "maximumDomRows": 64
+    },
+    "lifecycle": {
+      "opened": "ready",
+      "closed": "disposed"
+    },
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "productScaleReferenceAssertions": {
+    "localProductScaleReferenceSourceOpened": true,
+    "productScaleReferenceIdentityExact": true,
+    "productScaleReferenceHasNoBimAuthority": true,
+    "productScaleReferenceVscodeWebGl2": true,
+    "productScaleReferenceRendererBounded": true,
+    "productScaleReferencePathFreeBridge": true,
+    "productScaleReferenceEditorCloseObserved": true
+  },
+  "assertions": {
+    "actualVscodeChromiumWebGl2": true,
+    "localSourceOpened": true,
+    "pathFreeHostBridge": true,
+    "commandsRegistered": true,
+    "editorCloseObserved": true,
+    "packagedRuntimeIndependent": true,
+    "spatialIndependent": true
+  },
+  "decision": {
+    "vscodeCustomEditor": "passed",
+    "actualPhysicalGpu": "not-claimed",
+    "publicViewerCoreConformance": "held"
+  }
+}

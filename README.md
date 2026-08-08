@@ -40,6 +40,9 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > 86,486 pixels, path-free bridge와 Worker/GPU/editor cleanup을 통과했습니다.
 > 같은 세 제품 경로는 macOS arm64와 Linux x64 CI에서도 고정 VS Code
 > 1.131.0·SwiftShader WebGL2로 동일한 projection과 cleanup을 재현했습니다.
+> 42.98MB `A Beautiful Game` GLB도 Browser, staged VS Code와 clean-installed
+> VSIX에서 49개 source-native entity·573,952 unique triangles, 16,896,412-byte
+> read·16,900,016-byte upload와 48,765 pixels를 동일하게 재현했습니다.
 > occurrence/type primitive property value는 별도 lazy range로 읽고,
 > IFC4 projected CRS/MapConversion과 fingerprinted source
 > precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
@@ -154,8 +157,9 @@ VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
 `A Beautiful Game` 42.98MB GLB를 on-demand로 검증해 417,028 vertices,
 573,952 unique triangles와 1,499,072 instanced triangles를 headless 및 실제
 Chrome SwiftShader WebGL2에서 열고 16.9MB allocation을 전량 회수했습니다.
-같은 파일은 Browser 제품의 실제 local file input에서도 검색·3D pick·닫기와
-전량 cleanup을 통과했습니다. VS Code 제품 file-open, physical GPU 또는 BIM
+같은 파일은 Browser 제품의 실제 local file input, staged VS Code와 빈
+profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selection,
+path-free bridge, 닫기와 전량 cleanup을 통과했습니다. physical GPU 또는 BIM
 semantic authority는 승인하지 않습니다.
 
 ## 비목표
@@ -246,6 +250,8 @@ npm run qualify:product:vscode-install
 npm run qualify:gltf:product
 npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
+npm run qualify:gltf:product-scale:vscode
+npm run qualify:gltf:product-scale:vscode-install
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core

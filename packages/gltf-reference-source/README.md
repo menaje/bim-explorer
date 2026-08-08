@@ -32,9 +32,10 @@ instanced triangles를 headless 및 실제 Chrome SwiftShader WebGL2에서
 검증했고 16,900,016-byte allocation을 전량 회수했습니다. embedded texture와
 `KHR_materials_transmission`/`KHR_materials_volume`은 source에 존재하지만
 이 bounded geometry projection의 material authority로 승격하지 않습니다.
-같은 파일의 Browser 제품 local file-open, source-native 3D pick과 cleanup도
-별도 evidence로 통과했습니다. VS Code 제품 file-open과 physical GPU는
-계속 별도 Gate입니다.
+같은 파일의 Browser 제품 local file-open, staged VS Code와 clean-installed
+VSIX도 동일한 49개 source-native entity·573,952 unique triangles,
+16,896,412-byte read·16,900,016-byte upload와 cleanup을 별도 evidence로
+통과했습니다. physical GPU는 계속 별도 Gate입니다.
 
 qualified snapshot은 BIM federation에 `gltf`/`glb` reference slot으로
 등록할 수 있습니다. selection은 source slot, exact revision과

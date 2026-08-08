@@ -28,9 +28,10 @@ const PASSED_GATES = [
   "cleanVsixGltfGlbOpen",
   "crossPlatformGltfProductOpen",
   "browserProductScaleGltfOpen",
+  "vscodeProductScaleGltfOpen",
+  "cleanVsixProductScaleGltfOpen",
 ];
 const HELD_GATES = [
-  "vscodeProductScaleGltfOpen",
   "publicViewerCoreConformance",
   "physicalGpuQualification",
   "marketplaceRelease",
@@ -101,6 +102,23 @@ function equalPublicProjection(browserPublic, installedRuntime) {
   return true;
 }
 
+function equalReferenceProjection(left, right) {
+  for (const field of [
+    "model",
+    "resources",
+    "renderer",
+    "reference",
+  ]) {
+    if (
+      JSON.stringify(left?.[field]) !==
+      JSON.stringify(right?.[field])
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function exactReferenceFixture(value, fixture) {
   return (
     value?.id === fixture?.id &&
@@ -148,9 +166,9 @@ function exactReferenceObservation(value, hostKind, nativeId) {
   );
 }
 
-function exactProductScaleReferenceObservation(value) {
+function exactProductScaleReferenceSurface(value, hostKind) {
   return (
-    value?.hostKind === "browser" &&
+    value?.hostKind === hostKind &&
     JSON.stringify(value?.model) === JSON.stringify({
       entities: 49,
       geometryRecords: 15,
@@ -175,6 +193,14 @@ function exactProductScaleReferenceObservation(value) {
       "node:0/mesh:0/primitive:0" &&
     value?.reference?.treeRows === 49 &&
     value?.reference?.maximumDomRows === 64 &&
+    value?.lifecycle?.opened === "ready" &&
+    value?.lifecycle?.closed === "disposed"
+  );
+}
+
+function exactProductScaleReferenceObservation(value) {
+  return (
+    exactProductScaleReferenceSurface(value, "browser") &&
     value?.interaction?.searchResults === 1 &&
     Number.isSafeInteger(
       value?.interaction?.selectedExpressId,
@@ -183,9 +209,7 @@ function exactProductScaleReferenceObservation(value) {
     /^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
       value?.interaction?.selectedNativeId ?? "",
     ) &&
-    value?.interaction?.selectionOrigin === "3d" &&
-    value?.lifecycle?.opened === "ready" &&
-    value?.lifecycle?.closed === "disposed"
+    value?.interaction?.selectionOrigin === "3d"
   );
 }
 
@@ -197,6 +221,8 @@ export function validateBimProductShellCompatibility(
   installation,
   browserReference,
   browserProductScaleReference,
+  vscodeProductScaleReference,
+  vscodeCleanInstallProductScaleReference,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -214,6 +240,14 @@ export function validateBimProductShellCompatibility(
     browserProductScaleReference,
     "product-scale reference Browser product shell evidence",
   );
+  plainRecord(
+    vscodeProductScaleReference,
+    "product-scale reference VS Code product shell evidence",
+  );
+  plainRecord(
+    vscodeCleanInstallProductScaleReference,
+    "product-scale reference clean VSIX evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -227,6 +261,10 @@ export function validateBimProductShellCompatibility(
       "bim-explorer-product-shell-browser-evidence/1" ||
     browserProductScaleReference.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
+    vscodeProductScaleReference.schema !==
+      "bim-explorer-vscode-custom-editor-evidence/1" ||
+    vscodeCleanInstallProductScaleReference.schema !==
+      "bim-explorer-vscode-vsix-install-evidence/1" ||
     vscode.schema !==
       "bim-explorer-vscode-custom-editor-evidence/1" ||
     installation.schema !==
@@ -261,11 +299,20 @@ export function validateBimProductShellCompatibility(
   }
   const productScaleReferenceFixture =
     manifest.productScaleReferenceFixture;
+  const installedProductScaleReference =
+    vscodeCleanInstallProductScaleReference.observation
+      ?.productScaleReferenceRuntime;
   if (
-    !exactReferenceFixture(
+    [
       browserProductScaleReference.fixture,
-      productScaleReferenceFixture,
-    ) ||
+      vscodeProductScaleReference
+        .productScaleReferenceFixture,
+      installedProductScaleReference?.fixture,
+    ].some((value) =>
+      !exactReferenceFixture(
+        value,
+        productScaleReferenceFixture,
+      )) ||
     productScaleReferenceFixture?.artifactCommitted !== false ||
     productScaleReferenceFixture?.thirdPartyContent !== true ||
     productScaleReferenceFixture?.bundled !== false ||
@@ -550,6 +597,76 @@ export function validateBimProductShellCompatibility(
       "product-scale Browser product evidence is incomplete",
     );
   }
+  const stagedProductScaleReference =
+    vscodeProductScaleReference
+      .productScaleReferenceObservation;
+  if (
+    vscodeProductScaleReference.environment?.runtimeLayout !==
+      "staged" ||
+    !everyTrue(vscodeProductScaleReference.assertions) ||
+    !everyTrue(
+      vscodeProductScaleReference
+        .productScaleReferenceAssertions,
+    ) ||
+    !exactProductScaleReferenceSurface(
+      stagedProductScaleReference,
+      "vscode-webview",
+    ) ||
+    stagedProductScaleReference?.externalUpload !== false ||
+    stagedProductScaleReference?.telemetry !== false ||
+    vscodeProductScaleReference.productScaleReferenceFixture
+      ?.classification !== "product-scale-reference" ||
+    JSON.stringify(
+      vscodeProductScaleReference
+        .productScaleReferenceFixture?.rendererLimits,
+    ) !== JSON.stringify(limits.productScaleGltfRenderer) ||
+    vscodeCleanInstallProductScaleReference.environment
+      ?.cleanUserData !== true ||
+    vscodeCleanInstallProductScaleReference.environment
+      ?.cleanExtensionsDirectory !== true ||
+    !everyTrue(
+      vscodeCleanInstallProductScaleReference.assertions,
+    ) ||
+    vscodeCleanInstallProductScaleReference.package?.id !==
+      "menaje.bim-explorer" ||
+    vscodeCleanInstallProductScaleReference.package?.version !==
+      "0.1.0" ||
+    vscodeCleanInstallProductScaleReference.package?.byteLength <= 0 ||
+    vscodeCleanInstallProductScaleReference.package
+      ?.installedRuntimeFiles !== 7 ||
+    !/^[0-9a-f]{64}$/u.test(
+      vscodeCleanInstallProductScaleReference.package
+        ?.workerBundleSha256 ?? "",
+    ) ||
+    !exactProductScaleReferenceSurface(
+      installedProductScaleReference,
+      "vscode-webview",
+    ) ||
+    installedProductScaleReference?.externalUpload !== false ||
+    installedProductScaleReference?.telemetry !== false ||
+    installedProductScaleReference?.fixture?.classification !==
+      "product-scale-reference" ||
+    JSON.stringify(
+      installedProductScaleReference?.fixture?.rendererLimits,
+    ) !== JSON.stringify(limits.productScaleGltfRenderer) ||
+    !equalReferenceProjection(
+      stagedProductScaleReference,
+      installedProductScaleReference,
+    ) ||
+    vscodeCleanInstallProductScaleReference.decision
+      ?.cleanInstall !== "passed" ||
+    vscodeCleanInstallProductScaleReference.decision
+      ?.publicFixtureOpen !== "not-run" ||
+    vscodeCleanInstallProductScaleReference.decision
+      ?.productScaleReferenceFixtureOpen !==
+        "passed-bounded-read-only" ||
+    vscodeCleanInstallProductScaleReference.decision
+      ?.marketplaceRelease !== "held"
+  ) {
+    throw new Error(
+      "product-scale VS Code product evidence is incomplete",
+    );
+  }
   if (
     !exactReferenceObservation(
       browserReference.observation,
@@ -684,6 +801,12 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.browserProductScaleReference !==
       "compatibility/evidence/" +
         "gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json" ||
+    manifest.evidence?.vscodeProductScaleReference !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.vscodeCleanInstallProductScaleReference !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json" ||
     manifest.evidence?.vscodeSynthetic !==
       "compatibility/evidence/" +
         "bim-product-shell-vscode-synthetic-2026-08-04.json" ||
@@ -700,7 +823,8 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimQualifiedReferenceOpen !== true ||
     manifest.policy?.claimCrossPlatformGltfProductOpen !== true ||
     manifest.policy?.claimProductScaleBrowserOpen !== true ||
-    manifest.policy?.claimProductScaleVscodeOpen !== false ||
+    manifest.policy?.claimProductScaleVscodeOpen !== true ||
+    manifest.policy?.claimProductScaleCleanVsixOpen !== true ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||
@@ -717,6 +841,8 @@ export function validateBimProductShellCompatibility(
         browserPublic,
         browserReference,
         browserProductScaleReference,
+        vscodeProductScaleReference,
+        vscodeCleanInstallProductScaleReference,
         installation,
         manifest,
         vscode,
@@ -756,6 +882,8 @@ async function main() {
     browserPublic,
     browserReference,
     browserProductScaleReference,
+    vscodeProductScaleReference,
+    vscodeCleanInstallProductScaleReference,
     vscode,
     installation,
   ] = await Promise.all([
@@ -779,6 +907,21 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(
+        root,
+        manifest.evidence.vscodeProductScaleReference,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence
+          .vscodeCleanInstallProductScaleReference,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -795,6 +938,8 @@ async function main() {
     installation,
     browserReference,
     browserProductScaleReference,
+    vscodeProductScaleReference,
+    vscodeCleanInstallProductScaleReference,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +
