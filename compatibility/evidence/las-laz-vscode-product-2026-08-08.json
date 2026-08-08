@@ -1,0 +1,593 @@
+{
+  "schema": "bim-explorer-las-laz-vscode-product-evidence/1",
+  "status": "passed-experimental-vscode-product-open",
+  "asOf": "2026-08-08",
+  "capturedAt": "2026-08-08T11:22:43.652Z",
+  "environment": {
+    "platform": "darwin-arm64",
+    "node": "v24.11.1",
+    "vscode": "1.131.0",
+    "runtimeSource": "local-installation",
+    "requestedVersion": null,
+    "downloadAttempts": 0
+  },
+  "surfaces": {
+    "staged": {
+      "environment": {
+        "vscode": "1.131.0",
+        "platform": "darwin-arm64",
+        "runtimeLayout": "staged"
+      },
+      "fixtures": {
+        "las": {
+          "id": "loaders-gl-ripple-las-laz-las",
+          "committed": false,
+          "format": "las",
+          "sourceBytes": 347061,
+          "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "laz": {
+          "id": "loaders-gl-ripple-las-laz-laz",
+          "committed": false,
+          "format": "laz",
+          "sourceBytes": 53952,
+          "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        }
+      },
+      "observations": {
+        "las": {
+          "hostKind": "vscode-webview",
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 7.800000004470348,
+            "sourceMs": 0,
+            "totalMs": 13.800000004470348
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 347061,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "las-point-record-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "laz": {
+          "hostKind": "vscode-webview",
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 26.5,
+            "sourceMs": 0,
+            "totalMs": 27.399999998509884
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 53952,
+            "wasmHeapCapacityBytes": {
+              "afterDecode": 4063232,
+              "afterInitialization": 262144,
+              "peakObserved": 4063232
+            }
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "decoder": {
+              "backend": "browser-wasm-worker-product-source",
+              "id": "laz-perf",
+              "license": "Apache-2.0",
+              "version": "0.0.6"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        }
+      },
+      "assertions": {
+        "las": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "laz": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        }
+      }
+    },
+    "installed": {
+      "environment": {
+        "platform": "darwin-arm64",
+        "cleanUserData": true,
+        "cleanExtensionsDirectory": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1308041,
+        "installedRuntimeFiles": 10,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "aa6623ebf7e13c63240b8b1ff773203d224c37c52c9fc3c806b4fc57e2caf1b4",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      },
+      "association": {
+        "viewType": "bimExplorer.ifcEditor",
+        "displayName": "BIM Explorer",
+        "selector": [
+          {
+            "filenamePattern": "*.ifc"
+          },
+          {
+            "filenamePattern": "*.gltf"
+          },
+          {
+            "filenamePattern": "*.glb"
+          },
+          {
+            "filenamePattern": "*.las"
+          },
+          {
+            "filenamePattern": "*.laz"
+          }
+        ],
+        "priority": "default"
+      },
+      "dependencies": {
+        "laz-perf": "0.0.6",
+        "web-ifc": "0.0.77"
+      },
+      "pointRuntime": {
+        "fixtures": {
+          "las": {
+            "id": "loaders-gl-ripple-las-laz-las",
+            "committed": false,
+            "format": "las",
+            "sourceBytes": 347061,
+            "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "provenance": {
+              "repository": "https://github.com/visgl/loaders.gl",
+              "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+              "license": "MIT",
+              "bundled": false,
+              "sampleRedistributed": false
+            }
+          },
+          "laz": {
+            "id": "loaders-gl-ripple-las-laz-laz",
+            "committed": false,
+            "format": "laz",
+            "sourceBytes": 53952,
+            "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "provenance": {
+              "repository": "https://github.com/visgl/loaders.gl",
+              "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+              "license": "MIT",
+              "bundled": false,
+              "sampleRedistributed": false
+            }
+          }
+        },
+        "observations": {
+          "las": {
+            "hostKind": "vscode-webview",
+            "model": {
+              "points": 10201,
+              "ranges": 1
+            },
+            "performance": {
+              "artifactMs": 7.699999995529652,
+              "sourceMs": 0,
+              "totalMs": 10.399999998509884
+            },
+            "resources": {
+              "decodedPointBytes": 346834,
+              "pointRangeBytes": 163264,
+              "pointRangePayloadBytes": 163216,
+              "sourceBytes": 347061,
+              "wasmHeapCapacityBytes": null
+            },
+            "renderer": {
+              "actualGpu": true,
+              "nonBackgroundPixels": 36934,
+              "sourceReadBytes": 163264,
+              "uploadedBytes": 163216
+            },
+            "pointCloud": {
+              "bounds": {
+                "min": [
+                  -5,
+                  -5,
+                  -0.6664099993588058
+                ],
+                "max": [
+                  5,
+                  5,
+                  1.0999999938128862
+                ]
+              },
+              "colorRange": {
+                "min": [
+                  0,
+                  68,
+                  0,
+                  255
+                ],
+                "max": [
+                  254,
+                  198,
+                  63,
+                  255
+                ]
+              },
+              "coordinateReferenceStatus": "unqualified",
+              "decoder": {
+                "backend": "bounded-native-js-product-source",
+                "id": "las-point-record-reader",
+                "license": "MPL-2.0",
+                "version": "0.1.0"
+              },
+              "maximumProjectionError": 2.9791268563172935e-8,
+              "origin": [
+                0,
+                0,
+                0.2167949972270401
+              ],
+              "pointPrimitive": "POINTS",
+              "pointSize": 3,
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "productLifecycle": {
+              "cpuPointRangeCleared": true,
+              "sourceBufferCleared": true,
+              "workerTerminatedAfterTransfer": true
+            },
+            "lifecycle": {
+              "opened": "ready",
+              "closed": "disposed"
+            },
+            "externalUpload": false,
+            "telemetry": false
+          },
+          "laz": {
+            "hostKind": "vscode-webview",
+            "model": {
+              "points": 10201,
+              "ranges": 1
+            },
+            "performance": {
+              "artifactMs": 24.799999997019768,
+              "sourceMs": 0,
+              "totalMs": 25.799999997019768
+            },
+            "resources": {
+              "decodedPointBytes": 346834,
+              "pointRangeBytes": 163264,
+              "pointRangePayloadBytes": 163216,
+              "sourceBytes": 53952,
+              "wasmHeapCapacityBytes": {
+                "afterDecode": 4063232,
+                "afterInitialization": 262144,
+                "peakObserved": 4063232
+              }
+            },
+            "renderer": {
+              "actualGpu": true,
+              "nonBackgroundPixels": 36934,
+              "sourceReadBytes": 163264,
+              "uploadedBytes": 163216
+            },
+            "pointCloud": {
+              "bounds": {
+                "min": [
+                  -5,
+                  -5,
+                  -0.6664099993588058
+                ],
+                "max": [
+                  5,
+                  5,
+                  1.0999999938128862
+                ]
+              },
+              "colorRange": {
+                "min": [
+                  0,
+                  68,
+                  0,
+                  255
+                ],
+                "max": [
+                  254,
+                  198,
+                  63,
+                  255
+                ]
+              },
+              "coordinateReferenceStatus": "unqualified",
+              "decoder": {
+                "backend": "browser-wasm-worker-product-source",
+                "id": "laz-perf",
+                "license": "Apache-2.0",
+                "version": "0.0.6"
+              },
+              "maximumProjectionError": 2.9791268563172935e-8,
+              "origin": [
+                0,
+                0,
+                0.2167949972270401
+              ],
+              "pointPrimitive": "POINTS",
+              "pointSize": 3,
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "productLifecycle": {
+              "cpuPointRangeCleared": true,
+              "sourceBufferCleared": true,
+              "workerTerminatedAfterTransfer": true
+            },
+            "lifecycle": {
+              "opened": "ready",
+              "closed": "disposed"
+            },
+            "externalUpload": false,
+            "telemetry": false
+          }
+        },
+        "assertions": {
+          "las": {
+            "localPointSourceOpened": true,
+            "pointSourceIdentityExact": true,
+            "noCoordinateOrSemanticAuthority": true,
+            "vscodeChromiumWebGl2": true,
+            "boundedPointRenderer": true,
+            "pointWorkerAndCpuCleanup": true,
+            "pathFreeHostBridge": true,
+            "editorCloseObserved": true
+          },
+          "laz": {
+            "localPointSourceOpened": true,
+            "pointSourceIdentityExact": true,
+            "noCoordinateOrSemanticAuthority": true,
+            "vscodeChromiumWebGl2": true,
+            "boundedPointRenderer": true,
+            "pointWorkerAndCpuCleanup": true,
+            "pathFreeHostBridge": true,
+            "editorCloseObserved": true
+          }
+        }
+      },
+      "assertions": {
+        "requiredRuntimeComplete": true,
+        "pointWorkerBundleExact": true,
+        "lazPerfRuntimeExact": true,
+        "noSpatialDependency": true,
+        "readOnlyLasLazAssociation": true,
+        "installedPackageOpensLas": true,
+        "installedPackageOpensLaz": true,
+        "installedPointRangeParity": true,
+        "installedPointVisualParity": true
+      },
+      "decision": {
+        "cleanInstall": "passed",
+        "publicFixtureOpen": "not-run",
+        "referenceFixtureOpen": "passed-bounded-read-only",
+        "productScaleReferenceFixtureOpen": "not-run",
+        "pointFixtureOpen": "passed-bounded-read-only-unqualified-coordinates",
+        "marketplaceRelease": "held"
+      }
+    }
+  },
+  "parity": {
+    "points": 10201,
+    "pointRangeBytes": 163264,
+    "pointRangePayloadBytes": 163216,
+    "pointRangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449",
+    "nonBackgroundPixels": 36934
+  },
+  "runtime": {
+    "pointSourceContract": "bim-explorer-las-laz-point-source/0.1",
+    "pointWorkerRequest": "bim-explorer-point-source-worker-request/0.1",
+    "pointWorkerResponse": "bim-explorer-point-source-worker-response/0.1",
+    "lazDecoder": {
+      "id": "laz-perf",
+      "version": "0.0.6",
+      "license": "Apache-2.0",
+      "strictCspAdaptation": true,
+      "webviewUnsafeEval": false
+    }
+  },
+  "fixturePolicy": {
+    "artifactTracked": false,
+    "sampleRedistributed": false,
+    "releaseBundled": false,
+    "testOnly": true
+  },
+  "decision": {
+    "stagedVscodeProductOpen": "passed-experimental",
+    "cleanInstalledVsixProductOpen": "passed-experimental",
+    "coordinateReference": "held",
+    "pointIdentityPicking": "held",
+    "levelOfDetail": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false,
+    "actualPhysicalGpu": "not-claimed",
+    "marketplaceRelease": "held"
+  },
+  "assertions": {
+    "stagedLasFileOpen": true,
+    "stagedLazFileOpen": true,
+    "installedLasFileOpen": true,
+    "installedLazFileOpen": true,
+    "sameFixtureIdentity": true,
+    "samePointRangeProjection": true,
+    "sameVisibleProjection": true,
+    "boundedLocalReadOnly": true,
+    "strictCspDecoderRuntime": true,
+    "cleanVsixRuntime": true,
+    "pathFree": true,
+    "spatialIndependent": true,
+    "sampleNotTrackedOrBundled": true,
+    "coordinateReferenceHeld": true,
+    "formatAdmissionHeld": true
+  },
+  "limitations": [
+    "the product profile covers one paired LAS 1.2 point-format 3 sample",
+    "coordinates are displayed without CRS or surveyed datum authority",
+    "individual point identity, picking and LOD streaming are not implemented",
+    "the CSP adaptation changes generated Emscripten glue but not laz-perf WASM",
+    "SwiftShader exercises actual WebGL2 APIs but does not claim a physical GPU",
+    "the public sample remains in an ignored digest cache and is not redistributed",
+    "bounded VS Code product open does not admit the LAS/LAZ format family"
+  ]
+}

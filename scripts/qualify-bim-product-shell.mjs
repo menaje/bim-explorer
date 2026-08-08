@@ -250,9 +250,12 @@ class CdpClient {
       userGesture: true,
     });
     if (response.exceptionDetails !== undefined) {
+      const description =
+        response.exceptionDetails.exception?.description ??
+        response.exceptionDetails.text;
       throw new Error(
         `Browser evaluation failed: ` +
-          `${response.exceptionDetails.text}`,
+          `${description}`,
       );
     }
     return response.result?.value;

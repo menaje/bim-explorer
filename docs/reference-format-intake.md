@@ -83,15 +83,19 @@ Float32/RGBA8 range로 투영해 actual Chrome에서 10,201 points·1 draw와 ex
 resource cleanup을 통과했습니다. 후속 Browser 제품 Gate는 bounded LAS/LAZ
 source를 전용 Worker에서 같은 range로 만들고 실제 local file input에서
 10,201 points·동일 range SHA-256·36,934 pixels와 source/Worker/CPU/GPU cleanup을
-통과했습니다. 좌표는 계속 unqualified이며 point identity/picking·LOD와 VS Code
-open은 제공하지 않습니다.
+통과했습니다. 후속 VS Code Gate도 `.las`/`.laz` Custom Editor association,
+staged runtime과 빈 profile에 clean-installed VSIX에서 같은 point-range/visible
+projection, path-free bridge와 cleanup을 재현했습니다. VSIX의 generated
+Emscripten glue는 strict CSP를 위해 dynamic Function construction을 동등한
+closure로 치환하고 original `laz-perf.wasm`은 수정하지 않습니다. 좌표는 계속
+unqualified이며 point identity/picking·LOD는 제공하지 않습니다.
 
 ## 현재 상태
 
 intake 계약과 공개 issue form, cache-only E57 및 LAS/LAZ pre-admission
-decode/Worker/point-renderer probe가 준비됐고, LAS/LAZ는 bounded Browser 제품
-source/file-open까지 통과했습니다. 실제 외부 packet, surveyed coordinate와
-VS Code 제품 open은 아직 없습니다.
+decode/Worker/point-renderer probe가 준비됐고, LAS/LAZ는 bounded Browser,
+staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했습니다.
+실제 외부 packet과 surveyed coordinate는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에

@@ -2,6 +2,7 @@ import {
   mkdtemp,
   readFile,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -21,6 +22,20 @@ const OUTPUT = path.join(
   "apps",
   "bim-explorer-web",
   "point-source-worker.bundle.js",
+);
+const LAZ_PERF_INPUT = path.join(
+  ROOT,
+  "node_modules",
+  "laz-perf",
+  "lib",
+  "worker",
+  "laz-perf.js",
+);
+const LAZ_PERF_OUTPUT = path.join(
+  ROOT,
+  "apps",
+  "bim-explorer-web",
+  "laz-perf-worker-csp.js",
 );
 
 async function createBundle(output) {
@@ -42,18 +57,119 @@ async function createBundle(output) {
   });
 }
 
+async function createCspCompatibleLazPerf(output) {
+  let source = await readFile(LAZ_PERF_INPUT, "utf8");
+  function replaceExactSection(
+    marker,
+    endMarker,
+    requiredSource,
+    replacement,
+    label,
+  ) {
+    const start = source.indexOf(marker);
+    const end = source.indexOf(endMarker, start);
+    if (
+      start < 0 ||
+      end <= start ||
+      source.indexOf(marker, start + marker.length) >= 0 ||
+      !source.slice(start, end).includes(requiredSource)
+    ) {
+      throw new Error(
+        `laz-perf 0.0.6 ${label} patch identity changed`,
+      );
+    }
+    source =
+      source.slice(0, start) +
+      replacement +
+      source.slice(end);
+  }
+  replaceExactSection(
+    "function createNamedFunction(name,body){",
+    "function extendError",
+    "new Function",
+    "function createNamedFunction(name,body){return function(){" +
+      '"use strict";return body.apply(this,arguments)}}',
+    "dynamic-name",
+  );
+  replaceExactSection(
+    "function craftInvokerFunction(",
+    "function __embind_register_class_constructor",
+    "new_(Function,args1)",
+    "function craftInvokerFunction(humanName,argTypes,classType," +
+      "cppInvokerFunc,cppTargetFunc){" +
+      "var argCount=argTypes.length;" +
+      "if(argCount<2){throwBindingError(" +
+      '"argTypes array size mismatch! Must at least get return value "+' +
+      '"and \'this\' types!")}' +
+      "var isClassMethodFunc=argTypes[1]!==null&&classType!==null;" +
+      "var needsDestructorStack=false;" +
+      "for(var i=1;i<argTypes.length;++i){" +
+      "if(argTypes[i]!==null&&" +
+      "argTypes[i].destructorFunction===undefined){" +
+      "needsDestructorStack=true;break}}" +
+      "var returns=argTypes[0].name!==\"void\";" +
+      "var expectedArguments=argCount-2;" +
+      "return function(){" +
+      "if(arguments.length!==expectedArguments){throwBindingError(" +
+      '"function "+humanName+" called with "+arguments.length+' +
+      '" arguments, expected "+expectedArguments+" args!")}' +
+      "var destructors=needsDestructorStack?[]:null;" +
+      "var wired=[];" +
+      "if(isClassMethodFunc){" +
+      "wired.push(argTypes[1].toWireType(destructors,this))}" +
+      "for(var i=0;i<expectedArguments;++i){" +
+      "wired.push(argTypes[i+2].toWireType(" +
+      "destructors,arguments[i]))}" +
+      "var rv=cppInvokerFunc.apply(null,[cppTargetFunc].concat(wired));" +
+      "if(needsDestructorStack){runDestructors(destructors)}else{" +
+      "for(var i=isClassMethodFunc?1:2;i<argTypes.length;++i){" +
+      "if(argTypes[i].destructorFunction!==null){" +
+      "var wiredIndex=isClassMethodFunc?i-1:i-2;" +
+      "argTypes[i].destructorFunction(wired[wiredIndex])}}}" +
+      "if(returns){return argTypes[0].fromWireType(rv)}}}",
+    "dynamic-invoker",
+  );
+  source = source.replace(/[ \t]+$/gmu, "");
+  const body =
+    "// Generated from exact laz-perf@0.0.6 Apache-2.0 Worker " +
+    "runtime; dynamic Function construction replaced with " +
+    "equivalent closures for strict CSP.\n" +
+    source;
+  if (
+    /\bnew Function\b|\bnew_\(Function|\beval\s*\(/u.test(body)
+  ) {
+    throw new Error(
+      "CSP-compatible laz-perf runtime still contains dynamic code",
+    );
+  }
+  await writeFile(output, body, "utf8");
+}
+
 export async function checkPointSourceWorkerBundle() {
   const temporary = await mkdtemp(
     path.join(tmpdir(), "bim-explorer-point-worker-"),
   );
   try {
     const generated = path.join(temporary, "worker.js");
-    await createBundle(generated);
-    const [expected, observed] = await Promise.all([
+    const generatedLazPerf = path.join(
+      temporary,
+      "laz-perf.js",
+    );
+    await Promise.all([
+      createBundle(generated),
+      createCspCompatibleLazPerf(generatedLazPerf),
+    ]);
+    const [expected, observed, expectedLazPerf, observedLazPerf] =
+      await Promise.all([
       readFile(OUTPUT),
       readFile(generated),
+      readFile(LAZ_PERF_OUTPUT),
+      readFile(generatedLazPerf),
     ]);
-    if (!expected.equals(observed)) {
+    if (
+      !expected.equals(observed) ||
+      !expectedLazPerf.equals(observedLazPerf)
+    ) {
       throw new Error(
         "point source Worker bundle is stale; " +
           "run npm run build:point-worker",
@@ -61,7 +177,8 @@ export async function checkPointSourceWorkerBundle() {
     }
     process.stdout.write(
       `Point source Worker bundle check passed: ` +
-        `${expected.byteLength} bytes\n`,
+        `${expected.byteLength} bytes; CSP laz-perf ` +
+        `${expectedLazPerf.byteLength} bytes\n`,
     );
   } finally {
     await rm(temporary, {
@@ -84,10 +201,17 @@ async function main() {
       "usage: node scripts/build-point-source-worker.mjs [--check]",
     );
   }
-  await createBundle(OUTPUT);
-  const body = await readFile(OUTPUT);
+  await Promise.all([
+    createBundle(OUTPUT),
+    createCspCompatibleLazPerf(LAZ_PERF_OUTPUT),
+  ]);
+  const [body, lazPerfBody] = await Promise.all([
+    readFile(OUTPUT),
+    readFile(LAZ_PERF_OUTPUT),
+  ]);
   process.stdout.write(
-    `Point source Worker bundle built: ${body.byteLength} bytes\n`,
+    `Point source Worker bundle built: ${body.byteLength} bytes; ` +
+      `CSP laz-perf ${lazPerfBody.byteLength} bytes\n`,
   );
 }
 

@@ -13,6 +13,7 @@ const [
   lasLazWorkerEvidence,
   lasLazPointRendererEvidence,
   lasLazBrowserProductEvidence,
+  lasLazVscodeProductEvidence,
 ] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
@@ -43,6 +44,11 @@ const [
       "las-laz-browser-product-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "las-laz-vscode-product-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
@@ -54,11 +60,12 @@ test("reference sample probes remain separate from format admission", () => {
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
+      lasLazVscodeProductEvidence,
     ),
     {
       status: "pre-admission",
-      passedGates: 17,
-      heldGates: 6,
+      passedGates: 18,
+      heldGates: 5,
       sampleFormats: 3,
     },
   );
@@ -75,6 +82,7 @@ test("an E57 sample probe cannot claim point decode", () => {
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
+      lasLazVscodeProductEvidence,
     ),
     /must be held/u,
   );
@@ -91,6 +99,7 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
+      lasLazVscodeProductEvidence,
     ),
     /must be held/u,
   );

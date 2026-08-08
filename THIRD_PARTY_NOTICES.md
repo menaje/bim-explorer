@@ -88,8 +88,8 @@ digest와 attribution은
 기록합니다. GLB 자체는 ignored private cache에만 두며 release에 포함하지
 않습니다.
 
-LAS/LAZ point-record qualification과 experimental Browser product Worker는
-다음 exact dependency를 사용합니다.
+LAS/LAZ point-record qualification과 experimental Browser 및 VS Code/VSIX
+product Worker는 다음 exact dependency를 사용합니다.
 
 - `laz-perf@0.0.6`
 - Apache-2.0, [full text](specs/LICENSE)
@@ -101,10 +101,15 @@ LAS/LAZ point-record qualification과 experimental Browser product Worker는
 
 공개 LAS/LAZ pair는 `visgl/loaders.gl`의 MIT source repository에서 고정 commit과
 SHA-256로 내려받습니다. 샘플 binary는 ignored cache에만 두고 재배포하거나
-release에 포함하지 않습니다. `laz-perf`는 main의 bounded Browser product에서
-전용 classic Worker runtime으로 사용하지만 immutable Community v0.1.0,
-VS Code/VSIX와 release bundle에는 포함하지 않습니다. release나 VSIX에
-포함하기 전 platform package, runtime SBOM과 notice를 다시 검증해야 합니다.
+release에 포함하지 않습니다. `laz-perf`는 main의 bounded Browser product와
+VS Code/VSIX에서 전용 classic Worker runtime으로 사용합니다. Webview의 strict
+CSP에서 `unsafe-eval` 없이 실행하기 위해 generated Emscripten glue의 dynamic
+Function naming과 invoker construction을 동등한 closure로 치환했으며,
+`laz-perf.wasm`은 수정하지 않았습니다. 수정 표시는 generated file header에도
+기록합니다. 개발 VSIX는 이 glue, exact WASM과 Apache-2.0 full text를 포함하지만
+공개 샘플은 포함하지 않습니다. immutable Community v0.1.0과 그 release
+bundle에는 이 runtime이 없으며 marketplace 또는 다음 Community release는
+runtime SBOM, checksum, notice와 재현성 Gate를 다시 통과해야 합니다.
 
 - exact package와 version
 - upstream source와 license

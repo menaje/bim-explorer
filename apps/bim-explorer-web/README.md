@@ -37,4 +37,6 @@ projection과 editor cleanup을 확인합니다.
 `npm run qualify:las-laz:product:web`은 cache-only 공개 LAS/LAZ pair를 각각
 실제 Browser local file input으로 열어 exact point-range/visual parity,
 `laz-perf@0.0.6` Worker isolation과 source/Worker/CPU/GPU cleanup을 확인합니다.
-샘플은 Git, package 또는 release에 포함하지 않습니다.
+`npm run qualify:las-laz:product:vscode`는 같은 projection을 staged VS Code와
+clean-installed VSIX에서 다시 확인합니다. 샘플은 Git, package 또는 release에
+포함하지 않습니다.

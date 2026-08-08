@@ -5,6 +5,9 @@ import { pathToFileURL } from "node:url";
 import {
   validateLasLazBrowserProductQualification,
 } from "./qualify-las-laz-browser-product.mjs";
+import {
+  validateLasLazVscodeProductQualification,
+} from "./qualify-las-laz-vscode-product.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -35,6 +38,8 @@ const PASSED_GATES = [
   "vscodeProductScaleGltfOpen",
   "cleanVsixProductScaleGltfOpen",
   "browserReadonlyLasLazOpen",
+  "vscodeReadonlyLasLazOpen",
+  "cleanVsixLasLazOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -229,6 +234,7 @@ export function validateBimProductShellCompatibility(
   vscodeProductScaleReference,
   vscodeCleanInstallProductScaleReference,
   lasLazBrowserProduct,
+  lasLazVscodeProduct,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -256,6 +262,9 @@ export function validateBimProductShellCompatibility(
   );
   validateLasLazBrowserProductQualification(
     lasLazBrowserProduct,
+  );
+  validateLasLazVscodeProductQualification(
+    lasLazVscodeProduct,
   );
   if (
     manifest.schema !==
@@ -842,6 +851,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.browserLasLaz !==
       "compatibility/evidence/" +
         "las-laz-browser-product-2026-08-08.json" ||
+    manifest.evidence?.vscodeLasLaz !==
+      "compatibility/evidence/" +
+        "las-laz-vscode-product-2026-08-08.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -852,6 +864,8 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimProductScaleVscodeOpen !== true ||
     manifest.policy?.claimProductScaleCleanVsixOpen !== true ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
+    manifest.policy?.claimVscodeLasLazOpen !== true ||
+    manifest.policy?.claimCleanVsixLasLazOpen !== true ||
     manifest.policy?.claimLasLazFormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
@@ -872,6 +886,7 @@ export function validateBimProductShellCompatibility(
         vscodeProductScaleReference,
         vscodeCleanInstallProductScaleReference,
         lasLazBrowserProduct,
+        lasLazVscodeProduct,
         installation,
         manifest,
         vscode,
@@ -914,6 +929,7 @@ async function main() {
     vscodeProductScaleReference,
     vscodeCleanInstallProductScaleReference,
     lasLazBrowserProduct,
+    lasLazVscodeProduct,
     vscode,
     installation,
   ] = await Promise.all([
@@ -956,6 +972,10 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.vscodeLasLaz),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -975,6 +995,7 @@ async function main() {
     vscodeProductScaleReference,
     vscodeCleanInstallProductScaleReference,
     lasLazBrowserProduct,
+    lasLazVscodeProduct,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

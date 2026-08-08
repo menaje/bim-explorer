@@ -13,12 +13,20 @@ const HOST_MESSAGE =
 const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const PRODUCT_MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+const POINT_MAXIMUM_SOURCE_BYTES = 8 * 1024 * 1024;
 const DEFAULTS = Object.freeze({
   maximumSourceBytes: PRODUCT_MAXIMUM_SOURCE_BYTES,
   openTimeoutMs: 30_000,
   profile: "ReferenceView_V1.2",
 });
-const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
+const SOURCE_FORMATS = new Set([
+  "ifc",
+  "gltf",
+  "glb",
+  "las",
+  "laz",
+]);
+const POINT_SOURCE_FORMATS = new Set(["las", "laz"]);
 
 function boundedInteger(value, fallback, minimum, maximum) {
   return Number.isSafeInteger(value)
@@ -100,13 +108,25 @@ function numericRecord(value, keys) {
   );
 }
 
+function numericArray(value, length) {
+  if (
+    !Array.isArray(value) ||
+    value.length !== length ||
+    value.some((item) =>
+      typeof item !== "number" || !Number.isFinite(item))
+  ) {
+    return null;
+  }
+  return [...value];
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
     .toLowerCase();
   if (!SOURCE_FORMATS.has(extension)) {
     throw new Error(
-      "BIM Explorer supports local IFC, glTF, and GLB files",
+      "BIM Explorer supports local IFC, glTF, GLB, LAS, and LAZ files",
     );
   }
   return extension;
@@ -121,6 +141,7 @@ function sanitizeReport(value) {
     return null;
   }
   const format = stringOrNull(value.source?.format);
+  const pointSource = POINT_SOURCE_FORMATS.has(format);
   const source = value.source === undefined
     ? null
     : {
@@ -135,6 +156,15 @@ function sanitizeReport(value) {
         format,
         gltfVersion: stringOrNull(
           value.source?.gltfVersion,
+        ),
+        coordinateReferenceStatus: stringOrNull(
+          value.source?.coordinateReferenceStatus,
+        ),
+        formatVersion: stringOrNull(
+          value.source?.formatVersion,
+        ),
+        pointFormat: numberOrNull(
+          value.source?.pointFormat,
         ),
         profile: stringOrNull(value.source?.profile),
         sourceRole: stringOrNull(
@@ -169,7 +199,9 @@ function sanitizeReport(value) {
     source,
     model: numericRecord(
       value.model,
-      ["gltf", "glb"].includes(format)
+      pointSource
+        ? ["points", "ranges"]
+        : ["gltf", "glb"].includes(format)
         ? [
             "entities",
             "geometryRecords",
@@ -189,33 +221,53 @@ function sanitizeReport(value) {
       "sourceMs",
       "totalMs",
     ]),
-    resources: numericRecord(
-      value.resources,
-      ["gltf", "glb"].includes(format)
-        ? [
+    resources: pointSource
+      ? {
+          ...numericRecord(value.resources, [
+            "decodedPointBytes",
+            "pointRangeBytes",
+            "pointRangePayloadBytes",
             "sourceBytes",
-            "geometryBytes",
-            "metadataBytes",
-            "detailBytes",
-            "detailRanges",
-            "largestDetailRangeBytes",
-            "ranges",
-            "products",
-            "referenceEntities",
-            "wasmHeapCapacityBytes",
-          ]
-        : [
-            "sourceBytes",
-            "geometryBytes",
-            "metadataBytes",
-            "detailBytes",
-            "detailRanges",
-            "largestDetailRangeBytes",
-            "ranges",
-            "products",
-            "wasmHeapCapacityBytes",
-          ],
-    ),
+          ]),
+          wasmHeapCapacityBytes:
+            value.resources?.wasmHeapCapacityBytes === null
+              ? null
+              : numericRecord(
+                  value.resources?.wasmHeapCapacityBytes,
+                  [
+                    "afterDecode",
+                    "afterInitialization",
+                    "peakObserved",
+                  ],
+                ),
+        }
+      : numericRecord(
+          value.resources,
+          ["gltf", "glb"].includes(format)
+            ? [
+                "sourceBytes",
+                "geometryBytes",
+                "metadataBytes",
+                "detailBytes",
+                "detailRanges",
+                "largestDetailRangeBytes",
+                "ranges",
+                "products",
+                "referenceEntities",
+                "wasmHeapCapacityBytes",
+              ]
+            : [
+                "sourceBytes",
+                "geometryBytes",
+                "metadataBytes",
+                "detailBytes",
+                "detailRanges",
+                "largestDetailRangeBytes",
+                "ranges",
+                "products",
+                "wasmHeapCapacityBytes",
+              ],
+        ),
     renderer: value.renderer === undefined
       ? null
       : {
@@ -232,6 +284,73 @@ function sanitizeReport(value) {
       "maximumDomRows",
     ]),
     reference,
+    pointCloud: !pointSource || value.pointCloud === undefined
+      ? null
+      : {
+          bounds: {
+            min: numericArray(
+              value.pointCloud?.bounds?.min,
+              3,
+            ),
+            max: numericArray(
+              value.pointCloud?.bounds?.max,
+              3,
+            ),
+          },
+          colorRange: {
+            min: numericArray(
+              value.pointCloud?.colorRange?.min,
+              4,
+            ),
+            max: numericArray(
+              value.pointCloud?.colorRange?.max,
+              4,
+            ),
+          },
+          coordinateReferenceStatus: stringOrNull(
+            value.pointCloud?.coordinateReferenceStatus,
+          ),
+          decoder: value.pointCloud?.decoder === undefined
+            ? null
+            : {
+                backend: stringOrNull(
+                  value.pointCloud?.decoder?.backend,
+                ),
+                id: stringOrNull(
+                  value.pointCloud?.decoder?.id,
+                ),
+                license: stringOrNull(
+                  value.pointCloud?.decoder?.license,
+                ),
+                version: stringOrNull(
+                  value.pointCloud?.decoder?.version,
+                ),
+              },
+          maximumProjectionError: numberOrNull(
+            value.pointCloud?.maximumProjectionError,
+          ),
+          origin: numericArray(value.pointCloud?.origin, 3),
+          pointPrimitive: stringOrNull(
+            value.pointCloud?.pointPrimitive,
+          ),
+          pointSize: numberOrNull(
+            value.pointCloud?.pointSize,
+          ),
+          rangeSha256: stringOrNull(
+            value.pointCloud?.rangeSha256,
+            /^[0-9a-f]{64}$/u,
+          ),
+        },
+    productLifecycle: !pointSource
+      ? null
+      : {
+          cpuPointRangeCleared:
+            value.lifecycle?.cpuPointRangeCleared === true,
+          sourceBufferCleared:
+            value.lifecycle?.sourceBufferCleared === true,
+          workerTerminatedAfterTransfer:
+            value.lifecycle?.workerTerminatedAfterTransfer === true,
+        },
     diagnostic: value.diagnostic === undefined
       ? null
       : {
@@ -377,6 +496,13 @@ class BimExplorerReadonlyEditorProvider {
 
   async #readBounded(document) {
     const configured = settings(this.#vscode);
+    const format = sourceFormat(document.uri);
+    const maximumSourceBytes = POINT_SOURCE_FORMATS.has(format)
+      ? Math.min(
+          configured.maximumSourceBytes,
+          POINT_MAXIMUM_SOURCE_BYTES,
+        )
+      : configured.maximumSourceBytes;
     const before = await this.#vscode.workspace.fs.stat(
       document.uri,
     );
@@ -388,7 +514,7 @@ class BimExplorerReadonlyEditorProvider {
     if (
       (before.type & this.#vscode.FileType.File) === 0 ||
       before.size <= 0 ||
-      before.size > configured.maximumSourceBytes
+      before.size > maximumSourceBytes
     ) {
       throw stableError(
         "SOURCE_FILE_LIMIT_REJECTED",
@@ -411,8 +537,11 @@ class BimExplorerReadonlyEditorProvider {
     }
     return {
       bytes,
-      configured,
-      format: sourceFormat(document.uri),
+      configured: Object.freeze({
+        ...configured,
+        maximumSourceBytes,
+      }),
+      format,
     };
   }
 
@@ -471,6 +600,13 @@ class BimExplorerReadonlyEditorProvider {
       "node_modules",
       "web-ifc",
     );
+    const pointVendorRoot = this.#vscode.Uri.joinPath(
+      this.#runtimeRoot,
+      "node_modules",
+      "laz-perf",
+      "lib",
+      "worker",
+    );
     const resource = (...segments) =>
       webview.asWebviewUri(
         this.#vscode.Uri.joinPath(appRoot, ...segments),
@@ -483,6 +619,18 @@ class BimExplorerReadonlyEditorProvider {
       {
         appUri: resource("app.mjs"),
         cspSource: webview.cspSource,
+        lazPerfScriptUri: resource(
+          "laz-perf-worker-csp.js",
+        ),
+        lazPerfWasmUri: webview.asWebviewUri(
+          this.#vscode.Uri.joinPath(
+            pointVendorRoot,
+            "laz-perf.wasm",
+          ),
+        ).toString(true),
+        pointWorkerUri: resource(
+          "point-source-worker.bundle.js",
+        ),
         profile: settings(this.#vscode).profile,
         sourceUriText: document.uri.toString(true),
         stylesUri: resource("styles.css"),
@@ -604,7 +752,7 @@ function activateBimExplorerExtension(vscode, context) {
           vscode.window.activeTextEditor?.document?.uri;
         if (selected === undefined) {
           throw new Error(
-            "Choose a local IFC, glTF, or GLB file first",
+            "Choose a local IFC, glTF, GLB, LAS, or LAZ file first",
           );
         }
         return await vscode.commands.executeCommand(

@@ -46,6 +46,7 @@ const REQUIRED_PATHS = [
   "apps/bim-explorer-web/README.md",
   "apps/bim-explorer-web/app.mjs",
   "apps/bim-explorer-web/index.html",
+  "apps/bim-explorer-web/laz-perf-worker-csp.js",
   "apps/bim-explorer-web/point-source-client.mjs",
   "apps/bim-explorer-web/point-source-worker.bundle.js",
   "apps/bim-explorer-web/point-source-worker.mjs",
@@ -101,6 +102,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
   "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
   "compatibility/evidence/las-laz-browser-product-2026-08-08.json",
+  "compatibility/evidence/las-laz-vscode-product-2026-08-08.json",
   "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
@@ -284,6 +286,7 @@ const REQUIRED_PATHS = [
   "scripts/qualify-las-laz-public-sample.mjs",
   "scripts/qualify-las-laz-browser-worker.mjs",
   "scripts/qualify-las-laz-browser-product.mjs",
+  "scripts/qualify-las-laz-vscode-product.mjs",
   "scripts/qualify-las-laz-point-renderer.mjs",
   "scripts/qualify-gltf-reference-source.mjs",
   "scripts/qualify-gltf-browser-webgl2.mjs",
@@ -353,6 +356,7 @@ const REQUIRED_PATHS = [
   "tests/federation/las-laz-browser-worker.test.mjs",
   "tests/federation/las-laz-point-renderer.test.mjs",
   "tests/point-source/las-laz-point-source.test.mjs",
+  "tests/product/las-laz-vscode-product.test.mjs",
   "tests/federation/federated-renderer-projection.test.mjs",
   "tests/federation/gltf-reference-federation.test.mjs",
   "tests/gltf/gltf-reference-source.test.mjs",
@@ -509,7 +513,7 @@ if (
   lazPerfLock.dev === true
 ) {
   failures.push(
-    "package-lock.json: laz-perf 0.0.6 Browser product runtime " +
+    "package-lock.json: laz-perf 0.0.6 product runtime " +
       "requires exact registry integrity and Apache-2.0 metadata",
   );
 }

@@ -96,7 +96,7 @@ cache입니다.
 | --- | --- | --- |
 | IFC4 ReferenceView | semantic BIM source | 기존 bounded read-only profile |
 | glTF/GLB | derived/reference mesh | bounded read-only reference admission |
-| LAS/LAZ | point-cloud/survey reference | bounded Browser product open passed; admission held |
+| LAS/LAZ | point-cloud/survey reference | bounded Browser·VS Code·clean VSIX product open passed; admission held |
 | E57 | point-cloud/survey reference | held |
 | 3D Tiles/GIS | site context reference | held |
 | RVT/DGN | native SDK reference | held |
@@ -130,8 +130,11 @@ qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperativ
 primitive도 10,201 points·1 draw·40,471 pixels 및 exact cleanup을
 통과했습니다. 이어 bounded product source와 실제 Browser local file input은
 LAS/LAZ가 동일한 point range와 visible frame을 만들고 source/Worker/CPU/GPU
-cleanup을 통과했습니다. 하지만 CRS/datum, point identity/picking·LOD와 VS
-Code file-open이 없으므로 위 표의 admission은 계속 `held`입니다.
+cleanup을 통과했습니다. staged VS Code Custom Editor와 빈 profile에
+clean-installed VSIX도 같은 point range, visible frame, path-free bridge와
+cleanup을 재현했습니다. VSIX는 exact `laz-perf@0.0.6` WASM과 strict-CSP용
+generated glue를 포함하지만 public sample은 포함하지 않습니다. CRS/datum,
+point identity/picking·LOD가 없으므로 위 표의 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 
@@ -149,6 +152,11 @@ composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모
 조합으로 통과했습니다. physical GPU와 실제 사용자/Spatial/survey evidence는
 계속 held입니다. 이 결과는 v0.1.0 asset이나 broader glTF profile을 소급
 승인하지 않습니다.
+
+LAS/LAZ의 Browser, staged VS Code와 clean-installed VSIX 제품 open도 current
+main에서만 통과했습니다. 이 변경은 immutable Community v0.1.0 asset에
+소급되지 않으며 다음 공개 VSIX나 marketplace 승격에는 runtime SBOM,
+checksum과 release reproducibility 검증이 다시 필요합니다.
 
 실제 Spatial consumer와 standalone Spatial bundle은 Explorer 저장소가
 완료로 만들 수 없는 consumer-owned Gate입니다. 관련 진행은 Explorer

@@ -121,6 +121,8 @@
     "vscodeProductScaleGltfOpen": true,
     "cleanVsixProductScaleGltfOpen": true,
     "browserReadonlyLasLazOpen": true,
+    "vscodeReadonlyLasLazOpen": true,
+    "cleanVsixLasLazOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -135,7 +137,8 @@
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
     "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
-    "browserLasLaz": "compatibility/evidence/las-laz-browser-product-2026-08-08.json"
+    "browserLasLaz": "compatibility/evidence/las-laz-browser-product-2026-08-08.json",
+    "vscodeLasLaz": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json"
   },
   "blockers": [
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
@@ -153,6 +156,8 @@
     "claimProductScaleVscodeOpen": true,
     "claimProductScaleCleanVsixOpen": true,
     "claimBrowserLasLazOpen": true,
+    "claimVscodeLasLazOpen": true,
+    "claimCleanVsixLasLazOpen": true,
     "claimLasLazFormatAdmission": false,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,

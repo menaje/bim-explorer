@@ -6,7 +6,10 @@ header and LASzip VLR identity, and derives one source-neutral
 `BEXPTS01` Float64-origin/relative-Float32/RGBA8 point range.
 
 LAZ decompression is supplied by exact `laz-perf@0.0.6` inside an isolated
-product Worker. The source has no BIM semantic authority, native write or
+product Worker. Browser serves the generated strict-CSP runtime directly;
+VS Code loads the point Worker, adapted Emscripten glue and original WASM as
+bounded extension resources and injects `blob:` capabilities without enabling
+`unsafe-eval`. The source has no BIM semantic authority, native write or
 round-trip authority. Coordinates remain `unqualified`: this package does not
 infer a CRS or datum from file metadata and does not establish surveyed
 accuracy. Point identity, picking and LOD streaming are outside this profile.

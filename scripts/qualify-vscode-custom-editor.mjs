@@ -20,6 +20,9 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicLasLazFixture,
+} from "./public-las-laz-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -28,12 +31,17 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 function parseArguments(values) {
   const options = {
     includeProductScaleFixture: false,
+    includePointFixtures: false,
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
     const name = values[index];
     if (name === "--product-scale") {
       options.includeProductScaleFixture = true;
+      continue;
+    }
+    if (name === "--point-cloud") {
+      options.includePointFixtures = true;
       continue;
     }
     if (name === "--output") {
@@ -50,13 +58,14 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
-        "[--product-scale] [--output path]",
+        "[--product-scale] [--point-cloud] [--output path]",
     );
   }
   return options;
 }
 
 export async function qualifyVscodeCustomEditor({
+  includePointFixtures = false,
   includeProductScaleFixture = false,
   vscodeRuntime = null,
 } = {}) {
@@ -71,6 +80,11 @@ export async function qualifyVscodeCustomEditor({
         })
       : null;
   productScaleReferenceFixture?.bytes.fill(0);
+  const pointFixtures = includePointFixtures
+    ? await acquirePublicLasLazFixture()
+    : null;
+  pointFixtures?.bytes.las.fill(0);
+  pointFixtures?.bytes.laz.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : process.cwd(),
@@ -110,6 +124,14 @@ export async function qualifyVscodeCustomEditor({
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
+        ...(pointFixtures === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_LAS_SOURCE:
+                pointFixtures.cachePaths.las,
+              BIM_EXPLORER_VSCODE_LAZ_SOURCE:
+                pointFixtures.cachePaths.laz,
+            }),
         ...(productScaleReferenceFixture === null
           ? {}
           : {

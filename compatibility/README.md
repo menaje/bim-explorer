@@ -28,7 +28,8 @@ source/renderer와 Browser/VS Code host conformance는
 않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
 고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
 
-Browser 제품 shell과 VS Code IFC/glTF/GLB read-only Custom Editor의
+Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
+Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,
 path-free host bridge와 clean VSIX install 결과는
 [`bim-product-shells.json`](bim-product-shells.json),
@@ -37,6 +38,7 @@ path-free host bridge와 clean VSIX install 결과는
 [`reference Browser product evidence`](evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json),
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
+[`LAS/LAZ VS Code evidence`](evidence/las-laz-vscode-product-2026-08-08.json),
 [`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
 24 triangles, 57,585 non-background pixels와 1,120 uploaded bytes를
@@ -50,6 +52,11 @@ clean-installed VSIX에서 1 reference entity·12 triangles·86,486 pixels,
 source-native selection, `globalId: null`과 cleanup을 재현했습니다. 제품
 세 경로는 macOS arm64와 Linux x64 CI에서 고정 VS Code 1.131.0으로 같은
 model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
+paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
+points·163,216-byte payload·36,934 pixels를 재현하고 path-free bridge,
+source/Worker/CPU/GPU/editor cleanup을 통과했습니다. VSIX는 strict-CSP용
+generated `laz-perf@0.0.6` glue와 exact WASM을 포함하되 sample은 포함하지
+않습니다.
 entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
 glTF profile, physical GPU와 marketplace release는 계속 보류합니다.
 
@@ -129,9 +136,9 @@ contract host conformance는 각각 별도 evidence에서 통과했습니다.
 payload를 사용합니다. cache-only LAS/LAZ parity sample의 10,201 points를
 actual Chrome WebGL2 단일 `POINTS` draw로 그려 40,471 pixels를 확인하고
 163,216-byte upload를 전량 회수했습니다. renderer manifest는 이 세 point
-Gate를 포함해 24 passed / 0 held입니다. 별도 Browser 제품 source/open은
-reference-format과 product-shell manifest가 소유하며, format admission·CRS와
-VS Code open은 계속 분리해 held합니다.
+Gate를 포함해 24 passed / 0 held입니다. 별도 Browser와 VS Code 제품
+source/open은 reference-format과 product-shell manifest가 소유하며, format
+admission·CRS는 계속 분리해 held합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
@@ -229,8 +236,11 @@ points·1 draw·40,471 pixels와 exact CPU/GPU cleanup을 기록합니다. 별�
 [`Browser product evidence`](evidence/las-laz-browser-product-2026-08-08.json)는
 LAS와 LAZ 실제 local file input이 동일한 10,201 points·163,216-byte upload·
 36,934 pixels를 만들고 source/Worker/CPU/GPU 자원을 회수했음을 기록합니다.
-전체 17개 Gate가 통과했고 E57 decode/renderer/product, LAS/LAZ CRS·VS Code
-open·format admission 6개 Gate는 held입니다. 이 결과는 federation의
+[`VS Code product evidence`](evidence/las-laz-vscode-product-2026-08-08.json)는
+staged Custom Editor와 clean-installed VSIX가 같은 projection을 재현하고
+point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록합니다.
+전체 18개 Gate가 통과했고 E57 decode/renderer/product, LAS/LAZ CRS·format
+admission 5개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.
 

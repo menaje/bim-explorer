@@ -29,6 +29,9 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicLasLazFixture,
+} from "./public-las-laz-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -48,6 +51,7 @@ const EXTENSION_VERSION = JSON.parse(
 function parseArguments(values) {
   const options = {
     includeProductScaleFixture: false,
+    includePointFixtures: false,
     includePublicFixture: true,
     output: null,
   };
@@ -55,6 +59,10 @@ function parseArguments(values) {
     const name = values[index];
     if (name === "--product-scale") {
       options.includeProductScaleFixture = true;
+      continue;
+    }
+    if (name === "--point-cloud") {
+      options.includePointFixtures = true;
       continue;
     }
     if (name === "--no-public") {
@@ -75,7 +83,8 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
-        "[--product-scale] [--no-public] [--output path]",
+        "[--product-scale] [--point-cloud] [--no-public] " +
+          "[--output path]",
     );
   }
   return options;
@@ -97,6 +106,16 @@ function runCode(cli, argumentsValue) {
   return result.stdout;
 }
 
+function allTrue(value) {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0 &&
+    Object.values(value).every((item) => item === true)
+  );
+}
+
 async function sha256(file) {
   return createHash("sha256")
     .update(await readFile(file))
@@ -104,6 +123,7 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall({
+  includePointFixtures = false,
   includeProductScaleFixture = false,
   includePublicFixture = true,
   vscodeRuntime = null,
@@ -127,6 +147,11 @@ export async function qualifyVscodeVsixInstall({
         })
       : null;
   productScaleReferenceFixture?.bytes.fill(0);
+  const pointFixtures = includePointFixtures
+    ? await acquirePublicLasLazFixture()
+    : null;
+  pointFixtures?.bytes.las.fill(0);
+  pointFixtures?.bytes.laz.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -194,6 +219,9 @@ export async function qualifyVscodeVsixInstall({
       "apps/bim-explorer-web/app.mjs",
       "apps/bim-explorer-web/reference-mesh-explorer.mjs",
       "apps/bim-explorer-web/source-worker.bundle.mjs",
+      "apps/bim-explorer-web/point-source-worker.bundle.js",
+      "apps/bim-explorer-web/laz-perf-worker-csp.js",
+      "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
     ];
@@ -210,7 +238,16 @@ export async function qualifyVscodeVsixInstall({
         "utf8",
       ),
     );
-    const [installedWorkerSha256, sourceWorkerSha256] =
+    const [
+      installedWorkerSha256,
+      sourceWorkerSha256,
+      installedPointWorkerSha256,
+      sourcePointWorkerSha256,
+      installedLazPerfJsSha256,
+      sourceLazPerfJsSha256,
+      installedLazPerfWasmSha256,
+      sourceLazPerfWasmSha256,
+    ] =
       await Promise.all([
         sha256(path.join(
           installedRoot,
@@ -223,6 +260,46 @@ export async function qualifyVscodeVsixInstall({
           "apps",
           "bim-explorer-web",
           "source-worker.bundle.mjs",
+        )),
+        sha256(path.join(
+          installedRoot,
+          "apps",
+          "bim-explorer-web",
+          "point-source-worker.bundle.js",
+        )),
+        sha256(path.join(
+          ROOT,
+          "apps",
+          "bim-explorer-web",
+          "point-source-worker.bundle.js",
+        )),
+        sha256(path.join(
+          installedRoot,
+          "apps",
+          "bim-explorer-web",
+          "laz-perf-worker-csp.js",
+        )),
+        sha256(path.join(
+          ROOT,
+          "apps",
+          "bim-explorer-web",
+          "laz-perf-worker-csp.js",
+        )),
+        sha256(path.join(
+          installedRoot,
+          "node_modules",
+          "laz-perf",
+          "lib",
+          "worker",
+          "laz-perf.wasm",
+        )),
+        sha256(path.join(
+          ROOT,
+          "node_modules",
+          "laz-perf",
+          "lib",
+          "worker",
+          "laz-perf.wasm",
         )),
       ]);
     await runTests({
@@ -258,6 +335,14 @@ export async function qualifyVscodeVsixInstall({
             }),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
+        ...(pointFixtures === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_LAS_SOURCE:
+                pointFixtures.cachePaths.las,
+              BIM_EXPLORER_VSCODE_LAZ_SOURCE:
+                pointFixtures.cachePaths.laz,
+            }),
         ...(productScaleReferenceFixture === null
           ? {}
           : {
@@ -281,6 +366,12 @@ export async function qualifyVscodeVsixInstall({
       requiredRuntimeComplete: true,
       workerBundleExact:
         installedWorkerSha256 === sourceWorkerSha256,
+      pointWorkerBundleExact:
+        installedPointWorkerSha256 ===
+          sourcePointWorkerSha256,
+      lazPerfRuntimeExact:
+        installedLazPerfJsSha256 === sourceLazPerfJsSha256 &&
+        installedLazPerfWasmSha256 === sourceLazPerfWasmSha256,
       noSpatialDependency:
         !Object.keys(manifest.dependencies ?? {}).some((name) =>
           /spatial/iu.test(name)),
@@ -289,11 +380,18 @@ export async function qualifyVscodeVsixInstall({
           .selector[0].filenamePattern === "*.ifc",
       readOnlyGltfGlbAssociation:
         JSON.stringify(
-          manifest.contributes.customEditors[0].selector,
+          manifest.contributes.customEditors[0].selector.slice(0, 3),
         ) === JSON.stringify([
           { filenamePattern: "*.ifc" },
           { filenamePattern: "*.gltf" },
           { filenamePattern: "*.glb" },
+        ]),
+      readOnlyLasLazAssociation:
+        JSON.stringify(
+          manifest.contributes.customEditors[0].selector.slice(3),
+        ) === JSON.stringify([
+          { filenamePattern: "*.las" },
+          { filenamePattern: "*.laz" },
         ]),
       installedPackageOpensFixture:
         runtime.assertions?.localSourceOpened === true,
@@ -366,6 +464,30 @@ export async function qualifyVscodeVsixInstall({
                 ?.productScaleReferenceEditorCloseObserved === true,
           }
         : {}),
+      ...(includePointFixtures
+        ? {
+            installedPackageOpensLas:
+              allTrue(runtime.pointAssertions?.las),
+            installedPackageOpensLaz:
+              allTrue(runtime.pointAssertions?.laz),
+            installedPointRangeParity:
+              runtime.pointObservations?.las?.pointCloud
+                ?.rangeSha256 ===
+              runtime.pointObservations?.laz?.pointCloud
+                ?.rangeSha256 &&
+              runtime.pointObservations?.las?.pointCloud
+                ?.rangeSha256 ===
+                "8383abce84d57b8f50ee1f39aa1d442" +
+                  "a7f258cd759ab9812aff1a0625ab10449",
+            installedPointVisualParity:
+              runtime.pointObservations?.las?.renderer
+                ?.nonBackgroundPixels ===
+              runtime.pointObservations?.laz?.renderer
+                ?.nonBackgroundPixels &&
+              runtime.pointObservations?.las?.renderer
+                ?.nonBackgroundPixels > 0,
+          }
+        : {}),
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -387,6 +509,10 @@ export async function qualifyVscodeVsixInstall({
         byteLength: packaged.byteLength,
         installedRuntimeFiles: required.length,
         workerBundleSha256: installedWorkerSha256,
+        pointWorkerBundleSha256:
+          installedPointWorkerSha256,
+        lazPerfJsSha256: installedLazPerfJsSha256,
+        lazPerfWasmSha256: installedLazPerfWasmSha256,
       },
       observation: {
         installedExtensions: installedList,
@@ -480,6 +606,15 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
+        ...(includePointFixtures
+          ? {
+              pointRuntime: {
+                fixtures: runtime.pointFixtures,
+                observations: runtime.pointObservations,
+                assertions: runtime.pointAssertions,
+              },
+            }
+          : {}),
       },
       assertions,
       decision: {
@@ -492,6 +627,9 @@ export async function qualifyVscodeVsixInstall({
           includeProductScaleFixture
             ? "passed-bounded-read-only"
             : "not-run",
+        pointFixtureOpen: includePointFixtures
+          ? "passed-bounded-read-only-unqualified-coordinates"
+          : "not-run",
         marketplaceRelease: "held",
       },
     });

@@ -6,7 +6,7 @@ authority:
   - vscode-readonly-custom-editor
   - local-source-worker-lifecycle
   - path-free-host-bridge
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-08
 ---
 
 # BIM product hosts v0.1
@@ -16,7 +16,8 @@ last_reviewed: 2026-08-04
 Browser shell과 VS Code Custom Editor가 같은 source Worker와 3D renderer를
 실행하는 내부 read-only draft입니다. IFC는 `BimModelSource`와 semantic
 explorer로, bounded glTF/GLB는 source-native reference mesh explorer로
-분기합니다. public Viewer Core, Spatial authority, marketplace release와
+분기합니다. bounded LAS/LAZ는 source-neutral point range와 `POINTS`
+renderer로 분기합니다. public Viewer Core, Spatial authority, marketplace release와
 write operation을 정의하지 않습니다.
 
 ## 공통 lifecycle
@@ -34,7 +35,8 @@ idle
 
 source switch는 generation을 증가시켜 이전 session을 stale로 만들고 이전
 Worker를 종료합니다. open timeout은 30초, operation timeout은 10초이며
-source는 최대 64 MiB, 단일 range read는 최대 1 MiB입니다. tree/search
+source는 최대 64 MiB이고 LAS/LAZ는 별도 8 MiB·500,000-point cap을
+적용합니다. 단일 BIM range read는 최대 1 MiB입니다. tree/search
 aggregate와 DOM projection도 생성 시 고정한 상한을 넘지 않습니다.
 
 ## Browser Host
@@ -48,7 +50,7 @@ loopback server는 allowlist route, same-origin CSP와 no-store response만
 ## VS Code Host
 
 backward-compatible view type `bimExplorer.ifcEditor`는 `*.ifc`, `*.gltf`,
-`*.glb`에 연결된 read-only Custom Editor입니다. extension host만 source
+`*.glb`, `*.las`, `*.laz`에 연결된 read-only Custom Editor입니다. extension host만 source
 `file:` URI를 보유합니다.
 
 - regular non-symlink file만 exact URI로 읽습니다.
@@ -61,9 +63,12 @@ backward-compatible view type `bimExplorer.ifcEditor`는 `*.ifc`, `*.gltf`,
 
 VS Code webview 보안 모델에서는 local resource URL을 Worker에 직접 사용할
 수 없으므로, package에 고정한 Worker bundle과 web-ifc module/WASM을
-webview가 읽은 뒤 bounded `blob:` URL로 격리 Worker에 제공합니다. CSP는
-extension resource와 해당 blob만 허용합니다. source bytes와 resource
-blob은 서로 다른 capability이며 source path는 blob에 포함되지 않습니다.
+webview가 읽은 뒤 bounded `blob:` URL로 격리 Worker에 제공합니다. point
+source는 별도 classic Worker bundle, strict-CSP `laz-perf` glue와 exact WASM을
+같은 방식으로 주입합니다. CSP는 extension resource, 해당 blob과 WASM
+compile만 허용하고 `unsafe-eval`은 허용하지 않습니다. source bytes와
+resource blob은 서로 다른 capability이며 source path는 blob에 포함되지
+않습니다.
 
 ## Host message
 
@@ -79,21 +84,23 @@ blob은 서로 다른 capability이며 source path는 blob에 포함되지 않�
 ## Packaging
 
 `npm run package:vscode`는 공용 runtime, exact web-ifc 0.0.77 module/WASM,
-third-party notice와 Worker bundle을 독립 staging한 뒤 VSIX를 생성합니다.
+exact `laz-perf@0.0.6` WASM과 strict-CSP glue, third-party notice와 Worker
+bundle을 독립 staging한 뒤 VSIX를 생성합니다.
 package manifest는 Coni Spatial이나 sibling checkout dependency를
 포함하지 않습니다. `npm run qualify:product:vscode-install`은 빈 user data와
 extension directory에 VSIX를 설치한 뒤 설치본 Custom Editor로 generated
-IFC, on-demand 공개 IFC와 Khronos Box GLB를 엽니다. association과 runtime
+IFC, on-demand 공개 IFC와 Khronos Box GLB를 엽니다. 별도 LAS/LAZ 제품 Gate는
+cache-only pair를 staged와 clean-installed runtime에서 엽니다. association과 runtime
 digest뿐 아니라 format별 source/render projection, 실제 VS Code Chromium
 WebGL2, path-free bridge와 editor close cleanup을 확인합니다. 공개 IFC와
-GLB는 package에 포함하지 않습니다.
+GLB 및 LAS/LAZ sample은 package에 포함하지 않습니다.
 
 ## 현재 보류
 
 - public Viewer Core artifact와 cross-repository conformance
 - physical GPU와 cross-platform GPU/memory qualification
-- external glTF resource bundle, required extension와 product-scale
-  reference geometry
+- external glTF resource bundle과 required extension
+- LAS/LAZ CRS/datum, point identity/picking·LOD와 format admission
 - license, signing과 marketplace release
 
 공개 IFC2X3 product-scale open은 통과했지만 engine/profile admission으로

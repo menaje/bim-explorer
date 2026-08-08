@@ -20,11 +20,11 @@
     "lasLazRenderer": true,
     "lasLazProductSource": true,
     "lasLazBrowserProductOpen": true,
+    "lasLazVscodeProductOpen": true,
     "e57PointDecode": false,
     "e57Renderer": false,
     "e57ProductOpen": false,
     "lasLazCoordinateReference": false,
-    "lasLazVscodeProductOpen": false,
     "lasLazFormatAdmission": false
   },
   "evidence": {
@@ -32,14 +32,14 @@
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
     "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
     "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
-    "lasLazBrowserProduct": "compatibility/evidence/las-laz-browser-product-2026-08-08.json"
+    "lasLazBrowserProduct": "compatibility/evidence/las-laz-browser-product-2026-08-08.json",
+    "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json"
   },
   "blockers": [
     "E57 compressed point payload decode is not implemented",
     "E57 has no qualified point renderer",
     "Browser and VS Code do not open E57 files",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
-    "VS Code staged and clean-installed VSIX do not open LAS or LAZ files",
     "LAS/LAZ format admission remains held until coordinate and remaining product Gates pass"
   ],
   "limitations": [
@@ -47,7 +47,7 @@
     "sample files are not tracked, redistributed or included in a release",
     "the E57 probe inspects only its envelope, page CRCs and XML metadata",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
-    "laz-perf is an exact Browser product Worker runtime dependency but is not in Community v0.1.0 or the VSIX",
+    "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
     "the Browser product opens bounded LAS/LAZ point-format 2 or 3 sources without coordinate authority",
     "the point renderer has no point identity, picking, semantics or level-of-detail streaming",
@@ -58,9 +58,11 @@
     "sampleRedistributed": false,
     "releaseBundled": false,
     "decoderBrowserProductRuntime": true,
+    "decoderVscodeProductRuntime": true,
     "decoderReleaseBundled": false,
     "sampleUseTestOnly": true,
     "browserExperimentalProductOpen": true,
+    "vscodeExperimentalProductOpen": true,
     "formatAdmission": false,
     "productSupport": false
   }

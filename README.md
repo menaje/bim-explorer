@@ -149,9 +149,10 @@ identity·visibility·partial/stale·alignment, incremental refresh와
 cross-source saved view를 분리합니다. glTF/GLB는 source-native identity만
 사용하며 BIM semantic authority를 갖지 않습니다. E57, 3D Tiles와
 RVT/DGN은 capability Gate만 등록했고 제품 codec/SDK evidence 전에는
-열기를 거부합니다. LAS/LAZ는 bounded Browser 제품 source/open Gate까지
-통과했지만 CRS, VS Code와 federation format admission은 계속 분리해
-보류합니다. cache-only decoder probe만으로는 제품 codec/SDK evidence가
+열기를 거부합니다. LAS/LAZ는 bounded Browser, staged VS Code와
+clean-installed VSIX 제품 source/open Gate까지 통과했지만 CRS와 federation
+format admission은 계속 분리해 보류합니다. cache-only decoder probe만으로는
+제품 codec/SDK evidence가
 되지 않습니다. 이 기능은 immutable Community v0.1.0 asset에는
 포함되지 않습니다. 현재 main의 bounded glTF/GLB profile은 Browser,
 VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
@@ -185,11 +186,13 @@ source-neutral Float64-origin/relative-Float32
 point range를 actual Chrome WebGL2에서 10,201 points·1 draw·40,471 pixels로
 검증하고 allocation을 전량 회수했습니다. 따라서 point primitive renderer
 Gate를 통과했습니다. 이어 같은 LAS와 LAZ를 실제 BIM Explorer Browser local
-file input으로 각각 열어 동일한 10,201 points·163,216-byte GPU payload·36,934
+file input, staged VS Code 1.131.0 Custom Editor와 빈 profile에 clean-installed
+VSIX에서 각각 열어 동일한 10,201 points·163,216-byte GPU payload·36,934
 pixels를 재현하고 source buffer, Worker, CPU range와 GPU 자원을 전량
-회수했습니다. exact `laz-perf@0.0.6`은 전용 product Worker에서만 실행합니다.
-CRS/datum, point identity/picking·LOD, VS Code 제품 open과 format admission은
-계속 held입니다.
+회수했습니다. exact `laz-perf@0.0.6`은 전용 product Worker에서 실행하며,
+VSIX의 generated glue는 Webview CSP에 `unsafe-eval`을 추가하지 않도록 dynamic
+Function construction을 동등한 closure로 치환합니다. CRS/datum, point
+identity/picking·LOD와 format admission은 계속 held입니다.
 
 ## 비목표
 

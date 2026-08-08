@@ -39,6 +39,9 @@ function renderBimExplorerWebviewHtml(template, {
   appUri,
   cspSource,
   profile,
+  pointWorkerUri,
+  lazPerfScriptUri,
+  lazPerfWasmUri,
   sourceUriText = "",
   stylesUri,
   wasmUri,
@@ -49,6 +52,9 @@ function renderBimExplorerWebviewHtml(template, {
     appUri,
     cspSource,
     profile,
+    pointWorkerUri,
+    lazPerfScriptUri,
+    lazPerfWasmUri,
     stylesUri,
     wasmUri,
     webIfcModuleUri,
@@ -88,6 +94,24 @@ function renderBimExplorerWebviewHtml(template, {
     `<meta name="bim-wasm-path" ` +
       `content="${escapeAttribute(wasmUri)}">`,
     "web-ifc WASM path",
+  );
+  html = replaceOnce(
+    html,
+    'content="./point-source-worker.bundle.js"',
+    `content="${escapeAttribute(pointWorkerUri)}"`,
+    "point Worker",
+  );
+  html = replaceOnce(
+    html,
+    'content="/vendor/laz-perf.js"',
+    `content="${escapeAttribute(lazPerfScriptUri)}"`,
+    "laz-perf script",
+  );
+  html = replaceOnce(
+    html,
+    'content="/vendor/laz-perf.wasm"',
+    `content="${escapeAttribute(lazPerfWasmUri)}"`,
+    "laz-perf WASM",
   );
   html = replaceOnce(
     html,

@@ -65,6 +65,7 @@
     "qualify:las-laz:worker": "node scripts/qualify-las-laz-browser-worker.mjs",
     "qualify:las-laz:renderer": "node scripts/qualify-las-laz-point-renderer.mjs",
     "qualify:las-laz:product:web": "node scripts/qualify-las-laz-browser-product.mjs",
+    "qualify:las-laz:product:vscode": "node scripts/qualify-las-laz-vscode-product.mjs",
     "assemble:federation:product-scale:platform": "node scripts/assemble-bim-federation-product-scale-platform-matrix.mjs",
     "qualify:community-release": "node scripts/qualify-community-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",

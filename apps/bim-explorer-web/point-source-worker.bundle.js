@@ -721,6 +721,30 @@
   var FORMATS = /* @__PURE__ */ new Set(["las", "laz"]);
   var accepted = false;
   var loadedLazPerfScriptUrl = null;
+  function stableErrorCode(error) {
+    const message = typeof error?.message === "string" ? error.message : "";
+    if (error?.name === "EvalError" && /compile or instantiate WebAssembly|WebAssembly compilation/iu.test(message)) {
+      return "POINT_SOURCE_WASM_CSP_REJECTED";
+    }
+    if (error?.name === "RangeError") {
+      return "POINT_SOURCE_LIMIT_REJECTED";
+    }
+    if (error?.name === "EvalError") {
+      return "POINT_SOURCE_DYNAMIC_CODE_REJECTED";
+    }
+    if (["CompileError", "LinkError", "RuntimeError"].includes(
+      error?.name
+    )) {
+      return "POINT_SOURCE_WASM_FAILED";
+    }
+    if (error?.name === "SecurityError") {
+      return "POINT_SOURCE_RUNTIME_SECURITY_REJECTED";
+    }
+    if (error?.name === "TypeError") {
+      return "POINT_SOURCE_RUNTIME_CONTRACT_REJECTED";
+    }
+    return "POINT_SOURCE_OPEN_FAILED";
+  }
   function post(requestId, type, value, transfer = []) {
     self.postMessage({
       schema: RESPONSE_SCHEMA,
@@ -737,7 +761,10 @@
       throw new TypeError(`${label} is invalid`);
     }
     const url = new URL(value, self.location.href);
-    if (!["http:", "https:"].includes(url.protocol) || url.origin !== self.location.origin || url.username.length > 0 || url.password.length > 0 || url.hash.length > 0) {
+    const allowedProtocol = ["http:", "https:", "blob:"].includes(
+      url.protocol
+    );
+    if (!allowedProtocol || url.origin !== self.location.origin || url.username.length > 0 || url.password.length > 0 || url.hash.length > 0) {
       throw new TypeError(`${label} must be a same-origin URL`);
     }
     return url.href;
@@ -824,7 +851,7 @@
         typeof request?.requestId === "string" ? request.requestId : "invalid",
         "error",
         {
-          code: error?.name === "RangeError" ? "POINT_SOURCE_LIMIT_REJECTED" : "POINT_SOURCE_OPEN_FAILED",
+          code: stableErrorCode(error),
           retryable: true
         }
       );

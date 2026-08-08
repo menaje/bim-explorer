@@ -138,8 +138,11 @@ let openingSequence = 0;
 let hostGeneration = 0;
 let latestSourceCheckpoint = "not-started";
 let vscodeWorkerRuntimePromise = null;
+let vscodePointWorkerRuntimePromise = null;
 let wasmBlobUrl = null;
 let webIfcBlobUrl = null;
+let pointLazPerfBlobUrl = null;
+let pointLazPerfWasmBlobUrl = null;
 
 function localStorageAdapter() {
   if (vscodeApi !== null) {
@@ -734,6 +737,46 @@ async function vscodeWorkerRuntime() {
   return vscodeWorkerRuntimePromise;
 }
 
+async function vscodePointWorkerRuntime() {
+  if (runtime.hostKind !== "vscode-webview") {
+    return null;
+  }
+  vscodePointWorkerRuntimePromise ??= Promise.all([
+    responseText(
+      runtime.pointWorkerUrl,
+      "VS Code point Worker bundle",
+      1024 * 1024,
+    ),
+    responseText(
+      runtime.lazPerfScriptUrl,
+      "VS Code laz-perf Worker runtime",
+      1024 * 1024,
+    ),
+    responseBytes(
+      runtime.lazPerfWasmUrl,
+      "VS Code laz-perf WASM",
+      32 * 1024 * 1024,
+    ),
+  ]).then(([workerBundle, lazPerfSource, lazPerfWasm]) => {
+    pointLazPerfBlobUrl = URL.createObjectURL(
+      new Blob([lazPerfSource], {
+        type: "text/javascript",
+      }),
+    );
+    pointLazPerfWasmBlobUrl = URL.createObjectURL(
+      new Blob([lazPerfWasm], {
+        type: "application/wasm",
+      }),
+    );
+    return Object.freeze({
+      lazPerfScriptUrl: pointLazPerfBlobUrl,
+      lazPerfWasmUrl: pointLazPerfWasmBlobUrl,
+      workerBundle,
+    });
+  });
+  return vscodePointWorkerRuntimePromise;
+}
+
 async function client({
   maximumSourceBytes = MAXIMUM_SOURCE_BYTES,
   openTimeoutMs = 30_000,
@@ -823,7 +866,7 @@ async function client({
   return value;
 }
 
-function pointClient({
+async function pointClient({
   maximumSourceBytes = MAXIMUM_POINT_SOURCE_BYTES,
   openTimeoutMs = 15_000,
 } = {}) {
@@ -841,13 +884,52 @@ function pointClient({
     openTimeoutMs <= 120_000
       ? openTimeoutMs
       : 15_000;
+  const workerRuntime = await vscodePointWorkerRuntime();
+  const workerFactory = workerRuntime === null
+    ? undefined
+    : () => {
+        const bootstrapUrl = URL.createObjectURL(
+          new Blob([workerRuntime.workerBundle], {
+            type: "text/javascript",
+          }),
+        );
+        const worker = new Worker(bootstrapUrl, {
+          name: "bim-explorer-point-source",
+        });
+        let revoked = false;
+        const revoke = () => {
+          if (!revoked) {
+            revoked = true;
+            URL.revokeObjectURL(bootstrapUrl);
+          }
+        };
+        return {
+          addEventListener(...args) {
+            return worker.addEventListener(...args);
+          },
+          postMessage(...args) {
+            return worker.postMessage(...args);
+          },
+          terminate() {
+            revoke();
+            return worker.terminate();
+          },
+        };
+      };
   const value = createLasLazPointSourceWorkerClient({
-    lazPerfScriptUrl: runtime.lazPerfScriptUrl,
-    lazPerfWasmUrl: runtime.lazPerfWasmUrl,
+    lazPerfScriptUrl:
+      workerRuntime?.lazPerfScriptUrl ??
+      runtime.lazPerfScriptUrl,
+    lazPerfWasmUrl:
+      workerRuntime?.lazPerfWasmUrl ??
+      runtime.lazPerfWasmUrl,
     limits: {
       maximumSourceBytes: boundedSourceBytes,
       openTimeoutMs: boundedOpenTimeout,
     },
+    ...(workerFactory === undefined
+      ? {}
+      : { workerFactory }),
     workerUrl: runtime.pointWorkerUrl,
   });
   value.onProgress((event) => {
@@ -903,7 +985,11 @@ async function openPointBytes(bytesValue, {
   if (sequence !== openingSequence) {
     return null;
   }
-  const sourceClient = pointClient(limits);
+  const sourceClient = await pointClient(limits);
+  if (sequence !== openingSequence) {
+    await sourceClient.dispose();
+    return null;
+  }
   openingClient = sourceClient;
   let backend = null;
   let opened = null;
@@ -1691,6 +1777,14 @@ globalThis.addEventListener("pagehide", () => {
   if (wasmBlobUrl !== null) {
     URL.revokeObjectURL(wasmBlobUrl);
     wasmBlobUrl = null;
+  }
+  if (pointLazPerfBlobUrl !== null) {
+    URL.revokeObjectURL(pointLazPerfBlobUrl);
+    pointLazPerfBlobUrl = null;
+  }
+  if (pointLazPerfWasmBlobUrl !== null) {
+    URL.revokeObjectURL(pointLazPerfWasmBlobUrl);
+    pointLazPerfWasmBlobUrl = null;
   }
   if (active !== null) {
     void disposeActive("pagehide");

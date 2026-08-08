@@ -30,6 +30,7 @@ const COPY_FILES = Object.freeze([
   ["apps/bim-explorer-web/README.md"],
   ["apps/bim-explorer-web/app.mjs"],
   ["apps/bim-explorer-web/index.html"],
+  ["apps/bim-explorer-web/laz-perf-worker-csp.js"],
   ["apps/bim-explorer-web/point-source-client.mjs"],
   ["apps/bim-explorer-web/point-source-worker.bundle.js"],
   ["apps/bim-explorer-web/point-source-worker.mjs"],
@@ -58,10 +59,13 @@ const COPY_FILES = Object.freeze([
   ["packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs"],
   ["packages/bim-renderer-3d/src/webgl2-backend.mjs"],
   ["packages/bim-semantic-explorer/src/index.mjs"],
+  ["node_modules/laz-perf/lib/worker/laz-perf.wasm"],
+  ["node_modules/laz-perf/package.json"],
   ["node_modules/web-ifc/LICENSE.md"],
   ["node_modules/web-ifc/package.json"],
   ["node_modules/web-ifc/web-ifc-api.js"],
   ["node_modules/web-ifc/web-ifc.wasm"],
+  ["specs/LICENSE"],
 ]);
 const EXTENSION_FILES = Object.freeze([
   "README.md",

@@ -79,5 +79,6 @@ admission을 승인하지 않습니다.
 
 실제 [`bim-explorer-web`](bim-explorer-web/README.md)은 이 qualified range를
 제품 source 경계로 채택해 bounded LAS/LAZ local file input을 전용 Worker에서
-처리합니다. Browser 제품 open은 통과했지만 CRS, point identity/picking·LOD,
-VS Code/VSIX와 format admission은 계속 별도 Gate입니다.
+처리합니다. Browser, staged VS Code와 clean-installed VSIX 제품 open은
+통과했지만 CRS, point identity/picking·LOD와 format admission은 계속 별도
+Gate입니다.

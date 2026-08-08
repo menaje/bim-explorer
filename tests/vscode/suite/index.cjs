@@ -212,6 +212,175 @@ async function qualifyReference({
   };
 }
 
+async function qualifyPointSource({
+  api,
+  format,
+  manifest,
+  sourcePath,
+}) {
+  const entry = manifest.entries[format];
+  const metadata = await stat(sourcePath);
+  assert.equal(metadata.isFile(), true);
+  assert.equal(metadata.size, entry.byteLength);
+  await vscode.commands.executeCommand(
+    "vscode.openWith",
+    vscode.Uri.file(sourcePath),
+    "bimExplorer.ifcEditor",
+  );
+  const ready = await waitFor(
+    () => {
+      const report = api.qualificationReports().at(-1);
+      if (report?.status === "failed") {
+        throw new Error(
+          `${format.toUpperCase()} Custom Editor failed: ` +
+            `${JSON.stringify(report)}`,
+        );
+      }
+      return report?.status === "ready" ? report : null;
+    },
+    `${format.toUpperCase()} Custom Editor ready report`,
+  );
+  const expectedDecoder = format === "laz"
+    ? {
+        backend: "browser-wasm-worker-product-source",
+        id: "laz-perf",
+        license: "Apache-2.0",
+        version: "0.0.6",
+      }
+    : {
+        backend: "bounded-native-js-product-source",
+        id: "las-point-record-reader",
+        license: "MPL-2.0",
+        version: "0.1.0",
+      };
+  assert.equal(ready.hostKind, "vscode-webview");
+  assert.equal(ready.externalUpload, false);
+  assert.equal(ready.telemetry, false);
+  assert.deepEqual(ready.source, {
+    fingerprint: `sha256:${entry.sha256}`,
+    revisionId: `source-snapshot:sha256:${entry.sha256}`,
+    snapshotId: null,
+    byteLength: entry.byteLength,
+    ifcSchema: null,
+    format,
+    gltfVersion: null,
+    coordinateReferenceStatus: "unqualified",
+    formatVersion: manifest.expected.formatVersion,
+    pointFormat: manifest.expected.pointFormat,
+    profile: null,
+    sourceRole: "derived-or-reference-points",
+    semanticAuthority: false,
+  });
+  assert.deepEqual(ready.model, {
+    points: manifest.expected.pointRecords,
+    ranges: 1,
+  });
+  assert.equal(
+    ready.resources.decodedPointBytes,
+    manifest.expected.pointRecordLength *
+      manifest.expected.pointRecords,
+  );
+  assert.equal(ready.resources.pointRangeBytes, 163_264);
+  assert.equal(
+    ready.resources.pointRangePayloadBytes,
+    163_216,
+  );
+  assert.equal(ready.resources.sourceBytes, entry.byteLength);
+  if (format === "las") {
+    assert.equal(
+      ready.resources.wasmHeapCapacityBytes,
+      null,
+    );
+  } else {
+    assert.deepEqual(
+      ready.resources.wasmHeapCapacityBytes,
+      {
+        afterDecode: 4_063_232,
+        afterInitialization: 262_144,
+        peakObserved: 4_063_232,
+      },
+    );
+  }
+  assert.equal(ready.renderer.actualGpu, true);
+  assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(ready.renderer.sourceReadBytes, 163_264);
+  assert.equal(ready.renderer.uploadedBytes, 163_216);
+  assert.equal(
+    ready.pointCloud.rangeSha256,
+    "8383abce84d57b8f50ee1f39aa1d442" +
+      "a7f258cd759ab9812aff1a0625ab10449",
+  );
+  assert.equal(
+    ready.pointCloud.coordinateReferenceStatus,
+    "unqualified",
+  );
+  assert.deepEqual(ready.pointCloud.decoder, expectedDecoder);
+  assert.equal(ready.pointCloud.pointPrimitive, "POINTS");
+  assert.equal(ready.pointCloud.pointSize, 3);
+  assert.ok(ready.pointCloud.maximumProjectionError < 1e-6);
+  assert.deepEqual(ready.productLifecycle, {
+    cpuPointRangeCleared: true,
+    sourceBufferCleared: true,
+    workerTerminatedAfterTransfer: true,
+  });
+  const serialized = JSON.stringify(ready);
+  assert.equal(serialized.includes(sourcePath), false);
+  assert.equal(
+    serialized.includes(path.basename(sourcePath)),
+    false,
+  );
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
+  const disposed = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    return report?.status === "disposed" ? report : null;
+  }, `${format.toUpperCase()} Custom Editor disposal`);
+  return {
+    fixture: {
+      id: `${manifest.fixtureId}-${format}`,
+      committed: false,
+      format,
+      sourceBytes: entry.byteLength,
+      fingerprint: ready.source.fingerprint,
+      formatVersion: ready.source.formatVersion,
+      pointFormat: ready.source.pointFormat,
+      provenance: {
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.use.sourceRepositoryLicense,
+        bundled: false,
+        sampleRedistributed: false,
+      },
+    },
+    observation: {
+      hostKind: ready.hostKind,
+      model: ready.model,
+      performance: ready.performance,
+      resources: ready.resources,
+      renderer: ready.renderer,
+      pointCloud: ready.pointCloud,
+      productLifecycle: ready.productLifecycle,
+      lifecycle: {
+        opened: ready.status,
+        closed: disposed.status,
+      },
+      externalUpload: ready.externalUpload,
+      telemetry: ready.telemetry,
+    },
+    assertions: {
+      localPointSourceOpened: true,
+      pointSourceIdentityExact: true,
+      noCoordinateOrSemanticAuthority: true,
+      vscodeChromiumWebGl2: true,
+      boundedPointRenderer: true,
+      pointWorkerAndCpuCleanup: true,
+      pathFreeHostBridge: true,
+      editorCloseObserved: disposed.status === "disposed",
+    },
+  };
+}
+
 async function run() {
   const root = process.env.BIM_EXPLORER_ROOT;
   const evidencePath =
@@ -225,6 +394,10 @@ async function run() {
   const productScaleReferenceSourcePath =
     process.env
       .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
+  const lasSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
+  const lazSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_LAZ_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -494,6 +667,35 @@ async function run() {
         },
       };
     }
+    let pointQualifications = null;
+    if (
+      typeof lasSourcePath === "string" &&
+      lasSourcePath.length > 0 &&
+      typeof lazSourcePath === "string" &&
+      lazSourcePath.length > 0
+    ) {
+      const fixtureModule = await import(
+        pathToFileURL(
+          path.join(root, "scripts", "public-las-laz-fixture.mjs"),
+        ).href
+      );
+      const manifest = await fixtureModule
+        .loadPublicLasLazFixtureManifest();
+      pointQualifications = {
+        las: await qualifyPointSource({
+          api,
+          format: "las",
+          manifest,
+          sourcePath: lasSourcePath,
+        }),
+        laz: await qualifyPointSource({
+          api,
+          format: "laz",
+          manifest,
+          sourcePath: lazSourcePath,
+        }),
+      };
+    }
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -555,6 +757,22 @@ async function run() {
             productScaleReferenceAssertions:
               productScaleReferenceQualification.assertions,
           }),
+      ...(pointQualifications === null
+        ? {}
+        : {
+            pointFixtures: {
+              las: pointQualifications.las.fixture,
+              laz: pointQualifications.laz.fixture,
+            },
+            pointObservations: {
+              las: pointQualifications.las.observation,
+              laz: pointQualifications.laz.observation,
+            },
+            pointAssertions: {
+              las: pointQualifications.las.assertions,
+              laz: pointQualifications.laz.assertions,
+            },
+          }),
       assertions: {
         actualVscodeChromiumWebGl2:
           ready.renderer.actualGpu === true &&
@@ -599,6 +817,13 @@ async function run() {
           evidence.productScaleReferenceAssertions,
         ).every(Boolean),
       );
+    }
+    if (evidence.pointAssertions !== undefined) {
+      for (const assertions of Object.values(
+        evidence.pointAssertions,
+      )) {
+        assert.ok(Object.values(assertions).every(Boolean));
+      }
     }
     await writeFile(
       evidencePath,

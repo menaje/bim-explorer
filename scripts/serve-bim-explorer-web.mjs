@@ -23,7 +23,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 const POINT_WORKER_CONTENT_SECURITY_POLICY = [
   "default-src 'none'",
-  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'",
+  "script-src 'self' 'wasm-unsafe-eval'",
   "connect-src 'self'",
   "worker-src 'none'",
   "img-src 'none'",
@@ -225,12 +225,8 @@ const ROUTES = new Map([
   ["/vendor/laz-perf.js", {
     csp: POINT_WORKER_CONTENT_SECURITY_POLICY,
     file: path.join(
-      ROOT,
-      "node_modules",
-      "laz-perf",
-      "lib",
-      "worker",
-      "laz-perf.js",
+      APP,
+      "laz-perf-worker-csp.js",
     ),
     type: JAVASCRIPT,
   }],

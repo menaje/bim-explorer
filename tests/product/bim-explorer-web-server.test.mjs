@@ -83,7 +83,11 @@ test("product server exposes only its same-origin allowlist", async () => {
     );
     assert.match(
       pointWorker.headers.get("content-security-policy"),
-      /script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'/u,
+      /script-src 'self' 'wasm-unsafe-eval';/u,
+    );
+    assert.doesNotMatch(
+      pointWorker.headers.get("content-security-policy"),
+      /script-src[^;]*'unsafe-eval'/u,
     );
     assert.match(
       page.headers.get("content-security-policy"),

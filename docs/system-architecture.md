@@ -239,7 +239,7 @@ message나 Browser DOM event를 cross-product API로 안정화하지 않습니�
 
 VS Code extension host는 exact local `file:` URI를 regular non-symlink로
 검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
-`ArrayBuffer`, normalized `ifc`/`gltf`/`glb` format, generation과 bounded
+`ArrayBuffer`, normalized `ifc`/`gltf`/`glb`/`las`/`laz` format, generation과 bounded
 setting만 전달하며 report는
 fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
 diagnostic에 넣지 않습니다.
@@ -310,9 +310,12 @@ parity record의 source-neutral point range도 actual Chrome WebGL2에서 단일
 8 MiB source/500,000-point 한도 뒤 전용 Worker에서 LAS record를 읽거나 exact
 `laz-perf@0.0.6`으로 LAZ를 해제하고, 하나의 Float64-origin/relative-Float32
 range만 main thread로 transfer합니다. 실제 local file input의 LAS/LAZ parity와
-source/Worker/CPU/GPU cleanup도 통과했습니다. 샘플은 qualification-only이며
-CRS, point identity/picking·LOD, VS Code open과 admission이 없으므로 federation
-source admission에는 영향을 주지 않습니다.
+source/Worker/CPU/GPU cleanup도 통과했습니다. VS Code Webview는 point Worker,
+strict-CSP `laz-perf` glue와 WASM을 bounded read한 뒤 각각 `blob:` capability로
+주입합니다. staged Custom Editor와 clean-installed VSIX도 같은 projection과
+cleanup을 통과했으며 Webview CSP는 `unsafe-eval`을 허용하지 않습니다. 샘플은
+qualification-only이며 CRS, point identity/picking·LOD와 format admission이
+없으므로 federation source admission에는 영향을 주지 않습니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

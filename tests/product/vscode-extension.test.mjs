@@ -188,7 +188,7 @@ function fakePanel() {
   };
 }
 
-test("VS Code manifest associates IFC and glTF with a read-only product host", async () => {
+test("VS Code manifest associates bounded BIM sources with a read-only product host", async () => {
   const manifest = JSON.parse(
     await readFile(
       path.join(
@@ -211,6 +211,8 @@ test("VS Code manifest associates IFC and glTF with a read-only product host", a
       { filenamePattern: "*.ifc" },
       { filenamePattern: "*.gltf" },
       { filenamePattern: "*.glb" },
+      { filenamePattern: "*.las" },
+      { filenamePattern: "*.laz" },
     ],
   );
   assert.equal(
@@ -218,6 +220,7 @@ test("VS Code manifest associates IFC and glTF with a read-only product host", a
     "default",
   );
   assert.equal(manifest.dependencies["web-ifc"], "0.0.77");
+  assert.equal(manifest.dependencies["laz-perf"], "0.0.6");
 });
 
 test("webview HTML uses the shared app with strict path-free CSP", async () => {
@@ -235,6 +238,12 @@ test("webview HTML uses the shared app with strict path-free CSP", async () => {
   const html = renderBimExplorerWebviewHtml(template, {
     appUri: "vscode-webview://test/app.mjs",
     cspSource: "vscode-webview://test",
+    lazPerfScriptUri:
+      "vscode-webview://test/vendor/laz-perf.js",
+    lazPerfWasmUri:
+      "vscode-webview://test/vendor/laz-perf.wasm",
+    pointWorkerUri:
+      "vscode-webview://test/point-source-worker.bundle.js",
     profile: "ReferenceView_V1.2",
     sourceUriText,
     stylesUri: "vscode-webview://test/styles.css",
@@ -249,6 +258,9 @@ test("webview HTML uses the shared app with strict path-free CSP", async () => {
     /name="bim-host-kind" content="vscode-webview"/u,
   );
   assert.match(html, /source-worker\.bundle\.mjs/u);
+  assert.match(html, /point-source-worker\.bundle\.js/u);
+  assert.match(html, /vendor\/laz-perf\.js/u);
+  assert.match(html, /vendor\/laz-perf\.wasm/u);
   assert.match(
     html,
     /Content-Security-Policy/u,
@@ -258,6 +270,7 @@ test("webview HTML uses the shared app with strict path-free CSP", async () => {
     /worker-src vscode-webview:\/\/test blob:/u,
   );
   assert.doesNotMatch(html, /unsafe-inline/u);
+  assert.equal(html.includes("'unsafe-eval'"), false);
   assert.equal(html.includes(sourceUriText), false);
   assert.equal(html.includes("acme-building.ifc"), false);
 });
@@ -345,6 +358,49 @@ test("Custom Editor sends only the normalized GLB format hint", async () => {
   assert.equal(sourceMessage.format, "glb");
   assert.equal(
     JSON.stringify(sourceMessage).includes("acme-reference"),
+    false,
+  );
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends bounded LAS with the point-source cap", async () => {
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/acme-observation.las",
+    sourceBytes: Uint8Array.from({ length: 227 }, () => 1),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    {
+      runtimeRoot: new FakeUri(ROOT),
+    },
+  );
+  const document = await provider.openCustomDocument(
+    sourceUri,
+  );
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "las");
+  assert.equal(
+    sourceMessage.limits.maximumSourceBytes,
+    8 * 1024 * 1024,
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("acme-observation"),
     false,
   );
   document.dispose();
@@ -467,6 +523,69 @@ test("extension diagnostics preserve bounded reference identity only", () => {
   );
 });
 
+test("extension diagnostics preserve bounded point evidence only", () => {
+  const report = sanitizeReport({
+    schema: "bim-explorer-product-shell-report/0.1",
+    status: "ready",
+    hostKind: "vscode-webview",
+    externalUpload: false,
+    telemetry: false,
+    source: {
+      fingerprint: `sha256:${"c".repeat(64)}`,
+      revisionId: "source-snapshot:test",
+      byteLength: 53_952,
+      coordinateReferenceStatus: "unqualified",
+      format: "laz",
+      formatVersion: "1.2",
+      pointFormat: 3,
+      semanticAuthority: false,
+      sourceRole: "derived-or-reference-points",
+      path: "/private/customer/acme.laz",
+    },
+    model: { points: 10_201, ranges: 1 },
+    resources: {
+      decodedPointBytes: 346_834,
+      pointRangeBytes: 163_264,
+      pointRangePayloadBytes: 163_216,
+      sourceBytes: 53_952,
+      wasmHeapCapacityBytes: {
+        afterDecode: 4_063_232,
+        afterInitialization: 262_144,
+        peakObserved: 4_063_232,
+      },
+    },
+    pointCloud: {
+      bounds: { min: [-5, -5, -1], max: [5, 5, 1] },
+      colorRange: {
+        min: [0, 68, 0, 255],
+        max: [254, 198, 63, 255],
+      },
+      coordinateReferenceStatus: "unqualified",
+      decoder: {
+        backend: "browser-wasm-worker-product-source",
+        id: "laz-perf",
+        license: "Apache-2.0",
+        version: "0.0.6",
+      },
+      maximumProjectionError: 1e-8,
+      origin: [0, 0, 0],
+      pointPrimitive: "POINTS",
+      pointSize: 3,
+      rangeSha256: "d".repeat(64),
+    },
+    lifecycle: {
+      cpuPointRangeCleared: true,
+      sourceBufferCleared: true,
+      workerTerminatedAfterTransfer: true,
+    },
+  });
+  assert.deepEqual(report.model, { points: 10_201, ranges: 1 });
+  assert.equal(report.resources.wasmHeapCapacityBytes.peakObserved, 4_063_232);
+  assert.equal(report.pointCloud.decoder.id, "laz-perf");
+  assert.equal(report.productLifecycle.cpuPointRangeCleared, true);
+  assert.equal(JSON.stringify(report).includes("/private"), false);
+});
+
 test("extension staging is complete and independently path-safe", async () => {
   const destination = await mkdtemp(
     path.join(tmpdir(), "bim-explorer-stage-test-"),
@@ -479,6 +598,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "extension.js",
       "src/provider.js",
       "apps/bim-explorer-web/app.mjs",
+      "apps/bim-explorer-web/laz-perf-worker-csp.js",
       "apps/bim-explorer-web/point-source-client.mjs",
       "apps/bim-explorer-web/point-source-worker.bundle.js",
       "apps/bim-explorer-web/point-source-worker.mjs",
@@ -496,6 +616,9 @@ test("extension staging is complete and independently path-safe", async () => {
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",
+      "node_modules/laz-perf/lib/worker/laz-perf.wasm",
+      "node_modules/laz-perf/package.json",
+      "specs/LICENSE",
       "LICENSE",
       "NOTICE",
       "SOURCE_OFFER.md",
@@ -517,6 +640,7 @@ test("extension staging is complete and independently path-safe", async () => {
     );
     assert.equal(manifest.private, false);
     assert.equal(manifest.dependencies["web-ifc"], "0.0.77");
+    assert.equal(manifest.dependencies["laz-perf"], "0.0.6");
     assert.equal(
       staged.files.some((relative) =>
         /\.(?:ifc|ifczip|ifcxml)$/iu.test(relative)),
