@@ -47,12 +47,38 @@ async function localMacosExecutable() {
   }
 }
 
+async function downloadExactVersion(version) {
+  const errors = [];
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return {
+        attempts: attempt,
+        executable: await downloadAndUnzipVSCode({
+          version,
+          timeout: 60_000,
+        }),
+      };
+    } catch (error) {
+      errors.push(error);
+      if (attempt < 3) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, attempt * 1_000));
+      }
+    }
+  }
+  throw new AggregateError(
+    errors,
+    `VS Code ${version} download failed after 3 attempts`,
+  );
+}
+
 export async function resolveVscodeQualificationRuntime() {
   const executableOverride =
     process.env.BIM_EXPLORER_VSCODE_EXECUTABLE;
   const forceVersion =
     process.env.BIM_EXPLORER_VSCODE_VERSION;
   let executable;
+  let downloadAttempts = 0;
   let source;
   let version = null;
   if (
@@ -73,10 +99,9 @@ export async function resolveVscodeQualificationRuntime() {
       source = "local-installation";
     } else {
       version = requestedVersion();
-      executable = await downloadAndUnzipVSCode({
-        version,
-        timeout: 60_000,
-      });
+      const downloaded = await downloadExactVersion(version);
+      executable = downloaded.executable;
+      downloadAttempts = downloaded.attempts;
       source = "exact-download";
     }
   }
@@ -100,6 +125,7 @@ export async function resolveVscodeQualificationRuntime() {
   return Object.freeze({
     executable,
     cli: Object.freeze([...cli]),
+    downloadAttempts,
     requestedVersion: version,
     source,
   });

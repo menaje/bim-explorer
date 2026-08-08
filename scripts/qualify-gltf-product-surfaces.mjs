@@ -99,6 +99,8 @@ export async function qualifyGltfProductSurfaces({
       browser: browser.environment.browser,
       browserHeadless: browser.environment.headless,
       vscode: vscode.environment.vscode,
+      vscodeDownloadAttempts:
+        vscodeRuntime.downloadAttempts,
       vscodeRuntimeSource: vscodeRuntime.source,
       vscodeRequestedVersion:
         vscodeRuntime.requestedVersion,
