@@ -1,0 +1,36 @@
+{
+  "schema": "bim-explorer-reference-format-probes-compatibility/1",
+  "status": "pre-admission",
+  "asOf": "2026-08-08",
+  "gates": {
+    "cacheOnlyPublicFixture": true,
+    "pinnedDigestAcquisition": true,
+    "e57EnvelopeInspection": true,
+    "e57PhysicalPageIntegrity": true,
+    "e57MetadataProfile": true,
+    "e57PointDecode": false,
+    "e57Renderer": false,
+    "e57ProductOpen": false
+  },
+  "evidence": {
+    "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json"
+  },
+  "blockers": [
+    "E57 compressed point payload decode is not implemented",
+    "the bounded renderer has no point primitive contract",
+    "Browser and VS Code do not open E57 files"
+  ],
+  "limitations": [
+    "the sample is downloaded on demand into an ignored digest cache",
+    "the sample file is not tracked or included in a release",
+    "the probe inspects only the E57 envelope, page CRCs and XML metadata",
+    "sample-based testing does not establish user demand, surveyed accuracy or format admission"
+  ],
+  "policy": {
+    "sampleArtifactTracked": false,
+    "releaseBundled": false,
+    "testOnly": true,
+    "formatAdmission": false,
+    "productSupport": false
+  }
+}

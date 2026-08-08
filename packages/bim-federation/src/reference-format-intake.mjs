@@ -14,6 +14,7 @@ const DEMAND_KINDS = new Set([
   "maintainer-hypothesis",
 ]);
 const FIXTURE_AVAILABILITY = new Set([
+  "public-test-only",
   "public-redistributable",
   "private-review-only",
   "none",
@@ -283,7 +284,10 @@ export function evaluateReferenceFormatIntakeWithRegistry(
   if (
     fixture.containsCustomerData !== false ||
     (
-      fixture.availability !== "public-redistributable" &&
+      ![
+        "public-test-only",
+        "public-redistributable",
+      ].includes(fixture.availability) &&
       fixtureUrl !== null
     )
   ) {
@@ -392,8 +396,11 @@ export function evaluateReferenceFormatIntakeWithRegistry(
     );
   }
 
-  const publicFixtureComplete =
-    fixture.availability === "public-redistributable" &&
+  const publicTestFixtureComplete =
+    [
+      "public-test-only",
+      "public-redistributable",
+    ].includes(fixture.availability) &&
     fixtureUrl !== null &&
     fixtureByteLength !== null &&
     fixtureSha256 !== null &&
@@ -425,8 +432,8 @@ export function evaluateReferenceFormatIntakeWithRegistry(
   );
   addGap(
     gaps,
-    !publicFixtureComplete,
-    "public-redistributable-fixture",
+    !publicTestFixtureComplete,
+    "public-test-fixture",
   );
   addGap(
     gaps,
@@ -438,7 +445,7 @@ export function evaluateReferenceFormatIntakeWithRegistry(
   addGap(
     gaps,
     implementation.redistribution !== "confirmed",
-    "redistribution-rights",
+    "implementation-redistribution-rights",
   );
   addGap(
     gaps,
@@ -518,7 +525,7 @@ export function evaluateReferenceFormatIntakeWithRegistry(
     },
     fixture: {
       availability: fixture.availability,
-      publicEvidenceComplete: publicFixtureComplete,
+      publicEvidenceComplete: publicTestFixtureComplete,
     },
     implementation: {
       kind: implementation.kind,

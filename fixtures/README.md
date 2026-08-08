@@ -27,6 +27,10 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   source, SwiftShader WebGL2, Browser/VS Code/clean VSIX 제품 file-open과
   generated IFC 두 source의 동시 federation projection에 사용하는
   ASWF/Ed Mackey CC BY 4.0 manifest
+- `e57/public-libe57-coloured-cube`: `libE57Format-test-data`의 118,784-byte
+  CC0 E57을 envelope, 116-page CRC-32C와 XML metadata profile의 cache-only
+  pre-admission probe에 사용하는 manifest. compressed point payload와 renderer는
+  아직 검증하지 않음
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로
@@ -34,6 +38,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
 fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
 두 glTF fixture도 `.gltf-cache/public-gltf`의 digest cache로만 내려받으며
 원본 GLB를 Git 또는 release bundle에 포함하지 않습니다.
+E57 sample도 `.bim-explorer-cache/public-reference/e57`에만 내려받고 Git 또는
+release에 포함하지 않습니다. test-only 사용에는 샘플 재배포를 요구하지 않습니다.
 
 ```sh
 npm run fetch:ifc:public
@@ -42,6 +48,8 @@ npm run qualify:ifc:negative
 npm run qualify:bim-source:public
 npm run qualify:renderer:public
 npm run fetch:gltf:product-scale
+npm run fetch:e57:public
+npm run qualify:e57:probe
 npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode

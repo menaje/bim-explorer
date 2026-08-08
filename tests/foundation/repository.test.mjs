@@ -32,7 +32,11 @@ test("private BIM and generated cache patterns are ignored", async () => {
     "*.ifc",
     "*.gltf",
     "*.glb",
+    "*.las",
+    "*.laz",
+    "*.e57",
     "*.rvt",
+    "*.dgn",
   ]) {
     assert.match(gitignore, new RegExp(
       pattern.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"),

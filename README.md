@@ -172,6 +172,9 @@ semantic authority는 승인하지 않습니다. 다음 held format 제안은
 [`reference format evidence intake`](docs/reference-format-intake.md)로 실제
 사용자 과업·public fixture·권리·좌표·lifecycle evidence를 접수하며, intake
 완료만으로 format 지원을 승인하지 않습니다.
+공개 sample은 재배포하지 않고 cache-only pre-admission probe에 사용할 수 있으며,
+현재 E57 envelope·page integrity·metadata profile까지만 검증했습니다. sample
+probe는 실제 point decode나 format admission을 뜻하지 않습니다.
 
 ## 비목표
 

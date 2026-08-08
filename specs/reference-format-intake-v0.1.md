@@ -7,7 +7,7 @@ License: [Apache License 2.0](LICENSE)
 ## Scope
 
 이 계약은 아직 admission되지 않은 reference format의 실제 사용자 과업,
-공개 fixture, implementation 권리, coordinate profile과 qualification 준비
+공개 test fixture, implementation 권리, coordinate profile과 qualification 준비
 상태를 path-free packet으로 접수합니다.
 
 intake가 완전해도 format을 admission하지 않습니다. 완전한 packet은 별도
@@ -40,7 +40,7 @@ packet은 다음 top-level field를 정확히 가집니다.
 | `schema` | exact intake identifier |
 | `candidateFormat` | held registry format |
 | `demand` | actual task 여부, opaque evidence reference, path-free summary, source formats, requested capabilities |
-| `fixture` | public/private/none 상태, public HTTPS URL, bytes, SHA-256, license, customer-data 부재 |
+| `fixture` | public test-only/redistributable/private/none 상태, public HTTPS URL, bytes, SHA-256, test-use 조건, customer-data 부재 |
 | `implementation` | codec/engine/SDK kind, exact artifact reference, license, redistribution state |
 | `coordinates` | mode, CRS, opaque evidence reference, datum transformation 필요 여부 |
 | `qualification` | budget, lifecycle, network, platform package와 reopen evidence |
@@ -61,8 +61,11 @@ public-evidence:sha256:<64 lowercase hex>
 ```
 
 공개 fixture URL은 credential 없는 HTTPS여야 하며 query와 fragment를
-허용하지 않습니다. private fixture는 공개 URL을 가질 수 없습니다. public
-issue에는 고객 모델, credential, 토큰 또는 absolute path를 넣지 않습니다.
+허용하지 않습니다. `public-test-only` fixture는 digest cache에서 qualification에만
+사용하고 Git 또는 release에 포함하지 않습니다. 샘플 파일 자체의 재배포 권리는
+필수 조건이 아니며, 파일을 bundle할 때만 별도로 확인합니다. private fixture는
+공개 URL을 가질 수 없습니다. public issue에는 고객 모델, credential, 토큰 또는
+absolute path를 넣지 않습니다.
 
 ## Triage
 
@@ -71,7 +74,8 @@ issue에는 고객 모델, credential, 토큰 또는 absolute path를 넣지 않
 - `actual-user-task`와 evidence reference
 - 후보를 포함한 두 종류 이상의 registered source가 있는 workflow
 - `view` capability가 필요한 실제 과업
-- URL, bytes, SHA-256과 license가 고정된 public redistributable fixture
+- URL, bytes, SHA-256과 test-use 조건이 고정된 `public-test-only` 또는
+  `public-redistributable` fixture
 - exact implementation artifact/license와 confirmed redistribution
 - bounded budget evidence
 - cancellation과 cleanup harness
@@ -87,6 +91,11 @@ format family별로 다음 조건을 추가합니다.
 누락 항목은 deterministic `missingEvidence` code로 반환합니다. 모든 항목이
 있어도 receipt의 `formatAdmission`, semantic authority, native write,
 round-trip과 Spatial authority는 `false`입니다.
+
+실제 사용자 수요 packet 전에도 maintainer는 cache-only public sample로 envelope,
+parser feasibility와 failure cleanup을 기술 probe할 수 있습니다. 이 probe는
+`ready-for-qualification`을 만들지 않으며, 실제 point decode·renderer·제품 open
+근거가 없으면 codec Gate는 계속 held입니다.
 
 ## Authority boundary
 

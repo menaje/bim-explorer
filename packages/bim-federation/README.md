@@ -33,7 +33,8 @@ mesh 조합이며 datum transformation, 실제 측량 좌표, 실제 Spatial con
 
 held format의 다음 구현 후보는
 [`bim-explorer-reference-format-intake/0.1`](../../specs/reference-format-intake-v0.1.md)으로
-접수합니다. evaluator는 실제 multi-source 과업, public fixture,
+접수합니다. evaluator는 실제 multi-source 과업, cache-only 또는 redistributable
+public test fixture,
 codec/SDK 권리, coordinate와 lifecycle evidence의 누락을 deterministic
 code로 반환합니다. 완전한 packet도 별도 qualification 전에는 registry
 admission, BIM semantics, write, round-trip 또는 Spatial authority를 만들지

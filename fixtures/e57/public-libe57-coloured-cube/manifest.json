@@ -1,0 +1,65 @@
+{
+  "schema": "bim-explorer-public-e57-fixture/1",
+  "fixtureId": "libe57format-coloured-cube-float-e57",
+  "format": "e57",
+  "purpose": "cache-only public E57 envelope, page-integrity and metadata-profile probe",
+  "provenance": {
+    "repository": "https://github.com/asmaloney/libE57Format-test-data",
+    "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+    "committedAt": "2026-08-04T16:42:49Z",
+    "path": "self/ColouredCubeFloat.e57",
+    "sourcePage": "https://github.com/asmaloney/libE57Format-test-data/blob/1ca737e03d6277c384f1b05c4046e10caab331b5/self/ColouredCubeFloat.e57"
+  },
+  "entry": {
+    "name": "ColouredCubeFloat.e57",
+    "mediaType": "application/octet-stream",
+    "byteLength": 118784,
+    "sha256": "6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+    "rawUrl": "https://raw.githubusercontent.com/asmaloney/libE57Format-test-data/1ca737e03d6277c384f1b05c4046e10caab331b5/self/ColouredCubeFloat.e57"
+  },
+  "license": {
+    "spdx": "CC0-1.0",
+    "url": "https://github.com/asmaloney/libE57Format-test-data/blob/1ca737e03d6277c384f1b05c4046e10caab331b5/LICENSE",
+    "scope": "self directory test data"
+  },
+  "tracking": {
+    "cacheRoot": ".bim-explorer-cache/public-reference/e57",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "testOnly": true,
+    "networkAtRuntime": false
+  },
+  "expected": {
+    "signature": "ASTM-E57",
+    "formatVersion": "1.0",
+    "physicalLength": 118784,
+    "pageSize": 1024,
+    "pages": 116,
+    "xmlPhysicalOffset": 115824,
+    "xmlLogicalLength": 1932,
+    "data3DScans": 1,
+    "pointRecords": 7680,
+    "coordinateFields": [
+      "cartesianX",
+      "cartesianY",
+      "cartesianZ"
+    ],
+    "colorFields": [
+      "colorRed",
+      "colorGreen",
+      "colorBlue"
+    ],
+    "coordinateBounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    }
+  }
+}

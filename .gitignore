@@ -25,7 +25,11 @@ artifacts/
 *.ifcxml
 *.gltf
 *.glb
+*.las
+*.laz
+*.e57
 *.rvt
+*.dgn
 *.nwd
 *.nwc
 *.bim

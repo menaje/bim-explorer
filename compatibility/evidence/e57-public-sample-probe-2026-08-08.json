@@ -1,0 +1,90 @@
+{
+  "schema": "bim-explorer-e57-public-sample-probe/1",
+  "status": "passed-pre-admission-probe",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "libe57format-coloured-cube-float-e57",
+    "repository": "https://github.com/asmaloney/libE57Format-test-data",
+    "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+    "path": "self/ColouredCubeFloat.e57",
+    "byteLength": 118784,
+    "sha256": "6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+    "license": "CC0-1.0",
+    "testOnly": true,
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "envelope": {
+    "signature": "ASTM-E57",
+    "formatVersion": "1.0",
+    "physicalLength": 118784,
+    "pageSize": 1024,
+    "pages": 116,
+    "pageChecksum": "CRC-32C",
+    "validPageChecksums": 116,
+    "xmlPhysicalOffset": 115824,
+    "xmlLogicalLength": 1932
+  },
+  "profile": {
+    "data3DScans": 1,
+    "pointRecords": 7680,
+    "coordinateFields": [
+      "cartesianX",
+      "cartesianY",
+      "cartesianZ"
+    ],
+    "colorFields": [
+      "colorRed",
+      "colorGreen",
+      "colorBlue"
+    ],
+    "coordinateBounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "producerLibrary": "E57Format-3.1.1-x86_64-AppleClang140"
+  },
+  "capabilities": {
+    "envelopeInspection": true,
+    "pageIntegrity": true,
+    "metadataProfile": true,
+    "pointDecode": false,
+    "renderer": false
+  },
+  "cleanup": {
+    "downloadBufferCleared": true
+  },
+  "decision": {
+    "sampleUse": "cache-only-technical-test",
+    "formatAdmission": false,
+    "pointCloudCodec": "held",
+    "productSupport": false
+  },
+  "assertions": {
+    "pinnedPublicDownload": true,
+    "exactByteLengthAndDigest": true,
+    "validE57Header": true,
+    "allPhysicalPageChecksums": true,
+    "boundedXmlMetadata": true,
+    "declaredPointProfile": true,
+    "cacheOnlyTestUse": true,
+    "artifactNotTrackedOrBundled": true,
+    "noFormatAdmission": true,
+    "pathFreeEvidence": true
+  },
+  "limitations": [
+    "the probe validates the E57 envelope, physical page CRCs and XML metadata only",
+    "compressed point records are declared but not decoded",
+    "no point-cloud renderer or Browser product file-open is qualified",
+    "the downloaded E57 file remains in an ignored digest cache and is not released",
+    "sample evidence does not establish actual user demand or surveyed datum accuracy"
+  ]
+}

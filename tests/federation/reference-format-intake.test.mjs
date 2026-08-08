@@ -21,7 +21,7 @@ function intake(overrides = {}) {
       requestedCapabilities: ["view", "query"],
     },
     fixture: {
-      availability: "public-redistributable",
+      availability: "public-test-only",
       url: "https://example.org/fixtures/survey.las",
       byteLength: 8_388_608,
       sha256: "a".repeat(64),
@@ -117,8 +117,8 @@ test("maintainer hypothesis remains held with explicit gaps", () => {
   for (const gap of [
     "actual-user-task-evidence",
     "multi-source-workflow-evidence",
-    "public-redistributable-fixture",
-    "redistribution-rights",
+    "public-test-fixture",
+    "implementation-redistribution-rights",
     "native-sdk-platform-package",
     "native-reopen-qualification",
   ]) {
@@ -222,6 +222,7 @@ test("public issue form keeps evidence and privacy gates explicit", async () => 
     "고객 모델을 첨부하지 않았습니다",
     "credential이나 absolute path를 포함하지 않았습니다",
     "write/round-trip 지원을 자동으로 승인하지 않습니다",
+    "public-test-only",
   ]) {
     assert.ok(form.includes(value), `issue form must include ${value}`);
   }

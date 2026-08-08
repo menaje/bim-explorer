@@ -105,8 +105,8 @@ source-native identity에 한정됩니다. 비 IFC reference source는 semantic
 BIM authority가 아닙니다. 모든 후보의 write와 round-trip은 별도
 Gate입니다.
 
-다음 실제 format은 사용자 과업, redistribution 가능한 fixture, exact
-parser/SDK license, coordinate profile, first-frame/memory/cleanup evidence가
+다음 실제 format은 사용자 과업, pinned cache-only public test fixture, exact
+parser/SDK license와 배포 권리, coordinate profile, first-frame/memory/cleanup evidence가
 함께 생긴 뒤 선택합니다. 후보 제안은
 [`reference format evidence intake`](reference-format-intake.md)의 공개 issue
 form과 fail-closed triage receipt를 사용하며 고객 모델·credential·absolute

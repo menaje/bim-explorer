@@ -120,6 +120,10 @@ lifecycle evidence로 분류합니다. 완전한 packet도 qualification 착수�
 허용하고 registry admission은 계속 false이며, 고객 모델·credential·absolute
 path와 이미 admission된 format 재개방을 거부합니다.
 
+`e57-public-sample-probe` test는 공개 E57을 ignored digest cache로만 획득하고
+header, 모든 physical page CRC-32C와 XML point profile을 확인합니다. 샘플 원본,
+point decode와 renderer admission은 테스트 결과에 포함하지 않습니다.
+
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick
 revision binding, source switch, abort, invalid backend cleanup과 deterministic

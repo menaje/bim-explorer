@@ -79,8 +79,10 @@ body:
   - type: dropdown
     id: fixture-availability
     attributes:
-      label: 재배포 가능한 공개 fixture
+      label: 공개 테스트 fixture
+      description: 파일을 배포하지 않는 cache-only 테스트도 public-test-only로 제출할 수 있습니다.
       options:
+        - public-test-only
         - public-redistributable
         - private-review-only
         - none
@@ -91,7 +93,7 @@ body:
     id: fixture-evidence
     attributes:
       label: Fixture provenance
-      description: 공개 HTTPS URL, byte length, SHA-256, license를 적습니다. URL에 token/query를 넣지 마세요.
+      description: 공개 HTTPS URL, byte length, SHA-256, 테스트 사용 조건을 적습니다. URL에 token/query를 넣지 마세요. 샘플 파일은 저장소나 release에 포함할 필요가 없습니다.
       placeholder: |
         URL: https://example.org/public/sample.las
         Bytes: 8388608

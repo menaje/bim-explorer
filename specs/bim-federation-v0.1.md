@@ -146,7 +146,8 @@ admission하지 않습니다.
 - coordinate/precision profile
 - source role과 semantic authority
 - view/query/write/round-trip 각각의 conformance
-- representative redistributable fixture와 bounded budget
+- representative public test fixture의 pinned provenance·digest와 bounded budget;
+  원본을 bundle하지 않는 test-only fixture에는 재배포 권리를 요구하지 않음
 
 product-scale budget은 experimental codec admission과 별도의 production
 Gate입니다.
