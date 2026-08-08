@@ -201,6 +201,13 @@ const ROUTES = new Map([
     ),
   ],
   [
+    "/packages/bim-renderer-3d/src/point-cloud-lod.mjs",
+    route(
+      "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
     "/packages/bim-renderer-3d/src/point-cloud.mjs",
     route(
       "packages/bim-renderer-3d/src/point-cloud.mjs",

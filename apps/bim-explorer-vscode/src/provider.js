@@ -142,6 +142,73 @@ function stringArray(value, maximumLength = 16) {
   return [...value];
 }
 
+function sanitizedPointLod(value) {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  return {
+    fullDetail: value.fullDetail === true,
+    hierarchyId: stringOrNull(value.hierarchyId),
+    levelId: stringOrNull(value.levelId),
+    selectionSha256: stringOrNull(
+      value.selectionSha256,
+      /^[0-9a-f]{64}$/u,
+    ),
+    ...numericRecord(value, [
+      "chunkCount",
+      "levelIndex",
+      "pointCount",
+      "stride",
+    ]),
+  };
+}
+
+function sanitizedPointHierarchy(value) {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  const levels = Array.isArray(value.levels) &&
+    value.levels.length <= 9
+      ? value.levels.map((level) => ({
+          fullDetail: level?.fullDetail === true,
+          id: stringOrNull(level?.id),
+          ...numericRecord(level, [
+            "index",
+            "pointCount",
+            "rangeBytes",
+            "stride",
+          ]),
+        }))
+      : [];
+  return {
+    contract: stringOrNull(value.contract),
+    digest: stringOrNull(value.digest, /^[0-9a-f]{64}$/u),
+    hierarchyId: stringOrNull(value.hierarchyId),
+    initialLevelId: stringOrNull(value.initialLevelId),
+    chunkCount: Array.isArray(value.chunks)
+      ? value.chunks.length
+      : null,
+    depth: numberOrNull(value.depth),
+    levels,
+    sourcePointCount: numberOrNull(value.sourcePointCount),
+  };
+}
+
+function sanitizedHierarchyCleanup(value) {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  return {
+    disposed: value.disposed === true,
+    hierarchyId: stringOrNull(value.hierarchyId),
+    ...numericRecord(value, [
+      "indexBytes",
+      "retainedBytes",
+      "rootRangeBytes",
+    ]),
+  };
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
@@ -246,11 +313,23 @@ function sanitizeReport(value) {
                   pointIndex: numberOrNull(
                     value.pointSelection?.identity?.pointIndex,
                   ),
+                  renderedPointIndex: numberOrNull(
+                    value.pointSelection?.identity?.renderedPointIndex,
+                  ),
                   rangeHandleId: stringOrNull(
                     value.pointSelection?.identity?.rangeHandleId,
                   ),
                   rangeSha256: stringOrNull(
                     value.pointSelection?.identity?.rangeSha256,
+                    /^[0-9a-f]{64}$/u,
+                  ),
+                  renderedRangeHandleId: stringOrNull(
+                    value.pointSelection?.identity
+                      ?.renderedRangeHandleId,
+                  ),
+                  renderedRangeSha256: stringOrNull(
+                    value.pointSelection?.identity
+                      ?.renderedRangeSha256,
                     /^[0-9a-f]{64}$/u,
                   ),
                 },
@@ -292,7 +371,13 @@ function sanitizeReport(value) {
     model: numericRecord(
       value.model,
       pointSource
-        ? ["points", "ranges"]
+        ? [
+            "points",
+            "ranges",
+            ...(value.model?.chunks === undefined
+              ? []
+              : ["chunks", "levels"]),
+          ]
         : ["gltf", "glb"].includes(format)
         ? [
             "entities",
@@ -317,6 +402,9 @@ function sanitizeReport(value) {
       ? {
           ...numericRecord(value.resources, [
             "decodedPointBytes",
+            "hierarchyIndexBytes",
+            "hierarchyRetainedBytes",
+            "initialPointRangeBytes",
             "pointRangeBytes",
             "pointRangePayloadBytes",
             "sourceBytes",
@@ -473,7 +561,30 @@ function sanitizeReport(value) {
             value.pointCloud?.rangeSha256,
             /^[0-9a-f]{64}$/u,
           ),
+          renderedRangeSha256: stringOrNull(
+            value.pointCloud?.renderedRangeSha256,
+            /^[0-9a-f]{64}$/u,
+          ),
+          hierarchy: sanitizedPointHierarchy(
+            value.pointCloud?.hierarchy,
+          ),
+          lod: sanitizedPointLod(value.pointCloud?.lod),
         },
+    lodTransitions: !pointSource || !Array.isArray(value.lodTransitions)
+      ? []
+      : value.lodTransitions.slice(0, 8).map((transition) => ({
+          fromLevelId: stringOrNull(transition?.fromLevelId),
+          hierarchyId: stringOrNull(transition?.hierarchyId),
+          toLevelId: stringOrNull(transition?.toLevelId),
+          ...numericRecord(transition, [
+            "identityMapBytes",
+            "points",
+            "rangeBytes",
+            "releasedBytes",
+            "releasedIdentityMapBytes",
+            "uploadedBytes",
+          ]),
+        })),
     pointSelection,
     productLifecycle: !pointSource
       ? null
@@ -482,6 +593,9 @@ function sanitizeReport(value) {
             value.lifecycle?.cpuPointRangeCleared === true,
           sourceBufferCleared:
             value.lifecycle?.sourceBufferCleared === true,
+          hierarchyCleanup: sanitizedHierarchyCleanup(
+            value.lifecycle?.hierarchyCleanup,
+          ),
           workerTerminatedAfterTransfer:
             value.lifecycle?.workerTerminatedAfterTransfer === true,
         },
@@ -911,6 +1025,10 @@ function activateBimExplorerExtension(vscode, context) {
     vscode.commands.registerCommand(
       "bimExplorer.pickVisiblePoint",
       () => provider.postActive("pick-visible-point"),
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.refinePointLod",
+      () => provider.postActive("refine-point-lod"),
     ),
   ];
   context.subscriptions.push(

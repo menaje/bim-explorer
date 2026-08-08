@@ -8,14 +8,18 @@ import {
   E57_POINT_SOURCE_CONTRACT,
 } from "../../packages/e57-point-source/src/index.mjs";
 import {
+  BIM_POINT_HIERARCHY_CONTRACT,
+  BIM_POINT_LOD_RANGE_RECEIPT,
+} from "../../packages/bim-renderer-3d/src/point-cloud-lod.mjs";
+import {
   BIM_POINT_RANGE_MEDIA_TYPE,
   BIM_POINT_RANGE_MAXIMUM_BYTES,
 } from "../../packages/bim-renderer-3d/src/point-cloud.mjs";
 
 export const POINT_SOURCE_WORKER_REQUEST =
-  "bim-explorer-point-source-worker-request/0.1";
+  "bim-explorer-point-source-worker-request/0.2";
 export const POINT_SOURCE_WORKER_RESPONSE =
-  "bim-explorer-point-source-worker-response/0.1";
+  "bim-explorer-point-source-worker-response/0.2";
 
 const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: Math.max(
@@ -138,7 +142,106 @@ function rangeBytes(value) {
   throw new TypeError("point source range bytes are invalid");
 }
 
-function validateResult(value, expected) {
+function pointIndices(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (value instanceof Uint32Array) {
+    return value;
+  }
+  if (value instanceof ArrayBuffer) {
+    return new Uint32Array(value);
+  }
+  throw new TypeError("point source identity map is invalid");
+}
+
+function validateHierarchy(artifact, range, expected) {
+  const hierarchy = plainRecord(
+    artifact.hierarchy,
+    "point source hierarchy",
+  );
+  const rootRange = plainRecord(
+    artifact.rootRange,
+    "point source root range",
+  );
+  const levels = hierarchy.levels;
+  const chunks = hierarchy.chunks;
+  const lod = plainRecord(range.lod, "point source initial LOD");
+  const indices = pointIndices(range.pointIndices);
+  if (
+    hierarchy.contract !== BIM_POINT_HIERARCHY_CONTRACT ||
+    typeof hierarchy.hierarchyId !== "string" ||
+    hierarchy.hierarchyId.length === 0 ||
+    !SHA256.test(hierarchy.digest ?? "") ||
+    !Array.isArray(levels) ||
+    levels.length === 0 ||
+    levels.length > 9 ||
+    !Array.isArray(chunks) ||
+    chunks.length === 0 ||
+    chunks.length > 65_536 ||
+    hierarchy.sourcePointCount !== artifact.model?.points ||
+    hierarchy.source?.fingerprint !== artifact.source?.fingerprint ||
+    hierarchy.source?.revisionId !== artifact.source?.revisionId ||
+    hierarchy.source?.semanticAuthority !== false ||
+    hierarchy.identity?.authority !== "derived-point-range-order" ||
+    hierarchy.identity?.rangeHandleId !== rootRange.handleId ||
+    hierarchy.identity?.rangeSha256 !== rootRange.sha256 ||
+    hierarchy.identity?.scope !==
+      "source-revision-and-root-range-digest" ||
+    rootRange.mediaType !== BIM_POINT_RANGE_MEDIA_TYPE ||
+    !SHA256.test(rootRange.sha256 ?? "") ||
+    !Number.isSafeInteger(rootRange.byteLength) ||
+    rootRange.byteLength <= 48 ||
+    rootRange.byteLength > expected.maximumRangeBytes ||
+    hierarchy.initialLevelId !== levels[0]?.id ||
+    levels.some((level, index) =>
+      typeof level?.id !== "string" ||
+      level.id !== `lod:${index}` ||
+      level.index !== index ||
+      !Number.isSafeInteger(level.pointCount) ||
+      level.pointCount <= 0 ||
+      level.pointCount > artifact.model.points ||
+      !Number.isSafeInteger(level.rangeBytes) ||
+      level.rangeBytes !== 48 + level.pointCount * 16 ||
+      !Number.isSafeInteger(level.stride) ||
+      level.stride <= 0 ||
+      typeof level.fullDetail !== "boolean" ||
+      (index > 0 && level.pointCount <= levels[index - 1].pointCount)) ||
+    chunks.some((chunk) =>
+      typeof chunk?.id !== "string" ||
+      chunk.id.length === 0 ||
+      !Number.isSafeInteger(chunk.pointCount) ||
+      chunk.pointCount <= 0) ||
+    lod.hierarchyId !== hierarchy.hierarchyId ||
+    lod.levelId !== hierarchy.initialLevelId ||
+    lod.levelIndex !== 0 ||
+    lod.pointCount !== levels[0].pointCount ||
+    lod.chunkCount !== chunks.length ||
+    !SHA256.test(lod.selectionSha256 ?? "") ||
+    range.identityRangeHandleId !== rootRange.handleId ||
+    range.identityRangeSha256 !== rootRange.sha256 ||
+    range.sourcePointCount !== artifact.model.points ||
+    (
+      lod.fullDetail
+        ? indices !== null
+        : indices?.length !== lod.pointCount
+    ) ||
+    resultWorkerRetention(expected.resultCleanup) !==
+      (levels.length > 1)
+  ) {
+    indices?.fill(0);
+    throw new Error("point source hierarchy is invalid");
+  }
+  return Object.freeze({ hierarchy, indices, rootRange });
+}
+
+function resultWorkerRetention(cleanup) {
+  return cleanup?.workerRetainedForLod === true;
+}
+
+function validateResult(value, expected, {
+  workerTerminatedAfterTransfer,
+}) {
   const result = plainRecord(value, "point source Worker result");
   pathFree(result);
   const artifact = plainRecord(
@@ -154,6 +257,7 @@ function validateResult(value, expected) {
     "point source Worker range",
   );
   const bytes = rangeBytes(range.bytes);
+  const hierarchical = artifact.hierarchy !== undefined;
   const multipleScanE57 =
     expected.format === "e57" &&
     typeof source.pointFormat === "string" &&
@@ -164,6 +268,7 @@ function validateResult(value, expected) {
   const maximumRangeBytes = multipleScanE57
     ? BIM_POINT_RANGE_MAXIMUM_BYTES
     : 8 * 1024 * 1024;
+  const identityMap = pointIndices(range.pointIndices);
   const pointFormatValid =
     (
       typeof source.pointFormat === "string" &&
@@ -189,17 +294,36 @@ function validateResult(value, expected) {
     bytes.byteLength !== range.byteLength ||
     bytes.byteLength <= 48 ||
     bytes.byteLength > maximumRangeBytes ||
+    hierarchical !== expected.hierarchy ||
     artifact.model?.points <= 0 ||
     artifact.model.points > maximumPoints ||
     artifact.model.ranges !== 1 ||
     artifact.resources?.inputBytes !== expected.byteLength ||
-    artifact.resources.pointRangeBytes !== bytes.byteLength ||
+    artifact.resources.pointRangeBytes !== (
+      hierarchical
+        ? artifact.rootRange?.byteLength
+        : bytes.byteLength
+    ) ||
     artifact.resources.pointRangePayloadBytes !==
-      bytes.byteLength - 48 ||
+      artifact.resources.pointRangeBytes - 48 ||
     artifact.cleanup?.cpuProjectionBuffersReleased !== true ||
     artifact.cleanup.decoderReleased !== true ||
     artifact.cleanup.wasmAllocationsReleased !== true ||
     result.cleanup?.pointRangeTransferred !== true ||
+    (
+      hierarchical
+        ? result.cleanup.hierarchyContract !==
+          BIM_POINT_HIERARCHY_CONTRACT
+        : ![undefined, null].includes(
+            result.cleanup.hierarchyContract,
+          )
+    ) ||
+    (
+      !hierarchical &&
+      ![undefined, false].includes(
+        result.cleanup.workerRetainedForLod,
+      )
+    ) ||
     result.cleanup.sourceBufferCleared !== true ||
     result.cleanup.workerRetainedUntilClientReceipt !== true ||
     typeof result.performance?.totalMs !== "number" ||
@@ -207,24 +331,129 @@ function validateResult(value, expected) {
     result.performance.totalMs < 0
   ) {
     bytes.fill(0);
+    identityMap?.fill(0);
     throw new Error("point source Worker result is invalid");
   }
+  const hierarchy = hierarchical
+    ? validateHierarchy(artifact, {
+        ...range,
+        pointIndices: identityMap,
+      }, {
+        ...expected,
+        maximumRangeBytes,
+        resultCleanup: result.cleanup,
+      })
+    : null;
   return Object.freeze({
     artifact: Object.freeze({
       ...artifact,
-      range: Object.freeze({ ...range, bytes }),
+      ...(hierarchy === null
+        ? {}
+        : {
+            hierarchy: Object.freeze({ ...hierarchy.hierarchy }),
+            rootRange: Object.freeze({ ...hierarchy.rootRange }),
+          }),
+      range: Object.freeze({
+        ...range,
+        bytes,
+        pointIndices: identityMap,
+      }),
     }),
     cleanup: Object.freeze({
       ...result.cleanup,
-      workerTerminatedAfterTransfer: true,
+      workerTerminatedAfterTransfer,
     }),
     performance: Object.freeze({ ...result.performance }),
   });
 }
 
+function validateLodResult(value, hierarchy, chunkIds) {
+  const result = plainRecord(value, "point LOD Worker result");
+  pathFree(result);
+  const range = plainRecord(result.range, "point LOD range");
+  const receipt = plainRecord(result.receipt, "point LOD receipt");
+  const bytes = rangeBytes(range.bytes);
+  const indices = pointIndices(range.pointIndices);
+  const level = hierarchy.levels.find((item) =>
+    item.id === range.lod?.levelId);
+  const selectedChunks = chunkIds === undefined
+    ? hierarchy.chunks
+    : chunkIds.map((id) =>
+        hierarchy.chunks.find((chunk) => chunk.id === id));
+  const expectedPoints = level === undefined ||
+    selectedChunks.some((chunk) => chunk === undefined)
+      ? null
+      : selectedChunks.reduce(
+          (total, chunk) =>
+            total + Math.ceil(chunk.pointCount / level.stride),
+          0,
+        );
+  const rootPassThrough = level?.fullDetail === true &&
+    selectedChunks.length === hierarchy.chunks.length &&
+    selectedChunks.every((chunk, index) =>
+      chunk === hierarchy.chunks[index]);
+  if (
+    result.hierarchyId !== hierarchy.hierarchyId ||
+    level === undefined ||
+    receipt.schema !== BIM_POINT_LOD_RANGE_RECEIPT ||
+    receipt.level?.hierarchyId !== hierarchy.hierarchyId ||
+    receipt.level.levelId !== level.id ||
+    receipt.level.pointCount !== expectedPoints ||
+    receipt.rangeBytes !== bytes.byteLength ||
+    receipt.rootRangeSha256 !== hierarchy.identity.rangeSha256 ||
+    range.mediaType !== BIM_POINT_RANGE_MEDIA_TYPE ||
+    range.byteLength !== bytes.byteLength ||
+    range.sha256 === undefined ||
+    !SHA256.test(range.sha256) ||
+    range.identityRangeHandleId !== hierarchy.identity.rangeHandleId ||
+    range.identityRangeSha256 !== hierarchy.identity.rangeSha256 ||
+    range.sourcePointCount !== hierarchy.sourcePointCount ||
+    range.lod?.chunkCount !== selectedChunks.length ||
+    range.lod?.pointCount !== expectedPoints ||
+    (
+      rootPassThrough
+        ? indices !== null || range.sha256 !== hierarchy.identity.rangeSha256
+        : indices?.length !== expectedPoints
+    ) ||
+    receipt.identityMapBytes !== (indices?.byteLength ?? 0)
+  ) {
+    bytes.fill(0);
+    indices?.fill(0);
+    throw new Error("point LOD Worker result is invalid");
+  }
+  return Object.freeze({
+    range: Object.freeze({
+      ...range,
+      bytes,
+      pointIndices: indices,
+    }),
+    receipt: Object.freeze({ ...receipt }),
+  });
+}
+
+function validateLodRelease(value, hierarchyId) {
+  const cleanup = plainRecord(
+    value?.cleanup,
+    "point LOD Worker cleanup",
+  );
+  if (
+    cleanup.disposed !== true ||
+    cleanup.hierarchyId !== hierarchyId ||
+    cleanup.indexBytes !== 0 ||
+    cleanup.retainedBytes !== 0 ||
+    cleanup.rootRangeBytes !== 0
+  ) {
+    throw new Error("point LOD Worker cleanup is invalid");
+  }
+  return Object.freeze({ ...cleanup });
+}
+
 export class PointSourceWorkerClient {
   #disposed = false;
   #generation = 0;
+  #hierarchy = null;
+  #hierarchyCleanup = null;
+  #lodReads = 0;
   #nextRequest = 1;
   #options;
   #pending = new Map();
@@ -246,6 +475,9 @@ export class PointSourceWorkerClient {
     return Object.freeze({
       disposed: this.#disposed,
       generation: this.#generation,
+      hierarchyActive: this.#hierarchy !== null,
+      hierarchyCleanup: this.#hierarchyCleanup,
+      lodReads: this.#lodReads,
       pendingRequests: this.#pending.size,
       status: this.#state,
       terminations: this.#terminations,
@@ -281,6 +513,7 @@ export class PointSourceWorkerClient {
     }
     this.#worker.terminate();
     this.#worker = null;
+    this.#hierarchy = null;
     this.#terminations += 1;
     return true;
   }
@@ -343,13 +576,47 @@ export class PointSourceWorkerClient {
     return worker;
   }
 
-  async open(bytesValue, { format } = {}) {
+  async #request(type, message, transfer = []) {
+    const requestId =
+      `point-source:${this.#generation}:${this.#nextRequest}`;
+    this.#nextRequest += 1;
+    return await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.#pending.delete(requestId);
+        reject(operationError({
+          code: type === "open"
+            ? "POINT_SOURCE_OPEN_TIMEOUT"
+            : "POINT_SOURCE_LOD_TIMEOUT",
+          retryable: true,
+        }));
+      }, this.#options.limits.openTimeoutMs);
+      this.#pending.set(requestId, {
+        reject,
+        resolve,
+        timer,
+      });
+      this.#worker.postMessage({
+        schema: POINT_SOURCE_WORKER_REQUEST,
+        requestId,
+        type,
+        ...message,
+      }, transfer);
+    });
+  }
+
+  async open(bytesValue, {
+    format,
+    hierarchy = false,
+  } = {}) {
     this.#assertOpen();
     if (!(bytesValue instanceof Uint8Array)) {
       throw new TypeError("point source bytes must be a Uint8Array");
     }
     if (!FORMATS.has(format)) {
       throw new TypeError("point source format is unsupported");
+    }
+    if (typeof hierarchy !== "boolean") {
+      throw new TypeError("point source hierarchy option is invalid");
     }
     if (
       bytesValue.byteLength === 0 ||
@@ -363,47 +630,117 @@ export class PointSourceWorkerClient {
       this.terminate();
     }
     this.#generation += 1;
+    this.#hierarchyCleanup = null;
+    this.#lodReads = 0;
     this.#worker = this.#createWorker();
     this.#state = "opening";
     const bytes = Uint8Array.from(bytesValue);
-    const requestId =
-      `point-source:${this.#generation}:${this.#nextRequest}`;
-    this.#nextRequest += 1;
     try {
-      const value = await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          this.#pending.delete(requestId);
-          reject(operationError({
-            code: "POINT_SOURCE_OPEN_TIMEOUT",
-            retryable: true,
-          }));
-        }, this.#options.limits.openTimeoutMs);
-        this.#pending.set(requestId, {
-          reject,
-          resolve,
-          timer,
-        });
-        this.#worker.postMessage({
-          schema: POINT_SOURCE_WORKER_REQUEST,
-          requestId,
-          type: "open",
-          bytes: bytes.buffer,
-          options: {
-            format,
-            lazPerfScriptUrl:
-              this.#options.lazPerfScriptUrl,
-            lazPerfWasmUrl:
-              this.#options.lazPerfWasmUrl,
-          },
-        }, [bytes.buffer]);
-      });
-      this.#terminateWorker();
+      const value = await this.#request("open", {
+        bytes: bytes.buffer,
+        options: {
+          format,
+          hierarchy,
+          lazPerfScriptUrl:
+            this.#options.lazPerfScriptUrl,
+          lazPerfWasmUrl:
+            this.#options.lazPerfWasmUrl,
+        },
+      }, [bytes.buffer]);
+      const retained =
+        value?.cleanup?.workerRetainedForLod === true;
+      if (!retained) {
+        this.#terminateWorker();
+      }
       const result = validateResult(value, {
         byteLength: bytesValue.byteLength,
         format,
+        hierarchy,
+      }, {
+        workerTerminatedAfterTransfer: !retained,
       });
+      this.#hierarchy = retained
+        ? result.artifact.hierarchy
+        : null;
       this.#state = "ready";
       return result;
+    } catch (error) {
+      this.#terminateWorker();
+      this.#state = "failed";
+      throw error;
+    }
+  }
+
+  async readLod(levelId, { chunkIds } = {}) {
+    this.#assertOpen();
+    if (
+      this.#worker === null ||
+      this.#hierarchy === null ||
+      this.#state !== "ready"
+    ) {
+      throw invalidState("point source hierarchy is not active");
+    }
+    if (
+      typeof levelId !== "string" ||
+      !this.#hierarchy.levels.some((level) => level.id === levelId)
+    ) {
+      throw new RangeError("point source LOD level is unavailable");
+    }
+    if (
+      chunkIds !== undefined &&
+      (
+        !Array.isArray(chunkIds) ||
+        chunkIds.length === 0 ||
+        new Set(chunkIds).size !== chunkIds.length ||
+        chunkIds.some((id) =>
+          typeof id !== "string" ||
+          !this.#hierarchy.chunks.some((chunk) => chunk.id === id))
+      )
+    ) {
+      throw new TypeError("point source LOD chunkIds are invalid");
+    }
+    this.#state = "reading-lod";
+    try {
+      const value = await this.#request("read-lod", {
+        options: {
+          ...(chunkIds === undefined ? {} : { chunkIds }),
+          levelId,
+        },
+      });
+      const result = validateLodResult(
+        value,
+        this.#hierarchy,
+        chunkIds,
+      );
+      this.#lodReads += 1;
+      this.#state = "ready";
+      return result;
+    } catch (error) {
+      this.#terminateWorker();
+      this.#state = "failed";
+      throw error;
+    }
+  }
+
+  async releaseHierarchy() {
+    this.#assertOpen();
+    if (this.#hierarchy === null || this.#worker === null) {
+      return null;
+    }
+    if (this.#state !== "ready") {
+      throw invalidState("point source operation is in progress");
+    }
+    const hierarchyId = this.#hierarchy.hierarchyId;
+    this.#state = "releasing-lod";
+    try {
+      const value = await this.#request("dispose-lod", {
+        options: {},
+      });
+      const cleanup = validateLodRelease(value, hierarchyId);
+      this.#hierarchyCleanup = cleanup;
+      this.#terminateWorker();
+      this.#state = "ready";
+      return cleanup;
     } catch (error) {
       this.#terminateWorker();
       this.#state = "failed";
@@ -428,7 +765,11 @@ export class PointSourceWorkerClient {
       return false;
     }
     if (this.#worker !== null) {
-      this.terminate();
+      if (this.#hierarchy !== null && this.#state === "ready") {
+        await this.releaseHierarchy();
+      } else {
+        this.terminate();
+      }
     }
     this.#disposed = true;
     this.#state = "disposed";

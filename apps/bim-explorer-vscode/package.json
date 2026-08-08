@@ -27,7 +27,8 @@
     "onCommand:bimExplorer.cancel",
     "onCommand:bimExplorer.retry",
     "onCommand:bimExplorer.showDiagnostics",
-    "onCommand:bimExplorer.pickVisiblePoint"
+    "onCommand:bimExplorer.pickVisiblePoint",
+    "onCommand:bimExplorer.refinePointLod"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -78,6 +79,10 @@
       {
         "command": "bimExplorer.pickVisiblePoint",
         "title": "BIM Explorer: Pick Visible Point"
+      },
+      {
+        "command": "bimExplorer.refinePointLod",
+        "title": "BIM Explorer: Refine Point Detail"
       }
     ],
     "configuration": {

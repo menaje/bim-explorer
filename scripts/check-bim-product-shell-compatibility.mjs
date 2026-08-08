@@ -32,6 +32,9 @@ import {
 import {
   validatePointCloudVscodePickingQualification,
 } from "./qualify-point-cloud-vscode-picking.mjs";
+import {
+  validatePointCloudLodProductQualification,
+} from "./qualify-point-cloud-lod-products.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -76,6 +79,9 @@ const PASSED_GATES = [
   "browserPointIdentityPicking",
   "vscodePointIdentityPicking",
   "cleanVsixPointIdentityPicking",
+  "browserDerivedPointHierarchyLod",
+  "vscodeDerivedPointHierarchyLod",
+  "cleanVsixDerivedPointHierarchyLod",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -279,6 +285,7 @@ export function validateBimProductShellCompatibility(
   e57MultipleScanVscodeProduct,
   pointCloudBrowserPicking,
   pointCloudVscodePicking,
+  pointCloudLodProducts,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -334,6 +341,9 @@ export function validateBimProductShellCompatibility(
   validatePointCloudVscodePickingQualification(
     pointCloudVscodePicking,
   );
+  validatePointCloudLodProductQualification(
+    pointCloudLodProducts,
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -383,11 +393,15 @@ export function validateBimProductShellCompatibility(
     contracts?.pointSource !==
       "bim-explorer-las-laz-point-source/0.1" ||
     contracts?.pointSourceWorkerRequest !==
-      "bim-explorer-point-source-worker-request/0.1" ||
+      "bim-explorer-point-source-worker-request/0.2" ||
     contracts?.pointSourceWorkerResponse !==
-      "bim-explorer-point-source-worker-response/0.1" ||
+      "bim-explorer-point-source-worker-response/0.2" ||
     contracts?.pointPickReceipt !==
-      "bim-explorer-bounded-point-renderer-pick-receipt/0.1"
+      "bim-explorer-bounded-point-renderer-pick-receipt/0.1" ||
+    contracts?.pointHierarchy !==
+      "bim-explorer-derived-point-hierarchy/0.1" ||
+    contracts?.pointLodRangeReceipt !==
+      "bim-explorer-derived-point-lod-range-receipt/0.1"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -968,6 +982,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.vscodePointPicking !==
       "compatibility/evidence/" +
         "point-cloud-vscode-picking-2026-08-09.json" ||
+    manifest.evidence?.pointCloudLodProducts !==
+      "compatibility/evidence/" +
+        "point-cloud-lod-products-2026-08-09.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -993,6 +1010,10 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimBrowserPointPicking !== true ||
     manifest.policy?.claimVscodePointPicking !== true ||
     manifest.policy?.claimCleanVsixPointPicking !== true ||
+    manifest.policy?.claimBrowserDerivedPointLod !== true ||
+    manifest.policy?.claimVscodeDerivedPointLod !== true ||
+    manifest.policy?.claimCleanVsixDerivedPointLod !== true ||
+    manifest.policy?.claimSourceNativePointLod !== false ||
     manifest.policy?.pointIdentityAuthority !==
       "derived-point-range-order" ||
     manifest.policy?.pointIdentityScope !==
@@ -1026,6 +1047,7 @@ export function validateBimProductShellCompatibility(
         e57MultipleScanVscodeProduct,
         pointCloudBrowserPicking,
         pointCloudVscodePicking,
+        pointCloudLodProducts,
         installation,
         manifest,
         vscode,
@@ -1077,6 +1099,7 @@ async function main() {
     e57MultipleScanVscodeProduct,
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
+    pointCloudLodProducts,
     vscode,
     installation,
   ] = await Promise.all([
@@ -1155,6 +1178,10 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.pointCloudLodProducts),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -1183,6 +1210,7 @@ async function main() {
     e57MultipleScanVscodeProduct,
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
+    pointCloudLodProducts,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

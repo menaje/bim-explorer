@@ -28,6 +28,7 @@ async function fixtures() {
     e57MultipleScanVscodeProduct,
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
+    pointCloudLodProducts,
     vscode,
     installation,
   ] = await Promise.all([
@@ -96,6 +97,10 @@ async function fixtures() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      manifest.evidence.pointCloudLodProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       manifest.evidence.vscodeSynthetic,
       "utf8",
     ).then(JSON.parse),
@@ -122,6 +127,7 @@ async function fixtures() {
     e57MultipleScanVscodeProduct,
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
+    pointCloudLodProducts,
     manifest,
     vscode,
   };
@@ -148,6 +154,7 @@ function validate(values) {
     values.e57MultipleScanVscodeProduct,
     values.pointCloudBrowserPicking,
     values.pointCloudVscodePicking,
+    values.pointCloudLodProducts,
   );
 }
 
@@ -159,7 +166,7 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 42,
+      passedGates: 45,
       publicProducts: 3_569,
       status: "experimental",
     },

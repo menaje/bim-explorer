@@ -15,7 +15,7 @@ test("authority documents preserve the three-product boundary", async () => {
   }
   assert.match(
     product,
-    /IFC GlobalId·Express ID, reference native ID 또는 revision\/range-scoped derived point ID/u,
+    /IFC GlobalId·Express ID, reference native ID 또는 revision\/root-range-scoped derived point ID/u,
   );
   assert.match(
     product,
@@ -23,7 +23,7 @@ test("authority documents preserve the three-product boundary", async () => {
   );
   assert.match(
     product,
-    /E57\/LAS\/LAZ `point:n`: exact source revision과 range digest/u,
+    /E57\/LAS\/LAZ `point:n`: exact source revision과 root range digest/u,
   );
   assert.match(product, /Viewer UI와 event로 Spatial authority/u);
   assert.match(architecture, /Native process/u);

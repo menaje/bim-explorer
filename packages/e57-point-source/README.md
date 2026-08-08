@@ -33,7 +33,8 @@ not infer a CRS, datum, surveyed control or accuracy. Spherical input is
 converted to Cartesian display coordinates. Extension records, images,
 source-declared point identity and LOD streaming remain outside the product
 profile. The product renderer may derive and pick `point:n` from the exact
-projected range order within one source revision and range digest. This does not
+projected range order within one source revision and root range digest. It may
+also derive local octree leaf chunks and coarse-to-full display LOD. These do not
 preserve the original index of filtered invalid records or create E57 semantic
 authority. Omitting intensity from the display range
 is reported as lossy and does not create intensity semantic authority.
@@ -66,5 +67,8 @@ one omitted identity pose. Pose-applied nanometer position and RGB SHA-256
 digests match the independently pinned `pye57@0.4.18/libE57Format` reference.
 The same 19,423,840-byte payload passes actual Browser local-file, staged
 VS Code and clean-installed VSIX product-open qualification with exact visible
-projection and cleanup. This bounded evidence remains pre-admission and does
-not qualify CRS, surveyed datum, extension behavior or the E57 format family.
+projection and cleanup. The same three paths also pass 51 derived octree leaf
+chunks, three coarse-to-full levels, stable root-range point identity and exact
+hierarchy/GPU cleanup. This bounded evidence remains pre-admission and does not
+qualify source-native hierarchy, CRS, surveyed datum, extension behavior or the
+E57 format family.

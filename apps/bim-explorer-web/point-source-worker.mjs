@@ -6,11 +6,15 @@ import {
   E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
   createE57ProductPointSourceArtifact,
 } from "../../packages/e57-point-source/src/index.mjs";
+import {
+  BIM_POINT_HIERARCHY_CONTRACT,
+  createDerivedPointCloudHierarchy,
+} from "../../packages/bim-renderer-3d/src/point-cloud-lod.mjs";
 
 const REQUEST_SCHEMA =
-  "bim-explorer-point-source-worker-request/0.1";
+  "bim-explorer-point-source-worker-request/0.2";
 const RESPONSE_SCHEMA =
-  "bim-explorer-point-source-worker-response/0.1";
+  "bim-explorer-point-source-worker-response/0.2";
 const FORMATS = new Set(["e57", "las", "laz"]);
 const MAXIMUM_SOURCE_BYTES = Object.freeze({
   e57: E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
@@ -19,7 +23,9 @@ const MAXIMUM_SOURCE_BYTES = Object.freeze({
 });
 
 let accepted = false;
+let hierarchy = null;
 let loadedLazPerfScriptUrl = null;
+let operation = Promise.resolve();
 
 function stableErrorCode(error) {
   const message = typeof error?.message === "string"
@@ -87,7 +93,7 @@ function sameOriginUrl(value, label) {
   return url.href;
 }
 
-function validRequest(request) {
+function validOpenRequest(request) {
   return (
     request?.schema === REQUEST_SCHEMA &&
     request.type === "open" &&
@@ -98,6 +104,26 @@ function validRequest(request) {
     FORMATS.has(request.options?.format) &&
     request.bytes.byteLength <=
       MAXIMUM_SOURCE_BYTES[request.options.format]
+  );
+}
+
+function validLodRequest(request) {
+  return (
+    request?.schema === REQUEST_SCHEMA &&
+    typeof request.requestId === "string" &&
+    request.requestId.length > 0 &&
+    (
+      (
+        request.type === "read-lod" &&
+        typeof request.options?.levelId === "string" &&
+        request.options.levelId.length > 0 &&
+        (
+          request.options.chunkIds === undefined ||
+          Array.isArray(request.options.chunkIds)
+        )
+      ) ||
+      request.type === "dispose-lod"
+    )
   );
 }
 
@@ -122,7 +148,7 @@ async function lazPerfModuleFactory(scriptUrl, wasmUrl) {
 }
 
 async function open(request) {
-  if (accepted || !validRequest(request)) {
+  if (accepted || !validOpenRequest(request)) {
     throw new TypeError("point source Worker request is invalid");
   }
   accepted = true;
@@ -142,6 +168,8 @@ async function open(request) {
   const bytes = new Uint8Array(request.bytes);
   const started = performance.now();
   let artifact = null;
+  let completed = false;
+  let initial = null;
   try {
     progress(request.requestId, "source-admitted", {
       byteLength: bytes.byteLength,
@@ -158,23 +186,81 @@ async function open(request) {
             ? () => lazPerfModuleFactory(scriptUrl, wasmUrl)
             : undefined,
         });
-    progress(request.requestId, "point-range-created", {
-      pointRangeBytes: artifact.range.byteLength,
-      points: artifact.model.points,
-    });
+    const hierarchyRequested = request.options.hierarchy === true;
+    if (hierarchyRequested) {
+      progress(request.requestId, "point-hierarchy-creating", {
+        points: artifact.model.points,
+      });
+      hierarchy = await createDerivedPointCloudHierarchy({
+        range: artifact.range,
+        source: artifact.source,
+      });
+      initial = await hierarchy.readLevel(
+        hierarchy.manifest.initialLevelId,
+      );
+      progress(request.requestId, "point-lod-ready", {
+        chunks: hierarchy.manifest.chunks.length,
+        levels: hierarchy.manifest.levels.length,
+        points: initial.receipt.level.pointCount,
+      });
+    } else {
+      progress(request.requestId, "point-range-created", {
+        pointRangeBytes: artifact.range.byteLength,
+        points: artifact.model.points,
+      });
+    }
     bytes.fill(0);
-    const rangeBuffer = artifact.range.bytes.buffer;
+    const rootRange = artifact.range;
+    const range = initial?.range ?? rootRange;
+    const hierarchyState = hierarchy?.state ?? null;
+    const hierarchyContract = hierarchy === null
+      ? null
+      : BIM_POINT_HIERARCHY_CONTRACT;
+    const retainHierarchy =
+      hierarchy !== null && hierarchy.manifest.levels.length > 1;
+    const transportArtifact = hierarchy === null
+      ? artifact
+      : {
+          ...artifact,
+          hierarchy: hierarchy.manifest,
+          range,
+          rootRange: {
+            byteLength: rootRange.byteLength,
+            handleId: rootRange.handleId,
+            mediaType: rootRange.mediaType,
+            sha256: rootRange.sha256,
+          },
+          resources: {
+            ...artifact.resources,
+            hierarchyIndexBytes: hierarchyState.indexBytes,
+            hierarchyRetainedBytes: hierarchyState.retainedBytes,
+            initialPointRangeBytes: range.byteLength,
+          },
+        };
+    const transfer = [range.bytes.buffer];
+    if (range.pointIndices instanceof Uint32Array) {
+      transfer.push(range.pointIndices.buffer);
+    }
+    if (!retainHierarchy && hierarchy !== null) {
+      await hierarchy.dispose();
+      hierarchy = null;
+    }
     post(request.requestId, "result", {
-      artifact,
+      artifact: transportArtifact,
       cleanup: {
+        hierarchyContract,
+        pointIndexMapTransferred:
+          range.pointIndices instanceof Uint32Array,
         pointRangeTransferred: true,
         sourceBufferCleared: bytes.every((value) => value === 0),
+        workerRetainedForLod: retainHierarchy,
         workerRetainedUntilClientReceipt: true,
       },
       performance: {
         totalMs: performance.now() - started,
       },
-    }, [rangeBuffer]);
+    }, transfer);
+    completed = true;
   } finally {
     bytes.fill(0);
     if (
@@ -183,13 +269,67 @@ async function open(request) {
     ) {
       artifact.range.bytes.fill(0);
     }
+    if (!completed && hierarchy !== null) {
+      await hierarchy.dispose();
+      hierarchy = null;
+    }
   }
+}
+
+async function readLod(request) {
+  if (!accepted || hierarchy === null || !validLodRequest(request)) {
+    throw new TypeError("point LOD Worker request is invalid");
+  }
+  const result = await hierarchy.readLevel(
+    request.options.levelId,
+    { chunkIds: request.options.chunkIds },
+  );
+  const transfer = [result.range.bytes.buffer];
+  if (result.range.pointIndices instanceof Uint32Array) {
+    transfer.push(result.range.pointIndices.buffer);
+  }
+  post(request.requestId, "result", {
+    hierarchyId: hierarchy.manifest.hierarchyId,
+    ...result,
+  }, transfer);
+}
+
+async function disposeLod(request) {
+  if (!accepted || hierarchy === null || !validLodRequest(request)) {
+    throw new TypeError("point LOD dispose request is invalid");
+  }
+  const hierarchyId = hierarchy.manifest.hierarchyId;
+  const disposed = await hierarchy.dispose();
+  const state = hierarchy.state;
+  hierarchy = null;
+  post(request.requestId, "result", {
+    cleanup: {
+      disposed,
+      hierarchyId,
+      indexBytes: state.indexBytes,
+      retainedBytes: state.retainedBytes,
+      rootRangeBytes: state.rootRangeBytes,
+    },
+  });
+}
+
+async function route(request) {
+  if (request?.type === "open") {
+    return await open(request);
+  }
+  if (request?.type === "read-lod") {
+    return await readLod(request);
+  }
+  if (request?.type === "dispose-lod") {
+    return await disposeLod(request);
+  }
+  throw new TypeError("point source Worker request is invalid");
 }
 
 self.addEventListener("message", (event) => {
   const request = event.data;
-  Promise.resolve()
-    .then(() => open(request))
+  operation = operation
+    .then(() => route(request))
     .catch((error) => {
       post(
         typeof request?.requestId === "string"

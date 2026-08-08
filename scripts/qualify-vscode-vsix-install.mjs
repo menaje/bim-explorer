@@ -258,6 +258,7 @@ export async function qualifyVscodeVsixInstall({
       "apps/bim-explorer-web/laz-perf-worker-csp.js",
       "packages/e57-point-source/src/format.mjs",
       "packages/e57-point-source/src/index.mjs",
+      "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
       "LICENSES/e57-rs-MIT.txt",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",

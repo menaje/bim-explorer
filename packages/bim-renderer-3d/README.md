@@ -19,6 +19,8 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
   exact resource-release 영수증
 - WebGL2 point backend의 32-bit Pick ID pass, depth-tested point 선택과
   선택 좌표 12-byte GPU readback
+- exact source revision/root range에 묶인 derived octree leaf chunks, bounded
+  coarse-to-full LOD materialization과 rendered-index→root-index map
 - perspective/orthographic fit과 orbit·pan·zoom camera state
 - active revision의 Render ID hide/show와 view revision 영수증
 - offscreen WebGL2 Pick ID pass와 revision-bound selection/highlight
@@ -47,13 +49,15 @@ reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-lo
 identity를 유지합니다.
 
 point range는 source semantic identity를 만들지 않습니다. renderer는 exact
-source revision과 range SHA-256 안의 배열 순서에서만 `point:n`을 파생하고,
+source revision과 root range SHA-256 안의 배열 순서에서만 `point:n`을 파생하고,
 32-bit Pick ID pass로 선택한 좌표 하나를 GPU buffer에서 읽습니다. 이 identity는
 다른 revision/range와 합치지 않으며 E57 invalid record 제거 전의 원본 record
 index도 아닙니다. cache-only LAS/LAZ와 E57을 actual Chrome, staged VS Code 및
-clean-installed VSIX에서 qualification했습니다. renderer 자체에는 CRS/datum,
-source-declared point semantics 또는 level-of-detail streaming이 없습니다.
-따라서 point selection만으로 format admission이나 제품 지원을 주장할 수
+clean-installed VSIX에서 qualification했습니다. five-scan E57은 51개 파생
+octree leaf chunk와 31,971→242,821→1,213,990-point LOD, 단계별 identity-map/GPU
+release와 최종 hierarchy cleanup도 통과했습니다. renderer 자체에는 CRS/datum,
+source-native hierarchy 또는 source-declared point semantics가 없습니다. 따라서
+파생 selection/LOD만으로 format admission이나 federation 지원을 주장할 수
 없습니다.
 
 renderer 단독 사용 시 session/source lifecycle은 호출자가 소유합니다.

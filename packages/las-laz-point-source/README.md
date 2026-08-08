@@ -14,8 +14,10 @@ round-trip authority. Coordinates remain `unqualified`: this package does not
 infer a CRS or datum from file metadata and does not establish surveyed
 accuracy. This source package itself does not declare point identity. The
 product renderer may derive `point:n` from the exact projected range order and
-pick it only within the matching source revision and range digest; that is not LAS/LAZ source-record
-or semantic authority. LOD streaming remains outside this profile.
+pick it only within the matching source revision and root range digest; that is
+not LAS/LAZ source-record or semantic authority. Source-native LOD remains
+outside this profile. The product renderer may separately derive local octree
+leaf chunks and coarse-to-full display LOD without changing that boundary.
 
 Default bounds are 8 MiB source bytes, 500,000 points, 24 MiB decoded point
 records and one 8 MiB derived point range. Callers own and must clear source

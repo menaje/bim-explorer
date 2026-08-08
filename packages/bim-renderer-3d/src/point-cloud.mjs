@@ -27,6 +27,7 @@ export const BIM_POINT_RANGE_MAXIMUM_POINTS = 2_000_000;
 const DEFAULT_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 8 * 1024 * 1024,
   maximumGpuBytes: 8 * 1024 * 1024,
+  maximumIdentityMapBytes: 2 * 1024 * 1024,
   maximumPointPayloadBytes: 8 * 1024 * 1024,
   maximumPoints: 500_000,
   maximumRangeBytes: 8 * 1024 * 1024,
@@ -35,6 +36,7 @@ const DEFAULT_LIMITS = Object.freeze({
 const ABSOLUTE_LIMITS = Object.freeze({
   maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
   maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+  maximumIdentityMapBytes: 8 * 1024 * 1024,
   maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
   maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
   maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
@@ -134,6 +136,8 @@ function validatedLimits(overrides = {}) {
   if (
     limits.maximumPointPayloadBytes > limits.maximumGpuBytes ||
     limits.maximumRangeBytes > limits.maximumCpuStagingBytes ||
+    limits.maximumPoints * Uint32Array.BYTES_PER_ELEMENT >
+      limits.maximumIdentityMapBytes ||
     limits.maximumPoints * POINT_STRIDE_BYTES >
       limits.maximumPointPayloadBytes
   ) {
@@ -414,7 +418,55 @@ function validatedRange(value, limits) {
   ) {
     throw new TypeError("point renderer range is invalid or unbounded");
   }
+  const hasIdentityMetadata =
+    range.identityRangeHandleId !== undefined ||
+    range.identityRangeSha256 !== undefined ||
+    range.pointIndices !== undefined ||
+    range.sourcePointCount !== undefined;
+  if (
+    hasIdentityMetadata &&
+    (
+      typeof range.identityRangeHandleId !== "string" ||
+      range.identityRangeHandleId.length === 0 ||
+      !SHA256.test(range.identityRangeSha256 ?? "") ||
+      !Number.isSafeInteger(range.sourcePointCount) ||
+      range.sourcePointCount <= 0 ||
+      (
+        range.pointIndices !== null &&
+        !(range.pointIndices instanceof Uint32Array)
+      ) ||
+      (range.pointIndices?.byteLength ?? 0) >
+        limits.maximumIdentityMapBytes
+    )
+  ) {
+    throw new TypeError("point renderer range identity map is invalid");
+  }
   return range;
+}
+
+function validatedLod(value, pointCount) {
+  if (value === undefined) {
+    return null;
+  }
+  const lod = plainRecord(value, "point renderer range.lod");
+  if (
+    !Number.isSafeInteger(lod.chunkCount) ||
+    lod.chunkCount <= 0 ||
+    typeof lod.fullDetail !== "boolean" ||
+    typeof lod.hierarchyId !== "string" ||
+    lod.hierarchyId.length === 0 ||
+    typeof lod.levelId !== "string" ||
+    lod.levelId.length === 0 ||
+    !Number.isSafeInteger(lod.levelIndex) ||
+    lod.levelIndex < 0 ||
+    lod.pointCount !== pointCount ||
+    !SHA256.test(lod.selectionSha256 ?? "") ||
+    !Number.isSafeInteger(lod.stride) ||
+    lod.stride <= 0
+  ) {
+    throw new TypeError("point renderer range LOD metadata is invalid");
+  }
+  return Object.freeze({ ...lod });
 }
 
 function validateBackendMount(value, metrics) {
@@ -668,6 +720,9 @@ export class BoundedPointCloudRenderer {
     return Object.freeze({
       active: this.#active !== null,
       activeBytes: this.#active?.gpuBytes ?? 0,
+      activeIdentityMapBytes:
+        this.#active?.pointIndices?.byteLength ?? 0,
+      activeLodLevel: this.#active?.lod?.levelId ?? null,
       activePoints: this.#active?.points ?? 0,
       disposed: this.#disposed,
       mounting: this.#mounting,
@@ -694,6 +749,8 @@ export class BoundedPointCloudRenderer {
     const range = validatedRange(rangeValue, this.limits);
     this.#mounting = true;
     const staging = range.bytes.slice();
+    let pointIndices = range.pointIndices?.slice() ?? null;
+    let pointIndicesRetained = false;
     let backendHandleId = null;
     try {
       aborted(signal);
@@ -713,15 +770,37 @@ export class BoundedPointCloudRenderer {
           "point renderer upload exceeds its GPU byte limit",
         );
       }
+      if (
+        pointIndices !== null &&
+        (
+          pointIndices.length !== decoded.pointCount ||
+          pointIndices.some((value) =>
+            value >= range.sourcePointCount)
+        )
+      ) {
+        throw new RangeError(
+          "point renderer identity map does not cover the decoded range",
+        );
+      }
+      const identityRange = Object.freeze({
+        handleId:
+          range.identityRangeHandleId ?? range.handleId,
+        sha256: range.identityRangeSha256 ?? sha256,
+        sourcePointCount:
+          range.sourcePointCount ?? decoded.pointCount,
+      });
+      const lod = validatedLod(range.lod, decoded.pointCount);
       const camera = cameraValue === undefined
         ? createFitCamera3d(paddedCameraBounds(decoded.bounds), {
             aspect: 4 / 3,
           })
         : validateCamera3d(cameraValue);
       const metrics = Object.freeze({
-        cpuStagingPeakBytes: staging.byteLength,
+        cpuStagingPeakBytes:
+          staging.byteLength + (pointIndices?.byteLength ?? 0),
         drawCalls: 1,
         gpuBytes: decoded.payloadBytes,
+        identityMapBytes: pointIndices?.byteLength ?? 0,
         pointSize: this.#pointSize,
         points: decoded.pointCount,
         rangeBytes: staging.byteLength,
@@ -751,6 +830,9 @@ export class BoundedPointCloudRenderer {
       this.#active = {
         backendHandleId,
         gpuBytes: metrics.gpuBytes,
+        identityRange,
+        lod,
+        pointIndices,
         points: metrics.points,
         range: Object.freeze({
           handleId: range.handleId,
@@ -759,6 +841,7 @@ export class BoundedPointCloudRenderer {
         }),
         source,
       };
+      pointIndicesRetained = true;
       return Object.freeze({
         schema: BIM_POINT_RENDERER_RECEIPT,
         status: "mounted",
@@ -769,6 +852,8 @@ export class BoundedPointCloudRenderer {
           sha256,
           byteLength: decoded.byteLength,
         }),
+        identityRange,
+        lod,
         geometry: Object.freeze({
           bounds: decoded.bounds,
           colorRange: decoded.colorRange,
@@ -793,6 +878,10 @@ export class BoundedPointCloudRenderer {
       throw error;
     } finally {
       staging.fill(0);
+      if (!pointIndicesRetained) {
+        pointIndices?.fill(0);
+        pointIndices = null;
+      }
       this.#mounting = false;
     }
   }
@@ -840,13 +929,20 @@ export class BoundedPointCloudRenderer {
         y,
       });
       this.#picks += 1;
+      const pointIndex = backend.hit
+        ? active.pointIndices?.[backend.pointIndex] ??
+          backend.pointIndex
+        : null;
       const identity = backend.hit
         ? Object.freeze({
             authority: BIM_POINT_IDENTITY_AUTHORITY,
-            nativeId: `point:${backend.pointIndex}`,
-            pointIndex: backend.pointIndex,
-            rangeHandleId: active.range.handleId,
-            rangeSha256: active.range.sha256,
+            nativeId: `point:${pointIndex}`,
+            pointIndex,
+            rangeHandleId: active.identityRange.handleId,
+            rangeSha256: active.identityRange.sha256,
+            renderedPointIndex: backend.pointIndex,
+            renderedRangeHandleId: active.range.handleId,
+            renderedRangeSha256: active.range.sha256,
           })
         : null;
       return Object.freeze({
@@ -877,6 +973,9 @@ export class BoundedPointCloudRenderer {
       await this.#backend.unmount(active.backendHandleId),
       active.gpuBytes,
     );
+    const releasedIdentityMapBytes =
+      active.pointIndices?.byteLength ?? 0;
+    active.pointIndices?.fill(0);
     this.#active = null;
     this.#unmounts += 1;
     return Object.freeze({
@@ -884,6 +983,7 @@ export class BoundedPointCloudRenderer {
       status: "released",
       source: active.source,
       releasedBytes: active.gpuBytes,
+      releasedIdentityMapBytes,
       releasedPoints: active.points,
       backend,
     });

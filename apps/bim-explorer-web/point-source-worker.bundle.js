@@ -2,6 +2,7 @@
 (() => {
   // packages/bim-renderer-3d/src/point-cloud.mjs
   var BIM_POINT_RANGE_MEDIA_TYPE = "application/vnd.bim-explorer.point-range.v1";
+  var BIM_POINT_IDENTITY_AUTHORITY = "derived-point-range-order";
   var MAGIC = "BEXPTS01";
   var HEADER_BYTES = 48;
   var POINT_STRIDE_BYTES = 16;
@@ -11,6 +12,7 @@
   var DEFAULT_LIMITS = Object.freeze({
     maximumCpuStagingBytes: 8 * 1024 * 1024,
     maximumGpuBytes: 8 * 1024 * 1024,
+    maximumIdentityMapBytes: 2 * 1024 * 1024,
     maximumPointPayloadBytes: 8 * 1024 * 1024,
     maximumPoints: 5e5,
     maximumRangeBytes: 8 * 1024 * 1024,
@@ -19,6 +21,7 @@
   var ABSOLUTE_LIMITS = Object.freeze({
     maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
     maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumIdentityMapBytes: 8 * 1024 * 1024,
     maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
     maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
     maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
@@ -1006,10 +1009,10 @@
     const coordinateFields = hasCartesian ? CARTESIAN_COORDINATES : SPHERICAL_COORDINATES;
     const invalidStateName = hasCartesian ? CARTESIAN_INVALID_STATE : SPHERICAL_INVALID_STATE;
     const otherInvalidStateName = hasCartesian ? SPHERICAL_INVALID_STATE : CARTESIAN_INVALID_STATE;
-    const invalidState = fields.find(
+    const invalidState2 = fields.find(
       (field) => field.name === invalidStateName
     );
-    if (names.has(otherInvalidStateName) || invalidState !== void 0 && (invalidState.kind !== "integer" || invalidState.minimum !== 0 || ![1, 2].includes(invalidState.maximum) || invalidState.scale !== 1 || invalidState.offset !== 0)) {
+    if (names.has(otherInvalidStateName) || invalidState2 !== void 0 && (invalidState2.kind !== "integer" || invalidState2.minimum !== 0 || ![1, 2].includes(invalidState2.maximum) || invalidState2.scale !== 1 || invalidState2.offset !== 0)) {
       throw new TypeError(
         `E57 ${invalidStateName} profile is unsupported`
       );
@@ -1018,7 +1021,7 @@
       coordinateFields,
       coordinateRepresentation,
       fields: Object.freeze(fields),
-      invalidStateName: invalidState === void 0 ? null : invalidStateName
+      invalidStateName: invalidState2 === void 0 ? null : invalidStateName
     });
   }
   function decodedPointBytes(fields, recordCount) {
@@ -1617,7 +1620,7 @@
         for (let index = 0; index < count; index += 1) {
           coordinateValues.fill(0);
           colorValues.fill(0);
-          let invalidState = 0;
+          let invalidState2 = 0;
           for (const [fieldIndex, field] of fields.entries()) {
             const value = recordValue(streams[fieldIndex], field);
             const coordinate = coordinateIndex.get(field.name);
@@ -1627,18 +1630,18 @@
             } else if (color !== void 0) {
               colorValues[color] = value;
             } else if (fieldIndex === invalidStateField) {
-              invalidState = value;
+              invalidState2 = value;
             }
           }
-          if (invalidState === 1) {
+          if (invalidState2 === 1) {
             directionPointRecords += 1;
             continue;
           }
-          if (invalidState === 2) {
+          if (invalidState2 === 2) {
             invalidPointRecords += 1;
             continue;
           }
-          if (invalidState !== 0) {
+          if (invalidState2 !== 0) {
             throw new RangeError(
               `E57 ${pointProfile2.invalidStateName} value is unsupported`
             );
@@ -2557,9 +2560,568 @@
     }
   }
 
+  // packages/bim-renderer-3d/src/point-cloud-lod.mjs
+  var BIM_POINT_HIERARCHY_CONTRACT = "bim-explorer-derived-point-hierarchy/0.1";
+  var BIM_POINT_LOD_RANGE_RECEIPT = "bim-explorer-derived-point-lod-range-receipt/0.1";
+  var HEADER_BYTES3 = 48;
+  var POINT_STRIDE_BYTES2 = 16;
+  var SHA2563 = /^[0-9a-f]{64}$/u;
+  var FINGERPRINT = /^sha256:[0-9a-f]{64}$/u;
+  var DEFAULT_LEVEL_POINT_BUDGETS = Object.freeze([
+    32768,
+    262144
+  ]);
+  var DEFAULT_LIMITS2 = Object.freeze({
+    maximumChunkCount: 65536,
+    maximumDepth: 6,
+    maximumHierarchyBytes: 64 * 1024 * 1024,
+    maximumMaterializedBytes: 40 * 1024 * 1024,
+    maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
+    maximumPointsPerChunk: 65536,
+    maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES
+  });
+  function plainRecord(value, label) {
+    if (value === null || typeof value !== "object" || Array.isArray(value) || ArrayBuffer.isView(value)) {
+      throw new TypeError(`${label} must be an object`);
+    }
+    return value;
+  }
+  function positiveInteger3(value, label) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new TypeError(`${label} must be a positive safe integer`);
+    }
+    return value;
+  }
+  function aborted(signal) {
+    signal?.throwIfAborted?.();
+    if (signal?.aborted) {
+      throw signal.reason ?? new DOMException(
+        "operation aborted",
+        "AbortError"
+      );
+    }
+  }
+  function invalidState(message) {
+    return new DOMException(message, "InvalidStateError");
+  }
+  function bytesToHex3(bytes) {
+    return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  }
+  async function digest(bytes) {
+    if (globalThis.crypto?.subtle === void 0) {
+      throw new Error("SHA-256 Web Crypto is unavailable");
+    }
+    const result = await globalThis.crypto.subtle.digest(
+      "SHA-256",
+      bytes
+    );
+    return bytesToHex3(new Uint8Array(result));
+  }
+  function validatedLimits(overrides = {}) {
+    const additions = plainRecord(
+      overrides,
+      "point hierarchy limits"
+    );
+    for (const key of Object.keys(additions)) {
+      if (!(key in DEFAULT_LIMITS2)) {
+        throw new TypeError(
+          `point hierarchy limit ${key} is unsupported`
+        );
+      }
+    }
+    const limits = { ...DEFAULT_LIMITS2, ...additions };
+    for (const [key, value] of Object.entries(limits)) {
+      positiveInteger3(value, `point hierarchy limits.${key}`);
+    }
+    if (limits.maximumDepth > DEFAULT_LIMITS2.maximumDepth || limits.maximumChunkCount > DEFAULT_LIMITS2.maximumChunkCount || limits.maximumHierarchyBytes > DEFAULT_LIMITS2.maximumHierarchyBytes || limits.maximumMaterializedBytes > DEFAULT_LIMITS2.maximumMaterializedBytes || limits.maximumPoints > BIM_POINT_RANGE_MAXIMUM_POINTS || limits.maximumRangeBytes > BIM_POINT_RANGE_MAXIMUM_BYTES || limits.maximumPointsPerChunk > limits.maximumPoints) {
+      throw new RangeError(
+        "point hierarchy limits exceed the absolute profile"
+      );
+    }
+    return Object.freeze(limits);
+  }
+  function validatedLevelBudgets(values, maximumPoints) {
+    if (!Array.isArray(values) || values.length > 8) {
+      throw new TypeError(
+        "point hierarchy levelPointBudgets must be a bounded array"
+      );
+    }
+    const budgets = [...new Set(values.map((value) => {
+      positiveInteger3(value, "point hierarchy level point budget");
+      if (value > maximumPoints) {
+        throw new RangeError(
+          "point hierarchy level point budget exceeds its profile"
+        );
+      }
+      return value;
+    }))].sort((left, right) => left - right);
+    return Object.freeze(budgets);
+  }
+  function validatedInput(value, limits) {
+    const input = plainRecord(value, "point hierarchy input");
+    const source = plainRecord(input.source, "point hierarchy source");
+    const range = plainRecord(input.range, "point hierarchy range");
+    if (!FINGERPRINT.test(source.fingerprint ?? "") || typeof source.revisionId !== "string" || source.revisionId.length === 0 || source.semanticAuthority !== false) {
+      throw new TypeError("point hierarchy source identity is invalid");
+    }
+    if (typeof range.handleId !== "string" || range.handleId.length === 0 || range.mediaType !== BIM_POINT_RANGE_MEDIA_TYPE || !SHA2563.test(range.sha256 ?? "") || !(range.bytes instanceof Uint8Array) || range.bytes.byteLength <= HEADER_BYTES3 || range.bytes.byteLength > limits.maximumRangeBytes) {
+      throw new TypeError("point hierarchy root range is invalid");
+    }
+    return Object.freeze({ range, source });
+  }
+  function hierarchyDepth(pointCount, maximumPointsPerChunk, maximumDepth) {
+    let depth = 0;
+    let cells = 1;
+    while (depth < maximumDepth && Math.ceil(pointCount / cells) > maximumPointsPerChunk) {
+      depth += 1;
+      cells *= 8;
+    }
+    return depth;
+  }
+  function cellCoordinate(value, minimum, maximum, grid) {
+    const span = maximum - minimum;
+    if (!(span > 0)) {
+      return 0;
+    }
+    return Math.min(
+      grid - 1,
+      Math.max(0, Math.floor((value - minimum) / span * grid))
+    );
+  }
+  function pointCell(view, pointIndex, decoded, grid) {
+    const offset = HEADER_BYTES3 + pointIndex * POINT_STRIDE_BYTES2;
+    const x = cellCoordinate(
+      view.getFloat32(offset, true),
+      decoded.relativeBounds.min[0],
+      decoded.relativeBounds.max[0],
+      grid
+    );
+    const y = cellCoordinate(
+      view.getFloat32(offset + 4, true),
+      decoded.relativeBounds.min[1],
+      decoded.relativeBounds.max[1],
+      grid
+    );
+    const z = cellCoordinate(
+      view.getFloat32(offset + 8, true),
+      decoded.relativeBounds.min[2],
+      decoded.relativeBounds.max[2],
+      grid
+    );
+    return x + grid * (y + grid * z);
+  }
+  function octreePath(cell, depth, grid) {
+    if (depth === 0) {
+      return "r";
+    }
+    const plane = grid * grid;
+    const z = Math.floor(cell / plane);
+    const remainder = cell - z * plane;
+    const y = Math.floor(remainder / grid);
+    const x = remainder - y * grid;
+    const path = [];
+    for (let bit = depth - 1; bit >= 0; bit -= 1) {
+      const octant = x >> bit & 1 | (y >> bit & 1) << 1 | (z >> bit & 1) << 2;
+      path.push(octant);
+    }
+    return `r/${path.join("/")}`;
+  }
+  function chunkBounds(view, order, start, count, origin) {
+    const minimum = [Infinity, Infinity, Infinity];
+    const maximum = [-Infinity, -Infinity, -Infinity];
+    for (let offset = 0; offset < count; offset += 1) {
+      const pointIndex = order[start + offset];
+      const pointOffset = HEADER_BYTES3 + pointIndex * POINT_STRIDE_BYTES2;
+      for (let axis = 0; axis < 3; axis += 1) {
+        const coordinate = origin[axis] + view.getFloat32(pointOffset + axis * 4, true);
+        minimum[axis] = Math.min(minimum[axis], coordinate);
+        maximum[axis] = Math.max(maximum[axis], coordinate);
+      }
+    }
+    return Object.freeze({
+      min: Object.freeze(minimum),
+      max: Object.freeze(maximum)
+    });
+  }
+  function buildSpatialIndex(bytes, decoded, limits) {
+    const depth = hierarchyDepth(
+      decoded.pointCount,
+      limits.maximumPointsPerChunk,
+      limits.maximumDepth
+    );
+    const grid = 2 ** depth;
+    const cellCount = grid ** 3;
+    const counts = new Uint32Array(cellCount);
+    const view = new DataView(
+      bytes.buffer,
+      bytes.byteOffset,
+      bytes.byteLength
+    );
+    for (let pointIndex = 0; pointIndex < decoded.pointCount; pointIndex += 1) {
+      counts[pointCell(view, pointIndex, decoded, grid)] += 1;
+    }
+    const offsets = new Uint32Array(cellCount + 1);
+    for (let cell = 0; cell < cellCount; cell += 1) {
+      offsets[cell + 1] = offsets[cell] + counts[cell];
+    }
+    const cursors = offsets.slice(0, cellCount);
+    const order = new Uint32Array(decoded.pointCount);
+    for (let pointIndex = 0; pointIndex < decoded.pointCount; pointIndex += 1) {
+      const cell = pointCell(view, pointIndex, decoded, grid);
+      order[cursors[cell]] = pointIndex;
+      cursors[cell] += 1;
+    }
+    cursors.fill(0);
+    const chunks = [];
+    for (let cell = 0; cell < cellCount; cell += 1) {
+      const cellPoints = counts[cell];
+      if (cellPoints === 0) {
+        continue;
+      }
+      const pages = Math.ceil(
+        cellPoints / limits.maximumPointsPerChunk
+      );
+      for (let page = 0; page < pages; page += 1) {
+        const start = offsets[cell] + page * limits.maximumPointsPerChunk;
+        const count = Math.min(
+          limits.maximumPointsPerChunk,
+          offsets[cell + 1] - start
+        );
+        const path = octreePath(cell, depth, grid);
+        chunks.push(Object.freeze({
+          bounds: chunkBounds(
+            view,
+            order,
+            start,
+            count,
+            decoded.origin
+          ),
+          count,
+          id: pages === 1 ? path : `${path}:p${page}`,
+          start
+        }));
+      }
+    }
+    counts.fill(0);
+    offsets.fill(0);
+    if (chunks.length === 0 || chunks.length > limits.maximumChunkCount) {
+      order.fill(0);
+      throw new RangeError(
+        "point hierarchy chunk count exceeds its bounded profile"
+      );
+    }
+    return Object.freeze({ depth, grid, order, chunks });
+  }
+  function levelsFor(pointCount, chunks, budgets) {
+    const strides = [];
+    for (const budget of [...budgets, pointCount]) {
+      const stride = Math.max(1, Math.ceil(pointCount / budget));
+      if (!strides.includes(stride)) {
+        strides.push(stride);
+      }
+    }
+    strides.sort((left, right) => right - left);
+    return Object.freeze(strides.map((stride, index) => {
+      const points = chunks.reduce(
+        (total, chunk) => total + Math.ceil(chunk.count / stride),
+        0
+      );
+      return Object.freeze({
+        fullDetail: stride === 1,
+        id: `lod:${index}`,
+        index,
+        pointCount: points,
+        rangeBytes: HEADER_BYTES3 + points * POINT_STRIDE_BYTES2,
+        stride
+      });
+    }));
+  }
+  function publicChunk(chunk) {
+    return Object.freeze({
+      bounds: chunk.bounds,
+      id: chunk.id,
+      pointCount: chunk.count
+    });
+  }
+  function stableManifestSeed({
+    chunks,
+    depth,
+    levels,
+    range,
+    source
+  }) {
+    return {
+      contract: BIM_POINT_HIERARCHY_CONTRACT,
+      chunking: "derived-octree-leaf-pages",
+      chunks: chunks.map(publicChunk),
+      depth,
+      identity: {
+        authority: BIM_POINT_IDENTITY_AUTHORITY,
+        rangeHandleId: range.handleId,
+        rangeSha256: range.sha256,
+        scope: "source-revision-and-root-range-digest"
+      },
+      levels,
+      source: {
+        fingerprint: source.fingerprint,
+        revisionId: source.revisionId,
+        semanticAuthority: false
+      }
+    };
+  }
+  function selectedChunks(chunks, chunkIds) {
+    if (chunkIds === void 0) {
+      return chunks;
+    }
+    if (!Array.isArray(chunkIds) || chunkIds.length === 0 || chunkIds.length > chunks.length) {
+      throw new TypeError("point LOD chunkIds are invalid");
+    }
+    const byId = new Map(chunks.map((chunk) => [chunk.id, chunk]));
+    const unique = /* @__PURE__ */ new Set();
+    const selected = chunkIds.map((id) => {
+      if (typeof id !== "string" || unique.has(id) || !byId.has(id)) {
+        throw new TypeError("point LOD chunkIds are invalid");
+      }
+      unique.add(id);
+      return byId.get(id);
+    });
+    return Object.freeze(selected);
+  }
+  var DerivedPointCloudHierarchy = class {
+    #busy = false;
+    #bytes;
+    #chunks;
+    #disposed = false;
+    #levels;
+    #limits;
+    #materializedBytes = 0;
+    #order;
+    #range;
+    #reads = 0;
+    constructor({
+      bytes,
+      chunks,
+      levels,
+      limits,
+      manifest,
+      order,
+      range
+    }) {
+      this.#bytes = bytes;
+      this.#chunks = chunks;
+      this.#levels = levels;
+      this.#limits = limits;
+      this.#order = order;
+      this.#range = range;
+      this.manifest = manifest;
+    }
+    get state() {
+      const retainedBytes = this.#disposed ? 0 : this.#bytes.byteLength + this.#order.byteLength;
+      return Object.freeze({
+        disposed: this.#disposed,
+        hierarchyId: this.manifest.hierarchyId,
+        indexBytes: this.#disposed ? 0 : this.#order.byteLength,
+        materializedBytes: this.#materializedBytes,
+        reads: this.#reads,
+        retainedBytes,
+        rootRangeBytes: this.#disposed ? 0 : this.#bytes.byteLength
+      });
+    }
+    async readLevel(levelId, { chunkIds, signal } = {}) {
+      if (this.#disposed) {
+        throw invalidState("point hierarchy is disposed");
+      }
+      if (this.#busy) {
+        throw invalidState("point hierarchy read is in progress");
+      }
+      const level = this.#levels.find((item) => item.id === levelId);
+      if (level === void 0) {
+        throw new RangeError("point hierarchy level is unavailable");
+      }
+      const chunks = selectedChunks(this.#chunks, chunkIds);
+      this.#busy = true;
+      let bytes = null;
+      let pointIndices = null;
+      try {
+        aborted(signal);
+        const allChunks = chunks.length === this.#chunks.length && chunks.every((chunk, index) => chunk === this.#chunks[index]);
+        const rootPassThrough = level.fullDetail && allChunks;
+        const pointCount = rootPassThrough ? this.manifest.sourcePointCount : chunks.reduce(
+          (total, chunk) => total + Math.ceil(chunk.count / level.stride),
+          0
+        );
+        const rangeBytes = HEADER_BYTES3 + pointCount * POINT_STRIDE_BYTES2;
+        const identityMapBytes = rootPassThrough ? 0 : pointCount * 4;
+        if (rangeBytes + identityMapBytes > this.#limits.maximumMaterializedBytes) {
+          throw new RangeError(
+            "point LOD materialization exceeds its byte limit"
+          );
+        }
+        if (rootPassThrough) {
+          bytes = this.#bytes.slice();
+        } else {
+          bytes = new Uint8Array(rangeBytes);
+          bytes.set(this.#bytes.subarray(0, HEADER_BYTES3));
+          new DataView(bytes.buffer).setUint32(12, pointCount, true);
+          pointIndices = new Uint32Array(pointCount);
+          let outputIndex = 0;
+          for (const chunk of chunks) {
+            for (let localIndex = 0; localIndex < chunk.count; localIndex += level.stride) {
+              const pointIndex = this.#order[chunk.start + localIndex];
+              const sourceOffset = HEADER_BYTES3 + pointIndex * POINT_STRIDE_BYTES2;
+              bytes.set(
+                this.#bytes.subarray(
+                  sourceOffset,
+                  sourceOffset + POINT_STRIDE_BYTES2
+                ),
+                HEADER_BYTES3 + outputIndex * POINT_STRIDE_BYTES2
+              );
+              pointIndices[outputIndex] = pointIndex;
+              outputIndex += 1;
+            }
+          }
+          if (outputIndex !== pointCount) {
+            throw new Error("point LOD materialization count drifted");
+          }
+        }
+        aborted(signal);
+        const sha2563 = rootPassThrough ? this.#range.sha256 : await digest(bytes);
+        const selectionSha256 = await digest(new TextEncoder().encode(
+          chunks.map((chunk) => chunk.id).join("\n")
+        ));
+        this.#reads += 1;
+        this.#materializedBytes += rangeBytes + identityMapBytes;
+        const lod = Object.freeze({
+          chunkCount: chunks.length,
+          fullDetail: level.fullDetail,
+          hierarchyId: this.manifest.hierarchyId,
+          levelId: level.id,
+          levelIndex: level.index,
+          pointCount,
+          selectionSha256,
+          stride: level.stride
+        });
+        return Object.freeze({
+          range: {
+            byteLength: bytes.byteLength,
+            bytes,
+            handleId: rootPassThrough ? this.#range.handleId : `range:point-lod:${this.manifest.digest.slice(0, 16)}:${level.index}:${selectionSha256.slice(0, 16)}`,
+            identityRangeHandleId: this.#range.handleId,
+            identityRangeSha256: this.#range.sha256,
+            lod,
+            mediaType: BIM_POINT_RANGE_MEDIA_TYPE,
+            pointIndices,
+            sha256: sha2563,
+            sourcePointCount: this.manifest.sourcePointCount
+          },
+          receipt: Object.freeze({
+            schema: BIM_POINT_LOD_RANGE_RECEIPT,
+            identityMapBytes,
+            level: lod,
+            rangeBytes,
+            rootRangeSha256: this.#range.sha256
+          })
+        });
+      } catch (error) {
+        bytes?.fill(0);
+        pointIndices?.fill(0);
+        throw error;
+      } finally {
+        this.#busy = false;
+      }
+    }
+    async dispose() {
+      if (this.#disposed) {
+        return false;
+      }
+      if (this.#busy) {
+        throw invalidState("point hierarchy read is in progress");
+      }
+      this.#bytes.fill(0);
+      this.#order.fill(0);
+      this.#disposed = true;
+      return true;
+    }
+  };
+  async function createDerivedPointCloudHierarchy(inputValue, {
+    levelPointBudgets = DEFAULT_LEVEL_POINT_BUDGETS,
+    limits: limitOverrides = {},
+    signal
+  } = {}) {
+    const limits = validatedLimits(limitOverrides);
+    const input = validatedInput(inputValue, limits);
+    const budgets = validatedLevelBudgets(
+      levelPointBudgets,
+      limits.maximumPoints
+    );
+    const bytes = input.range.bytes.slice();
+    let order = null;
+    try {
+      aborted(signal);
+      const rootDigest = await digest(bytes);
+      if (rootDigest !== input.range.sha256) {
+        throw new Error(
+          "point hierarchy root range digest does not match"
+        );
+      }
+      const decoded = decodeBimPointRange(bytes, {
+        maximumPayloadBytes: limits.maximumRangeBytes - HEADER_BYTES3,
+        maximumPoints: limits.maximumPoints
+      });
+      const index = buildSpatialIndex(bytes, decoded, limits);
+      order = index.order;
+      const retainedBytes = bytes.byteLength + order.byteLength;
+      if (retainedBytes > limits.maximumHierarchyBytes) {
+        throw new RangeError(
+          "point hierarchy retained bytes exceed their limit"
+        );
+      }
+      const levels = levelsFor(
+        decoded.pointCount,
+        index.chunks,
+        budgets
+      );
+      const seed = stableManifestSeed({
+        chunks: index.chunks,
+        depth: index.depth,
+        levels,
+        range: input.range,
+        source: input.source
+      });
+      const manifestDigest = await digest(
+        new TextEncoder().encode(JSON.stringify(seed))
+      );
+      const manifest = Object.freeze({
+        ...seed,
+        digest: manifestDigest,
+        hierarchyId: `point-hierarchy:${manifestDigest.slice(0, 24)}`,
+        initialLevelId: levels[0].id,
+        sourcePointCount: decoded.pointCount
+      });
+      return new DerivedPointCloudHierarchy({
+        bytes,
+        chunks: index.chunks,
+        levels,
+        limits,
+        manifest,
+        order,
+        range: Object.freeze({
+          byteLength: bytes.byteLength,
+          handleId: input.range.handleId,
+          mediaType: input.range.mediaType,
+          sha256: input.range.sha256
+        })
+      });
+    } catch (error) {
+      bytes.fill(0);
+      order?.fill(0);
+      throw error;
+    }
+  }
+
   // apps/bim-explorer-web/point-source-worker.mjs
-  var REQUEST_SCHEMA = "bim-explorer-point-source-worker-request/0.1";
-  var RESPONSE_SCHEMA = "bim-explorer-point-source-worker-response/0.1";
+  var REQUEST_SCHEMA = "bim-explorer-point-source-worker-request/0.2";
+  var RESPONSE_SCHEMA = "bim-explorer-point-source-worker-response/0.2";
   var FORMATS = /* @__PURE__ */ new Set(["e57", "las", "laz"]);
   var MAXIMUM_SOURCE_BYTES = Object.freeze({
     e57: E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
@@ -2567,7 +3129,9 @@
     laz: LAS_LAZ_MAXIMUM_SOURCE_BYTES
   });
   var accepted = false;
+  var hierarchy = null;
   var loadedLazPerfScriptUrl = null;
+  var operation = Promise.resolve();
   function stableErrorCode(error) {
     const message = typeof error?.message === "string" ? error.message : "";
     if (error?.name === "EvalError" && /compile or instantiate WebAssembly|WebAssembly compilation/iu.test(message)) {
@@ -2616,8 +3180,11 @@
     }
     return url.href;
   }
-  function validRequest(request) {
+  function validOpenRequest(request) {
     return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && FORMATS.has(request.options?.format) && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES[request.options.format];
+  }
+  function validLodRequest(request) {
+    return request?.schema === REQUEST_SCHEMA && typeof request.requestId === "string" && request.requestId.length > 0 && (request.type === "read-lod" && typeof request.options?.levelId === "string" && request.options.levelId.length > 0 && (request.options.chunkIds === void 0 || Array.isArray(request.options.chunkIds)) || request.type === "dispose-lod");
   }
   async function lazPerfModuleFactory(scriptUrl, wasmUrl) {
     if (loadedLazPerfScriptUrl === null) {
@@ -2639,7 +3206,7 @@
     });
   }
   async function open(request) {
-    if (accepted || !validRequest(request)) {
+    if (accepted || !validOpenRequest(request)) {
       throw new TypeError("point source Worker request is invalid");
     }
     accepted = true;
@@ -2655,6 +3222,8 @@
     const bytes = new Uint8Array(request.bytes);
     const started = performance.now();
     let artifact = null;
+    let completed = false;
+    let initial = null;
     try {
       progress(request.requestId, "source-admitted", {
         byteLength: bytes.byteLength,
@@ -2667,33 +3236,136 @@
         format,
         moduleFactory: format === "laz" ? () => lazPerfModuleFactory(scriptUrl, wasmUrl) : void 0
       });
-      progress(request.requestId, "point-range-created", {
-        pointRangeBytes: artifact.range.byteLength,
-        points: artifact.model.points
-      });
+      const hierarchyRequested = request.options.hierarchy === true;
+      if (hierarchyRequested) {
+        progress(request.requestId, "point-hierarchy-creating", {
+          points: artifact.model.points
+        });
+        hierarchy = await createDerivedPointCloudHierarchy({
+          range: artifact.range,
+          source: artifact.source
+        });
+        initial = await hierarchy.readLevel(
+          hierarchy.manifest.initialLevelId
+        );
+        progress(request.requestId, "point-lod-ready", {
+          chunks: hierarchy.manifest.chunks.length,
+          levels: hierarchy.manifest.levels.length,
+          points: initial.receipt.level.pointCount
+        });
+      } else {
+        progress(request.requestId, "point-range-created", {
+          pointRangeBytes: artifact.range.byteLength,
+          points: artifact.model.points
+        });
+      }
       bytes.fill(0);
-      const rangeBuffer = artifact.range.bytes.buffer;
+      const rootRange = artifact.range;
+      const range = initial?.range ?? rootRange;
+      const hierarchyState = hierarchy?.state ?? null;
+      const hierarchyContract = hierarchy === null ? null : BIM_POINT_HIERARCHY_CONTRACT;
+      const retainHierarchy = hierarchy !== null && hierarchy.manifest.levels.length > 1;
+      const transportArtifact = hierarchy === null ? artifact : {
+        ...artifact,
+        hierarchy: hierarchy.manifest,
+        range,
+        rootRange: {
+          byteLength: rootRange.byteLength,
+          handleId: rootRange.handleId,
+          mediaType: rootRange.mediaType,
+          sha256: rootRange.sha256
+        },
+        resources: {
+          ...artifact.resources,
+          hierarchyIndexBytes: hierarchyState.indexBytes,
+          hierarchyRetainedBytes: hierarchyState.retainedBytes,
+          initialPointRangeBytes: range.byteLength
+        }
+      };
+      const transfer = [range.bytes.buffer];
+      if (range.pointIndices instanceof Uint32Array) {
+        transfer.push(range.pointIndices.buffer);
+      }
+      if (!retainHierarchy && hierarchy !== null) {
+        await hierarchy.dispose();
+        hierarchy = null;
+      }
       post(request.requestId, "result", {
-        artifact,
+        artifact: transportArtifact,
         cleanup: {
+          hierarchyContract,
+          pointIndexMapTransferred: range.pointIndices instanceof Uint32Array,
           pointRangeTransferred: true,
           sourceBufferCleared: bytes.every((value) => value === 0),
+          workerRetainedForLod: retainHierarchy,
           workerRetainedUntilClientReceipt: true
         },
         performance: {
           totalMs: performance.now() - started
         }
-      }, [rangeBuffer]);
+      }, transfer);
+      completed = true;
     } finally {
       bytes.fill(0);
       if (artifact !== null && artifact.range.bytes.byteLength > 0) {
         artifact.range.bytes.fill(0);
       }
+      if (!completed && hierarchy !== null) {
+        await hierarchy.dispose();
+        hierarchy = null;
+      }
     }
+  }
+  async function readLod(request) {
+    if (!accepted || hierarchy === null || !validLodRequest(request)) {
+      throw new TypeError("point LOD Worker request is invalid");
+    }
+    const result = await hierarchy.readLevel(
+      request.options.levelId,
+      { chunkIds: request.options.chunkIds }
+    );
+    const transfer = [result.range.bytes.buffer];
+    if (result.range.pointIndices instanceof Uint32Array) {
+      transfer.push(result.range.pointIndices.buffer);
+    }
+    post(request.requestId, "result", {
+      hierarchyId: hierarchy.manifest.hierarchyId,
+      ...result
+    }, transfer);
+  }
+  async function disposeLod(request) {
+    if (!accepted || hierarchy === null || !validLodRequest(request)) {
+      throw new TypeError("point LOD dispose request is invalid");
+    }
+    const hierarchyId = hierarchy.manifest.hierarchyId;
+    const disposed = await hierarchy.dispose();
+    const state = hierarchy.state;
+    hierarchy = null;
+    post(request.requestId, "result", {
+      cleanup: {
+        disposed,
+        hierarchyId,
+        indexBytes: state.indexBytes,
+        retainedBytes: state.retainedBytes,
+        rootRangeBytes: state.rootRangeBytes
+      }
+    });
+  }
+  async function route(request) {
+    if (request?.type === "open") {
+      return await open(request);
+    }
+    if (request?.type === "read-lod") {
+      return await readLod(request);
+    }
+    if (request?.type === "dispose-lod") {
+      return await disposeLod(request);
+    }
+    throw new TypeError("point source Worker request is invalid");
   }
   self.addEventListener("message", (event) => {
     const request = event.data;
-    Promise.resolve().then(() => open(request)).catch((error) => {
+    operation = operation.then(() => route(request)).catch((error) => {
       post(
         typeof request?.requestId === "string" ? request.requestId : "invalid",
         "error",

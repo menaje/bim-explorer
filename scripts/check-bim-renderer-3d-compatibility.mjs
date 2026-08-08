@@ -12,6 +12,9 @@ import {
 import {
   validatePointCloudVscodePickingQualification,
 } from "./qualify-point-cloud-vscode-picking.mjs";
+import {
+  validatePointCloudLodProductQualification,
+} from "./qualify-point-cloud-lod-products.mjs";
 
 const BASELINE_AS_OF = "2026-08-04";
 
@@ -41,6 +44,7 @@ const TRUE_GATES = [
   "boundedPointPrimitiveWebGl2",
   "pointResourceAccounting",
   "pointIdentityPicking",
+  "pointHierarchyChunkLod",
 ];
 const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
@@ -2577,6 +2581,10 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.vscodePointPicking,
     "VS Code point picking BIM renderer evidence",
   );
+  const pointLodEvidence = plainRecord(
+    evidenceBundle.pointHierarchyChunkLod,
+    "point hierarchy and LOD BIM renderer evidence",
+  );
   validateLasLazPointRendererQualification(
     browserPointPrimitiveEvidence,
   );
@@ -2586,6 +2594,7 @@ export function validateBimRenderer3dCompatibility(
   validatePointCloudVscodePickingQualification(
     vscodePointPickingEvidence,
   );
+  validatePointCloudLodProductQualification(pointLodEvidence);
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
@@ -2620,6 +2629,10 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-bounded-point-renderer-pick-receipt/0.1" ||
     manifest.contract?.pointReleaseReceipt !==
       "bim-explorer-bounded-point-renderer-release-receipt/0.1" ||
+    manifest.contract?.pointHierarchy !==
+      "bim-explorer-derived-point-hierarchy/0.1" ||
+    manifest.contract?.pointLodRangeReceipt !==
+      "bim-explorer-derived-point-lod-range-receipt/0.1" ||
     manifest.contract?.pointMediaType !==
       "application/vnd.bim-explorer.point-range.v1" ||
     manifest.backend?.id !== "headless" ||
@@ -2706,7 +2719,10 @@ export function validateBimRenderer3dCompatibility(
     manifest.evidence?.vscodePointPicking !==
       "compatibility/evidence/" +
         "point-cloud-vscode-picking-2026-08-09.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 17 ||
+    manifest.evidence?.pointHierarchyChunkLod !==
+      "compatibility/evidence/" +
+        "point-cloud-lod-products-2026-08-09.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 18 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2723,6 +2739,8 @@ export function validateBimRenderer3dCompatibility(
     manifest.policy?.claimProductionRenderer !== false ||
     manifest.policy?.claimPointFormatAdmission !== false ||
     manifest.policy?.claimPointPicking !== true ||
+    manifest.policy?.claimDerivedPointLod !== true ||
+    manifest.policy?.claimSourceNativePointLod !== false ||
     manifest.policy?.pointIdentityAuthority !==
       "derived-point-range-order" ||
     manifest.policy?.pointIdentityScope !==
@@ -2783,6 +2801,37 @@ export function validateBimRenderer3dCompatibility(
       expectedPointPicking.selectedCoordinateReadbackBytes
   ) {
     throw new Error("BIM point picking evidence metrics are invalid");
+  }
+  const expectedPointLod = plainRecord(
+    expectedPointRenderer.lod,
+    "manifest expected point hierarchy and LOD",
+  );
+  const browserPointLod =
+    pointLodEvidence.surfaces.browser.observation;
+  if (
+    expectedPointLod.hierarchyContract !==
+      pointLodEvidence.runtime.hierarchyContract ||
+    expectedPointLod.rangeReceipt !==
+      pointLodEvidence.runtime.lodRangeReceipt ||
+    expectedPointLod.sourcePoints !==
+      browserPointLod.model.points ||
+    expectedPointLod.chunks !== browserPointLod.model.chunks ||
+    expectedPointLod.depth !==
+      browserPointLod.pointCloud.hierarchy.depth ||
+    !equalJson(
+      expectedPointLod.levelPoints,
+      browserPointLod.pointCloud.hierarchy.levels.map(
+        (level) => level.pointCount,
+      ),
+    ) ||
+    expectedPointLod.initialUploadedBytes !==
+      browserPointLod.initialPointLod.renderer.uploadedBytes ||
+    expectedPointLod.fullUploadedBytes !==
+      browserPointLod.renderer.uploadedBytes
+  ) {
+    throw new Error(
+      "BIM point hierarchy and LOD evidence metrics are invalid",
+    );
   }
   const fixture = manifest.fixture;
   if (
@@ -3195,6 +3244,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.vscodePointPicking,
+      ),
+      "utf8",
+    )),
+    pointHierarchyChunkLod: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.pointHierarchyChunkLod,
       ),
       "utf8",
     )),

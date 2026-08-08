@@ -25,6 +25,7 @@ const [
   lasLazVscodeProductEvidence,
   pointCloudBrowserPickingEvidence,
   pointCloudVscodePickingEvidence,
+  pointCloudLodProductEvidence,
 ] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
@@ -115,6 +116,11 @@ const [
       "point-cloud-vscode-picking-2026-08-09.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "point-cloud-lod-products-2026-08-09.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
@@ -138,10 +144,11 @@ test("reference sample probes remain separate from format admission", () => {
       lasLazVscodeProductEvidence,
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
+      pointCloudLodProductEvidence,
     ),
     {
       status: "pre-admission",
-      passedGates: 35,
+      passedGates: 36,
       heldGates: 4,
       sampleFormats: 3,
     },
@@ -171,6 +178,7 @@ test("an E57 product open cannot claim format admission", () => {
       lasLazVscodeProductEvidence,
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
+      pointCloudLodProductEvidence,
     ),
     /must be held/u,
   );
@@ -199,6 +207,7 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       lasLazVscodeProductEvidence,
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
+      pointCloudLodProductEvidence,
     ),
     /must be held/u,
   );

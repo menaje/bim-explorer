@@ -72,7 +72,7 @@ async function qualifyReference({
   const label = productScale
     ? "product-scale reference"
     : "reference";
-  const ready = await waitFor(
+  let ready = await waitFor(
     () => {
       const report = api.qualificationReports().at(-1);
       if (report?.status === "failed") {
@@ -238,7 +238,7 @@ async function qualifyPointSource({
     vscode.Uri.file(sourcePath),
     "bimExplorer.ifcEditor",
   );
-  const ready = await waitFor(
+  let ready = await waitFor(
     () => {
       const report = api.qualificationReports().at(-1);
       if (report?.status === "failed") {
@@ -251,6 +251,53 @@ async function qualifyPointSource({
     },
     `${format.toUpperCase()} Custom Editor ready report`,
   );
+  const initialPointLod = ready.pointCloud?.lod?.fullDetail === false
+    ? {
+        lifecycle: ready.productLifecycle,
+        lod: ready.pointCloud.lod,
+        renderer: ready.renderer,
+        renderedRangeSha256:
+          ready.pointCloud.renderedRangeSha256,
+      }
+    : null;
+  if (initialPointLod !== null) {
+    assert.equal(
+      await vscode.commands.executeCommand(
+        "bimExplorer.pickVisiblePoint",
+      ),
+      true,
+    );
+    const initialSelected = await waitFor(() => {
+      const report = api.qualificationReports().at(-1);
+      return report?.status === "ready" &&
+        report.pointSelection?.status === "hit"
+        ? report
+        : null;
+    }, `${format.toUpperCase()} initial LOD point selection`);
+    initialPointLod.pointSelection = initialSelected.pointSelection;
+  }
+  while (ready.pointCloud?.lod?.fullDetail === false) {
+    const nextLevel = ready.pointCloud.lod.levelIndex + 1;
+    assert.equal(
+      await vscode.commands.executeCommand(
+        "bimExplorer.refinePointLod",
+      ),
+      true,
+    );
+    ready = await waitFor(() => {
+      const report = api.qualificationReports().at(-1);
+      if (report?.status === "failed") {
+        throw new Error(
+          `${format.toUpperCase()} point LOD failed: ` +
+            `${JSON.stringify(report)}`,
+        );
+      }
+      return report?.status === "ready" &&
+        report.pointCloud?.lod?.levelIndex === nextLevel
+        ? report
+        : null;
+    }, `${format.toUpperCase()} point LOD ${nextLevel}`, 120_000);
+  }
   const expectedDecoder = format === "laz"
     ? {
         backend: "browser-wasm-worker-product-source",
@@ -296,6 +343,8 @@ async function qualifyPointSource({
     semanticAuthority: false,
   });
   assert.deepEqual(ready.model, {
+    chunks: ready.pointCloud.hierarchy.chunkCount,
+    levels: ready.pointCloud.hierarchy.levels.length,
     points: manifest.expected.pointRecords,
     ranges: 1,
   });
@@ -373,11 +422,16 @@ async function qualifyPointSource({
   assert.equal(ready.pointCloud.pointPrimitive, "POINTS");
   assert.equal(ready.pointCloud.pointSize, 3);
   assert.ok(ready.pointCloud.maximumProjectionError < 1e-6);
-  assert.deepEqual(ready.productLifecycle, {
-    cpuPointRangeCleared: true,
-    sourceBufferCleared: true,
-    workerTerminatedAfterTransfer: true,
-  });
+  assert.equal(ready.productLifecycle.cpuPointRangeCleared, true);
+  assert.equal(ready.productLifecycle.sourceBufferCleared, true);
+  assert.equal(
+    ready.productLifecycle.workerTerminatedAfterTransfer,
+    true,
+  );
+  assert.equal(
+    ready.productLifecycle.hierarchyCleanup?.disposed ?? true,
+    true,
+  );
   assert.equal(
     await vscode.commands.executeCommand(
       "bimExplorer.pickVisiblePoint",
@@ -469,6 +523,8 @@ async function qualifyPointSource({
       pointCloud: ready.pointCloud,
       pointSelection: selected.pointSelection,
       productLifecycle: ready.productLifecycle,
+      initialPointLod,
+      lodTransitions: ready.lodTransitions,
       lifecycle: {
         opened: ready.status,
         closed: disposed.status,
@@ -558,6 +614,7 @@ async function run() {
       "bimExplorer.retry",
       "bimExplorer.showDiagnostics",
       "bimExplorer.pickVisiblePoint",
+      "bimExplorer.refinePointLod",
     ]) {
       assert.ok(commands.includes(command), command);
     }

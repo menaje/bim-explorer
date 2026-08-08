@@ -29,6 +29,7 @@ const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const MULTIPLE_SCAN_E57_RENDERER_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 32 * 1024 * 1024,
   maximumGpuBytes: 32 * 1024 * 1024,
+  maximumIdentityMapBytes: 8 * 1024 * 1024,
   maximumPointPayloadBytes: 32 * 1024 * 1024,
   maximumPoints: 2_000_000,
   maximumRangeBytes: 32 * 1024 * 1024,
@@ -241,11 +242,22 @@ function controls(state) {
   elements.cancel.disabled = !opening;
   elements.close.disabled = !ready;
   elements.pick.disabled = !ready;
-  elements.showAll.disabled = !ready || pointCloud;
+  elements.showAll.disabled = !ready || (
+    pointCloud && nextPointLodLevel() === null
+  );
   elements.searchInput.disabled = !ready || pointCloud;
   elements.retry.disabled =
     state !== "failed" ||
     (lastFailedBytes === null && vscodeApi === null);
+}
+
+function nextPointLodLevel() {
+  if (active?.kind !== "point-cloud") {
+    return null;
+  }
+  const levels = active.opened.artifact.hierarchy?.levels ?? [];
+  const current = active.mount.lod?.levelIndex ?? levels.length - 1;
+  return levels[current + 1] ?? null;
 }
 
 function inspectorSection(title, items, renderItem) {
@@ -457,14 +469,41 @@ function renderPointCloud() {
   const artifact = active.opened.artifact;
   const mount = active.mount;
   const selection = active.selection;
+  const hierarchy = artifact.hierarchy ?? null;
+  const chunks = hierarchy?.chunks ?? [];
+  const maximumChunkRows = 64;
   clear(elements.tree);
   clear(elements.results);
   clear(elements.inspector);
-  elements.treeTitle.textContent = "Point source";
-  elements.treeCount.textContent = "1";
-  elements.treeOmission.textContent =
-    "Point identity is scoped to this exact source revision and " +
-    "derived range; hierarchy is not available.";
+  elements.treeTitle.textContent = hierarchy === null
+    ? "Point source"
+    : "Point hierarchy";
+  elements.treeCount.textContent = String(
+    hierarchy === null ? 1 : chunks.length,
+  );
+  if (hierarchy === null) {
+    elements.treeOmission.textContent =
+      "Point identity is scoped to this exact source revision and " +
+      "derived range.";
+  } else {
+    for (const chunk of chunks.slice(0, maximumChunkRows)) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.disabled = true;
+      row.setAttribute("role", "treeitem");
+      row.setAttribute("aria-level", "1");
+      row.append(
+        text("span", chunk.id, "meta"),
+        text("span", `${chunk.pointCount} source-order points`, "name"),
+      );
+      elements.tree.append(row);
+    }
+    const omitted = Math.max(0, chunks.length - maximumChunkRows);
+    elements.treeOmission.textContent =
+      `${hierarchy.depth}-deep derived octree · ` +
+      `${hierarchy.levels.length} LOD levels · ` +
+      `${omitted} chunk rows omitted by the ${maximumChunkRows}-row DOM bound.`;
+  }
   elements.searchLabel.textContent =
     "Point metadata search is not available";
   elements.searchOmission.textContent =
@@ -477,12 +516,18 @@ function renderPointCloud() {
   elements.subtitle.textContent =
     "Open bounded E57, LAS, or LAZ point observations locally.";
   elements.pick.textContent = "Pick visible point";
+  elements.showAll.textContent = nextPointLodLevel() === null
+    ? "Full point detail"
+    : "Refine point detail";
   const summary = document.createElement("dl");
   for (const [label, value] of [
     ["Format", artifact.source.format.toUpperCase()],
     ["Version", artifact.source.formatVersion],
     ["Point format", artifact.source.pointFormat],
     ["Points", artifact.model.points],
+    ["Displayed points", mount.metrics.points],
+    ["LOD", mount.lod?.levelId ?? "full"],
+    ["Spatial chunks", chunks.length || 1],
     ["Point primitive", mount.backend.pointPrimitive],
     ["CRS authority", "unqualified"],
     ["Semantic authority", "none"],
@@ -513,8 +558,12 @@ function renderPointCloud() {
         ]),
     text(
       "p",
-      "Read-only display and point selection only; LOD and surveyed " +
-        "coordinate claims are outside this profile.",
+      hierarchy === null
+        ? "Read-only display and point selection only; surveyed " +
+          "coordinate claims are outside this profile."
+        : "Read-only derived octree/chunk LOD; source-native point " +
+          "semantics and surveyed coordinate claims remain outside " +
+          "this profile.",
       "limitation",
     ),
   );
@@ -531,6 +580,7 @@ function render() {
   const state = active.explorer.state;
   elements.pick.textContent = "Pick center";
   const reference = active.format !== "ifc";
+  elements.showAll.textContent = "Show all";
   elements.treeTitle.textContent =
     reference ? "Reference nodes" : "Model tree";
   elements.searchLabel.textContent =
@@ -676,11 +726,13 @@ async function disposeActive(reason) {
       backend: current.backend.state,
       client: current.client.state,
       clientDisposed,
+      hierarchyCleanup:
+        current.client.state.hierarchyCleanup,
       pointRangeCleared: current.pointRangeCleared,
       reason,
       rendererDisposed,
       workerTerminatedAfterTransfer:
-        current.opened.cleanup.workerTerminatedAfterTransfer,
+        current.client.state.workerActive === false,
     };
   }
   let explorerDisposed = false;
@@ -983,6 +1035,10 @@ async function pointClient({
         "Initializing the isolated LAZ decoder…",
       "point-range-created":
         "Point range ready; mounting WebGL2…",
+      "point-hierarchy-creating":
+        "Building bounded point hierarchy and LOD chunks…",
+      "point-lod-ready":
+        "Initial point LOD ready; mounting WebGL2…",
     };
     latestSourceCheckpoint = event.phase;
     setStatus(
@@ -1043,9 +1099,13 @@ async function openPointBytes(bytesValue, {
   let renderer = null;
   let phase = "point-source-open";
   try {
-    opened = await sourceClient.open(bytesValue, { format });
+    opened = await sourceClient.open(bytesValue, {
+      format,
+      hierarchy: true,
+    });
     if (sequence !== openingSequence) {
       opened.artifact.range.bytes.fill(0);
+      opened.artifact.range.pointIndices?.fill(0);
       await sourceClient.dispose();
       return null;
     }
@@ -1070,6 +1130,7 @@ async function openPointBytes(bytesValue, {
     });
     if (sequence !== openingSequence) {
       opened.artifact.range.bytes.fill(0);
+      opened.artifact.range.pointIndices?.fill(0);
       await renderer.dispose();
       await sourceClient.dispose();
       if (openingClient === sourceClient) {
@@ -1078,8 +1139,13 @@ async function openPointBytes(bytesValue, {
       return null;
     }
     opened.artifact.range.bytes.fill(0);
+    opened.artifact.range.pointIndices?.fill(0);
     pointRangeCleared = opened.artifact.range.bytes.every(
       (value) => value === 0,
+    ) && (
+      opened.artifact.range.pointIndices === null ||
+      opened.artifact.range.pointIndices === undefined ||
+      opened.artifact.range.pointIndices.every((value) => value === 0)
     );
     active = {
       backend,
@@ -1090,6 +1156,8 @@ async function openPointBytes(bytesValue, {
       opened,
       origin,
       pointRangeCleared,
+      lodTransitions: [],
+      hierarchyCleanup: null,
       report: null,
       renderer,
       selection: null,
@@ -1110,12 +1178,15 @@ async function openPointBytes(bytesValue, {
     elements.diagBytes.textContent =
       `${artifact.resources.inputBytes} source · ` +
       `${artifact.resources.pointRangeBytes} point range · ` +
+      `${mount.metrics.rangeBytes} displayed range · ` +
       `${artifact.model.points} points`;
     elements.diagGpu.textContent =
       `${mount.backend.uploadedBytes} bytes · ` +
       `${mount.backend.nonBackgroundPixels} pixels`;
     elements.diagLife.textContent =
-      "source Worker released + GPU active";
+      (sourceClient.state.hierarchyActive
+        ? "LOD Worker retained + GPU active"
+        : "source Worker released + GPU active");
     elements.sourceIdentity.textContent =
       artifact.source.fingerprint.slice(0, 23) +
       `… · ${format.toUpperCase()} ` +
@@ -1141,6 +1212,8 @@ async function openPointBytes(bytesValue, {
       model: {
         points: artifact.model.points,
         ranges: artifact.model.ranges,
+        chunks: artifact.hierarchy?.chunks.length ?? 1,
+        levels: artifact.hierarchy?.levels.length ?? 1,
       },
       performance: {
         artifactMs:
@@ -1155,6 +1228,13 @@ async function openPointBytes(bytesValue, {
           artifact.resources.pointRangeBytes,
         pointRangePayloadBytes:
           artifact.resources.pointRangePayloadBytes,
+        hierarchyIndexBytes:
+          artifact.resources.hierarchyIndexBytes ?? 0,
+        hierarchyRetainedBytes:
+          artifact.resources.hierarchyRetainedBytes ?? 0,
+        initialPointRangeBytes:
+          artifact.resources.initialPointRangeBytes ??
+          artifact.resources.pointRangeBytes,
         sourceBytes: artifact.resources.inputBytes,
         wasmHeapCapacityBytes:
           artifact.resources.wasmHeapCapacityBytes,
@@ -1191,7 +1271,11 @@ async function openPointBytes(bytesValue, {
         origin: mount.geometry.origin,
         pointPrimitive: mount.backend.pointPrimitive,
         pointSize: mount.backend.pointSize,
-        rangeSha256: artifact.range.sha256,
+        rangeSha256:
+          artifact.rootRange?.sha256 ?? artifact.range.sha256,
+        renderedRangeSha256: artifact.range.sha256,
+        hierarchy: artifact.hierarchy ?? null,
+        lod: mount.lod,
       },
       lifecycle: {
         cpuPointRangeCleared: pointRangeCleared,
@@ -1200,12 +1284,14 @@ async function openPointBytes(bytesValue, {
         workerTerminatedAfterTransfer:
           opened.cleanup.workerTerminatedAfterTransfer,
       },
+      lodTransitions: [],
       pointSelection: null,
       priorCleanup,
     });
     return active;
   } catch (error) {
     opened?.artifact.range.bytes.fill(0);
+    opened?.artifact.range.pointIndices?.fill(0);
     try {
       await renderer?.dispose();
     } finally {
@@ -1672,8 +1758,120 @@ elements.isolateResults.addEventListener("click", async () => {
   render();
 });
 
+async function refinePointLod() {
+  if (active?.kind !== "point-cloud" || active.refining === true) {
+    return null;
+  }
+  const next = nextPointLodLevel();
+  if (next === null) {
+    return null;
+  }
+  const current = active;
+  current.refining = true;
+  controls("opening");
+  setStatus(
+    "opening",
+    `Loading ${next.id} point detail from the retained local hierarchy…`,
+  );
+  let detail = null;
+  try {
+    detail = await current.client.readLod(next.id);
+    const release = await current.renderer.unmount();
+    const mount = await current.renderer.mount({
+      range: detail.range,
+      source: current.opened.artifact.source,
+    });
+    detail.range.bytes.fill(0);
+    detail.range.pointIndices?.fill(0);
+    current.pointRangeCleared = current.pointRangeCleared &&
+      detail.range.bytes.every((value) => value === 0) &&
+      (
+        detail.range.pointIndices === null ||
+        detail.range.pointIndices.every((value) => value === 0)
+      );
+    const transition = Object.freeze({
+      fromLevelId: current.mount.lod?.levelId ?? "full",
+      hierarchyId: mount.lod.hierarchyId,
+      identityMapBytes: mount.metrics.identityMapBytes,
+      points: mount.metrics.points,
+      rangeBytes: mount.metrics.rangeBytes,
+      releasedBytes: release.releasedBytes,
+      releasedIdentityMapBytes:
+        release.releasedIdentityMapBytes,
+      toLevelId: mount.lod.levelId,
+      uploadedBytes: mount.backend.uploadedBytes,
+    });
+    current.lodTransitions.push(transition);
+    current.mount = mount;
+    current.selection = null;
+    if (mount.lod.fullDetail) {
+      current.hierarchyCleanup =
+        await current.client.releaseHierarchy();
+    }
+    elements.diagGpu.textContent =
+      `${mount.backend.uploadedBytes} bytes · ` +
+      `${mount.backend.nonBackgroundPixels} pixels`;
+    elements.diagLife.textContent = mount.lod.fullDetail
+      ? "LOD hierarchy released + full-detail GPU active"
+      : "LOD Worker retained + GPU active";
+    current.report = publishReport("ready", {
+      ...current.report,
+      renderer: {
+        actualGpu: mount.backend.actualGpu,
+        nonBackgroundPixels: mount.backend.nonBackgroundPixels,
+        sourceReadBytes: mount.metrics.rangeBytes,
+        uploadedBytes: mount.backend.uploadedBytes,
+      },
+      pointCloud: {
+        ...current.report.pointCloud,
+        bounds: mount.geometry.bounds,
+        colorRange: mount.geometry.colorRange,
+        lod: mount.lod,
+        origin: mount.geometry.origin,
+        renderedRangeSha256: mount.range.sha256,
+      },
+      lifecycle: {
+        ...current.report.lifecycle,
+        cpuPointRangeCleared: current.pointRangeCleared,
+        hierarchyCleanup: current.hierarchyCleanup,
+        workerTerminatedAfterTransfer:
+          current.client.state.workerActive === false,
+      },
+      lodTransitions: [...current.lodTransitions],
+      pointSelection: null,
+    });
+    render();
+    setStatus(
+      "ready",
+      mount.lod.fullDetail
+        ? "Ready: full point detail is active read-only."
+        : `Ready: ${mount.lod.levelId} point detail is active read-only.`,
+    );
+    return transition;
+  } catch (error) {
+    detail?.range.bytes.fill(0);
+    detail?.range.pointIndices?.fill(0);
+    setStatus("failed", "Point LOD refinement failed closed.");
+    publishReport("failed", {
+      diagnostic: {
+        code: "POINT_LOD_REFINE_FAILED",
+        operation: "point-lod-refine",
+        retryable: true,
+      },
+    });
+    throw error;
+  } finally {
+    current.refining = false;
+    controls(elements.status.dataset.state);
+  }
+}
+
 elements.showAll.addEventListener("click", async () => {
-  if (active === null || active.kind === "point-cloud") {
+  if (active === null) {
+    return;
+  }
+  if (active.kind === "point-cloud") {
+    await refinePointLod();
     return;
   }
   const command = await active.explorer.setVisibility("show-all");
@@ -1861,6 +2059,8 @@ globalThis.addEventListener("message", async (event) => {
     });
   } else if (message.type === "pick-visible-point") {
     await selectVisible();
+  } else if (message.type === "refine-point-lod") {
+    await refinePointLod();
   } else if (message.type === "dispose") {
     const cleanup = await disposeActive("editor-close");
     publishReport("disposed", { cleanup });

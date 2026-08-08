@@ -267,6 +267,9 @@ test("point WebGL2 backend performs one POINTS draw and exact cleanup", async ()
     pointIndex: 1,
     rangeHandleId: "point-range:webgl2:0",
     rangeSha256: sha256(bytes),
+    renderedPointIndex: 1,
+    renderedRangeHandleId: "point-range:webgl2:0",
+    renderedRangeSha256: sha256(bytes),
   });
   assert.deepEqual(picked.worldPosition, [
     10_001,

@@ -16,7 +16,7 @@ last_reviewed: 2026-08-09
 Browser shell과 VS Code Custom Editor가 같은 source Worker와 3D renderer를
 실행하는 내부 read-only draft입니다. IFC는 `BimModelSource`와 semantic
 explorer로, bounded glTF/GLB는 source-native reference mesh explorer로
-분기합니다. bounded LAS/LAZ는 source-neutral point range와 `POINTS`
+분기합니다. bounded E57/LAS/LAZ는 source-neutral point range와 `POINTS`
 renderer로 분기합니다. public Viewer Core, Spatial authority, marketplace release와
 write operation을 정의하지 않습니다.
 
@@ -29,14 +29,16 @@ idle
 -> immutable snapshot
 -> renderer + role-specific explorer mount
 -> ready
+-> optional point LOD refine + prior range release
 -> source switch | cancel | editor close
 -> session + Worker + GPU dispose
 ```
 
 source switch는 generation을 증가시켜 이전 session을 stale로 만들고 이전
 Worker를 종료합니다. open timeout은 30초, operation timeout은 10초이며
-source는 최대 64 MiB이고 LAS/LAZ는 별도 8 MiB·500,000-point cap을
-적용합니다. 단일 BIM range read는 최대 1 MiB입니다. tree/search
+source는 최대 64 MiB이고 LAS/LAZ는 별도 8 MiB·500,000-point cap,
+multiple-scan E57은 32 MiB·2,000,000-point cap을 적용합니다. 단일 BIM range
+read는 최대 1 MiB입니다. tree/search
 aggregate와 DOM projection도 생성 시 고정한 상한을 넘지 않습니다.
 
 ## Browser Host
@@ -50,7 +52,8 @@ loopback server는 allowlist route, same-origin CSP와 no-store response만
 ## VS Code Host
 
 backward-compatible view type `bimExplorer.ifcEditor`는 `*.ifc`, `*.gltf`,
-`*.glb`, `*.las`, `*.laz`에 연결된 read-only Custom Editor입니다. extension host만 source
+`*.glb`, `*.e57`, `*.las`, `*.laz`에 연결된 read-only Custom Editor입니다.
+extension host만 source
 `file:` URI를 보유합니다.
 
 - regular non-symlink file만 exact URI로 읽습니다.
@@ -76,7 +79,7 @@ resource blob은 서로 다른 capability이며 source path는 blob에 포함되
 
 - webview → host: `ready`, `retry`, path-free `report`
 - host → webview: `source-bytes`, `source-error`, `cancel`,
-  `show-diagnostics`, `dispose`
+  `show-diagnostics`, `refine-point-lod`, `dispose`
 
 이 message는 public Viewer/Agent protocol이 아니며 다른 제품이 직접
 호출하는 integration surface로 안정화하지 않습니다.
@@ -93,15 +96,18 @@ IFC, on-demand 공개 IFC와 Khronos Box GLB를 엽니다. 별도 LAS/LAZ 제품
 cache-only pair를 staged와 clean-installed runtime에서 엽니다. association과 runtime
 digest뿐 아니라 format별 source/render projection, 실제 VS Code Chromium
 WebGL2, path-free bridge와 editor close cleanup을 확인합니다. 공개 IFC와
-GLB 및 LAS/LAZ sample은 package에 포함하지 않습니다.
+GLB 및 E57/LAS/LAZ sample은 package에 포함하지 않습니다. 별도
+`qualify:point-cloud:lod` Gate는 Browser, staged Custom Editor와 clean-installed
+VSIX에서 파생 hierarchy/LOD 전환과 exact cleanup을 비교합니다.
 
 ## 현재 보류
 
 - public Viewer Core artifact와 cross-repository conformance
 - physical GPU와 cross-platform GPU/memory qualification
 - external glTF resource bundle과 required extension
-- E57/LAS/LAZ CRS/surveyed datum, source-declared point semantics·LOD와
-  format admission; 파생 `point:n` pick은 exact revision/range에만 유효
+- E57/LAS/LAZ CRS/surveyed datum, source-native hierarchy·point semantics와
+  format admission; 파생 `point:n` pick과 제품 로컬 octree/chunk LOD는 exact
+  revision/root range에만 유효
 - license, signing과 marketplace release
 
 공개 IFC2X3 product-scale open은 통과했지만 engine/profile admission으로

@@ -270,7 +270,11 @@ LAS와 LAZ 실제 local file input이 동일한 10,201 points·163,216-byte uplo
 [`VS Code product evidence`](evidence/las-laz-vscode-product-2026-08-08.json)는
 staged Custom Editor와 clean-installed VSIX가 같은 projection을 재현하고
 point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록합니다.
-전체 33개 Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
+별도
+[`point hierarchy/LOD product evidence`](evidence/point-cloud-lod-products-2026-08-09.json)는
+five-scan E57의 51개 파생 chunk와 3단계 coarse-to-full 전환, root-range identity
+mapping 및 Browser/staged VS Code/clean VSIX cleanup을 기록합니다. 전체 36개
+Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
 admission 4개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.

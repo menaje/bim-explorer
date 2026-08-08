@@ -147,7 +147,7 @@ function exactPackage(value) {
     value?.id === "menaje.bim-explorer" &&
     value.version === "0.1.0" &&
     value.byteLength > 0 &&
-    value.installedRuntimeFiles === 13 &&
+    [13, 14].includes(value.installedRuntimeFiles) &&
     [
       value.workerBundleSha256,
       value.pointWorkerBundleSha256,

@@ -16,9 +16,12 @@ range와 `POINTS` renderer로 분기합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
-  회수합니다. point pick의 `point:n`은 exact source revision과 range digest의
-  파생 순서 identity이며 CRS, surveyed datum, source semantics·LOD 또는 BIM
-  semantic authority를 제공하지 않습니다.
+  회수합니다. point pick의 `point:n`은 exact source revision과 root range
+  digest의 파생 순서 identity입니다. 대형 range는 파생 octree leaf chunk와
+  coarse-to-full LOD로 열고, 각 전환에서 이전 GPU range/identity map을 회수한
+  뒤 full detail에서 Worker hierarchy를 종료합니다. 이는 CRS, surveyed datum,
+  source-native hierarchy·semantics 또는 BIM semantic authority를 제공하지
+  않습니다.
 - timing과 source/geometry/metadata/range budget을 diagnostics로 표시합니다.
 - account, telemetry, 외부 upload를 요구하지 않습니다.
 
@@ -61,3 +64,6 @@ registration으로만 취급합니다.
 E57을 actual Chrome에서 열고 32-bit point selection, 선택 좌표 GPU readback과
 transient target/source/Worker/CPU/GPU cleanup을 검증합니다. 샘플은 재배포하거나
 제품에 포함하지 않습니다.
+`npm run qualify:point-cloud:lod`는 같은 five-scan E57을 Browser, staged VS Code와
+clean-installed VSIX에서 51개 chunk·3개 LOD로 전환하고 root-range point identity,
+단계별 GPU/identity-map release와 최종 hierarchy cleanup을 검증합니다.

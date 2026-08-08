@@ -810,7 +810,7 @@ export async function qualifyBimProductShell({
         files: [fixture.input],
       });
     }
-    const opened = await poll(
+    let opened = await poll(
       client,
       `(() => {
         const report = globalThis.__bimExplorerProductReport;
@@ -832,6 +832,52 @@ export async function qualifyBimProductShell({
               : 30_000,
       },
     );
+    const initialPointLod = pointCloud &&
+      opened.pointCloud?.hierarchy?.levels?.length > 1
+        ? {
+            lifecycle: opened.lifecycle,
+            lod: opened.pointCloud.lod,
+            renderer: opened.renderer,
+            renderedRangeSha256:
+              opened.pointCloud.renderedRangeSha256,
+          }
+        : null;
+    if (initialPointLod !== null) {
+      await client.evaluate(
+        `document.querySelector("#pick-model").click(); true`,
+      );
+      initialPointLod.pointSelection = await poll(
+        client,
+        `(() => {
+          const selection = globalThis.__bimExplorerProductReport
+            ?.pointSelection;
+          return selection?.status === "hit"
+            ? JSON.parse(JSON.stringify(selection))
+            : null;
+        })()`,
+      );
+    }
+    while (
+      pointCloud &&
+      opened.pointCloud?.lod !== null &&
+      opened.pointCloud?.lod?.fullDetail !== true
+    ) {
+      const nextLevel = opened.pointCloud.lod.levelIndex + 1;
+      await client.evaluate(
+        `document.querySelector("#show-all").click(); true`,
+      );
+      opened = await poll(
+        client,
+        `(() => {
+          const report = globalThis.__bimExplorerProductReport;
+          return report?.status === "ready" &&
+            report?.pointCloud?.lod?.levelIndex === ${nextLevel}
+              ? JSON.parse(JSON.stringify(report))
+              : null;
+        })()`,
+        { timeoutMs: 120_000 },
+      );
+    }
     if (!pointCloud) {
       await client.evaluate(`(() => {
         const input = document.querySelector("#search-input");
@@ -976,6 +1022,9 @@ export async function qualifyBimProductShell({
         performance: opened.performance,
         resources: opened.resources,
         renderer: opened.renderer,
+        ...(initialPointLod === null
+          ? {}
+          : { initialPointLod }),
         ...(fixture.format === "ifc"
           ? { semantic: opened.semantic }
           : pointCloud
@@ -983,6 +1032,7 @@ export async function qualifyBimProductShell({
                 pointCloud: opened.pointCloud,
                 pointSelection: interaction.pointSelection,
                 productLifecycle: opened.lifecycle,
+                lodTransitions: opened.lodTransitions,
               }
             : { reference: opened.reference }),
         interaction: {

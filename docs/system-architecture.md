@@ -239,8 +239,8 @@ message나 Browser DOM event를 cross-product API로 안정화하지 않습니�
 
 VS Code extension host는 exact local `file:` URI를 regular non-symlink로
 검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
-`ArrayBuffer`, normalized `ifc`/`gltf`/`glb`/`las`/`laz` format, generation과 bounded
-setting만 전달하며 report는
+`ArrayBuffer`, normalized `ifc`/`gltf`/`glb`/`e57`/`las`/`laz` format,
+generation과 bounded setting만 전달하며 report는
 fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
 diagnostic에 넣지 않습니다.
 
@@ -315,9 +315,14 @@ strict-CSP `laz-perf` glue와 WASM을 bounded read한 뒤 각각 `blob:` capabil
 주입합니다. staged Custom Editor와 clean-installed VSIX도 같은 projection과
 cleanup을 통과했으며 Webview CSP는 `unsafe-eval`을 허용하지 않습니다. 샘플은
 qualification-only입니다. 별도 Browser, staged VS Code와 clean-installed VSIX
-Gate는 exact source revision/range digest에 묶인 32-bit derived point pick과
-선택 좌표 readback을 통과했습니다. CRS, source-declared semantics·LOD와 format
-admission은 없으므로 federation source admission에는 영향을 주지 않습니다. E57도
+Gate는 exact source revision/root range digest에 묶인 32-bit derived point
+pick과 선택 좌표 readback을 통과했습니다. 대형 E57은 같은 root range에서
+51개 octree leaf-page chunk를 파생하고 31,971→242,821→1,213,990-point LOD로
+전환합니다. rendered vertex index는 `Uint32` map으로 root `point:n`에 돌아가며
+각 단계의 prior GPU range/map과 full-detail 이후 Worker hierarchy를 exact
+회수합니다. 이 파생 display 구조는 source-native hierarchy가 아닙니다. CRS,
+source-declared semantics와 format admission은 없으므로 federation source
+admission에는 영향을 주지 않습니다. E57도
 single-scan Cartesian XYZ/optional RGB default-BitPack profile을 같은 bounded
 point Worker와 renderer로 열며, Browser·staged VS Code·clean-installed VSIX에서
 7,680-point projection과 cleanup을 통과했습니다. 같은 Worker decoder는 별도

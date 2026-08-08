@@ -88,9 +88,20 @@ point count의 exact release 및 terminal active byte/range 0을 요구합니다
 기록하고 zero를 miss로 예약합니다. depth buffer가 겹친 point의 nearest
 fragment를 결정하며 hit이면 해당 GPU buffer의 relative XYZ 12 bytes만 읽어
 Float64 origin과 다시 합칩니다. identity는 `derived-point-range-order`의
-`point:n`이며 exact source revision과 range digest 안에서만 유효합니다. 이는
+`point:n`이며 exact source revision과 root range digest 안에서만 유효합니다. 이는
 source-declared record identity, BIM semantics 또는 E57 invalid-filter 이전
 index가 아닙니다. pick target은 완료 전에 즉시 회수해야 합니다.
+
+`bim-explorer-derived-point-hierarchy/0.1`은 exact source revision과 root point
+range SHA-256에 묶인 read-only 파생 octree leaf-page directory입니다. 기본
+coarse budget은 32,768과 262,144 points이며 full-detail level을 마지막에
+추가합니다. `bim-explorer-derived-point-lod-range-receipt/0.1`은 선택 chunk,
+stride, materialized range bytes와 rendered-index→root-range-index map을
+기록합니다. LOD 전환은 현재 GPU range와 identity map을 먼저 exact release한
+뒤 다음 range를 mount하고, full detail 도달 시 Worker가 보유한 root range와
+spatial index를 0으로 회수해야 합니다. 이 hierarchy는 제품 로컬 display
+projection이며 source-native E57/LAS/LAZ hierarchy나 semantic authority가
+아닙니다.
 
 WebGL2 point backend는 Float64 origin을 camera target에서 빼고 relative
 Float32 position만 GPU에 upload합니다. RGBA8 color를 normalized attribute로
@@ -99,9 +110,10 @@ LAS/LAZ parity sample은 actual Chrome에서 10,201 points, 163,216-byte upload,
 한 draw와 40,471 non-background pixels를 재현하고 buffer/program/VAO를 전량
 회수했습니다. 이는 source-neutral primitive qualification이며 LAS/LAZ parser
 packaging이나 format admission을 승인하지 않습니다. 별도 actual Browser,
-staged VS Code와 clean-installed VSIX Gate는 32-bit derived point pick을
-통과했지만 CRS/datum, source-declared point semantics와 LOD streaming은
-계속 renderer 밖입니다.
+staged VS Code와 clean-installed VSIX Gate는 32-bit derived point pick과
+five-scan E57의 51-chunk, 3-level coarse-to-full 파생 LOD를 통과했습니다.
+CRS/datum, source-native hierarchy와 source-declared point semantics는 계속
+renderer 밖입니다.
 
 ## Mount plan과 identity
 

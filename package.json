@@ -80,6 +80,7 @@
     "qualify:las-laz:product:vscode": "node scripts/qualify-las-laz-vscode-product.mjs",
     "qualify:point-cloud:picking:web": "node scripts/qualify-point-cloud-browser-picking.mjs",
     "qualify:point-cloud:picking:vscode": "node scripts/qualify-point-cloud-vscode-picking.mjs",
+    "qualify:point-cloud:lod": "node scripts/qualify-point-cloud-lod-products.mjs",
     "assemble:federation:product-scale:platform": "node scripts/assemble-bim-federation-product-scale-platform-matrix.mjs",
     "qualify:community-release": "node scripts/qualify-community-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",

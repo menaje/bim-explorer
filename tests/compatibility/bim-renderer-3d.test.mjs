@@ -76,6 +76,10 @@ async function fixtures() {
       manifest.evidence.vscodePointPicking,
       "utf8",
     )),
+    pointHierarchyChunkLod: JSON.parse(await readFile(
+      manifest.evidence.pointHierarchyChunkLod,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -114,7 +118,7 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.passedGates, 25);
+  assert.equal(result.passedGates, 26);
   assert.equal(result.heldGates, 0);
 });
 

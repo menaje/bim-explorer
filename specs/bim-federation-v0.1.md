@@ -128,8 +128,8 @@ format 등록과 실제 source admission을 분리합니다.
 | --- | --- | --- | --- | --- | --- |
 | IFC4 ReferenceView | semantic BIM source | qualified bounded profile | qualified bounded semantics | blocked | blocked |
 | glTF/GLB | derived/reference mesh | qualified bounded glTF 2.0 reference mesh | qualified bounded node/mesh metadata | blocked | blocked |
-| LAS/LAZ | point observation reference | bounded Browser product open; CRS/VS Code/admission held | held metadata | blocked | blocked |
-| E57 | point observation reference | held codec/renderer | held metadata | blocked | blocked |
+| LAS/LAZ | point observation reference | bounded Browser·VS Code·clean VSIX open, derived pick/LOD; CRS/admission held | held metadata | blocked | blocked |
+| E57 | point observation reference | bounded Browser·VS Code·clean VSIX profiles, derived pick/LOD; CRS/admission held | held metadata | blocked | blocked |
 | 3D Tiles | GIS/site context | held engine/network | held metadata | blocked | blocked |
 | RVT/DGN | native SDK reference | held SDK/rights | held SDK/profile | separate Gate | reopen Gate |
 
@@ -195,7 +195,8 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 측량 control point와 datum transformation
 - glTF/GLB external resource bundle와 required extension; bounded 제품
   file-open은 별도 product-shell evidence에서 통과
-- point-cloud surveyed CRS/datum, chunk/LOD와 federation admission; 제품의
-  파생 point pick은 federation identity authority가 아님
+- point-cloud surveyed CRS/datum과 federation admission; 제품 로컬 파생
+  point pick·octree/chunk LOD는 통과했지만 federation source identity 또는
+  coordinate authority가 아님
 - 3D Tiles parser/engine
 - RVT/DGN native SDK bridge와 reopen qualification

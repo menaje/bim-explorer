@@ -52,6 +52,9 @@ import {
 import {
   validatePointCloudVscodePickingQualification,
 } from "./qualify-point-cloud-vscode-picking.mjs";
+import {
+  validatePointCloudLodProductQualification,
+} from "./qualify-point-cloud-lod-products.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -89,6 +92,7 @@ const PASSED_GATES = Object.freeze([
   "lasLazVscodeProductOpen",
   "browserPointIdentityPicking",
   "vscodePointIdentityPicking",
+  "derivedPointHierarchyLod",
 ]);
 const HELD_GATES = Object.freeze([
   "e57CoordinateReference",
@@ -116,6 +120,7 @@ export function validateReferenceFormatProbeCompatibility(
   lasLazVscodeProductEvidence,
   pointCloudBrowserPickingEvidence,
   pointCloudVscodePickingEvidence,
+  pointCloudLodProductEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateE57ProfileMatrixQualification(e57ProfileMatrixEvidence);
@@ -161,6 +166,9 @@ export function validateReferenceFormatProbeCompatibility(
   );
   validatePointCloudVscodePickingQualification(
     pointCloudVscodePickingEvidence,
+  );
+  validatePointCloudLodProductQualification(
+    pointCloudLodProductEvidence,
   );
   if (
     manifest?.schema !==
@@ -217,7 +225,10 @@ export function validateReferenceFormatProbeCompatibility(
         "point-cloud-browser-picking-2026-08-09.json" ||
     manifest.evidence?.vscodePointPicking !==
       "compatibility/evidence/" +
-        "point-cloud-vscode-picking-2026-08-09.json"
+        "point-cloud-vscode-picking-2026-08-09.json" ||
+    manifest.evidence?.pointCloudLodProducts !==
+      "compatibility/evidence/" +
+        "point-cloud-lod-products-2026-08-09.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -261,6 +272,8 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.policy.e57MultipleScanVscodeExperimentalProductOpen !==
       true ||
     manifest.policy.derivedPointIdentityPicking !== true ||
+    manifest.policy.derivedPointHierarchyLod !== true ||
+    manifest.policy.sourceNativePointHierarchyLod !== false ||
     manifest.policy.pointIdentityAuthority !==
       "derived-point-range-order" ||
     manifest.policy.pointIdentityScope !==
@@ -300,6 +313,7 @@ async function main() {
     lasLazVscodeProductEvidence,
     pointCloudBrowserPickingEvidence,
     pointCloudVscodePickingEvidence,
+    pointCloudLodProductEvidence,
   ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
@@ -388,6 +402,11 @@ async function main() {
         "point-cloud-vscode-picking-2026-08-09.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "point-cloud-lod-products-2026-08-09.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
@@ -409,6 +428,7 @@ async function main() {
       lasLazVscodeProductEvidence,
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
+      pointCloudLodProductEvidence,
     ),
   ));
 }

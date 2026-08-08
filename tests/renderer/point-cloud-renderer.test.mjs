@@ -136,6 +136,8 @@ test("headless point renderer accounts for and releases the exact upload", async
   assert.deepEqual(renderer.state, {
     active: true,
     activeBytes: 64,
+    activeIdentityMapBytes: 0,
+    activeLodLevel: null,
     activePoints: 4,
     disposed: false,
     mounting: false,
@@ -291,6 +293,7 @@ test("multiple-scan point envelope is explicit and preserves default caps", asyn
     limits: {
       maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
       maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+      maximumIdentityMapBytes: 8 * 1024 * 1024,
       maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
       maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
       maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,

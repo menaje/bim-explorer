@@ -37,6 +37,9 @@ upload·rasterized first frame·dispose를 통과했습니다. visibility 기반
 range loading, pointer/picking/section, Browser/VS Code Webview host와
 Viewer Core 3D mount도 검증했습니다. physical GPU qualification과 실제
 제품 entrypoint의 Viewer Core 채택은 별도 Gate입니다.
+point range에는 exact revision/root range에 묶인 파생 octree leaf chunk,
+coarse-to-full LOD와 rendered-index→root-index identity map을 제공하며 Browser,
+staged VS Code와 clean-installed VSIX의 대형 E57에서 검증했습니다.
 
 [`bim-semantic-explorer`](bim-semantic-explorer/README.md)는 bounded source
 query를 spatial/product tree, search, inspector, relation navigation,
@@ -81,8 +84,9 @@ mesh reference일 뿐 BIM semantics, write 또는 round-trip authority가
 point-format 2/3과 LASzip LAZ를 bounded Float64-origin/relative-Float32/RGBA8
 range로 투영합니다. exact `laz-perf@0.0.6`은 Browser 전용 Worker에서
 실행하며 CRS, source-declared point identity·LOD, semantics, write 또는
-round-trip authority를 제공하지 않습니다. 제품 renderer의 `point:n` 선택은
-exact source revision과 range digest 안의 파생 순서 identity입니다.
+round-trip authority를 제공하지 않습니다. 여기서 LOD는 source-native profile을
+뜻합니다. 제품 renderer는 exact source revision/root range digest 안에서
+`point:n`과 로컬 파생 chunk/LOD를 별도로 제공합니다.
 
 [`e57-point-source`](e57-point-source/README.md)는 E57 1.0 단일 scan의
 Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를

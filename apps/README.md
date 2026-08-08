@@ -7,7 +7,7 @@
 - [`bim-explorer-web`](bim-explorer-web/README.md): local Browser product
   surface
 - [`bim-explorer-vscode`](bim-explorer-vscode/README.md): IFC와 bounded
-  glTF/GLB read-only Custom Editor
+  glTF/GLB/E57/LAS/LAZ read-only Custom Editor
 
 App은 IFC parser, source identity authority나 generic 3D implementation을
 직접 소유하지 않습니다. Host capability와 lifecycle을 package/adapters에
@@ -81,7 +81,9 @@ admission을 승인하지 않습니다.
 제품 source 경계로 채택해 bounded E57/LAS/LAZ local file input을 전용 Worker에서
 처리합니다. Browser, staged VS Code와 clean-installed VSIX 제품 open은
 통과했습니다. 같은 세 경로의 32-bit point pick은 exact source revision과
-range digest에 묶인 파생 `point:n` identity로 통과했지만, CRS/surveyed datum,
-source-declared semantics·LOD와 format admission은 계속 별도 Gate입니다.
+root range digest에 묶인 파생 `point:n` identity로 통과했습니다. five-scan
+E57의 51개 파생 octree leaf chunk와 3단계 coarse-to-full LOD 및 exact cleanup도
+같은 세 경로에서 통과했습니다. CRS/surveyed datum, source-native hierarchy·
+semantics와 format/federation admission은 계속 별도 Gate입니다.
 E57은 bounded Cartesian/spherical 및 five-scan pose-applied profile만
 qualification했으며 extension profile은 승인하지 않습니다.

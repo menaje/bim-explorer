@@ -2501,6 +2501,13 @@ export {
 } from "./point-cloud-webgl2-backend.mjs";
 
 export {
+  BIM_POINT_HIERARCHY_CONTRACT,
+  BIM_POINT_LOD_RANGE_RECEIPT,
+  DerivedPointCloudHierarchy,
+  createDerivedPointCloudHierarchy,
+} from "./point-cloud-lod.mjs";
+
+export {
   BIM_RENDERER_3D_HOST_CONTRACT,
   BIM_RENDERER_3D_HOST_RECEIPT,
   BimRenderer3dHost,

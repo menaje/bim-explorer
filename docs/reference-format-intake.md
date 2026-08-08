@@ -70,7 +70,7 @@ XYZ/RGB, empty codec vector의 3개 data packet을 모두 해제해 독립 refer
 cleanup을 재현했습니다. 후속 Browser, staged VS Code와 clean-installed VSIX
 제품 Gate는 같은 7,680 points·122,880-byte GPU payload·39,561 pixels,
 path-free bridge와 source/Worker/CPU/GPU cleanup을 재현했습니다. 다만 CRS,
-surveyed datum, extension과 LOD가 없으므로 E57 admission과
+surveyed datum, extension과 source-native hierarchy가 없으므로 E57 admission과
 `pointCloudCodec`은 계속 held입니다. point selection은 아래 별도 Gate의
 derived range-order identity이며 E57 native record authority가 아닙니다.
 
@@ -102,7 +102,8 @@ SHA-256는 독립 `pye57@0.4.18/libE57Format` 기준과 일치합니다. 이 pos
 registration일 뿐 CRS·surveyed control·datum authority가 아닙니다. 후속 actual
 Browser, staged VS Code와 clean-installed VSIX Gate는 동일한 1,213,990-point
 pose-applied range와 cleanup을 재현했습니다. 같은 대형 range의 32-bit derived
-point pick도 통과했지만 extension, source-declared identity와 LOD는 아직 Gate를
+point pick, 51개 octree leaf chunk와 3단계 coarse-to-full LOD도 통과했습니다.
+extension, source-native hierarchy와 source-declared identity는 아직 Gate를
 통과하지 않았습니다.
 
 두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
@@ -127,10 +128,10 @@ projection, path-free bridge와 cleanup을 재현했습니다. VSIX의 generated
 Emscripten glue는 strict CSP를 위해 dynamic Function construction을 동등한
 closure로 치환하고 original `laz-perf.wasm`은 수정하지 않습니다. 좌표는 계속
 unqualified입니다. 후속 point-picking Gate는 LAS/LAZ와 five-scan E57에 대해
-exact source revision/range digest scoped `point:n`, 32-bit Pick ID, 선택 좌표
+exact source revision/root range digest scoped `point:n`, 32-bit Pick ID, 선택 좌표
 12-byte GPU readback과 transient target cleanup을 actual Browser, staged VS Code
-및 clean-installed VSIX에서 재현했습니다. 이는 source-declared identity나
-LOD를 제공하지 않습니다.
+및 clean-installed VSIX에서 재현했습니다. 제품 로컬 파생 LOD는 별도 Gate에서
+통과했지만 source-declared identity나 source-native LOD를 제공하지 않습니다.
 
 ## 현재 상태
 
@@ -140,8 +141,9 @@ staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했�
 E57도 bounded Browser, staged VS Code와 clean-installed VSIX에서 Cartesian,
 spherical 단일-scan 및 다섯-scan pose-applied 제품 source/file-open을
 통과했습니다. multiple-scan은 scan identity·structured index와 local pose
-적용을 보존합니다. E57/LAS/LAZ의 derived point selection도 세 제품 경로에서
-통과했지만 extension, surveyed coordinate evidence와 LOD는 아직 없습니다.
+적용을 보존합니다. E57/LAS/LAZ의 derived point selection과 대형 E57의 파생
+octree/chunk LOD도 세 제품 경로에서 통과했지만 extension, surveyed coordinate
+evidence와 source-native hierarchy는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에
