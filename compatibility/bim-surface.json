@@ -1,0 +1,66 @@
+{
+  "schema": "bim-explorer-bim-surface-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-09",
+  "contract": {
+    "package": "@bim-explorer/bim-surface",
+    "version": "0.1.0",
+    "surface": "bim-explorer-bim-surface/0.1",
+    "receipt": "bim-explorer-bim-surface-receipt/0.1",
+    "sourceProtocol": "bim-explorer-bim-source/0.2",
+    "renderer": "bim-explorer-bim-renderer-3d/0.1",
+    "semanticExplorer": "bim-explorer-bim-semantic-explorer/0.1",
+    "optionalSpatialIntegration": "bim-explorer-spatial-integration/0.1"
+  },
+  "artifact": {
+    "channel": "release-candidate",
+    "filename": "bim-explorer-bim-surface-0.1.0.tgz",
+    "sha256": "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2",
+    "runtimeSha256": "0be0cef03795746cb4a36e2cbb6937fbc22a91f5dcc48c6621fdc34f8ef393e7",
+    "runtimeDependencies": 0,
+    "repositoryManifestPrivate": true
+  },
+  "gates": {
+    "versionedHostNeutralContract": true,
+    "singlePackageEntrypoint": true,
+    "sourceIdentityPreserved": true,
+    "boundedRendererSemanticComposition": true,
+    "deterministicLifecycleCleanup": true,
+    "standaloneAuthorityFree": true,
+    "zeroRuntimeDependencies": true,
+    "deterministicPack": true,
+    "offlineCleanInstall": true,
+    "browserProductComposition": true,
+    "vscodeProductComposition": true,
+    "optionalSpatialProviderContract": true,
+    "immutablePublicReleaseAsset": false,
+    "registryPublication": false,
+    "actualSpatialConsumerConformance": false,
+    "stableProductionSupport": false
+  },
+  "evidence": {
+    "package": "compatibility/evidence/bim-surface-package-2026-08-09.json"
+  },
+  "blockers": [
+    "an immutable public GitHub release asset has not been published",
+    "npm or another public package registry publication remains disabled",
+    "the actual Coni Spatial consumer must exact-pin and run its own composition conformance",
+    "stable support requires public consumer adoption and cross-platform release evidence"
+  ],
+  "limitations": [
+    "the clean-install lifecycle uses generated IFC4 and a headless renderer backend",
+    "Browser and VS Code composition reuse their existing product evidence rather than claiming a new physical-GPU run",
+    "experimental point reference adapters remain outside the BIM surface package entrypoint"
+  ],
+  "policy": {
+    "readOnly": true,
+    "hostNeutral": true,
+    "spatialAuthority": false,
+    "allowSpatialPrivateDependency": false,
+    "repositoryPublishDisabled": true,
+    "claimReleaseCandidate": true,
+    "claimPublicPackage": false,
+    "claimActualSpatialConsumer": false,
+    "claimProductionSupport": false
+  }
+}

@@ -83,3 +83,29 @@ test("3D renderer stays independent from the DWG renderer", async () => {
     /from\s+["'][^"']*dwg[^"']*["']/iu,
   );
 });
+
+test("products consume one authority-free host-neutral BIM surface", async () => {
+  const [app, manifestText, surface] = await Promise.all([
+    readFile("apps/bim-explorer-web/app.mjs", "utf8"),
+    readFile("packages/bim-surface/package.json", "utf8"),
+    readFile("packages/bim-surface/src/index.mjs", "utf8"),
+  ]);
+  const manifest = JSON.parse(manifestText);
+
+  assert.match(
+    app,
+    /packages\/bim-surface\/runtime\/index\.mjs/u,
+  );
+  assert.doesNotMatch(
+    app,
+    /packages\/bim-semantic-explorer\/src\/index\.mjs/u,
+  );
+  assert.equal(manifest.name, "@bim-explorer/bim-surface");
+  assert.equal(manifest.version, "0.1.0");
+  assert.equal(manifest.private, true);
+  assert.equal(Object.keys(manifest.dependencies ?? {}).length, 0);
+  assert.match(surface, /canonicalEntityId: false/u);
+  assert.match(surface, /acceptance: false/u);
+  assert.match(surface, /publish: false/u);
+  assert.doesNotMatch(surface, /coni-spatial|point-cloud\.mjs/iu);
+});

@@ -5,7 +5,7 @@ authority:
   - open-source-product-boundary
   - spatial-commercial-boundary
   - license-decision-gates
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-09
 ---
 
 # 오픈소스 Explorer와 유료 Spatial 경계
@@ -30,6 +30,7 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 | BCF·IDS·bSDD read-only exploration | validation-to-revision diagnostics |
 | public source/renderer conformance | human accept/publish |
 | local Browser/VS Code shell | verified native delivery와 support |
+| host-neutral read-only BIM Surface | product-owned 2D/3D revision composition |
 
 ## 라이선스 결정
 
@@ -42,6 +43,13 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 root와 first-party package의 npm publish는 `private: true`로 차단하지만
 source license는 MPL-2.0입니다. `private`는 공개 소스 권리를 제한하지
 않으며 실수로 npm registry에 게시하지 않기 위한 공급망 통제입니다.
+
+`@bim-explorer/bim-surface`는 공개 Explorer 가치인 source read, bounded 3D와
+semantic exploration을 외부 host가 재사용할 수 있게 합성합니다. 이 package가
+Workspace, Canonical ID, Agent change, accept/publish 또는 verified delivery를
+포함하지 않으므로 Spatial의 유료 상품 경계를 약화시키지 않습니다. 현재는
+deterministic pack과 offline clean install을 통과한 release-candidate이며,
+public artifact publication과 실제 Spatial 소비는 별도 Gate입니다.
 
 ## Community 공개 Gate
 

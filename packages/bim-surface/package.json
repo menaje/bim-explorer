@@ -1,0 +1,17 @@
+{
+  "name": "@bim-explorer/bim-surface",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Host-neutral read-only BIM exploration surface",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": "./runtime/index.mjs",
+  "files": [
+    "runtime/index.mjs",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24"
+  }
+}

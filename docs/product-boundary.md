@@ -81,6 +81,8 @@ selection이 authority가 되지 않습니다.
 ## Runtime과 release 독립성
 
 - BIM Explorer는 자체 Browser/VS Code shell과 version을 가집니다.
+- `bim-surface`는 제품 이름을 대체하지 않고 한 BIM source의 host-neutral
+  표시·semantic 탐색 lifecycle만 재사용합니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는
@@ -88,6 +90,13 @@ selection이 authority가 되지 않습니다.
 - 세 저장소는 독립 tag와 release cadence를 사용합니다.
 - cross-product compatibility는 exact artifact, version과 conformance
   result로만 주장합니다.
+
+현재 `@bim-explorer/bim-surface@0.1.0`은 Browser/VS Code 제품이 사용하는
+zero-runtime-dependency release-candidate까지 검증했습니다. 저장소 manifest는
+`private: true`이고 public registry/release asset은 아직 없으므로 Coni
+Spatial의 실제 bundle dependency나 consumer conformance를 주장하지 않습니다.
+그 승격은 immutable public artifact와 Spatial-owned exact-pin 검증 뒤에만
+가능합니다.
 
 ## Optional handoff
 

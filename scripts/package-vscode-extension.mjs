@@ -13,6 +13,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import {
+  checkBimSurfaceBundle,
+} from "./build-bim-surface.mjs";
+import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
 import {
@@ -52,6 +55,7 @@ const COPY_FILES = Object.freeze([
   ["packages/e57-point-source/src/index.mjs"],
   ["packages/las-laz-point-source/src/header.mjs"],
   ["packages/las-laz-point-source/src/index.mjs"],
+  ["packages/bim-surface/runtime/index.mjs"],
   ["packages/bim-renderer-3d/src/camera-controls.mjs"],
   ["packages/bim-renderer-3d/src/camera.mjs"],
   ["packages/bim-renderer-3d/src/host-adapter.mjs"],
@@ -106,6 +110,7 @@ export async function prepareVscodeExtensionStage(destination) {
     );
   }
   await checkVscodeWorkerBundle();
+  await checkBimSurfaceBundle();
   await mkdir(destination, {
     recursive: true,
   });

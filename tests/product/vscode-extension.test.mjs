@@ -700,6 +700,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/e57-point-source/src/index.mjs",
       "packages/las-laz-point-source/src/header.mjs",
       "packages/las-laz-point-source/src/index.mjs",
+      "packages/bim-surface/runtime/index.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
       "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
       "packages/bim-renderer-3d/src/point-cloud.mjs",

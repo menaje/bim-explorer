@@ -6,6 +6,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 예정 경계:
 
 - `bim-model-source`: bounded source snapshot, range와 source-local identity
+- `bim-surface`: host-neutral source·3D host·semantic lifecycle composition
 - `bim-renderer-3d`: bounded geometry staging과 generic 3D backend lifecycle
 - `bim-semantic-explorer`: model tree, property/relation/search composition
 - `host-contracts`: Browser/VS Code Host adapter contract
@@ -29,6 +30,14 @@ raw source fingerprint, immutable tree/entity identity와 bounded binary
 range directory로 투영하는 내부 read-only draft입니다. 공개 대표 IFC의
 multi-range source artifact, rendered first-frame과 공용 Viewer Core
 RenderSource conformance를 통과했습니다.
+
+[`bim-surface`](bim-surface/README.md)는 source session, bounded mesh renderer
+host와 semantic explorer를 한 번 열고 exact cleanup하는 host-neutral
+read-only 경계입니다. Browser와 VS Code IFC 제품 경로가 generated runtime을
+사용합니다. zero-runtime-dependency release-candidate의 byte-identical pack과
+offline clean install은 통과했지만 public artifact publication과 실제 Spatial
+consumer exact-pin은 held입니다. experimental point reference runtime은 이
+entrypoint에 포함하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를

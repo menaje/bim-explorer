@@ -1,5 +1,13 @@
 # Tests
 
+`tests/surface/`는 host-neutral `bim-surface/0.1`이 exact source identity,
+bounded renderer·semantic initialization과 fail-closed cleanup을 유지하는지
+검증합니다. package test는 MPL-2.0/NOTICE/SOURCE_OFFER를 포함한 0.1.0
+release-candidate를 독립 stage에서 두 번 패킹하고, byte parity와 offline clean
+install consumer의 selection·search·standalone Spatial provider·전량 cleanup을
+재실행합니다. public publication과 actual Spatial consumer는 이 테스트가
+승인하지 않습니다.
+
 공개 synthetic fixture만 사용합니다.
 
 예정 구조:

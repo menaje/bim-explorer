@@ -2,7 +2,8 @@
 
 local IFC, bounded glTF/GLB 또는 bounded E57/LAS/LAZ를 Browser에서 선택해 Worker-isolated
 source snapshot과 WebGL2 renderer로 여는 standalone read-only product
-shell입니다. IFC는 `BimModelSource`와 semantic explorer로, glTF/GLB는
+shell입니다. IFC는 host-neutral `bim-surface/0.1`이 `BimModelSource`, bounded
+3D host와 semantic explorer의 수명주기를 합성하고, glTF/GLB는
 source-native reference mesh explorer로, E57/LAS/LAZ는 source-neutral point
 range와 `POINTS` renderer로 분기합니다.
 

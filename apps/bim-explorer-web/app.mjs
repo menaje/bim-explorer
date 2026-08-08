@@ -1,13 +1,15 @@
 import {
   createBimRenderer3dHost,
+  createBimSurface,
   createBounded3dRenderer,
-  createBoundedPointCloudRenderer,
-  createPointCloudWebGl2Backend,
   createWebGl2Backend,
-} from "../../packages/bim-renderer-3d/src/index.mjs";
+} from "../../packages/bim-surface/runtime/index.mjs";
 import {
-  createBimSemanticExplorer,
-} from "../../packages/bim-semantic-explorer/src/index.mjs";
+  createBoundedPointCloudRenderer,
+} from "../../packages/bim-renderer-3d/src/point-cloud.mjs";
+import {
+  createPointCloudWebGl2Backend,
+} from "../../packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs";
 import {
   createReferenceMeshExplorer,
 } from "./reference-mesh-explorer.mjs";
@@ -738,6 +740,24 @@ async function disposeActive(reason) {
   let explorerDisposed = false;
   let hostReceipt = null;
   let clientDisposed = false;
+  if (current.surface !== null) {
+    let surfaceReceipt = null;
+    try {
+      surfaceReceipt = await current.surface.dispose({ reason });
+      explorerDisposed = surfaceReceipt.explorerDisposed;
+      hostReceipt = surfaceReceipt.hostReceipt;
+    } finally {
+      clientDisposed = await current.client.dispose();
+    }
+    elements.diagLife.textContent = "disposed";
+    return {
+      clientDisposed,
+      explorerDisposed,
+      hostReceipt,
+      backend: current.backend.state,
+      client: current.client.state,
+    };
+  }
   try {
     explorerDisposed = await current.explorer.dispose();
   } finally {
@@ -1393,51 +1413,66 @@ async function openBytes(bytesValue, {
       backend,
       limits: rendererLimits(format, opened.snapshot),
     });
-    const host = createBimRenderer3dHost({
-      kind: runtime.hostKind,
-      renderer,
-    });
-    phase = "renderer-mount";
-    const mount = await host.mount({
-      session: opened.session,
-      snapshot: opened.snapshot,
-      workerLease: opened.workerLease,
-    });
-    phase = "semantic-initialize";
     const reference =
       opened.snapshot.source.sourceRole ===
         "derived-or-reference-mesh";
-    const explorer = reference
-      ? createReferenceMeshExplorer({
-          session: opened.session,
-          snapshot: opened.snapshot,
-          limits: {
-            maximumDomRows: 64,
-            maximumSearchResults: 500,
-            searchPageSize: 25,
-          },
-        })
-      : createBimSemanticExplorer({
-          session: opened.session,
-          snapshot: opened.snapshot,
-          storage: localStorageAdapter(),
-          limits: {
-            maximumDomRows: 64,
-            maximumLoadedTreeItems: 2_000,
-            maximumRelations: 100,
-            maximumSearchResults: 500,
-            searchPageSize: 25,
-            treePageSize: 25,
-          },
-        });
-    await explorer.initialize();
-    const entity = firstRenderable(opened.snapshot);
-    if (entity !== null) {
-      await revealFirstProduct(
-        explorer,
-        opened.snapshot,
-        entity,
-      );
+    let explorer;
+    let host;
+    let mount;
+    let surface = null;
+    if (reference) {
+      host = createBimRenderer3dHost({
+        kind: runtime.hostKind,
+        renderer,
+      });
+      phase = "renderer-mount";
+      mount = await host.mount({
+        session: opened.session,
+        snapshot: opened.snapshot,
+        workerLease: opened.workerLease,
+      });
+      phase = "semantic-initialize";
+      explorer = createReferenceMeshExplorer({
+        session: opened.session,
+        snapshot: opened.snapshot,
+        limits: {
+          maximumDomRows: 64,
+          maximumSearchResults: 500,
+          searchPageSize: 25,
+        },
+      });
+      await explorer.initialize();
+      const entity = firstRenderable(opened.snapshot);
+      if (entity !== null) {
+        await revealFirstProduct(
+          explorer,
+          opened.snapshot,
+          entity,
+        );
+      }
+    } else {
+      phase = "surface-open";
+      surface = createBimSurface({
+        kind: runtime.hostKind,
+        renderer,
+        storage: localStorageAdapter(),
+        semanticLimits: {
+          maximumDomRows: 64,
+          maximumLoadedTreeItems: 2_000,
+          maximumRelations: 100,
+          maximumSearchResults: 500,
+          searchPageSize: 25,
+          treePageSize: 25,
+        },
+      });
+      const receipt = await surface.open({
+        session: opened.session,
+        snapshot: opened.snapshot,
+        workerLease: opened.workerLease,
+      });
+      mount = receipt.mount;
+      host = surface.host;
+      explorer = surface.explorer;
     }
     active = {
       backend,
@@ -1449,6 +1484,7 @@ async function openBytes(bytesValue, {
       mount,
       opened,
       origin,
+      surface,
     };
     openingClient = null;
     lastFailedBytes?.fill(0);
@@ -1555,7 +1591,9 @@ async function openBytes(bytesValue, {
           ? "RENDERER_CREATE_FAILED"
           : phase === "renderer-mount"
             ? "RENDERER_MOUNT_FAILED"
-            : "SEMANTIC_INITIALIZE_FAILED";
+            : phase === "surface-open"
+              ? "BIM_SURFACE_OPEN_FAILED"
+              : "SEMANTIC_INITIALIZE_FAILED";
     setStatus(
       "failed",
       `Open failed: ${code}`,

@@ -28,6 +28,17 @@ source/renderer와 Browser/VS Code host conformance는
 않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
 고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
 
+외부 product shell이 재사용할 BIM lifecycle은
+[`bim-surface.json`](bim-surface.json)이 별도로 소유합니다.
+`@bim-explorer/bim-surface@0.1.0`은 source, bounded mesh renderer host,
+semantic explorer와 optional Spatial provider를 하나의 zero-runtime-dependency
+ESM으로 구성합니다. 두 번의 byte-identical pack과 offline clean install,
+exact source identity·selection·search·cleanup 및 Browser/VS Code 제품
+composition을 통과했습니다. repository manifest는 private이고 public registry,
+immutable release asset과 실제 Spatial consumer는 아직 held입니다. exact
+결과는 [package evidence](evidence/bim-surface-package-2026-08-09.json)에
+고정합니다.
+
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
 Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,

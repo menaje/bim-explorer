@@ -3,7 +3,8 @@
 `.ifc`, `.gltf`, `.glb`, `.e57`, `.las`, `.laz`를 같은 `bim-explorer-web`
 application, isolated source Worker와 WebGL2 renderer로 여는 read-only
 Custom Editor host입니다.
-IFC는 `BimModelSource`와 semantic explorer를 사용하고, glTF/GLB는
+IFC는 Browser와 같은 host-neutral `bim-surface/0.1` runtime으로
+`BimModelSource`, bounded 3D host와 semantic explorer를 합성하고, glTF/GLB는
 source-native reference mesh explorer를 사용합니다. LAS/LAZ는 8 MiB·
 500,000-point 한도, E57 multiple-scan은 최대 32 MiB·2,000,000-point의 명시적
 상한 안에서 source-neutral point range로 엽니다. `point:n` 선택은 exact source
@@ -36,7 +37,8 @@ bounded WebGL2 projection과 close cleanup을 재현합니다. 이 검증은
 package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 bytes만
 보내며 local URI나 IFC GlobalId를 전달하거나 합성하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
-검증 정책이 포함됩니다.
+검증 정책이 포함됩니다. VSIX stage는 generated `bim-surface` runtime도
+명시적으로 포함하며 stale bundle 검사를 먼저 통과해야 합니다.
 
 `npm run qualify:las-laz:product:vscode`는 cache-only paired LAS/LAZ를
 staged Custom Editor와 빈 profile에 clean-installed VSIX에서 각각 열어

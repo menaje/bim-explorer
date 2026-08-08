@@ -28,7 +28,8 @@ local BIM source
      - source-local identity map
   -> BimModelSource
   -> versioned Viewer Core/render protocol
-  -> generic 3D presentation + BIM semantic explorer
+  -> host-neutral BIM Surface
+     - generic 3D presentation + BIM semantic explorer
   -> Browser Host or VS Code Host
 ```
 
@@ -163,6 +164,28 @@ quantity/material/classification detail도 선택 시 deferred range에서
 읽습니다. generated fixture의 기존 semantic conformance와 46.77MB 공개
 fixture의 Browser/clean-installed VSIX product scale은 통과했지만,
 value-level public Browser semantic conformance는 보류합니다.
+
+## Host-neutral BIM Surface
+
+[`bim-surface/0.1`](../specs/bim-surface-v0.1.md)은 한 source session의
+bounded 3D host, semantic explorer, initial selection과 cleanup을 합성하는
+재사용 경계입니다. DOM, file chooser와 network를 소유하지 않으므로 Browser,
+VS Code Webview 또는 외부 product shell이 같은 source identity와 lifecycle을
+사용할 수 있습니다. Browser와 VS Code shared app의 IFC 경로가 이 surface를
+실제로 사용합니다.
+
+`@bim-explorer/bim-surface@0.1.0` release-candidate는 source, mesh renderer,
+semantic explorer와 optional Spatial provider contract를 하나의 zero-runtime-
+dependency ESM으로 묶습니다. repository manifest는 우발적 publication을 막기
+위해 private로 유지합니다. 별도 stage가 MPL-2.0, NOTICE와 SOURCE_OFFER를
+포함해 두 번 byte-identical pack하고 offline clean consumer에서 source open,
+selection, search와 exact cleanup을 재현했습니다. 이는 아직 public registry나
+immutable release asset, 실제 Spatial consumer conformance가 아닙니다.
+
+E57/LAS/LAZ point reference runtime은 experimental source-neutral 경계로
+남겨 이 package entrypoint에 포함하지 않습니다. Surface의 authority record는
+Workspace, Canonical Entity ID, mutation, accept, publish와 export를 모두
+거부합니다.
 
 ## Viewer Core와 3D presentation
 
@@ -369,6 +392,8 @@ protocol 0.1.0을 exact pin합니다. Context request에는 Canonical ID를
 Render/Pick ID를 다시 resolve합니다. BIM base layer와 Spatial layer는
 source/revision/owner를 합치지 않습니다.
 
-현재 generated IFC4와 synthetic bridge provider conformance만 통과했습니다.
-실제 Spatial consumer, standalone Spatial bundle과 public BIM package는
-각각 Spatial #8/#16과 consumer package admission Gate가 소유합니다.
+현재 generated IFC4와 synthetic bridge provider conformance, 그리고
+Explorer 소유 `bim-surface` release-candidate의 offline clean install만
+통과했습니다. 실제 Spatial consumer, standalone Spatial bundle과 immutable
+public package exact-pin은 각각 Spatial #8/#16과 consumer package admission
+Gate가 소유합니다.
