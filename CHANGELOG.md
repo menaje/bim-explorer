@@ -22,6 +22,10 @@
 - compose two generated IFC sources and the pinned product-scale GLB in one
   source-scoped federation projection, qualifying bounded headless/Chrome
   WebGL2 first frame, aggregate memory and deterministic cleanup;
+- compare that product-scale federation projection across macOS arm64 and
+  Linux x64 CI through a committed portable matrix;
+- add a privacy-safe reference-format intake/triage contract and public issue
+  form without promoting any held codec, SDK or authority Gate;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

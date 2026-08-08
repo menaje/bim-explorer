@@ -22,6 +22,8 @@ bim-explorer-federation-alignment/0.1
 bim-explorer-federation-selection/0.1
 bim-explorer-federation-saved-view/0.1
 bim-explorer-reference-format-registry/0.1
+bim-explorer-reference-format-intake/0.1
+bim-explorer-reference-format-triage/0.1
 bim-explorer-federated-renderer-projection/0.1
 ```
 
@@ -148,6 +150,11 @@ admission하지 않습니다.
 
 product-scale budget은 experimental codec admission과 별도의 production
 Gate입니다.
+
+후속 format의 실제 사용자 과업과 qualification 준비 상태는
+[`reference-format-intake/0.1`](reference-format-intake-v0.1.md) packet으로
+접수합니다. 완전한 packet도 별도 codec/SDK compatibility evidence 전에는
+registry의 `admitted` 값을 바꾸지 않습니다.
 
 ## Derived renderer projection
 

@@ -20,4 +20,5 @@ schema와 valid/invalid fixture가 함께 준비되기 전 확정하지 않습�
 - [BIM Spatial integration v0.1](bim-spatial-integration-v0.1.md)
 - [openBIM Explorer v0.1](openbim-explorer-v0.1.md)
 - [BIM federation v0.1](bim-federation-v0.1.md)
+- [Reference format intake v0.1](reference-format-intake-v0.1.md)
 - [glTF reference source v0.1](gltf-reference-source-v0.1.md)

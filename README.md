@@ -168,7 +168,10 @@ render/highlight와 cleanup이 동일함을 별도
 같은 파일은 Browser 제품의 실제 local file input, staged VS Code와 빈
 profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selection,
 path-free bridge, 닫기와 전량 cleanup을 통과했습니다. physical GPU 또는 BIM
-semantic authority는 승인하지 않습니다.
+semantic authority는 승인하지 않습니다. 다음 held format 제안은
+[`reference format evidence intake`](docs/reference-format-intake.md)로 실제
+사용자 과업·public fixture·권리·좌표·lifecycle evidence를 접수하며, intake
+완료만으로 format 지원을 승인하지 않습니다.
 
 ## 비목표
 

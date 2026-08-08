@@ -114,6 +114,12 @@ assemble:federation:product-scale:platform`으로 합치며 geometry, range,
 render/highlight와 cleanup의 portable projection이 동일하지 않으면
 실패합니다. memory/time은 runner별 예산 관측으로 분리해 보존합니다.
 
+`reference-format-intake` test는 held LAS/LAZ/E57, 3D Tiles, RVT/DGN 제안을
+실제 multi-source 과업, public fixture, implementation 권리, coordinate와
+lifecycle evidence로 분류합니다. 완전한 packet도 qualification 착수만
+허용하고 registry admission은 계속 false이며, 고객 모델·credential·absolute
+path와 이미 admission된 format 재개방을 거부합니다.
+
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick
 revision binding, source switch, abort, invalid backend cleanup과 deterministic

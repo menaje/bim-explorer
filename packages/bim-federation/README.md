@@ -30,3 +30,11 @@ CC BY 4.0 `A Beautiful Game` GLB를 한 first frame에 동시에 올려 53 insta
 Chrome WebGL2 cleanup을 통과했습니다. 이 결과는 synthetic IFC와 reference
 mesh 조합이며 datum transformation, 실제 측량 좌표, 실제 Spatial consumer,
 사용자 수요나 production federation evidence는 아닙니다.
+
+held format의 다음 구현 후보는
+[`bim-explorer-reference-format-intake/0.1`](../../specs/reference-format-intake-v0.1.md)으로
+접수합니다. evaluator는 실제 multi-source 과업, public fixture,
+codec/SDK 권리, coordinate와 lifecycle evidence의 누락을 deterministic
+code로 반환합니다. 완전한 packet도 별도 qualification 전에는 registry
+admission, BIM semantics, write, round-trip 또는 Spatial authority를 만들지
+않습니다.

@@ -6,7 +6,7 @@ authority:
   - coordinate-alignment-boundary
   - reference-format-admission
   - federation-refresh-lifecycle
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-08
 ---
 
 # Federation과 reference format 경계
@@ -107,7 +107,11 @@ Gate입니다.
 
 다음 실제 format은 사용자 과업, redistribution 가능한 fixture, exact
 parser/SDK license, coordinate profile, first-frame/memory/cleanup evidence가
-함께 생긴 뒤 선택합니다. glTF external resource와 required extension,
+함께 생긴 뒤 선택합니다. 후보 제안은
+[`reference format evidence intake`](reference-format-intake.md)의 공개 issue
+form과 fail-closed triage receipt를 사용하며 고객 모델·credential·absolute
+path를 받지 않습니다. intake가 완전해도 별도 codec/SDK conformance 전에는
+format을 admission하지 않습니다. glTF external resource와 required extension,
 product-scale 제품 file-open은 호스트별 Gate입니다. bounded local Browser/VS
 Code 제품 file-open은 Khronos Box로 macOS arm64와 Linux x64 product-shell
 evidence에서 통과했습니다. 42.98MB `A Beautiful Game`은 on-demand CC BY

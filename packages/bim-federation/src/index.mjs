@@ -1,3 +1,9 @@
+import {
+  BIM_REFERENCE_FORMAT_INTAKE_SCHEMA,
+  BIM_REFERENCE_FORMAT_TRIAGE_SCHEMA,
+  evaluateReferenceFormatIntakeWithRegistry,
+} from "./reference-format-intake.mjs";
+
 export const BIM_FEDERATION_CONTRACT =
   "bim-explorer-federation/0.1";
 export const BIM_FEDERATION_SOURCE_SCHEMA =
@@ -10,6 +16,11 @@ export const BIM_FEDERATION_SAVED_VIEW_SCHEMA =
   "bim-explorer-federation-saved-view/0.1";
 export const BIM_REFERENCE_FORMAT_REGISTRY_SCHEMA =
   "bim-explorer-reference-format-registry/0.1";
+
+export {
+  BIM_REFERENCE_FORMAT_INTAKE_SCHEMA,
+  BIM_REFERENCE_FORMAT_TRIAGE_SCHEMA,
+};
 
 export {
   BIM_FEDERATED_RENDERER_PROJECTION_SCHEMA,
@@ -528,6 +539,13 @@ export function getReferenceFormatCapability(format) {
     );
   }
   return deepFreeze(structuredClone(capability));
+}
+
+export function evaluateReferenceFormatIntake(intake) {
+  return evaluateReferenceFormatIntakeWithRegistry(
+    intake,
+    getReferenceFormatCapability,
+  );
 }
 
 function cameraDescriptor(value) {
