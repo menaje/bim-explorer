@@ -14,6 +14,8 @@ const [
   e57MultipleScanProfileEvidence,
   e57SphericalBrowserProductEvidence,
   e57SphericalVscodeProductEvidence,
+  e57MultipleScanBrowserProductEvidence,
+  e57MultipleScanVscodeProductEvidence,
   e57BrowserProductEvidence,
   e57VscodeProductEvidence,
   lasLazEvidence,
@@ -54,6 +56,16 @@ const [
   readFile(
     "compatibility/evidence/" +
       "e57-spherical-vscode-product-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-multiple-scan-browser-product-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-multiple-scan-vscode-product-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
   readFile(
@@ -103,6 +115,8 @@ test("reference sample probes remain separate from format admission", () => {
       e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
+      e57MultipleScanBrowserProductEvidence,
+      e57MultipleScanVscodeProductEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,
@@ -113,7 +127,7 @@ test("reference sample probes remain separate from format admission", () => {
     ),
     {
       status: "pre-admission",
-      passedGates: 31,
+      passedGates: 33,
       heldGates: 4,
       sampleFormats: 3,
     },
@@ -132,6 +146,8 @@ test("an E57 product open cannot claim format admission", () => {
       e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
+      e57MultipleScanBrowserProductEvidence,
+      e57MultipleScanVscodeProductEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,
@@ -156,6 +172,8 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
+      e57MultipleScanBrowserProductEvidence,
+      e57MultipleScanVscodeProductEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,

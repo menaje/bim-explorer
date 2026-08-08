@@ -38,6 +38,9 @@ import {
   acquirePublicE57SphericalFixture,
 } from "./public-e57-spherical-fixture.mjs";
 import {
+  acquirePublicE57MultipleScanFixture,
+} from "./public-e57-multiple-scan-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -59,6 +62,7 @@ function parseArguments(values) {
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
+    includeE57MultipleScanFixture: false,
     includePublicFixture: true,
     output: null,
   };
@@ -74,6 +78,10 @@ function parseArguments(values) {
     }
     if (name === "--e57-spherical") {
       options.includeE57SphericalFixture = true;
+      continue;
+    }
+    if (name === "--e57-multiple-scan") {
+      options.includeE57MultipleScanFixture = true;
       continue;
     }
     if (name === "--no-public") {
@@ -95,6 +103,7 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
         "[--product-scale] [--point-cloud] [--e57-spherical] " +
+          "[--e57-multiple-scan] " +
           "[--no-public] " +
           "[--output path]",
     );
@@ -135,6 +144,7 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall({
+  includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
@@ -169,10 +179,14 @@ export async function qualifyVscodeVsixInstall({
   const e57SphericalFixture = includeE57SphericalFixture
     ? await acquirePublicE57SphericalFixture()
     : null;
+  const e57MultipleScanFixture = includeE57MultipleScanFixture
+    ? await acquirePublicE57MultipleScanFixture()
+    : null;
   pointFixtures?.bytes.las.fill(0);
   pointFixtures?.bytes.laz.fill(0);
   e57Fixture?.bytes.fill(0);
   e57SphericalFixture?.bytes.fill(0);
+  e57MultipleScanFixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -375,6 +389,12 @@ export async function qualifyVscodeVsixInstall({
               BIM_EXPLORER_VSCODE_E57_SPHERICAL_SOURCE:
                 e57SphericalFixture.cachePath,
             }),
+        ...(e57MultipleScanFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE:
+                e57MultipleScanFixture.cachePath,
+            }),
         ...(productScaleReferenceFixture === null
           ? {}
           : {
@@ -545,6 +565,20 @@ export async function qualifyVscodeVsixInstall({
                 ?.nonBackgroundPixels > 0,
           }
         : {}),
+      ...(includeE57MultipleScanFixture
+        ? {
+            installedPackageOpensE57MultipleScan:
+              allTrue(runtime.pointAssertions?.e57MultipleScan),
+            installedE57MultipleScanPointProjection:
+              runtime.pointObservations?.e57MultipleScan?.pointCloud
+                ?.rangeSha256 ===
+                "4dd5bbef38ffd815c00a01cf3feaa07a" +
+                  "85b40fa7019b2a6dad448e373381e697",
+            installedE57MultipleScanVisibleProjection:
+              runtime.pointObservations?.e57MultipleScan?.renderer
+                ?.nonBackgroundPixels > 0,
+          }
+        : {}),
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -663,7 +697,9 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
-        ...(includePointFixtures || includeE57SphericalFixture
+        ...(includePointFixtures ||
+        includeE57SphericalFixture ||
+        includeE57MultipleScanFixture
           ? {
               pointRuntime: {
                 fixtures: runtime.pointFixtures,
@@ -685,7 +721,9 @@ export async function qualifyVscodeVsixInstall({
             ? "passed-bounded-read-only"
             : "not-run",
         pointFixtureOpen:
-          includePointFixtures || includeE57SphericalFixture
+          includePointFixtures ||
+          includeE57SphericalFixture ||
+          includeE57MultipleScanFixture
           ? "passed-bounded-read-only-unqualified-coordinates"
           : "not-run",
         marketplaceRelease: "held",

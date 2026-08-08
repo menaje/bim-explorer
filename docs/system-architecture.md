@@ -330,8 +330,9 @@ cleanup됩니다. 별도 32 MiB qualification envelope는 cache-only 공개 E57�
 1,213,990개 record와 structured row/column stream을 해제하고 네 explicit
 quaternion/translation pose 및 한 implicit identity pose를 적용해 독립
 `pye57/libE57Format` digest parity를 통과했습니다. 이 경로는 제품 Worker에
-admission되지 않았으며 local registration을 CRS나 surveyed datum으로
-승격하지 않습니다. E57의 CRS/surveyed datum, multiple-scan 제품 open,
+명시적으로 연결되어 actual Browser, staged VS Code와 clean-installed VSIX에서
+같은 1,213,990-point projection과 cleanup을 재현합니다. local registration을
+CRS나 surveyed datum으로 승격하지 않습니다. E57의 CRS/surveyed datum,
 extension profile과 format admission은 계속 별도 Gate입니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic

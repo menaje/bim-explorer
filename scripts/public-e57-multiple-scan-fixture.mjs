@@ -140,6 +140,33 @@ function validScan(value, index) {
     scan.sectionLength > 32;
 }
 
+function validProductProjection(value) {
+  const projection = plainRecord(
+    value,
+    "public E57 multiple-scan product projection",
+  );
+  exactKeys(projection, [
+    "pointFormat",
+    "pointRangeByteLength",
+    "pointRangePayloadBytes",
+    "pointRangeSha256",
+    "origin",
+    "maximumAbsoluteError",
+    "bounds",
+  ], "public E57 multiple-scan product projection");
+  return projection.pointFormat ===
+      "cartesian-xyz-rgb-multiple-scan" &&
+    projection.pointRangeByteLength === 19_423_888 &&
+    projection.pointRangePayloadBytes === 19_423_840 &&
+    projection.pointRangeSha256 ===
+      "4dd5bbef38ffd815c00a01cf3feaa07a" +
+        "85b40fa7019b2a6dad448e373381e697" &&
+    finiteVector(projection.origin, 3) &&
+    projection.maximumAbsoluteError > 0 &&
+    projection.maximumAbsoluteError < 1e-6 &&
+    validBounds(projection.bounds);
+}
+
 function validExpected(expected) {
   const value = plainRecord(
     expected,
@@ -164,6 +191,7 @@ function validExpected(expected) {
     "aggregateWorldBounds",
     "aggregateWorldPositionNanometerInt64LeSha256",
     "aggregateRgbSha256",
+    "productProjection",
     "scans",
   ], "public E57 multiple-scan expected");
   const expectedFields = [
@@ -198,6 +226,7 @@ function validExpected(expected) {
     value.aggregateWorldPositionNanometerInt64LeSha256 ===
       EXPECTED_POSITION_SHA256 &&
     value.aggregateRgbSha256 === EXPECTED_RGB_SHA256 &&
+    validProductProjection(value.productProjection) &&
     Array.isArray(value.scans) &&
     value.scans.length === 5 &&
     value.scans.every(validScan);

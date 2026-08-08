@@ -23,8 +23,17 @@ const HOST_MESSAGE =
 const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
-const MAXIMUM_POINT_SOURCE_BYTES = 8 * 1024 * 1024;
+const MAXIMUM_E57_SOURCE_BYTES = 32 * 1024 * 1024;
+const MAXIMUM_LAS_LAZ_SOURCE_BYTES = 8 * 1024 * 1024;
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
+const MULTIPLE_SCAN_E57_RENDERER_LIMITS = Object.freeze({
+  maximumCpuStagingBytes: 32 * 1024 * 1024,
+  maximumGpuBytes: 32 * 1024 * 1024,
+  maximumPointPayloadBytes: 32 * 1024 * 1024,
+  maximumPoints: 2_000_000,
+  maximumRangeBytes: 32 * 1024 * 1024,
+  maximumPointSize: 16,
+});
 const PRODUCT_SCALE_GLTF_RENDERER_LIMITS = Object.freeze({
   maximumRangeBytes: 32 * 1024 * 1024,
   maximumSourceReadBytes: 32 * 1024 * 1024,
@@ -43,6 +52,12 @@ function rendererLimits(format, snapshot) {
   return requiresProductScaleBudget
     ? PRODUCT_SCALE_GLTF_RENDERER_LIMITS
     : {};
+}
+
+function pointSourceMaximumBytes(format) {
+  return format === "e57"
+    ? MAXIMUM_E57_SOURCE_BYTES
+    : MAXIMUM_LAS_LAZ_SOURCE_BYTES;
 }
 
 const elements = {
@@ -867,17 +882,22 @@ async function client({
 }
 
 async function pointClient({
-  maximumSourceBytes = MAXIMUM_POINT_SOURCE_BYTES,
+  format,
+  maximumSourceBytes = pointSourceMaximumBytes(format),
   openTimeoutMs = 15_000,
 } = {}) {
+  if (!POINT_SOURCE_FORMATS.has(format)) {
+    throw new TypeError("Point source client format is unsupported");
+  }
+  const formatMaximumSourceBytes = pointSourceMaximumBytes(format);
   const boundedSourceBytes =
     Number.isSafeInteger(maximumSourceBytes) &&
     maximumSourceBytes > 0
       ? Math.min(
           maximumSourceBytes,
-          MAXIMUM_POINT_SOURCE_BYTES,
+          formatMaximumSourceBytes,
         )
-      : MAXIMUM_POINT_SOURCE_BYTES;
+      : formatMaximumSourceBytes;
   const boundedOpenTimeout =
     Number.isSafeInteger(openTimeoutMs) &&
     openTimeoutMs >= 1_000 &&
@@ -958,8 +978,8 @@ async function openPointBytes(bytesValue, {
   if (
     !(bytesValue instanceof Uint8Array) ||
     bytesValue.byteLength === 0 ||
-    bytesValue.byteLength > MAXIMUM_POINT_SOURCE_BYTES ||
-    !POINT_SOURCE_FORMATS.has(format)
+    !POINT_SOURCE_FORMATS.has(format) ||
+    bytesValue.byteLength > pointSourceMaximumBytes(format)
   ) {
     throw new RangeError(
       "Selected point source exceeds its bounded profile",
@@ -985,7 +1005,10 @@ async function openPointBytes(bytesValue, {
   if (sequence !== openingSequence) {
     return null;
   }
-  const sourceClient = await pointClient(limits);
+  const sourceClient = await pointClient({
+    ...limits,
+    format,
+  });
   if (sequence !== openingSequence) {
     await sourceClient.dispose();
     return null;
@@ -1011,6 +1034,10 @@ async function openPointBytes(bytesValue, {
     });
     renderer = createBoundedPointCloudRenderer({
       backend,
+      limits: format === "e57" &&
+        opened.artifact.source.pointFormat.endsWith("-multiple-scan")
+        ? MULTIPLE_SCAN_E57_RENDERER_LIMITS
+        : {},
       pointSize: 3,
     });
     phase = "point-renderer-mount";
@@ -1458,7 +1485,7 @@ function localFileFormat(file) {
 async function readLocalFile(file) {
   const format = localFileFormat(file);
   const maximumBytes = POINT_SOURCE_FORMATS.has(format)
-    ? MAXIMUM_POINT_SOURCE_BYTES
+    ? pointSourceMaximumBytes(format)
     : MAXIMUM_SOURCE_BYTES;
   if (
     file.size <= 0 ||

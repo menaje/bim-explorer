@@ -439,7 +439,7 @@ test("Custom Editor sends bounded E57 with the point-source cap", async () => {
   assert.equal(sourceMessage.format, "e57");
   assert.equal(
     sourceMessage.limits.maximumSourceBytes,
-    8 * 1024 * 1024,
+    32 * 1024 * 1024,
   );
   assert.equal(
     JSON.stringify(sourceMessage).includes("acme-scan"),

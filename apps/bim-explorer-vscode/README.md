@@ -4,14 +4,15 @@
 application, isolated source Worker와 WebGL2 renderer로 여는 read-only
 Custom Editor host입니다.
 IFC는 `BimModelSource`와 semantic explorer를 사용하고, glTF/GLB는
-source-native reference mesh explorer를 사용합니다. E57/LAS/LAZ는 8 MiB·
-500,000-point 한도의 source-neutral point range로 열며 CRS, point identity,
-picking, LOD 또는 BIM semantic authority를 주장하지 않습니다.
+source-native reference mesh explorer를 사용합니다. LAS/LAZ는 8 MiB·
+500,000-point 한도, E57 multiple-scan은 최대 32 MiB·2,000,000-point의 명시적
+상한 안에서 source-neutral point range로 열며 CRS, point identity, picking,
+LOD 또는 BIM semantic authority를 주장하지 않습니다.
 
 - source URI는 extension host 안에서만 사용하며 webview message와
   diagnostics에 넣지 않습니다.
 - `file:` URI, regular file, non-symlink와 최대 64 MiB를 읽기 전후에
-  검증하며 E57/LAS/LAZ에는 별도 8 MiB cap을 적용합니다.
+  검증하며 LAS/LAZ에는 8 MiB, E57에는 32 MiB cap을 적용합니다.
 - source 변경은 exact URI watcher가 새 generation을 보내 기존 Worker와
   fingerprint-scoped cache를 무효화합니다.
 - cancel, retry와 diagnostics command는 active editor에만 전달합니다.
@@ -52,3 +53,9 @@ surveyed datum과 E57 format admission은 계속 별도 Gate입니다.
 spherical RAE/intensity/RGB sample의 155,201-point projection을 staged와
 clean-installed VSIX에서 비교합니다. intensity omission은 lossy로 유지하고
 sample은 VSIX에 포함하지 않습니다.
+
+`npm run qualify:e57:multiple-scan:product:vscode`는 22,146,048-byte
+cache-only E57의 다섯 scan과 1,213,990 points를 staged Custom Editor 및
+clean-installed VSIX에서 동일한 pose-applied point range로 엽니다. 네 explicit
+pose와 한 implicit identity pose는 local registration으로만 취급하며, CRS나
+surveyed datum authority 및 E57 format admission으로 승격하지 않습니다.

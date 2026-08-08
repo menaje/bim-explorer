@@ -3,11 +3,13 @@ import {
   LAS_LAZ_POINT_SOURCE_CONTRACT,
 } from "../../packages/las-laz-point-source/src/index.mjs";
 import {
-  E57_MAXIMUM_SOURCE_BYTES,
+  E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+  E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
   E57_POINT_SOURCE_CONTRACT,
 } from "../../packages/e57-point-source/src/index.mjs";
 import {
   BIM_POINT_RANGE_MEDIA_TYPE,
+  BIM_POINT_RANGE_MAXIMUM_BYTES,
 } from "../../packages/bim-renderer-3d/src/point-cloud.mjs";
 
 export const POINT_SOURCE_WORKER_REQUEST =
@@ -16,13 +18,18 @@ export const POINT_SOURCE_WORKER_RESPONSE =
   "bim-explorer-point-source-worker-response/0.1";
 
 const DEFAULT_LIMITS = Object.freeze({
-  maximumSourceBytes: Math.min(
+  maximumSourceBytes: Math.max(
     LAS_LAZ_MAXIMUM_SOURCE_BYTES,
-    E57_MAXIMUM_SOURCE_BYTES,
+    E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
   ),
   openTimeoutMs: 15_000,
 });
 const FORMATS = new Set(["e57", "las", "laz"]);
+const SOURCE_LIMITS = Object.freeze({
+  e57: E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+  las: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+  laz: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+});
 const CONTRACTS = new Map([
   ["e57", E57_POINT_SOURCE_CONTRACT],
   ["las", LAS_LAZ_POINT_SOURCE_CONTRACT],
@@ -110,8 +117,8 @@ function validateOptions(options) {
   );
   positiveInteger(limits.openTimeoutMs, "point source openTimeoutMs");
   if (
-    limits.maximumSourceBytes > LAS_LAZ_MAXIMUM_SOURCE_BYTES ||
-    limits.maximumSourceBytes > E57_MAXIMUM_SOURCE_BYTES
+    limits.maximumSourceBytes >
+      E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES
   ) {
     throw new RangeError("point source byte limit exceeds its profile");
   }
@@ -147,6 +154,16 @@ function validateResult(value, expected) {
     "point source Worker range",
   );
   const bytes = rangeBytes(range.bytes);
+  const multipleScanE57 =
+    expected.format === "e57" &&
+    typeof source.pointFormat === "string" &&
+    source.pointFormat.endsWith("-multiple-scan");
+  const maximumPoints = multipleScanE57
+    ? E57_MULTIPLE_SCAN_MAXIMUM_POINTS
+    : 500_000;
+  const maximumRangeBytes = multipleScanE57
+    ? BIM_POINT_RANGE_MAXIMUM_BYTES
+    : 8 * 1024 * 1024;
   if (
     artifact.schema !== CONTRACTS.get(expected.format) ||
     source.format !== expected.format ||
@@ -156,16 +173,21 @@ function validateResult(value, expected) {
     source.revisionId.length === 0 ||
     source.semanticAuthority !== false ||
     source.coordinateReferenceStatus !== "unqualified" ||
+    typeof source.pointFormat !== "string" ||
+    source.pointFormat.length === 0 ||
     source.sourceRole !== "derived-or-reference-points" ||
     range.mediaType !== BIM_POINT_RANGE_MEDIA_TYPE ||
     !SHA256.test(range.sha256 ?? "") ||
     bytes.byteLength !== range.byteLength ||
     bytes.byteLength <= 48 ||
+    bytes.byteLength > maximumRangeBytes ||
     artifact.model?.points <= 0 ||
-    artifact.model.points > 500_000 ||
+    artifact.model.points > maximumPoints ||
     artifact.model.ranges !== 1 ||
     artifact.resources?.inputBytes !== expected.byteLength ||
     artifact.resources.pointRangeBytes !== bytes.byteLength ||
+    artifact.resources.pointRangePayloadBytes !==
+      bytes.byteLength - 48 ||
     artifact.cleanup?.cpuProjectionBuffersReleased !== true ||
     artifact.cleanup.decoderReleased !== true ||
     artifact.cleanup.wasmAllocationsReleased !== true ||
@@ -318,15 +340,16 @@ export class PointSourceWorkerClient {
     if (!(bytesValue instanceof Uint8Array)) {
       throw new TypeError("point source bytes must be a Uint8Array");
     }
+    if (!FORMATS.has(format)) {
+      throw new TypeError("point source format is unsupported");
+    }
     if (
       bytesValue.byteLength === 0 ||
       bytesValue.byteLength >
-        this.#options.limits.maximumSourceBytes
+        this.#options.limits.maximumSourceBytes ||
+      bytesValue.byteLength > SOURCE_LIMITS[format]
     ) {
       throw new RangeError("point source exceeds its byte limit");
-    }
-    if (!FORMATS.has(format)) {
-      throw new TypeError("point source format is unsupported");
     }
     if (this.#worker !== null) {
       this.terminate();

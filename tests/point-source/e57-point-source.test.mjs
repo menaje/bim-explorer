@@ -3,11 +3,15 @@ import test from "node:test";
 
 import {
   createE57PointSourceArtifact,
+  createE57ProductPointSourceArtifact,
   decodeE57PointSource,
 } from "../../packages/e57-point-source/src/index.mjs";
 import {
   acquirePublicE57Fixture,
 } from "../../scripts/public-e57-fixture.mjs";
+import {
+  acquirePublicE57MultipleScanFixture,
+} from "../../scripts/public-e57-multiple-scan-fixture.mjs";
 
 test("bounded E57 product source decodes the public colored cube", async () => {
   const fixture = await acquirePublicE57Fixture();
@@ -97,6 +101,87 @@ test("E57 product source fails closed on CRC and point limits", async () => {
       /header identity is invalid/u,
     );
   } finally {
+    fixture.bytes.fill(0);
+  }
+});
+
+test("bounded E57 product source aggregates five posed scans", async () => {
+  const fixture = await acquirePublicE57MultipleScanFixture();
+  let artifact = null;
+  try {
+    artifact = await createE57ProductPointSourceArtifact(
+      fixture.bytes,
+    );
+    const expected = fixture.manifest.expected;
+    const projection = expected.productProjection;
+    assert.equal(
+      artifact.schema,
+      "bim-explorer-e57-point-source/0.1",
+    );
+    assert.equal(artifact.source.format, "e57");
+    assert.equal(
+      artifact.source.pointFormat,
+      projection.pointFormat,
+    );
+    assert.equal(artifact.source.semanticAuthority, false);
+    assert.equal(
+      artifact.source.coordinateReferenceStatus,
+      "unqualified",
+    );
+    assert.equal(artifact.model.points, expected.pointRecords);
+    assert.equal(artifact.model.ranges, 1);
+    assert.deepEqual(artifact.model.bounds, projection.bounds);
+    assert.equal(
+      artifact.range.byteLength,
+      projection.pointRangeByteLength,
+    );
+    assert.equal(
+      artifact.range.sha256,
+      projection.pointRangeSha256,
+    );
+    assert.equal(
+      artifact.resources.pointRangePayloadBytes,
+      projection.pointRangePayloadBytes,
+    );
+    assert.equal(
+      artifact.profile.header.scanCount,
+      expected.scanCount,
+    );
+    assert.equal(
+      artifact.profile.header.explicitPoseScans,
+      expected.explicitPoseScans,
+    );
+    assert.equal(
+      artifact.profile.header.implicitIdentityPoseScans,
+      expected.implicitIdentityPoseScans,
+    );
+    assert.equal(artifact.profile.scans.length, expected.scanCount);
+    assert.deepEqual(
+      artifact.profile.scans.map((scan) => scan.pointRecords),
+      expected.scans.map((scan) => scan.pointRecords),
+    );
+    assert.deepEqual(
+      artifact.profile.coordinateProjection.origin,
+      projection.origin,
+    );
+    assert.equal(
+      artifact.profile.coordinateProjection.poseAuthority,
+      "local-registration-only",
+    );
+    assert.ok(
+      artifact.profile.coordinateProjection.maximumAbsoluteError <
+        1e-6,
+    );
+    assert.deepEqual(
+      artifact.profile.attributeProjection.ignoredFields,
+      ["intensity", "rowIndex", "columnIndex"],
+    );
+    assert.equal(
+      artifact.profile.attributeProjection.lossiness,
+      "lossy",
+    );
+  } finally {
+    artifact?.range.bytes.fill(0);
     fixture.bytes.fill(0);
   }
 });

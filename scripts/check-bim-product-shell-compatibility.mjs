@@ -20,6 +20,12 @@ import {
 import {
   validateE57SphericalVscodeProductQualification,
 } from "./qualify-e57-spherical-vscode-product.mjs";
+import {
+  validateE57MultipleScanBrowserProductQualification,
+} from "./qualify-e57-multiple-scan-browser-product.mjs";
+import {
+  validateE57MultipleScanVscodeProductQualification,
+} from "./qualify-e57-multiple-scan-vscode-product.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -58,6 +64,9 @@ const PASSED_GATES = [
   "browserReadonlyE57SphericalOpen",
   "vscodeReadonlyE57SphericalOpen",
   "cleanVsixE57SphericalOpen",
+  "browserReadonlyE57MultipleScanOpen",
+  "vscodeReadonlyE57MultipleScanOpen",
+  "cleanVsixE57MultipleScanOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -257,6 +266,8 @@ export function validateBimProductShellCompatibility(
   e57VscodeProduct,
   e57SphericalBrowserProduct,
   e57SphericalVscodeProduct,
+  e57MultipleScanBrowserProduct,
+  e57MultipleScanVscodeProduct,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -299,6 +310,12 @@ export function validateBimProductShellCompatibility(
   );
   validateE57SphericalVscodeProductQualification(
     e57SphericalVscodeProduct,
+  );
+  validateE57MultipleScanBrowserProductQualification(
+    e57MultipleScanBrowserProduct,
+  );
+  validateE57MultipleScanVscodeProductQualification(
+    e57MultipleScanVscodeProduct,
   );
   if (
     manifest.schema !==
@@ -562,6 +579,16 @@ export function validateBimProductShellCompatibility(
         maximumDecodedPointBytes: 16_777_216,
         maximumPointRangeBytes: 8_388_608,
         maximumGpuBytes: 8_388_608,
+      }) ||
+    JSON.stringify(limits?.e57MultipleScanPointSource) !==
+      JSON.stringify({
+        maximumSourceBytes: 33_554_432,
+        maximumPoints: 2_000_000,
+        maximumPointsPerScan: 750_000,
+        maximumScans: 8,
+        maximumDecodedPointBytes: 67_108_864,
+        maximumPointRangeBytes: 33_554_432,
+        maximumGpuBytes: 33_554_432,
       })
   ) {
     throw new Error("BIM product shell limits are invalid");
@@ -910,6 +937,12 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.vscodeE57Spherical !==
       "compatibility/evidence/" +
         "e57-spherical-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.browserE57MultipleScan !==
+      "compatibility/evidence/" +
+        "e57-multiple-scan-browser-product-2026-08-08.json" ||
+    manifest.evidence?.vscodeE57MultipleScan !==
+      "compatibility/evidence/" +
+        "e57-multiple-scan-vscode-product-2026-08-08.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -929,6 +962,9 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimBrowserE57SphericalOpen !== true ||
     manifest.policy?.claimVscodeE57SphericalOpen !== true ||
     manifest.policy?.claimCleanVsixE57SphericalOpen !== true ||
+    manifest.policy?.claimBrowserE57MultipleScanOpen !== true ||
+    manifest.policy?.claimVscodeE57MultipleScanOpen !== true ||
+    manifest.policy?.claimCleanVsixE57MultipleScanOpen !== true ||
     manifest.policy?.claimE57FormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
@@ -954,6 +990,8 @@ export function validateBimProductShellCompatibility(
         e57VscodeProduct,
         e57SphericalBrowserProduct,
         e57SphericalVscodeProduct,
+        e57MultipleScanBrowserProduct,
+        e57MultipleScanVscodeProduct,
         installation,
         manifest,
         vscode,
@@ -1001,6 +1039,8 @@ async function main() {
     e57VscodeProduct,
     e57SphericalBrowserProduct,
     e57SphericalVscodeProduct,
+    e57MultipleScanBrowserProduct,
+    e57MultipleScanVscodeProduct,
     vscode,
     installation,
   ] = await Promise.all([
@@ -1063,6 +1103,14 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.browserE57MultipleScan),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.vscodeE57MultipleScan),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -1087,6 +1135,8 @@ async function main() {
     e57VscodeProduct,
     e57SphericalBrowserProduct,
     e57SphericalVscodeProduct,
+    e57MultipleScanBrowserProduct,
+    e57MultipleScanVscodeProduct,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

@@ -13,7 +13,8 @@ const HOST_MESSAGE =
 const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const PRODUCT_MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
-const POINT_MAXIMUM_SOURCE_BYTES = 8 * 1024 * 1024;
+const E57_MAXIMUM_SOURCE_BYTES = 32 * 1024 * 1024;
+const LAS_LAZ_MAXIMUM_SOURCE_BYTES = 8 * 1024 * 1024;
 const DEFAULTS = Object.freeze({
   maximumSourceBytes: PRODUCT_MAXIMUM_SOURCE_BYTES,
   openTimeoutMs: 30_000,
@@ -28,6 +29,12 @@ const SOURCE_FORMATS = new Set([
   "laz",
 ]);
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
+
+function pointMaximumSourceBytes(format) {
+  return format === "e57"
+    ? E57_MAXIMUM_SOURCE_BYTES
+    : LAS_LAZ_MAXIMUM_SOURCE_BYTES;
+}
 
 function boundedInteger(value, fallback, minimum, maximum) {
   return Number.isSafeInteger(value)
@@ -557,7 +564,7 @@ class BimExplorerReadonlyEditorProvider {
     const maximumSourceBytes = POINT_SOURCE_FORMATS.has(format)
       ? Math.min(
           configured.maximumSourceBytes,
-          POINT_MAXIMUM_SOURCE_BYTES,
+          pointMaximumSourceBytes(format),
         )
       : configured.maximumSourceBytes;
     const before = await this.#vscode.workspace.fs.stat(

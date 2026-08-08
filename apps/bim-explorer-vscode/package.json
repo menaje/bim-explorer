@@ -83,7 +83,7 @@
           "default": 67108864,
           "minimum": 1,
           "maximum": 67108864,
-          "description": "Maximum local source byte length admitted by the read-only editor; E57/LAS/LAZ retain an 8 MiB product cap."
+          "description": "Maximum local source byte length admitted by the read-only editor; E57 is capped at 32 MiB and LAS/LAZ at 8 MiB."
         },
         "bimExplorer.openTimeoutMs": {
           "type": "number",

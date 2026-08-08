@@ -11,8 +11,10 @@
   projection and cleanup;
 - qualify cache-only E57 Float64/ScaledInteger, validity, indexless and
   spherical profiles, then decode a five-scan 1,213,990-point sample with
-  structured indexes and independent local-pose/RGB parity without claiming
-  multiple-scan product support;
+  structured indexes and independent local-pose/RGB parity;
+- open that five-scan E57 through the Browser product, staged VS Code and a
+  clean-installed VSIX with an explicit 32 MiB/2,000,000-point envelope,
+  identical pose-applied projection and deterministic cleanup;
 - download a paired public LAS 1.2/LAZ fixture into an ignored cache and prove
   exact 10,201-point record parity, Float64 coordinates and RGB with a pinned
   qualification-only `laz-perf@0.0.6` decoder;

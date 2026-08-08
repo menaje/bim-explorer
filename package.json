@@ -67,6 +67,8 @@
     "qualify:e57:profiles": "node scripts/qualify-e57-profile-matrix.mjs",
     "qualify:e57:spherical": "node scripts/qualify-e57-spherical-profile.mjs",
     "qualify:e57:multiple-scan": "node scripts/qualify-e57-multiple-scan-profile.mjs",
+    "qualify:e57:multiple-scan:product:web": "node scripts/qualify-e57-multiple-scan-browser-product.mjs",
+    "qualify:e57:multiple-scan:product:vscode": "node scripts/qualify-e57-multiple-scan-vscode-product.mjs",
     "qualify:e57:spherical:product:web": "node scripts/qualify-e57-spherical-browser-product.mjs",
     "qualify:e57:spherical:product:vscode": "node scripts/qualify-e57-spherical-vscode-product.mjs",
     "qualify:e57:product:web": "node scripts/qualify-e57-browser-product.mjs",

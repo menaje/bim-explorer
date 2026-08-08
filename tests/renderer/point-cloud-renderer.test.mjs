@@ -4,6 +4,8 @@ import test from "node:test";
 
 import {
   BIM_POINT_RANGE_MEDIA_TYPE,
+  BIM_POINT_RANGE_MAXIMUM_BYTES,
+  BIM_POINT_RANGE_MAXIMUM_POINTS,
   BIM_POINT_RENDERER_RECEIPT,
   BIM_POINT_RENDERER_RELEASE_RECEIPT,
   createBoundedPointCloudRenderer,
@@ -250,4 +252,47 @@ test("point renderer validates source authority, point size, and cancellation", 
   );
   assert.equal(backend.state.mounts, 0);
   assert.equal(await renderer.dispose(), true);
+});
+
+test("multiple-scan point envelope is explicit and preserves default caps", async () => {
+  const pointCount = 500_001;
+  const positions = new Float32Array(pointCount * 3);
+  const colors = new Uint8Array(pointCount * 4);
+  const bytes = encodeBimPointRange({
+    colors,
+    origin: [0, 0, 0],
+    positions,
+  }, {
+    maximumPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
+  });
+  positions.fill(0);
+  colors.fill(0);
+
+  const boundedInput = mountInput(bytes);
+  const defaultRenderer = createBoundedPointCloudRenderer({
+    backend: createHeadlessPointCloudBackend(),
+  });
+  await assert.rejects(
+    defaultRenderer.mount(boundedInput),
+    /configured limit/u,
+  );
+  assert.equal(await defaultRenderer.dispose(), true);
+
+  const expandedRenderer = createBoundedPointCloudRenderer({
+    backend: createHeadlessPointCloudBackend(),
+    limits: {
+      maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+      maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+      maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+      maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
+      maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    },
+  });
+  const receipt = await expandedRenderer.mount(boundedInput);
+  assert.equal(receipt.metrics.points, pointCount);
+  assert.equal(receipt.metrics.gpuBytes, pointCount * 16);
+  assert.equal((await expandedRenderer.unmount()).releasedPoints, pointCount);
+  assert.equal(await expandedRenderer.dispose(), true);
+  bytes.fill(0);
 });

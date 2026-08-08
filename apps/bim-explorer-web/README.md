@@ -6,16 +6,18 @@ shell입니다. IFC는 `BimModelSource`와 semantic explorer로, glTF/GLB는
 source-native reference mesh explorer로, E57/LAS/LAZ는 source-neutral point
 range와 `POINTS` renderer로 분기합니다.
 
-- IFC/glTF/GLB는 64 MiB, E57/LAS/LAZ는 8 MiB admission limit 뒤 Worker로
-  전달합니다.
+- IFC/glTF/GLB는 64 MiB, E57은 32 MiB, LAS/LAZ는 8 MiB admission limit 뒤
+  Worker로 전달합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
-- E57/LAS/LAZ는 8 MiB·500,000-point 한도와 전용 one-shot Worker를 사용하고,
-  source/range CPU buffer와 GPU allocation을 닫을 때 회수합니다. CRS,
-  point identity/picking·LOD와 BIM semantic authority는 제공하지 않습니다.
+- LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
+  multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
+  Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
+  회수하며 CRS, point identity/picking·LOD와 BIM semantic authority는
+  제공하지 않습니다.
 - timing과 source/geometry/metadata/range budget을 diagnostics로 표시합니다.
 - account, telemetry, 외부 upload를 요구하지 않습니다.
 
@@ -49,3 +51,8 @@ clean-installed VSIX에서 재현합니다. E57 샘플도 재배포하지 않습
 `npm run qualify:e57:spherical:product:vscode`는 155,201개 유효점을 만드는
 spherical RAE/intensity/RGB profile을 같은 세 제품 경로에서 검증합니다.
 intensity는 display range에서 lossy omitted이며 원본 sample은 cache-only입니다.
+`npm run qualify:e57:multiple-scan:product:web`과
+`npm run qualify:e57:multiple-scan:product:vscode`는 다섯 scan·1,213,990-point
+cache-only E57을 pose-applied range로 열어 Browser, staged VS Code와
+clean-installed VSIX의 동일 투영 및 cleanup을 검증합니다. pose는 local
+registration으로만 취급합니다.

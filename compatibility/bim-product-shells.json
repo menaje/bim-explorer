@@ -98,6 +98,15 @@
       "maximumDecodedPointBytes": 16777216,
       "maximumPointRangeBytes": 8388608,
       "maximumGpuBytes": 8388608
+    },
+    "e57MultipleScanPointSource": {
+      "maximumSourceBytes": 33554432,
+      "maximumPoints": 2000000,
+      "maximumPointsPerScan": 750000,
+      "maximumScans": 8,
+      "maximumDecodedPointBytes": 67108864,
+      "maximumPointRangeBytes": 33554432,
+      "maximumGpuBytes": 33554432
     }
   },
   "gates": {
@@ -137,6 +146,9 @@
     "browserReadonlyE57SphericalOpen": true,
     "vscodeReadonlyE57SphericalOpen": true,
     "cleanVsixE57SphericalOpen": true,
+    "browserReadonlyE57MultipleScanOpen": true,
+    "vscodeReadonlyE57MultipleScanOpen": true,
+    "cleanVsixE57MultipleScanOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -156,7 +168,9 @@
     "browserE57": "compatibility/evidence/e57-browser-product-2026-08-08.json",
     "vscodeE57": "compatibility/evidence/e57-vscode-product-2026-08-08.json",
     "browserE57Spherical": "compatibility/evidence/e57-spherical-browser-product-2026-08-08.json",
-    "vscodeE57Spherical": "compatibility/evidence/e57-spherical-vscode-product-2026-08-08.json"
+    "vscodeE57Spherical": "compatibility/evidence/e57-spherical-vscode-product-2026-08-08.json",
+    "browserE57MultipleScan": "compatibility/evidence/e57-multiple-scan-browser-product-2026-08-08.json",
+    "vscodeE57MultipleScan": "compatibility/evidence/e57-multiple-scan-vscode-product-2026-08-08.json"
   },
   "blockers": [
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
@@ -183,6 +197,9 @@
     "claimBrowserE57SphericalOpen": true,
     "claimVscodeE57SphericalOpen": true,
     "claimCleanVsixE57SphericalOpen": true,
+    "claimBrowserE57MultipleScanOpen": true,
+    "claimVscodeE57MultipleScanOpen": true,
+    "claimCleanVsixE57MultipleScanOpen": true,
     "claimE57FormatAdmission": false,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,

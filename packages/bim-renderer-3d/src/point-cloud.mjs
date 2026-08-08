@@ -18,6 +18,8 @@ const POINT_STRIDE_BYTES = 16;
 const RGBA8_FLAG = 1;
 const SHA256 = /^[0-9a-f]{64}$/u;
 const SOURCE_FINGERPRINT = /^sha256:[0-9a-f]{64}$/u;
+export const BIM_POINT_RANGE_MAXIMUM_BYTES = 32 * 1024 * 1024;
+export const BIM_POINT_RANGE_MAXIMUM_POINTS = 2_000_000;
 const DEFAULT_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 8 * 1024 * 1024,
   maximumGpuBytes: 8 * 1024 * 1024,
@@ -25,6 +27,14 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumPoints: 500_000,
   maximumRangeBytes: 8 * 1024 * 1024,
   maximumPointSize: 16,
+});
+const ABSOLUTE_LIMITS = Object.freeze({
+  maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+  maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+  maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+  maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
+  maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+  maximumPointSize: DEFAULT_LIMITS.maximumPointSize,
 });
 
 function plainRecord(value, label) {
@@ -111,6 +121,11 @@ function validatedLimits(overrides = {}) {
   const limits = { ...DEFAULT_LIMITS, ...additions };
   for (const [key, value] of Object.entries(limits)) {
     positiveInteger(value, `point renderer limits.${key}`);
+    if (value > ABSOLUTE_LIMITS[key]) {
+      throw new RangeError(
+        `point renderer limits.${key} exceeds its absolute bound`,
+      );
+    }
   }
   if (
     limits.maximumPointPayloadBytes > limits.maximumGpuBytes ||
@@ -160,7 +175,22 @@ export function encodeBimPointRange({
   colors,
   origin,
   positions,
+} = {}, {
+  maximumPayloadBytes =
+    DEFAULT_LIMITS.maximumPointPayloadBytes,
+  maximumPoints = DEFAULT_LIMITS.maximumPoints,
 } = {}) {
+  positiveInteger(maximumPayloadBytes, "maximumPayloadBytes");
+  positiveInteger(maximumPoints, "maximumPoints");
+  if (
+    maximumPayloadBytes >
+      ABSOLUTE_LIMITS.maximumPointPayloadBytes ||
+    maximumPoints > ABSOLUTE_LIMITS.maximumPoints
+  ) {
+    throw new RangeError(
+      "point range encoder limits exceed the absolute profile",
+    );
+  }
   const valueOrigin = finiteVector(origin, 3, "point range origin");
   if (
     !(positions instanceof Float32Array) ||
@@ -172,6 +202,7 @@ export function encodeBimPointRange({
     );
   }
   const pointCount = positions.length / 3;
+  const payloadBytes = pointCount * POINT_STRIDE_BYTES;
   if (
     !(colors instanceof Uint8Array) ||
     colors.length !== pointCount * 4
@@ -181,7 +212,8 @@ export function encodeBimPointRange({
     );
   }
   if (
-    pointCount > DEFAULT_LIMITS.maximumPoints ||
+    pointCount > maximumPoints ||
+    payloadBytes > maximumPayloadBytes ||
     positions.some((value) => !Number.isFinite(value))
   ) {
     throw new RangeError(
@@ -223,6 +255,15 @@ export function decodeBimPointRange(
 ) {
   positiveInteger(maximumPayloadBytes, "maximumPayloadBytes");
   positiveInteger(maximumPoints, "maximumPoints");
+  if (
+    maximumPayloadBytes >
+      ABSOLUTE_LIMITS.maximumPointPayloadBytes ||
+    maximumPoints > ABSOLUTE_LIMITS.maximumPoints
+  ) {
+    throw new RangeError(
+      "point range decoder limits exceed the absolute profile",
+    );
+  }
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError("point range must be a Uint8Array");
   }

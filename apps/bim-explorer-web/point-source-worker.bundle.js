@@ -6,6 +6,8 @@
   var HEADER_BYTES = 48;
   var POINT_STRIDE_BYTES = 16;
   var RGBA8_FLAG = 1;
+  var BIM_POINT_RANGE_MAXIMUM_BYTES = 32 * 1024 * 1024;
+  var BIM_POINT_RANGE_MAXIMUM_POINTS = 2e6;
   var DEFAULT_LIMITS = Object.freeze({
     maximumCpuStagingBytes: 8 * 1024 * 1024,
     maximumGpuBytes: 8 * 1024 * 1024,
@@ -13,6 +15,14 @@
     maximumPoints: 5e5,
     maximumRangeBytes: 8 * 1024 * 1024,
     maximumPointSize: 16
+  });
+  var ABSOLUTE_LIMITS = Object.freeze({
+    maximumCpuStagingBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumGpuBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumPointPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumPoints: BIM_POINT_RANGE_MAXIMUM_POINTS,
+    maximumRangeBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+    maximumPointSize: DEFAULT_LIMITS.maximumPointSize
   });
   function positiveInteger(value, label) {
     if (!Number.isSafeInteger(value) || value <= 0) {
@@ -30,7 +40,17 @@
     colors,
     origin,
     positions
+  } = {}, {
+    maximumPayloadBytes = DEFAULT_LIMITS.maximumPointPayloadBytes,
+    maximumPoints = DEFAULT_LIMITS.maximumPoints
   } = {}) {
+    positiveInteger(maximumPayloadBytes, "maximumPayloadBytes");
+    positiveInteger(maximumPoints, "maximumPoints");
+    if (maximumPayloadBytes > ABSOLUTE_LIMITS.maximumPointPayloadBytes || maximumPoints > ABSOLUTE_LIMITS.maximumPoints) {
+      throw new RangeError(
+        "point range encoder limits exceed the absolute profile"
+      );
+    }
     const valueOrigin = finiteVector(origin, 3, "point range origin");
     if (!(positions instanceof Float32Array) || positions.length === 0 || positions.length % 3 !== 0) {
       throw new TypeError(
@@ -38,12 +58,13 @@
       );
     }
     const pointCount = positions.length / 3;
+    const payloadBytes = pointCount * POINT_STRIDE_BYTES;
     if (!(colors instanceof Uint8Array) || colors.length !== pointCount * 4) {
       throw new TypeError(
         "point range colors must provide one RGBA8 value per point"
       );
     }
-    if (pointCount > DEFAULT_LIMITS.maximumPoints || positions.some((value) => !Number.isFinite(value))) {
+    if (pointCount > maximumPoints || payloadBytes > maximumPayloadBytes || positions.some((value) => !Number.isFinite(value))) {
       throw new RangeError(
         "point range encoder input exceeds the bounded profile"
       );
@@ -78,6 +99,11 @@
   } = {}) {
     positiveInteger(maximumPayloadBytes, "maximumPayloadBytes");
     positiveInteger(maximumPoints, "maximumPoints");
+    if (maximumPayloadBytes > ABSOLUTE_LIMITS.maximumPointPayloadBytes || maximumPoints > ABSOLUTE_LIMITS.maximumPoints) {
+      throw new RangeError(
+        "point range decoder limits exceed the absolute profile"
+      );
+    }
     if (!(bytes instanceof Uint8Array)) {
       throw new TypeError("point range must be a Uint8Array");
     }
@@ -720,7 +746,10 @@
   var E57_MAXIMUM_POINTS = 5e5;
   var E57_MAXIMUM_DECODED_POINT_BYTES = 16 * 1024 * 1024;
   var E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES = 32 * 1024 * 1024;
+  var E57_MULTIPLE_SCAN_MAXIMUM_POINTS = 2e6;
+  var E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN = 75e4;
   var E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES = 64 * 1024 * 1024;
+  var E57_MULTIPLE_SCAN_MAXIMUM_SCANS = 8;
   var SIGNATURE = "ASTM-E57";
   var HEADER_BYTES2 = 48;
   var CHECKSUM_BYTES = 4;
@@ -1079,6 +1108,182 @@
     }
     return pointProfile(points[0], limits);
   }
+  function structureBody(body, name, label) {
+    const matches = [...body.matchAll(
+      new RegExp(`<${name}\\b([^>]*)>([\\s\\S]*?)<\\/${name}>`, "gu")
+    )];
+    if (matches.length !== 1) {
+      throw new TypeError(`${label} is missing or duplicated`);
+    }
+    const attributes = parseAttributes(matches[0][1], label);
+    if (requiredAttribute(attributes, "type", label) !== "Structure") {
+      throw new TypeError(`${label} type is unsupported`);
+    }
+    return matches[0];
+  }
+  function cdataString(body, name, label) {
+    const matches = [...body.matchAll(
+      new RegExp(
+        `<${name}\\b([^>]*)><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${name}>`,
+        "gu"
+      )
+    )];
+    if (matches.length !== 1) {
+      throw new TypeError(`${label} is missing or duplicated`);
+    }
+    const attributes = parseAttributes(matches[0][1], label);
+    const value = matches[0][2];
+    if (requiredAttribute(attributes, "type", label) !== "String" || value.length === 0 || value.length > 256 || /[<>\u0000]/u.test(value)) {
+      throw new TypeError(`${label} is invalid`);
+    }
+    return value;
+  }
+  function numericElement(body, name, label) {
+    const matches = [...body.matchAll(
+      new RegExp(`<${name}\\b([^>]*)>([^<]*)<\\/${name}>`, "gu")
+    )];
+    if (matches.length !== 1) {
+      throw new TypeError(`${label} is missing or duplicated`);
+    }
+    const attributes = parseAttributes(matches[0][1], label);
+    const value = Number(matches[0][2]);
+    if (requiredAttribute(attributes, "type", label) !== "Float" || !Number.isFinite(value)) {
+      throw new TypeError(`${label} is invalid`);
+    }
+    return value;
+  }
+  function scanPose(body, label) {
+    const matches = [...body.matchAll(
+      /<pose\b([^>]*)>([\s\S]*?)<\/pose>/gu
+    )];
+    if (matches.length === 0) {
+      return Object.freeze({
+        explicit: false,
+        rotation: Object.freeze([1, 0, 0, 0]),
+        translation: Object.freeze([0, 0, 0])
+      });
+    }
+    if (matches.length !== 1) {
+      throw new TypeError(`${label} pose is duplicated`);
+    }
+    const poseAttributes = parseAttributes(
+      matches[0][1],
+      `${label} pose`
+    );
+    if (requiredAttribute(poseAttributes, "type", `${label} pose`) !== "Structure") {
+      throw new TypeError(`${label} pose type is unsupported`);
+    }
+    const rotation = structureBody(
+      matches[0][2],
+      "rotation",
+      `${label} rotation`
+    );
+    const translation = structureBody(
+      matches[0][2],
+      "translation",
+      `${label} translation`
+    );
+    if (matches[0][2].replace(rotation[0], "").replace(translation[0], "").trim().length > 0) {
+      throw new TypeError(`${label} pose structure is unsupported`);
+    }
+    const quaternion = ["w", "x", "y", "z"].map((name) => numericElement(
+      rotation[2],
+      name,
+      `${label} rotation.${name}`
+    ));
+    const offset = ["x", "y", "z"].map((name) => numericElement(
+      translation[2],
+      name,
+      `${label} translation.${name}`
+    ));
+    const normSquared = quaternion.reduce(
+      (sum, value) => sum + value * value,
+      0
+    );
+    if (Math.abs(normSquared - 1) > 1e-9) {
+      throw new RangeError(`${label} rotation is not a unit quaternion`);
+    }
+    return Object.freeze({
+      explicit: true,
+      rotation: Object.freeze(quaternion),
+      translation: Object.freeze(offset)
+    });
+  }
+  function parseMultipleScanXml(xml, limits) {
+    validateXmlEnvelope(xml);
+    const data3d = [...xml.matchAll(
+      /<data3D\b([^>]*)>([\s\S]*?)<\/data3D>/gu
+    )];
+    if (data3d.length !== 1) {
+      throw new TypeError("E57 profile requires one data3D vector");
+    }
+    const dataAttributes = parseAttributes(data3d[0][1], "E57 data3D");
+    if (requiredAttribute(dataAttributes, "type", "E57 data3D") !== "Vector") {
+      throw new TypeError("E57 data3D vector is unsupported");
+    }
+    const children = [...data3d[0][2].matchAll(
+      /<vectorChild\b([^>]*)>([\s\S]*?)<\/vectorChild>/gu
+    )];
+    const remaining = children.reduce(
+      (body, child) => body.replace(child[0], ""),
+      data3d[0][2]
+    );
+    if (children.length < 2 || children.length > limits.maximumScans || remaining.trim().length > 0) {
+      throw new RangeError("E57 scan count exceeds its bounded profile");
+    }
+    const scans = children.map((child, index) => {
+      const label = `E57 scan ${index}`;
+      const attributes = parseAttributes(child[1], label);
+      if (requiredAttribute(attributes, "type", label) !== "Structure") {
+        throw new TypeError(`${label} type is unsupported`);
+      }
+      const points = [...child[2].matchAll(
+        /<points\b([^>]*)>([\s\S]*?)<\/points>/gu
+      )];
+      if (points.length !== 1) {
+        throw new TypeError(`${label} requires one point vector`);
+      }
+      const profile = pointProfile(points[0], {
+        maximumDecodedPointBytes: limits.maximumDecodedPointBytes,
+        maximumPoints: limits.maximumPointsPerScan
+      }, `${label} points`);
+      const guid = cdataString(child[2], "guid", `${label} guid`);
+      const name = cdataString(child[2], "name", `${label} name`);
+      if (!/^\{[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\}$/u.test(guid)) {
+        throw new TypeError(`${label} guid is invalid`);
+      }
+      return Object.freeze({
+        ...profile,
+        guid,
+        index,
+        name,
+        pose: scanPose(child[2], label)
+      });
+    });
+    const recordCount = scans.reduce(
+      (sum, scan) => sum + scan.recordCount,
+      0
+    );
+    const decodedBytes = scans.reduce(
+      (sum, scan) => sum + scan.decodedPointBytes,
+      0
+    );
+    const representations = new Set(
+      scans.map((scan) => scan.coordinateRepresentation)
+    );
+    const fieldNames = JSON.stringify(
+      scans[0].fields.map((field) => field.name)
+    );
+    if (recordCount > limits.maximumPoints || decodedBytes > limits.maximumDecodedPointBytes || representations.size !== 1 || scans.some((scan, index) => index > 0 && scan.fileOffset <= scans[index - 1].fileOffset) || scans.some((scan) => JSON.stringify(scan.fields.map((field) => field.name)) !== fieldNames)) {
+      throw new RangeError("E57 multiple-scan profile is unsupported");
+    }
+    return Object.freeze({
+      coordinateRepresentation: scans[0].coordinateRepresentation,
+      decodedPointBytes: decodedBytes,
+      recordCount,
+      scans: Object.freeze(scans)
+    });
+  }
   var Cursor = class {
     #bytes;
     #end;
@@ -1224,6 +1429,49 @@
       throw new RangeError("E57 spherical projection is non-finite");
     }
     return result;
+  }
+  function applyScanPose(positions, pose) {
+    const [w, x, y, z] = pose.rotation;
+    const [tx, ty, tz] = pose.translation;
+    const matrix = [
+      1 - 2 * (y * y + z * z),
+      2 * (x * y - z * w),
+      2 * (x * z + y * w),
+      2 * (x * y + z * w),
+      1 - 2 * (x * x + z * z),
+      2 * (y * z - x * w),
+      2 * (x * z - y * w),
+      2 * (y * z + x * w),
+      1 - 2 * (x * x + y * y)
+    ];
+    const bounds = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity]
+    };
+    for (let point = 0; point < positions.length / 3; point += 1) {
+      const offset = point * 3;
+      const px = positions[offset];
+      const py = positions[offset + 1];
+      const pz = positions[offset + 2];
+      const world = [
+        matrix[0] * px + matrix[1] * py + matrix[2] * pz + tx,
+        matrix[3] * px + matrix[4] * py + matrix[5] * pz + ty,
+        matrix[6] * px + matrix[7] * py + matrix[8] * pz + tz
+      ];
+      if (world.some((value) => !Number.isFinite(value))) {
+        throw new RangeError("E57 scan pose projection is non-finite");
+      }
+      positions.set(world, offset);
+      for (let axis = 0; axis < 3; axis += 1) {
+        bounds.min[axis] = Math.min(bounds.min[axis], world[axis]);
+        bounds.max[axis] = Math.max(bounds.max[axis], world[axis]);
+      }
+    }
+    matrix.fill(0);
+    return Object.freeze({
+      min: Object.freeze([...bounds.min]),
+      max: Object.freeze([...bounds.max])
+    });
   }
   function decodePackets(logical, header, pointProfile2) {
     const sectionStart = physicalToLogical(
@@ -1648,6 +1896,188 @@
       logical.fill(0);
     }
   }
+  function decodeE57MultipleScanSource(bytes, {
+    maximumDecodedPointBytes = E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES,
+    maximumPoints = E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+    maximumPointsPerScan = E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN,
+    maximumScans = E57_MULTIPLE_SCAN_MAXIMUM_SCANS,
+    maximumSourceBytes = E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES
+  } = {}) {
+    if (!(bytes instanceof Uint8Array)) {
+      throw new TypeError("E57 source must be a Uint8Array");
+    }
+    const limits = Object.freeze({
+      maximumDecodedPointBytes: positiveLimit(
+        maximumDecodedPointBytes,
+        E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES,
+        "E57 multiple-scan decoded point byte limit"
+      ),
+      maximumPoints: positiveLimit(
+        maximumPoints,
+        E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+        "E57 multiple-scan point limit"
+      ),
+      maximumPointsPerScan: positiveLimit(
+        maximumPointsPerScan,
+        E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN,
+        "E57 per-scan point limit"
+      ),
+      maximumScans: positiveLimit(
+        maximumScans,
+        E57_MULTIPLE_SCAN_MAXIMUM_SCANS,
+        "E57 scan limit"
+      ),
+      maximumSourceBytes: positiveLimit(
+        maximumSourceBytes,
+        E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+        "E57 multiple-scan source byte limit"
+      )
+    });
+    if (limits.maximumSourceBytes > E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES || limits.maximumPoints > E57_MULTIPLE_SCAN_MAXIMUM_POINTS || limits.maximumPointsPerScan > E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN || limits.maximumScans > E57_MULTIPLE_SCAN_MAXIMUM_SCANS || limits.maximumDecodedPointBytes > E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES || limits.maximumPointsPerScan > limits.maximumPoints || bytes.byteLength < HEADER_BYTES2 || bytes.byteLength > limits.maximumSourceBytes) {
+      throw new RangeError(
+        "E57 multiple-scan source exceeds its bounded profile"
+      );
+    }
+    const signature = new TextDecoder("ascii", { fatal: true }).decode(bytes.subarray(0, 8));
+    const view = new DataView(
+      bytes.buffer,
+      bytes.byteOffset,
+      bytes.byteLength
+    );
+    const major = view.getUint32(8, true);
+    const minor = view.getUint32(12, true);
+    const physicalLength = safeUnsigned64(
+      view,
+      16,
+      "E57 physical length"
+    );
+    const xmlPhysicalOffset = safeUnsigned64(
+      view,
+      24,
+      "E57 XML offset"
+    );
+    const xmlLogicalLength = safeUnsigned64(
+      view,
+      32,
+      "E57 XML length"
+    );
+    const pageSize = safeUnsigned64(view, 40, "E57 page size");
+    if (signature !== SIGNATURE || major !== 1 || minor !== 0 || physicalLength !== bytes.byteLength) {
+      throw new Error("E57 header identity is invalid");
+    }
+    if (pageSize < MINIMUM_PAGE_BYTES || pageSize > MAXIMUM_PAGE_BYTES || (pageSize & pageSize - 1) !== 0 || bytes.byteLength % pageSize !== 0 || xmlLogicalLength <= 0 || xmlLogicalLength > MAXIMUM_XML_BYTES) {
+      throw new RangeError("E57 physical page layout is invalid");
+    }
+    const { logical, pages } = logicalFile(bytes, pageSize);
+    const decodedScans = [];
+    try {
+      const xmlLogicalOffset = physicalToLogical(
+        xmlPhysicalOffset,
+        physicalLength,
+        pageSize,
+        "E57 XML offset"
+      );
+      if (xmlLogicalOffset + xmlLogicalLength > logical.byteLength) {
+        throw new RangeError("E57 XML range is truncated");
+      }
+      const xml = new TextDecoder("utf-8", { fatal: true }).decode(
+        logical.subarray(
+          xmlLogicalOffset,
+          xmlLogicalOffset + xmlLogicalLength
+        )
+      );
+      const profile = parseMultipleScanXml(xml, limits);
+      const envelopeHeader = Object.freeze({
+        coordinateRepresentation: profile.coordinateRepresentation,
+        decodedPointBytes: profile.decodedPointBytes,
+        formatVersion: `${major}.${minor}`,
+        pageChecksum: "CRC-32C",
+        pageSize,
+        pages,
+        physicalLength,
+        scanCount: profile.scans.length,
+        signature,
+        sourcePointRecords: profile.recordCount,
+        validPageChecksums: pages,
+        xmlLogicalLength,
+        xmlLogicalOffset,
+        xmlPhysicalOffset
+      });
+      for (const scan of profile.scans) {
+        const decoded = decodePackets(
+          logical,
+          envelopeHeader,
+          scan
+        );
+        try {
+          const worldBounds = applyScanPose(
+            decoded.rawPositions,
+            scan.pose
+          );
+          decodedScans.push(Object.freeze({
+            colors: decoded.colors,
+            header: Object.freeze({
+              coordinateRepresentation: scan.coordinateRepresentation,
+              decodedPointBytes: scan.decodedPointBytes,
+              directionPointRecords: decoded.directionPointRecords,
+              fields: scan.fields,
+              guid: scan.guid,
+              index: scan.index,
+              invalidPointRecords: decoded.invalidPointRecords,
+              name: scan.name,
+              pointRecords: decoded.validPointRecords,
+              pose: scan.pose,
+              sourcePointRecords: scan.recordCount
+            }),
+            localBounds: decoded.rawBounds,
+            packetProfile: decoded.packetProfile,
+            rawColorRange: decoded.rawColorRange,
+            worldBounds,
+            worldPositions: decoded.rawPositions
+          }));
+        } catch (error) {
+          decoded.rawPositions.fill(0);
+          decoded.colors.fill(0);
+          throw error;
+        }
+      }
+      const pointRecords = decodedScans.reduce(
+        (sum, scan) => sum + scan.header.pointRecords,
+        0
+      );
+      const directionPointRecords = decodedScans.reduce(
+        (sum, scan) => sum + scan.header.directionPointRecords,
+        0
+      );
+      const invalidPointRecords = decodedScans.reduce(
+        (sum, scan) => sum + scan.header.invalidPointRecords,
+        0
+      );
+      return Object.freeze({
+        header: Object.freeze({
+          ...envelopeHeader,
+          directionPointRecords,
+          explicitPoseScans: decodedScans.filter(
+            (scan) => scan.header.pose.explicit
+          ).length,
+          implicitIdentityPoseScans: decodedScans.filter(
+            (scan) => !scan.header.pose.explicit
+          ).length,
+          invalidPointRecords,
+          pointRecords
+        }),
+        scans: Object.freeze(decodedScans)
+      });
+    } catch (error) {
+      for (const scan of decodedScans) {
+        scan.worldPositions.fill(0);
+        scan.colors.fill(0);
+      }
+      throw error;
+    } finally {
+      logical.fill(0);
+    }
+  }
 
   // packages/e57-point-source/src/index.mjs
   var E57_POINT_SOURCE_CONTRACT = "bim-explorer-e57-point-source/0.1";
@@ -1698,6 +2128,90 @@
       offset: field.offset,
       scale: field.scale
     })));
+  }
+  function multipleScanProjection(decoded) {
+    const rawBounds = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity]
+    };
+    for (const scan of decoded.scans) {
+      for (let axis = 0; axis < 3; axis += 1) {
+        rawBounds.min[axis] = Math.min(
+          rawBounds.min[axis],
+          scan.worldBounds.min[axis]
+        );
+        rawBounds.max[axis] = Math.max(
+          rawBounds.max[axis],
+          scan.worldBounds.max[axis]
+        );
+      }
+    }
+    const origin = rawBounds.min.map(
+      (value, axis) => (value + rawBounds.max[axis]) / 2
+    );
+    const positions = new Float32Array(
+      decoded.header.pointRecords * 3
+    );
+    const colors = new Uint8Array(
+      decoded.header.pointRecords * 4
+    );
+    let maximumAbsoluteError = 0;
+    let pointOffset = 0;
+    for (const scan of decoded.scans) {
+      for (let index = 0; index < scan.header.pointRecords; index += 1) {
+        for (let axis = 0; axis < 3; axis += 1) {
+          const world = scan.worldPositions[index * 3 + axis];
+          const relative = Math.fround(world - origin[axis]);
+          positions[(pointOffset + index) * 3 + axis] = relative;
+          maximumAbsoluteError = Math.max(
+            maximumAbsoluteError,
+            Math.abs(origin[axis] + relative - world)
+          );
+        }
+      }
+      colors.set(scan.colors, pointOffset * 4);
+      pointOffset += scan.header.pointRecords;
+    }
+    if (pointOffset !== decoded.header.pointRecords) {
+      positions.fill(0);
+      colors.fill(0);
+      throw new Error("E57 multiple-scan projection is incomplete");
+    }
+    return Object.freeze({
+      colors,
+      maximumAbsoluteError,
+      origin: Object.freeze([...origin]),
+      positions,
+      rawBounds: Object.freeze({
+        min: Object.freeze([...rawBounds.min]),
+        max: Object.freeze([...rawBounds.max])
+      })
+    });
+  }
+  function aggregateColorRange(scans) {
+    if (scans.some((scan) => scan.rawColorRange === null)) {
+      return null;
+    }
+    const result = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity]
+    };
+    for (const scan of scans) {
+      for (let channel = 0; channel < 3; channel += 1) {
+        result.min[channel] = Math.min(
+          result.min[channel],
+          scan.rawColorRange.min[channel]
+        );
+        result.max[channel] = Math.max(
+          result.max[channel],
+          scan.rawColorRange.max[channel]
+        );
+      }
+    }
+    return Object.freeze({
+      min: Object.freeze(result.min),
+      max: Object.freeze(result.max)
+    });
   }
   async function createE57PointSourceArtifact(bytes, {
     maximumDecodedPointBytes = E57_MAXIMUM_DECODED_POINT_BYTES,
@@ -1855,15 +2369,203 @@
       projected?.positions.fill(0);
     }
   }
+  async function createE57MultipleScanPointSourceArtifact(bytes) {
+    if (!(bytes instanceof Uint8Array)) {
+      throw new TypeError("E57 source must be a Uint8Array");
+    }
+    if (bytes.byteLength < 48 || bytes.byteLength > E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES) {
+      throw new RangeError(
+        "E57 multiple-scan source exceeds its bounded profile"
+      );
+    }
+    const sourceDigest = await sha2562(bytes);
+    if (!SHA2562.test(sourceDigest)) {
+      throw new Error("E57 source digest is invalid");
+    }
+    const started = performance.now();
+    const decoded = decodeE57MultipleScanSource(bytes);
+    let projected = null;
+    let rangeBytes = null;
+    try {
+      projected = multipleScanProjection(decoded);
+      rangeBytes = encodeBimPointRange({
+        colors: projected.colors,
+        origin: projected.origin,
+        positions: projected.positions
+      }, {
+        maximumPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+        maximumPoints: E57_MULTIPLE_SCAN_MAXIMUM_POINTS
+      });
+      const range = decodeBimPointRange(rangeBytes, {
+        maximumPayloadBytes: BIM_POINT_RANGE_MAXIMUM_BYTES,
+        maximumPoints: E57_MULTIPLE_SCAN_MAXIMUM_POINTS
+      });
+      const rangeDigest = await sha2562(rangeBytes);
+      const fingerprint = `sha256:${sourceDigest}`;
+      const revisionId = `source-snapshot:${fingerprint}`;
+      const fields = decoded.scans[0].header.fields;
+      const hasColor = ["colorRed", "colorGreen", "colorBlue"].every((name) => fields.some((field) => field.name === name));
+      const ignoredFields = fields.map((field) => field.name).filter((name) => [
+        "columnIndex",
+        "intensity",
+        "rowIndex"
+      ].includes(name));
+      return Object.freeze({
+        schema: E57_POINT_SOURCE_CONTRACT,
+        source: Object.freeze({
+          adapter: Object.freeze({
+            backend: "isolated-browser-worker",
+            id: "@bim-explorer/e57-point-source",
+            license: "MPL-2.0",
+            version: "0.1.0"
+          }),
+          byteLength: bytes.byteLength,
+          coordinateReferenceStatus: "unqualified",
+          fingerprint,
+          format: "e57",
+          formatVersion: decoded.header.formatVersion,
+          mediaType: "application/octet-stream",
+          pointFormat: hasColor ? "cartesian-xyz-rgb-multiple-scan" : "cartesian-xyz-multiple-scan",
+          revisionId,
+          roundTripAuthority: false,
+          semanticAuthority: false,
+          sourceRole: "derived-or-reference-points",
+          writeAuthority: false
+        }),
+        model: Object.freeze({
+          bounds: range.bounds,
+          colorRange: range.colorRange,
+          pointStrideBytes: range.pointStrideBytes,
+          points: range.pointCount,
+          ranges: 1
+        }),
+        range: {
+          byteLength: rangeBytes.byteLength,
+          bytes: rangeBytes,
+          handleId: `range:e57:multiple-scan:${rangeDigest.slice(0, 24)}`,
+          mediaType: BIM_POINT_RANGE_MEDIA_TYPE,
+          sha256: rangeDigest
+        },
+        profile: Object.freeze({
+          attributeProjection: Object.freeze({
+            ignoredFields: Object.freeze(ignoredFields),
+            lossiness: ignoredFields.includes("intensity") ? "lossy" : "lossless-for-admitted-fields",
+            method: "decode-for-stream-alignment-without-semantic-authority"
+          }),
+          colorProjection: Object.freeze({
+            method: hasColor ? "prototype-range-to-rgba8" : "opaque-white-no-color",
+            rawRange: aggregateColorRange(decoded.scans),
+            rgba8Range: range.colorRange
+          }),
+          coordinateProjection: Object.freeze({
+            crsAuthority: false,
+            maximumAbsoluteError: projected.maximumAbsoluteError,
+            method: "scan-pose-then-float64-origin-plus-relative-float32",
+            origin: projected.origin,
+            poseAuthority: "local-registration-only",
+            rawBounds: projected.rawBounds,
+            sourceRepresentation: decoded.header.coordinateRepresentation
+          }),
+          decoder: Object.freeze({
+            backend: "bounded-native-js-product-source",
+            id: "bim-explorer-e57-bitpack-reader",
+            license: "MPL-2.0",
+            reference: Object.freeze({
+              commit: "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+              id: "cry-inc/e57",
+              license: "MIT",
+              version: "0.10.5"
+            }),
+            version: "0.1.0"
+          }),
+          header: Object.freeze({
+            coordinateRepresentation: decoded.header.coordinateRepresentation,
+            decodedPointBytes: decoded.header.decodedPointBytes,
+            directionPointRecords: decoded.header.directionPointRecords,
+            explicitPoseScans: decoded.header.explicitPoseScans,
+            formatVersion: decoded.header.formatVersion,
+            implicitIdentityPoseScans: decoded.header.implicitIdentityPoseScans,
+            invalidPointRecords: decoded.header.invalidPointRecords,
+            pageChecksum: decoded.header.pageChecksum,
+            pageSize: decoded.header.pageSize,
+            pages: decoded.header.pages,
+            pointRecords: decoded.header.pointRecords,
+            prototype: prototypeProfile(fields),
+            scanCount: decoded.header.scanCount,
+            sourcePointRecords: decoded.header.sourcePointRecords,
+            validPageChecksums: decoded.header.validPageChecksums,
+            xmlLogicalLength: decoded.header.xmlLogicalLength,
+            xmlPhysicalOffset: decoded.header.xmlPhysicalOffset
+          }),
+          scans: Object.freeze(decoded.scans.map((scan) => Object.freeze({
+            dataPackets: scan.packetProfile.dataPackets,
+            directionPointRecords: scan.header.directionPointRecords,
+            guid: scan.header.guid,
+            index: scan.header.index,
+            indexPackets: scan.packetProfile.indexPackets,
+            invalidPointRecords: scan.header.invalidPointRecords,
+            name: scan.header.name,
+            pointRecords: scan.header.pointRecords,
+            pose: scan.header.pose,
+            sectionLength: scan.packetProfile.sectionLength,
+            sourcePointRecords: scan.header.sourcePointRecords,
+            worldBounds: scan.worldBounds
+          })))
+        }),
+        resources: Object.freeze({
+          decodedPointBytes: decoded.header.decodedPointBytes,
+          inputBytes: bytes.byteLength,
+          pointRangeBytes: rangeBytes.byteLength,
+          pointRangePayloadBytes: range.payloadBytes,
+          wasmHeapCapacityBytes: null
+        }),
+        cleanup: Object.freeze({
+          cpuProjectionBuffersReleased: true,
+          decoderReleased: true,
+          wasmAllocationsReleased: true
+        }),
+        performance: Object.freeze({
+          sourceProjectionMs: performance.now() - started
+        })
+      });
+    } catch (error) {
+      rangeBytes?.fill(0);
+      throw error;
+    } finally {
+      for (const scan of decoded.scans) {
+        scan.worldPositions.fill(0);
+        scan.colors.fill(0);
+      }
+      projected?.positions.fill(0);
+      projected?.colors.fill(0);
+    }
+  }
+  async function createE57ProductPointSourceArtifact(bytes) {
+    if (!(bytes instanceof Uint8Array)) {
+      throw new TypeError("E57 source must be a Uint8Array");
+    }
+    if (bytes.byteLength > E57_MAXIMUM_SOURCE_BYTES) {
+      return await createE57MultipleScanPointSourceArtifact(bytes);
+    }
+    try {
+      return await createE57PointSourceArtifact(bytes);
+    } catch (error) {
+      if (!(error instanceof TypeError) || error.message !== "E57 profile requires one point scan") {
+        throw error;
+      }
+      return await createE57MultipleScanPointSourceArtifact(bytes);
+    }
+  }
 
   // apps/bim-explorer-web/point-source-worker.mjs
   var REQUEST_SCHEMA = "bim-explorer-point-source-worker-request/0.1";
   var RESPONSE_SCHEMA = "bim-explorer-point-source-worker-response/0.1";
-  var MAXIMUM_SOURCE_BYTES = Math.min(
-    LAS_LAZ_MAXIMUM_SOURCE_BYTES,
-    E57_MAXIMUM_SOURCE_BYTES
-  );
   var FORMATS = /* @__PURE__ */ new Set(["e57", "las", "laz"]);
+  var MAXIMUM_SOURCE_BYTES = Object.freeze({
+    e57: E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+    las: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+    laz: LAS_LAZ_MAXIMUM_SOURCE_BYTES
+  });
   var accepted = false;
   var loadedLazPerfScriptUrl = null;
   function stableErrorCode(error) {
@@ -1915,7 +2617,7 @@
     return url.href;
   }
   function validRequest(request) {
-    return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES && FORMATS.has(request.options?.format);
+    return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && FORMATS.has(request.options?.format) && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES[request.options.format];
   }
   async function lazPerfModuleFactory(scriptUrl, wasmUrl) {
     if (loadedLazPerfScriptUrl === null) {
@@ -1961,7 +2663,7 @@
       if (format === "laz") {
         progress(request.requestId, "decoder-initializing");
       }
-      artifact = format === "e57" ? await createE57PointSourceArtifact(bytes) : await createLasLazPointSourceArtifact(bytes, {
+      artifact = format === "e57" ? await createE57ProductPointSourceArtifact(bytes) : await createLasLazPointSourceArtifact(bytes, {
         format,
         moduleFactory: format === "laz" ? () => lazPerfModuleFactory(scriptUrl, wasmUrl) : void 0
       });

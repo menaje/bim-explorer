@@ -1,0 +1,244 @@
+{
+  "schema": "bim-explorer-e57-multiple-scan-browser-product-evidence/1",
+  "status": "passed-experimental-multiple-scan-browser-product-open",
+  "asOf": "2026-08-08",
+  "capturedAt": "2026-08-08T14:31:46.137Z",
+  "surface": {
+    "schema": "bim-explorer-product-shell-browser-evidence/1",
+    "capturedAt": "2026-08-08T14:31:46.032Z",
+    "environment": {
+      "browser": "Google Chrome 151.0.7922.108",
+      "headless": true,
+      "platform": "darwin-arm64",
+      "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
+    },
+    "fixture": {
+      "id": "e57-example-pump-no-invalid-multiple-scan",
+      "committed": false,
+      "format": "e57",
+      "sourceBytes": 22146048,
+      "fingerprint": "sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+      "formatVersion": "1.0",
+      "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+      "provenance": {
+        "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+        "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+        "publishedAt": "2011-05-05T21:05:19Z",
+        "license": "LicenseRef-E57-Example-Test-Data",
+        "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+        "cacheHit": true,
+        "bundled": false,
+        "sampleRedistributed": false
+      }
+    },
+    "observation": {
+      "hostKind": "browser",
+      "model": {
+        "points": 1213990,
+        "ranges": 1
+      },
+      "performance": {
+        "artifactMs": 2269.515000000596,
+        "sourceMs": 0,
+        "totalMs": 2417.2150000035763
+      },
+      "resources": {
+        "decodedPointBytes": 35205710,
+        "pointRangeBytes": 19423888,
+        "pointRangePayloadBytes": 19423840,
+        "sourceBytes": 22146048,
+        "wasmHeapCapacityBytes": null
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 28206,
+        "sourceReadBytes": 19423888,
+        "uploadedBytes": 19423840
+      },
+      "pointCloud": {
+        "attributeProjection": {
+          "ignoredFields": [
+            "intensity",
+            "rowIndex",
+            "columnIndex"
+          ],
+          "lossiness": "lossy",
+          "method": "decode-for-stream-alignment-without-semantic-authority"
+        },
+        "bounds": {
+          "min": [
+            -3.034407483588252,
+            -5.8261087311925275,
+            -1.9824324273209424
+          ],
+          "max": [
+            1.7299581894769334,
+            -0.7926481141270978,
+            1.8476499892134814
+          ]
+        },
+        "colorRange": {
+          "min": [
+            0,
+            0,
+            0,
+            255
+          ],
+          "max": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        "coordinateRepresentation": "cartesian",
+        "coordinateReferenceStatus": "unqualified",
+        "decoder": {
+          "backend": "bounded-native-js-product-source",
+          "id": "bim-explorer-e57-bitpack-reader",
+          "license": "MPL-2.0",
+          "reference": {
+            "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+            "id": "cry-inc/e57",
+            "license": "MIT",
+            "version": "0.10.5"
+          },
+          "version": "0.1.0"
+        },
+        "maximumProjectionError": 1.1920501918893933e-7,
+        "origin": [
+          -0.6522246470556594,
+          -3.3093784226598126,
+          -0.06739121905373047
+        ],
+        "pointPrimitive": "POINTS",
+        "pointSize": 3,
+        "rangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697"
+      },
+      "productLifecycle": {
+        "cpuPointRangeCleared": true,
+        "sourceBufferCleared": true,
+        "workerTerminatedAfterTransfer": true
+      },
+      "interaction": {
+        "searchResults": 0,
+        "selectedExpressId": null,
+        "selectedNativeId": null,
+        "selectionOrigin": "not applicable",
+        "pickDisabled": true,
+        "searchDisabled": true,
+        "treeRows": 0
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed",
+        "backendDisposed": true,
+        "clientDisposed": true,
+        "pointRangeCleared": true,
+        "rendererDisposed": true,
+        "workerTerminatedAfterTransfer": true
+      },
+      "network": {
+        "externalOrigins": [],
+        "localRequestCount": 20
+      },
+      "runtimeErrors": []
+    },
+    "assertions": {
+      "actualBrowserWebGl2": true,
+      "boundedLocalSource": true,
+      "localOnly": true,
+      "pathFree": true,
+      "pointCloudAnd3d": true,
+      "workerAndGpuCleanup": true,
+      "noRuntimeErrors": true,
+      "fixtureIdentity": true
+    },
+    "decision": {
+      "browserProductShell": "passed",
+      "referenceProductOpen": "not-applicable",
+      "pointCloudProductOpen": "passed-bounded-read-only-unqualified-coordinates",
+      "actualPhysicalGpu": "not-claimed",
+      "publicViewerCoreConformance": "held",
+      "vscodeChromiumRuntime": "separate-gate"
+    }
+  },
+  "runtime": {
+    "pointSourceContract": "bim-explorer-e57-point-source/0.1",
+    "pointWorkerRequest": "bim-explorer-point-source-worker-request/0.1",
+    "pointWorkerResponse": "bim-explorer-point-source-worker-response/0.1",
+    "decoder": {
+      "id": "bim-explorer-e57-bitpack-reader",
+      "version": "0.1.0",
+      "license": "MPL-2.0",
+      "reference": {
+        "id": "cry-inc/e57",
+        "version": "0.10.5",
+        "license": "MIT",
+        "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c"
+      },
+      "productRuntime": true,
+      "isolatedWorker": true,
+      "wasm": false
+    }
+  },
+  "profile": {
+    "coordinateRepresentation": "cartesian",
+    "scanCount": 5,
+    "sourcePointRecords": 1213990,
+    "renderedPointRecords": 1213990,
+    "explicitPoseScans": 4,
+    "implicitIdentityPoseScans": 1,
+    "poseAuthority": "local-registration-only",
+    "ignoredFields": [
+      "intensity",
+      "rowIndex",
+      "columnIndex"
+    ],
+    "attributeLossiness": "lossy"
+  },
+  "fixturePolicy": {
+    "artifactTracked": false,
+    "sampleRedistributed": false,
+    "releaseBundled": false,
+    "testOnly": true
+  },
+  "decision": {
+    "browserProductOpen": "passed-experimental",
+    "vscodeProductOpen": "held",
+    "renderer": "passed-browser-webgl2",
+    "scanPose": "passed-local-registration-only",
+    "coordinateReference": "held",
+    "pointIdentityPicking": "held",
+    "levelOfDetail": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false
+  },
+  "assertions": {
+    "browserMultipleScanE57FileOpen": true,
+    "fiveScanProductRuntime": true,
+    "scanPosesAppliedLocally": true,
+    "intensityAndStructuredIndicesRemainLossy": true,
+    "actualWebGl2Points": true,
+    "boundedSourceDecodeAndUpload": true,
+    "sourceBufferCleared": true,
+    "workerTerminatedAfterTransfer": true,
+    "cpuPointRangeCleared": true,
+    "gpuResourcesReleased": true,
+    "localOnly": true,
+    "pathFree": true,
+    "sampleNotTrackedOrBundled": true,
+    "coordinateReferenceHeld": true,
+    "formatAdmissionHeld": true
+  },
+  "limitations": [
+    "the product profile covers one E57 1.0 five-scan Cartesian intensity/RGB/structured-index default-BitPack sample",
+    "scan poses establish local registration only and do not establish CRS or surveyed datum authority",
+    "intensity, row and column indices are decoded for stream alignment and omitted from the RGBA display range",
+    "individual point identity, picking and LOD streaming are not implemented",
+    "VS Code staged and clean-installed VSIX product open remain a separate Gate",
+    "SwiftShader exercises actual WebGL2 APIs but does not claim a physical GPU",
+    "the public sample remains in an ignored digest cache and is not redistributed",
+    "bounded Browser product open does not admit the E57 format family"
+  ]
+}

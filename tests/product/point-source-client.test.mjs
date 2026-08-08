@@ -86,6 +86,9 @@ function success(request) {
         coordinateReferenceStatus: "unqualified",
         fingerprint: `sha256:${"1".repeat(64)}`,
         format: request.options.format,
+        pointFormat: request.options.format === "e57"
+          ? "cartesian-xyz-rgb"
+          : "cartesian-xyz-rgb16",
         revisionId: "source-snapshot:fake",
         semanticAuthority: false,
         sourceRole: "derived-or-reference-points",
@@ -105,6 +108,7 @@ function success(request) {
       resources: {
         inputBytes: request.bytes.byteLength,
         pointRangeBytes: rangeBytes.byteLength,
+        pointRangePayloadBytes: rangeBytes.byteLength - 48,
       },
       cleanup: {
         cpuProjectionBuffersReleased: true,

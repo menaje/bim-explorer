@@ -3,19 +3,20 @@ import {
   createLasLazPointSourceArtifact,
 } from "../../packages/las-laz-point-source/src/index.mjs";
 import {
-  E57_MAXIMUM_SOURCE_BYTES,
-  createE57PointSourceArtifact,
+  E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+  createE57ProductPointSourceArtifact,
 } from "../../packages/e57-point-source/src/index.mjs";
 
 const REQUEST_SCHEMA =
   "bim-explorer-point-source-worker-request/0.1";
 const RESPONSE_SCHEMA =
   "bim-explorer-point-source-worker-response/0.1";
-const MAXIMUM_SOURCE_BYTES = Math.min(
-  LAS_LAZ_MAXIMUM_SOURCE_BYTES,
-  E57_MAXIMUM_SOURCE_BYTES,
-);
 const FORMATS = new Set(["e57", "las", "laz"]);
+const MAXIMUM_SOURCE_BYTES = Object.freeze({
+  e57: E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+  las: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+  laz: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+});
 
 let accepted = false;
 let loadedLazPerfScriptUrl = null;
@@ -94,8 +95,9 @@ function validRequest(request) {
     request.requestId.length > 0 &&
     request.bytes instanceof ArrayBuffer &&
     request.bytes.byteLength > 0 &&
-    request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES &&
-    FORMATS.has(request.options?.format)
+    FORMATS.has(request.options?.format) &&
+    request.bytes.byteLength <=
+      MAXIMUM_SOURCE_BYTES[request.options.format]
   );
 }
 
@@ -149,7 +151,7 @@ async function open(request) {
       progress(request.requestId, "decoder-initializing");
     }
     artifact = format === "e57"
-      ? await createE57PointSourceArtifact(bytes)
+      ? await createE57ProductPointSourceArtifact(bytes)
       : await createLasLazPointSourceArtifact(bytes, {
           format,
           moduleFactory: format === "laz"

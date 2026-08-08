@@ -222,6 +222,13 @@ async function qualifyPointSource({
   const sphericalE57 =
     manifest.schema ===
       "bim-explorer-public-e57-spherical-fixture/1";
+  const multipleScanE57 =
+    manifest.schema ===
+      "bim-explorer-public-e57-multiple-scan-fixture/1";
+  const exampleE57 = sphericalE57 || multipleScanE57;
+  const e57Projection = multipleScanE57
+    ? manifest.expected.productProjection
+    : manifest.expected;
   const entry = e57 ? manifest.entry : manifest.entries[format];
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
@@ -278,9 +285,11 @@ async function qualifyPointSource({
     coordinateReferenceStatus: "unqualified",
     formatVersion: manifest.expected.formatVersion,
     pointFormat: e57
-      ? sphericalE57
-        ? "spherical-rae-rgb"
-        : "cartesian-xyz-rgb"
+      ? multipleScanE57
+        ? e57Projection.pointFormat
+        : sphericalE57
+          ? "spherical-rae-rgb"
+          : "cartesian-xyz-rgb"
       : manifest.expected.pointFormat,
     profile: null,
     sourceRole: "derived-or-reference-points",
@@ -293,17 +302,17 @@ async function qualifyPointSource({
   assert.equal(
     ready.resources.decodedPointBytes,
     e57
-      ? sphericalE57
+      ? exampleE57
         ? manifest.expected.decodedPointBytes
         : 215_040
       : manifest.expected.pointRecordLength *
           manifest.expected.pointRecords,
   );
   const pointRangeBytes = e57
-    ? manifest.expected.pointRangeByteLength
+    ? e57Projection.pointRangeByteLength
     : 163_264;
   const pointRangePayloadBytes = e57
-    ? manifest.expected.pointRangePayloadBytes
+    ? e57Projection.pointRangePayloadBytes
     : 163_216;
   assert.equal(ready.resources.pointRangeBytes, pointRangeBytes);
   assert.equal(
@@ -336,7 +345,7 @@ async function qualifyPointSource({
   assert.equal(
     ready.pointCloud.rangeSha256,
     e57
-      ? manifest.expected.pointRangeSha256
+      ? e57Projection.pointRangeSha256
       : "8383abce84d57b8f50ee1f39aa1d442" +
           "a7f258cd759ab9812aff1a0625ab10449",
   );
@@ -395,7 +404,7 @@ async function qualifyPointSource({
       pointFormat: ready.source.pointFormat,
       provenance: {
         repository: manifest.provenance.repository,
-        ...(sphericalE57
+        ...(exampleE57
           ? {
               sourcePage: manifest.provenance.sourcePage,
               publishedAt: manifest.provenance.publishedAt,
@@ -461,6 +470,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_E57_SOURCE;
   const e57SphericalSourcePath =
     process.env.BIM_EXPLORER_VSCODE_E57_SPHERICAL_SOURCE;
+  const e57MultipleScanSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -795,6 +806,29 @@ async function run() {
           format: "e57",
           manifest,
           sourcePath: e57SphericalSourcePath,
+        });
+    }
+    if (
+      typeof e57MultipleScanSourcePath === "string" &&
+      e57MultipleScanSourcePath.length > 0
+    ) {
+      const fixtureModule = await import(
+        pathToFileURL(
+          path.join(
+            root,
+            "scripts",
+            "public-e57-multiple-scan-fixture.mjs",
+          ),
+        ).href
+      );
+      const manifest = await fixtureModule
+        .loadPublicE57MultipleScanFixtureManifest();
+      pointQualifications.e57MultipleScan =
+        await qualifyPointSource({
+          api,
+          format: "e57",
+          manifest,
+          sourcePath: e57MultipleScanSourcePath,
         });
     }
     const hasPointQualifications =

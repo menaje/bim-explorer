@@ -17,6 +17,8 @@
     "e57StructuredIndexAlignment": true,
     "e57SphericalBrowserProductOpen": true,
     "e57SphericalVscodeProductOpen": true,
+    "e57MultipleScanBrowserProductOpen": true,
+    "e57MultipleScanVscodeProductOpen": true,
     "lasHeaderInspection": true,
     "lazHeaderInspection": true,
     "lasPointDecode": true,
@@ -46,6 +48,8 @@
     "e57MultipleScanProfile": "compatibility/evidence/e57-multiple-scan-profile-2026-08-08.json",
     "e57SphericalBrowserProduct": "compatibility/evidence/e57-spherical-browser-product-2026-08-08.json",
     "e57SphericalVscodeProduct": "compatibility/evidence/e57-spherical-vscode-product-2026-08-08.json",
+    "e57MultipleScanBrowserProduct": "compatibility/evidence/e57-multiple-scan-browser-product-2026-08-08.json",
+    "e57MultipleScanVscodeProduct": "compatibility/evidence/e57-multiple-scan-vscode-product-2026-08-08.json",
     "e57BrowserProduct": "compatibility/evidence/e57-browser-product-2026-08-08.json",
     "e57VscodeProduct": "compatibility/evidence/e57-vscode-product-2026-08-08.json",
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
@@ -56,15 +60,15 @@
   },
   "blockers": [
     "the E57 samples have no qualified CRS or surveyed datum authority; scan poses establish local registration only",
-    "E57 format admission remains held until surveyed coordinate, multiple-scan product open and extension profile Gates pass",
+    "E57 format admission remains held until surveyed coordinate and extension profile Gates pass",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
     "LAS/LAZ format admission remains held until coordinate and remaining product Gates pass"
   ],
   "limitations": [
     "the samples are downloaded on demand into ignored digest caches",
     "sample files are not tracked, redistributed or included in a release",
-    "the E57 Browser and VS Code products cover bounded single-scan Cartesian XYZ/RGB and spherical RAE/intensity/RGB profiles without CRS authority; intensity is intentionally omitted from the spherical RGBA display range",
-    "a separate cache-only E57 technical profile decodes five scans, structured row/column streams and four explicit poses, but does not claim Browser or VS Code product open",
+    "the E57 Browser and VS Code products cover bounded single-scan Cartesian XYZ/RGB, spherical RAE/intensity/RGB and five-scan posed Cartesian intensity/RGB/structured-index profiles without CRS authority",
+    "the five-scan E57 product applies four explicit poses as local registration only; structured row/column indices and intensity are intentionally omitted from the RGBA display range",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
     "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
@@ -85,6 +89,8 @@
     "vscodeExperimentalProductOpen": true,
     "e57BrowserExperimentalProductOpen": true,
     "e57VscodeExperimentalProductOpen": true,
+    "e57MultipleScanBrowserExperimentalProductOpen": true,
+    "e57MultipleScanVscodeExperimentalProductOpen": true,
     "formatAdmission": false,
     "productSupport": false
   }

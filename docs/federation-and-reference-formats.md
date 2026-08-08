@@ -153,9 +153,10 @@ pixels와 source/Worker/CPU/GPU/editor cleanup을 재현합니다. 별도 cache-
 technical profile은 다섯 scan·1,213,990개 record와 structured row/column
 stream을 해제하고 네 explicit pose 및 한 implicit identity pose를 적용해 독립
 `pye57/libE57Format` position/RGB digest parity를 통과했습니다. 이 결과는 local
-registration metadata만 검증합니다. multiple-scan 제품 open, CRS/surveyed
-datum, extension과 point identity/picking·LOD가 없으므로 E57 admission은 계속
-`held`입니다.
+registration metadata만 검증합니다. 후속 actual Browser, staged VS Code와
+clean-installed VSIX는 같은 1,213,990-point pose-applied projection과 cleanup을
+재현했습니다. CRS/surveyed datum, extension과 point identity/picking·LOD가
+없으므로 E57 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

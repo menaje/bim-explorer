@@ -73,6 +73,18 @@
     },
     "aggregateWorldPositionNanometerInt64LeSha256": "d44fa31718500cf88129bc1f0fbd435446d929d142878712b08fd2d95e9af63a",
     "aggregateRgbSha256": "cebed53b1493e874b11c5fc5bb4f411aa72851ba884d58e62a4d3023a0e8be11",
+    "productProjection": {
+      "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+      "pointRangeByteLength": 19423888,
+      "pointRangePayloadBytes": 19423840,
+      "pointRangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697",
+      "origin": [-0.6522246470556594, -3.3093784226598126, -0.06739121905373047],
+      "maximumAbsoluteError": 1.1920501918893933e-7,
+      "bounds": {
+        "min": [-3.034407483588252, -5.8261087311925275, -1.9824324273209424],
+        "max": [1.7299581894769334, -0.7926481141270978, 1.8476499892134814]
+      }
+    },
     "scans": [
       {
         "index": 0,

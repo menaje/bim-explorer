@@ -20,6 +20,12 @@ import {
   validateE57SphericalVscodeProductQualification,
 } from "./qualify-e57-spherical-vscode-product.mjs";
 import {
+  validateE57MultipleScanBrowserProductQualification,
+} from "./qualify-e57-multiple-scan-browser-product.mjs";
+import {
+  validateE57MultipleScanVscodeProductQualification,
+} from "./qualify-e57-multiple-scan-vscode-product.mjs";
+import {
   validateE57BrowserProductQualification,
 } from "./qualify-e57-browser-product.mjs";
 import {
@@ -56,6 +62,8 @@ const PASSED_GATES = Object.freeze([
   "e57StructuredIndexAlignment",
   "e57SphericalBrowserProductOpen",
   "e57SphericalVscodeProductOpen",
+  "e57MultipleScanBrowserProductOpen",
+  "e57MultipleScanVscodeProductOpen",
   "e57PointDecode",
   "e57Renderer",
   "e57BrowserProductOpen",
@@ -89,6 +97,8 @@ export function validateReferenceFormatProbeCompatibility(
   e57MultipleScanProfileEvidence,
   e57SphericalBrowserProductEvidence,
   e57SphericalVscodeProductEvidence,
+  e57MultipleScanBrowserProductEvidence,
+  e57MultipleScanVscodeProductEvidence,
   e57BrowserProductEvidence,
   e57VscodeProductEvidence,
   lasLazEvidence,
@@ -110,6 +120,12 @@ export function validateReferenceFormatProbeCompatibility(
   );
   validateE57SphericalVscodeProductQualification(
     e57SphericalVscodeProductEvidence,
+  );
+  validateE57MultipleScanBrowserProductQualification(
+    e57MultipleScanBrowserProductEvidence,
+  );
+  validateE57MultipleScanVscodeProductQualification(
+    e57MultipleScanVscodeProductEvidence,
   );
   validateE57BrowserProductQualification(
     e57BrowserProductEvidence,
@@ -153,6 +169,12 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.evidence?.e57SphericalVscodeProduct !==
       "compatibility/evidence/" +
         "e57-spherical-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.e57MultipleScanBrowserProduct !==
+      "compatibility/evidence/" +
+        "e57-multiple-scan-browser-product-2026-08-08.json" ||
+    manifest.evidence?.e57MultipleScanVscodeProduct !==
+      "compatibility/evidence/" +
+        "e57-multiple-scan-vscode-product-2026-08-08.json" ||
     manifest.evidence?.e57BrowserProduct !==
       "compatibility/evidence/" +
         "e57-browser-product-2026-08-08.json" ||
@@ -212,6 +234,10 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.policy.vscodeExperimentalProductOpen !== true ||
     manifest.policy.e57BrowserExperimentalProductOpen !== true ||
     manifest.policy.e57VscodeExperimentalProductOpen !== true ||
+    manifest.policy.e57MultipleScanBrowserExperimentalProductOpen !==
+      true ||
+    manifest.policy.e57MultipleScanVscodeExperimentalProductOpen !==
+      true ||
     manifest.policy.formatAdmission !== false ||
     manifest.policy.productSupport !== false ||
     manifest.blockers?.length !== HELD_GATES.length ||
@@ -236,6 +262,8 @@ async function main() {
     e57MultipleScanProfileEvidence,
     e57SphericalBrowserProductEvidence,
     e57SphericalVscodeProductEvidence,
+    e57MultipleScanBrowserProductEvidence,
+    e57MultipleScanVscodeProductEvidence,
     e57BrowserProductEvidence,
     e57VscodeProductEvidence,
     lasLazEvidence,
@@ -274,6 +302,16 @@ async function main() {
     readFile(
       "compatibility/evidence/" +
         "e57-spherical-vscode-product-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-multiple-scan-browser-product-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-multiple-scan-vscode-product-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -321,6 +359,8 @@ async function main() {
       e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
+      e57MultipleScanBrowserProductEvidence,
+      e57MultipleScanVscodeProductEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,

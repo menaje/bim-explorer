@@ -30,6 +30,9 @@ import {
   acquirePublicE57SphericalFixture,
 } from "./public-e57-spherical-fixture.mjs";
 import {
+  acquirePublicE57MultipleScanFixture,
+} from "./public-e57-multiple-scan-fixture.mjs";
+import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
 
@@ -625,6 +628,41 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "e57-multiple-scan-public") {
+    const acquired = await acquirePublicE57MultipleScanFixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    const projection = manifest.expected.productProjection;
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "e57",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      formatVersion: manifest.expected.formatVersion,
+      pointFormat: projection.pointFormat,
+      points: manifest.expected.pointRecords,
+      ranges: 1,
+      pointRangeBytes: projection.pointRangeByteLength,
+      pointRangePayloadBytes: projection.pointRangePayloadBytes,
+      pointRangeSha256: projection.pointRangeSha256,
+      rendererLimits: null,
+      searchQuery: null,
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        sourcePage: manifest.provenance.sourcePage,
+        publishedAt: manifest.provenance.publishedAt,
+        license: manifest.license.identifier,
+        notice: manifest.license.notice,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
   if (["las-public", "laz-public"].includes(kind)) {
     const acquired = await acquirePublicLasLazFixture();
     const format = kind === "las-public" ? "las" : "laz";
@@ -668,7 +706,8 @@ async function qualificationFixture(kind) {
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
       "gltf-public, gltf-product-scale, e57-public, " +
-      "e57-spherical-public, las-public, or laz-public",
+      "e57-spherical-public, e57-multiple-scan-public, " +
+      "las-public, or laz-public",
   );
 }
 
@@ -987,6 +1026,7 @@ function parseArguments(values) {
     "gltf-public",
     "e57-public",
     "e57-spherical-public",
+    "e57-multiple-scan-public",
     "las-public",
     "laz-public",
     "public",
@@ -1020,7 +1060,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
         "gltf-product-scale|e57-public|e57-spherical-public|" +
-        "las-public|laz-public] " +
+        "e57-multiple-scan-public|las-public|laz-public] " +
         "[--output path]",
     );
   }
