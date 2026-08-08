@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { once } from "node:events";
 import test from "node:test";
 
 import {
@@ -21,6 +22,9 @@ import {
 import {
   syntheticGeoreferencedIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
+import {
+  createBimFederationBrowserProbeServer,
+} from "../../scripts/serve-bim-federation-browser-probe.mjs";
 
 async function sourceFixture(label) {
   const sourceText = syntheticGeoreferencedIfc().replace(
@@ -402,4 +406,36 @@ test("reference format registry admits only qualified reference profiles", () =>
     () => getReferenceFormatCapability("nwd"),
     /not registered/u,
   );
+});
+
+test("federation Browser probe serves the complete renderer module graph", async () => {
+  const layerId = "federation-probe:test-layer";
+  const server = createBimFederationBrowserProbeServer({
+    input: {
+      schema: "bim-explorer-federation-browser-probe-input/1",
+      snapshot: {
+        layerId,
+        layers: [{ layerId, rangeHandles: [] }],
+      },
+    },
+    ranges: new Map(),
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  try {
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const response = await fetch(
+      `${origin}/point-cloud-lod.mjs`,
+    );
+    assert.equal(response.status, 200);
+    assert.equal(
+      response.headers.get("content-type"),
+      "text/javascript; charset=utf-8",
+    );
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) =>
+        error === undefined ? resolve() : reject(error));
+    });
+  }
 });

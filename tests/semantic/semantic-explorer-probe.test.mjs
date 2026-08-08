@@ -90,6 +90,7 @@ test("semantic explorer probe serves bounded same-origin source ranges", async (
       "/bim-semantic-explorer.mjs",
       "/semantic-index.mjs",
       "/bim-renderer-3d.mjs",
+      "/point-cloud-lod.mjs",
     ]) {
       assert.equal(
         (await fetch(`${origin}${routeName}`)).status,

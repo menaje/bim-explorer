@@ -76,6 +76,14 @@ test("glTF Browser probe exposes only projected bounded ranges", async () => {
       drawCalls: 2,
       uploadedBytes: 244,
     });
+    const lodModule = await fetch(
+      `${origin}/point-cloud-lod.mjs`,
+    );
+    assert.equal(lodModule.status, 200);
+    assert.equal(
+      lodModule.headers.get("content-type"),
+      "text/javascript; charset=utf-8",
+    );
     const handle =
       input.snapshot.layers[0].rangeHandles[0];
     const range = await fetch(

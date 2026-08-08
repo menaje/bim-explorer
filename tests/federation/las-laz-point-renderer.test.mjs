@@ -74,6 +74,16 @@ test("point renderer loopback server is local-only and clears its range", async 
     }
   });
   const origin = `http://127.0.0.1:${server.address().port}`;
+  const lodModule = await fetch(`${origin}/point-cloud-lod.mjs`);
+  assert.equal(lodModule.status, 200);
+  assert.equal(
+    lodModule.headers.get("content-type"),
+    "text/javascript; charset=utf-8",
+  );
+  assert.match(
+    await lodModule.text(),
+    /from "\.\/point-cloud\.mjs"/u,
+  );
   const response = await fetch(`${origin}/point-range.bin`);
   assert.equal(response.status, 200);
   assert.equal(

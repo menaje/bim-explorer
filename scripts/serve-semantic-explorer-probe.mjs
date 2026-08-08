@@ -85,6 +85,10 @@ const STATIC_ROUTES = new Map([
     file: path.join(RENDERER, "point-cloud.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/point-cloud-lod.mjs", {
+    file: path.join(RENDERER, "point-cloud-lod.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
   ["/point-cloud-webgl2-backend.mjs", {
     file: path.join(RENDERER, "point-cloud-webgl2-backend.mjs"),
     type: "text/javascript; charset=utf-8",

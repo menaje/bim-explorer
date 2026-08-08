@@ -87,6 +87,14 @@ test("Browser GPU server exposes only bounded same-origin ranges", async () => {
       input.schema,
       "bim-explorer-browser-gpu-probe-input/1",
     );
+    const lodModule = await fetch(
+      `${origin}/point-cloud-lod.mjs`,
+    );
+    assert.equal(lodModule.status, 200);
+    assert.equal(
+      lodModule.headers.get("content-type"),
+      "text/javascript; charset=utf-8",
+    );
 
     const handle =
       prepared.input.snapshot.layers[0].rangeHandles[0];
