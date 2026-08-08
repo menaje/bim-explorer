@@ -89,7 +89,7 @@ Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를
 투영합니다. optional intensity는 stream alignment까지만 해제하고 lossy omitted로
 표시합니다. 자체 JavaScript decoder는 격리 Worker 실행을 전제로 하며 CRS,
 scan pose, semantics, write 또는 round-trip authority를 제공하지 않습니다.
-현재 main은 Cartesian bounded profile의 Browser, staged VS Code와
-clean-installed VSIX 제품 open 및 별도 spherical source qualification을
-통과했지만 E57 format family나 federation coordinate authority를 admission하지
-않습니다.
+현재 main은 Cartesian bounded profile뿐 아니라 spherical RAE/intensity/RGB
+profile도 Browser, staged VS Code와 clean-installed VSIX 제품 open을
+통과했습니다. intensity는 lossy omitted이고 E57 format family나 federation
+coordinate authority는 admission하지 않습니다.

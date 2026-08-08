@@ -70,6 +70,8 @@ npm run fetch:e57:profiles
 npm run qualify:e57:profiles
 npm run fetch:e57:spherical
 npm run qualify:e57:spherical
+npm run qualify:e57:spherical:product:web
+npm run qualify:e57:spherical:product:vscode
 npm run fetch:las-laz:public
 npm run qualify:las-laz:probe
 npm run qualify:las-laz:worker

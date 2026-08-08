@@ -121,6 +121,20 @@ function numericArray(value, length) {
   return [...value];
 }
 
+function stringArray(value, maximumLength = 16) {
+  if (
+    !Array.isArray(value) ||
+    value.length > maximumLength ||
+    value.some((item) =>
+      typeof item !== "string" ||
+      item.length === 0 ||
+      item.length > 128)
+  ) {
+    return null;
+  }
+  return [...value];
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
@@ -289,6 +303,21 @@ function sanitizeReport(value) {
     pointCloud: !pointSource || value.pointCloud === undefined
       ? null
       : {
+          attributeProjection:
+            value.pointCloud?.attributeProjection === undefined
+              ? null
+              : {
+                  ignoredFields: stringArray(
+                    value.pointCloud.attributeProjection
+                      ?.ignoredFields,
+                  ),
+                  lossiness: stringOrNull(
+                    value.pointCloud.attributeProjection?.lossiness,
+                  ),
+                  method: stringOrNull(
+                    value.pointCloud.attributeProjection?.method,
+                  ),
+                },
           bounds: {
             min: numericArray(
               value.pointCloud?.bounds?.min,
@@ -311,6 +340,9 @@ function sanitizeReport(value) {
           },
           coordinateReferenceStatus: stringOrNull(
             value.pointCloud?.coordinateReferenceStatus,
+          ),
+          coordinateRepresentation: stringOrNull(
+            value.pointCloud?.coordinateRepresentation,
           ),
           decoder: value.pointCloud?.decoder === undefined
             ? null

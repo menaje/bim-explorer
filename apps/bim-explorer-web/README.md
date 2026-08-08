@@ -45,3 +45,7 @@ file input으로 열어 7,680-point range, visible projection과
 source/Worker/CPU/GPU cleanup을 확인합니다. `npm run
 qualify:e57:product:vscode`는 같은 projection을 staged VS Code와
 clean-installed VSIX에서 재현합니다. E57 샘플도 재배포하지 않습니다.
+`npm run qualify:e57:spherical:product:web`과
+`npm run qualify:e57:spherical:product:vscode`는 155,201개 유효점을 만드는
+spherical RAE/intensity/RGB profile을 같은 세 제품 경로에서 검증합니다.
+intensity는 display range에서 lossy omitted이며 원본 sample은 cache-only입니다.

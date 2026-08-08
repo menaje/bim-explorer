@@ -14,6 +14,12 @@ import {
 import {
   validateE57VscodeProductQualification,
 } from "./qualify-e57-vscode-product.mjs";
+import {
+  validateE57SphericalBrowserProductQualification,
+} from "./qualify-e57-spherical-browser-product.mjs";
+import {
+  validateE57SphericalVscodeProductQualification,
+} from "./qualify-e57-spherical-vscode-product.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -49,6 +55,9 @@ const PASSED_GATES = [
   "browserReadonlyE57Open",
   "vscodeReadonlyE57Open",
   "cleanVsixE57Open",
+  "browserReadonlyE57SphericalOpen",
+  "vscodeReadonlyE57SphericalOpen",
+  "cleanVsixE57SphericalOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -246,6 +255,8 @@ export function validateBimProductShellCompatibility(
   lasLazVscodeProduct,
   e57BrowserProduct,
   e57VscodeProduct,
+  e57SphericalBrowserProduct,
+  e57SphericalVscodeProduct,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -282,6 +293,12 @@ export function validateBimProductShellCompatibility(
   );
   validateE57VscodeProductQualification(
     e57VscodeProduct,
+  );
+  validateE57SphericalBrowserProductQualification(
+    e57SphericalBrowserProduct,
+  );
+  validateE57SphericalVscodeProductQualification(
+    e57SphericalVscodeProduct,
   );
   if (
     manifest.schema !==
@@ -887,6 +904,12 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.vscodeE57 !==
       "compatibility/evidence/" +
         "e57-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.browserE57Spherical !==
+      "compatibility/evidence/" +
+        "e57-spherical-browser-product-2026-08-08.json" ||
+    manifest.evidence?.vscodeE57Spherical !==
+      "compatibility/evidence/" +
+        "e57-spherical-vscode-product-2026-08-08.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -903,6 +926,9 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimBrowserE57Open !== true ||
     manifest.policy?.claimVscodeE57Open !== true ||
     manifest.policy?.claimCleanVsixE57Open !== true ||
+    manifest.policy?.claimBrowserE57SphericalOpen !== true ||
+    manifest.policy?.claimVscodeE57SphericalOpen !== true ||
+    manifest.policy?.claimCleanVsixE57SphericalOpen !== true ||
     manifest.policy?.claimE57FormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
@@ -926,6 +952,8 @@ export function validateBimProductShellCompatibility(
         lasLazVscodeProduct,
         e57BrowserProduct,
         e57VscodeProduct,
+        e57SphericalBrowserProduct,
+        e57SphericalVscodeProduct,
         installation,
         manifest,
         vscode,
@@ -971,6 +999,8 @@ async function main() {
     lasLazVscodeProduct,
     e57BrowserProduct,
     e57VscodeProduct,
+    e57SphericalBrowserProduct,
+    e57SphericalVscodeProduct,
     vscode,
     installation,
   ] = await Promise.all([
@@ -1025,6 +1055,14 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.browserE57Spherical),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.vscodeE57Spherical),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -1047,6 +1085,8 @@ async function main() {
     lasLazVscodeProduct,
     e57BrowserProduct,
     e57VscodeProduct,
+    e57SphericalBrowserProduct,
+    e57SphericalVscodeProduct,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

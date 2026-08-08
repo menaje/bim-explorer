@@ -153,10 +153,11 @@ Cartesian XYZ와 optional RGB/default-BitPack profile을 bounded Browser,
 staged VS Code와 clean-installed VSIX에서 source-neutral point range로 여는
 제품 Gate까지 통과했습니다. 같은 제품 Worker는 cache-only profile matrix에서
 Float64·ScaledInteger 좌표, optional `cartesianInvalidState` 필터와 indexless
-compressed-vector를 추가로 통과했습니다. 별도 공개 spherical sample은
+compressed-vector를 추가로 통과했습니다. 별도 공개 spherical sample도
 370,530개 RAE/intensity/RGB record 중 invalid 215,329개를 제거해 155,201개
-Cartesian display point를 독립 기준과 동일하게 만듭니다. intensity omission은
-lossy로 기록합니다. 3D Tiles와 RVT/DGN은
+Cartesian display point를 독립 기준과 동일하게 만들고, 실제 Browser·staged
+VS Code·clean-installed VSIX에서 같은 2,483,216-byte GPU projection으로
+열립니다. intensity omission은 lossy로 기록합니다. 3D Tiles와 RVT/DGN은
 capability Gate만 등록했고 제품 codec/SDK evidence 전에는 열기를 거부합니다.
 LAS/LAZ는 bounded Browser, staged VS Code와
 clean-installed VSIX 제품 source/open Gate까지 통과했습니다. 두 point-cloud
@@ -193,7 +194,9 @@ XYZ/RGB record와 122,880-byte point payload를 검증했습니다. 추가 E57 m
 동일한 position SHA-256 및 489,136-byte point payload를 만드는지 검증합니다.
 5,168,128-byte spherical example은 155,201개 유효점의 nanometer-quantized
 Cartesian position과 RGB digest parity 및 2,483,216-byte point payload를
-검증합니다.
+검증합니다. 같은 payload는 실제 Browser, staged VS Code 1.131.0과
+clean-installed VSIX에서 155,201 points·20,754 pixels로 재현되고 source
+buffer, Worker, CPU range, GPU와 editor 자원이 전량 회수됩니다.
 paired LAS 1.2/LAZ의
 10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
 parity를 검증했습니다. LAZ는 실제 Chrome의 disposable Worker에서도 4,063,232

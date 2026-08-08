@@ -131,8 +131,10 @@ Worker transfer·termination, 실제 Browser local file input, staged VS Code와
 clean-installed VSIX의 exact range·visible projection과 cleanup을 검사합니다.
 별도 `e57-spherical-profile` test는 370,530개 spherical RAE/intensity/RGB
 record의 Cartesian 변환, 215,329개 invalid filter, 독립 nanometer position/RGB
-digest와 intensity lossy omission을 검사합니다. Cartesian 제품 open과 bounded
-spherical source projection만 experimental로 승인하며 CRS/scan pose/surveyed
+digest와 intensity lossy omission을 검사합니다. `e57-spherical-browser-product`와
+`e57-spherical-vscode-product` test는 actual Browser, staged VS Code와
+clean-installed VSIX의 동일 point range·visible projection·cleanup 증거를
+검사합니다. Cartesian과 spherical 제품 open만 experimental로 승인하며 CRS/scan pose/surveyed
 datum, multiple scan/extension, point identity/pick, LOD와 format admission은
 계속 거부합니다.
 

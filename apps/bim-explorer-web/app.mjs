@@ -1115,8 +1115,22 @@ async function openPointBytes(bytesValue, {
         uploadedBytes: mount.backend.uploadedBytes,
       },
       pointCloud: {
+        ...(artifact.profile.attributeProjection === undefined
+          ? {}
+          : {
+              attributeProjection:
+                artifact.profile.attributeProjection,
+            }),
         bounds: mount.geometry.bounds,
         colorRange: mount.geometry.colorRange,
+        ...(artifact.profile.coordinateProjection
+          .sourceRepresentation === undefined
+          ? {}
+          : {
+              coordinateRepresentation:
+                artifact.profile.coordinateProjection
+                  .sourceRepresentation,
+            }),
         coordinateReferenceStatus: "unqualified",
         decoder: artifact.profile.decoder,
         maximumProjectionError:

@@ -22,6 +22,8 @@ async function fixtures() {
     lasLazVscodeProduct,
     e57BrowserProduct,
     e57VscodeProduct,
+    e57SphericalBrowserProduct,
+    e57SphericalVscodeProduct,
     vscode,
     installation,
   ] = await Promise.all([
@@ -66,6 +68,14 @@ async function fixtures() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      manifest.evidence.browserE57Spherical,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.vscodeE57Spherical,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       manifest.evidence.vscodeSynthetic,
       "utf8",
     ).then(JSON.parse),
@@ -86,6 +96,8 @@ async function fixtures() {
     lasLazVscodeProduct,
     e57BrowserProduct,
     e57VscodeProduct,
+    e57SphericalBrowserProduct,
+    e57SphericalVscodeProduct,
     manifest,
     vscode,
   };
@@ -106,6 +118,8 @@ function validate(values) {
     values.lasLazVscodeProduct,
     values.e57BrowserProduct,
     values.e57VscodeProduct,
+    values.e57SphericalBrowserProduct,
+    values.e57SphericalVscodeProduct,
   );
 }
 
@@ -117,7 +131,7 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 3,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 33,
+      passedGates: 36,
       publicProducts: 3_569,
       status: "experimental",
     },

@@ -11,6 +11,12 @@ import {
   validateE57SphericalProfileQualification,
 } from "./qualify-e57-spherical-profile.mjs";
 import {
+  validateE57SphericalBrowserProductQualification,
+} from "./qualify-e57-spherical-browser-product.mjs";
+import {
+  validateE57SphericalVscodeProductQualification,
+} from "./qualify-e57-spherical-vscode-product.mjs";
+import {
   validateE57BrowserProductQualification,
 } from "./qualify-e57-browser-product.mjs";
 import {
@@ -42,6 +48,8 @@ const PASSED_GATES = Object.freeze([
   "e57CartesianValidityFiltering",
   "e57IndexlessCompressedVector",
   "e57SphericalCoordinateProfile",
+  "e57SphericalBrowserProductOpen",
+  "e57SphericalVscodeProductOpen",
   "e57PointDecode",
   "e57Renderer",
   "e57BrowserProductOpen",
@@ -72,6 +80,8 @@ export function validateReferenceFormatProbeCompatibility(
   e57Evidence,
   e57ProfileMatrixEvidence,
   e57SphericalProfileEvidence,
+  e57SphericalBrowserProductEvidence,
+  e57SphericalVscodeProductEvidence,
   e57BrowserProductEvidence,
   e57VscodeProductEvidence,
   lasLazEvidence,
@@ -84,6 +94,12 @@ export function validateReferenceFormatProbeCompatibility(
   validateE57ProfileMatrixQualification(e57ProfileMatrixEvidence);
   validateE57SphericalProfileQualification(
     e57SphericalProfileEvidence,
+  );
+  validateE57SphericalBrowserProductQualification(
+    e57SphericalBrowserProductEvidence,
+  );
+  validateE57SphericalVscodeProductQualification(
+    e57SphericalVscodeProductEvidence,
   );
   validateE57BrowserProductQualification(
     e57BrowserProductEvidence,
@@ -118,6 +134,12 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.evidence?.e57SphericalProfile !==
       "compatibility/evidence/" +
         "e57-spherical-profile-2026-08-08.json" ||
+    manifest.evidence?.e57SphericalBrowserProduct !==
+      "compatibility/evidence/" +
+        "e57-spherical-browser-product-2026-08-08.json" ||
+    manifest.evidence?.e57SphericalVscodeProduct !==
+      "compatibility/evidence/" +
+        "e57-spherical-vscode-product-2026-08-08.json" ||
     manifest.evidence?.e57BrowserProduct !==
       "compatibility/evidence/" +
         "e57-browser-product-2026-08-08.json" ||
@@ -198,6 +220,8 @@ async function main() {
     e57Evidence,
     e57ProfileMatrixEvidence,
     e57SphericalProfileEvidence,
+    e57SphericalBrowserProductEvidence,
+    e57SphericalVscodeProductEvidence,
     e57BrowserProductEvidence,
     e57VscodeProductEvidence,
     lasLazEvidence,
@@ -221,6 +245,16 @@ async function main() {
     readFile(
       "compatibility/evidence/" +
         "e57-spherical-profile-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-spherical-browser-product-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-spherical-vscode-product-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -265,6 +299,8 @@ async function main() {
       e57Evidence,
       e57ProfileMatrixEvidence,
       e57SphericalProfileEvidence,
+      e57SphericalBrowserProductEvidence,
+      e57SphericalVscodeProductEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,

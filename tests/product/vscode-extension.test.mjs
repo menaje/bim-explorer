@@ -597,12 +597,19 @@ test("extension diagnostics preserve bounded point evidence only", () => {
       },
     },
     pointCloud: {
+      attributeProjection: {
+        ignoredFields: ["intensity"],
+        lossiness: "lossy",
+        method:
+          "decode-for-stream-alignment-without-semantic-authority",
+      },
       bounds: { min: [-5, -5, -1], max: [5, 5, 1] },
       colorRange: {
         min: [0, 68, 0, 255],
         max: [254, 198, 63, 255],
       },
       coordinateReferenceStatus: "unqualified",
+      coordinateRepresentation: "spherical",
       decoder: {
         backend: "browser-wasm-worker-product-source",
         id: "laz-perf",
@@ -624,6 +631,14 @@ test("extension diagnostics preserve bounded point evidence only", () => {
   assert.deepEqual(report.model, { points: 10_201, ranges: 1 });
   assert.equal(report.resources.wasmHeapCapacityBytes.peakObserved, 4_063_232);
   assert.equal(report.pointCloud.decoder.id, "laz-perf");
+  assert.deepEqual(
+    report.pointCloud.attributeProjection.ignoredFields,
+    ["intensity"],
+  );
+  assert.equal(
+    report.pointCloud.coordinateRepresentation,
+    "spherical",
+  );
   assert.equal(report.productLifecycle.cpuPointRangeCleared, true);
   assert.equal(JSON.stringify(report).includes("/private"), false);
 });

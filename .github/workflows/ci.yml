@@ -176,6 +176,52 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Qualify spherical E57 Browser product on Linux
+        if: runner.os == 'Linux'
+        run: >-
+          xvfb-run -a
+          npm run qualify:e57:spherical:product:web --
+          --out e57-spherical-browser-product-${{ runner.os }}.json
+
+      - name: Qualify spherical E57 Browser product on macOS
+        if: runner.os == 'macOS'
+        run: >-
+          npm run qualify:e57:spherical:product:web --
+          --out e57-spherical-browser-product-${{ runner.os }}.json
+
+      - name: Upload spherical E57 Browser product evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e57-spherical-browser-product-${{ runner.os }}
+          path: e57-spherical-browser-product-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Qualify spherical E57 VS Code product on Linux
+        if: runner.os == 'Linux'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          xvfb-run -a
+          npm run qualify:e57:spherical:product:vscode --
+          --out e57-spherical-vscode-product-${{ runner.os }}.json
+
+      - name: Qualify spherical E57 VS Code product on macOS
+        if: runner.os == 'macOS'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          npm run qualify:e57:spherical:product:vscode --
+          --out e57-spherical-vscode-product-${{ runner.os }}.json
+
+      - name: Upload spherical E57 VS Code product evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e57-spherical-vscode-product-${{ runner.os }}
+          path: e57-spherical-vscode-product-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify web-ifc platform package
         run: >-
           npm run qualify:ifc:platform-package --

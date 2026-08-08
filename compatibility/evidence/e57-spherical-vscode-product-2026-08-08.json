@@ -1,0 +1,400 @@
+{
+  "schema": "bim-explorer-e57-spherical-vscode-product-evidence/1",
+  "status": "passed-experimental-spherical-vscode-product-open",
+  "asOf": "2026-08-08",
+  "capturedAt": "2026-08-08T13:30:15.990Z",
+  "environment": {
+    "platform": "darwin-arm64",
+    "node": "v24.11.1",
+    "vscode": "1.131.0",
+    "runtimeSource": "local-installation",
+    "requestedVersion": null,
+    "downloadAttempts": 0
+  },
+  "surfaces": {
+    "staged": {
+      "environment": {
+        "vscode": "1.131.0",
+        "platform": "darwin-arm64",
+        "runtimeLayout": "staged"
+      },
+      "fixture": {
+        "id": "e57-example-pump-a-spherical",
+        "committed": false,
+        "format": "e57",
+        "sourceBytes": 5168128,
+        "fingerprint": "sha256:268b42e69bbbad85703933f24626b97736ec703b0a7c34550dcb6ed0830317e3",
+        "formatVersion": "1.0",
+        "pointFormat": "spherical-rae-rgb",
+        "provenance": {
+          "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+          "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+          "publishedAt": "2011-05-04T23:26:44Z",
+          "license": "LicenseRef-E57-Example-Test-Data",
+          "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+          "bundled": false,
+          "sampleRedistributed": false
+        }
+      },
+      "observation": {
+        "hostKind": "vscode-webview",
+        "model": {
+          "points": 155201,
+          "ranges": 1
+        },
+        "performance": {
+          "artifactMs": 819.6000000014901,
+          "sourceMs": 0,
+          "totalMs": 853.6000000014901
+        },
+        "resources": {
+          "decodedPointBytes": 10745370,
+          "pointRangeBytes": 2483264,
+          "pointRangePayloadBytes": 2483216,
+          "sourceBytes": 5168128,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 20754,
+          "sourceReadBytes": 2483264,
+          "uploadedBytes": 2483216
+        },
+        "pointCloud": {
+          "attributeProjection": {
+            "ignoredFields": [
+              "intensity"
+            ],
+            "lossiness": "lossy",
+            "method": "decode-for-stream-alignment-without-semantic-authority"
+          },
+          "bounds": {
+            "min": [
+              -2.9037629094026016,
+              -5.301102505934216,
+              -1.8997026311267473
+            ],
+            "max": [
+              1.721604732046373,
+              -0.792647706282116,
+              1.8430029524456404
+            ]
+          },
+          "colorRange": {
+            "min": [
+              0,
+              2,
+              0,
+              255
+            ],
+            "max": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "coordinateReferenceStatus": "unqualified",
+          "coordinateRepresentation": "spherical",
+          "decoder": {
+            "backend": "bounded-native-js-product-source",
+            "id": "bim-explorer-e57-bitpack-reader",
+            "license": "MPL-2.0",
+            "version": "0.1.0",
+            "reference": {
+              "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+              "id": "cry-inc/e57",
+              "license": "MIT",
+              "version": "0.10.5"
+            }
+          },
+          "maximumProjectionError": 1.191939629219263e-7,
+          "origin": [
+            -0.5910790886781142,
+            -3.046875106108166,
+            -0.028349839340553573
+          ],
+          "pointPrimitive": "POINTS",
+          "pointSize": 3,
+          "rangeSha256": "b0a0c2cd5cb5f3a051d208332824318e7561e1098ef24a4dd718e460b3fd303f"
+        },
+        "productLifecycle": {
+          "cpuPointRangeCleared": true,
+          "sourceBufferCleared": true,
+          "workerTerminatedAfterTransfer": true
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "assertions": {
+        "localPointSourceOpened": true,
+        "pointSourceIdentityExact": true,
+        "noCoordinateOrSemanticAuthority": true,
+        "vscodeChromiumWebGl2": true,
+        "boundedPointRenderer": true,
+        "pointWorkerAndCpuCleanup": true,
+        "pathFreeHostBridge": true,
+        "editorCloseObserved": true
+      }
+    },
+    "installed": {
+      "environment": {
+        "platform": "darwin-arm64",
+        "cleanUserData": true,
+        "cleanExtensionsDirectory": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1330060,
+        "installedRuntimeFiles": 13,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "4b5003dfbad061362b0e38b0c8c0e6f381f0a327781dbe8f529b5403ad85a587",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      },
+      "association": {
+        "viewType": "bimExplorer.ifcEditor",
+        "displayName": "BIM Explorer",
+        "selector": [
+          {
+            "filenamePattern": "*.ifc"
+          },
+          {
+            "filenamePattern": "*.gltf"
+          },
+          {
+            "filenamePattern": "*.glb"
+          },
+          {
+            "filenamePattern": "*.e57"
+          },
+          {
+            "filenamePattern": "*.las"
+          },
+          {
+            "filenamePattern": "*.laz"
+          }
+        ],
+        "priority": "default"
+      },
+      "pointRuntime": {
+        "fixture": {
+          "id": "e57-example-pump-a-spherical",
+          "committed": false,
+          "format": "e57",
+          "sourceBytes": 5168128,
+          "fingerprint": "sha256:268b42e69bbbad85703933f24626b97736ec703b0a7c34550dcb6ed0830317e3",
+          "formatVersion": "1.0",
+          "pointFormat": "spherical-rae-rgb",
+          "provenance": {
+            "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+            "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+            "publishedAt": "2011-05-04T23:26:44Z",
+            "license": "LicenseRef-E57-Example-Test-Data",
+            "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "observation": {
+          "hostKind": "vscode-webview",
+          "model": {
+            "points": 155201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 832,
+            "sourceMs": 0,
+            "totalMs": 873.5
+          },
+          "resources": {
+            "decodedPointBytes": 10745370,
+            "pointRangeBytes": 2483264,
+            "pointRangePayloadBytes": 2483216,
+            "sourceBytes": 5168128,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 20754,
+            "sourceReadBytes": 2483264,
+            "uploadedBytes": 2483216
+          },
+          "pointCloud": {
+            "attributeProjection": {
+              "ignoredFields": [
+                "intensity"
+              ],
+              "lossiness": "lossy",
+              "method": "decode-for-stream-alignment-without-semantic-authority"
+            },
+            "bounds": {
+              "min": [
+                -2.9037629094026016,
+                -5.301102505934216,
+                -1.8997026311267473
+              ],
+              "max": [
+                1.721604732046373,
+                -0.792647706282116,
+                1.8430029524456404
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                2,
+                0,
+                255
+              ],
+              "max": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": "spherical",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "bim-explorer-e57-bitpack-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0",
+              "reference": {
+                "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+                "id": "cry-inc/e57",
+                "license": "MIT",
+                "version": "0.10.5"
+              }
+            },
+            "maximumProjectionError": 1.191939629219263e-7,
+            "origin": [
+              -0.5910790886781142,
+              -3.046875106108166,
+              -0.028349839340553573
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "b0a0c2cd5cb5f3a051d208332824318e7561e1098ef24a4dd718e460b3fd303f"
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "assertions": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        }
+      },
+      "assertions": {
+        "requiredRuntimeComplete": true,
+        "pointWorkerBundleExact": true,
+        "noSpatialDependency": true,
+        "readOnlyPointAssociation": true,
+        "installedPackageOpensE57Spherical": true,
+        "installedE57SphericalPointProjection": true,
+        "installedE57SphericalVisibleProjection": true
+      },
+      "decision": {
+        "cleanInstall": "passed",
+        "publicFixtureOpen": "not-run",
+        "referenceFixtureOpen": "passed-bounded-read-only",
+        "productScaleReferenceFixtureOpen": "not-run",
+        "pointFixtureOpen": "passed-bounded-read-only-unqualified-coordinates",
+        "marketplaceRelease": "held"
+      }
+    }
+  },
+  "runtime": {
+    "pointSourceContract": "bim-explorer-e57-point-source/0.1",
+    "pointWorkerRequest": "bim-explorer-point-source-worker-request/0.1",
+    "pointWorkerResponse": "bim-explorer-point-source-worker-response/0.1",
+    "decoder": {
+      "id": "bim-explorer-e57-bitpack-reader",
+      "version": "0.1.0",
+      "license": "MPL-2.0",
+      "reference": {
+        "id": "cry-inc/e57",
+        "version": "0.10.5",
+        "license": "MIT",
+        "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c"
+      },
+      "productRuntime": true,
+      "isolatedWorker": true,
+      "wasm": false
+    }
+  },
+  "profile": {
+    "coordinateRepresentation": "spherical",
+    "sourcePointRecords": 370530,
+    "renderedPointRecords": 155201,
+    "invalidPointRecords": 215329,
+    "ignoredFields": [
+      "intensity"
+    ],
+    "attributeLossiness": "lossy"
+  },
+  "fixturePolicy": {
+    "artifactTracked": false,
+    "sampleRedistributed": false,
+    "releaseBundled": false,
+    "testOnly": true
+  },
+  "decision": {
+    "stagedVscodeProductOpen": "passed-experimental",
+    "cleanInstalledVsixProductOpen": "passed-experimental",
+    "coordinateReference": "held",
+    "pointIdentityPicking": "held",
+    "levelOfDetail": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false,
+    "actualPhysicalGpu": "not-claimed",
+    "marketplaceRelease": "held"
+  },
+  "assertions": {
+    "stagedSphericalE57FileOpen": true,
+    "installedSphericalE57FileOpen": true,
+    "sameFixtureIdentity": true,
+    "samePointRangeProjection": true,
+    "sameVisibleProjection": true,
+    "boundedLocalReadOnly": true,
+    "sphericalProductRuntime": true,
+    "invalidRecordsFiltered": true,
+    "intensityProjectionRemainsLossy": true,
+    "cleanVsixRuntime": true,
+    "pathFree": true,
+    "spatialIndependent": true,
+    "sampleNotTrackedOrBundled": true,
+    "coordinateReferenceHeld": true,
+    "formatAdmissionHeld": true
+  },
+  "limitations": [
+    "the product profile covers one E57 1.0 single-scan spherical RAE/intensity/RGB default-BitPack sample",
+    "intensity is decoded for stream alignment and intentionally omitted from the RGBA display range",
+    "coordinates are displayed without CRS, scan-pose or surveyed datum authority",
+    "individual point identity, picking and LOD streaming are not implemented",
+    "SwiftShader exercises actual WebGL2 APIs but does not claim a physical GPU",
+    "the public sample remains in an ignored digest cache and is not redistributed",
+    "bounded VS Code product open does not admit the E57 format family"
+  ]
+}

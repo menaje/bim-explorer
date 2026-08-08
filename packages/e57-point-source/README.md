@@ -40,6 +40,8 @@ position digest. Those samples are not redistributed and the reference decoder
 is not a product dependency. A 5,168,128-byte SourceForge E57 example additionally
 qualifies 370,530 spherical records, 215,329 invalid-record removals and 155,201
 Cartesian display points against `pye57/libE57Format` nanometer-quantized parity.
-It also remains in the ignored cache and is not redistributed. The evidence admits only this bounded
+The same 2,483,216-byte point payload passes actual Browser, staged VS Code and
+clean-installed VSIX product-open qualification. The sample remains in the
+ignored cache and is not redistributed. The evidence admits only this bounded
 experimental product profile; it does not admit the E57 format family or the
 source as a federation coordinate authority.

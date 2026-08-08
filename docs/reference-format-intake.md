@@ -120,8 +120,8 @@ unqualified이며 point identity/picking·LOD는 제공하지 않습니다.
 intake 계약과 공개 issue form, cache-only E57 decode/source projection 및
 LAS/LAZ pre-admission decode/Worker/point-renderer probe가 준비됐고, LAS/LAZ는 bounded Browser,
 staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했습니다.
-E57도 bounded Browser, staged VS Code와 clean-installed VSIX의 Cartesian 제품
-source/file-open 및 별도 spherical source projection까지 통과했지만 scan pose,
+E57도 bounded Browser, staged VS Code와 clean-installed VSIX에서 Cartesian과
+spherical 제품 source/file-open을 통과했지만 scan pose,
 multiple-scan/extension, surveyed coordinate evidence는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보

@@ -147,7 +147,9 @@ direction 필터를 통과했습니다. 별도 5,168,128-byte cache-only E57 exa
 370,530개 spherical RAE/intensity/RGB record 중 215,329개 invalid record를
 제거하고 155,201개 Cartesian display point를 만들며, 독립
 `pye57/libE57Format` nanometer-quantized position 및 RGB digest와 일치합니다.
-intensity는 lossy omitted로 명시합니다. CRS, scan pose 적용, surveyed datum,
+intensity는 lossy omitted로 명시합니다. 후속 actual Browser, staged VS Code와
+clean-installed VSIX도 동일한 2,483,216-byte range, 155,201 points·20,754
+pixels와 source/Worker/CPU/GPU/editor cleanup을 재현합니다. CRS, scan pose 적용, surveyed datum,
 multiple-scan/extension profile과 point identity/picking·LOD가 없으므로 E57
 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지

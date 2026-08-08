@@ -35,6 +35,9 @@ import {
   acquirePublicE57Fixture,
 } from "./public-e57-fixture.mjs";
 import {
+  acquirePublicE57SphericalFixture,
+} from "./public-e57-spherical-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -55,6 +58,7 @@ function parseArguments(values) {
   const options = {
     includeProductScaleFixture: false,
     includePointFixtures: false,
+    includeE57SphericalFixture: false,
     includePublicFixture: true,
     output: null,
   };
@@ -66,6 +70,10 @@ function parseArguments(values) {
     }
     if (name === "--point-cloud") {
       options.includePointFixtures = true;
+      continue;
+    }
+    if (name === "--e57-spherical") {
+      options.includeE57SphericalFixture = true;
       continue;
     }
     if (name === "--no-public") {
@@ -86,7 +94,8 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
-        "[--product-scale] [--point-cloud] [--no-public] " +
+        "[--product-scale] [--point-cloud] [--e57-spherical] " +
+          "[--no-public] " +
           "[--output path]",
     );
   }
@@ -126,6 +135,7 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall({
+  includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
   includePublicFixture = true,
@@ -156,9 +166,13 @@ export async function qualifyVscodeVsixInstall({
   const e57Fixture = includePointFixtures
     ? await acquirePublicE57Fixture()
     : null;
+  const e57SphericalFixture = includeE57SphericalFixture
+    ? await acquirePublicE57SphericalFixture()
+    : null;
   pointFixtures?.bytes.las.fill(0);
   pointFixtures?.bytes.laz.fill(0);
   e57Fixture?.bytes.fill(0);
+  e57SphericalFixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -355,6 +369,12 @@ export async function qualifyVscodeVsixInstall({
               BIM_EXPLORER_VSCODE_E57_SOURCE:
                 e57Fixture.cachePath,
             }),
+        ...(e57SphericalFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_E57_SPHERICAL_SOURCE:
+                e57SphericalFixture.cachePath,
+            }),
         ...(productScaleReferenceFixture === null
           ? {}
           : {
@@ -511,6 +531,20 @@ export async function qualifyVscodeVsixInstall({
                 ?.nonBackgroundPixels > 0,
           }
         : {}),
+      ...(includeE57SphericalFixture
+        ? {
+            installedPackageOpensE57Spherical:
+              allTrue(runtime.pointAssertions?.e57Spherical),
+            installedE57SphericalPointProjection:
+              runtime.pointObservations?.e57Spherical?.pointCloud
+                ?.rangeSha256 ===
+                "b0a0c2cd5cb5f3a051d208332824318e" +
+                  "7561e1098ef24a4dd718e460b3fd303f",
+            installedE57SphericalVisibleProjection:
+              runtime.pointObservations?.e57Spherical?.renderer
+                ?.nonBackgroundPixels > 0,
+          }
+        : {}),
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(
@@ -629,7 +663,7 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
-        ...(includePointFixtures
+        ...(includePointFixtures || includeE57SphericalFixture
           ? {
               pointRuntime: {
                 fixtures: runtime.pointFixtures,
@@ -650,7 +684,8 @@ export async function qualifyVscodeVsixInstall({
           includeProductScaleFixture
             ? "passed-bounded-read-only"
             : "not-run",
-        pointFixtureOpen: includePointFixtures
+        pointFixtureOpen:
+          includePointFixtures || includeE57SphericalFixture
           ? "passed-bounded-read-only-unqualified-coordinates"
           : "not-run",
         marketplaceRelease: "held",

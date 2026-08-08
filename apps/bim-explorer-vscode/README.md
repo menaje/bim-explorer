@@ -48,3 +48,7 @@ default-BitPack E57을 staged Custom Editor와 clean-installed VSIX에서 열어
 확인합니다. 자체 JavaScript decoder와 audit reference의 MIT license text는
 VSIX에 포함하지만 공개 E57 샘플은 포함하지 않습니다. CRS, scan pose,
 surveyed datum과 E57 format admission은 계속 별도 Gate입니다.
+`npm run qualify:e57:spherical:product:vscode`는 같은 packaged runtime으로
+spherical RAE/intensity/RGB sample의 155,201-point projection을 staged와
+clean-installed VSIX에서 비교합니다. intensity omission은 lossy로 유지하고
+sample은 VSIX에 포함하지 않습니다.

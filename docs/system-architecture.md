@@ -324,7 +324,9 @@ compressed-vector와 `cartesianInvalidState` direction 필터를 통과했습니
 추가 cache-only spherical sample은 370,530개 RAE/intensity/RGB record를 해제해
 215,329개 invalid record를 제거하고 155,201개 Cartesian display point를
 독립 `pye57/libE57Format` nanometer parity로 재현합니다. intensity omission은
-lossy로 표시합니다. E57의 CRS, scan pose 적용, surveyed datum,
+lossy로 표시합니다. 같은 point range는 actual Browser, staged VS Code와
+clean-installed VSIX에서 155,201 points·20,754 pixels로 재현되고 전량
+cleanup됩니다. E57의 CRS, scan pose 적용, surveyed datum,
 multiple-scan/extension profile과 format admission은 계속 별도 Gate입니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic

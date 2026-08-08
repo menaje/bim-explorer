@@ -219,6 +219,9 @@ async function qualifyPointSource({
   sourcePath,
 }) {
   const e57 = format === "e57";
+  const sphericalE57 =
+    manifest.schema ===
+      "bim-explorer-public-e57-spherical-fixture/1";
   const entry = e57 ? manifest.entry : manifest.entries[format];
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
@@ -275,7 +278,9 @@ async function qualifyPointSource({
     coordinateReferenceStatus: "unqualified",
     formatVersion: manifest.expected.formatVersion,
     pointFormat: e57
-      ? "cartesian-xyz-rgb"
+      ? sphericalE57
+        ? "spherical-rae-rgb"
+        : "cartesian-xyz-rgb"
       : manifest.expected.pointFormat,
     profile: null,
     sourceRole: "derived-or-reference-points",
@@ -288,7 +293,9 @@ async function qualifyPointSource({
   assert.equal(
     ready.resources.decodedPointBytes,
     e57
-      ? 215_040
+      ? sphericalE57
+        ? manifest.expected.decodedPointBytes
+        : 215_040
       : manifest.expected.pointRecordLength *
           manifest.expected.pointRecords,
   );
@@ -388,10 +395,19 @@ async function qualifyPointSource({
       pointFormat: ready.source.pointFormat,
       provenance: {
         repository: manifest.provenance.repository,
-        commit: manifest.provenance.commit,
-        license: e57
-          ? manifest.license.spdx
-          : manifest.use.sourceRepositoryLicense,
+        ...(sphericalE57
+          ? {
+              sourcePage: manifest.provenance.sourcePage,
+              publishedAt: manifest.provenance.publishedAt,
+              license: manifest.license.identifier,
+              notice: manifest.license.notice,
+            }
+          : {
+              commit: manifest.provenance.commit,
+              license: e57
+                ? manifest.license.spdx
+                : manifest.use.sourceRepositoryLicense,
+            }),
         bundled: false,
         sampleRedistributed: false,
       },
@@ -443,6 +459,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_LAZ_SOURCE;
   const e57SourcePath =
     process.env.BIM_EXPLORER_VSCODE_E57_SOURCE;
+  const e57SphericalSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_E57_SPHERICAL_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -712,7 +730,7 @@ async function run() {
         },
       };
     }
-    let pointQualifications = null;
+    const pointQualifications = {};
     if (
       typeof lasSourcePath === "string" &&
       lasSourcePath.length > 0 &&
@@ -735,7 +753,7 @@ async function run() {
       );
       const e57Manifest = await e57FixtureModule
         .loadPublicE57FixtureManifest();
-      pointQualifications = {
+      Object.assign(pointQualifications, {
         e57: await qualifyPointSource({
           api,
           format: "e57",
@@ -754,8 +772,33 @@ async function run() {
           manifest,
           sourcePath: lazSourcePath,
         }),
-      };
+      });
     }
+    if (
+      typeof e57SphericalSourcePath === "string" &&
+      e57SphericalSourcePath.length > 0
+    ) {
+      const fixtureModule = await import(
+        pathToFileURL(
+          path.join(
+            root,
+            "scripts",
+            "public-e57-spherical-fixture.mjs",
+          ),
+        ).href
+      );
+      const manifest = await fixtureModule
+        .loadPublicE57SphericalFixtureManifest();
+      pointQualifications.e57Spherical =
+        await qualifyPointSource({
+          api,
+          format: "e57",
+          manifest,
+          sourcePath: e57SphericalSourcePath,
+        });
+    }
+    const hasPointQualifications =
+      Object.keys(pointQualifications).length > 0;
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -817,24 +860,24 @@ async function run() {
             productScaleReferenceAssertions:
               productScaleReferenceQualification.assertions,
           }),
-      ...(pointQualifications === null
+      ...(!hasPointQualifications
         ? {}
         : {
-            pointFixtures: {
-              e57: pointQualifications.e57.fixture,
-              las: pointQualifications.las.fixture,
-              laz: pointQualifications.laz.fixture,
-            },
-            pointObservations: {
-              e57: pointQualifications.e57.observation,
-              las: pointQualifications.las.observation,
-              laz: pointQualifications.laz.observation,
-            },
-            pointAssertions: {
-              e57: pointQualifications.e57.assertions,
-              las: pointQualifications.las.assertions,
-              laz: pointQualifications.laz.assertions,
-            },
+            pointFixtures: Object.fromEntries(
+              Object.entries(pointQualifications).map(
+                ([name, value]) => [name, value.fixture],
+              ),
+            ),
+            pointObservations: Object.fromEntries(
+              Object.entries(pointQualifications).map(
+                ([name, value]) => [name, value.observation],
+              ),
+            ),
+            pointAssertions: Object.fromEntries(
+              Object.entries(pointQualifications).map(
+                ([name, value]) => [name, value.assertions],
+              ),
+            ),
           }),
       assertions: {
         actualVscodeChromiumWebGl2:
