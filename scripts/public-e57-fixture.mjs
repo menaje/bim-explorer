@@ -131,7 +131,32 @@ function validateManifest(value) {
       JSON.stringify({
         min: [-0.5, -0.5, -0.5],
         max: [0.5, 0.5, 0.5],
-      })
+      }) ||
+    JSON.stringify(expected.firstPoint) !==
+      JSON.stringify({
+        position: [
+          -0.5,
+          -0.4990559220314026,
+          0.07136291265487671,
+        ],
+        color: [0, 0, 255],
+      }) ||
+    JSON.stringify(expected.lastPoint) !==
+      JSON.stringify({
+        position: [
+          0.16827905178070068,
+          -0.00394439697265625,
+          0.5,
+        ],
+        color: [255, 0, 0],
+      }) ||
+    expected.dataPackets !== 3 ||
+    expected.indexPackets !== 1 ||
+    expected.pointRangeByteLength !== 122_928 ||
+    expected.pointRangePayloadBytes !== 122_880 ||
+    expected.pointRangeSha256 !==
+      "dcc6868c55c79a51d315bfc4b287ca38" +
+        "f8217e3d572554ef56b0da77359cd6aa"
   ) {
     throw new Error("public E57 manifest is invalid");
   }

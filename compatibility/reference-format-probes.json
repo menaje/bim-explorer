@@ -21,7 +21,7 @@
     "lasLazProductSource": true,
     "lasLazBrowserProductOpen": true,
     "lasLazVscodeProductOpen": true,
-    "e57PointDecode": false,
+    "e57PointDecode": true,
     "e57Renderer": false,
     "e57ProductOpen": false,
     "lasLazCoordinateReference": false,
@@ -36,7 +36,6 @@
     "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json"
   },
   "blockers": [
-    "E57 compressed point payload decode is not implemented",
     "E57 has no qualified point renderer",
     "Browser and VS Code do not open E57 files",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
@@ -45,7 +44,7 @@
   "limitations": [
     "the samples are downloaded on demand into ignored digest caches",
     "sample files are not tracked, redistributed or included in a release",
-    "the E57 probe inspects only its envelope, page CRCs and XML metadata",
+    "the E57 probe covers one single-scan Cartesian XYZ/RGB default-BitPack profile without CRS authority",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
     "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
@@ -59,6 +58,7 @@
     "releaseBundled": false,
     "decoderBrowserProductRuntime": true,
     "decoderVscodeProductRuntime": true,
+    "e57DecoderProductRuntime": false,
     "decoderReleaseBundled": false,
     "sampleUseTestOnly": true,
     "browserExperimentalProductOpen": true,

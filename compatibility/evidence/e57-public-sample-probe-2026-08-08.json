@@ -52,15 +52,87 @@
     },
     "producerLibrary": "E57Format-3.1.1-x86_64-AppleClang140"
   },
+  "pointSource": {
+    "contract": "bim-explorer-e57-point-source/0.1",
+    "decoder": "bim-explorer-e57-bitpack-reader",
+    "decoderVersion": "0.1.0",
+    "decoderReference": {
+      "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+      "id": "cry-inc/e57",
+      "license": "MIT",
+      "version": "0.10.5"
+    },
+    "pointFormat": "cartesian-xyz-rgb",
+    "points": 7680,
+    "dataPackets": 3,
+    "indexPackets": 1,
+    "pointRangeByteLength": 122928,
+    "pointRangePayloadBytes": 122880,
+    "pointRangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa",
+    "coordinateReferenceStatus": "unqualified",
+    "bounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "colorRange": {
+      "min": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "max": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "firstPoint": {
+      "position": [
+        -0.5,
+        -0.4990559220314026,
+        0.07136291265487671
+      ],
+      "color": [
+        0,
+        0,
+        255
+      ]
+    },
+    "lastPoint": {
+      "position": [
+        0.16827905178070068,
+        -0.00394439697265625,
+        0.5
+      ],
+      "color": [
+        255,
+        0,
+        0
+      ]
+    }
+  },
   "capabilities": {
     "envelopeInspection": true,
     "pageIntegrity": true,
     "metadataProfile": true,
-    "pointDecode": false,
+    "pointDecode": true,
+    "pointRange": true,
     "renderer": false
   },
   "cleanup": {
-    "downloadBufferCleared": true
+    "downloadBufferCleared": true,
+    "decodedPointBuffersCleared": true,
+    "pointRangeCleared": true
   },
   "decision": {
     "sampleUse": "cache-only-technical-test",
@@ -75,14 +147,17 @@
     "allPhysicalPageChecksums": true,
     "boundedXmlMetadata": true,
     "declaredPointProfile": true,
+    "compressedPointDecode": true,
+    "exactPointRecordProfile": true,
+    "boundedPointRange": true,
+    "decoderBuffersCleared": true,
     "cacheOnlyTestUse": true,
     "artifactNotTrackedOrBundled": true,
     "noFormatAdmission": true,
     "pathFreeEvidence": true
   },
   "limitations": [
-    "the probe validates the E57 envelope, physical page CRCs and XML metadata only",
-    "compressed point records are declared but not decoded",
+    "the decoder profile covers one E57 1.0 scan with Cartesian XYZ/RGB and the default empty codec vector",
     "no point-cloud renderer or Browser product file-open is qualified",
     "the downloaded E57 file remains in an ignored digest cache and is not released",
     "sample evidence does not establish actual user demand or surveyed datum accuracy"

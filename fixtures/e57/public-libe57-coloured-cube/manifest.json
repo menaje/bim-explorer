@@ -2,7 +2,7 @@
   "schema": "bim-explorer-public-e57-fixture/1",
   "fixtureId": "libe57format-coloured-cube-float-e57",
   "format": "e57",
-  "purpose": "cache-only public E57 envelope, page-integrity and metadata-profile probe",
+  "purpose": "cache-only public E57 envelope, point-decode and source-projection probe",
   "provenance": {
     "repository": "https://github.com/asmaloney/libE57Format-test-data",
     "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
@@ -60,6 +60,35 @@
         0.5,
         0.5
       ]
-    }
+    },
+    "firstPoint": {
+      "position": [
+        -0.5,
+        -0.4990559220314026,
+        0.07136291265487671
+      ],
+      "color": [
+        0,
+        0,
+        255
+      ]
+    },
+    "lastPoint": {
+      "position": [
+        0.16827905178070068,
+        -0.00394439697265625,
+        0.5
+      ],
+      "color": [
+        255,
+        0,
+        0
+      ]
+    },
+    "dataPackets": 3,
+    "indexPackets": 1,
+    "pointRangeByteLength": 122928,
+    "pointRangePayloadBytes": 122880,
+    "pointRangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa"
   }
 }

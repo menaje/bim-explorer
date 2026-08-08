@@ -111,6 +111,20 @@ Function naming과 invoker construction을 동등한 closure로 치환했으며,
 bundle에는 이 runtime이 없으며 marketplace 또는 다음 Community release는
 runtime SBOM, checksum, notice와 재현성 Gate를 다시 통과해야 합니다.
 
+E57 packet framing과 default BitPack decoder 동작은 다음 exact MIT source를
+감사 reference로 사용해 BIM Explorer 소유 JavaScript로 구현했습니다.
+
+- `cry-inc/e57@0.10.5`
+- MIT, [full text](LICENSES/e57-rs-MIT.txt)
+- <https://github.com/cry-inc/e57>
+- exact source commit:
+  <https://github.com/cry-inc/e57/tree/7a7498f679b30588dc9298beb7aafab2245a2d0c>
+
+upstream Rust crate나 WASM binary는 dependency 또는 배포 artifact에 포함하지
+않습니다. 저작권·허가 고지는 source tree와 VSIX/release notice에 보존합니다.
+공개 E57 sample은 별도 CC0 fixture manifest의 고정 digest로 ignored cache에서만
+사용하며 배포하지 않습니다.
+
 - exact package와 version
 - upstream source와 license
 - static/dynamic/WASM/process 결합 방식

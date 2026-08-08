@@ -26,6 +26,7 @@ const PASSED_GATES = Object.freeze([
   "e57EnvelopeInspection",
   "e57PhysicalPageIntegrity",
   "e57MetadataProfile",
+  "e57PointDecode",
   "lasHeaderInspection",
   "lazHeaderInspection",
   "lasPointDecode",
@@ -41,7 +42,6 @@ const PASSED_GATES = Object.freeze([
   "lasLazVscodeProductOpen",
 ]);
 const HELD_GATES = Object.freeze([
-  "e57PointDecode",
   "e57Renderer",
   "e57ProductOpen",
   "lasLazCoordinateReference",
@@ -125,6 +125,7 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.policy.releaseBundled !== false ||
     manifest.policy.decoderBrowserProductRuntime !== true ||
     manifest.policy.decoderVscodeProductRuntime !== true ||
+    manifest.policy.e57DecoderProductRuntime !== false ||
     manifest.policy.decoderReleaseBundled !== false ||
     manifest.policy.sampleUseTestOnly !== true ||
     manifest.policy.browserExperimentalProductOpen !== true ||

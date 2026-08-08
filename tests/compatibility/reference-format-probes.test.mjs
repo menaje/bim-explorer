@@ -64,16 +64,16 @@ test("reference sample probes remain separate from format admission", () => {
     ),
     {
       status: "pre-admission",
-      passedGates: 18,
-      heldGates: 5,
+      passedGates: 19,
+      heldGates: 4,
       sampleFormats: 3,
     },
   );
 });
 
-test("an E57 sample probe cannot claim point decode", () => {
+test("an E57 decode probe cannot claim renderer qualification", () => {
   const overclaim = structuredClone(manifest);
-  overclaim.gates.e57PointDecode = true;
+  overclaim.gates.e57Renderer = true;
   assert.throws(
     () => validateReferenceFormatProbeCompatibility(
       overclaim,

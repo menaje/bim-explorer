@@ -97,7 +97,7 @@ cache입니다.
 | IFC4 ReferenceView | semantic BIM source | 기존 bounded read-only profile |
 | glTF/GLB | derived/reference mesh | bounded read-only reference admission |
 | LAS/LAZ | point-cloud/survey reference | bounded Browser·VS Code·clean VSIX product open passed; admission held |
-| E57 | point-cloud/survey reference | held |
+| E57 | point-cloud/survey reference | bounded decode/source projection passed; renderer/product/admission held |
 | 3D Tiles/GIS | site context reference | held |
 | RVT/DGN | native SDK reference | held |
 
@@ -135,6 +135,10 @@ clean-installed VSIX도 같은 point range, visible frame, path-free bridge와
 cleanup을 재현했습니다. VSIX는 exact `laz-perf@0.0.6` WASM과 strict-CSP용
 generated glue를 포함하지만 public sample은 포함하지 않습니다. CRS/datum,
 point identity/picking·LOD가 없으므로 위 표의 admission은 계속 `held`입니다.
+cache-only E57 probe도 116개 page CRC 검증 뒤 단일 Cartesian XYZ/RGB
+default-BitPack scan의 7,680개 record를 해제해 122,880-byte point payload와
+exact buffer cleanup을 통과했습니다. 이 단계는 renderer나 Browser/VS Code
+file-open을 실행하지 않으므로 E57 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

@@ -14,6 +14,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `bim-federation`: multi-source identity·alignment·reference-format Gate
 - `gltf-reference-source`: bounded glTF/GLB read-only reference mesh
 - `las-laz-point-source`: bounded LAS/LAZ read-only point-range projection
+- `e57-point-source`: bounded E57 read-only point-range projection
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
@@ -81,3 +82,9 @@ point-format 2/3과 LASzip LAZ를 bounded Float64-origin/relative-Float32/RGBA8
 range로 투영합니다. exact `laz-perf@0.0.6`은 Browser 전용 Worker에서
 실행하며 CRS, point identity/picking·LOD, semantics, write 또는 round-trip
 authority를 제공하지 않습니다.
+
+[`e57-point-source`](e57-point-source/README.md)는 E57 1.0 단일 Cartesian
+scan의 default BitPack XYZ/RGB record를 모든 page CRC와 packet boundary를
+검증한 뒤 같은 source-neutral point range로 투영합니다. 자체 JavaScript
+decoder는 격리 Worker 실행을 전제로 하며 CRS, scan pose, semantics, write 또는
+round-trip authority를 제공하지 않습니다.

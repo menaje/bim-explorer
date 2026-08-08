@@ -1,0 +1,15 @@
+{
+  "name": "@bim-explorer/e57-point-source",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bounded read-only E57 point source projection",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "dependencies": {
+    "@bim-explorer/bim-renderer-3d": "0.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
