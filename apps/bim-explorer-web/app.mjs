@@ -18,6 +18,25 @@ const HOST_MESSAGE =
 const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+const PRODUCT_SCALE_GLTF_RENDERER_LIMITS = Object.freeze({
+  maximumRangeBytes: 32 * 1024 * 1024,
+  maximumSourceReadBytes: 32 * 1024 * 1024,
+  maximumGeometryPayloadBytes: 24 * 1024 * 1024,
+  maximumInstancedTriangles: 4_000_000,
+  maximumCpuStagingBytes: 32 * 1024 * 1024,
+  maximumGpuCacheBytes: 32 * 1024 * 1024,
+});
+
+function rendererLimits(format, snapshot) {
+  const requiresProductScaleBudget =
+    format !== "ifc" &&
+    snapshot.layers.some((layer) =>
+      layer.rangeHandles.some((handle) =>
+        handle.byteLength > 4 * 1024 * 1024));
+  return requiresProductScaleBudget
+    ? PRODUCT_SCALE_GLTF_RENDERER_LIMITS
+    : {};
+}
 
 const elements = {
   cancel: document.querySelector("#cancel-open"),
@@ -768,7 +787,10 @@ async function openBytes(bytesValue, {
       height: 450,
       width: 800,
     });
-    const renderer = createBounded3dRenderer({ backend });
+    const renderer = createBounded3dRenderer({
+      backend,
+      limits: rendererLimits(format, opened.snapshot),
+    });
     const host = createBimRenderer3dHost({
       kind: runtime.hostKind,
       renderer,

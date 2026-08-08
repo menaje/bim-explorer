@@ -414,8 +414,10 @@ export async function qualifyGltfProductScaleReference() {
     decision: {
       productScaleReferenceGeometry: "passed-experimental",
       browserWebGl2: "passed-swiftshader",
-      browserProductFileOpen: "held-separate-product-gate",
-      vscodeProductFileOpen: "held-separate-product-gate",
+        browserProductFileOpen:
+          "not-qualified-by-this-evidence",
+        vscodeProductFileOpen:
+          "not-qualified-by-this-evidence",
       physicalGpu: "not-claimed",
       bimSemanticAuthority: false,
       write: false,
@@ -426,7 +428,7 @@ export async function qualifyGltfProductScaleReference() {
       "A Beautiful Game is product-scale reference geometry, not a BIM semantic model",
       "embedded textures and material extensions are not projected by the bounded geometry profile",
       "the actual Browser path uses SwiftShader and makes no physical GPU claim",
-      "Browser and VS Code product file-open remain separate qualification gates",
+      "Browser and VS Code product file-open are separate qualification gates",
       "the fixture is fetched into a private cache and is not tracked or release-bundled",
     ],
   };

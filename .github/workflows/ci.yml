@@ -93,3 +93,19 @@ jobs:
           path: gltf-product-scale-${{ runner.os }}.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: Qualify product-scale glTF Browser product on Linux
+        if: runner.os == 'Linux'
+        run: >-
+          xvfb-run -a
+          npm run qualify:gltf:product-scale:web --
+          --output gltf-product-scale-browser-${{ runner.os }}.json
+
+      - name: Upload product-scale glTF Browser product evidence
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gltf-product-scale-browser-${{ runner.os }}
+          path: gltf-product-scale-browser-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7

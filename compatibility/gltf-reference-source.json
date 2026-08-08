@@ -26,7 +26,8 @@
     "vscodeProductOpen": true,
     "crossPlatformProductOpen": true,
     "productScaleReferenceGeometry": true,
-    "productScaleProductOpen": false,
+    "productScaleBrowserProductOpen": true,
+    "productScaleVscodeProductOpen": false,
     "physicalGpu": false,
     "externalResourceBundle": false,
     "requiredExtensions": false,
@@ -42,17 +43,18 @@
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
     "productPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
     "productScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json",
+    "productScaleBrowserProduct": "compatibility/evidence/gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json",
     "productScaleFixtureManifest": "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json"
   },
   "blockers": [
     "external resource bundles and required extensions remain unsupported",
-    "product-scale Browser/VS Code product file-open and physical GPU evidence remain separate held gates"
+    "product-scale VS Code product file-open and physical GPU evidence remain separate held gates"
   ],
   "limitations": [
     "the 1664-byte Khronos Box remains the cross-platform product-surface smoke fixture",
-    "the 42.98MB A Beautiful Game GLB qualifies product-scale source and SwiftShader WebGL2 rendering, not Browser/VS Code product file-open",
+    "the 42.98MB A Beautiful Game GLB passes Browser product file-open; VS Code product file-open remains held",
     "synthetic JSON glTF covers only embedded base64 buffer data",
     "actual Browser and VS Code product qualification passes macOS arm64 and Linux x64 CI with SwiftShader and does not claim a physical GPU",
     "the output is a lossy display cache and has no source write authority",
@@ -70,7 +72,8 @@
     "claimProductSupport": true,
     "claimCrossPlatformProductOpen": true,
     "claimProductScaleReferenceGeometry": true,
-    "claimProductScaleProductOpen": false,
+    "claimProductScaleBrowserProductOpen": true,
+    "claimProductScaleVscodeProductOpen": false,
     "claimPhysicalGpu": false,
     "claimProduction": false
   }

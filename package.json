@@ -37,6 +37,7 @@
     "qualify:gltf:public": "node scripts/qualify-gltf-reference-source.mjs",
     "qualify:gltf:browser": "node scripts/qualify-gltf-browser-webgl2.mjs",
     "qualify:gltf:product-scale": "node scripts/qualify-gltf-product-scale-reference.mjs",
+    "qualify:gltf:product-scale:web": "node scripts/qualify-bim-product-shell.mjs --fixture gltf-product-scale",
     "qualify:gltf:product": "node scripts/qualify-gltf-product-surfaces.mjs",
     "qualify:gltf:product:platform": "node scripts/qualify-gltf-product-surfaces.mjs",
     "assemble:gltf:product:platform": "node scripts/assemble-gltf-product-platform-matrix.mjs",

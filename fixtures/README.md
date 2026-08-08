@@ -24,7 +24,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   surface smoke에 사용하는 Cesium CC BY 4.0 manifest
 - `gltf/public-khronos-a-beautiful-game`: 42,977,928-byte embedded GLB의
   417,028 vertices·573,952 unique triangles를 product-scale reference
-  source와 SwiftShader WebGL2에 사용하는 ASWF/Ed Mackey CC BY 4.0 manifest
+  source, SwiftShader WebGL2와 Browser 제품 file-open에 사용하는
+  ASWF/Ed Mackey CC BY 4.0 manifest
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로

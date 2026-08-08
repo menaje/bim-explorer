@@ -154,8 +154,9 @@ VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
 `A Beautiful Game` 42.98MB GLB를 on-demand로 검증해 417,028 vertices,
 573,952 unique triangles와 1,499,072 instanced triangles를 headless 및 실제
 Chrome SwiftShader WebGL2에서 열고 16.9MB allocation을 전량 회수했습니다.
-이 결과는 Browser/VS Code 제품 file-open, physical GPU 또는 BIM semantic
-authority를 승인하지 않습니다.
+같은 파일은 Browser 제품의 실제 local file input에서도 검색·3D pick·닫기와
+전량 cleanup을 통과했습니다. VS Code 제품 file-open, physical GPU 또는 BIM
+semantic authority는 승인하지 않습니다.
 
 ## 비목표
 
@@ -244,6 +245,7 @@ npm run qualify:product:web:public
 npm run qualify:product:vscode-install
 npm run qualify:gltf:product
 npm run qualify:gltf:product-scale
+npm run qualify:gltf:product-scale:web
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core

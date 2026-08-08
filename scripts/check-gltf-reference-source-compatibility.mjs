@@ -39,6 +39,15 @@ const productScaleEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.productScaleReference),
   "utf8",
 ));
+const productScaleBrowserProductEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.productScaleBrowserProduct,
+    ),
+    "utf8",
+  ),
+);
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -73,9 +82,10 @@ const trueGates = [
   "vscodeProductOpen",
   "crossPlatformProductOpen",
   "productScaleReferenceGeometry",
+  "productScaleBrowserProductOpen",
 ];
 const heldGates = [
-  "productScaleProductOpen",
+  "productScaleVscodeProductOpen",
   "physicalGpu",
   "externalResourceBundle",
   "requiredExtensions",
@@ -178,7 +188,8 @@ if (
   manifest.policy.claimProductSupport !== true ||
   manifest.policy.claimCrossPlatformProductOpen !== true ||
   manifest.policy.claimProductScaleReferenceGeometry !== true ||
-  manifest.policy.claimProductScaleProductOpen !== false ||
+  manifest.policy.claimProductScaleBrowserProductOpen !== true ||
+  manifest.policy.claimProductScaleVscodeProductOpen !== false ||
   manifest.policy.claimPhysicalGpu !== false ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -198,6 +209,9 @@ if (
   manifest.evidence.productScaleReference !==
     "compatibility/evidence/" +
       "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json" ||
+  manifest.evidence.productScaleBrowserProduct !==
+    "compatibility/evidence/" +
+      "gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -410,11 +424,92 @@ if (
   productScaleEvidence.decision?.productScaleReferenceGeometry !==
     "passed-experimental" ||
   productScaleEvidence.decision?.browserProductFileOpen !==
-    "held-separate-product-gate" ||
+    "not-qualified-by-this-evidence" ||
   productScaleEvidence.decision?.vscodeProductFileOpen !==
-    "held-separate-product-gate" ||
+    "not-qualified-by-this-evidence" ||
   productScaleEvidence.decision?.physicalGpu !== "not-claimed" ||
-  productScaleEvidence.decision?.productionClaims !== false
+  productScaleEvidence.decision?.productionClaims !== false ||
+  productScaleBrowserProductEvidence.schema !==
+    "bim-explorer-product-shell-browser-evidence/1" ||
+  productScaleBrowserProductEvidence.environment?.headless !== true ||
+  productScaleBrowserProductEvidence.fixture?.id !==
+    productScaleFixture.fixtureId ||
+  productScaleBrowserProductEvidence.fixture?.committed !== false ||
+  productScaleBrowserProductEvidence.fixture?.format !== "glb" ||
+  productScaleBrowserProductEvidence.fixture?.sourceBytes !==
+    productScaleFixture.entry.byteLength ||
+  productScaleBrowserProductEvidence.fixture?.fingerprint !==
+    `sha256:${productScaleFixture.entry.sha256}` ||
+  productScaleBrowserProductEvidence.fixture?.gltfVersion !==
+    productScaleFixture.expected.gltfVersion ||
+  productScaleBrowserProductEvidence.fixture?.nativeId !==
+    "node:0/mesh:0/primitive:0" ||
+  productScaleBrowserProductEvidence.fixture?.provenance
+    ?.repository !== productScaleFixture.provenance.repository ||
+  productScaleBrowserProductEvidence.fixture?.provenance
+    ?.commit !== productScaleFixture.provenance.commit ||
+  productScaleBrowserProductEvidence.fixture?.provenance
+    ?.license !== productScaleFixture.license.spdx ||
+  productScaleBrowserProductEvidence.fixture?.provenance
+    ?.bundled !== false ||
+  productScaleBrowserProductEvidence.qualification
+    ?.classification !== "product-scale-reference" ||
+  JSON.stringify(
+    productScaleBrowserProductEvidence.qualification
+      ?.rendererLimits,
+  ) !== JSON.stringify(
+    productScaleFixture.browserQualification.rendererLimits,
+  ) ||
+  JSON.stringify(
+    productScaleBrowserProductEvidence.observation?.model,
+  ) !== JSON.stringify({
+    entities: 49,
+    geometryRecords: 15,
+    instances: 49,
+    triangles: 573_952,
+    ranges: 1,
+  }) ||
+  productScaleBrowserProductEvidence.observation?.resources
+    ?.sourceBytes !== 42_977_928 ||
+  productScaleBrowserProductEvidence.observation?.resources
+    ?.geometryBytes !== 16_896_412 ||
+  productScaleBrowserProductEvidence.observation?.resources
+    ?.referenceEntities !== 49 ||
+  productScaleBrowserProductEvidence.observation?.renderer
+    ?.actualGpu !== true ||
+  productScaleBrowserProductEvidence.observation?.renderer
+    ?.nonBackgroundPixels <= 0 ||
+  productScaleBrowserProductEvidence.observation?.renderer
+    ?.sourceReadBytes !== 16_896_412 ||
+  productScaleBrowserProductEvidence.observation?.renderer
+    ?.uploadedBytes !== 16_900_016 ||
+  productScaleBrowserProductEvidence.observation?.reference
+    ?.globalId !== null ||
+  productScaleBrowserProductEvidence.observation?.reference
+    ?.selectedNativeId !== "node:0/mesh:0/primitive:0" ||
+  productScaleBrowserProductEvidence.observation?.interaction
+    ?.selectionOrigin !== "3d" ||
+  !/^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
+    productScaleBrowserProductEvidence.observation?.interaction
+      ?.selectedNativeId ?? "",
+  ) ||
+  productScaleBrowserProductEvidence.observation?.network
+    ?.externalOrigins?.length !== 0 ||
+  productScaleBrowserProductEvidence.observation?.runtimeErrors
+    ?.length !== 0 ||
+  productScaleBrowserProductEvidence.observation?.lifecycle
+    ?.opened !== "ready" ||
+  productScaleBrowserProductEvidence.observation?.lifecycle
+    ?.closed !== "disposed" ||
+  productScaleBrowserProductEvidence.observation?.lifecycle
+    ?.backendDisposed !== true ||
+  productScaleBrowserProductEvidence.observation?.lifecycle
+    ?.clientDisposed !== true ||
+  !everyTrue(productScaleBrowserProductEvidence.assertions) ||
+  productScaleBrowserProductEvidence.decision
+    ?.referenceProductOpen !== "passed-bounded-read-only" ||
+  productScaleBrowserProductEvidence.decision
+    ?.actualPhysicalGpu !== "not-claimed"
 ) {
   throw new Error(
     "glTF reference source compatibility check failed",
@@ -426,6 +521,7 @@ const serialized = JSON.stringify({
   browserProductEvidence,
   federationEvidence,
   productScaleEvidence,
+  productScaleBrowserProductEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

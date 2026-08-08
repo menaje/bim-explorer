@@ -52,5 +52,5 @@ qualification surface이며 제품 shell은 아닙니다.
 42.98MB `A Beautiful Game` GLB에서 투영한 generic geometry range를 실제
 Chrome WebGL2로 render합니다. Box의 source-native pick과 대형 reference의
 first-frame/range/allocation cleanup을 확인하는 source/renderer qualification
-surface입니다. 제품 file-open은 별도 Browser·VS Code evidence가
-소유합니다.
+surface입니다. 제품 file-open은 별도 evidence가 소유하며, Browser
+제품 경로는 같은 대형 GLB로 통과했고 VS Code 제품 경로는 보류 중입니다.

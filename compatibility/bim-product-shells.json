@@ -48,6 +48,21 @@
     "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
     "license": "CC-BY-4.0"
   },
+  "productScaleReferenceFixture": {
+    "id": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+    "byteLength": 42977928,
+    "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+    "format": "glb",
+    "gltfVersion": "2.0",
+    "nativeId": "node:0/mesh:0/primitive:0",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "CC-BY-4.0",
+    "classification": "product-scale-reference"
+  },
   "limits": {
     "maximumSourceBytes": 67108864,
     "openTimeoutMs": 30000,
@@ -57,7 +72,15 @@
     "maximumDomRows": 64,
     "maximumLoadedTreeItems": 2000,
     "maximumRelations": 100,
-    "maximumSearchResults": 500
+    "maximumSearchResults": 500,
+    "productScaleGltfRenderer": {
+      "maximumRangeBytes": 33554432,
+      "maximumSourceReadBytes": 33554432,
+      "maximumGeometryPayloadBytes": 25165824,
+      "maximumInstancedTriangles": 4000000,
+      "maximumCpuStagingBytes": 33554432,
+      "maximumGpuCacheBytes": 33554432
+    }
   },
   "gates": {
     "browserLocalFileAdmission": true,
@@ -84,6 +107,8 @@
     "vscodeReadonlyGltfGlbAssociation": true,
     "cleanVsixGltfGlbOpen": true,
     "crossPlatformGltfProductOpen": true,
+    "browserProductScaleGltfOpen": true,
+    "vscodeProductScaleGltfOpen": false,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -92,11 +117,13 @@
     "browserSynthetic": "compatibility/evidence/bim-product-shell-browser-synthetic-2026-08-04.json",
     "browserPublic": "compatibility/evidence/bim-product-shell-browser-public-2026-08-04.json",
     "browserReference": "compatibility/evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json",
+    "browserProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
     "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json"
   },
   "blockers": [
+    "product-scale GLB remains unqualified in the VS Code Custom Editor and clean-installed VSIX",
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
     "actual physical GPU qualification is not claimed",
     "marketplace release remains behind license and release gates"
@@ -108,6 +135,8 @@
     "claimDeferredSemanticDetails": true,
     "claimQualifiedReferenceOpen": true,
     "claimCrossPlatformGltfProductOpen": true,
+    "claimProductScaleBrowserOpen": true,
+    "claimProductScaleVscodeOpen": false,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

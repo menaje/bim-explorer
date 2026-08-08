@@ -214,10 +214,11 @@ admission을 통과했습니다. bounded Browser/VS Code/clean-installed VSIX
 42.98MB `A Beautiful Game` GLB의 417,028 vertices·573,952 unique
 triangles·1,499,072 instanced triangles를 official Validator, headless
 renderer와 실제 Chrome SwiftShader WebGL2에서 검증하고 16,900,016-byte
-allocation을 전량 회수했습니다. external resource, required extension,
-product-scale Browser/VS Code 제품 file-open과 physical GPU는 독립 Gate로
-남습니다. GLB는 ignored cache에서만 사용하고 release에는 포함하지
-않습니다.
+allocation을 전량 회수했습니다. 같은 GLB의 Browser 제품 local file-open도
+49개 source-native entity, 검색·3D pick과 close cleanup을 통과했습니다.
+external resource, required extension, product-scale VS Code 제품 file-open과
+physical GPU는 독립 Gate로 남습니다. GLB는 ignored cache에서만 사용하고
+release에는 포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

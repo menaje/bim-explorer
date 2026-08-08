@@ -1,5 +1,10 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +18,7 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
   resolveChromeQualificationExecutable,
@@ -278,6 +284,11 @@ function assertions(
   fixture,
 ) {
   const reference = fixture.format !== "ifc";
+  const selectedReferenceIdentity =
+    typeof interaction.selectedNativeId === "string" &&
+    /^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
+      interaction.selectedNativeId,
+    );
   return Object.freeze({
     actualBrowserWebGl2:
       opened.renderer.actualGpu === true &&
@@ -286,6 +297,19 @@ function assertions(
       opened.source.byteLength > 0 &&
       opened.source.byteLength <= 64 * 1024 * 1024 &&
       opened.resources.sourceBytes === opened.source.byteLength,
+    ...(fixture.rendererLimits === null
+      ? {}
+      : {
+          boundedReferenceRenderer:
+            opened.renderer.sourceReadBytes <=
+              fixture.rendererLimits
+                .maximumSourceReadBytes &&
+            opened.renderer.uploadedBytes <=
+              fixture.rendererLimits.maximumGpuCacheBytes &&
+            opened.model.triangles <=
+              fixture.rendererLimits
+                .maximumInstancedTriangles,
+        }),
     localOnly:
       opened.externalUpload === false &&
       opened.telemetry === false &&
@@ -300,8 +324,12 @@ function assertions(
           referenceAnd3dSync:
             interaction.searchResults > 0 &&
             interaction.selectionOrigin === "3d" &&
-            interaction.selectedNativeId ===
-              fixture.nativeId &&
+            selectedReferenceIdentity &&
+            (
+              fixture.exactPickNativeId !== true ||
+              interaction.selectedNativeId ===
+                fixture.nativeId
+            ) &&
             opened.reference?.globalId === null &&
             opened.reference?.selectedNativeId ===
               fixture.nativeId,
@@ -362,6 +390,7 @@ async function qualificationFixture(kind) {
       treeNodes: 7,
       triangles: 24,
       ranges: 1,
+      rendererLimits: null,
       searchQuery: "Wall",
       provenance: null,
     });
@@ -383,6 +412,7 @@ async function qualificationFixture(kind) {
       treeNodes: 3_578,
       triangles: manifest.expected.triangles,
       ranges: 3,
+      rendererLimits: null,
       searchQuery: "Wall",
       provenance: Object.freeze({
         repository: manifest.provenance.repository,
@@ -413,6 +443,8 @@ async function qualificationFixture(kind) {
       triangles: 12,
       ranges: 1,
       nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
       searchQuery: "primitive",
       provenance: Object.freeze({
         repository: manifest.provenance.repository,
@@ -423,8 +455,45 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "gltf-product-scale") {
+    const acquired = await acquirePublicGltfFixture({
+      manifestPath: PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
+    });
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: 1,
+      nativeId: "node:0/mesh:0/primitive:0",
+      exactPickNativeId: false,
+      rendererLimits: Object.freeze({
+        ...manifest.browserQualification.rendererLimits,
+      }),
+      searchQuery: "node:0",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+      }),
+    });
+  }
   throw new TypeError(
-    "BIM product qualification fixture must be synthetic, public, or gltf-public",
+    "BIM product qualification fixture must be synthetic, public, " +
+      "gltf-public, or gltf-product-scale",
   );
 }
 
@@ -518,7 +587,11 @@ export async function qualifyBimProductShell({
       })()`,
       {
         timeoutMs:
-          fixture.kind === "public" ? 60_000 : 30_000,
+          fixture.kind === "gltf-product-scale"
+            ? 120_000
+            : fixture.kind === "public"
+              ? 60_000
+              : 30_000,
       },
     );
     await client.evaluate(`(() => {
@@ -621,6 +694,14 @@ export async function qualifyBimProductShell({
           ? {}
           : { provenance: fixture.provenance }),
       },
+      ...(fixture.rendererLimits === null
+        ? {}
+        : {
+            qualification: {
+              classification: "product-scale-reference",
+              rendererLimits: fixture.rendererLimits,
+            },
+          }),
       observation: {
         hostKind: opened.hostKind,
         model: opened.model,
@@ -691,21 +772,44 @@ export async function qualifyBimProductShell({
   }
 }
 
-function parseFixtureArguments(values) {
-  if (values.length === 0) {
-    return "synthetic";
+function parseArguments(values) {
+  const allowedFixtures = new Set([
+    "gltf-product-scale",
+    "gltf-public",
+    "public",
+    "synthetic",
+  ]);
+  const options = {
+    fixture: "synthetic",
+    output: null,
+  };
+  for (let index = 0; index < values.length; index += 1) {
+    const name = values[index];
+    const value = values[index + 1];
+    if (
+      name === "--fixture" &&
+      allowedFixtures.has(value)
+    ) {
+      options.fixture = value;
+      index += 1;
+      continue;
+    }
+    if (
+      name === "--output" &&
+      typeof value === "string" &&
+      !value.startsWith("-")
+    ) {
+      options.output = path.resolve(value);
+      index += 1;
+      continue;
+    }
+    throw new TypeError(
+      "usage: node scripts/qualify-bim-product-shell.mjs " +
+        "[--fixture synthetic|public|gltf-public|" +
+        "gltf-product-scale] [--output path]",
+    );
   }
-  if (
-    values.length === 2 &&
-    values[0] === "--fixture" &&
-    ["gltf-public", "public", "synthetic"].includes(values[1])
-  ) {
-    return values[1];
-  }
-  throw new TypeError(
-    "usage: node scripts/qualify-bim-product-shell.mjs " +
-      "[--fixture synthetic|public|gltf-public]",
-  );
+  return options;
 }
 
 if (
@@ -713,8 +817,19 @@ if (
   path.resolve(process.argv[1]) ===
     fileURLToPath(import.meta.url)
 ) {
+  const options = parseArguments(process.argv.slice(2));
   const evidence = await qualifyBimProductShell({
-    fixture: parseFixtureArguments(process.argv.slice(2)),
+    fixture: options.fixture,
   });
+  if (options.output !== null) {
+    await mkdir(path.dirname(options.output), {
+      recursive: true,
+    });
+    await writeFile(
+      options.output,
+      `${JSON.stringify(evidence, null, 2)}\n`,
+      "utf8",
+    );
+  }
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
 }

@@ -27,8 +27,10 @@ const PASSED_GATES = [
   "vscodeReadonlyGltfGlbAssociation",
   "cleanVsixGltfGlbOpen",
   "crossPlatformGltfProductOpen",
+  "browserProductScaleGltfOpen",
 ];
 const HELD_GATES = [
+  "vscodeProductScaleGltfOpen",
   "publicViewerCoreConformance",
   "physicalGpuQualification",
   "marketplaceRelease",
@@ -146,6 +148,47 @@ function exactReferenceObservation(value, hostKind, nativeId) {
   );
 }
 
+function exactProductScaleReferenceObservation(value) {
+  return (
+    value?.hostKind === "browser" &&
+    JSON.stringify(value?.model) === JSON.stringify({
+      entities: 49,
+      geometryRecords: 15,
+      instances: 49,
+      triangles: 573_952,
+      ranges: 1,
+    }) &&
+    value?.resources?.sourceBytes === 42_977_928 &&
+    value?.resources?.geometryBytes === 16_896_412 &&
+    value?.resources?.metadataBytes === 8_988 &&
+    value?.resources?.detailBytes === 0 &&
+    value?.resources?.detailRanges === 0 &&
+    value?.resources?.ranges === 1 &&
+    value?.resources?.products === 0 &&
+    value?.resources?.referenceEntities === 49 &&
+    value?.renderer?.actualGpu === true &&
+    value?.renderer?.nonBackgroundPixels > 0 &&
+    value?.renderer?.sourceReadBytes === 16_896_412 &&
+    value?.renderer?.uploadedBytes === 16_900_016 &&
+    value?.reference?.globalId === null &&
+    value?.reference?.selectedNativeId ===
+      "node:0/mesh:0/primitive:0" &&
+    value?.reference?.treeRows === 49 &&
+    value?.reference?.maximumDomRows === 64 &&
+    value?.interaction?.searchResults === 1 &&
+    Number.isSafeInteger(
+      value?.interaction?.selectedExpressId,
+    ) &&
+    value.interaction.selectedExpressId > 0 &&
+    /^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
+      value?.interaction?.selectedNativeId ?? "",
+    ) &&
+    value?.interaction?.selectionOrigin === "3d" &&
+    value?.lifecycle?.opened === "ready" &&
+    value?.lifecycle?.closed === "disposed"
+  );
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
@@ -153,6 +196,7 @@ export function validateBimProductShellCompatibility(
   browserPublic,
   installation,
   browserReference,
+  browserProductScaleReference,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -166,6 +210,10 @@ export function validateBimProductShellCompatibility(
     browserReference,
     "reference Browser product shell evidence",
   );
+  plainRecord(
+    browserProductScaleReference,
+    "product-scale reference Browser product shell evidence",
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -176,6 +224,8 @@ export function validateBimProductShellCompatibility(
     browserPublic.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
     browserReference.schema !==
+      "bim-explorer-product-shell-browser-evidence/1" ||
+    browserProductScaleReference.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
     vscode.schema !==
       "bim-explorer-vscode-custom-editor-evidence/1" ||
@@ -207,6 +257,28 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
+    );
+  }
+  const productScaleReferenceFixture =
+    manifest.productScaleReferenceFixture;
+  if (
+    !exactReferenceFixture(
+      browserProductScaleReference.fixture,
+      productScaleReferenceFixture,
+    ) ||
+    productScaleReferenceFixture?.artifactCommitted !== false ||
+    productScaleReferenceFixture?.thirdPartyContent !== true ||
+    productScaleReferenceFixture?.bundled !== false ||
+    productScaleReferenceFixture?.classification !==
+      "product-scale-reference" ||
+    productScaleReferenceFixture?.byteLength !== 42_977_928 ||
+    productScaleReferenceFixture?.sha256 !==
+      "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007" ||
+    productScaleReferenceFixture?.nativeId !==
+      "node:0/mesh:0/primitive:0"
+  ) {
+    throw new Error(
+      "product-scale reference fixture policy is invalid",
     );
   }
   const fixture = manifest.fixture;
@@ -358,7 +430,16 @@ export function validateBimProductShellCompatibility(
     limits?.maximumDomRows !== 64 ||
     limits?.maximumLoadedTreeItems !== 2_000 ||
     limits?.maximumRelations !== 100 ||
-    limits?.maximumSearchResults !== 500
+    limits?.maximumSearchResults !== 500 ||
+    JSON.stringify(limits?.productScaleGltfRenderer) !==
+      JSON.stringify({
+        maximumRangeBytes: 33_554_432,
+        maximumSourceReadBytes: 33_554_432,
+        maximumGeometryPayloadBytes: 25_165_824,
+        maximumInstancedTriangles: 4_000_000,
+        maximumCpuStagingBytes: 33_554_432,
+        maximumGpuCacheBytes: 33_554_432,
+      })
   ) {
     throw new Error("BIM product shell limits are invalid");
   }
@@ -366,12 +447,15 @@ export function validateBimProductShellCompatibility(
     !everyTrue(browser.assertions) ||
     !everyTrue(browserPublic.assertions) ||
     !everyTrue(browserReference.assertions) ||
+    !everyTrue(browserProductScaleReference.assertions) ||
     !everyTrue(vscode.assertions) ||
     !everyTrue(vscode.referenceAssertions) ||
     !everyTrue(installation.assertions) ||
     browser.observation?.hostKind !== "browser" ||
     browserPublic.observation?.hostKind !== "browser" ||
     browserReference.observation?.hostKind !== "browser" ||
+    browserProductScaleReference.observation?.hostKind !==
+      "browser" ||
     vscode.observation?.hostKind !== "vscode-webview" ||
     vscode.environment?.runtimeLayout !== "staged" ||
     installedRuntime?.environment?.runtimeLayout !==
@@ -383,6 +467,8 @@ export function validateBimProductShellCompatibility(
     installedRuntime?.renderer?.actualGpu !== true ||
     browserPublic.observation?.renderer?.actualGpu !== true ||
     browserReference.observation?.renderer?.actualGpu !== true ||
+    browserProductScaleReference.observation?.renderer
+      ?.actualGpu !== true ||
     installedPublic?.renderer?.actualGpu !== true ||
     installedReference?.renderer?.actualGpu !== true ||
     !(browser.observation.renderer.nonBackgroundPixels > 0) ||
@@ -408,6 +494,10 @@ export function validateBimProductShellCompatibility(
     browserReference.observation?.lifecycle?.opened !== "ready" ||
     browserReference.observation?.lifecycle?.closed !==
       "disposed" ||
+    browserProductScaleReference.observation?.lifecycle
+      ?.opened !== "ready" ||
+    browserProductScaleReference.observation?.lifecycle
+      ?.closed !== "disposed" ||
     installedPublic?.lifecycle?.opened !== "ready" ||
     installedPublic?.lifecycle?.closed !== "disposed" ||
     installedReference?.lifecycle?.opened !== "ready" ||
@@ -428,6 +518,36 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell host projections diverge",
+    );
+  }
+  if (
+    !exactProductScaleReferenceObservation(
+      browserProductScaleReference.observation,
+    ) ||
+    browserProductScaleReference.environment?.headless !== true ||
+    browserProductScaleReference.qualification
+      ?.classification !== "product-scale-reference" ||
+    JSON.stringify(
+      browserProductScaleReference.qualification
+        ?.rendererLimits,
+    ) !== JSON.stringify(
+      limits.productScaleGltfRenderer,
+    ) ||
+    browserProductScaleReference.observation?.network
+      ?.externalOrigins?.length !== 0 ||
+    browserProductScaleReference.observation?.runtimeErrors
+      ?.length !== 0 ||
+    browserProductScaleReference.observation?.lifecycle
+      ?.backendDisposed !== true ||
+    browserProductScaleReference.observation?.lifecycle
+      ?.clientDisposed !== true ||
+    browserProductScaleReference.decision
+      ?.referenceProductOpen !== "passed-bounded-read-only" ||
+    browserProductScaleReference.decision
+      ?.actualPhysicalGpu !== "not-claimed"
+  ) {
+    throw new Error(
+      "product-scale Browser product evidence is incomplete",
     );
   }
   if (
@@ -561,6 +681,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.browserReference !==
       "compatibility/evidence/" +
         "gltf-reference-source-khronos-box-browser-product-2026-08-04.json" ||
+    manifest.evidence?.browserProductScaleReference !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-a-beautiful-game-browser-product-2026-08-08.json" ||
     manifest.evidence?.vscodeSynthetic !==
       "compatibility/evidence/" +
         "bim-product-shell-vscode-synthetic-2026-08-04.json" ||
@@ -576,6 +699,8 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimDeferredSemanticDetails !== true ||
     manifest.policy?.claimQualifiedReferenceOpen !== true ||
     manifest.policy?.claimCrossPlatformGltfProductOpen !== true ||
+    manifest.policy?.claimProductScaleBrowserOpen !== true ||
+    manifest.policy?.claimProductScaleVscodeOpen !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||
@@ -591,6 +716,7 @@ export function validateBimProductShellCompatibility(
         browser,
         browserPublic,
         browserReference,
+        browserProductScaleReference,
         installation,
         manifest,
         vscode,
@@ -629,6 +755,7 @@ async function main() {
     browser,
     browserPublic,
     browserReference,
+    browserProductScaleReference,
     vscode,
     installation,
   ] = await Promise.all([
@@ -642,6 +769,13 @@ async function main() {
     ).then(JSON.parse),
     readFile(
       path.join(root, manifest.evidence.browserReference),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.browserProductScaleReference,
+      ),
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -660,6 +794,7 @@ async function main() {
     browserPublic,
     installation,
     browserReference,
+    browserProductScaleReference,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

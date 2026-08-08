@@ -22,4 +22,6 @@ fixture와 실제 고객 IFC는 package에 포함하거나 Git에 추적하지 �
 `npm run qualify:gltf:product`는 고정 Khronos Box GLB를 실제 local file
 input으로 선택하고 staged VS Code와 clean-installed VSIX까지 같은 bounded
 reference projection을 확인합니다. 공개 GLB도 package나 Git에 포함하지
-않습니다.
+않습니다. `npm run qualify:gltf:product-scale:web`은 on-demand cache의
+42.98MB `A Beautiful Game` GLB를 실제 Browser local file input으로 열어
+bounded Worker/renderer, 검색·3D pick과 close cleanup을 확인합니다.
