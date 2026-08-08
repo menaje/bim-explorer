@@ -13,6 +13,18 @@
     >
     <meta name="bim-wasm-path" content="/vendor/">
     <meta
+      name="bim-point-worker"
+      content="./point-source-worker.bundle.js"
+    >
+    <meta
+      name="bim-laz-perf-script"
+      content="/vendor/laz-perf.js"
+    >
+    <meta
+      name="bim-laz-perf-wasm"
+      content="/vendor/laz-perf.wasm"
+    >
+    <meta
       name="bim-worker-module"
       content="./source-worker.mjs"
     >
@@ -28,7 +40,8 @@
           <p class="eyebrow">Local-first · read-only</p>
           <h1>BIM Explorer</h1>
           <p id="product-subtitle" class="subtitle">
-            Open IFC semantics or glTF/GLB reference geometry locally.
+            Open IFC semantics, glTF/GLB reference geometry, or LAS/LAZ
+            points locally.
           </p>
         </div>
         <div class="header-actions">
@@ -37,7 +50,7 @@
             <input
               id="source-file"
               type="file"
-              accept=".ifc,.gltf,.glb,application/x-step,model/gltf+json,model/gltf-binary"
+              accept=".ifc,.gltf,.glb,.las,.laz,application/x-step,model/gltf+json,model/gltf-binary,application/octet-stream"
             >
           </label>
           <button id="open-fixture" type="button">
@@ -61,7 +74,7 @@
           role="status"
           aria-live="polite"
           data-state="idle"
-        >Choose a local IFC, glTF, or GLB file.</p>
+        >Choose a local IFC, glTF, GLB, LAS, or LAZ file.</p>
         <p id="source-identity">No active source</p>
       </section>
 

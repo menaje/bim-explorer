@@ -140,8 +140,14 @@ point renderer와 제품 admission을 주장하지 않습니다.
 Float64-origin/relative-Float32/RGBA8 range로 투영하고 range decoder,
 loopback-only delivery·buffer zeroing과 committed actual Chrome WebGL2 evidence를
 검사합니다. 이 test는 단일 `POINTS` draw와 exact CPU/GPU cleanup만 승인하며
-CRS, point identity/pick, LOD, 제품 file-open과 format admission은 계속
+CRS, point identity/pick, LOD와 format admission은 계속
 거부합니다.
+
+`las-laz-point-source`, `point-source-client`와 `las-laz-browser-product`
+test는 bounded header/source projection, one-shot Worker transfer·termination과
+실제 BIM Explorer Browser local file input의 LAS/LAZ exact range·visual parity를
+검사합니다. Browser open만 experimental로 승인하며 CRS, point identity/pick,
+LOD, VS Code/VSIX open과 format admission은 계속 거부합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

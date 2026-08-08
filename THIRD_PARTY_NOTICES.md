@@ -88,8 +88,8 @@ digest와 attribution은
 기록합니다. GLB 자체는 ignored private cache에만 두며 release에 포함하지
 않습니다.
 
-LAS/LAZ pre-admission point-record qualification은 제품 runtime과 분리된 exact
-dev dependency를 사용합니다.
+LAS/LAZ point-record qualification과 experimental Browser product Worker는
+다음 exact dependency를 사용합니다.
 
 - `laz-perf@0.0.6`
 - Apache-2.0, [full text](specs/LICENSE)
@@ -101,10 +101,10 @@ dev dependency를 사용합니다.
 
 공개 LAS/LAZ pair는 `visgl/loaders.gl`의 MIT source repository에서 고정 commit과
 SHA-256로 내려받습니다. 샘플 binary는 ignored cache에만 두고 재배포하거나
-release에 포함하지 않습니다. `laz-perf`도 현재 Community Browser/VS Code
-runtime이나 release bundle에는 포함하지 않습니다. 향후 제품 dependency로
-승격하려면 Browser Worker isolation·cancellation·resource budget, platform
-package, runtime SBOM과 notice를 다시 검증해야 합니다.
+release에 포함하지 않습니다. `laz-perf`는 main의 bounded Browser product에서
+전용 classic Worker runtime으로 사용하지만 immutable Community v0.1.0,
+VS Code/VSIX와 release bundle에는 포함하지 않습니다. release나 VSIX에
+포함하기 전 platform package, runtime SBOM과 notice를 다시 검증해야 합니다.
 
 - exact package와 version
 - upstream source와 license

@@ -76,3 +76,8 @@ point range를 만들고 actual Chrome WebGL2의 단일 `POINTS` draw, pixel out
 bounded CPU/GPU bytes와 deterministic cleanup을 검증합니다. Browser에 LAS/LAZ
 원본이나 decoder를 제공하지 않으며 제품 file-open·CRS·point picking·format
 admission을 승인하지 않습니다.
+
+실제 [`bim-explorer-web`](bim-explorer-web/README.md)은 이 qualified range를
+제품 source 경계로 채택해 bounded LAS/LAZ local file input을 전용 Worker에서
+처리합니다. Browser 제품 open은 통과했지만 CRS, point identity/picking·LOD,
+VS Code/VSIX와 format admission은 계속 별도 Gate입니다.

@@ -21,6 +21,9 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicLasLazFixture,
+} from "./public-las-laz-fixture.mjs";
+import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
 
@@ -283,7 +286,8 @@ function assertions(
   errors,
   fixture,
 ) {
-  const reference = fixture.format !== "ifc";
+  const pointCloud = ["las", "laz"].includes(fixture.format);
+  const reference = fixture.format !== "ifc" && !pointCloud;
   const selectedReferenceIdentity =
     typeof interaction.selectedNativeId === "string" &&
     /^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
@@ -318,8 +322,24 @@ function assertions(
       interaction.serializedReport.includes(".ifc") === false &&
       interaction.serializedReport.includes(".gltf") === false &&
       interaction.serializedReport.includes(".glb") === false &&
+      interaction.serializedReport.includes(".las") === false &&
+      interaction.serializedReport.includes(".laz") === false &&
       interaction.serializedReport.includes("file:") === false,
-    ...(reference
+    ...(pointCloud
+      ? {
+          pointCloudAnd3d:
+            interaction.pickDisabled === true &&
+            interaction.searchDisabled === true &&
+            interaction.selectionOrigin === "not applicable" &&
+            opened.pointCloud?.pointPrimitive === "POINTS" &&
+            opened.pointCloud.coordinateReferenceStatus ===
+              "unqualified" &&
+            opened.renderer.sourceReadBytes ===
+              fixture.pointRangeBytes &&
+            opened.renderer.uploadedBytes ===
+              fixture.pointRangePayloadBytes,
+        }
+      : reference
       ? {
           referenceAnd3dSync:
             interaction.searchResults > 0 &&
@@ -343,13 +363,40 @@ function assertions(
     workerAndGpuCleanup:
       cleanup.status === "disposed" &&
       cleanup.cleanup?.backend?.disposed === true &&
-      cleanup.cleanup?.client?.disposed === true,
+      cleanup.cleanup?.client?.disposed === true &&
+      (
+        !pointCloud ||
+        (
+          cleanup.cleanup.rendererDisposed === true &&
+          cleanup.cleanup.pointRangeCleared === true &&
+          cleanup.cleanup.workerTerminatedAfterTransfer === true
+        )
+      ),
     noRuntimeErrors: errors.length === 0,
     fixtureIdentity:
       opened.source.byteLength === fixture.sourceBytes &&
       opened.source.fingerprint === fixture.fingerprint &&
       (
-        reference
+        pointCloud
+          ? (
+              opened.source.format === fixture.format &&
+              opened.source.formatVersion ===
+                fixture.formatVersion &&
+              opened.source.pointFormat === fixture.pointFormat &&
+              opened.source.sourceRole ===
+                "derived-or-reference-points" &&
+              opened.source.semanticAuthority === false &&
+              opened.source.coordinateReferenceStatus ===
+                "unqualified" &&
+              opened.model.points === fixture.points &&
+              opened.model.ranges === fixture.ranges &&
+              opened.pointCloud.rangeSha256 ===
+                fixture.pointRangeSha256 &&
+              opened.lifecycle.cpuPointRangeCleared === true &&
+              opened.lifecycle.sourceBufferCleared === true &&
+              opened.lifecycle.workerTerminatedAfterTransfer === true
+            )
+          : reference
           ? (
               opened.source.format === fixture.format &&
               opened.source.gltfVersion ===
@@ -368,7 +415,10 @@ function assertions(
               opened.model.treeNodes === fixture.treeNodes
             )
       ) &&
-      opened.model.triangles === fixture.triangles &&
+      (
+        pointCloud ||
+        opened.model.triangles === fixture.triangles
+      ) &&
       opened.model.ranges === fixture.ranges,
   });
 }
@@ -491,9 +541,49 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (["las-public", "laz-public"].includes(kind)) {
+    const acquired = await acquirePublicLasLazFixture();
+    const format = kind === "las-public" ? "las" : "laz";
+    const entry = acquired.manifest.entries[format];
+    const cacheHit = acquired.receipt.entries[format].cacheHit;
+    acquired.bytes.las.fill(0);
+    acquired.bytes.laz.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePaths[format],
+      id: `${acquired.manifest.fixtureId}-${format}`,
+      committed: false,
+      format,
+      sourceBytes: entry.byteLength,
+      fingerprint: `sha256:${entry.sha256}`,
+      formatVersion:
+        acquired.manifest.expected.formatVersion,
+      pointFormat: acquired.manifest.expected.pointFormat,
+      points: acquired.manifest.expected.pointRecords,
+      ranges: 1,
+      pointRangeBytes: 163_264,
+      pointRangePayloadBytes: 163_216,
+      pointRangeSha256:
+        "8383abce84d57b8f50ee1f39aa1d442a" +
+        "7f258cd759ab9812aff1a0625ab10449",
+      rendererLimits: null,
+      searchQuery: null,
+      provenance: Object.freeze({
+        repository:
+          acquired.manifest.provenance.repository,
+        commit: acquired.manifest.provenance.commit,
+        license:
+          acquired.manifest.use.sourceRepositoryLicense,
+        cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
-      "gltf-public, or gltf-product-scale",
+      "gltf-public, gltf-product-scale, las-public, or laz-public",
   );
 }
 
@@ -501,6 +591,7 @@ export async function qualifyBimProductShell({
   fixture: fixtureKind = "synthetic",
 } = {}) {
   const fixture = await qualificationFixture(fixtureKind);
+  const pointCloud = ["las", "laz"].includes(fixture.format);
   const server = createBimExplorerWebServer({
     fixture: fixture.serverFixture,
   });
@@ -594,23 +685,25 @@ export async function qualifyBimProductShell({
               : 30_000,
       },
     );
-    await client.evaluate(`(() => {
-      const input = document.querySelector("#search-input");
-      input.value = ${JSON.stringify(fixture.searchQuery)};
-      document.querySelector("#search-form").requestSubmit();
-      return true;
-    })()`);
-    await poll(
-      client,
-      `document.querySelectorAll("#search-results [role=option]").length`,
-    );
-    await client.evaluate(
-      `document.querySelector("#pick-model").click(); true`,
-    );
-    await poll(
-      client,
-      `document.querySelector("#selection-origin").textContent === "3d"`,
-    );
+    if (!pointCloud) {
+      await client.evaluate(`(() => {
+        const input = document.querySelector("#search-input");
+        input.value = ${JSON.stringify(fixture.searchQuery)};
+        document.querySelector("#search-form").requestSubmit();
+        return true;
+      })()`);
+      await poll(
+        client,
+        `document.querySelectorAll("#search-results [role=option]").length`,
+      );
+      await client.evaluate(
+        `document.querySelector("#pick-model").click(); true`,
+      );
+      await poll(
+        client,
+        `document.querySelector("#selection-origin").textContent === "3d"`,
+      );
+    }
     const interaction = await client.evaluate(`(() => {
       const report = globalThis.__bimExplorerProductReport;
       const origins = [...new Set(
@@ -635,6 +728,10 @@ export async function qualifyBimProductShell({
           )?.dataset.nativeId || null,
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
+        pickDisabled:
+          document.querySelector("#pick-model").disabled,
+        searchDisabled:
+          document.querySelector("#search-input").disabled,
         serializedReport: JSON.stringify(report),
         treeRows:
           document.querySelectorAll(
@@ -686,6 +783,11 @@ export async function qualifyBimProductShell({
         fingerprint: opened.source.fingerprint,
         ...(fixture.format === "ifc"
           ? { ifcSchema: opened.source.ifcSchema }
+          : pointCloud
+            ? {
+                formatVersion: opened.source.formatVersion,
+                pointFormat: opened.source.pointFormat,
+              }
           : {
               gltfVersion: opened.source.gltfVersion,
               nativeId: fixture.nativeId,
@@ -710,7 +812,12 @@ export async function qualifyBimProductShell({
         renderer: opened.renderer,
         ...(fixture.format === "ifc"
           ? { semantic: opened.semantic }
-          : { reference: opened.reference }),
+          : pointCloud
+            ? {
+                pointCloud: opened.pointCloud,
+                productLifecycle: opened.lifecycle,
+              }
+            : { reference: opened.reference }),
         interaction: {
           searchResults: interaction.searchResults,
           selectedExpressId:
@@ -719,6 +826,8 @@ export async function qualifyBimProductShell({
             interaction.selectedNativeId,
           selectionOrigin:
             interaction.selectionOrigin,
+          pickDisabled: interaction.pickDisabled,
+          searchDisabled: interaction.searchDisabled,
           treeRows: interaction.treeRows,
         },
         lifecycle: {
@@ -728,6 +837,16 @@ export async function qualifyBimProductShell({
             cleanup.cleanup.backend.disposed,
           clientDisposed:
             cleanup.cleanup.client.disposed,
+          ...(pointCloud
+            ? {
+                pointRangeCleared:
+                  cleanup.cleanup.pointRangeCleared,
+                rendererDisposed:
+                  cleanup.cleanup.rendererDisposed,
+                workerTerminatedAfterTransfer:
+                  cleanup.cleanup.workerTerminatedAfterTransfer,
+              }
+            : {}),
         },
         network: {
           externalOrigins: interaction.externalOrigins,
@@ -739,9 +858,12 @@ export async function qualifyBimProductShell({
       decision: {
         browserProductShell: "passed",
         referenceProductOpen:
-          fixture.format === "ifc"
+          fixture.format === "ifc" || pointCloud
             ? "not-applicable"
             : "passed-bounded-read-only",
+        pointCloudProductOpen: pointCloud
+          ? "passed-bounded-read-only-unqualified-coordinates"
+          : "not-applicable",
         actualPhysicalGpu: "not-claimed",
         publicViewerCoreConformance: "held",
         vscodeChromiumRuntime: "separate-gate",
@@ -776,6 +898,8 @@ function parseArguments(values) {
   const allowedFixtures = new Set([
     "gltf-product-scale",
     "gltf-public",
+    "las-public",
+    "laz-public",
     "public",
     "synthetic",
   ]);
@@ -806,7 +930,7 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
-        "gltf-product-scale] [--output path]",
+        "gltf-product-scale|las-public|laz-public] [--output path]",
     );
   }
   return options;

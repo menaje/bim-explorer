@@ -128,7 +128,7 @@ format 등록과 실제 source admission을 분리합니다.
 | --- | --- | --- | --- | --- | --- |
 | IFC4 ReferenceView | semantic BIM source | qualified bounded profile | qualified bounded semantics | blocked | blocked |
 | glTF/GLB | derived/reference mesh | qualified bounded glTF 2.0 reference mesh | qualified bounded node/mesh metadata | blocked | blocked |
-| LAS/LAZ | point observation reference | pre-admission point primitive; source/CRS/product held | held metadata | blocked | blocked |
+| LAS/LAZ | point observation reference | bounded Browser product open; CRS/VS Code/admission held | held metadata | blocked | blocked |
 | E57 | point observation reference | held codec/renderer | held metadata | blocked | blocked |
 | 3D Tiles | GIS/site context | held engine/network | held metadata | blocked | blocked |
 | RVT/DGN | native SDK reference | held SDK/rights | held SDK/profile | separate Gate | reopen Gate |
@@ -195,5 +195,5 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 측량 control point와 datum transformation
 - glTF/GLB external resource bundle와 required extension; bounded 제품
   file-open은 별도 product-shell evidence에서 통과
-- LAS/LAZ 제품 decoder/source·CRS·file-open, E57와 3D Tiles parser/engine
+- LAS/LAZ CRS·point identity/LOD·VS Code file-open과 admission, E57와 3D Tiles parser/engine
 - RVT/DGN native SDK bridge와 reopen qualification

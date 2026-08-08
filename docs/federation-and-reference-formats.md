@@ -96,7 +96,7 @@ cache입니다.
 | --- | --- | --- |
 | IFC4 ReferenceView | semantic BIM source | 기존 bounded read-only profile |
 | glTF/GLB | derived/reference mesh | bounded read-only reference admission |
-| LAS/LAZ | point-cloud/survey reference | renderer probe passed; admission held |
+| LAS/LAZ | point-cloud/survey reference | bounded Browser product open passed; admission held |
 | E57 | point-cloud/survey reference | held |
 | 3D Tiles/GIS | site context reference | held |
 | RVT/DGN | native SDK reference | held |
@@ -128,8 +128,10 @@ qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperativ
 취소, 동기 decode 중 강제 종료, timeout, truncated payload 격리와 fresh-Worker
 복구를 통과했습니다. source-neutral point range와 actual Chrome WebGL2
 primitive도 10,201 points·1 draw·40,471 pixels 및 exact cleanup을
-통과했습니다. 하지만 CRS/datum, LAS/LAZ 제품 source와 Browser/VS Code
-file-open이 없으므로 위 표의 admission은 계속 `held`입니다.
+통과했습니다. 이어 bounded product source와 실제 Browser local file input은
+LAS/LAZ가 동일한 point range와 visible frame을 만들고 source/Worker/CPU/GPU
+cleanup을 통과했습니다. 하지만 CRS/datum, point identity/picking·LOD와 VS
+Code file-open이 없으므로 위 표의 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

@@ -21,6 +21,16 @@ const CONTENT_SECURITY_POLICY = [
   "form-action 'none'",
   "frame-ancestors 'none'",
 ].join("; ");
+const POINT_WORKER_CONTENT_SECURITY_POLICY = [
+  "default-src 'none'",
+  "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'",
+  "connect-src 'self'",
+  "worker-src 'none'",
+  "img-src 'none'",
+  "style-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+].join("; ");
 
 function route(file, type) {
   return Object.freeze({
@@ -59,6 +69,15 @@ const ROUTES = new Map([
     file: path.join(APP, "worker-source-client.mjs"),
     type: JAVASCRIPT,
   }],
+  ["/point-source-client.mjs", {
+    file: path.join(APP, "point-source-client.mjs"),
+    type: JAVASCRIPT,
+  }],
+  ["/point-source-worker.bundle.js", {
+    csp: POINT_WORKER_CONTENT_SECURITY_POLICY,
+    file: path.join(APP, "point-source-worker.bundle.js"),
+    type: JAVASCRIPT,
+  }],
   ["/reference-mesh-explorer.mjs", {
     file: path.join(APP, "reference-mesh-explorer.mjs"),
     type: JAVASCRIPT,
@@ -67,6 +86,20 @@ const ROUTES = new Map([
     file: path.join(APP, "styles.css"),
     type: "text/css; charset=utf-8",
   }],
+  [
+    "/packages/las-laz-point-source/src/header.mjs",
+    route(
+      "packages/las-laz-point-source/src/header.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/las-laz-point-source/src/index.mjs",
+    route(
+      "packages/las-laz-point-source/src/index.mjs",
+      JAVASCRIPT,
+    ),
+  ],
   [
     "/adapters/web-ifc/src/create-source-artifact.mjs",
     route(
@@ -189,13 +222,40 @@ const ROUTES = new Map([
     file: path.join(VENDOR, "web-ifc.wasm"),
     type: "application/wasm",
   }],
+  ["/vendor/laz-perf.js", {
+    csp: POINT_WORKER_CONTENT_SECURITY_POLICY,
+    file: path.join(
+      ROOT,
+      "node_modules",
+      "laz-perf",
+      "lib",
+      "worker",
+      "laz-perf.js",
+    ),
+    type: JAVASCRIPT,
+  }],
+  ["/vendor/laz-perf.wasm", {
+    file: path.join(
+      ROOT,
+      "node_modules",
+      "laz-perf",
+      "lib",
+      "worker",
+      "laz-perf.wasm",
+    ),
+    type: "application/wasm",
+  }],
 ]);
 
-function headers(type, byteLength) {
+function headers(
+  type,
+  byteLength,
+  contentSecurityPolicy = CONTENT_SECURITY_POLICY,
+) {
   return {
     "Cache-Control": "no-store",
     "Content-Length": String(byteLength),
-    "Content-Security-Policy": CONTENT_SECURITY_POLICY,
+    "Content-Security-Policy": contentSecurityPolicy,
     "Content-Type": type,
     "Cross-Origin-Embedder-Policy": "require-corp",
     "Cross-Origin-Opener-Policy": "same-origin",
@@ -272,7 +332,11 @@ export function createBimExplorerWebServer({
       ) ?? body;
       response.writeHead(
         200,
-        headers(selected.type, body.byteLength),
+        headers(
+          selected.type,
+          body.byteLength,
+          selected.csp,
+        ),
       );
       response.end(
         request.method === "HEAD" ? undefined : body,

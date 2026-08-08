@@ -18,33 +18,38 @@
     "lasLazMalformedInputIsolation": true,
     "lasLazPointRange": true,
     "lasLazRenderer": true,
+    "lasLazProductSource": true,
+    "lasLazBrowserProductOpen": true,
     "e57PointDecode": false,
     "e57Renderer": false,
     "e57ProductOpen": false,
     "lasLazCoordinateReference": false,
-    "lasLazProductOpen": false
+    "lasLazVscodeProductOpen": false,
+    "lasLazFormatAdmission": false
   },
   "evidence": {
     "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
     "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
-    "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json"
+    "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
+    "lasLazBrowserProduct": "compatibility/evidence/las-laz-browser-product-2026-08-08.json"
   },
   "blockers": [
     "E57 compressed point payload decode is not implemented",
     "E57 has no qualified point renderer",
     "Browser and VS Code do not open E57 files",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
-    "Browser and VS Code do not open LAS or LAZ files"
+    "VS Code staged and clean-installed VSIX do not open LAS or LAZ files",
+    "LAS/LAZ format admission remains held until coordinate and remaining product Gates pass"
   ],
   "limitations": [
     "the samples are downloaded on demand into ignored digest caches",
     "sample files are not tracked, redistributed or included in a release",
     "the E57 probe inspects only its envelope, page CRCs and XML metadata",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
-    "laz-perf is a qualification-only dev dependency and not a product runtime",
+    "laz-perf is an exact Browser product Worker runtime dependency but is not in Community v0.1.0 or the VSIX",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
-    "the point renderer consumes a source-neutral derived range and does not open LAS or LAZ files",
+    "the Browser product opens bounded LAS/LAZ point-format 2 or 3 sources without coordinate authority",
     "the point renderer has no point identity, picking, semantics or level-of-detail streaming",
     "sample-based testing does not establish user demand, surveyed accuracy or format admission"
   ],
@@ -52,8 +57,10 @@
     "sampleArtifactTracked": false,
     "sampleRedistributed": false,
     "releaseBundled": false,
-    "decoderProductBundled": false,
-    "testOnly": true,
+    "decoderBrowserProductRuntime": true,
+    "decoderReleaseBundled": false,
+    "sampleUseTestOnly": true,
+    "browserExperimentalProductOpen": true,
     "formatAdmission": false,
     "productSupport": false
   }

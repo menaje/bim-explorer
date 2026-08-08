@@ -10,7 +10,10 @@
     "sourceProtocol": "bim-explorer-bim-source/0.2",
     "rendererHost": "bim-explorer-bim-renderer-3d-host/0.1",
     "semanticExplorer": "bim-explorer-bim-semantic-explorer/0.1",
-    "referenceExplorer": "bim-explorer-reference-mesh-explorer/0.1"
+    "referenceExplorer": "bim-explorer-reference-mesh-explorer/0.1",
+    "pointSource": "bim-explorer-las-laz-point-source/0.1",
+    "pointSourceWorkerRequest": "bim-explorer-point-source-worker-request/0.1",
+    "pointSourceWorkerResponse": "bim-explorer-point-source-worker-response/0.1"
   },
   "fixture": {
     "id": "synthetic-semantic-ifc4",
@@ -80,6 +83,13 @@
       "maximumInstancedTriangles": 4000000,
       "maximumCpuStagingBytes": 33554432,
       "maximumGpuCacheBytes": 33554432
+    },
+    "lasLazPointSource": {
+      "maximumSourceBytes": 8388608,
+      "maximumPoints": 500000,
+      "maximumDecodedPointBytes": 25165824,
+      "maximumPointRangeBytes": 8388608,
+      "maximumGpuBytes": 8388608
     }
   },
   "gates": {
@@ -110,6 +120,7 @@
     "browserProductScaleGltfOpen": true,
     "vscodeProductScaleGltfOpen": true,
     "cleanVsixProductScaleGltfOpen": true,
+    "browserReadonlyLasLazOpen": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -123,7 +134,8 @@
     "vscodeCleanInstallProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json",
     "vscodeSynthetic": "compatibility/evidence/bim-product-shell-vscode-synthetic-2026-08-04.json",
     "vscodeCleanInstall": "compatibility/evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json",
-    "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json"
+    "gltfProductPlatformMatrix": "compatibility/evidence/gltf-product-platform-matrix-2026-08-08.json",
+    "browserLasLaz": "compatibility/evidence/las-laz-browser-product-2026-08-08.json"
   },
   "blockers": [
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
@@ -140,6 +152,8 @@
     "claimProductScaleBrowserOpen": true,
     "claimProductScaleVscodeOpen": true,
     "claimProductScaleCleanVsixOpen": true,
+    "claimBrowserLasLazOpen": true,
+    "claimLasLazFormatAdmission": false,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,
     "claimPhysicalGpu": false,

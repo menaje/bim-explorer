@@ -13,6 +13,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `openbim-explorer`: source-bound BCF·IDS·bSDD read-only exploration
 - `bim-federation`: multi-source identity·alignment·reference-format Gate
 - `gltf-reference-source`: bounded glTF/GLB read-only reference mesh
+- `las-laz-point-source`: bounded LAS/LAZ read-only point-range projection
 
 공용 Viewer Core/render protocol은 이 저장소에 복사하지 않습니다.
 [`viewer-core-consumer`](viewer-core-consumer/README.md)는
@@ -74,3 +75,9 @@ source-neutral renderer projection으로 namespacing하는 adapter도 제공하�
 embedded geometry를 bounded generic 3D range로 투영합니다. 이 source는
 mesh reference일 뿐 BIM semantics, write 또는 round-trip authority가
 아닙니다.
+
+[`las-laz-point-source`](las-laz-point-source/README.md)는 LAS 1.0–1.3의
+point-format 2/3과 LASzip LAZ를 bounded Float64-origin/relative-Float32/RGBA8
+range로 투영합니다. exact `laz-perf@0.0.6`은 Browser 전용 Worker에서
+실행하며 CRS, point identity/picking·LOD, semantics, write 또는 round-trip
+authority를 제공하지 않습니다.

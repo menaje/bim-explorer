@@ -13,6 +13,9 @@ import {
 import {
   validateLasLazPointRendererQualification,
 } from "./qualify-las-laz-point-renderer.mjs";
+import {
+  validateLasLazBrowserProductQualification,
+} from "./qualify-las-laz-browser-product.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -30,13 +33,16 @@ const PASSED_GATES = Object.freeze([
   "lasLazMalformedInputIsolation",
   "lasLazPointRange",
   "lasLazRenderer",
+  "lasLazProductSource",
+  "lasLazBrowserProductOpen",
 ]);
 const HELD_GATES = Object.freeze([
   "e57PointDecode",
   "e57Renderer",
   "e57ProductOpen",
   "lasLazCoordinateReference",
-  "lasLazProductOpen",
+  "lasLazVscodeProductOpen",
+  "lasLazFormatAdmission",
 ]);
 
 export function validateReferenceFormatProbeCompatibility(
@@ -45,6 +51,7 @@ export function validateReferenceFormatProbeCompatibility(
   lasLazEvidence,
   lasLazWorkerEvidence,
   lasLazPointRendererEvidence,
+  lasLazBrowserProductEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateLasLazPublicSampleProbe(lasLazEvidence);
@@ -53,6 +60,9 @@ export function validateReferenceFormatProbeCompatibility(
   );
   validateLasLazPointRendererQualification(
     lasLazPointRendererEvidence,
+  );
+  validateLasLazBrowserProductQualification(
+    lasLazBrowserProductEvidence,
   );
   if (
     manifest?.schema !==
@@ -70,7 +80,10 @@ export function validateReferenceFormatProbeCompatibility(
         "las-laz-browser-worker-2026-08-08.json" ||
     manifest.evidence?.lasLazPointRenderer !==
       "compatibility/evidence/" +
-        "las-laz-point-renderer-2026-08-08.json"
+        "las-laz-point-renderer-2026-08-08.json" ||
+    manifest.evidence?.lasLazBrowserProduct !==
+      "compatibility/evidence/" +
+        "las-laz-browser-product-2026-08-08.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -100,8 +113,10 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.policy?.sampleArtifactTracked !== false ||
     manifest.policy.sampleRedistributed !== false ||
     manifest.policy.releaseBundled !== false ||
-    manifest.policy.decoderProductBundled !== false ||
-    manifest.policy.testOnly !== true ||
+    manifest.policy.decoderBrowserProductRuntime !== true ||
+    manifest.policy.decoderReleaseBundled !== false ||
+    manifest.policy.sampleUseTestOnly !== true ||
+    manifest.policy.browserExperimentalProductOpen !== true ||
     manifest.policy.formatAdmission !== false ||
     manifest.policy.productSupport !== false ||
     manifest.blockers?.length !== HELD_GATES.length ||
@@ -124,6 +139,7 @@ async function main() {
     lasLazEvidence,
     lasLazWorkerEvidence,
     lasLazPointRendererEvidence,
+    lasLazBrowserProductEvidence,
   ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
@@ -147,6 +163,11 @@ async function main() {
         "las-laz-point-renderer-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "las-laz-browser-product-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
@@ -155,6 +176,7 @@ async function main() {
       lasLazEvidence,
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
+      lasLazBrowserProductEvidence,
     ),
   ));
 }

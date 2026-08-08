@@ -54,13 +54,19 @@ test("product server exposes only its same-origin allowlist", async () => {
       "/app.mjs",
       "/source-worker.mjs",
       "/worker-source-client.mjs",
+      "/point-source-client.mjs",
+      "/point-source-worker.bundle.js",
       "/reference-mesh-explorer.mjs",
       "/styles.css",
       "/vendor/web-ifc-api.js",
       "/vendor/web-ifc.wasm",
+      "/vendor/laz-perf.js",
+      "/vendor/laz-perf.wasm",
       "/adapters/web-ifc/src/create-source-artifact.mjs",
       "/packages/bim-model-source/src/index.mjs",
       "/packages/gltf-reference-source/src/index.mjs",
+      "/packages/las-laz-point-source/src/header.mjs",
+      "/packages/las-laz-point-source/src/index.mjs",
       "/packages/bim-renderer-3d/src/index.mjs",
       "/packages/bim-renderer-3d/src/point-cloud.mjs",
       "/packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
@@ -72,6 +78,21 @@ test("product server exposes only its same-origin allowlist", async () => {
         pathname,
       );
     }
+    const pointWorker = await fetch(
+      `${origin}/point-source-worker.bundle.js`,
+    );
+    assert.match(
+      pointWorker.headers.get("content-security-policy"),
+      /script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'/u,
+    );
+    assert.match(
+      page.headers.get("content-security-policy"),
+      /script-src 'self' 'wasm-unsafe-eval';/u,
+    );
+    assert.doesNotMatch(
+      page.headers.get("content-security-policy"),
+      /script-src[^;]*'unsafe-eval'/u,
+    );
     assert.equal(
       (await fetch(`${origin}/qualification-fixture.ifc`)).status,
       404,

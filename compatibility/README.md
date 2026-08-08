@@ -129,8 +129,9 @@ contract host conformance는 각각 별도 evidence에서 통과했습니다.
 payload를 사용합니다. cache-only LAS/LAZ parity sample의 10,201 points를
 actual Chrome WebGL2 단일 `POINTS` draw로 그려 40,471 pixels를 확인하고
 163,216-byte upload를 전량 회수했습니다. renderer manifest는 이 세 point
-Gate를 포함해 24 passed / 0 held이며, format admission·CRS·제품 file-open은
-reference-format manifest에서 계속 분리해 held합니다.
+Gate를 포함해 24 passed / 0 held입니다. 별도 Browser 제품 source/open은
+reference-format과 product-shell manifest가 소유하며, format admission·CRS와
+VS Code open은 계속 분리해 held합니다.
 
 web-ifc의 local Browser Worker ESM/WASM smoke는
 [`Browser Worker evidence`](evidence/web-ifc-browser-worker-smoke-2026-08-03.json)에
@@ -224,9 +225,13 @@ actual Chrome의 4,063,232-byte peak WASM heap, checkpoint/forced cancellation,
 timeout, truncated payload cleanup과 fresh-Worker recovery를 기록합니다.
 별도 [`point renderer evidence`](evidence/las-laz-point-renderer-2026-08-08.json)는
 Float64 origin + relative Float32/RGBA8 range, actual Chrome WebGL2의 10,201
-points·1 draw·40,471 pixels와 exact CPU/GPU cleanup을 기록합니다. 전체 15개
-Gate가 통과했고 E57 decode/renderer/product, LAS/LAZ CRS·제품 open 5개 Gate는
-held입니다. 이 결과는 federation의 `pointCloudCodec`이나
+points·1 draw·40,471 pixels와 exact CPU/GPU cleanup을 기록합니다. 별도
+[`Browser product evidence`](evidence/las-laz-browser-product-2026-08-08.json)는
+LAS와 LAZ 실제 local file input이 동일한 10,201 points·163,216-byte upload·
+36,934 pixels를 만들고 source/Worker/CPU/GPU 자원을 회수했음을 기록합니다.
+전체 17개 Gate가 통과했고 E57 decode/renderer/product, LAS/LAZ CRS·VS Code
+open·format admission 6개 Gate는 held입니다. 이 결과는 federation의
+`pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.
 
 bounded glTF 2.0/GLB reference mesh는

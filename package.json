@@ -14,13 +14,14 @@
     "node": ">=24"
   },
   "scripts": {
+    "build:point-worker": "node scripts/build-point-source-worker.mjs",
     "build:vscode-worker": "node scripts/build-vscode-worker.mjs",
     "check": "npm run check:text && npm run check:repository && npm run check:history && npm run check:docs && npm run check:generated && npm run check:compatibility && npm test",
     "check:history": "node scripts/check-community-history.mjs",
     "check:text": "node scripts/check-text.mjs",
     "check:repository": "node scripts/check-repository.mjs",
     "check:docs": "node scripts/check-docs.mjs",
-    "check:generated": "node scripts/build-vscode-worker.mjs --check",
+    "check:generated": "node scripts/build-vscode-worker.mjs --check && node scripts/build-point-source-worker.mjs --check",
     "check:compatibility": "node scripts/check-viewer-core-compatibility.mjs && node scripts/check-ifc-engine-compatibility.mjs && node scripts/check-bim-model-source-compatibility.mjs && node scripts/check-bim-renderer-3d-compatibility.mjs && node scripts/check-gltf-reference-source-compatibility.mjs && node scripts/check-gltf-product-platform-compatibility.mjs && node scripts/check-bim-semantic-explorer-compatibility.mjs && node scripts/check-bim-product-shell-compatibility.mjs && node scripts/check-spatial-integration-compatibility.mjs && node scripts/check-openbim-compatibility.mjs && node scripts/check-bim-federation-compatibility.mjs && node scripts/check-reference-format-probes-compatibility.mjs && node scripts/check-community-release-compatibility.mjs",
     "fetch:ifc:public": "node scripts/fetch-public-ifc-fixture.mjs",
     "fetch:gltf:public": "node scripts/fetch-public-gltf-fixture.mjs",
@@ -63,6 +64,7 @@
     "qualify:las-laz:probe": "node scripts/qualify-las-laz-public-sample.mjs",
     "qualify:las-laz:worker": "node scripts/qualify-las-laz-browser-worker.mjs",
     "qualify:las-laz:renderer": "node scripts/qualify-las-laz-point-renderer.mjs",
+    "qualify:las-laz:product:web": "node scripts/qualify-las-laz-browser-product.mjs",
     "assemble:federation:product-scale:platform": "node scripts/assemble-bim-federation-product-scale-platform-matrix.mjs",
     "qualify:community-release": "node scripts/qualify-community-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",

@@ -14,7 +14,10 @@
   rejection and fresh-Worker recovery without opening product support;
 - add a source-neutral Float64-origin point range and bounded headless/WebGL2
   `POINTS` renderer, qualifying 10,201 LAS/LAZ-parity points and exact cleanup
-  in Chrome without admitting product file-open or a point-cloud format;
+  in Chrome without admitting a point-cloud format;
+- add a bounded LAS/LAZ product source and one-shot decoder Worker, then open
+  both paired files through the actual Browser local-file product with exact
+  point-range/visual parity and deterministic source/Worker/CPU/GPU cleanup;
 - add an experimental multi-IFC federation contract with source-scoped
   identity, visibility, partial/stale state, explicit Float64 alignment,
   incremental refresh, cross-source selection and saved views;
@@ -39,7 +42,8 @@
   Linux x64 CI through a committed portable matrix;
 - add a privacy-safe reference-format intake/triage contract and public issue
   form without promoting any held codec, SDK or authority Gate;
-- keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
+- keep LAS/LAZ CRS, VS Code and format admission, plus E57, 3D Tiles and
+  RVT/DGN, behind fail-closed capability Gates.
 
 ## 0.1.0 - 2026-08-04
 

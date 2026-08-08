@@ -306,9 +306,13 @@ cache-only LAS/LAZ probe는 paired LAS 1.2 point record decode에 이어 실제
 Chrome Worker의 bounded WASM heap, checkpoint/forced cancellation, timeout,
 truncated payload 격리와 fresh-Worker recovery까지 통과했습니다. 같은 exact
 parity record의 source-neutral point range도 actual Chrome WebGL2에서 단일
-`POINTS` draw, visible pixels와 exact cleanup을 통과했습니다. 다만 decoder와
-sample은 qualification-only이고 CRS, 제품 source/file-open과 admission이
-없으므로 source admission에는 영향을 주지 않습니다.
+`POINTS` draw, visible pixels와 exact cleanup을 통과했습니다. Browser 제품은
+8 MiB source/500,000-point 한도 뒤 전용 Worker에서 LAS record를 읽거나 exact
+`laz-perf@0.0.6`으로 LAZ를 해제하고, 하나의 Float64-origin/relative-Float32
+range만 main thread로 transfer합니다. 실제 local file input의 LAS/LAZ parity와
+source/Worker/CPU/GPU cleanup도 통과했습니다. 샘플은 qualification-only이며
+CRS, point identity/picking·LOD, VS Code open과 admission이 없으므로 federation
+source admission에는 영향을 주지 않습니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  validateLasLazBrowserProductQualification,
+} from "./qualify-las-laz-browser-product.mjs";
+
 const PASSED_GATES = [
   "browserLocalFileAdmission",
   "browserWorkerIsolation",
@@ -30,6 +34,7 @@ const PASSED_GATES = [
   "browserProductScaleGltfOpen",
   "vscodeProductScaleGltfOpen",
   "cleanVsixProductScaleGltfOpen",
+  "browserReadonlyLasLazOpen",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -223,6 +228,7 @@ export function validateBimProductShellCompatibility(
   browserProductScaleReference,
   vscodeProductScaleReference,
   vscodeCleanInstallProductScaleReference,
+  lasLazBrowserProduct,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -247,6 +253,9 @@ export function validateBimProductShellCompatibility(
   plainRecord(
     vscodeCleanInstallProductScaleReference,
     "product-scale reference clean VSIX evidence",
+  );
+  validateLasLazBrowserProductQualification(
+    lasLazBrowserProduct,
   );
   if (
     manifest.schema !==
@@ -291,7 +300,13 @@ export function validateBimProductShellCompatibility(
     contracts?.semanticExplorer !==
       "bim-explorer-bim-semantic-explorer/0.1" ||
     contracts?.referenceExplorer !==
-      "bim-explorer-reference-mesh-explorer/0.1"
+      "bim-explorer-reference-mesh-explorer/0.1" ||
+    contracts?.pointSource !==
+      "bim-explorer-las-laz-point-source/0.1" ||
+    contracts?.pointSourceWorkerRequest !==
+      "bim-explorer-point-source-worker-request/0.1" ||
+    contracts?.pointSourceWorkerResponse !==
+      "bim-explorer-point-source-worker-response/0.1"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -486,6 +501,14 @@ export function validateBimProductShellCompatibility(
         maximumInstancedTriangles: 4_000_000,
         maximumCpuStagingBytes: 33_554_432,
         maximumGpuCacheBytes: 33_554_432,
+      }) ||
+    JSON.stringify(limits?.lasLazPointSource) !==
+      JSON.stringify({
+        maximumSourceBytes: 8_388_608,
+        maximumPoints: 500_000,
+        maximumDecodedPointBytes: 25_165_824,
+        maximumPointRangeBytes: 8_388_608,
+        maximumGpuBytes: 8_388_608,
       })
   ) {
     throw new Error("BIM product shell limits are invalid");
@@ -816,6 +839,9 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.gltfProductPlatformMatrix !==
       "compatibility/evidence/" +
         "gltf-product-platform-matrix-2026-08-08.json" ||
+    manifest.evidence?.browserLasLaz !==
+      "compatibility/evidence/" +
+        "las-laz-browser-product-2026-08-08.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -825,6 +851,8 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimProductScaleBrowserOpen !== true ||
     manifest.policy?.claimProductScaleVscodeOpen !== true ||
     manifest.policy?.claimProductScaleCleanVsixOpen !== true ||
+    manifest.policy?.claimBrowserLasLazOpen !== true ||
+    manifest.policy?.claimLasLazFormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== false ||
@@ -843,6 +871,7 @@ export function validateBimProductShellCompatibility(
         browserProductScaleReference,
         vscodeProductScaleReference,
         vscodeCleanInstallProductScaleReference,
+        lasLazBrowserProduct,
         installation,
         manifest,
         vscode,
@@ -884,6 +913,7 @@ async function main() {
     browserProductScaleReference,
     vscodeProductScaleReference,
     vscodeCleanInstallProductScaleReference,
+    lasLazBrowserProduct,
     vscode,
     installation,
   ] = await Promise.all([
@@ -922,6 +952,10 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.browserLasLaz),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -940,6 +974,7 @@ async function main() {
     browserProductScaleReference,
     vscodeProductScaleReference,
     vscodeCleanInstallProductScaleReference,
+    lasLazBrowserProduct,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

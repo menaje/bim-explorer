@@ -46,6 +46,9 @@ const REQUIRED_PATHS = [
   "apps/bim-explorer-web/README.md",
   "apps/bim-explorer-web/app.mjs",
   "apps/bim-explorer-web/index.html",
+  "apps/bim-explorer-web/point-source-client.mjs",
+  "apps/bim-explorer-web/point-source-worker.bundle.js",
+  "apps/bim-explorer-web/point-source-worker.mjs",
   "apps/bim-explorer-web/reference-mesh-explorer.mjs",
   "apps/bim-explorer-web/source-worker.bundle.mjs",
   "apps/bim-explorer-web/source-worker.mjs",
@@ -97,6 +100,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
   "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
   "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
+  "compatibility/evidence/las-laz-browser-product-2026-08-08.json",
   "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
   "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
@@ -183,6 +187,10 @@ const REQUIRED_PATHS = [
   "packages/gltf-reference-source/src/index.mjs",
   "packages/gltf-reference-source/src/math.mjs",
   "packages/gltf-reference-source/src/profile.mjs",
+  "packages/las-laz-point-source/README.md",
+  "packages/las-laz-point-source/package.json",
+  "packages/las-laz-point-source/src/header.mjs",
+  "packages/las-laz-point-source/src/index.mjs",
   "packages/bim-model-source/README.md",
   "packages/bim-model-source/package.json",
   "packages/bim-model-source/src/artifact-schema.mjs",
@@ -251,6 +259,7 @@ const REQUIRED_PATHS = [
   "scripts/fetch-public-e57-fixture.mjs",
   "scripts/fetch-public-las-laz-fixture.mjs",
   "scripts/build-vscode-worker.mjs",
+  "scripts/build-point-source-worker.mjs",
   "scripts/browser-qualification-runtime.mjs",
   "scripts/bim-federation-product-scale-platform-evidence.mjs",
   "scripts/chrome-qualification-runtime.mjs",
@@ -274,6 +283,7 @@ const REQUIRED_PATHS = [
   "scripts/qualify-e57-public-sample.mjs",
   "scripts/qualify-las-laz-public-sample.mjs",
   "scripts/qualify-las-laz-browser-worker.mjs",
+  "scripts/qualify-las-laz-browser-product.mjs",
   "scripts/qualify-las-laz-point-renderer.mjs",
   "scripts/qualify-gltf-reference-source.mjs",
   "scripts/qualify-gltf-browser-webgl2.mjs",
@@ -342,6 +352,7 @@ const REQUIRED_PATHS = [
   "tests/federation/las-laz-public-sample-probe.test.mjs",
   "tests/federation/las-laz-browser-worker.test.mjs",
   "tests/federation/las-laz-point-renderer.test.mjs",
+  "tests/point-source/las-laz-point-source.test.mjs",
   "tests/federation/federated-renderer-projection.test.mjs",
   "tests/federation/gltf-reference-federation.test.mjs",
   "tests/gltf/gltf-reference-source.test.mjs",
@@ -368,6 +379,8 @@ const REQUIRED_PATHS = [
   "tests/renderer/point-cloud-renderer.test.mjs",
   "tests/renderer/point-cloud-webgl2-backend.test.mjs",
   "tests/product/bim-explorer-web-server.test.mjs",
+  "tests/product/las-laz-browser-product.test.mjs",
+  "tests/product/point-source-client.test.mjs",
   "tests/product/reference-mesh-explorer.test.mjs",
   "tests/product/vscode-extension.test.mjs",
   "tests/product/worker-source-client.test.mjs",
@@ -412,6 +425,7 @@ const PACKAGE_MANIFESTS = [
   "packages/bim-model-source/package.json",
   "packages/bim-federation/package.json",
   "packages/gltf-reference-source/package.json",
+  "packages/las-laz-point-source/package.json",
   "packages/bim-renderer-3d/package.json",
   "packages/bim-semantic-explorer/package.json",
   "packages/spatial-integration/package.json",
@@ -492,10 +506,10 @@ if (
     "sha512-ZBqC+BBlofznDIY3SfjXDBVdIhYfz7bq8HAHztlw4XOnu++n" +
       "HiWtCGPgzpdeAhPkByc68DaKNy3E3rY4XrdRtQ==" ||
   lazPerfLock.license !== "Apache-2.0" ||
-  lazPerfLock.dev !== true
+  lazPerfLock.dev === true
 ) {
   failures.push(
-    "package-lock.json: laz-perf 0.0.6 qualification dependency " +
+    "package-lock.json: laz-perf 0.0.6 Browser product runtime " +
       "requires exact registry integrity and Apache-2.0 metadata",
   );
 }

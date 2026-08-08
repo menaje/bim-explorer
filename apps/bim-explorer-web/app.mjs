@@ -1,6 +1,8 @@
 import {
   createBimRenderer3dHost,
   createBounded3dRenderer,
+  createBoundedPointCloudRenderer,
+  createPointCloudWebGl2Backend,
   createWebGl2Backend,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
@@ -12,12 +14,17 @@ import {
 import {
   createBimProductSourceWorkerClient,
 } from "./worker-source-client.mjs";
+import {
+  createLasLazPointSourceWorkerClient,
+} from "./point-source-client.mjs";
 
 const HOST_MESSAGE =
   "bim-explorer-product-host-message/0.1";
 const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
+const MAXIMUM_POINT_SOURCE_BYTES = 8 * 1024 * 1024;
+const POINT_SOURCE_FORMATS = new Set(["las", "laz"]);
 const PRODUCT_SCALE_GLTF_RENDERER_LIMITS = Object.freeze({
   maximumRangeBytes: 32 * 1024 * 1024,
   maximumSourceReadBytes: 32 * 1024 * 1024,
@@ -99,6 +106,18 @@ const runtime = Object.freeze({
   ).href,
   webIfcModuleUrl: new URL(
     meta("bim-web-ifc-module"),
+    globalThis.location.href,
+  ).href,
+  pointWorkerUrl: new URL(
+    meta("bim-point-worker"),
+    globalThis.location.href,
+  ).href,
+  lazPerfScriptUrl: new URL(
+    meta("bim-laz-perf-script"),
+    globalThis.location.href,
+  ).href,
+  lazPerfWasmUrl: new URL(
+    meta("bim-laz-perf-wasm"),
     globalThis.location.href,
   ).href,
   workerModuleUrl: new URL(
@@ -200,11 +219,12 @@ function setStatus(state, message) {
 function controls(state) {
   const ready = state === "ready";
   const opening = state === "opening";
+  const pointCloud = active?.kind === "point-cloud";
   elements.cancel.disabled = !opening;
   elements.close.disabled = !ready;
-  elements.pick.disabled = !ready;
-  elements.showAll.disabled = !ready;
-  elements.searchInput.disabled = !ready;
+  elements.pick.disabled = !ready || pointCloud;
+  elements.showAll.disabled = !ready || pointCloud;
+  elements.searchInput.disabled = !ready || pointCloud;
   elements.retry.disabled =
     state !== "failed" ||
     (lastFailedBytes === null && vscodeApi === null);
@@ -415,8 +435,57 @@ function renderInspector(state) {
   );
 }
 
+function renderPointCloud() {
+  const artifact = active.opened.artifact;
+  const mount = active.mount;
+  clear(elements.tree);
+  clear(elements.results);
+  clear(elements.inspector);
+  elements.treeTitle.textContent = "Point source";
+  elements.treeCount.textContent = "1";
+  elements.treeOmission.textContent =
+    "Per-point identity and hierarchy are not available.";
+  elements.searchLabel.textContent =
+    "Point metadata search is not available";
+  elements.searchOmission.textContent =
+    "This bounded profile does not index individual points.";
+  elements.moreResults.disabled = true;
+  elements.isolateResults.disabled = true;
+  elements.inspectorTitle.textContent = "Point cloud profile";
+  elements.selectionOrigin.textContent = "not applicable";
+  elements.subtitle.textContent =
+    "Open bounded LAS/LAZ point observations locally.";
+  const summary = document.createElement("dl");
+  for (const [label, value] of [
+    ["Format", artifact.source.format.toUpperCase()],
+    ["Version", artifact.source.formatVersion],
+    ["Point format", artifact.source.pointFormat],
+    ["Points", artifact.model.points],
+    ["Point primitive", mount.backend.pointPrimitive],
+    ["CRS authority", "unqualified"],
+    ["Semantic authority", "none"],
+  ]) {
+    const row = document.createElement("div");
+    row.append(text("dt", label), text("dd", value));
+    summary.append(row);
+  }
+  elements.inspector.append(
+    summary,
+    text(
+      "p",
+      "Read-only display only; point picking, identity, LOD and " +
+        "surveyed coordinate claims are outside this profile.",
+      "limitation",
+    ),
+  );
+}
+
 function render() {
   if (active === null) {
+    return;
+  }
+  if (active.kind === "point-cloud") {
+    renderPointCloud();
     return;
   }
   const state = active.explorer.state;
@@ -553,6 +622,26 @@ async function disposeActive(reason) {
   }
   const current = active;
   active = null;
+  if (current.kind === "point-cloud") {
+    let rendererDisposed = false;
+    let clientDisposed = false;
+    try {
+      rendererDisposed = await current.renderer.dispose();
+    } finally {
+      clientDisposed = await current.client.dispose();
+    }
+    elements.diagLife.textContent = "disposed";
+    return {
+      backend: current.backend.state,
+      client: current.client.state,
+      clientDisposed,
+      pointRangeCleared: current.pointRangeCleared,
+      reason,
+      rendererDisposed,
+      workerTerminatedAfterTransfer:
+        current.opened.cleanup.workerTerminatedAfterTransfer,
+    };
+  }
   let explorerDisposed = false;
   let hostReceipt = null;
   let clientDisposed = false;
@@ -734,12 +823,286 @@ async function client({
   return value;
 }
 
+function pointClient({
+  maximumSourceBytes = MAXIMUM_POINT_SOURCE_BYTES,
+  openTimeoutMs = 15_000,
+} = {}) {
+  const boundedSourceBytes =
+    Number.isSafeInteger(maximumSourceBytes) &&
+    maximumSourceBytes > 0
+      ? Math.min(
+          maximumSourceBytes,
+          MAXIMUM_POINT_SOURCE_BYTES,
+        )
+      : MAXIMUM_POINT_SOURCE_BYTES;
+  const boundedOpenTimeout =
+    Number.isSafeInteger(openTimeoutMs) &&
+    openTimeoutMs >= 1_000 &&
+    openTimeoutMs <= 120_000
+      ? openTimeoutMs
+      : 15_000;
+  const value = createLasLazPointSourceWorkerClient({
+    lazPerfScriptUrl: runtime.lazPerfScriptUrl,
+    lazPerfWasmUrl: runtime.lazPerfWasmUrl,
+    limits: {
+      maximumSourceBytes: boundedSourceBytes,
+      openTimeoutMs: boundedOpenTimeout,
+    },
+    workerUrl: runtime.pointWorkerUrl,
+  });
+  value.onProgress((event) => {
+    const labels = {
+      "source-admitted":
+        "Point source admitted; validating header…",
+      "decoder-initializing":
+        "Initializing the isolated LAZ decoder…",
+      "point-range-created":
+        "Point range ready; mounting WebGL2…",
+    };
+    latestSourceCheckpoint = event.phase;
+    setStatus(
+      "opening",
+      labels[event.phase] ?? "Opening point source locally…",
+    );
+  });
+  return value;
+}
+
+async function openPointBytes(bytesValue, {
+  format,
+  limits = {},
+  origin,
+} = {}) {
+  if (
+    !(bytesValue instanceof Uint8Array) ||
+    bytesValue.byteLength === 0 ||
+    bytesValue.byteLength > MAXIMUM_POINT_SOURCE_BYTES ||
+    !POINT_SOURCE_FORMATS.has(format)
+  ) {
+    throw new RangeError(
+      "Selected point source exceeds the bounded LAS/LAZ profile",
+    );
+  }
+  const sequence = openingSequence + 1;
+  openingSequence = sequence;
+  controls("opening");
+  latestSourceCheckpoint = "point-client-creating";
+  setStatus(
+    "opening",
+    `Opening ${format.toUpperCase()} locally…`,
+  );
+  elements.diagLife.textContent = "opening isolated point Worker";
+  const priorCleanup = await disposeActive("source-switch");
+  if (sequence !== openingSequence) {
+    return null;
+  }
+  if (openingClient !== null) {
+    openingClient.terminate();
+    await openingClient.dispose();
+  }
+  if (sequence !== openingSequence) {
+    return null;
+  }
+  const sourceClient = pointClient(limits);
+  openingClient = sourceClient;
+  let backend = null;
+  let opened = null;
+  let pointRangeCleared = false;
+  let renderer = null;
+  let phase = "point-source-open";
+  try {
+    opened = await sourceClient.open(bytesValue, { format });
+    if (sequence !== openingSequence) {
+      opened.artifact.range.bytes.fill(0);
+      await sourceClient.dispose();
+      return null;
+    }
+    phase = "point-renderer-create";
+    backend = createPointCloudWebGl2Backend({
+      canvas: elements.canvas,
+      height: 450,
+      width: 800,
+    });
+    renderer = createBoundedPointCloudRenderer({
+      backend,
+      pointSize: 3,
+    });
+    phase = "point-renderer-mount";
+    const mount = await renderer.mount({
+      range: opened.artifact.range,
+      source: opened.artifact.source,
+    });
+    if (sequence !== openingSequence) {
+      opened.artifact.range.bytes.fill(0);
+      await renderer.dispose();
+      await sourceClient.dispose();
+      if (openingClient === sourceClient) {
+        openingClient = null;
+      }
+      return null;
+    }
+    opened.artifact.range.bytes.fill(0);
+    pointRangeCleared = opened.artifact.range.bytes.every(
+      (value) => value === 0,
+    );
+    active = {
+      backend,
+      client: sourceClient,
+      format,
+      kind: "point-cloud",
+      mount,
+      opened,
+      origin,
+      pointRangeCleared,
+      renderer,
+    };
+    if (openingClient === sourceClient) {
+      openingClient = null;
+    }
+    lastFailedBytes?.fill(0);
+    lastFailedBytes = null;
+    lastFailedFormat = "ifc";
+    render();
+    const artifact = opened.artifact;
+    elements.diagHost.textContent = runtime.hostKind;
+    elements.diagSource.textContent =
+      artifact.source.fingerprint.slice(0, 20) + "…";
+    elements.diagTime.textContent =
+      `${opened.performance.totalMs.toFixed(1)} ms`;
+    elements.diagBytes.textContent =
+      `${artifact.resources.inputBytes} source · ` +
+      `${artifact.resources.pointRangeBytes} point range · ` +
+      `${artifact.model.points} points`;
+    elements.diagGpu.textContent =
+      `${mount.backend.uploadedBytes} bytes · ` +
+      `${mount.backend.nonBackgroundPixels} pixels`;
+    elements.diagLife.textContent =
+      "source Worker released + GPU active";
+    elements.sourceIdentity.textContent =
+      artifact.source.fingerprint.slice(0, 23) +
+      `… · ${format.toUpperCase()} ` +
+      `${artifact.source.formatVersion} · CRS unqualified`;
+    setStatus(
+      "ready",
+      `Ready: local ${format.toUpperCase()} points are open read-only.`,
+    );
+    controls("ready");
+    publishReport("ready", {
+      source: {
+        byteLength: artifact.source.byteLength,
+        coordinateReferenceStatus:
+          artifact.source.coordinateReferenceStatus,
+        fingerprint: artifact.source.fingerprint,
+        format: artifact.source.format,
+        formatVersion: artifact.source.formatVersion,
+        pointFormat: artifact.source.pointFormat,
+        revisionId: artifact.source.revisionId,
+        semanticAuthority: false,
+        sourceRole: artifact.source.sourceRole,
+      },
+      model: {
+        points: artifact.model.points,
+        ranges: artifact.model.ranges,
+      },
+      performance: {
+        artifactMs:
+          artifact.performance.sourceProjectionMs,
+        sourceMs: 0,
+        totalMs: opened.performance.totalMs,
+      },
+      resources: {
+        decodedPointBytes:
+          artifact.resources.decodedPointBytes,
+        pointRangeBytes:
+          artifact.resources.pointRangeBytes,
+        pointRangePayloadBytes:
+          artifact.resources.pointRangePayloadBytes,
+        sourceBytes: artifact.resources.inputBytes,
+        wasmHeapCapacityBytes:
+          artifact.resources.wasmHeapCapacityBytes,
+      },
+      renderer: {
+        actualGpu: mount.backend.actualGpu,
+        nonBackgroundPixels:
+          mount.backend.nonBackgroundPixels,
+        sourceReadBytes: mount.metrics.rangeBytes,
+        uploadedBytes: mount.backend.uploadedBytes,
+      },
+      pointCloud: {
+        bounds: mount.geometry.bounds,
+        colorRange: mount.geometry.colorRange,
+        coordinateReferenceStatus: "unqualified",
+        decoder: artifact.profile.decoder,
+        maximumProjectionError:
+          artifact.profile.coordinateProjection
+            .maximumAbsoluteError,
+        origin: mount.geometry.origin,
+        pointPrimitive: mount.backend.pointPrimitive,
+        pointSize: mount.backend.pointSize,
+        rangeSha256: artifact.range.sha256,
+      },
+      lifecycle: {
+        cpuPointRangeCleared: pointRangeCleared,
+        sourceBufferCleared:
+          opened.cleanup.sourceBufferCleared,
+        workerTerminatedAfterTransfer:
+          opened.cleanup.workerTerminatedAfterTransfer,
+      },
+      priorCleanup,
+    });
+    return active;
+  } catch (error) {
+    opened?.artifact.range.bytes.fill(0);
+    try {
+      await renderer?.dispose();
+    } finally {
+      await sourceClient.dispose();
+    }
+    if (openingClient === sourceClient) {
+      openingClient = null;
+    }
+    if (sequence !== openingSequence) {
+      return null;
+    }
+    const code = typeof error?.code === "string"
+      ? error.code
+      : phase === "point-source-open"
+        ? "POINT_SOURCE_OPEN_FAILED"
+        : phase === "point-renderer-create"
+          ? "POINT_RENDERER_CREATE_FAILED"
+          : "POINT_RENDERER_MOUNT_FAILED";
+    setStatus("failed", `Open failed: ${code}`);
+    elements.diagLife.textContent =
+      "failed; point Worker and GPU resources released";
+    controls("failed");
+    publishReport("failed", {
+      diagnostic: {
+        checkpoint: latestSourceCheckpoint,
+        code,
+        name: typeof error?.name === "string"
+          ? error.name
+          : "Error",
+        operation: phase,
+        retryable: true,
+      },
+    });
+    throw error;
+  }
+}
+
 async function openBytes(bytesValue, {
   format = "ifc",
   limits = {},
   origin,
   profile = runtime.profile,
 } = {}) {
+  if (POINT_SOURCE_FORMATS.has(format)) {
+    return openPointBytes(bytesValue, {
+      format,
+      limits,
+      origin,
+    });
+  }
   if (
     !(bytesValue instanceof Uint8Array) ||
     bytesValue.byteLength === 0 ||
@@ -980,9 +1343,13 @@ function localFileFormat(file) {
   const extension = file.name
     .toLocaleLowerCase()
     .match(/\.([a-z0-9]+)$/u)?.[1] ?? "";
-  if (!["ifc", "gltf", "glb"].includes(extension)) {
+  if (
+    !["ifc", "gltf", "glb", "las", "laz"].includes(
+      extension,
+    )
+  ) {
     throw new TypeError(
-      "Selected file must be IFC, glTF, or GLB",
+      "Selected file must be IFC, glTF, GLB, LAS, or LAZ",
     );
   }
   return extension;
@@ -990,18 +1357,21 @@ function localFileFormat(file) {
 
 async function readLocalFile(file) {
   const format = localFileFormat(file);
+  const maximumBytes = POINT_SOURCE_FORMATS.has(format)
+    ? MAXIMUM_POINT_SOURCE_BYTES
+    : MAXIMUM_SOURCE_BYTES;
   if (
     file.size <= 0 ||
-    file.size > MAXIMUM_SOURCE_BYTES
+    file.size > maximumBytes
   ) {
     throw new RangeError(
-      "Selected source exceeds the 64 MiB local admission limit",
+      "Selected source exceeds its local admission limit",
     );
   }
   const buffer = await file.arrayBuffer();
   if (
     buffer.byteLength !== file.size ||
-    buffer.byteLength > MAXIMUM_SOURCE_BYTES
+    buffer.byteLength > maximumBytes
   ) {
     throw new RangeError(
       "Selected source changed during local admission",
@@ -1120,7 +1490,7 @@ elements.close.addEventListener("click", async () => {
 
 elements.searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (active === null) {
+  if (active === null || active.kind === "point-cloud") {
     return;
   }
   await active.explorer.search(elements.searchInput.value);
@@ -1128,12 +1498,15 @@ elements.searchForm.addEventListener("submit", async (event) => {
 });
 
 elements.moreResults.addEventListener("click", async () => {
+  if (active?.kind === "point-cloud") {
+    return;
+  }
   await active?.explorer.loadMoreSearch();
   render();
 });
 
 elements.isolateResults.addEventListener("click", async () => {
-  if (active === null) {
+  if (active === null || active.kind === "point-cloud") {
     return;
   }
   const command = await active.explorer.setVisibility(
@@ -1147,7 +1520,7 @@ elements.isolateResults.addEventListener("click", async () => {
 });
 
 elements.showAll.addEventListener("click", async () => {
-  if (active === null) {
+  if (active === null || active.kind === "point-cloud") {
     return;
   }
   const command = await active.explorer.setVisibility("show-all");
@@ -1175,7 +1548,7 @@ async function pickVisible() {
 }
 
 elements.pick.addEventListener("click", async () => {
-  if (active === null) {
+  if (active === null || active.kind === "point-cloud") {
     return;
   }
   const pick = await pickVisible();
@@ -1186,7 +1559,11 @@ elements.pick.addEventListener("click", async () => {
 
 elements.tree.addEventListener("keydown", async (event) => {
   const target = event.target.closest('[role="treeitem"]');
-  if (target === null || active === null) {
+  if (
+    target === null ||
+    active === null ||
+    active.kind === "point-cloud"
+  ) {
     return;
   }
   const buttons = [
