@@ -44,12 +44,12 @@ renderer authority로 만들지 않습니다.
 reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-local
 identity를 유지합니다.
 
-point range는 source semantic identity를 만들지 않습니다. 현재 cache-only
-LAS/LAZ parity sample로 actual Chrome WebGL2 primitive와 cleanup만
-qualification했으며, LAS/LAZ source adapter, CRS/datum, point picking,
-level-of-detail streaming과 Browser/VS Code file-open은 포함하지 않습니다.
-따라서 point renderer 계약은 format admission이나 제품 지원을 뜻하지
-않습니다.
+point range는 source semantic identity를 만들지 않습니다. cache-only
+LAS/LAZ parity sample과 E57 derived range로 actual Chrome WebGL2 primitive와
+cleanup을 qualification했습니다. source adapter와 Browser/VS Code file-open은
+별도 제품 evidence가 소유하며, renderer 자체에는 CRS/datum, scan pose,
+point picking 또는 level-of-detail streaming이 없습니다. 따라서 point
+renderer 계약만으로 format admission이나 제품 지원을 주장할 수 없습니다.
 
 renderer 단독 사용 시 session/source lifecycle은 호출자가 소유합니다.
 host adapter를 사용하면 active range session과 Worker lease를 소스 교체와

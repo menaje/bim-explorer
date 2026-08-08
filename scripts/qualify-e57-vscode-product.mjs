@@ -13,20 +13,18 @@ import {
 } from "./vscode-qualification-runtime.mjs";
 
 const SCHEMA =
-  "bim-explorer-las-laz-vscode-product-evidence/1";
+  "bim-explorer-e57-vscode-product-evidence/1";
 const RANGE_SHA256 =
-  "8383abce84d57b8f50ee1f39aa1d442a" +
-  "7f258cd759ab9812aff1a0625ab10449";
+  "dcc6868c55c79a51d315bfc4b287ca38" +
+  "f8217e3d572554ef56b0da77359cd6aa";
 const ASSERTIONS = Object.freeze([
-  "stagedLasFileOpen",
-  "stagedLazFileOpen",
-  "installedLasFileOpen",
-  "installedLazFileOpen",
+  "stagedE57FileOpen",
+  "installedE57FileOpen",
   "sameFixtureIdentity",
   "samePointRangeProjection",
   "sameVisibleProjection",
   "boundedLocalReadOnly",
-  "strictCspDecoderRuntime",
+  "defaultBitPackProductRuntime",
   "cleanVsixRuntime",
   "pathFree",
   "spatialIndependent",
@@ -34,24 +32,6 @@ const ASSERTIONS = Object.freeze([
   "coordinateReferenceHeld",
   "formatAdmissionHeld",
 ]);
-const FIXTURES = Object.freeze({
-  las: Object.freeze({
-    bytes: 347_061,
-    decoder: "las-point-record-reader",
-    fingerprint:
-      "sha256:dbe194dd8529300f341a591e0b2e2ac5" +
-      "7a96880db6dffa120dc1a41465026852",
-    id: "loaders-gl-ripple-las-laz-las",
-  }),
-  laz: Object.freeze({
-    bytes: 53_952,
-    decoder: "laz-perf",
-    fingerprint:
-      "sha256:64cc16cf7b38d3ec3d13e96b7af66bf" +
-      "887be2a5d35d55e86c41fd38fa79c9034",
-    id: "loaders-gl-ripple-las-laz-laz",
-  }),
-});
 
 function parseArguments(values) {
   if (values.length === 0) {
@@ -64,7 +44,7 @@ function parseArguments(values) {
     values[1].startsWith("-")
   ) {
     throw new TypeError(
-      "usage: node scripts/qualify-las-laz-vscode-product.mjs " +
+      "usage: node scripts/qualify-e57-vscode-product.mjs " +
         "[--out path]",
     );
   }
@@ -85,54 +65,50 @@ function allTrue(value) {
   );
 }
 
-function exactFixture(value, format) {
-  const expected = FIXTURES[format];
+function exactFixture(value) {
   return (
-    value?.id === expected.id &&
+    value?.id === "libe57format-coloured-cube-float-e57" &&
     value.committed === false &&
-    value.format === format &&
-    value.sourceBytes === expected.bytes &&
-    value.fingerprint === expected.fingerprint &&
-    value.formatVersion === "1.2" &&
-    value.pointFormat === 3 &&
+    value.format === "e57" &&
+    value.sourceBytes === 118_784 &&
+    value.fingerprint ===
+      "sha256:6dbf7972b358bd7dd0864c7893a4aa7b" +
+        "61a339fd6ee27c71b3031f763c977d33" &&
+    value.formatVersion === "1.0" &&
+    value.pointFormat === "cartesian-xyz-rgb" &&
     value.provenance?.repository ===
-      "https://github.com/visgl/loaders.gl" &&
+      "https://github.com/asmaloney/libE57Format-test-data" &&
     value.provenance.commit ===
-      "44e7a4e978a63fad0ee257fedb688826f5f279e5" &&
-    value.provenance.license === "MIT" &&
+      "1ca737e03d6277c384f1b05c4046e10caab331b5" &&
+    value.provenance.license === "CC0-1.0" &&
     value.provenance.bundled === false &&
     value.provenance.sampleRedistributed === false
   );
 }
 
-function exactObservation(value, format) {
-  const expected = FIXTURES[format];
-  const heap = value?.resources?.wasmHeapCapacityBytes;
-  const heapValid = format === "las"
-    ? heap === null
-    : (
-        heap?.afterInitialization === 262_144 &&
-        heap.afterDecode === 4_063_232 &&
-        heap.peakObserved === 4_063_232
-      );
+function exactObservation(value) {
   return (
     value?.hostKind === "vscode-webview" &&
-    same(value.model, { points: 10_201, ranges: 1 }) &&
-    value.resources?.sourceBytes === expected.bytes &&
-    value.resources.decodedPointBytes === 346_834 &&
-    value.resources.pointRangeBytes === 163_264 &&
-    value.resources.pointRangePayloadBytes === 163_216 &&
-    heapValid &&
+    same(value.model, { points: 7_680, ranges: 1 }) &&
+    value.resources?.sourceBytes === 118_784 &&
+    value.resources.decodedPointBytes === 215_040 &&
+    value.resources.pointRangeBytes === 122_928 &&
+    value.resources.pointRangePayloadBytes === 122_880 &&
+    value.resources.wasmHeapCapacityBytes === null &&
     value.renderer?.actualGpu === true &&
     value.renderer.nonBackgroundPixels > 0 &&
-    value.renderer.sourceReadBytes === 163_264 &&
-    value.renderer.uploadedBytes === 163_216 &&
+    value.renderer.sourceReadBytes === 122_928 &&
+    value.renderer.uploadedBytes === 122_880 &&
     value.pointCloud?.rangeSha256 === RANGE_SHA256 &&
     value.pointCloud.pointPrimitive === "POINTS" &&
-    value.pointCloud.decoder?.id === expected.decoder &&
+    value.pointCloud.decoder?.id ===
+      "bim-explorer-e57-bitpack-reader" &&
+    value.pointCloud.decoder.version === "0.1.0" &&
+    value.pointCloud.decoder.reference?.id === "cry-inc/e57" &&
+    value.pointCloud.decoder.reference.version === "0.10.5" &&
     value.pointCloud.coordinateReferenceStatus ===
       "unqualified" &&
-    value.pointCloud.maximumProjectionError < 1e-6 &&
+    value.pointCloud.maximumProjectionError === 0 &&
     value.productLifecycle?.cpuPointRangeCleared === true &&
     value.productLifecycle.sourceBufferCleared === true &&
     value.productLifecycle.workerTerminatedAfterTransfer === true &&
@@ -187,7 +163,7 @@ function runtimeIdentityValid(environment) {
   return downloaded || supplied;
 }
 
-export function validateLasLazVscodeProductQualification(report) {
+export function validateE57VscodeProductQualification(report) {
   const staged = report?.surfaces?.staged;
   const installed = report?.surfaces?.installed;
   const installedPoints = installed?.pointRuntime;
@@ -213,12 +189,10 @@ export function validateLasLazVscodeProductQualification(report) {
     ) ||
     report.environment.vscode !== "1.131.0" ||
     !runtimeIdentityValid(report.environment) ||
-    staged?.environment?.platform !==
-      report.environment.platform ||
+    staged?.environment?.platform !== report.environment.platform ||
     staged.environment.vscode !== "1.131.0" ||
     staged.environment.runtimeLayout !== "staged" ||
-    installed?.environment?.platform !==
-      report.environment.platform ||
+    installed?.environment?.platform !== report.environment.platform ||
     installed.environment.cleanUserData !== true ||
     installed.environment.cleanExtensionsDirectory !== true ||
     !exactPackage(installed.package) ||
@@ -227,8 +201,6 @@ export function validateLasLazVscodeProductQualification(report) {
     installed.association.displayName !== "BIM Explorer" ||
     !same(installed.association.selector, selector) ||
     installed.association.priority !== "default" ||
-    installed.dependencies?.["laz-perf"] !== "0.0.6" ||
-    installed.dependencies?.["web-ifc"] !== "0.0.77" ||
     !allTrue(installed.assertions) ||
     installed.decision?.cleanInstall !== "passed" ||
     installed.decision.pointFixtureOpen !==
@@ -236,65 +208,32 @@ export function validateLasLazVscodeProductQualification(report) {
     installed.decision.marketplaceRelease !== "held"
   ) {
     throw new Error(
-      "LAS/LAZ VS Code product qualification identity is invalid",
+      "E57 VS Code product qualification identity is invalid",
     );
   }
-  for (const format of ["las", "laz"]) {
-    if (
-      !exactFixture(staged.fixtures?.[format], format) ||
-      !exactFixture(installedPoints?.fixtures?.[format], format) ||
-      !exactObservation(staged.observations?.[format], format) ||
-      !exactObservation(
-        installedPoints?.observations?.[format],
-        format,
-      ) ||
-      !allTrue(staged.assertions?.[format]) ||
-      !allTrue(installedPoints?.assertions?.[format]) ||
-      !same(
-        staged.fixtures[format],
-        installedPoints.fixtures[format],
-      ) ||
-      !same(
-        pointProjection(staged.observations[format]),
-        pointProjection(installedPoints.observations[format]),
-      )
-    ) {
-      throw new Error(
-        `LAS/LAZ VS Code ${format} surface is invalid`,
-      );
-    }
-  }
-  const stagedLas = staged.observations.las;
-  const stagedLaz = staged.observations.laz;
   if (
-    !same(stagedLas.model, stagedLaz.model) ||
-    !same(stagedLas.pointCloud.bounds, stagedLaz.pointCloud.bounds) ||
+    !exactFixture(staged.fixture) ||
+    !exactFixture(installedPoints?.fixture) ||
+    !exactObservation(staged.observation) ||
+    !exactObservation(installedPoints?.observation) ||
+    !allTrue(staged.assertions) ||
+    !allTrue(installedPoints?.assertions) ||
+    !same(staged.fixture, installedPoints.fixture) ||
     !same(
-      stagedLas.pointCloud.colorRange,
-      stagedLaz.pointCloud.colorRange,
+      pointProjection(staged.observation),
+      pointProjection(installedPoints.observation),
     ) ||
-    !same(stagedLas.pointCloud.origin, stagedLaz.pointCloud.origin) ||
-    stagedLas.pointCloud.rangeSha256 !== RANGE_SHA256 ||
-    stagedLaz.pointCloud.rangeSha256 !== RANGE_SHA256 ||
-    stagedLas.renderer.nonBackgroundPixels !==
-      stagedLaz.renderer.nonBackgroundPixels ||
-    report.parity?.points !== 10_201 ||
-    report.parity.pointRangeBytes !== 163_264 ||
-    report.parity.pointRangePayloadBytes !== 163_216 ||
-    report.parity.pointRangeSha256 !== RANGE_SHA256 ||
-    report.parity.nonBackgroundPixels !==
-      stagedLas.renderer.nonBackgroundPixels ||
     report.runtime?.pointSourceContract !==
-      "bim-explorer-las-laz-point-source/0.1" ||
+      "bim-explorer-e57-point-source/0.1" ||
     report.runtime.pointWorkerRequest !==
       "bim-explorer-point-source-worker-request/0.1" ||
     report.runtime.pointWorkerResponse !==
       "bim-explorer-point-source-worker-response/0.1" ||
-    report.runtime.lazDecoder?.id !== "laz-perf" ||
-    report.runtime.lazDecoder.version !== "0.0.6" ||
-    report.runtime.lazDecoder.license !== "Apache-2.0" ||
-    report.runtime.lazDecoder.strictCspAdaptation !== true ||
-    report.runtime.lazDecoder.webviewUnsafeEval !== false ||
+    report.runtime.decoder?.id !==
+      "bim-explorer-e57-bitpack-reader" ||
+    report.runtime.decoder.version !== "0.1.0" ||
+    report.runtime.decoder.productRuntime !== true ||
+    report.runtime.decoder.wasm !== false ||
     report.fixturePolicy?.artifactTracked !== false ||
     report.fixturePolicy.sampleRedistributed !== false ||
     report.fixturePolicy.releaseBundled !== false ||
@@ -317,17 +256,16 @@ export function validateLasLazVscodeProductQualification(report) {
     )
   ) {
     throw new Error(
-      "LAS/LAZ VS Code product qualification evidence is invalid",
+      "E57 VS Code product qualification evidence is invalid",
     );
   }
   return report;
 }
 
-export async function qualifyLasLazVscodeProduct({
+export async function qualifyE57VscodeProduct({
   output = null,
 } = {}) {
-  const vscodeRuntime =
-    await resolveVscodeQualificationRuntime();
+  const vscodeRuntime = await resolveVscodeQualificationRuntime();
   const staged = await qualifyVscodeCustomEditor({
     includePointFixtures: true,
     vscodeRuntime,
@@ -337,7 +275,6 @@ export async function qualifyLasLazVscodeProduct({
     includePublicFixture: false,
     vscodeRuntime,
   });
-  const stagedLas = staged.pointObservations.las;
   const report = {
     schema: SCHEMA,
     status: "passed-experimental-vscode-product-open",
@@ -354,61 +291,62 @@ export async function qualifyLasLazVscodeProduct({
     surfaces: {
       staged: {
         environment: staged.environment,
-        fixtures: staged.pointFixtures,
-        observations: staged.pointObservations,
-        assertions: staged.pointAssertions,
+        fixture: staged.pointFixtures.e57,
+        observation: staged.pointObservations.e57,
+        assertions: staged.pointAssertions.e57,
       },
       installed: {
         environment: installed.environment,
         package: installed.package,
         association: installed.observation.association,
-        dependencies: installed.observation.dependencies,
-        pointRuntime: installed.observation.pointRuntime,
+        pointRuntime: {
+          fixture:
+            installed.observation.pointRuntime.fixtures.e57,
+          observation:
+            installed.observation.pointRuntime.observations.e57,
+          assertions:
+            installed.observation.pointRuntime.assertions.e57,
+        },
         assertions: {
           requiredRuntimeComplete:
             installed.assertions.requiredRuntimeComplete,
           pointWorkerBundleExact:
             installed.assertions.pointWorkerBundleExact,
-          lazPerfRuntimeExact:
-            installed.assertions.lazPerfRuntimeExact,
           noSpatialDependency:
             installed.assertions.noSpatialDependency,
-          readOnlyLasLazAssociation:
+          readOnlyPointAssociation:
             installed.assertions.readOnlyLasLazAssociation,
-          installedPackageOpensLas:
-            installed.assertions.installedPackageOpensLas,
-          installedPackageOpensLaz:
-            installed.assertions.installedPackageOpensLaz,
-          installedPointRangeParity:
-            installed.assertions.installedPointRangeParity,
-          installedPointVisualParity:
-            installed.assertions.installedPointVisualParity,
+          installedPackageOpensE57:
+            installed.assertions.installedPackageOpensE57,
+          installedE57PointProjection:
+            installed.assertions.installedE57PointProjection,
+          installedE57VisibleProjection:
+            installed.assertions.installedE57VisibleProjection,
         },
         decision: installed.decision,
       },
     },
-    parity: {
-      points: stagedLas.model.points,
-      pointRangeBytes: stagedLas.resources.pointRangeBytes,
-      pointRangePayloadBytes:
-        stagedLas.resources.pointRangePayloadBytes,
-      pointRangeSha256: stagedLas.pointCloud.rangeSha256,
-      nonBackgroundPixels:
-        stagedLas.renderer.nonBackgroundPixels,
-    },
     runtime: {
       pointSourceContract:
-        "bim-explorer-las-laz-point-source/0.1",
+        "bim-explorer-e57-point-source/0.1",
       pointWorkerRequest:
         "bim-explorer-point-source-worker-request/0.1",
       pointWorkerResponse:
         "bim-explorer-point-source-worker-response/0.1",
-      lazDecoder: {
-        id: "laz-perf",
-        version: "0.0.6",
-        license: "Apache-2.0",
-        strictCspAdaptation: true,
-        webviewUnsafeEval: false,
+      decoder: {
+        id: "bim-explorer-e57-bitpack-reader",
+        version: "0.1.0",
+        license: "MPL-2.0",
+        reference: {
+          id: "cry-inc/e57",
+          version: "0.10.5",
+          license: "MIT",
+          commit:
+            "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+        },
+        productRuntime: true,
+        isolatedWorker: true,
+        wasm: false,
       },
     },
     fixturePolicy: {
@@ -432,16 +370,15 @@ export async function qualifyLasLazVscodeProduct({
       ASSERTIONS.map((name) => [name, true]),
     ),
     limitations: [
-      "the product profile covers one paired LAS 1.2 point-format 3 sample",
-      "coordinates are displayed without CRS or surveyed datum authority",
+      "the product profile covers one E57 1.0 single-scan Cartesian XYZ/RGB default-BitPack sample",
+      "coordinates are displayed without CRS, scan-pose or surveyed datum authority",
       "individual point identity, picking and LOD streaming are not implemented",
-      "the CSP adaptation changes generated Emscripten glue but not laz-perf WASM",
       "SwiftShader exercises actual WebGL2 APIs but does not claim a physical GPU",
       "the public sample remains in an ignored digest cache and is not redistributed",
-      "bounded VS Code product open does not admit the LAS/LAZ format family",
+      "bounded VS Code product open does not admit the E57 format family"
     ],
   };
-  validateLasLazVscodeProductQualification(report);
+  validateE57VscodeProductQualification(report);
   if (output !== null) {
     await mkdir(path.dirname(output), { recursive: true });
     await writeFile(
@@ -459,6 +396,6 @@ if (
     fileURLToPath(import.meta.url)
 ) {
   const options = parseArguments(process.argv.slice(2));
-  const report = await qualifyLasLazVscodeProduct(options);
+  const report = await qualifyE57VscodeProduct(options);
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }

@@ -5,6 +5,12 @@ import {
   validateE57PublicSampleProbe,
 } from "./qualify-e57-public-sample.mjs";
 import {
+  validateE57BrowserProductQualification,
+} from "./qualify-e57-browser-product.mjs";
+import {
+  validateE57VscodeProductQualification,
+} from "./qualify-e57-vscode-product.mjs";
+import {
   validateLasLazPublicSampleProbe,
 } from "./qualify-las-laz-public-sample.mjs";
 import {
@@ -27,6 +33,9 @@ const PASSED_GATES = Object.freeze([
   "e57PhysicalPageIntegrity",
   "e57MetadataProfile",
   "e57PointDecode",
+  "e57Renderer",
+  "e57BrowserProductOpen",
+  "e57VscodeProductOpen",
   "lasHeaderInspection",
   "lazHeaderInspection",
   "lasPointDecode",
@@ -42,8 +51,8 @@ const PASSED_GATES = Object.freeze([
   "lasLazVscodeProductOpen",
 ]);
 const HELD_GATES = Object.freeze([
-  "e57Renderer",
-  "e57ProductOpen",
+  "e57CoordinateReference",
+  "e57FormatAdmission",
   "lasLazCoordinateReference",
   "lasLazFormatAdmission",
 ]);
@@ -51,6 +60,8 @@ const HELD_GATES = Object.freeze([
 export function validateReferenceFormatProbeCompatibility(
   manifest,
   e57Evidence,
+  e57BrowserProductEvidence,
+  e57VscodeProductEvidence,
   lasLazEvidence,
   lasLazWorkerEvidence,
   lasLazPointRendererEvidence,
@@ -58,6 +69,12 @@ export function validateReferenceFormatProbeCompatibility(
   lasLazVscodeProductEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
+  validateE57BrowserProductQualification(
+    e57BrowserProductEvidence,
+  );
+  validateE57VscodeProductQualification(
+    e57VscodeProductEvidence,
+  );
   validateLasLazPublicSampleProbe(lasLazEvidence);
   validateLasLazBrowserWorkerQualification(
     lasLazWorkerEvidence,
@@ -79,6 +96,12 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.evidence?.e57PublicSample !==
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json" ||
+    manifest.evidence?.e57BrowserProduct !==
+      "compatibility/evidence/" +
+        "e57-browser-product-2026-08-08.json" ||
+    manifest.evidence?.e57VscodeProduct !==
+      "compatibility/evidence/" +
+        "e57-vscode-product-2026-08-08.json" ||
     manifest.evidence?.lasLazPublicSample !==
       "compatibility/evidence/" +
         "las-laz-public-sample-probe-2026-08-08.json" ||
@@ -125,11 +148,13 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.policy.releaseBundled !== false ||
     manifest.policy.decoderBrowserProductRuntime !== true ||
     manifest.policy.decoderVscodeProductRuntime !== true ||
-    manifest.policy.e57DecoderProductRuntime !== false ||
+    manifest.policy.e57DecoderProductRuntime !== true ||
     manifest.policy.decoderReleaseBundled !== false ||
     manifest.policy.sampleUseTestOnly !== true ||
     manifest.policy.browserExperimentalProductOpen !== true ||
     manifest.policy.vscodeExperimentalProductOpen !== true ||
+    manifest.policy.e57BrowserExperimentalProductOpen !== true ||
+    manifest.policy.e57VscodeExperimentalProductOpen !== true ||
     manifest.policy.formatAdmission !== false ||
     manifest.policy.productSupport !== false ||
     manifest.blockers?.length !== HELD_GATES.length ||
@@ -149,6 +174,8 @@ async function main() {
   const [
     manifest,
     e57Evidence,
+    e57BrowserProductEvidence,
+    e57VscodeProductEvidence,
     lasLazEvidence,
     lasLazWorkerEvidence,
     lasLazPointRendererEvidence,
@@ -160,6 +187,16 @@ async function main() {
     readFile(
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-browser-product-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-vscode-product-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -192,6 +229,8 @@ async function main() {
     validateReferenceFormatProbeCompatibility(
       manifest,
       e57Evidence,
+      e57BrowserProductEvidence,
+      e57VscodeProductEvidence,
       lasLazEvidence,
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,

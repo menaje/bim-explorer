@@ -24,6 +24,9 @@ import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
+  acquirePublicE57Fixture,
+} from "./public-e57-fixture.mjs";
+import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
 
@@ -289,7 +292,9 @@ function assertions(
   errors,
   fixture,
 ) {
-  const pointCloud = ["las", "laz"].includes(fixture.format);
+  const pointCloud = ["e57", "las", "laz"].includes(
+    fixture.format,
+  );
   const reference = fixture.format !== "ifc" && !pointCloud;
   const selectedReferenceIdentity =
     typeof interaction.selectedNativeId === "string" &&
@@ -325,6 +330,7 @@ function assertions(
       interaction.serializedReport.includes(".ifc") === false &&
       interaction.serializedReport.includes(".gltf") === false &&
       interaction.serializedReport.includes(".glb") === false &&
+      interaction.serializedReport.includes(".e57") === false &&
       interaction.serializedReport.includes(".las") === false &&
       interaction.serializedReport.includes(".laz") === false &&
       interaction.serializedReport.includes("file:") === false,
@@ -544,6 +550,41 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "e57-public") {
+    const acquired = await acquirePublicE57Fixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "e57",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      formatVersion: manifest.expected.formatVersion,
+      pointFormat: "cartesian-xyz-rgb",
+      points: manifest.expected.pointRecords,
+      ranges: 1,
+      pointRangeBytes:
+        manifest.expected.pointRangeByteLength,
+      pointRangePayloadBytes:
+        manifest.expected.pointRangePayloadBytes,
+      pointRangeSha256:
+        manifest.expected.pointRangeSha256,
+      rendererLimits: null,
+      searchQuery: null,
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
   if (["las-public", "laz-public"].includes(kind)) {
     const acquired = await acquirePublicLasLazFixture();
     const format = kind === "las-public" ? "las" : "laz";
@@ -586,7 +627,8 @@ async function qualificationFixture(kind) {
   }
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
-      "gltf-public, gltf-product-scale, las-public, or laz-public",
+      "gltf-public, gltf-product-scale, e57-public, las-public, " +
+      "or laz-public",
   );
 }
 
@@ -594,7 +636,9 @@ export async function qualifyBimProductShell({
   fixture: fixtureKind = "synthetic",
 } = {}) {
   const fixture = await qualificationFixture(fixtureKind);
-  const pointCloud = ["las", "laz"].includes(fixture.format);
+  const pointCloud = ["e57", "las", "laz"].includes(
+    fixture.format,
+  );
   const server = createBimExplorerWebServer({
     fixture: fixture.serverFixture,
   });
@@ -901,6 +945,7 @@ function parseArguments(values) {
   const allowedFixtures = new Set([
     "gltf-product-scale",
     "gltf-public",
+    "e57-public",
     "las-public",
     "laz-public",
     "public",
@@ -933,7 +978,8 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
-        "gltf-product-scale|las-public|laz-public] [--output path]",
+        "gltf-product-scale|e57-public|las-public|laz-public] " +
+        "[--output path]",
     );
   }
   return options;

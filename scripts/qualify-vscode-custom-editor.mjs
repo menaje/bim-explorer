@@ -23,6 +23,9 @@ import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
+  acquirePublicE57Fixture,
+} from "./public-e57-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -83,8 +86,12 @@ export async function qualifyVscodeCustomEditor({
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
     : null;
+  const e57Fixture = includePointFixtures
+    ? await acquirePublicE57Fixture()
+    : null;
   pointFixtures?.bytes.las.fill(0);
   pointFixtures?.bytes.laz.fill(0);
+  e57Fixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : process.cwd(),
@@ -131,6 +138,8 @@ export async function qualifyVscodeCustomEditor({
                 pointFixtures.cachePaths.las,
               BIM_EXPLORER_VSCODE_LAZ_SOURCE:
                 pointFixtures.cachePaths.laz,
+              BIM_EXPLORER_VSCODE_E57_SOURCE:
+                e57Fixture.cachePath,
             }),
         ...(productScaleReferenceFixture === null
           ? {}

@@ -32,6 +32,9 @@ import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
+  acquirePublicE57Fixture,
+} from "./public-e57-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -150,8 +153,12 @@ export async function qualifyVscodeVsixInstall({
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
     : null;
+  const e57Fixture = includePointFixtures
+    ? await acquirePublicE57Fixture()
+    : null;
   pointFixtures?.bytes.las.fill(0);
   pointFixtures?.bytes.laz.fill(0);
+  e57Fixture?.bytes.fill(0);
   const temporary = await mkdtemp(
     path.join(
       process.platform === "darwin" ? "/tmp" : tmpdir(),
@@ -221,6 +228,9 @@ export async function qualifyVscodeVsixInstall({
       "apps/bim-explorer-web/source-worker.bundle.mjs",
       "apps/bim-explorer-web/point-source-worker.bundle.js",
       "apps/bim-explorer-web/laz-perf-worker-csp.js",
+      "packages/e57-point-source/src/format.mjs",
+      "packages/e57-point-source/src/index.mjs",
+      "LICENSES/e57-rs-MIT.txt",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
@@ -342,6 +352,8 @@ export async function qualifyVscodeVsixInstall({
                 pointFixtures.cachePaths.las,
               BIM_EXPLORER_VSCODE_LAZ_SOURCE:
                 pointFixtures.cachePaths.laz,
+              BIM_EXPLORER_VSCODE_E57_SOURCE:
+                e57Fixture.cachePath,
             }),
         ...(productScaleReferenceFixture === null
           ? {}
@@ -390,6 +402,7 @@ export async function qualifyVscodeVsixInstall({
         JSON.stringify(
           manifest.contributes.customEditors[0].selector.slice(3),
         ) === JSON.stringify([
+          { filenamePattern: "*.e57" },
           { filenamePattern: "*.las" },
           { filenamePattern: "*.laz" },
         ]),
@@ -466,6 +479,8 @@ export async function qualifyVscodeVsixInstall({
         : {}),
       ...(includePointFixtures
         ? {
+            installedPackageOpensE57:
+              allTrue(runtime.pointAssertions?.e57),
             installedPackageOpensLas:
               allTrue(runtime.pointAssertions?.las),
             installedPackageOpensLaz:
@@ -485,6 +500,14 @@ export async function qualifyVscodeVsixInstall({
               runtime.pointObservations?.laz?.renderer
                 ?.nonBackgroundPixels &&
               runtime.pointObservations?.las?.renderer
+                ?.nonBackgroundPixels > 0,
+            installedE57PointProjection:
+              runtime.pointObservations?.e57?.pointCloud
+                ?.rangeSha256 ===
+                "dcc6868c55c79a51d315bfc4b287ca38" +
+                  "f8217e3d572554ef56b0da77359cd6aa",
+            installedE57VisibleProjection:
+              runtime.pointObservations?.e57?.renderer
                 ?.nonBackgroundPixels > 0,
           }
         : {}),

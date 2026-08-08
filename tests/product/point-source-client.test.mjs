@@ -5,6 +5,7 @@ import {
   POINT_SOURCE_WORKER_REQUEST,
   POINT_SOURCE_WORKER_RESPONSE,
   createLasLazPointSourceWorkerClient,
+  createPointSourceWorkerClient,
 } from "../../apps/bim-explorer-web/point-source-client.mjs";
 
 class FakeWorker {
@@ -77,7 +78,9 @@ function success(request) {
   const rangeBytes = new Uint8Array(64);
   return {
     artifact: {
-      schema: "bim-explorer-las-laz-point-source/0.1",
+      schema: request.options.format === "e57"
+        ? "bim-explorer-e57-point-source/0.1"
+        : "bim-explorer-las-laz-point-source/0.1",
       source: {
         byteLength: request.bytes.byteLength,
         coordinateReferenceStatus: "unqualified",
@@ -155,6 +158,24 @@ test("point source client transfers one bounded range and terminates its Worker"
   assert.equal(client.state.terminations, 1);
   assert.equal(await client.dispose(), true);
   assert.equal(await client.dispose(), false);
+});
+
+test("generic point source client accepts the bounded E57 contract", async () => {
+  const worker = new FakeWorker();
+  const client = createPointSourceWorkerClient(
+    options(() => worker),
+  );
+  const opened = await client.open(
+    Uint8Array.from([1, 2, 3, 4]),
+    { format: "e57" },
+  );
+  assert.equal(worker.openFormat, "e57");
+  assert.equal(
+    opened.artifact.schema,
+    "bim-explorer-e57-point-source/0.1",
+  );
+  assert.equal(worker.terminated, true);
+  await client.dispose();
 });
 
 test("point source client bounds input, timeout, rejection and path exposure", async () => {

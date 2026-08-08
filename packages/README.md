@@ -87,4 +87,6 @@ authority를 제공하지 않습니다.
 scan의 default BitPack XYZ/RGB record를 모든 page CRC와 packet boundary를
 검증한 뒤 같은 source-neutral point range로 투영합니다. 자체 JavaScript
 decoder는 격리 Worker 실행을 전제로 하며 CRS, scan pose, semantics, write 또는
-round-trip authority를 제공하지 않습니다.
+round-trip authority를 제공하지 않습니다. 현재 main은 이 bounded profile의
+Browser, staged VS Code와 clean-installed VSIX 제품 open을 통과했지만 E57
+format family나 federation coordinate authority를 admission하지 않습니다.

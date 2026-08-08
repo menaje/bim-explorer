@@ -22,13 +22,18 @@
     "lasLazBrowserProductOpen": true,
     "lasLazVscodeProductOpen": true,
     "e57PointDecode": true,
-    "e57Renderer": false,
-    "e57ProductOpen": false,
+    "e57Renderer": true,
+    "e57BrowserProductOpen": true,
+    "e57VscodeProductOpen": true,
+    "e57CoordinateReference": false,
+    "e57FormatAdmission": false,
     "lasLazCoordinateReference": false,
     "lasLazFormatAdmission": false
   },
   "evidence": {
     "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
+    "e57BrowserProduct": "compatibility/evidence/e57-browser-product-2026-08-08.json",
+    "e57VscodeProduct": "compatibility/evidence/e57-vscode-product-2026-08-08.json",
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
     "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
     "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
@@ -36,15 +41,15 @@
     "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json"
   },
   "blockers": [
-    "E57 has no qualified point renderer",
-    "Browser and VS Code do not open E57 files",
+    "the E57 sample has no qualified CRS, scan-pose or surveyed datum authority",
+    "E57 format admission remains held until coordinate and broader profile Gates pass",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
     "LAS/LAZ format admission remains held until coordinate and remaining product Gates pass"
   ],
   "limitations": [
     "the samples are downloaded on demand into ignored digest caches",
     "sample files are not tracked, redistributed or included in a release",
-    "the E57 probe covers one single-scan Cartesian XYZ/RGB default-BitPack profile without CRS authority",
+    "the E57 Browser and VS Code products cover one single-scan Cartesian XYZ/RGB default-BitPack profile without CRS authority",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
     "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
@@ -58,11 +63,13 @@
     "releaseBundled": false,
     "decoderBrowserProductRuntime": true,
     "decoderVscodeProductRuntime": true,
-    "e57DecoderProductRuntime": false,
+    "e57DecoderProductRuntime": true,
     "decoderReleaseBundled": false,
     "sampleUseTestOnly": true,
     "browserExperimentalProductOpen": true,
     "vscodeExperimentalProductOpen": true,
+    "e57BrowserExperimentalProductOpen": true,
+    "e57VscodeExperimentalProductOpen": true,
     "formatAdmission": false,
     "productSupport": false
   }

@@ -78,7 +78,8 @@ bounded CPU/GPU bytes와 deterministic cleanup을 검증합니다. Browser에 LA
 admission을 승인하지 않습니다.
 
 실제 [`bim-explorer-web`](bim-explorer-web/README.md)은 이 qualified range를
-제품 source 경계로 채택해 bounded LAS/LAZ local file input을 전용 Worker에서
+제품 source 경계로 채택해 bounded E57/LAS/LAZ local file input을 전용 Worker에서
 처리합니다. Browser, staged VS Code와 clean-installed VSIX 제품 open은
 통과했지만 CRS, point identity/picking·LOD와 format admission은 계속 별도
-Gate입니다.
+Gate입니다. E57은 single-scan Cartesian XYZ/RGB default-BitPack profile로
+한정하며 scan pose, surveyed datum과 broader profile도 승인하지 않습니다.

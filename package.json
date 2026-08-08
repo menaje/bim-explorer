@@ -61,6 +61,8 @@
     "qualify:federation": "node scripts/qualify-bim-federation.mjs",
     "qualify:federation:product-scale": "node scripts/qualify-bim-federation-product-scale.mjs",
     "qualify:e57:probe": "node scripts/qualify-e57-public-sample.mjs",
+    "qualify:e57:product:web": "node scripts/qualify-e57-browser-product.mjs",
+    "qualify:e57:product:vscode": "node scripts/qualify-e57-vscode-product.mjs",
     "qualify:las-laz:probe": "node scripts/qualify-las-laz-public-sample.mjs",
     "qualify:las-laz:worker": "node scripts/qualify-las-laz-browser-worker.mjs",
     "qualify:las-laz:renderer": "node scripts/qualify-las-laz-point-renderer.mjs",

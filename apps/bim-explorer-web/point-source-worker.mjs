@@ -2,12 +2,20 @@ import {
   LAS_LAZ_MAXIMUM_SOURCE_BYTES,
   createLasLazPointSourceArtifact,
 } from "../../packages/las-laz-point-source/src/index.mjs";
+import {
+  E57_MAXIMUM_SOURCE_BYTES,
+  createE57PointSourceArtifact,
+} from "../../packages/e57-point-source/src/index.mjs";
 
 const REQUEST_SCHEMA =
   "bim-explorer-point-source-worker-request/0.1";
 const RESPONSE_SCHEMA =
   "bim-explorer-point-source-worker-response/0.1";
-const FORMATS = new Set(["las", "laz"]);
+const MAXIMUM_SOURCE_BYTES = Math.min(
+  LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+  E57_MAXIMUM_SOURCE_BYTES,
+);
+const FORMATS = new Set(["e57", "las", "laz"]);
 
 let accepted = false;
 let loadedLazPerfScriptUrl = null;
@@ -86,7 +94,7 @@ function validRequest(request) {
     request.requestId.length > 0 &&
     request.bytes instanceof ArrayBuffer &&
     request.bytes.byteLength > 0 &&
-    request.bytes.byteLength <= LAS_LAZ_MAXIMUM_SOURCE_BYTES &&
+    request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES &&
     FORMATS.has(request.options?.format)
   );
 }
@@ -117,14 +125,18 @@ async function open(request) {
   }
   accepted = true;
   const format = request.options.format;
-  const scriptUrl = sameOriginUrl(
-    request.options.lazPerfScriptUrl,
-    "LAZ decoder script URL",
-  );
-  const wasmUrl = sameOriginUrl(
-    request.options.lazPerfWasmUrl,
-    "LAZ decoder WASM URL",
-  );
+  const scriptUrl = format === "laz"
+    ? sameOriginUrl(
+        request.options.lazPerfScriptUrl,
+        "LAZ decoder script URL",
+      )
+    : null;
+  const wasmUrl = format === "laz"
+    ? sameOriginUrl(
+        request.options.lazPerfWasmUrl,
+        "LAZ decoder WASM URL",
+      )
+    : null;
   const bytes = new Uint8Array(request.bytes);
   const started = performance.now();
   let artifact = null;
@@ -136,12 +148,14 @@ async function open(request) {
     if (format === "laz") {
       progress(request.requestId, "decoder-initializing");
     }
-    artifact = await createLasLazPointSourceArtifact(bytes, {
-      format,
-      moduleFactory: format === "laz"
-        ? () => lazPerfModuleFactory(scriptUrl, wasmUrl)
-        : undefined,
-    });
+    artifact = format === "e57"
+      ? await createE57PointSourceArtifact(bytes)
+      : await createLasLazPointSourceArtifact(bytes, {
+          format,
+          moduleFactory: format === "laz"
+            ? () => lazPerfModuleFactory(scriptUrl, wasmUrl)
+            : undefined,
+        });
     progress(request.requestId, "point-range-created", {
       pointRangeBytes: artifact.range.byteLength,
       points: artifact.model.points,

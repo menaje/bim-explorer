@@ -16,7 +16,7 @@ last_reviewed: 2026-08-08
 BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조,
 속성과 관계를 탐색하는 독립 제품입니다. 첫 semantic vertical slice는
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
-추가했습니다. bounded LAS/LAZ는 Browser와 VS Code에서 열 수 있는
+추가했습니다. bounded E57/LAS/LAZ는 Browser와 VS Code에서 열 수 있는
 experimental point reference이며 CRS, point identity와 format admission은
 아직 보류합니다.
 
@@ -35,7 +35,7 @@ experimental point reference이며 CRS, point identity와 format admission은
 
 | 책임 | DWG Viewer | BIM Explorer | Coni Spatial |
 | --- | --- | --- | --- |
-| raw source | DWG | IFC + qualified mesh reference + experimental LAS/LAZ | registered multi-source |
+| raw source | DWG | IFC + qualified mesh reference + experimental E57/LAS/LAZ | registered multi-source |
 | 기본 표현 | 2D drawing review | generic 3D/BIM exploration | 2D/3D revision review |
 | source adapter | DWG Scene Cache | semantic/reference source snapshot | native change/reconcile adapter |
 | source-local identity | DWG handle | IFC GlobalId·Express ID 또는 reference native ID | native reference mapping |
@@ -58,7 +58,7 @@ source bytes
    - IFC GlobalId: profile이 허용하는 durable source identity
    - Express ID: exact source snapshot 안에서만 유효
    - glTF/GLB native ID: exact reference snapshot 안에서만 유효
-   - LAS/LAZ: 현재 range identity만 있고 개별 point identity는 없음
+   - E57/LAS/LAZ: 현재 range identity만 있고 개별 point identity는 없음
 -> Render/Pick ID: exact snapshot/layer에 묶인 projection
 -> optional Spatial mapping
    -> Workspace + Spatial Revision + Canonical Entity ID

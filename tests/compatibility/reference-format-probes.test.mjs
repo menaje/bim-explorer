@@ -9,6 +9,8 @@ import {
 const [
   manifest,
   e57Evidence,
+  e57BrowserProductEvidence,
+  e57VscodeProductEvidence,
   lasLazEvidence,
   lasLazWorkerEvidence,
   lasLazPointRendererEvidence,
@@ -22,6 +24,16 @@ const [
   readFile(
     "compatibility/evidence/" +
       "e57-public-sample-probe-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-browser-product-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-vscode-product-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
   readFile(
@@ -56,6 +68,8 @@ test("reference sample probes remain separate from format admission", () => {
     validateReferenceFormatProbeCompatibility(
       manifest,
       e57Evidence,
+      e57BrowserProductEvidence,
+      e57VscodeProductEvidence,
       lasLazEvidence,
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
@@ -64,20 +78,22 @@ test("reference sample probes remain separate from format admission", () => {
     ),
     {
       status: "pre-admission",
-      passedGates: 19,
+      passedGates: 22,
       heldGates: 4,
       sampleFormats: 3,
     },
   );
 });
 
-test("an E57 decode probe cannot claim renderer qualification", () => {
+test("an E57 product open cannot claim format admission", () => {
   const overclaim = structuredClone(manifest);
-  overclaim.gates.e57Renderer = true;
+  overclaim.gates.e57FormatAdmission = true;
   assert.throws(
     () => validateReferenceFormatProbeCompatibility(
       overclaim,
       e57Evidence,
+      e57BrowserProductEvidence,
+      e57VscodeProductEvidence,
       lasLazEvidence,
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,
@@ -95,6 +111,8 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
     () => validateReferenceFormatProbeCompatibility(
       overclaim,
       e57Evidence,
+      e57BrowserProductEvidence,
+      e57VscodeProductEvidence,
       lasLazEvidence,
       lasLazWorkerEvidence,
       lasLazPointRendererEvidence,

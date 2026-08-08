@@ -15,7 +15,7 @@ import {
   createBimProductSourceWorkerClient,
 } from "./worker-source-client.mjs";
 import {
-  createLasLazPointSourceWorkerClient,
+  createPointSourceWorkerClient,
 } from "./point-source-client.mjs";
 
 const HOST_MESSAGE =
@@ -24,7 +24,7 @@ const REPORT_SCHEMA =
   "bim-explorer-product-shell-report/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const MAXIMUM_POINT_SOURCE_BYTES = 8 * 1024 * 1024;
-const POINT_SOURCE_FORMATS = new Set(["las", "laz"]);
+const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const PRODUCT_SCALE_GLTF_RENDERER_LIMITS = Object.freeze({
   maximumRangeBytes: 32 * 1024 * 1024,
   maximumSourceReadBytes: 32 * 1024 * 1024,
@@ -916,7 +916,7 @@ async function pointClient({
           },
         };
       };
-  const value = createLasLazPointSourceWorkerClient({
+  const value = createPointSourceWorkerClient({
     lazPerfScriptUrl:
       workerRuntime?.lazPerfScriptUrl ??
       runtime.lazPerfScriptUrl,
@@ -962,7 +962,7 @@ async function openPointBytes(bytesValue, {
     !POINT_SOURCE_FORMATS.has(format)
   ) {
     throw new RangeError(
-      "Selected point source exceeds the bounded LAS/LAZ profile",
+      "Selected point source exceeds its bounded profile",
     );
   }
   const sequence = openingSequence + 1;
@@ -1430,12 +1430,12 @@ function localFileFormat(file) {
     .toLocaleLowerCase()
     .match(/\.([a-z0-9]+)$/u)?.[1] ?? "";
   if (
-    !["ifc", "gltf", "glb", "las", "laz"].includes(
+    !["ifc", "gltf", "glb", "e57", "las", "laz"].includes(
       extension,
     )
   ) {
     throw new TypeError(
-      "Selected file must be IFC, glTF, GLB, LAS, or LAZ",
+      "Selected file must be IFC, glTF, GLB, E57, LAS, or LAZ",
     );
   }
   return extension;

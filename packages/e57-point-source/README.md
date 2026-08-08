@@ -22,3 +22,9 @@ picking and LOD streaming are outside this initial profile.
 Default bounds are 8 MiB source bytes, 500,000 records, 16 MiB decoded point
 storage and one 8 MiB derived point range. Callers own and must clear source
 and returned range buffers after transfer or renderer upload.
+
+The pinned cache-only reference sample has passed actual Browser local-file,
+staged VS Code Custom Editor and clean-installed VSIX product-open
+qualification. That evidence admits only this bounded experimental product
+profile; it does not admit the E57 format family or the source as a federation
+coordinate authority.

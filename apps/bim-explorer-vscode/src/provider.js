@@ -23,10 +23,11 @@ const SOURCE_FORMATS = new Set([
   "ifc",
   "gltf",
   "glb",
+  "e57",
   "las",
   "laz",
 ]);
-const POINT_SOURCE_FORMATS = new Set(["las", "laz"]);
+const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 
 function boundedInteger(value, fallback, minimum, maximum) {
   return Number.isSafeInteger(value)
@@ -126,7 +127,7 @@ function sourceFormat(uri) {
     .toLowerCase();
   if (!SOURCE_FORMATS.has(extension)) {
     throw new Error(
-      "BIM Explorer supports local IFC, glTF, GLB, LAS, and LAZ files",
+      "BIM Explorer supports local IFC, glTF, GLB, E57, LAS, and LAZ files",
     );
   }
   return extension;
@@ -163,9 +164,10 @@ function sanitizeReport(value) {
         formatVersion: stringOrNull(
           value.source?.formatVersion,
         ),
-        pointFormat: numberOrNull(
-          value.source?.pointFormat,
-        ),
+        pointFormat:
+          typeof value.source?.pointFormat === "number"
+            ? numberOrNull(value.source.pointFormat)
+            : stringOrNull(value.source?.pointFormat),
         profile: stringOrNull(value.source?.profile),
         sourceRole: stringOrNull(
           value.source?.sourceRole,
@@ -325,6 +327,29 @@ function sanitizeReport(value) {
                 version: stringOrNull(
                   value.pointCloud?.decoder?.version,
                 ),
+                ...(value.pointCloud?.decoder?.reference ===
+                  undefined
+                  ? {}
+                  : {
+                      reference: {
+                        commit: stringOrNull(
+                          value.pointCloud.decoder.reference
+                            ?.commit,
+                          /^[0-9a-f]{40}$/u,
+                        ),
+                        id: stringOrNull(
+                          value.pointCloud.decoder.reference?.id,
+                        ),
+                        license: stringOrNull(
+                          value.pointCloud.decoder.reference
+                            ?.license,
+                        ),
+                        version: stringOrNull(
+                          value.pointCloud.decoder.reference
+                            ?.version,
+                        ),
+                      },
+                    }),
               },
           maximumProjectionError: numberOrNull(
             value.pointCloud?.maximumProjectionError,

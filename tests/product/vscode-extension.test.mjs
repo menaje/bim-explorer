@@ -211,6 +211,7 @@ test("VS Code manifest associates bounded BIM sources with a read-only product h
       { filenamePattern: "*.ifc" },
       { filenamePattern: "*.gltf" },
       { filenamePattern: "*.glb" },
+      { filenamePattern: "*.e57" },
       { filenamePattern: "*.las" },
       { filenamePattern: "*.laz" },
     ],
@@ -401,6 +402,47 @@ test("Custom Editor sends bounded LAS with the point-source cap", async () => {
   );
   assert.equal(
     JSON.stringify(sourceMessage).includes("acme-observation"),
+    false,
+  );
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends bounded E57 with the point-source cap", async () => {
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/acme-scan.e57",
+    sourceBytes: Uint8Array.from({ length: 1_024 }, () => 1),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    {
+      runtimeRoot: new FakeUri(ROOT),
+    },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "e57");
+  assert.equal(
+    sourceMessage.limits.maximumSourceBytes,
+    8 * 1024 * 1024,
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("acme-scan"),
     false,
   );
   document.dispose();
@@ -607,6 +649,8 @@ test("extension staging is complete and independently path-safe", async () => {
       "adapters/web-ifc/src/create-source-artifact.mjs",
       "packages/bim-model-source/src/index.mjs",
       "packages/gltf-reference-source/src/index.mjs",
+      "packages/e57-point-source/src/format.mjs",
+      "packages/e57-point-source/src/index.mjs",
       "packages/las-laz-point-source/src/header.mjs",
       "packages/las-laz-point-source/src/index.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
@@ -618,6 +662,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "node_modules/web-ifc/LICENSE.md",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/laz-perf/package.json",
+      "LICENSES/e57-rs-MIT.txt",
       "specs/LICENSE",
       "LICENSE",
       "NOTICE",

@@ -1,19 +1,19 @@
 # BIM Explorer Web
 
-local IFC, bounded glTF/GLB 또는 bounded LAS/LAZ를 Browser에서 선택해 Worker-isolated
+local IFC, bounded glTF/GLB 또는 bounded E57/LAS/LAZ를 Browser에서 선택해 Worker-isolated
 source snapshot과 WebGL2 renderer로 여는 standalone read-only product
 shell입니다. IFC는 `BimModelSource`와 semantic explorer로, glTF/GLB는
-source-native reference mesh explorer로, LAS/LAZ는 source-neutral point
+source-native reference mesh explorer로, E57/LAS/LAZ는 source-neutral point
 range와 `POINTS` renderer로 분기합니다.
 
-- IFC/glTF/GLB는 64 MiB, LAS/LAZ는 8 MiB admission limit 뒤 Worker로
+- IFC/glTF/GLB는 64 MiB, E57/LAS/LAZ는 8 MiB admission limit 뒤 Worker로
   전달합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
-- LAS/LAZ는 8 MiB·500,000-point 한도와 전용 one-shot Worker를 사용하고,
+- E57/LAS/LAZ는 8 MiB·500,000-point 한도와 전용 one-shot Worker를 사용하고,
   source/range CPU buffer와 GPU allocation을 닫을 때 회수합니다. CRS,
   point identity/picking·LOD와 BIM semantic authority는 제공하지 않습니다.
 - timing과 source/geometry/metadata/range budget을 diagnostics로 표시합니다.
@@ -40,3 +40,8 @@ projection과 editor cleanup을 확인합니다.
 `npm run qualify:las-laz:product:vscode`는 같은 projection을 staged VS Code와
 clean-installed VSIX에서 다시 확인합니다. 샘플은 Git, package 또는 release에
 포함하지 않습니다.
+`npm run qualify:e57:product:web`은 cache-only 공개 E57을 실제 Browser local
+file input으로 열어 7,680-point range, visible projection과
+source/Worker/CPU/GPU cleanup을 확인합니다. `npm run
+qualify:e57:product:vscode`는 같은 projection을 staged VS Code와
+clean-installed VSIX에서 재현합니다. E57 샘플도 재배포하지 않습니다.

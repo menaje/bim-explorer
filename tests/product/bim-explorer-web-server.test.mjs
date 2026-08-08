@@ -65,6 +65,8 @@ test("product server exposes only its same-origin allowlist", async () => {
       "/adapters/web-ifc/src/create-source-artifact.mjs",
       "/packages/bim-model-source/src/index.mjs",
       "/packages/gltf-reference-source/src/index.mjs",
+      "/packages/e57-point-source/src/format.mjs",
+      "/packages/e57-point-source/src/index.mjs",
       "/packages/las-laz-point-source/src/header.mjs",
       "/packages/las-laz-point-source/src/index.mjs",
       "/packages/bim-renderer-3d/src/index.mjs",

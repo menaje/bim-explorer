@@ -218,7 +218,8 @@ async function qualifyPointSource({
   manifest,
   sourcePath,
 }) {
-  const entry = manifest.entries[format];
+  const e57 = format === "e57";
+  const entry = e57 ? manifest.entry : manifest.entries[format];
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
   assert.equal(metadata.size, entry.byteLength);
@@ -247,7 +248,14 @@ async function qualifyPointSource({
         license: "Apache-2.0",
         version: "0.0.6",
       }
-    : {
+    : e57
+      ? {
+          backend: "bounded-native-js-product-source",
+          id: "bim-explorer-e57-bitpack-reader",
+          license: "MPL-2.0",
+          version: "0.1.0",
+        }
+      : {
         backend: "bounded-native-js-product-source",
         id: "las-point-record-reader",
         license: "MPL-2.0",
@@ -266,7 +274,9 @@ async function qualifyPointSource({
     gltfVersion: null,
     coordinateReferenceStatus: "unqualified",
     formatVersion: manifest.expected.formatVersion,
-    pointFormat: manifest.expected.pointFormat,
+    pointFormat: e57
+      ? "cartesian-xyz-rgb"
+      : manifest.expected.pointFormat,
     profile: null,
     sourceRole: "derived-or-reference-points",
     semanticAuthority: false,
@@ -277,16 +287,24 @@ async function qualifyPointSource({
   });
   assert.equal(
     ready.resources.decodedPointBytes,
-    manifest.expected.pointRecordLength *
-      manifest.expected.pointRecords,
+    e57
+      ? 215_040
+      : manifest.expected.pointRecordLength *
+          manifest.expected.pointRecords,
   );
-  assert.equal(ready.resources.pointRangeBytes, 163_264);
+  const pointRangeBytes = e57
+    ? manifest.expected.pointRangeByteLength
+    : 163_264;
+  const pointRangePayloadBytes = e57
+    ? manifest.expected.pointRangePayloadBytes
+    : 163_216;
+  assert.equal(ready.resources.pointRangeBytes, pointRangeBytes);
   assert.equal(
     ready.resources.pointRangePayloadBytes,
-    163_216,
+    pointRangePayloadBytes,
   );
   assert.equal(ready.resources.sourceBytes, entry.byteLength);
-  if (format === "las") {
+  if (format !== "laz") {
     assert.equal(
       ready.resources.wasmHeapCapacityBytes,
       null,
@@ -303,18 +321,39 @@ async function qualifyPointSource({
   }
   assert.equal(ready.renderer.actualGpu, true);
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
-  assert.equal(ready.renderer.sourceReadBytes, 163_264);
-  assert.equal(ready.renderer.uploadedBytes, 163_216);
+  assert.equal(ready.renderer.sourceReadBytes, pointRangeBytes);
+  assert.equal(
+    ready.renderer.uploadedBytes,
+    pointRangePayloadBytes,
+  );
   assert.equal(
     ready.pointCloud.rangeSha256,
-    "8383abce84d57b8f50ee1f39aa1d442" +
-      "a7f258cd759ab9812aff1a0625ab10449",
+    e57
+      ? manifest.expected.pointRangeSha256
+      : "8383abce84d57b8f50ee1f39aa1d442" +
+          "a7f258cd759ab9812aff1a0625ab10449",
   );
   assert.equal(
     ready.pointCloud.coordinateReferenceStatus,
     "unqualified",
   );
-  assert.deepEqual(ready.pointCloud.decoder, expectedDecoder);
+  if (e57) {
+    assert.deepEqual(
+      {
+        backend: ready.pointCloud.decoder.backend,
+        id: ready.pointCloud.decoder.id,
+        license: ready.pointCloud.decoder.license,
+        version: ready.pointCloud.decoder.version,
+      },
+      expectedDecoder,
+    );
+    assert.equal(
+      ready.pointCloud.decoder.reference.id,
+      "cry-inc/e57",
+    );
+  } else {
+    assert.deepEqual(ready.pointCloud.decoder, expectedDecoder);
+  }
   assert.equal(ready.pointCloud.pointPrimitive, "POINTS");
   assert.equal(ready.pointCloud.pointSize, 3);
   assert.ok(ready.pointCloud.maximumProjectionError < 1e-6);
@@ -338,7 +377,9 @@ async function qualifyPointSource({
   }, `${format.toUpperCase()} Custom Editor disposal`);
   return {
     fixture: {
-      id: `${manifest.fixtureId}-${format}`,
+      id: e57
+        ? manifest.fixtureId
+        : `${manifest.fixtureId}-${format}`,
       committed: false,
       format,
       sourceBytes: entry.byteLength,
@@ -348,7 +389,9 @@ async function qualifyPointSource({
       provenance: {
         repository: manifest.provenance.repository,
         commit: manifest.provenance.commit,
-        license: manifest.use.sourceRepositoryLicense,
+        license: e57
+          ? manifest.license.spdx
+          : manifest.use.sourceRepositoryLicense,
         bundled: false,
         sampleRedistributed: false,
       },
@@ -398,6 +441,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
   const lazSourcePath =
     process.env.BIM_EXPLORER_VSCODE_LAZ_SOURCE;
+  const e57SourcePath =
+    process.env.BIM_EXPLORER_VSCODE_E57_SOURCE;
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -672,7 +717,9 @@ async function run() {
       typeof lasSourcePath === "string" &&
       lasSourcePath.length > 0 &&
       typeof lazSourcePath === "string" &&
-      lazSourcePath.length > 0
+      lazSourcePath.length > 0 &&
+      typeof e57SourcePath === "string" &&
+      e57SourcePath.length > 0
     ) {
       const fixtureModule = await import(
         pathToFileURL(
@@ -681,7 +728,20 @@ async function run() {
       );
       const manifest = await fixtureModule
         .loadPublicLasLazFixtureManifest();
+      const e57FixtureModule = await import(
+        pathToFileURL(
+          path.join(root, "scripts", "public-e57-fixture.mjs"),
+        ).href
+      );
+      const e57Manifest = await e57FixtureModule
+        .loadPublicE57FixtureManifest();
       pointQualifications = {
+        e57: await qualifyPointSource({
+          api,
+          format: "e57",
+          manifest: e57Manifest,
+          sourcePath: e57SourcePath,
+        }),
         las: await qualifyPointSource({
           api,
           format: "las",
@@ -761,14 +821,17 @@ async function run() {
         ? {}
         : {
             pointFixtures: {
+              e57: pointQualifications.e57.fixture,
               las: pointQualifications.las.fixture,
               laz: pointQualifications.laz.fixture,
             },
             pointObservations: {
+              e57: pointQualifications.e57.observation,
               las: pointQualifications.las.observation,
               laz: pointQualifications.laz.observation,
             },
             pointAssertions: {
+              e57: pointQualifications.e57.assertions,
               las: pointQualifications.las.assertions,
               laz: pointQualifications.laz.assertions,
             },

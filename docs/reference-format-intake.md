@@ -67,8 +67,11 @@ engine 또는 SDK의 redistribution 권리는 여전히 별도 Gate입니다.
 point record 선언을 검증합니다. 후속 자체 JavaScript decoder는 단일 Cartesian
 XYZ/RGB, empty codec vector의 3개 data packet을 모두 해제해 독립 reference와
 7,680개 record가 일치했고, 122,880-byte source-neutral point payload와 exact
-cleanup을 재현했습니다. renderer와 제품 file-open은 아직 검증하지 않으므로
-E57 admission과 `pointCloudCodec`은 계속 held입니다.
+cleanup을 재현했습니다. 후속 Browser, staged VS Code와 clean-installed VSIX
+제품 Gate는 같은 7,680 points·122,880-byte GPU payload·39,561 pixels,
+path-free bridge와 source/Worker/CPU/GPU cleanup을 재현했습니다. 다만 CRS,
+scan pose, surveyed datum, broader scan/profile과 point identity/picking·LOD가
+없으므로 E57 admission과 `pointCloudCodec`은 계속 held입니다.
 
 두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
 고정 commit에서 내려받습니다. exact `laz-perf@0.0.6` Apache-2.0 dependency로
@@ -98,8 +101,9 @@ unqualified이며 point identity/picking·LOD는 제공하지 않습니다.
 intake 계약과 공개 issue form, cache-only E57 decode/source projection 및
 LAS/LAZ pre-admission decode/Worker/point-renderer probe가 준비됐고, LAS/LAZ는 bounded Browser,
 staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했습니다.
-E57은 공개 외부 packet decode까지 통과했지만 surveyed coordinate와 broader
-scan/profile evidence는 아직 없습니다.
+E57도 bounded Browser, staged VS Code와 clean-installed VSIX 제품
+source/file-open까지 통과했지만 surveyed coordinate와 broader scan/profile
+evidence는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에

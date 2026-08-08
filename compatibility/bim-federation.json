@@ -51,7 +51,7 @@
     "actual Coni Spatial consumer composition remains consumer-owned",
     "two-format user demand must be evidenced without publishing customer models",
     "surveyed control points and datum transformation need qualified geospatial evidence",
-    "LAS and LAZ require product decoder/source, CRS, chunk/LOD and file-open qualification; E57 still requires point decode and rendering",
+    "bounded LAS/LAZ and E57 product opens are qualified, but point-cloud federation admission still requires CRS, point identity/picking and chunk/LOD evidence",
     "3D Tiles and GIS context require engine, network and precision qualification",
     "RVT and DGN require SDK rights, platform packaging and reopen qualification"
   ],

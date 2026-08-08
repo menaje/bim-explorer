@@ -121,8 +121,16 @@ lifecycle evidence로 분류합니다. 완전한 packet도 qualification 착수�
 path와 이미 admission된 format 재개방을 거부합니다.
 
 `e57-public-sample-probe` test는 공개 E57을 ignored digest cache로만 획득하고
-header, 모든 physical page CRC-32C와 XML point profile을 확인합니다. 샘플 원본,
-point decode와 renderer admission은 테스트 결과에 포함하지 않습니다.
+header, 모든 physical page CRC-32C와 XML point profile, default-BitPack packet의
+7,680개 XYZ/RGB record와 source-neutral point range를 확인합니다. 샘플 원본은
+추적·재배포하지 않으며 format admission은 승인하지 않습니다.
+
+`e57-point-source`, `point-source-client`, `e57-browser-product`와
+`e57-vscode-product` test는 bounded single-scan source projection, one-shot
+Worker transfer·termination, 실제 Browser local file input, staged VS Code와
+clean-installed VSIX의 exact range·visible projection과 cleanup을 검사합니다.
+제품 open만 experimental로 승인하며 CRS/scan pose/surveyed datum, broader
+profile, point identity/pick, LOD와 format admission은 계속 거부합니다.
 
 `las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest
 cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Float64
@@ -146,8 +154,8 @@ CRS, point identity/pick, LOD와 format admission은 계속
 `las-laz-point-source`, `point-source-client`와 `las-laz-browser-product`
 test는 bounded header/source projection, one-shot Worker transfer·termination과
 실제 BIM Explorer Browser local file input의 LAS/LAZ exact range·visual parity를
-검사합니다. Browser open만 experimental로 승인하며 CRS, point identity/pick,
-LOD, VS Code/VSIX open과 format admission은 계속 거부합니다.
+검사합니다. Browser, staged VS Code와 clean-installed VSIX open만 experimental로
+승인하며 CRS, point identity/pick, LOD와 format admission은 계속 거부합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

@@ -3,6 +3,10 @@ import {
   LAS_LAZ_POINT_SOURCE_CONTRACT,
 } from "../../packages/las-laz-point-source/src/index.mjs";
 import {
+  E57_MAXIMUM_SOURCE_BYTES,
+  E57_POINT_SOURCE_CONTRACT,
+} from "../../packages/e57-point-source/src/index.mjs";
+import {
   BIM_POINT_RANGE_MEDIA_TYPE,
 } from "../../packages/bim-renderer-3d/src/point-cloud.mjs";
 
@@ -12,10 +16,18 @@ export const POINT_SOURCE_WORKER_RESPONSE =
   "bim-explorer-point-source-worker-response/0.1";
 
 const DEFAULT_LIMITS = Object.freeze({
-  maximumSourceBytes: LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+  maximumSourceBytes: Math.min(
+    LAS_LAZ_MAXIMUM_SOURCE_BYTES,
+    E57_MAXIMUM_SOURCE_BYTES,
+  ),
   openTimeoutMs: 15_000,
 });
-const FORMATS = new Set(["las", "laz"]);
+const FORMATS = new Set(["e57", "las", "laz"]);
+const CONTRACTS = new Map([
+  ["e57", E57_POINT_SOURCE_CONTRACT],
+  ["las", LAS_LAZ_POINT_SOURCE_CONTRACT],
+  ["laz", LAS_LAZ_POINT_SOURCE_CONTRACT],
+]);
 const SHA256 = /^[0-9a-f]{64}$/u;
 const FINGERPRINT = /^sha256:[0-9a-f]{64}$/u;
 
@@ -97,7 +109,10 @@ function validateOptions(options) {
     "point source maximumSourceBytes",
   );
   positiveInteger(limits.openTimeoutMs, "point source openTimeoutMs");
-  if (limits.maximumSourceBytes > LAS_LAZ_MAXIMUM_SOURCE_BYTES) {
+  if (
+    limits.maximumSourceBytes > LAS_LAZ_MAXIMUM_SOURCE_BYTES ||
+    limits.maximumSourceBytes > E57_MAXIMUM_SOURCE_BYTES
+  ) {
     throw new RangeError("point source byte limit exceeds its profile");
   }
   return Object.freeze({
@@ -133,7 +148,7 @@ function validateResult(value, expected) {
   );
   const bytes = rangeBytes(range.bytes);
   if (
-    artifact.schema !== LAS_LAZ_POINT_SOURCE_CONTRACT ||
+    artifact.schema !== CONTRACTS.get(expected.format) ||
     source.format !== expected.format ||
     source.byteLength !== expected.byteLength ||
     !FINGERPRINT.test(source.fingerprint ?? "") ||
@@ -177,7 +192,7 @@ function validateResult(value, expected) {
   });
 }
 
-export class LasLazPointSourceWorkerClient {
+export class PointSourceWorkerClient {
   #disposed = false;
   #generation = 0;
   #nextRequest = 1;
@@ -391,6 +406,13 @@ export class LasLazPointSourceWorkerClient {
   }
 }
 
+export function createPointSourceWorkerClient(options) {
+  return new PointSourceWorkerClient(options);
+}
+
+export const LasLazPointSourceWorkerClient =
+  PointSourceWorkerClient;
+
 export function createLasLazPointSourceWorkerClient(options) {
-  return new LasLazPointSourceWorkerClient(options);
+  return new PointSourceWorkerClient(options);
 }

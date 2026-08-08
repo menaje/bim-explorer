@@ -315,7 +315,11 @@ strict-CSP `laz-perf` glue와 WASM을 bounded read한 뒤 각각 `blob:` capabil
 주입합니다. staged Custom Editor와 clean-installed VSIX도 같은 projection과
 cleanup을 통과했으며 Webview CSP는 `unsafe-eval`을 허용하지 않습니다. 샘플은
 qualification-only이며 CRS, point identity/picking·LOD와 format admission이
-없으므로 federation source admission에는 영향을 주지 않습니다.
+없으므로 federation source admission에는 영향을 주지 않습니다. E57도
+single-scan Cartesian XYZ/RGB default-BitPack profile을 같은 bounded point
+Worker와 renderer로 열며, Browser·staged VS Code·clean-installed VSIX에서
+7,680-point projection과 cleanup을 통과했습니다. E57의 CRS, scan pose,
+surveyed datum, broader profile과 format admission도 계속 별도 Gate입니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

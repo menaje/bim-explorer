@@ -1,7 +1,7 @@
 {
   "name": "bim-explorer",
   "displayName": "BIM Explorer",
-  "description": "Local-first read-only IFC, reference mesh, and bounded LAS/LAZ point exploration",
+  "description": "Local-first read-only IFC, reference mesh, E57, and bounded LAS/LAZ point exploration",
   "version": "0.1.0",
   "publisher": "menaje",
   "private": true,
@@ -45,6 +45,9 @@
             "filenamePattern": "*.glb"
           },
           {
+            "filenamePattern": "*.e57"
+          },
+          {
             "filenamePattern": "*.las"
           },
           {
@@ -80,7 +83,7 @@
           "default": 67108864,
           "minimum": 1,
           "maximum": 67108864,
-          "description": "Maximum local source byte length admitted by the read-only editor; LAS/LAZ retain an 8 MiB product cap."
+          "description": "Maximum local source byte length admitted by the read-only editor; E57/LAS/LAZ retain an 8 MiB product cap."
         },
         "bimExplorer.openTimeoutMs": {
           "type": "number",

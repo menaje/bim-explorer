@@ -87,6 +87,20 @@ const ROUTES = new Map([
     type: "text/css; charset=utf-8",
   }],
   [
+    "/packages/e57-point-source/src/format.mjs",
+    route(
+      "packages/e57-point-source/src/format.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/e57-point-source/src/index.mjs",
+    route(
+      "packages/e57-point-source/src/index.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
     "/packages/las-laz-point-source/src/header.mjs",
     route(
       "packages/las-laz-point-source/src/header.mjs",
