@@ -11,6 +11,11 @@ export const BIM_FEDERATION_SAVED_VIEW_SCHEMA =
 export const BIM_REFERENCE_FORMAT_REGISTRY_SCHEMA =
   "bim-explorer-reference-format-registry/0.1";
 
+export {
+  BIM_FEDERATED_RENDERER_PROJECTION_SCHEMA,
+  createFederatedRendererProjection,
+} from "./renderer-projection.mjs";
+
 const SOURCE_PROTOCOL = "bim-explorer-bim-source/0.2";
 const GLTF_REFERENCE_CONTRACT =
   "bim-explorer-gltf-reference-source/0.1";

@@ -31,7 +31,7 @@
     "actualSpatialConsumerConformance": false,
     "actualMultiFormatUserDemand": false,
     "surveyedCoordinateDatumEvidence": false,
-    "productScaleFederationPerformance": false,
+    "productScaleFederationPerformance": true,
     "pointCloudCodec": false,
     "gltfGlbCodec": true,
     "gis3dTilesEngine": false,
@@ -42,20 +42,20 @@
     "sourceMetadata": "compatibility/evidence/bim-model-source-metadata-2026-08-04.json",
     "gltfReferenceSource": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
     "gltfBrowserWebGl2": "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
-    "gltfProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json"
+    "gltfProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json",
+    "productScaleFederation": "compatibility/evidence/bim-federation-product-scale-2026-08-08.json"
   },
   "blockers": [
     "actual Coni Spatial consumer composition remains consumer-owned",
     "two-format user demand must be evidenced without publishing customer models",
     "surveyed control points and datum transformation need qualified geospatial evidence",
-    "product-scale GLB source/rendering passes, but multi-source composite first-frame, memory and cleanup remain unqualified",
     "LAS, LAZ and E57 require codec, CRS, chunking and cleanup qualification",
     "3D Tiles and GIS context require engine, network and precision qualification",
     "RVT and DGN require SDK rights, platform packaging and reopen qualification"
   ],
   "limitations": [
-    "the passing federation evidence uses three generated IFC4 snapshots, including one refresh revision, plus one generated GLB source",
-    "the product-scale A Beautiful Game evidence qualifies one GLB source/renderer path separately and is not a simultaneous multi-source composite frame",
+    "the foundation evidence uses three generated IFC4 snapshots, including one refresh revision, plus one generated GLB source",
+    "the product-scale composite evidence uses two generated IFC sources and A Beautiful Game reference geometry simultaneously; it is not customer-model or actual Spatial consumer evidence",
     "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
     "federation admission remains independent from product support; bounded Browser and VS Code file-open is qualified by separate product evidence",
     "point-cloud, GIS and native SDK format entries remain held capability records",
@@ -69,6 +69,7 @@
     "allowNonIfcSemanticAuthority": false,
     "claimQualifiedGltfCodec": true,
     "claimProductScaleGltfReference": true,
+    "claimProductScaleFederationPerformance": true,
     "claimUnqualifiedReferenceCodec": false,
     "claimActualSpatialConsumer": false,
     "claimUserDemand": false,

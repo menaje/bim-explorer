@@ -195,13 +195,15 @@ partial/stale, incremental refresh와 cross-source saved view foundation은
 [`bim-federation.json`](bim-federation.json)과
 [`synthetic federation evidence`](evidence/bim-federation-synthetic-2026-08-04.json)가
 소유합니다. IFC semantic source 두 개와 GLB reference mesh 하나를 함께
-배치해 source-native identity와 unaligned 경계를 포함한 16개 foundation
-Gate를 통과했습니다. actual Spatial consumer, 사용자 수요, 측량 datum,
-product-scale federation과 LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate
-7개는 보류합니다. registry는 `ifc`, `gltf`, `glb`만 admission하고 다른
-format은 fail closed합니다. product-scale GLB source/renderer prerequisite
-1개가 추가로 통과했지만 multi-source composite 성능 Gate는 그대로
-보류합니다.
+배치해 source-native identity와 unaligned 경계를 포함한 foundation Gate를
+통과했습니다. 별도
+[`product-scale federation evidence`](evidence/bim-federation-product-scale-2026-08-08.json)는
+generated IFC 두 source와 42.98MB GLB를 한 aligned first frame으로 구성해
+53 instances·573,976 unique triangles·19회 range read·16,902,256-byte
+upload와 headless/Chrome WebGL2 cleanup을 재현합니다. 전체 18개 Gate가
+통과했고 actual Spatial consumer, 사용자 수요, 측량 datum, LAS/LAZ/E57,
+3D Tiles, RVT/DGN의 6개 Gate는 보류합니다. registry는 `ifc`, `gltf`,
+`glb`만 admission하고 다른 format은 fail closed합니다.
 
 bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도

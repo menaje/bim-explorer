@@ -28,6 +28,7 @@ const TRUE_GATES = Object.freeze([
   "ifcAndGltfReferenceAdmission",
   "referenceNativeIdentityIsolation",
   "productScaleGltfReferencePrerequisite",
+  "productScaleFederationPerformance",
   "gltfGlbCodec",
   "boundedLifecycle",
 ]);
@@ -35,7 +36,6 @@ const HELD_GATES = Object.freeze([
   "actualSpatialConsumerConformance",
   "actualMultiFormatUserDemand",
   "surveyedCoordinateDatumEvidence",
-  "productScaleFederationPerformance",
   "pointCloudCodec",
   "gis3dTilesEngine",
   "rvtDgnNativeBridge",
@@ -47,6 +47,86 @@ const HELD_FORMATS = Object.freeze([
   "3d-tiles",
   "rvt",
   "dgn",
+]);
+const PRODUCT_REVISIONS = Object.freeze({
+  architecture:
+    "source-snapshot:sha256:" +
+    "0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+  reference:
+    "source-snapshot:sha256:" +
+    "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+  mep:
+    "source-snapshot:sha256:" +
+    "b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+});
+const PRODUCT_METRICS = Object.freeze({
+  sources: 3,
+  entities: 53,
+  firstFrameRanges: 3,
+  sourceReadBytes: 16_898_404,
+  sourceReads: 19,
+  geometryPayloadBytes: 16_898_016,
+  geometryRecords: 17,
+  vertices: 417_096,
+  indices: 1_721_928,
+  uniqueTriangles: 573_976,
+  instances: 53,
+  instancedTriangles: 1_499_120,
+  drawCalls: 53,
+  instanceBytes: 4_240,
+  cpuStagingBytes: 16_902_644,
+  uploadedBytes: 16_902_256,
+});
+const PRODUCT_SOURCE_SLOTS = Object.freeze([
+  {
+    federationSourceId: "source-slot:architecture",
+    format: "ifc",
+    sourceRevisionId: PRODUCT_REVISIONS.architecture,
+    entities: 2,
+    instances: 2,
+  },
+  {
+    federationSourceId: "source-slot:glb-reference",
+    format: "glb",
+    sourceRevisionId: PRODUCT_REVISIONS.reference,
+    entities: 49,
+    instances: 49,
+  },
+  {
+    federationSourceId: "source-slot:mep",
+    format: "ifc",
+    sourceRevisionId: PRODUCT_REVISIONS.mep,
+    entities: 2,
+    instances: 2,
+  },
+]);
+const PRODUCT_RENDERER_LIMITS = Object.freeze({
+  maximumFirstFrameRanges: 3,
+  maximumRangeBytes: 33_554_432,
+  maximumSourceReadBytes: 33_554_432,
+  maximumReadBytes: 1_048_576,
+  maximumGeometryRecords: 100_000,
+  maximumGeometryPayloadBytes: 25_165_824,
+  maximumInstances: 100_000,
+  maximumInstancedTriangles: 4_000_000,
+  maximumDrawCalls: 100_000,
+  maximumCpuStagingBytes: 33_554_432,
+  maximumGpuCacheBytes: 33_554_432,
+});
+const PRODUCT_ASSERTION_KEYS = Object.freeze([
+  "exactPinnedFixture",
+  "simultaneousThreeSourceFrame",
+  "exactCompositeGeometry",
+  "nativeIdentityIsolation",
+  "boundedAlignment",
+  "aggregateMemoryBudget",
+  "headlessPerformanceBudget",
+  "actualBrowserWebGl2",
+  "exactBrowserRangeReads",
+  "localOnlyRuntime",
+  "deterministicCleanup",
+  "authorityBoundaries",
+  "pathFreeEvidence",
 ]);
 
 function plainRecord(value, label) {
@@ -268,12 +348,291 @@ export function validateBimFederationEvidence(evidence) {
   }
 }
 
+export function validateBimFederationProductScaleEvidence(evidence) {
+  plainRecord(evidence, "product-scale BIM federation evidence");
+  if (
+    evidence.schema !==
+      "bim-explorer-federation-product-scale-qualification/1" ||
+    evidence.status !== "passed-experimental" ||
+    evidence.asOf !== "2026-08-08" ||
+    evidence.contract?.federation !== CONTRACT.federation ||
+    evidence.contract?.rendererProjection !==
+      "bim-explorer-federated-renderer-projection/0.1" ||
+    evidence.contract?.bimSourceProtocol !==
+      CONTRACT.bimSourceProtocol
+  ) {
+    throw new Error(
+      "product-scale BIM federation evidence identity is invalid",
+    );
+  }
+  if (
+    evidence.fixture?.fixtureId !==
+      "khronos-gltf-sample-assets-a-beautiful-game-glb" ||
+    evidence.fixture.byteLength !== 42_977_928 ||
+    evidence.fixture.sha256 !==
+      "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007" ||
+    evidence.fixture.license !== "CC-BY-4.0" ||
+    evidence.fixture.artifactTracked !== false ||
+    evidence.fixture.releaseBundled !== false ||
+    evidence.fixture.downloadOnDemand !== true
+  ) {
+    throw new Error(
+      "product-scale BIM federation fixture is invalid",
+    );
+  }
+  const expectedSources = [
+    {
+      federationSourceId: "source-slot:architecture",
+      format: "ifc",
+      sourceRevisionId: PRODUCT_REVISIONS.architecture,
+      alignmentMethod: "projected-same-crs",
+      alignmentProvenance: "ifc-map-conversion",
+      datumTransformation: "not-performed",
+    },
+    {
+      federationSourceId: "source-slot:glb-reference",
+      format: "glb",
+      sourceRevisionId: PRODUCT_REVISIONS.reference,
+      alignmentMethod: "explicit",
+      alignmentProvenance: "explicit-user-input",
+      datumTransformation: "not-performed",
+    },
+    {
+      federationSourceId: "source-slot:mep",
+      format: "ifc",
+      sourceRevisionId: PRODUCT_REVISIONS.mep,
+      alignmentMethod: "explicit",
+      alignmentProvenance: "explicit-user-input",
+      datumTransformation: "not-performed",
+    },
+  ];
+  if (
+    evidence.federation?.federationId !==
+      "federation:product-scale-composite" ||
+    !equalJson(evidence.federation.sources, expectedSources) ||
+    !equalJson(
+      evidence.federation.sourceSlots,
+      PRODUCT_SOURCE_SLOTS,
+    ) ||
+    evidence.federation.sourceIdentityMerged !== false ||
+    evidence.federation.entities !== PRODUCT_METRICS.entities ||
+    evidence.federation.instances !== PRODUCT_METRICS.instances ||
+    evidence.federation.firstFrameRanges !==
+      PRODUCT_METRICS.firstFrameRanges ||
+    evidence.federation.distinctCompositeNativeIds !==
+      PRODUCT_METRICS.entities ||
+    evidence.federation
+      .largestDuplicateGlobalIdOccurrences !== 2 ||
+    !equalJson(evidence.expected, PRODUCT_METRICS)
+  ) {
+    throw new Error(
+      "product-scale BIM federation source evidence is invalid",
+    );
+  }
+  const headless = evidence.headless;
+  if (
+    headless?.renderer?.backend !== "headless" ||
+    headless.renderer.rendered !== false ||
+    !equalJson(
+      headless.renderer.limits,
+      PRODUCT_RENDERER_LIMITS,
+    ) ||
+    Object.entries(PRODUCT_METRICS)
+      .filter(([field]) => ![
+        "sources",
+        "entities",
+        "firstFrameRanges",
+        "uploadedBytes",
+      ].includes(field))
+      .some(([field, value]) =>
+        headless.renderer[field] !== value) ||
+    headless.renderer.uploadedBytes !==
+      PRODUCT_METRICS.uploadedBytes ||
+    headless.range?.firstFrame?.rangeReads !==
+      PRODUCT_METRICS.sourceReads ||
+    headless.range.firstFrame.rangeBytes !==
+      PRODUCT_METRICS.sourceReadBytes ||
+    headless.range.firstFrame.sourceCount !== 3 ||
+    headless.range.firstFrame.ownsSourceSessions !== false ||
+    headless.range.afterBrowserPreparation?.rangeReads !== 38 ||
+    headless.range.afterBrowserPreparation.rangeBytes !==
+      PRODUCT_METRICS.sourceReadBytes * 2 ||
+    headless.cleanup?.releasedBytes !==
+      PRODUCT_METRICS.uploadedBytes ||
+    headless.cleanup.rendererDisposed !== true ||
+    headless.cleanup.backendDisposed !== true ||
+    headless.cleanup.activeBackendBytes !== 0 ||
+    headless.cleanup.residentRanges !== 0
+  ) {
+    throw new Error(
+      "product-scale BIM federation geometry evidence is invalid",
+    );
+  }
+  const memory = plainRecord(
+    headless.memory,
+    "product-scale BIM federation memory evidence",
+  );
+  const performance = plainRecord(
+    headless.performance,
+    "product-scale BIM federation performance evidence",
+  );
+  if (
+    memory.budgetBytes !== 1_073_741_824 ||
+    !Number.isSafeInteger(memory.maximumResidentSetSizeBytes) ||
+    memory.maximumResidentSetSizeBytes <= 0 ||
+    memory.maximumResidentSetSizeBytes > memory.budgetBytes ||
+    !Number.isSafeInteger(memory.residentSetSizeBeforeMount) ||
+    !Number.isSafeInteger(memory.residentSetSizeAfterMount) ||
+    !Number.isSafeInteger(memory.residentSetDeltaBytes) ||
+    memory.residentSetDeltaBytes < 0 ||
+    performance.limits?.maximumSourceMs !== 5_000 ||
+    performance.limits.maximumProjectionMs !== 1_000 ||
+    performance.limits.maximumMountMs !== 5_000 ||
+    !Number.isFinite(performance.sourceMs) ||
+    performance.sourceMs < 0 ||
+    performance.sourceMs > performance.limits.maximumSourceMs ||
+    !Number.isFinite(performance.projectionMs) ||
+    performance.projectionMs < 0 ||
+    performance.projectionMs >
+      performance.limits.maximumProjectionMs ||
+    !Number.isFinite(performance.mountMs) ||
+    performance.mountMs < 0 ||
+    performance.mountMs > performance.limits.maximumMountMs
+  ) {
+    throw new Error(
+      "product-scale BIM federation budget evidence is invalid",
+    );
+  }
+  const browser = evidence.browser;
+  if (
+    browser?.environment?.headless !== true ||
+    browser.environment.webgl2 !==
+      "actual Browser API via SwiftShader" ||
+    browser.environment.physicalGpuClaimed !== false ||
+    !equalJson(
+      browser.federation?.sourceSlots,
+      PRODUCT_SOURCE_SLOTS,
+    ) ||
+    browser.federation.sourceIdentityMerged !== false ||
+    browser.federation.distinctCompositeNativeIds !== 53 ||
+    browser.federation
+      .largestDuplicateGlobalIdOccurrences !== 2 ||
+    browser.renderer?.backend !== "webgl2" ||
+    browser.renderer.actualGpu !== true ||
+    browser.renderer.rendered !== true ||
+    browser.renderer.glError !== 0 ||
+    browser.renderer.nonBackgroundPixels <= 0 ||
+    browser.renderer.selectedInstances !== 1 ||
+    browser.renderer.highlightedInstances !== 1 ||
+    browser.renderer.highlightPixels <= 0 ||
+    browser.renderer.sourceReadBytes !==
+      PRODUCT_METRICS.sourceReadBytes ||
+    browser.renderer.sourceReads !== PRODUCT_METRICS.sourceReads ||
+    browser.renderer.geometryPayloadBytes !==
+      PRODUCT_METRICS.geometryPayloadBytes ||
+    browser.renderer.geometryRecords !==
+      PRODUCT_METRICS.geometryRecords ||
+    browser.renderer.uniqueTriangles !==
+      PRODUCT_METRICS.uniqueTriangles ||
+    browser.renderer.instances !== PRODUCT_METRICS.instances ||
+    browser.renderer.instancedTriangles !==
+      PRODUCT_METRICS.instancedTriangles ||
+    browser.renderer.drawCalls !== PRODUCT_METRICS.drawCalls ||
+    browser.renderer.cpuStagingBytes !==
+      PRODUCT_METRICS.cpuStagingBytes ||
+    browser.renderer.uploadedBytes !==
+      PRODUCT_METRICS.uploadedBytes ||
+    browser.range?.clientReads !== PRODUCT_METRICS.sourceReads ||
+    browser.range.clientBytes !== PRODUCT_METRICS.sourceReadBytes ||
+    browser.range.serverRequests !== PRODUCT_METRICS.sourceReads ||
+    browser.range.serverBytes !== PRODUCT_METRICS.sourceReadBytes ||
+    browser.cleanup?.releasedBytes !== PRODUCT_METRICS.uploadedBytes ||
+    browser.cleanup.rendererDisposed !== true ||
+    browser.cleanup.sessionDisposed !== true ||
+    browser.cleanup.backendDisposed !== true ||
+    browser.cleanup.activeBackendBytes !== 0 ||
+    browser.cleanup.residentRanges !== 0 ||
+    !equalJson(browser.network?.externalOrigins, []) ||
+    !equalJson(browser.network?.runtimeErrors, [])
+  ) {
+    throw new Error(
+      "product-scale BIM federation Browser evidence is invalid",
+    );
+  }
+  if (
+    evidence.sourceCleanup?.projectionDisposed !== true ||
+    evidence.sourceCleanup.projectionOwnsSourceSessions !== false ||
+    evidence.sourceCleanup.underlyingSessionsRemainUsable !== true ||
+    evidence.sourceCleanup.federationReleasedSources !== 3 ||
+    evidence.sourceCleanup.federationDisposed !== true ||
+    evidence.sourceCleanup.sessionsDisposed !== 3 ||
+    evidence.sourceCleanup.sourcesDisposed !== 3 ||
+    !equalJson(evidence.sourceCleanup.sourceStates, [
+      {
+        format: "ifc",
+        rangeReads: 2,
+        rangeBytesRead: 1_992,
+        remainingReadBytes: 0,
+      },
+      {
+        format: "ifc",
+        rangeReads: 2,
+        rangeBytesRead: 1_992,
+        remainingReadBytes: 0,
+      },
+      {
+        format: "glb",
+        rangeReads: 34,
+        rangeBytesRead: 33_792_824,
+        remainingReadBytes: 0,
+      },
+    ]) ||
+    !equalJson(
+      Object.keys(plainRecord(
+        evidence.assertions,
+        "product-scale BIM federation assertions",
+      )),
+      PRODUCT_ASSERTION_KEYS,
+    ) ||
+    Object.values(evidence.assertions)
+      .some((value) => value !== true) ||
+    evidence.decision?.productScaleFederationPerformance !==
+      "passed-experimental" ||
+    evidence.decision.simultaneousMultiSourceFrame !==
+      "passed-two-generated-ifc-and-product-scale-glb" ||
+    evidence.decision.browserWebGl2 !== "passed-swiftshader" ||
+    evidence.decision.physicalGpu !== "not-claimed" ||
+    evidence.decision.surveyedDatumTransformation !==
+      "not-claimed" ||
+    evidence.decision.actualSpatialConsumer !==
+      "not-qualified-by-this-evidence" ||
+    evidence.decision.actualMultiFormatUserDemand !==
+      "not-qualified-by-this-evidence" ||
+    evidence.decision.write !== false ||
+    evidence.decision.roundTrip !== false ||
+    evidence.decision.productionClaims !== false ||
+    !Array.isArray(evidence.limitations) ||
+    evidence.limitations.length < 6 ||
+    /(?:\/Users\/|\/Volumes\/|[A-Z]:\\)/u.test(
+      JSON.stringify(evidence),
+    )
+  ) {
+    throw new Error(
+      "product-scale BIM federation cleanup or decision evidence is invalid",
+    );
+  }
+}
+
 export function validateBimFederationCompatibility(
   manifest,
   evidence,
+  productScaleEvidence,
 ) {
   plainRecord(manifest, "BIM federation manifest");
   validateBimFederationEvidence(evidence);
+  validateBimFederationProductScaleEvidence(
+    productScaleEvidence,
+  );
   if (
     manifest.schema !==
       "bim-explorer-federation-compatibility/1" ||
@@ -324,7 +683,10 @@ export function validateBimFederationCompatibility(
         "gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json" ||
     manifest.evidence?.gltfProductScaleReference !==
       "compatibility/evidence/" +
-        "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json"
+        "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json" ||
+    manifest.evidence?.productScaleFederation !==
+      "compatibility/evidence/" +
+        "bim-federation-product-scale-2026-08-08.json"
   ) {
     throw new Error(
       "BIM federation Gate inventory is invalid",
@@ -341,6 +703,7 @@ export function validateBimFederationCompatibility(
     policy.allowNonIfcSemanticAuthority !== false ||
     policy.claimQualifiedGltfCodec !== true ||
     policy.claimProductScaleGltfReference !== true ||
+    policy.claimProductScaleFederationPerformance !== true ||
     policy.claimUnqualifiedReferenceCodec !== false ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimUserDemand !== false ||
@@ -362,7 +725,7 @@ export function validateBimFederationCompatibility(
 }
 
 async function main() {
-  const [manifest, evidence] = await Promise.all([
+  const [manifest, evidence, productScaleEvidence] = await Promise.all([
     readFile(
       "compatibility/bim-federation.json",
       "utf8",
@@ -372,10 +735,16 @@ async function main() {
         "bim-federation-synthetic-2026-08-04.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "bim-federation-product-scale-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimFederationCompatibility(
     manifest,
     evidence,
+    productScaleEvidence,
   );
   process.stdout.write(
     `BIM federation compatibility check passed: ` +

@@ -22,6 +22,7 @@ bim-explorer-federation-alignment/0.1
 bim-explorer-federation-selection/0.1
 bim-explorer-federation-saved-view/0.1
 bim-explorer-reference-format-registry/0.1
+bim-explorer-federated-renderer-projection/0.1
 ```
 
 모든 consumer는 지원하지 않는 major identifier를 거부해야 합니다.
@@ -148,10 +149,30 @@ admission하지 않습니다.
 product-scale budget은 experimental codec admission과 별도의 production
 Gate입니다.
 
+## Derived renderer projection
+
+explicitly aligned source 두 개 이상은 source-neutral geometry range를 한
+read-only renderer snapshot으로 투영할 수 있습니다. projection은 다음을
+지켜야 합니다.
+
+- range handle, Render/Pick ID와 composite native ID를 source slot별로
+  namespacing
+- `(federationSourceId, source revision, native identity)` mapping 보존
+- storage-to-source와 source-to-federation transform의 명시적 합성
+- source별 projected bounds를 합친 federation-local bounds
+- source identity를 GlobalId 기준으로 merge하지 않음
+- supplied source session의 ownership을 획득하거나 dispose하지 않음
+
+projection fingerprint는 source revision, alignment와 exact derived geometry
+projection에 묶여야 합니다. projection은 display cache이며 semantic,
+write, round-trip 또는 Spatial authority를 갖지 않습니다.
+
 ## Bounds와 lifecycle
 
 기본 구현 상한은 source 32개, selection 512개, section plane 6개입니다.
 호출자가 더 작은 상한을 설정할 수 있습니다.
+derived renderer projection의 기본 상한은 source 8개, renderable entity와
+instance 각각 100,000개이며 호출자가 더 작은 상한을 설정할 수 있습니다.
 
 federation은 supplied source session의 ownership을 획득하지 않습니다.
 `dispose`는 federation descriptor와 selection/view state만 회수합니다.
@@ -163,7 +184,6 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 실제 Coni Spatial consumer와 standalone Spatial bundle
 - 실제 사용자 과업의 두 format 이상 수요
 - 측량 control point와 datum transformation
-- product-scale multi-source first-frame, memory와 cleanup
 - glTF/GLB external resource bundle와 required extension; bounded 제품
   file-open은 별도 product-shell evidence에서 통과
 - LAS/LAZ/E57와 3D Tiles parser/engine

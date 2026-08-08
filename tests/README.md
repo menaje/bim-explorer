@@ -106,6 +106,10 @@ Validator와 bounded source/headless renderer에 통과시킨 뒤 실제 Chrome
 SwiftShader WebGL2 first frame, range budget과 allocation cleanup을
 검증합니다. 이는 Browser/VS Code product file-open이나 physical GPU
 qualification이 아닙니다.
+`npm run qualify:federation:product-scale`은 같은 공개 GLB와 generated IFC
+두 source를 하나의 aligned renderer projection으로 구성해 headless/실제
+Chrome WebGL2 first frame, aggregate memory, source-scoped highlight와 모든
+range/session/GPU cleanup을 검사합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick
@@ -127,4 +131,6 @@ same-CRS·explicit Float64 alignment, single-source refresh와 cross-source
 saved view stale rejection을 검사합니다. 별도 generated glTF/GLB test는
 bounded reference source admission, source-native selection, IFC GlobalId
 부재, unaligned fail-closed, refresh와 semantic authority overclaim 거부를
-확인합니다. LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 admission되지 않습니다.
+확인합니다. renderer projection test는 aligned IFC/GLB range와 transform,
+composite identity, source-session 비소유 lifecycle을 검사합니다.
+LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 admission되지 않습니다.

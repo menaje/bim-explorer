@@ -304,8 +304,10 @@ view/query/write/round-trip Gate를 분리해 기록하고 실제 codec/SDK
 evidence 전에는 source admission을 거부합니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
-foundation을 통과했습니다. 실제 측량 coordinate, product-scale
-multi-source 성능, 실제 사용자 수요와 Spatial consumer는 별도 Gate입니다.
+foundation을 통과했습니다. derived renderer projection은 generated IFC
+두 source와 제품 규모 GLB 하나의 동시 first frame, aggregate memory와
+cleanup도 통과했습니다. 실제 측량 coordinate, 실제 사용자 수요와 Spatial
+consumer는 별도 Gate입니다.
 
 ## Spatial integration
 

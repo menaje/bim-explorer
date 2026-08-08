@@ -6,7 +6,7 @@ import {
   validateBimFederationCompatibility,
 } from "../../scripts/check-bim-federation-compatibility.mjs";
 
-const [manifest, evidence] = await Promise.all([
+const [manifest, evidence, productScaleEvidence] = await Promise.all([
   readFile(
     "compatibility/bim-federation.json",
     "utf8",
@@ -16,6 +16,11 @@ const [manifest, evidence] = await Promise.all([
       "bim-federation-synthetic-2026-08-04.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "bim-federation-product-scale-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("BIM federation admits IFC and qualified glTF references", () => {
@@ -23,11 +28,12 @@ test("BIM federation admits IFC and qualified glTF references", () => {
     validateBimFederationCompatibility(
       manifest,
       evidence,
+      productScaleEvidence,
     ),
     {
       status: "experimental",
-      passedGates: 17,
-      heldGates: 7,
+      passedGates: 18,
+      heldGates: 6,
       registeredFormats: 9,
     },
   );
@@ -40,6 +46,7 @@ test("BIM federation cannot merge native source identity", () => {
     () => validateBimFederationCompatibility(
       overclaim,
       evidence,
+      productScaleEvidence,
     ),
     /overclaims capability/u,
   );
@@ -52,6 +59,7 @@ test("held reference codecs cannot become supported without evidence", () => {
     () => validateBimFederationCompatibility(
       overclaim,
       evidence,
+      productScaleEvidence,
     ),
     /must remain held/u,
   );
@@ -64,7 +72,34 @@ test("federation evidence rejects datum transformation claims", () => {
     () => validateBimFederationCompatibility(
       manifest,
       overclaim,
+      productScaleEvidence,
     ),
     /coordinate evidence is invalid/u,
+  );
+});
+
+test("product-scale federation requires exact composite metrics", () => {
+  const invalid = structuredClone(productScaleEvidence);
+  invalid.browser.renderer.uniqueTriangles += 1;
+  assert.throws(
+    () => validateBimFederationCompatibility(
+      manifest,
+      evidence,
+      invalid,
+    ),
+    /Browser evidence is invalid/u,
+  );
+});
+
+test("product-scale federation requires deterministic cleanup", () => {
+  const invalid = structuredClone(productScaleEvidence);
+  invalid.sourceCleanup.projectionDisposed = false;
+  assert.throws(
+    () => validateBimFederationCompatibility(
+      manifest,
+      evidence,
+      invalid,
+    ),
+    /cleanup or decision evidence is invalid/u,
   );
 });

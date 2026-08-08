@@ -37,6 +37,23 @@ reference source 하나를 동시에 등록하고 다음을 재현합니다.
 [`synthetic evidence`](../compatibility/evidence/bim-federation-synthetic-2026-08-04.json)가
 소유합니다.
 
+제품 규모 Gate는 aligned source snapshot의 range handle, native identity와
+transform을 source slot별로 namespacing한 derived renderer projection을
+사용합니다. generated architecture/MEP IFC 두 개와 on-demand CC BY 4.0
+`A Beautiful Game` GLB를 동시에 올려 다음 결과를 고정했습니다.
+
+- 3 source, 53 entities/instances, 3 first-frame ranges
+- 573,976 unique triangles와 1,499,120 instanced triangles
+- 19회·16,898,404-byte source read와 16,902,256-byte GPU allocation
+- headless와 실제 Chrome SwiftShader WebGL2 first frame/highlight
+- renderer, projection, source session과 allocation의 deterministic cleanup
+
+근거는
+[`product-scale federation evidence`](../compatibility/evidence/bim-federation-product-scale-2026-08-08.json)가
+소유합니다. 두 IFC는 generated qualification fixture이고 GLB는 reference
+geometry이므로 실제 사용자 모델, Spatial consumer, 측량 datum 또는
+production federation을 증명하지 않습니다.
+
 ## Identity와 Spatial 경계
 
 ```text
@@ -110,8 +127,10 @@ Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
 두 CI 플랫폼은 동일한 model/resource/render projection과 cleanup을
 재현했습니다. 별도 product-scale source/renderer probe와 Browser, staged
 VS Code, clean-installed VSIX 제품 file-open도 통과했습니다. multi-source
-composite first-frame과 physical GPU는 계속 held입니다. 이 결과는 v0.1.0
-asset이나 broader glTF profile을 소급 승인하지 않습니다.
+composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모 GLB
+조합으로 통과했습니다. physical GPU와 실제 사용자/Spatial/survey evidence는
+계속 held입니다. 이 결과는 v0.1.0 asset이나 broader glTF profile을 소급
+승인하지 않습니다.
 
 실제 Spatial consumer와 standalone Spatial bundle은 Explorer 저장소가
 완료로 만들 수 없는 consumer-owned Gate입니다. 관련 진행은 Explorer

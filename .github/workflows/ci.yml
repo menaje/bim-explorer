@@ -94,6 +94,27 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Qualify product-scale BIM federation on Linux
+        if: runner.os == 'Linux'
+        run: >-
+          xvfb-run -a
+          npm run qualify:federation:product-scale --
+          --output bim-federation-product-scale-${{ runner.os }}.json
+
+      - name: Qualify product-scale BIM federation on macOS
+        if: runner.os == 'macOS'
+        run: >-
+          npm run qualify:federation:product-scale --
+          --output bim-federation-product-scale-${{ runner.os }}.json
+
+      - name: Upload product-scale BIM federation evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: bim-federation-product-scale-${{ runner.os }}
+          path: bim-federation-product-scale-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify product-scale glTF Browser product on Linux
         if: runner.os == 'Linux'
         run: >-

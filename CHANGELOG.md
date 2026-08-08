@@ -19,6 +19,9 @@
   path with bounded rendering, source-native search/pick and close cleanup;
 - reproduce the same product-scale projection in the staged VS Code Custom
   Editor and a clean-installed VSIX without bundling the public fixture;
+- compose two generated IFC sources and the pinned product-scale GLB in one
+  source-scoped federation projection, qualifying bounded headless/Chrome
+  WebGL2 first frame, aggregate memory and deterministic cleanup;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

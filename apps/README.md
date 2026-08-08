@@ -56,3 +56,10 @@ Chrome WebGL2로 render합니다. Box의 source-native pick과 대형 reference�
 first-frame/range/allocation cleanup을 확인하는 source/renderer qualification
 surface입니다. 제품 file-open은 별도 evidence가 소유하며, Browser 제품,
 staged VS Code와 clean-installed VSIX 경로도 같은 대형 GLB로 통과했습니다.
+
+[`federation-browser-probe`](federation-browser-probe/README.md)는 generated
+IFC 두 source와 42.98MB `A Beautiful Game` GLB를 source-scoped identity와
+explicit alignment가 보존된 한 projection으로 구성합니다. 실제 Chrome
+WebGL2 first frame, cross-source highlight, aggregate range/GPU budget과
+deterministic cleanup을 검증하며 Spatial authority·survey datum·physical
+GPU 또는 production federation을 주장하지 않습니다.
