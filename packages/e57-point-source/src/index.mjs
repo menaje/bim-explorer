@@ -122,7 +122,9 @@ export async function createE57PointSourceArtifact(
     const rangeDigest = await sha256(rangeBytes);
     const fingerprint = `sha256:${sourceDigest}`;
     const revisionId = `source-snapshot:${fingerprint}`;
-    const hasColor = decoded.header.fields.length === 6;
+    const hasColor = ["colorRed", "colorGreen", "colorBlue"]
+      .every((name) =>
+        decoded.header.fields.some((field) => field.name === name));
     return Object.freeze({
       schema: E57_POINT_SOURCE_CONTRACT,
       source: Object.freeze({
@@ -192,12 +194,16 @@ export async function createE57PointSourceArtifact(
         }),
         header: Object.freeze({
           decodedPointBytes: decoded.header.decodedPointBytes,
+          directionPointRecords:
+            decoded.header.directionPointRecords,
           formatVersion: decoded.header.formatVersion,
+          invalidPointRecords: decoded.header.invalidPointRecords,
           pageChecksum: decoded.header.pageChecksum,
           pageSize: decoded.header.pageSize,
           pages: decoded.header.pages,
           pointRecords: decoded.header.pointRecords,
           prototype: prototypeProfile(decoded.header.fields),
+          sourcePointRecords: decoded.header.sourcePointRecords,
           validPageChecksums:
             decoded.header.validPageChecksums,
           xmlLogicalLength: decoded.header.xmlLogicalLength,

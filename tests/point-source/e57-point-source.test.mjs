@@ -54,6 +54,10 @@ test("bounded E57 product source decodes the public colored cube", async () => {
       },
     );
     assert.equal(artifact.profile.header.validPageChecksums, 116);
+    assert.equal(artifact.profile.header.sourcePointRecords, 7_680);
+    assert.equal(artifact.profile.header.pointRecords, 7_680);
+    assert.equal(artifact.profile.header.directionPointRecords, 0);
+    assert.equal(artifact.profile.header.invalidPointRecords, 0);
     assert.equal(artifact.profile.packets.dataPackets, 3);
     assert.equal(artifact.profile.packets.indexPackets, 1);
     assert.equal(

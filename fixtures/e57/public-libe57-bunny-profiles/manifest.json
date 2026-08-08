@@ -1,0 +1,118 @@
+{
+  "schema": "bim-explorer-public-e57-profile-fixtures/1",
+  "fixtureSetId": "libe57format-bunny-coordinate-profiles",
+  "format": "e57",
+  "purpose": "cache-only Float64, ScaledInteger, indexless compressed-vector and Cartesian validity profile qualification",
+  "provenance": {
+    "repository": "https://github.com/asmaloney/libE57Format-test-data",
+    "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+    "committedAt": "2026-08-04T16:42:49Z"
+  },
+  "license": {
+    "identifier": "LicenseRef-E57-Test-Data",
+    "url": "https://github.com/asmaloney/libE57Format-test-data/blob/1ca737e03d6277c384f1b05c4046e10caab331b5/README.md#licensing",
+    "scope": "reference directory test data"
+  },
+  "tracking": {
+    "cacheRoot": ".bim-explorer-cache/public-reference/e57",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "testOnly": true,
+    "networkAtRuntime": false
+  },
+  "referenceDecoder": {
+    "id": "pye57",
+    "version": "0.4.19",
+    "repository": "https://github.com/davidcaron/pye57",
+    "commit": "64c9000738ad54242e87e1da6bca6b683b13374b",
+    "libE57FormatCommit": "1914b8ea972251d3bb49a33828497dde683205d9",
+    "license": "MIT",
+    "positionEncoding": "record-major-cartesian-xyz-float64-little-endian",
+    "runtimeBundled": false,
+    "usedForExpectedResultsOnly": true
+  },
+  "entries": [
+    {
+      "fixtureId": "libe57format-bunny-double-e57",
+      "name": "bunnyDouble.e57",
+      "path": "reference/bunnyDouble.e57",
+      "sourcePage": "https://github.com/asmaloney/libE57Format-test-data/blob/1ca737e03d6277c384f1b05c4046e10caab331b5/reference/bunnyDouble.e57",
+      "rawUrl": "https://raw.githubusercontent.com/asmaloney/libE57Format-test-data/1ca737e03d6277c384f1b05c4046e10caab331b5/reference/bunnyDouble.e57",
+      "mediaType": "application/octet-stream",
+      "byteLength": 743424,
+      "sha256": "5ec10af7a8b4cf7778d247ea20b2c3058e6488b55ef102ae187373d5cbe8b056",
+      "expected": {
+        "formatVersion": "1.0",
+        "pageSize": 1024,
+        "pages": 726,
+        "xmlPhysicalOffset": 740736,
+        "xmlLogicalLength": 2172,
+        "sourcePointRecords": 30571,
+        "pointRecords": 30571,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "decodedPointBytes": 886559,
+        "prototype": [
+          { "name": "cartesianX", "kind": "double", "bitSize": 64, "minimum": -0.094689, "maximum": 0.187321, "scale": 1, "offset": 0 },
+          { "name": "cartesianY", "kind": "double", "bitSize": 64, "minimum": -0.094689, "maximum": 0.187321, "scale": 1, "offset": 0 },
+          { "name": "cartesianZ", "kind": "double", "bitSize": 64, "minimum": -0.094689, "maximum": 0.187321, "scale": 1, "offset": 0 },
+          { "name": "cartesianInvalidState", "kind": "integer", "bitSize": 1, "minimum": 0, "maximum": 1, "scale": 1, "offset": 0 }
+        ],
+        "bounds": {
+          "min": [-0.094689, 0.040011, -0.061873],
+          "max": [0.061008999999999994, 0.187321, 0.058799]
+        },
+        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
+        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
+        "dataPackets": 15,
+        "indexPackets": 0,
+        "sectionLength": 737796,
+        "pointRangeByteLength": 489184,
+        "pointRangePayloadBytes": 489136,
+        "pointRangeSha256": "500c94ed39bfb57abbdc7346a5d63f0fc6e64fe999872c770f136db7033a9b4d"
+      }
+    },
+    {
+      "fixtureId": "libe57format-bunny-scaled-integer-e57",
+      "name": "bunnyInt32.e57",
+      "path": "reference/bunnyInt32.e57",
+      "sourcePage": "https://github.com/asmaloney/libE57Format-test-data/blob/1ca737e03d6277c384f1b05c4046e10caab331b5/reference/bunnyInt32.e57",
+      "rawUrl": "https://raw.githubusercontent.com/asmaloney/libE57Format-test-data/1ca737e03d6277c384f1b05c4046e10caab331b5/reference/bunnyInt32.e57",
+      "mediaType": "application/octet-stream",
+      "byteLength": 374784,
+      "sha256": "6b3696c452a2dd0e325ab30b1ad28a40de87f1a56cd9d8a24ad81389b606c205",
+      "expected": {
+        "formatVersion": "1.0",
+        "pageSize": 1024,
+        "pages": 366,
+        "xmlPhysicalOffset": 372332,
+        "xmlLogicalLength": 2216,
+        "sourcePointRecords": 30571,
+        "pointRecords": 30571,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "decodedPointBytes": 886559,
+        "prototype": [
+          { "name": "cartesianX", "kind": "scaled-integer", "bitSize": 32, "minimum": -2147483648, "maximum": 2147483647, "scale": 0.000001, "offset": 0 },
+          { "name": "cartesianY", "kind": "scaled-integer", "bitSize": 32, "minimum": -2147483648, "maximum": 2147483647, "scale": 0.000001, "offset": 0 },
+          { "name": "cartesianZ", "kind": "scaled-integer", "bitSize": 32, "minimum": -2147483648, "maximum": 2147483647, "scale": 0.000001, "offset": 0 },
+          { "name": "cartesianInvalidState", "kind": "integer", "bitSize": 1, "minimum": 0, "maximum": 1, "scale": 1, "offset": 0 }
+        ],
+        "bounds": {
+          "min": [-0.094689, 0.040011, -0.061873],
+          "max": [0.061008999999999994, 0.187321, 0.058799]
+        },
+        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
+        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
+        "dataPackets": 8,
+        "indexPackets": 0,
+        "sectionLength": 370832,
+        "pointRangeByteLength": 489184,
+        "pointRangePayloadBytes": 489136,
+        "pointRangeSha256": "500c94ed39bfb57abbdc7346a5d63f0fc6e64fe999872c770f136db7033a9b4d"
+      }
+    }
+  ]
+}

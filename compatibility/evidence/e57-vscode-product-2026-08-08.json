@@ -2,7 +2,7 @@
   "schema": "bim-explorer-e57-vscode-product-evidence/1",
   "status": "passed-experimental-vscode-product-open",
   "asOf": "2026-08-08",
-  "capturedAt": "2026-08-08T12:01:53.888Z",
+  "capturedAt": "2026-08-08T12:43:30.994Z",
   "environment": {
     "platform": "darwin-arm64",
     "node": "v24.11.1",
@@ -41,9 +41,9 @@
           "ranges": 1
         },
         "performance": {
-          "artifactMs": 23.400000005960464,
+          "artifactMs": 24.100000001490116,
           "sourceMs": 0,
-          "totalMs": 24.700000002980232
+          "totalMs": 25.600000001490116
         },
         "resources": {
           "decodedPointBytes": 215040,
@@ -140,10 +140,10 @@
       "package": {
         "id": "menaje.bim-explorer",
         "version": "0.1.0",
-        "byteLength": 1325330,
+        "byteLength": 1328089,
         "installedRuntimeFiles": 13,
         "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
-        "pointWorkerBundleSha256": "08e80b89b0243dd2a22bea2b131655587ebe86552d8f51aabba3aee59f73e5d1",
+        "pointWorkerBundleSha256": "58518370c02caa5edd6a0904c4fb2c846ff6510f28f7770a53c2f7610de0eb2c",
         "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
         "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
       },
@@ -196,9 +196,9 @@
             "ranges": 1
           },
           "performance": {
-            "artifactMs": 26.299999997019768,
+            "artifactMs": 23.5,
             "sourceMs": 0,
-            "totalMs": 28.600000001490116
+            "totalMs": 24.700000002980232
           },
           "resources": {
             "decodedPointBytes": 215040,

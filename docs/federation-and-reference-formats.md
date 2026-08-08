@@ -140,8 +140,12 @@ default-BitPack scan의 7,680개 record를 해제해 122,880-byte point payload�
 exact buffer cleanup을 통과했습니다. 후속 실제 Browser local file input,
 staged VS Code Custom Editor와 clean-installed VSIX는 동일한 7,680 points,
 39,561 pixels, path-free bridge와 source/Worker/CPU/GPU cleanup을 재현했습니다.
-CRS, scan pose, surveyed datum, broader profile과 point identity/picking·LOD가
-없으므로 E57 admission은 계속 `held`입니다.
+추가 cache-only matrix는 동일한 30,571개 점을 Float64와 ScaledInteger로
+표현한 두 공개 E57을 독립 `pye57/libE57Format` position digest와 비교해 exact
+parity를 확인하고, indexless compressed-vector 및 `cartesianInvalidState`
+direction 필터를 통과했습니다. CRS, scan pose 적용, surveyed datum, spherical
+및 multiple-scan profile과 point identity/picking·LOD가 없으므로 E57
+admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

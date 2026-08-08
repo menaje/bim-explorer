@@ -2,10 +2,10 @@
   "schema": "bim-explorer-e57-browser-product-evidence/1",
   "status": "passed-experimental-browser-product-open",
   "asOf": "2026-08-08",
-  "capturedAt": "2026-08-08T11:55:05.727Z",
+  "capturedAt": "2026-08-08T12:43:05.298Z",
   "surface": {
     "schema": "bim-explorer-product-shell-browser-evidence/1",
-    "capturedAt": "2026-08-08T11:55:05.559Z",
+    "capturedAt": "2026-08-08T12:43:05.120Z",
     "environment": {
       "browser": "Google Chrome 151.0.7922.108",
       "headless": true,
@@ -36,9 +36,9 @@
         "ranges": 1
       },
       "performance": {
-        "artifactMs": 29.785000003874302,
+        "artifactMs": 27.95500000566244,
         "sourceMs": 0,
-        "totalMs": 33.774999998509884
+        "totalMs": 31.934999994933605
       },
       "resources": {
         "decodedPointBytes": 215040,

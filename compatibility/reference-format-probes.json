@@ -8,6 +8,9 @@
     "e57EnvelopeInspection": true,
     "e57PhysicalPageIntegrity": true,
     "e57MetadataProfile": true,
+    "e57CoordinateRepresentations": true,
+    "e57CartesianValidityFiltering": true,
+    "e57IndexlessCompressedVector": true,
     "lasHeaderInspection": true,
     "lazHeaderInspection": true,
     "lasPointDecode": true,
@@ -32,6 +35,7 @@
   },
   "evidence": {
     "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
+    "e57ProfileMatrix": "compatibility/evidence/e57-profile-matrix-2026-08-08.json",
     "e57BrowserProduct": "compatibility/evidence/e57-browser-product-2026-08-08.json",
     "e57VscodeProduct": "compatibility/evidence/e57-vscode-product-2026-08-08.json",
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
@@ -49,7 +53,7 @@
   "limitations": [
     "the samples are downloaded on demand into ignored digest caches",
     "sample files are not tracked, redistributed or included in a release",
-    "the E57 Browser and VS Code products cover one single-scan Cartesian XYZ/RGB default-BitPack profile without CRS authority",
+    "the E57 Browser and VS Code products cover one single-scan Cartesian XYZ/RGB profile; the same product Worker additionally passes Float64 and ScaledInteger XYZ, indexless compressed-vector and Cartesian validity source qualification without CRS authority",
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
     "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",

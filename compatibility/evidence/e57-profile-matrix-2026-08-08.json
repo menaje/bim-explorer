@@ -1,0 +1,234 @@
+{
+  "schema": "bim-explorer-e57-profile-matrix-evidence/1",
+  "status": "passed-bounded-profile-expansion",
+  "asOf": "2026-08-08",
+  "fixtureSet": {
+    "id": "libe57format-bunny-coordinate-profiles",
+    "repository": "https://github.com/asmaloney/libE57Format-test-data",
+    "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+    "license": "LicenseRef-E57-Test-Data",
+    "testOnly": true,
+    "artifactTracked": false,
+    "releaseBundled": false
+  },
+  "referenceDecoder": {
+    "id": "pye57",
+    "version": "0.4.19",
+    "repository": "https://github.com/davidcaron/pye57",
+    "commit": "64c9000738ad54242e87e1da6bca6b683b13374b",
+    "libE57FormatCommit": "1914b8ea972251d3bb49a33828497dde683205d9",
+    "license": "MIT",
+    "positionEncoding": "record-major-cartesian-xyz-float64-little-endian",
+    "runtimeBundled": false,
+    "usedForExpectedResultsOnly": true
+  },
+  "profiles": [
+    {
+      "fixtureId": "libe57format-bunny-double-e57",
+      "name": "bunnyDouble.e57",
+      "sourceBytes": 743424,
+      "sourceSha256": "5ec10af7a8b4cf7778d247ea20b2c3058e6488b55ef102ae187373d5cbe8b056",
+      "coordinateRepresentation": "double",
+      "header": {
+        "formatVersion": "1.0",
+        "pageSize": 1024,
+        "pages": 726,
+        "xmlPhysicalOffset": 740736,
+        "xmlLogicalLength": 2172,
+        "sourcePointRecords": 30571,
+        "pointRecords": 30571,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "decodedPointBytes": 886559,
+        "prototype": [
+          {
+            "name": "cartesianX",
+            "kind": "double",
+            "bitSize": 64,
+            "minimum": -0.094689,
+            "maximum": 0.187321,
+            "scale": 1,
+            "offset": 0
+          },
+          {
+            "name": "cartesianY",
+            "kind": "double",
+            "bitSize": 64,
+            "minimum": -0.094689,
+            "maximum": 0.187321,
+            "scale": 1,
+            "offset": 0
+          },
+          {
+            "name": "cartesianZ",
+            "kind": "double",
+            "bitSize": 64,
+            "minimum": -0.094689,
+            "maximum": 0.187321,
+            "scale": 1,
+            "offset": 0
+          },
+          {
+            "name": "cartesianInvalidState",
+            "kind": "integer",
+            "bitSize": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "scale": 1,
+            "offset": 0
+          }
+        ]
+      },
+      "decode": {
+        "bounds": {
+          "min": [-0.094689, 0.040011, -0.061873],
+          "max": [0.061008999999999994, 0.187321, 0.058799]
+        },
+        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
+        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
+        "dataPackets": 15,
+        "indexPackets": 0,
+        "sectionLength": 737796
+      },
+      "pointSource": {
+        "contract": "bim-explorer-e57-point-source/0.1",
+        "pointFormat": "cartesian-xyz",
+        "points": 30571,
+        "pointRangeByteLength": 489184,
+        "pointRangePayloadBytes": 489136,
+        "pointRangeSha256": "500c94ed39bfb57abbdc7346a5d63f0fc6e64fe999872c770f136db7033a9b4d",
+        "maximumProjectionError": 3.7231445287888576e-9
+      }
+    },
+    {
+      "fixtureId": "libe57format-bunny-scaled-integer-e57",
+      "name": "bunnyInt32.e57",
+      "sourceBytes": 374784,
+      "sourceSha256": "6b3696c452a2dd0e325ab30b1ad28a40de87f1a56cd9d8a24ad81389b606c205",
+      "coordinateRepresentation": "scaled-integer",
+      "header": {
+        "formatVersion": "1.0",
+        "pageSize": 1024,
+        "pages": 366,
+        "xmlPhysicalOffset": 372332,
+        "xmlLogicalLength": 2216,
+        "sourcePointRecords": 30571,
+        "pointRecords": 30571,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "decodedPointBytes": 886559,
+        "prototype": [
+          {
+            "name": "cartesianX",
+            "kind": "scaled-integer",
+            "bitSize": 32,
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "scale": 0.000001,
+            "offset": 0
+          },
+          {
+            "name": "cartesianY",
+            "kind": "scaled-integer",
+            "bitSize": 32,
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "scale": 0.000001,
+            "offset": 0
+          },
+          {
+            "name": "cartesianZ",
+            "kind": "scaled-integer",
+            "bitSize": 32,
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "scale": 0.000001,
+            "offset": 0
+          },
+          {
+            "name": "cartesianInvalidState",
+            "kind": "integer",
+            "bitSize": 1,
+            "minimum": 0,
+            "maximum": 1,
+            "scale": 1,
+            "offset": 0
+          }
+        ]
+      },
+      "decode": {
+        "bounds": {
+          "min": [-0.094689, 0.040011, -0.061873],
+          "max": [0.061008999999999994, 0.187321, 0.058799]
+        },
+        "firstPoint": [-0.07063, 0.04015, 0.0012259999999999999],
+        "lastPoint": [-0.037829, 0.12794, 0.004474],
+        "positionFloat64LeSha256": "dcdbc49b64fc068442b69f440252ec96fc0a7b8bdbf5bdd68755d83b3962cfef",
+        "dataPackets": 8,
+        "indexPackets": 0,
+        "sectionLength": 370832
+      },
+      "pointSource": {
+        "contract": "bim-explorer-e57-point-source/0.1",
+        "pointFormat": "cartesian-xyz",
+        "points": 30571,
+        "pointRangeByteLength": 489184,
+        "pointRangePayloadBytes": 489136,
+        "pointRangeSha256": "500c94ed39bfb57abbdc7346a5d63f0fc6e64fe999872c770f136db7033a9b4d",
+        "maximumProjectionError": 3.7231445287888576e-9
+      }
+    }
+  ],
+  "validityFilter": {
+    "sourcePointRecords": 30571,
+    "pointRecords": 30570,
+    "directionPointRecords": 1,
+    "invalidPointRecords": 0,
+    "firstDirectionRecordRemoved": true,
+    "pageChecksumRevalidated": true
+  },
+  "capabilities": {
+    "float64Coordinates": true,
+    "scaledIntegerCoordinates": true,
+    "indexlessCompressedVector": true,
+    "cartesianInvalidState": true,
+    "pointRange": true
+  },
+  "cleanup": {
+    "downloadBuffersCleared": true,
+    "decoderBuffersCleared": true,
+    "pointRangesCleared": true,
+    "mutationBufferCleared": true
+  },
+  "decision": {
+    "productProfileExpanded": true,
+    "coordinateReference": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false
+  },
+  "assertions": {
+    "pinnedProfileFixtures": true,
+    "allPhysicalPageChecksums": true,
+    "float64CoordinateDecode": true,
+    "scaledIntegerCoordinateDecode": true,
+    "indexlessCompressedVector": true,
+    "cartesianInvalidStateDecode": true,
+    "cartesianDirectionRecordFiltered": true,
+    "independentReferenceParity": true,
+    "coordinateRepresentationParity": true,
+    "boundedPointRange": true,
+    "decoderBuffersCleared": true,
+    "cacheOnlyTestUse": true,
+    "sampleNotTrackedOrBundled": true,
+    "formatAdmissionHeld": true,
+    "pathFreeEvidence": true
+  },
+  "limitations": [
+    "the two public samples contain only cartesianInvalidState zero records; a checksum-valid in-memory derivative qualifies state-one direction filtering",
+    "spherical coordinates, scan pose, multiple scans, extension records, point identity, picking and LOD streaming remain outside the bounded profile",
+    "pye57/libE57Format was used only to capture the independent canonical position digest and is not a product or release dependency",
+    "the public E57 binaries remain in an ignored digest cache and are not redistributed",
+    "coordinate authority and E57 format admission remain held"
+  ]
+}

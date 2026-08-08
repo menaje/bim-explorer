@@ -70,8 +70,18 @@ XYZ/RGB, empty codec vector의 3개 data packet을 모두 해제해 독립 refer
 cleanup을 재현했습니다. 후속 Browser, staged VS Code와 clean-installed VSIX
 제품 Gate는 같은 7,680 points·122,880-byte GPU payload·39,561 pixels,
 path-free bridge와 source/Worker/CPU/GPU cleanup을 재현했습니다. 다만 CRS,
-scan pose, surveyed datum, broader scan/profile과 point identity/picking·LOD가
-없으므로 E57 admission과 `pointCloudCodec`은 계속 held입니다.
+scan pose, surveyed datum과 point identity/picking·LOD가 없으므로 E57
+admission과 `pointCloudCodec`은 계속 held입니다.
+
+후속 profile matrix는 같은 고정 commit의 Test Data License 대상
+`bunnyDouble.e57`과 `bunnyInt32.e57`을 재배포하지 않고 cache-only로 사용합니다.
+두 파일은 각각 Float64와 scale `1e-6` ScaledInteger XYZ를 쓰며, index packet이
+없는 compressed-vector와 optional `cartesianInvalidState`를 포함합니다. 자체
+decoder의 30,571개 유효점은 독립 `pye57@0.4.19/libE57Format` 기준과 동일한
+record-major Float64 position SHA-256을 만들었습니다. checksum-valid in-memory
+derivative로 state 1 direction record가 bounds·range 투영 전에 제거되는 것도
+검증했습니다. spherical coordinate, pose 적용, multiple scan과 extension
+record는 여전히 profile 밖입니다.
 
 두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
 고정 commit에서 내려받습니다. exact `laz-perf@0.0.6` Apache-2.0 dependency로

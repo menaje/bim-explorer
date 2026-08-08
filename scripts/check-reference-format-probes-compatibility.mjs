@@ -5,6 +5,9 @@ import {
   validateE57PublicSampleProbe,
 } from "./qualify-e57-public-sample.mjs";
 import {
+  validateE57ProfileMatrixQualification,
+} from "./qualify-e57-profile-matrix.mjs";
+import {
   validateE57BrowserProductQualification,
 } from "./qualify-e57-browser-product.mjs";
 import {
@@ -32,6 +35,9 @@ const PASSED_GATES = Object.freeze([
   "e57EnvelopeInspection",
   "e57PhysicalPageIntegrity",
   "e57MetadataProfile",
+  "e57CoordinateRepresentations",
+  "e57CartesianValidityFiltering",
+  "e57IndexlessCompressedVector",
   "e57PointDecode",
   "e57Renderer",
   "e57BrowserProductOpen",
@@ -60,6 +66,7 @@ const HELD_GATES = Object.freeze([
 export function validateReferenceFormatProbeCompatibility(
   manifest,
   e57Evidence,
+  e57ProfileMatrixEvidence,
   e57BrowserProductEvidence,
   e57VscodeProductEvidence,
   lasLazEvidence,
@@ -69,6 +76,7 @@ export function validateReferenceFormatProbeCompatibility(
   lasLazVscodeProductEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
+  validateE57ProfileMatrixQualification(e57ProfileMatrixEvidence);
   validateE57BrowserProductQualification(
     e57BrowserProductEvidence,
   );
@@ -96,6 +104,9 @@ export function validateReferenceFormatProbeCompatibility(
     manifest.evidence?.e57PublicSample !==
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json" ||
+    manifest.evidence?.e57ProfileMatrix !==
+      "compatibility/evidence/" +
+        "e57-profile-matrix-2026-08-08.json" ||
     manifest.evidence?.e57BrowserProduct !==
       "compatibility/evidence/" +
         "e57-browser-product-2026-08-08.json" ||
@@ -174,6 +185,7 @@ async function main() {
   const [
     manifest,
     e57Evidence,
+    e57ProfileMatrixEvidence,
     e57BrowserProductEvidence,
     e57VscodeProductEvidence,
     lasLazEvidence,
@@ -187,6 +199,11 @@ async function main() {
     readFile(
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "e57-profile-matrix-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
     readFile(
@@ -229,6 +246,7 @@ async function main() {
     validateReferenceFormatProbeCompatibility(
       manifest,
       e57Evidence,
+      e57ProfileMatrixEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,

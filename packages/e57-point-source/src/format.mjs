@@ -14,7 +14,7 @@ const MAXIMUM_XML_BYTES = 1024 * 1024;
 const SECTION_HEADER_BYTES = 32;
 const DATA_PACKET_HEADER_BYTES = 6;
 const INDEX_PACKET_HEADER_BYTES = 16;
-const MAXIMUM_PROTOTYPE_FIELDS = 6;
+const MAXIMUM_PROTOTYPE_FIELDS = 7;
 const COORDINATES = Object.freeze([
   "cartesianX",
   "cartesianY",
@@ -25,7 +25,12 @@ const COLORS = Object.freeze([
   "colorGreen",
   "colorBlue",
 ]);
-const FIELDS = new Set([...COORDINATES, ...COLORS]);
+const CARTESIAN_INVALID_STATE = "cartesianInvalidState";
+const FIELDS = new Set([
+  ...COORDINATES,
+  ...COLORS,
+  CARTESIAN_INVALID_STATE,
+]);
 const CRC32C_POLYNOMIAL = 0x82f63b78;
 
 const CRC32C_TABLE = Uint32Array.from(
@@ -262,7 +267,34 @@ function prototypeFields(body) {
       throw new RangeError(`E57 ${field.name} bounds are invalid`);
     }
   }
+  const invalidState = fields.find(
+    (field) => field.name === CARTESIAN_INVALID_STATE,
+  );
+  if (
+    invalidState !== undefined &&
+    (
+      invalidState.kind !== "integer" ||
+      invalidState.minimum !== 0 ||
+      ![1, 2].includes(invalidState.maximum) ||
+      invalidState.scale !== 1 ||
+      invalidState.offset !== 0
+    )
+  ) {
+    throw new TypeError(
+      "E57 cartesianInvalidState profile is unsupported",
+    );
+  }
   return Object.freeze(fields);
+}
+
+function decodedPointBytes(fields, recordCount) {
+  const names = new Set(fields.map((field) => field.name));
+  const hasColor = COLORS.every((name) => names.has(name));
+  const hasInvalidState = names.has(CARTESIAN_INVALID_STATE);
+  const bytesPerRecord = 28 +
+    (hasInvalidState ? 1 : 0) +
+    (hasColor && hasInvalidState ? 24 : 0);
+  return recordCount * bytesPerRecord;
 }
 
 function parseXml(xml, limits) {
@@ -304,11 +336,9 @@ function parseXml(xml, limits) {
     "recordCount",
     "E57 points",
   );
-  const decodedPointBytes = recordCount * 28;
   if (
     recordCount <= 0 ||
-    recordCount > limits.maximumPoints ||
-    decodedPointBytes > limits.maximumDecodedPointBytes
+    recordCount > limits.maximumPoints
   ) {
     throw new RangeError("E57 point count exceeds its bounded profile");
   }
@@ -350,9 +380,14 @@ function parseXml(xml, limits) {
   ) {
     throw new TypeError("E57 point metadata profile is unsupported");
   }
+  const fields = prototypeFields(prototypes[0][2]);
+  const decodedBytes = decodedPointBytes(fields, recordCount);
+  if (decodedBytes > limits.maximumDecodedPointBytes) {
+    throw new RangeError("E57 point count exceeds its bounded profile");
+  }
   return Object.freeze({
-    decodedPointBytes,
-    fields: prototypeFields(prototypes[0][2]),
+    decodedPointBytes: decodedBytes,
+    fields,
     fileOffset,
     recordCount,
   });
@@ -561,31 +596,42 @@ function decodePackets(logical, header, pointProfile) {
     header.pageSize,
     "E57 compressed-vector data offset",
   );
-  const indexOffset = physicalToLogical(
-    indexPhysicalOffset,
-    header.physicalLength,
-    header.pageSize,
-    "E57 compressed-vector index offset",
-  );
   const sectionEnd = sectionStart + sectionLength;
+  const indexOffset = indexPhysicalOffset === 0
+    ? null
+    : physicalToLogical(
+        indexPhysicalOffset,
+        header.physicalLength,
+        header.pageSize,
+        "E57 compressed-vector index offset",
+      );
+  const dataEnd = indexOffset ?? sectionEnd;
   if (
     dataOffset !== sectionStart + SECTION_HEADER_BYTES ||
-    indexOffset <= dataOffset ||
-    sectionEnd <= indexOffset ||
+    dataEnd <= dataOffset ||
+    (indexOffset !== null && sectionEnd <= indexOffset) ||
     sectionEnd > header.xmlLogicalOffset
   ) {
     throw new RangeError("E57 compressed-vector range is invalid");
   }
   const fields = pointProfile.fields;
+  const names = new Set(fields.map((field) => field.name));
+  const hasColor = COLORS.every((name) => names.has(name));
+  const invalidStateField = fields.findIndex(
+    (field) => field.name === CARTESIAN_INVALID_STATE,
+  );
+  const hasInvalidState = invalidStateField !== -1;
   const streams = fields.map(() => new BitStream());
   const rawPositions = new Float64Array(
     pointProfile.recordCount * 3,
   );
   const colors = new Uint8Array(pointProfile.recordCount * 4);
-  const rawBounds = {
-    min: [Infinity, Infinity, Infinity],
-    max: [-Infinity, -Infinity, -Infinity],
-  };
+  const invalidStates = hasInvalidState
+    ? new Uint8Array(pointProfile.recordCount)
+    : null;
+  const rawColorValues = hasColor && hasInvalidState
+    ? new Float64Array(pointProfile.recordCount * 3)
+    : null;
   const rawColorRange = {
     min: [Infinity, Infinity, Infinity],
     max: [-Infinity, -Infinity, -Infinity],
@@ -600,8 +646,8 @@ function decodePackets(logical, header, pointProfile) {
   let dataPackets = 0;
   let indexPackets = 0;
   try {
-    const cursor = new Cursor(logical, dataOffset, indexOffset);
-    while (cursor.offset < indexOffset) {
+    const cursor = new Cursor(logical, dataOffset, dataEnd);
+    while (cursor.offset < dataEnd) {
       const packetStart = cursor.offset;
       const packetHeader = cursor.read(
         DATA_PACKET_HEADER_BYTES,
@@ -621,7 +667,7 @@ function decodePackets(logical, header, pointProfile) {
         streamCount !== fields.length ||
         packetLength % 4 !== 0 ||
         packetLength < DATA_PACKET_HEADER_BYTES + streamCount * 2 ||
-        packetEnd > indexOffset
+        packetEnd > dataEnd
       ) {
         throw new Error("E57 data packet header is invalid");
       }
@@ -676,34 +722,32 @@ function decodePackets(logical, header, pointProfile) {
           const target = records + index;
           if (coordinate !== undefined) {
             rawPositions[target * 3 + coordinate] = value;
-            rawBounds.min[coordinate] = Math.min(
-              rawBounds.min[coordinate],
-              value,
-            );
-            rawBounds.max[coordinate] = Math.max(
-              rawBounds.max[coordinate],
-              value,
-            );
           } else if (color !== undefined) {
             colors[target * 4 + color] = colorByte(
               value,
               bounds,
               `E57 ${field.name}`,
             );
-            rawColorRange.min[color] = Math.min(
-              rawColorRange.min[color],
-              value,
-            );
-            rawColorRange.max[color] = Math.max(
-              rawColorRange.max[color],
-              value,
-            );
+            if (rawColorValues === null) {
+              rawColorRange.min[color] = Math.min(
+                rawColorRange.min[color],
+                value,
+              );
+              rawColorRange.max[color] = Math.max(
+                rawColorRange.max[color],
+                value,
+              );
+            } else {
+              rawColorValues[target * 3 + color] = value;
+            }
+          } else if (fieldIndex === invalidStateField) {
+            invalidStates[target] = value;
           }
         }
       }
       for (let index = 0; index < count; index += 1) {
         const target = records + index;
-        if (fields.length === 3) {
+        if (!hasColor) {
           colors.fill(255, target * 4, target * 4 + 4);
         } else {
           colors[target * 4 + 3] = 255;
@@ -716,45 +760,126 @@ function decodePackets(logical, header, pointProfile) {
       throw new Error("E57 decoded point count is incomplete");
     }
     fields.forEach((field, index) => {
-      if (
-        field.bitSize > 0 &&
-        streams[index].availableBits >= field.bitSize
-      ) {
+      const remaining = streams[index].availableBits;
+      const expectedPadding = field.bitSize === 0
+        ? 0
+        : (8 - pointProfile.recordCount * field.bitSize % 8) % 8;
+      if (remaining !== expectedPadding) {
         throw new Error(`E57 ${field.name} stream has extra records`);
       }
-    });
-    const indexCursor = new Cursor(logical, indexOffset, sectionEnd);
-    while (indexCursor.offset < sectionEnd) {
-      const packetStart = indexCursor.offset;
-      const packetHeader = indexCursor.read(
-        INDEX_PACKET_HEADER_BYTES,
-        "E57 index packet header",
-      );
-      const packetView = new DataView(
-        packetHeader.buffer,
-        packetHeader.byteOffset,
-        packetHeader.byteLength,
-      );
-      const packetLength = packetView.getUint16(2, true) + 1;
       if (
-        packetHeader[0] !== 0 ||
-        packetLength < INDEX_PACKET_HEADER_BYTES ||
-        packetLength % 4 !== 0 ||
-        packetStart + packetLength > sectionEnd
+        remaining > 0 &&
+        streams[index].extract(remaining) !== 0n
       ) {
-        throw new Error("E57 index packet header is invalid");
+        throw new Error(`E57 ${field.name} padding is invalid`);
       }
-      indexCursor.skip(
-        packetLength - INDEX_PACKET_HEADER_BYTES,
-        "E57 index packet payload",
+    });
+    if (indexOffset !== null) {
+      const indexCursor = new Cursor(
+        logical,
+        indexOffset,
+        sectionEnd,
       );
-      indexPackets += 1;
+      while (indexCursor.offset < sectionEnd) {
+        const packetStart = indexCursor.offset;
+        const packetHeader = indexCursor.read(
+          INDEX_PACKET_HEADER_BYTES,
+          "E57 index packet header",
+        );
+        const packetView = new DataView(
+          packetHeader.buffer,
+          packetHeader.byteOffset,
+          packetHeader.byteLength,
+        );
+        const packetLength = packetView.getUint16(2, true) + 1;
+        if (
+          packetHeader[0] !== 0 ||
+          packetLength < INDEX_PACKET_HEADER_BYTES ||
+          packetLength % 4 !== 0 ||
+          packetStart + packetLength > sectionEnd
+        ) {
+          throw new Error("E57 index packet header is invalid");
+        }
+        indexCursor.skip(
+          packetLength - INDEX_PACKET_HEADER_BYTES,
+          "E57 index packet payload",
+        );
+        indexPackets += 1;
+      }
+      if (indexPackets === 0) {
+        throw new Error("E57 compressed-vector index is missing");
+      }
     }
-    if (indexPackets === 0) {
-      throw new Error("E57 compressed-vector index is missing");
+    let validPointRecords = records;
+    let directionPointRecords = 0;
+    let invalidPointRecords = 0;
+    if (invalidStates !== null) {
+      let write = 0;
+      for (let read = 0; read < records; read += 1) {
+        const state = invalidStates[read];
+        if (state === 0) {
+          if (write !== read) {
+            rawPositions.copyWithin(
+              write * 3,
+              read * 3,
+              read * 3 + 3,
+            );
+            colors.copyWithin(
+              write * 4,
+              read * 4,
+              read * 4 + 4,
+            );
+            rawColorValues?.copyWithin(
+              write * 3,
+              read * 3,
+              read * 3 + 3,
+            );
+          }
+          write += 1;
+        } else if (state === 1) {
+          directionPointRecords += 1;
+        } else if (state === 2) {
+          invalidPointRecords += 1;
+        } else {
+          throw new RangeError(
+            "E57 cartesianInvalidState value is unsupported",
+          );
+        }
+      }
+      validPointRecords = write;
+      rawPositions.fill(0, write * 3);
+      colors.fill(0, write * 4);
+      rawColorValues?.fill(0, write * 3);
+    }
+    if (validPointRecords === 0) {
+      throw new RangeError("E57 scan has no valid Cartesian points");
+    }
+    const rawBounds = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity],
+    };
+    for (let point = 0; point < validPointRecords; point += 1) {
+      for (let axis = 0; axis < 3; axis += 1) {
+        const value = rawPositions[point * 3 + axis];
+        rawBounds.min[axis] = Math.min(rawBounds.min[axis], value);
+        rawBounds.max[axis] = Math.max(rawBounds.max[axis], value);
+        if (rawColorValues !== null) {
+          const color = rawColorValues[point * 3 + axis];
+          rawColorRange.min[axis] = Math.min(
+            rawColorRange.min[axis],
+            color,
+          );
+          rawColorRange.max[axis] = Math.max(
+            rawColorRange.max[axis],
+            color,
+          );
+        }
+      }
     }
     return {
-      colors,
+      colors: colors.subarray(0, validPointRecords * 4),
+      directionPointRecords,
+      invalidPointRecords,
       packetProfile: Object.freeze({
         dataPackets,
         indexPackets,
@@ -764,19 +889,27 @@ function decodePackets(logical, header, pointProfile) {
         min: Object.freeze([...rawBounds.min]),
         max: Object.freeze([...rawBounds.max]),
       }),
-      rawColorRange: fields.length === 3
+      rawColorRange: !hasColor
         ? null
         : Object.freeze({
             min: Object.freeze([...rawColorRange.min]),
             max: Object.freeze([...rawColorRange.max]),
           }),
-      rawPositions,
+      rawPositions: rawPositions.subarray(
+        0,
+        validPointRecords * 3,
+      ),
+      validPointRecords,
     };
   } catch (error) {
     rawPositions.fill(0);
     colors.fill(0);
+    invalidStates?.fill(0);
+    rawColorValues?.fill(0);
     throw error;
   } finally {
+    invalidStates?.fill(0);
+    rawColorValues?.fill(0);
     streams.forEach((stream) => stream.clear());
   }
 }
@@ -884,7 +1017,7 @@ export function decodeE57PointSource(
       ),
     );
     const pointProfile = parseXml(xml, limits);
-    const header = Object.freeze({
+    const envelopeHeader = Object.freeze({
       decodedPointBytes: pointProfile.decodedPointBytes,
       fields: pointProfile.fields,
       formatVersion: `${major}.${minor}`,
@@ -892,14 +1025,20 @@ export function decodeE57PointSource(
       pageSize,
       pages,
       physicalLength,
-      pointRecords: pointProfile.recordCount,
       signature,
+      sourcePointRecords: pointProfile.recordCount,
       validPageChecksums: pages,
       xmlLogicalLength,
       xmlLogicalOffset,
       xmlPhysicalOffset,
     });
-    decoded = decodePackets(logical, header, pointProfile);
+    decoded = decodePackets(logical, envelopeHeader, pointProfile);
+    const header = Object.freeze({
+      ...envelopeHeader,
+      directionPointRecords: decoded.directionPointRecords,
+      invalidPointRecords: decoded.invalidPointRecords,
+      pointRecords: decoded.validPointRecords,
+    });
     return Object.freeze({
       ...decoded,
       header,

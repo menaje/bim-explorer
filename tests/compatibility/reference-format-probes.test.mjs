@@ -9,6 +9,7 @@ import {
 const [
   manifest,
   e57Evidence,
+  e57ProfileMatrixEvidence,
   e57BrowserProductEvidence,
   e57VscodeProductEvidence,
   lasLazEvidence,
@@ -24,6 +25,11 @@ const [
   readFile(
     "compatibility/evidence/" +
       "e57-public-sample-probe-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-profile-matrix-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
   readFile(
@@ -68,6 +74,7 @@ test("reference sample probes remain separate from format admission", () => {
     validateReferenceFormatProbeCompatibility(
       manifest,
       e57Evidence,
+      e57ProfileMatrixEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,
@@ -78,7 +85,7 @@ test("reference sample probes remain separate from format admission", () => {
     ),
     {
       status: "pre-admission",
-      passedGates: 22,
+      passedGates: 25,
       heldGates: 4,
       sampleFormats: 3,
     },
@@ -92,6 +99,7 @@ test("an E57 product open cannot claim format admission", () => {
     () => validateReferenceFormatProbeCompatibility(
       overclaim,
       e57Evidence,
+      e57ProfileMatrixEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,
@@ -111,6 +119,7 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
     () => validateReferenceFormatProbeCompatibility(
       overclaim,
       e57Evidence,
+      e57ProfileMatrixEvidence,
       e57BrowserProductEvidence,
       e57VscodeProductEvidence,
       lasLazEvidence,

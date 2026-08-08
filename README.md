@@ -149,9 +149,11 @@ post-v0.1 federation foundation은
 identity·visibility·partial/stale·alignment, incremental refresh와
 cross-source saved view를 분리합니다. glTF/GLB는 source-native identity만
 사용하며 BIM semantic authority를 갖지 않습니다. E57은 single-scan
-Cartesian XYZ/RGB default-BitPack profile을 bounded Browser, staged VS Code와
-clean-installed VSIX에서 source-neutral point range로 여는 제품 Gate까지
-통과했습니다. 3D Tiles와 RVT/DGN은
+Cartesian XYZ와 optional RGB/default-BitPack profile을 bounded Browser,
+staged VS Code와 clean-installed VSIX에서 source-neutral point range로 여는
+제품 Gate까지 통과했습니다. 같은 제품 Worker는 cache-only profile matrix에서
+Float64·ScaledInteger 좌표, optional `cartesianInvalidState` 필터와 indexless
+compressed-vector를 추가로 통과했습니다. 3D Tiles와 RVT/DGN은
 capability Gate만 등록했고 제품 codec/SDK evidence 전에는 열기를 거부합니다.
 LAS/LAZ는 bounded Browser, staged VS Code와
 clean-installed VSIX 제품 source/open Gate까지 통과했습니다. 두 point-cloud
@@ -183,7 +185,10 @@ semantic authority는 승인하지 않습니다. 다음 held format 제안은
 완료만으로 format 지원을 승인하지 않습니다.
 공개 sample은 재배포하지 않고 cache-only pre-admission probe에 사용할 수 있으며,
 현재 E57 envelope·page integrity·metadata profile, 7,680개 compressed
-XYZ/RGB record와 122,880-byte point payload를 검증했고, paired LAS 1.2/LAZ의
+XYZ/RGB record와 122,880-byte point payload를 검증했습니다. 추가 E57 matrix는
+각 30,571개 점의 Float64/ScaledInteger가 독립 `pye57/libE57Format` 기준과
+동일한 position SHA-256 및 489,136-byte point payload를 만드는지 검증합니다.
+paired LAS 1.2/LAZ의
 10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
 parity를 검증했습니다. LAZ는 실제 Chrome의 disposable Worker에서도 4,063,232
 byte peak WASM heap, checkpoint 취소, 동기 decode 중 강제 종료, timeout,

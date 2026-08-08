@@ -29,8 +29,12 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   ASWF/Ed Mackey CC BY 4.0 manifest
 - `e57/public-libe57-coloured-cube`: `libE57Format-test-data`의 118,784-byte
   CC0 E57을 envelope, 116-page CRC-32C와 XML metadata profile의 cache-only
-  pre-admission probe에 사용하는 manifest. compressed point payload와 renderer는
-  아직 검증하지 않음
+  pre-admission probe, 자체 decoder와 Browser/VS Code 제품 open에 사용하는
+  manifest
+- `e57/public-libe57-bunny-profiles`: 같은 저장소 `reference` 디렉터리의
+  Test Data License 대상 `bunnyDouble.e57`·`bunnyInt32.e57`을 cache-only로
+  받아 30,571-point Float64/ScaledInteger parity, `cartesianInvalidState`,
+  indexless compressed-vector와 source-neutral point range를 검증하는 manifest
 - `las-laz/public-loaders-gl-ripple`: `visgl/loaders.gl`의 paired 347,061-byte
   LAS와 53,952-byte LAZ를 cache-only로 받아 LAS 1.2 point-format 3의
   10,201개 record, Float64 좌표·RGB와 압축 해제 후 exact record SHA-256
@@ -57,6 +61,8 @@ npm run qualify:renderer:public
 npm run fetch:gltf:product-scale
 npm run fetch:e57:public
 npm run qualify:e57:probe
+npm run fetch:e57:profiles
+npm run qualify:e57:profiles
 npm run fetch:las-laz:public
 npm run qualify:las-laz:probe
 npm run qualify:las-laz:worker
