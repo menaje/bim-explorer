@@ -684,7 +684,9 @@ export async function qualifyBimProductShell({
     await closeServer(server);
     await rm(userDataDirectory, {
       force: true,
+      maxRetries: 10,
       recursive: true,
+      retryDelay: 100,
     });
   }
 }

@@ -444,8 +444,10 @@ export async function qualifyGltfBrowserWebGl2() {
     }
     await closeServer(server);
     await rm(userDataDirectory, {
-      recursive: true,
       force: true,
+      maxRetries: 10,
+      recursive: true,
+      retryDelay: 100,
     });
   }
 }
