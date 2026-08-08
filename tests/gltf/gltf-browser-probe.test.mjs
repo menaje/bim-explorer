@@ -60,6 +60,22 @@ test("glTF Browser probe exposes only projected bounded ranges", async () => {
       input.snapshot.entities[0].nativeId,
       "node:0/mesh:0/primitive:0",
     );
+    assert.deepEqual(input.qualification.rendererLimits, {});
+    assert.equal(
+      input.qualification.requireCenterPick,
+      true,
+    );
+    assert.deepEqual(input.qualification.expected, {
+      sourceReadBytes: 120,
+      sourceReads: 1,
+      geometryPayloadBytes: 84,
+      geometryRecords: 1,
+      uniqueTriangles: 1,
+      instances: 2,
+      instancedTriangles: 2,
+      drawCalls: 2,
+      uploadedBytes: 244,
+    });
     const handle =
       input.snapshot.layers[0].rangeHandles[0];
     const range = await fetch(

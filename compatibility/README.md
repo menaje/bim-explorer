@@ -199,7 +199,9 @@ partial/stale, incremental refresh와 cross-source saved view foundation은
 Gate를 통과했습니다. actual Spatial consumer, 사용자 수요, 측량 datum,
 product-scale federation과 LAS/LAZ/E57, 3D Tiles, RVT/DGN codec/SDK Gate
 7개는 보류합니다. registry는 `ifc`, `gltf`, `glb`만 admission하고 다른
-format은 fail closed합니다.
+format은 fail closed합니다. product-scale GLB source/renderer prerequisite
+1개가 추가로 통과했지만 multi-source composite 성능 Gate는 그대로
+보류합니다.
 
 bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도
@@ -207,10 +209,15 @@ bounded glTF 2.0/GLB reference mesh는
 headless generic renderer, 실제 Chrome WebGL2와 federation reference
 admission을 통과했습니다. bounded Browser/VS Code/clean-installed VSIX
 제품 file-open도 macOS arm64와 Linux x64 매트릭스로 통과했습니다.
-external resource,
-required extension, product-scale reference model과 physical GPU는 독립
-Gate로 남습니다. GLB는 ignored cache에서만 사용하고 release에는
-포함하지 않습니다.
+별도
+[`product-scale reference evidence`](evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json)는
+42.98MB `A Beautiful Game` GLB의 417,028 vertices·573,952 unique
+triangles·1,499,072 instanced triangles를 official Validator, headless
+renderer와 실제 Chrome SwiftShader WebGL2에서 검증하고 16,900,016-byte
+allocation을 전량 회수했습니다. external resource, required extension,
+product-scale Browser/VS Code 제품 file-open과 physical GPU는 독립 Gate로
+남습니다. GLB는 ignored cache에서만 사용하고 release에는 포함하지
+않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

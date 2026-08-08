@@ -17,9 +17,6 @@ import {
 } from "./chrome-qualification-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
-const FIXTURE_SHA256 =
-  "ed52f7192b8311d700ac0ce80644e385" +
-  "2cd01537e4d62241b9acba023da3d54e";
 
 function timeoutError(label) {
   return new DOMException(
@@ -241,21 +238,37 @@ async function poll(client, expression, {
   throw timeoutError(expression);
 }
 
-function outputArgument(argumentsValue) {
-  const index = argumentsValue.indexOf("--out");
-  if (index === -1) {
-    return null;
+function parseArguments(values) {
+  const options = {
+    manifestPath: undefined,
+    output: null,
+  };
+  for (let index = 0; index < values.length; index += 2) {
+    const name = values[index];
+    const value = values[index + 1];
+    if (typeof value !== "string" || value.startsWith("-")) {
+      throw new TypeError(`${name} requires a value`);
+    }
+    if (name === "--out") {
+      options.output = path.resolve(value);
+    } else if (name === "--manifest") {
+      options.manifestPath = path.resolve(value);
+    } else {
+      throw new TypeError(`unknown argument ${name}`);
+    }
   }
-  if (
-    index + 1 >= argumentsValue.length ||
-    argumentsValue[index + 1].startsWith("-")
-  ) {
-    throw new TypeError("--out requires a path");
-  }
-  return path.resolve(argumentsValue[index + 1]);
+  return options;
 }
 
-function assertions(report, errors, externalOrigins) {
+function assertions(
+  report,
+  errors,
+  externalOrigins,
+  qualification,
+) {
+  const expected = qualification.expected;
+  const requireCenterPick =
+    qualification.requireCenterPick;
   return Object.freeze({
     actualBrowser:
       report.status === "passed",
@@ -266,29 +279,45 @@ function assertions(report, errors, externalOrigins) {
     rasterizedPixels:
       report.renderer.nonBackgroundPixels > 0,
     boundedRangeReads:
-      report.range.clientReads === 3 &&
-      report.range.clientBytes === 756 &&
-      report.range.serverRequests === 3 &&
-      report.range.serverBytes === 756,
+      report.range.clientReads === expected.sourceReads &&
+      report.range.clientBytes === expected.sourceReadBytes &&
+      report.range.serverRequests === expected.sourceReads &&
+      report.range.serverBytes === expected.sourceReadBytes,
     geometryAndInstanceUpload:
-      report.renderer.uploadedBytes === 800 &&
-      report.renderer.geometryRecords === 1 &&
-      report.renderer.instances === 1 &&
-      report.renderer.triangles === 12,
+      report.renderer.uploadedBytes === expected.uploadedBytes &&
+      report.renderer.geometryRecords ===
+        expected.geometryRecords &&
+      report.renderer.geometryPayloadBytes ===
+        expected.geometryPayloadBytes &&
+      report.renderer.instances === expected.instances &&
+      report.renderer.triangles ===
+        expected.instancedTriangles &&
+      report.renderer.uniqueTriangles ===
+        expected.uniqueTriangles,
     sourceNativePick:
-      report.picking.status === "hit" &&
-      report.identity.nativeId ===
-        report.identity.pickedNativeId &&
       report.identity.globalId === null &&
-      report.identity.pickedGlobalId === null,
+      (
+        requireCenterPick
+          ? report.picking.status === "hit" &&
+            report.identity.nativeId ===
+              report.identity.pickedNativeId &&
+            report.identity.pickedGlobalId === null
+          : report.picking.status === "not-required"
+      ),
     selectedHighlight:
-      report.renderer.selectedInstances === 1 &&
-      report.renderer.highlightPixels > 0,
+      requireCenterPick
+        ? report.renderer.selectedInstances === 1 &&
+          report.renderer.highlightPixels > 0
+        : report.renderer.selectedInstances === 0 &&
+          report.renderer.highlightPixels === 0,
     transientPickReleased:
-      report.picking.actualGpu === true &&
-      report.picking.temporaryReleased === true,
+      requireCenterPick
+        ? report.picking.actualGpu === true &&
+          report.picking.temporaryReleased === true
+        : report.picking.actualGpu === null &&
+          report.picking.temporaryReleased === null,
     deterministicCleanup:
-      report.cleanup.releasedBytes === 800 &&
+      report.cleanup.releasedBytes === expected.uploadedBytes &&
       report.cleanup.rendererDisposed === true &&
       report.cleanup.sessionDisposed === true &&
       report.cleanup.backendDisposed === true &&
@@ -303,8 +332,12 @@ function assertions(report, errors, externalOrigins) {
   });
 }
 
-export async function qualifyGltfBrowserWebGl2() {
-  const prepared = await preparePublicGltfBrowserProbe();
+export async function qualifyGltfBrowserWebGl2({
+  manifestPath,
+} = {}) {
+  const prepared = await preparePublicGltfBrowserProbe({
+    manifestPath,
+  });
   const server = createGltfBrowserProbeServer(prepared);
   const origin = await listen(server);
   const userDataDirectory = await mkdtemp(
@@ -348,6 +381,10 @@ export async function qualifyGltfBrowserWebGl2() {
         }
         return report;
       })()`,
+      {
+        timeoutMs:
+          prepared.input.qualification.timeoutMs,
+      },
     );
     if (browserReport.status !== "passed") {
       throw new Error(
@@ -368,6 +405,7 @@ export async function qualifyGltfBrowserWebGl2() {
       browserReport,
       errors,
       externalOrigins,
+      prepared.input.qualification,
     );
     if (Object.values(gates).some((value) => value !== true)) {
       throw new Error(
@@ -378,7 +416,11 @@ export async function qualifyGltfBrowserWebGl2() {
     const evidence = {
       schema:
         "bim-explorer-gltf-browser-webgl2-qualification/1",
-      asOf: "2026-08-04",
+      asOf:
+        prepared.input.qualification.classification ===
+          "product-scale-reference"
+          ? "2026-08-08"
+          : "2026-08-04",
       contract: "bim-explorer-gltf-reference-source/0.1",
       environment: {
         browser: chrome.browserVersion,
@@ -394,6 +436,8 @@ export async function qualifyGltfBrowserWebGl2() {
         license: browserReport.fixture.license,
         artifactTracked: false,
         releaseBundled: false,
+        classification:
+          prepared.input.qualification.classification,
       },
       source: browserReport.source,
       identity: browserReport.identity,
@@ -406,16 +450,34 @@ export async function qualifyGltfBrowserWebGl2() {
         requestCount: requestedUrls.length,
         runtimeErrors: errors,
       },
+      qualification: {
+        expected:
+          prepared.input.qualification.expected,
+        rendererLimits:
+          prepared.input.qualification.rendererLimits,
+        requireCenterPick:
+          prepared.input.qualification.requireCenterPick,
+      },
       assertions: gates,
-      limitations: [
-        "SwiftShader proves the Browser WebGL2 API path, not physical GPU hardware",
-        "the public Box GLB is not product-scale geometry",
-        "Browser and VS Code product file-open surfaces remain separate gates",
-        "write, round-trip and BIM semantic authority remain blocked"
-      ],
+      limitations:
+        prepared.input.qualification.classification ===
+          "product-scale-reference"
+          ? [
+              "SwiftShader proves the Browser WebGL2 API path, not physical GPU hardware",
+              "the public GLB is reference geometry and not a BIM semantic model",
+              "Browser and VS Code product file-open surfaces remain separate gates",
+              "write, round-trip and BIM semantic authority remain blocked",
+            ]
+          : [
+              "SwiftShader proves the Browser WebGL2 API path, not physical GPU hardware",
+              "the public Box GLB is not product-scale geometry",
+              "Browser and VS Code product file-open surfaces remain separate gates",
+              "write, round-trip and BIM semantic authority remain blocked",
+            ],
     };
     if (
-      evidence.fixture.sha256 !== FIXTURE_SHA256 ||
+      evidence.fixture.sha256 !==
+        prepared.input.fixture.sha256 ||
       evidence.source.format !== "glb" ||
       evidence.source.semanticAuthority !== false ||
       JSON.stringify(evidence).includes("/Users/") ||
@@ -456,13 +518,15 @@ if (
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const report = await qualifyGltfBrowserWebGl2();
-  const output = outputArgument(process.argv.slice(2));
+  const options = parseArguments(process.argv.slice(2));
+  const report = await qualifyGltfBrowserWebGl2({
+    manifestPath: options.manifestPath,
+  });
   const serialized = `${JSON.stringify(report, null, 2)}\n`;
-  if (output === null) {
+  if (options.output === null) {
     process.stdout.write(serialized);
   } else {
-    await writeFile(output, serialized);
-    console.log(`Wrote ${path.relative(ROOT, output)}`);
+    await writeFile(options.output, serialized);
+    console.log(`Wrote ${path.relative(ROOT, options.output)}`);
   }
 }

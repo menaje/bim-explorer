@@ -1,0 +1,312 @@
+{
+  "schema": "bim-explorer-gltf-product-scale-reference-qualification/1",
+  "status": "passed-experimental",
+  "asOf": "2026-08-08",
+  "contract": "bim-explorer-gltf-reference-source/0.1",
+  "fixture": {
+    "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "path": "Models/ABeautifulGame/glTF-Binary/ABeautifulGame.glb",
+    "readmeUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/ABeautifulGame/README.md",
+    "byteLength": 42977928,
+    "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+    "license": "CC-BY-4.0",
+    "attribution": "A Beautiful Game © 2020 ASWF MaterialX Project; glTF conversion © 2022 Ed Mackey, licensed under CC BY 4.0",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "downloadOnDemand": true
+  },
+  "scale": {
+    "classification": "product-scale-reference",
+    "minimumSourceBytes": 33554432,
+    "minimumVertices": 400000,
+    "minimumTriangles": 500000,
+    "minimumGeometryRangeBytes": 16777216
+  },
+  "headless": {
+    "validator": {
+      "package": "gltf-validator",
+      "version": "2.0.0-dev.3.10",
+      "integrity": "sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==",
+      "license": "Apache-2.0",
+      "issues": {
+        "errors": 0,
+        "warnings": 0,
+        "infos": 0,
+        "hints": 0,
+        "truncated": false
+      },
+      "projection": {
+        "gltfVersion": "2.0",
+        "generator": "Created by RapidPipeline 3D Processor v7.3.0 | rapidpipeline.com",
+        "extensionsUsed": [
+          "KHR_materials_transmission",
+          "KHR_materials_volume"
+        ],
+        "drawCalls": 15,
+        "vertices": 417028,
+        "triangles": 573952,
+        "materials": 15,
+        "textures": true,
+        "skins": false,
+        "animations": 0
+      }
+    },
+    "source": {
+      "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+      "format": "glb",
+      "profile": "gltf-2.0-bounded-reference-mesh-v0.1",
+      "sourceRole": "derived-or-reference-mesh",
+      "semanticAuthority": false,
+      "writeAuthority": false,
+      "roundTripAuthority": false,
+      "extensionsUsed": [
+        "KHR_materials_transmission",
+        "KHR_materials_volume"
+      ]
+    },
+    "geometry": {
+      "bounds": {
+        "min": [
+          -0.3527080714702606,
+          -5.566945304735782e-8,
+          -0.3527080714702606
+        ],
+        "max": [
+          0.3527080714702606,
+          0.16899584978818893,
+          0.3527080714702606
+        ]
+      },
+      "records": 15,
+      "instances": 49,
+      "vertices": 417028,
+      "triangles": 573952,
+      "representationAuthority": "derived-display-cache",
+      "rangeBytes": 16896412
+    },
+    "identity": {
+      "entities": 49,
+      "firstNativeId": "node:0/mesh:0/primitive:0",
+      "lastNativeId": "node:48/mesh:14/primitive:0",
+      "firstResolved": true,
+      "lastResolved": true,
+      "allGlobalIdsNull": true
+    },
+    "renderer": {
+      "backend": "headless",
+      "rendered": false,
+      "sourceReadBytes": 16896412,
+      "sourceReads": 17,
+      "geometryPayloadBytes": 16896096,
+      "geometryRecords": 15,
+      "instances": 49,
+      "uniqueTriangles": 573952,
+      "instancedTriangles": 1499072,
+      "uploadedBytes": 16900016,
+      "drawCalls": 49,
+      "limits": {
+        "maximumFirstFrameRanges": 1,
+        "maximumRangeBytes": 33554432,
+        "maximumSourceReadBytes": 33554432,
+        "maximumReadBytes": 1048576,
+        "maximumGeometryRecords": 100000,
+        "maximumGeometryPayloadBytes": 25165824,
+        "maximumInstances": 100000,
+        "maximumInstancedTriangles": 4000000,
+        "maximumDrawCalls": 100000,
+        "maximumCpuStagingBytes": 33554432,
+        "maximumGpuCacheBytes": 33554432
+      }
+    },
+    "performance": {
+      "validationMs": 451.959375,
+      "sourceMs": 78.57679199999995,
+      "mountMs": 27.88345800000002,
+      "maximumResidentSetSizeBytes": 433504256,
+      "residentSetSizeAfterMount": 433471488,
+      "heapUsedAfterMount": 17931184
+    },
+    "cleanup": {
+      "releasedBytes": 16900016,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "sourceDisposed": true,
+      "rangeReads": 17,
+      "rangeBytesRead": 16896412,
+      "remainingReadBytes": 0,
+      "backendDisposed": true,
+      "activeBackendBytes": 0,
+      "residentRanges": 0
+    }
+  },
+  "browser": {
+    "schema": "bim-explorer-gltf-browser-webgl2-qualification/1",
+    "asOf": "2026-08-08",
+    "contract": "bim-explorer-gltf-reference-source/0.1",
+    "environment": {
+      "browser": "Google Chrome 151.0.7922.108",
+      "platform": "darwin-arm64",
+      "headless": true,
+      "webgl2": "actual Browser API via SwiftShader",
+      "physicalGpuClaimed": false
+    },
+    "fixture": {
+      "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+      "byteLength": 42977928,
+      "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+      "license": "CC-BY-4.0",
+      "artifactTracked": false,
+      "releaseBundled": false,
+      "classification": "product-scale-reference"
+    },
+    "source": {
+      "format": "glb",
+      "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+      "revisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+      "sourceRole": "derived-or-reference-mesh",
+      "semanticAuthority": false,
+      "bounds": {
+        "min": [
+          -0.3527080714702606,
+          -5.566945304735782e-8,
+          -0.3527080714702606
+        ],
+        "max": [
+          0.3527080714702606,
+          0.16899584978818893,
+          0.3527080714702606
+        ]
+      }
+    },
+    "identity": {
+      "nativeId": "node:0/mesh:0/primitive:0",
+      "globalId": null,
+      "pickedNativeId": null,
+      "pickedGlobalId": null,
+      "renderId": "render:glb:bd7133b4b322aae9:1",
+      "pickId": "pick:glb:bd7133b4b322aae9:1"
+    },
+    "renderer": {
+      "backend": "webgl2",
+      "actualGpu": true,
+      "rendered": true,
+      "glError": 0,
+      "nonBackgroundPixels": 55479,
+      "uploadedBytes": 16900016,
+      "drawCalls": 49,
+      "instances": 49,
+      "triangles": 1499072,
+      "uniqueTriangles": 573952,
+      "geometryRecords": 15,
+      "geometryPayloadBytes": 16896096,
+      "sourceReadBytes": 16896412,
+      "sourceReads": 17,
+      "selectedInstances": 0,
+      "highlightPixels": 0
+    },
+    "picking": {
+      "status": "not-required",
+      "actualGpu": null,
+      "temporaryTargetBytes": 0,
+      "temporaryReleased": null,
+      "worldPosition": null
+    },
+    "range": {
+      "clientReads": 17,
+      "clientBytes": 16896412,
+      "serverRequests": 17,
+      "serverBytes": 16896412
+    },
+    "cleanup": {
+      "releasedBytes": 16900016,
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "backendDisposed": true,
+      "activeBackendBytes": 0,
+      "residentRanges": 0
+    },
+    "network": {
+      "externalOrigins": [],
+      "requestCount": 29,
+      "runtimeErrors": []
+    },
+    "qualification": {
+      "expected": {
+        "sourceReadBytes": 16896412,
+        "sourceReads": 17,
+        "geometryPayloadBytes": 16896096,
+        "geometryRecords": 15,
+        "uniqueTriangles": 573952,
+        "instances": 49,
+        "instancedTriangles": 1499072,
+        "drawCalls": 49,
+        "uploadedBytes": 16900016
+      },
+      "rendererLimits": {
+        "maximumRangeBytes": 33554432,
+        "maximumSourceReadBytes": 33554432,
+        "maximumGeometryPayloadBytes": 25165824,
+        "maximumInstancedTriangles": 4000000,
+        "maximumCpuStagingBytes": 33554432,
+        "maximumGpuCacheBytes": 33554432
+      },
+      "requireCenterPick": false
+    },
+    "assertions": {
+      "actualBrowser": true,
+      "webgl2Context": true,
+      "rasterizedPixels": true,
+      "boundedRangeReads": true,
+      "geometryAndInstanceUpload": true,
+      "sourceNativePick": true,
+      "selectedHighlight": true,
+      "transientPickReleased": true,
+      "deterministicCleanup": true,
+      "localOnly": true,
+      "noRuntimeErrors": true,
+      "pathFreeEvidence": true,
+      "physicalGpuNotClaimed": true
+    },
+    "limitations": [
+      "SwiftShader proves the Browser WebGL2 API path, not physical GPU hardware",
+      "the public GLB is reference geometry and not a BIM semantic model",
+      "Browser and VS Code product file-open surfaces remain separate gates",
+      "write, round-trip and BIM semantic authority remain blocked"
+    ]
+  },
+  "assertions": {
+    "exactPinnedFixture": true,
+    "officialValidatorZeroIssues": true,
+    "productScaleThresholds": true,
+    "exactBoundedProjection": true,
+    "sourceNativeIdentity": true,
+    "referenceOnlyAuthority": true,
+    "boundedHeadlessRenderer": true,
+    "nodeBudget": true,
+    "actualBrowserWebGl2": true,
+    "deterministicCleanup": true,
+    "localOnlyRuntime": true,
+    "physicalGpuNotClaimed": true,
+    "pathFreeEvidence": true
+  },
+  "decision": {
+    "productScaleReferenceGeometry": "passed-experimental",
+    "browserWebGl2": "passed-swiftshader",
+    "browserProductFileOpen": "held-separate-product-gate",
+    "vscodeProductFileOpen": "held-separate-product-gate",
+    "physicalGpu": "not-claimed",
+    "bimSemanticAuthority": false,
+    "write": false,
+    "roundTrip": false,
+    "productionClaims": false
+  },
+  "limitations": [
+    "A Beautiful Game is product-scale reference geometry, not a BIM semantic model",
+    "embedded textures and material extensions are not projected by the bounded geometry profile",
+    "the actual Browser path uses SwiftShader and makes no physical GPU claim",
+    "Browser and VS Code product file-open remain separate qualification gates",
+    "the fixture is fetched into a private cache and is not tracked or release-bundled"
+  ]
+}

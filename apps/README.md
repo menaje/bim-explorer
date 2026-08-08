@@ -48,8 +48,9 @@ renderer에 연결합니다. spatial hierarchy, property/relation/search,
 실제 3D pick selection sync, 키보드·ARIA, DOM bound와 cleanup을 검증하는
 qualification surface이며 제품 shell은 아닙니다.
 
-[`gltf-browser-probe`](gltf-browser-probe/README.md)는 Khronos Box GLB에서
-투영한 generic geometry range를 실제 Chrome WebGL2로 render하고
-source-native pick과 cleanup을 확인하는 source/renderer qualification
+[`gltf-browser-probe`](gltf-browser-probe/README.md)는 Khronos Box와
+42.98MB `A Beautiful Game` GLB에서 투영한 generic geometry range를 실제
+Chrome WebGL2로 render합니다. Box의 source-native pick과 대형 reference의
+first-frame/range/allocation cleanup을 확인하는 source/renderer qualification
 surface입니다. 제품 file-open은 별도 Browser·VS Code evidence가
 소유합니다.

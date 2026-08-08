@@ -18,7 +18,9 @@
 `gltf` test는 binary artifact를 추적하지 않고 deterministic generator가
 만든 JSON data URI와 GLB를 메모리에서 검사합니다. external URI, required
 extension, malformed length를 거부하고 source-native identity가 IFC
-GlobalId를 합성하지 않는지 확인합니다.
+GlobalId를 합성하지 않는지 확인합니다. 공개 Box 및 `A Beautiful Game`
+manifest는 pinned URL·digest·CC BY 4.0·private cache 정책을 별도로
+검사하며 원본 GLB는 test tree에 포함하지 않습니다.
 
 IFC fixture artifact는 `node scripts/generate-synthetic-ifc.mjs --fixture
 small|mapped|performance --output <temporary.ifc>`로 생성합니다. `.ifc`는
@@ -99,6 +101,11 @@ staged VS Code와 clean-installed VSIX에서 열어 source-native identity,
 1.131.0을 사용해 같은 세 제품 경로의 플랫폼 receipt를 만듭니다. macOS와
 Linux receipt는 `npm run assemble:gltf:product:platform`으로 합치며, 동일한
 portable projection과 physical-GPU 비주장을 검사합니다.
+`npm run qualify:gltf:product-scale`은 42.98MB 공개 GLB를 official
+Validator와 bounded source/headless renderer에 통과시킨 뒤 실제 Chrome
+SwiftShader WebGL2 first frame, range budget과 allocation cleanup을
+검증합니다. 이는 Browser/VS Code product file-open이나 physical GPU
+qualification이 아닙니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

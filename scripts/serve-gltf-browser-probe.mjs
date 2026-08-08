@@ -8,6 +8,9 @@ import {
   createGltfReferenceSource,
 } from "../packages/gltf-reference-source/src/index.mjs";
 import {
+  decodeBimGeometryRange,
+} from "../packages/bim-renderer-3d/src/index.mjs";
+import {
   acquirePublicGltfFixture,
 } from "./public-gltf-fixture.mjs";
 
@@ -121,13 +124,18 @@ function projectedSnapshot(snapshot) {
 export async function prepareGltfBrowserProbe({
   bytes,
   fixture,
+  maximumRequestBytes = 256,
+  rendererLimits = {},
+  requireCenterPick = true,
+  timeoutMs = 30_000,
+  classification = "bounded-smoke",
 }) {
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError("glTF Browser fixture must be bytes");
   }
   const source = await createGltfReferenceSource(
     bytes,
-    { maximumRequestBytes: 256 },
+    { maximumRequestBytes },
   );
   const session = await source.open({
     protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
@@ -135,6 +143,11 @@ export async function prepareGltfBrowserProbe({
   try {
     const snapshot = await session.getSnapshot();
     const ranges = new Map();
+    let geometryPayloadBytes = 0;
+    let geometryRecords = 0;
+    let sourceReadBytes = 0;
+    let sourceReads = 0;
+    let uniqueTriangles = 0;
     for (const handle of snapshot.layers[0].rangeHandles) {
       const range = new Uint8Array(handle.byteLength);
       for (
@@ -153,14 +166,53 @@ export async function prepareGltfBrowserProbe({
         range.set(chunk, offset);
         chunk.fill(0);
       }
+      const decoded = decodeBimGeometryRange(range, {
+        maximumPayloadBytes:
+          rendererLimits.maximumGeometryPayloadBytes,
+      });
+      geometryPayloadBytes += decoded.payloadBytes;
+      geometryRecords += decoded.recordCount;
+      sourceReadBytes += handle.byteLength;
+      sourceReads += Math.ceil(
+        handle.byteLength / handle.maximumRequestBytes,
+      );
+      uniqueTriangles += decoded.triangles;
       ranges.set(handle.handleId, Buffer.from(range));
       range.fill(0);
     }
+    const primitives = snapshot.entities.flatMap(
+      (entity) => entity.primitives,
+    );
+    const instances = primitives.length;
+    const instancedTriangles = primitives.reduce(
+      (sum, primitive) => sum + primitive.triangles,
+      0,
+    );
+    const instanceBytes =
+      instances * 20 * Float32Array.BYTES_PER_ELEMENT;
     return {
       input: {
         schema: "bim-explorer-gltf-browser-probe-input/1",
         fixture: structuredClone(fixture),
         snapshot: projectedSnapshot(snapshot),
+        qualification: {
+          classification,
+          timeoutMs,
+          requireCenterPick,
+          rendererLimits: structuredClone(rendererLimits),
+          expected: {
+            sourceReadBytes,
+            sourceReads,
+            geometryPayloadBytes,
+            geometryRecords,
+            uniqueTriangles,
+            instances,
+            instancedTriangles,
+            drawCalls: instances,
+            uploadedBytes:
+              geometryPayloadBytes + instanceBytes,
+          },
+        },
       },
       ranges,
     };
@@ -170,9 +222,21 @@ export async function prepareGltfBrowserProbe({
   }
 }
 
-export async function preparePublicGltfBrowserProbe() {
-  const acquired = await acquirePublicGltfFixture();
+export async function preparePublicGltfBrowserProbe({
+  manifestPath,
+} = {}) {
+  const acquired = await acquirePublicGltfFixture({
+    manifestPath,
+  });
   try {
+    const qualification =
+      acquired.manifest.browserQualification ?? {
+        classification: "bounded-smoke",
+        maximumRequestBytes: 256,
+        timeoutMs: 30_000,
+        requireCenterPick: true,
+        rendererLimits: {},
+      };
     return await prepareGltfBrowserProbe({
       bytes: acquired.bytes,
       fixture: {
@@ -183,6 +247,12 @@ export async function preparePublicGltfBrowserProbe() {
         artifactTracked: false,
         releaseBundled: false,
       },
+      maximumRequestBytes:
+        qualification.maximumRequestBytes,
+      rendererLimits: qualification.rendererLimits,
+      requireCenterPick: qualification.requireCenterPick,
+      timeoutMs: qualification.timeoutMs,
+      classification: qualification.classification,
     });
   } finally {
     acquired.bytes.fill(0);

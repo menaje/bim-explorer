@@ -1,0 +1,81 @@
+{
+  "schema": "bim-explorer-public-gltf-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+  "purpose": "redistributable product-scale embedded GLB reference geometry qualification",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "path": "Models/ABeautifulGame/glTF-Binary/ABeautifulGame.glb",
+    "readmeUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/ABeautifulGame/README.md",
+    "modelOwner": "Academy Software Foundation MaterialX Project and Ed Mackey",
+    "modelYears": [
+      2020,
+      2022
+    ]
+  },
+  "entry": {
+    "name": "ABeautifulGame.glb",
+    "mediaType": "model/gltf-binary",
+    "byteLength": 42977928,
+    "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+    "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/ABeautifulGame/glTF-Binary/ABeautifulGame.glb"
+  },
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "attribution": "A Beautiful Game © 2020 ASWF MaterialX Project; glTF conversion © 2022 Ed Mackey, licensed under CC BY 4.0"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "Created by RapidPipeline 3D Processor v7.3.0 | rapidpipeline.com",
+    "drawCalls": 15,
+    "vertices": 417028,
+    "triangles": 573952,
+    "materials": 15,
+    "textures": true,
+    "skins": false,
+    "animations": 0,
+    "geometryRecords": 15,
+    "instances": 49,
+    "instancedTriangles": 1499072,
+    "geometryRangeBytes": 16896412,
+    "extensionsUsed": [
+      "KHR_materials_transmission",
+      "KHR_materials_volume"
+    ]
+  },
+  "scale": {
+    "classification": "product-scale-reference",
+    "minimumSourceBytes": 33554432,
+    "minimumVertices": 400000,
+    "minimumTriangles": 500000,
+    "minimumGeometryRangeBytes": 16777216
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  },
+  "nodeQualification": {
+    "maximumSourceMs": 5000,
+    "maximumMountMs": 5000,
+    "maximumResidentSetSizeBytes": 805306368
+  },
+  "browserQualification": {
+    "classification": "product-scale-reference",
+    "maximumRequestBytes": 1048576,
+    "timeoutMs": 120000,
+    "requireCenterPick": false,
+    "rendererLimits": {
+      "maximumRangeBytes": 33554432,
+      "maximumSourceReadBytes": 33554432,
+      "maximumGeometryPayloadBytes": 25165824,
+      "maximumInstancedTriangles": 4000000,
+      "maximumCpuStagingBytes": 33554432,
+      "maximumGpuCacheBytes": 33554432
+    }
+  }
+}

@@ -12,6 +12,9 @@
   path-free bridging and deterministic Worker/GPU cleanup;
 - reproduce those three glTF product surfaces on macOS arm64 and Linux x64
   CI with exact VS Code 1.131.0 and fail-closed platform evidence;
+- qualify a pinned 42.98MB CC BY 4.0 GLB as product-scale reference geometry
+  with the official Validator, bounded headless rendering, actual Chrome
+  SwiftShader WebGL2 first frame and deterministic resource cleanup;
 - keep LAS/LAZ/E57, 3D Tiles and RVT/DGN behind fail-closed codec/SDK Gates.
 
 ## 0.1.0 - 2026-08-04

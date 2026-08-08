@@ -10,15 +10,37 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
-const DEFAULT_MANIFEST = path.join(
+export const PUBLIC_GLTF_BOX_MANIFEST = path.join(
   ROOT,
   "fixtures",
   "gltf",
   "public-khronos-box",
   "manifest.json",
 );
+export const PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST = path.join(
+  ROOT,
+  "fixtures",
+  "gltf",
+  "public-khronos-a-beautiful-game",
+  "manifest.json",
+);
+const DEFAULT_MANIFEST = PUBLIC_GLTF_BOX_MANIFEST;
 const SHA256 = /^[0-9a-f]{64}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
+const FIXTURE_ID = /^[a-z0-9][a-z0-9-]+$/u;
+const RENDERER_LIMITS = new Set([
+  "maximumFirstFrameRanges",
+  "maximumRangeBytes",
+  "maximumSourceReadBytes",
+  "maximumReadBytes",
+  "maximumGeometryRecords",
+  "maximumGeometryPayloadBytes",
+  "maximumInstances",
+  "maximumInstancedTriangles",
+  "maximumDrawCalls",
+  "maximumCpuStagingBytes",
+  "maximumGpuCacheBytes",
+]);
 
 function plainRecord(value, label) {
   if (
@@ -33,6 +55,133 @@ function plainRecord(value, label) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function positiveInteger(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new TypeError(`${label} must be a positive safe integer`);
+  }
+}
+
+function validateBrowserQualification(value) {
+  if (value === undefined) {
+    return;
+  }
+  const qualification = plainRecord(
+    value,
+    "public glTF Browser qualification",
+  );
+  const rendererLimits = plainRecord(
+    qualification.rendererLimits,
+    "public glTF renderer limits",
+  );
+  if (
+    !["bounded-smoke", "product-scale-reference"].includes(
+      qualification.classification,
+    ) ||
+    typeof qualification.requireCenterPick !== "boolean"
+  ) {
+    throw new Error(
+      "public glTF Browser qualification policy is invalid",
+    );
+  }
+  positiveInteger(
+    qualification.maximumRequestBytes,
+    "public glTF maximumRequestBytes",
+  );
+  positiveInteger(
+    qualification.timeoutMs,
+    "public glTF timeoutMs",
+  );
+  for (const [name, limit] of Object.entries(rendererLimits)) {
+    if (!RENDERER_LIMITS.has(name)) {
+      throw new TypeError(
+        `public glTF renderer limit ${name} is unsupported`,
+      );
+    }
+    positiveInteger(limit, `public glTF renderer limit ${name}`);
+  }
+}
+
+function validateProductScaleManifest(manifest) {
+  if (
+    manifest.browserQualification?.classification !==
+      "product-scale-reference"
+  ) {
+    return;
+  }
+  const expected = plainRecord(
+    manifest.expected,
+    "public product-scale glTF expected values",
+  );
+  const scale = plainRecord(
+    manifest.scale,
+    "public product-scale glTF thresholds",
+  );
+  const node = plainRecord(
+    manifest.nodeQualification,
+    "public product-scale glTF Node budget",
+  );
+  for (const field of [
+    "drawCalls",
+    "vertices",
+    "triangles",
+    "materials",
+    "geometryRecords",
+    "instances",
+    "instancedTriangles",
+    "geometryRangeBytes",
+  ]) {
+    positiveInteger(expected[field], `public glTF expected.${field}`);
+  }
+  for (const field of [
+    "minimumSourceBytes",
+    "minimumVertices",
+    "minimumTriangles",
+    "minimumGeometryRangeBytes",
+  ]) {
+    positiveInteger(scale[field], `public glTF scale.${field}`);
+  }
+  for (const field of [
+    "maximumSourceMs",
+    "maximumMountMs",
+    "maximumResidentSetSizeBytes",
+  ]) {
+    positiveInteger(node[field], `public glTF Node budget.${field}`);
+  }
+  const readmeUrl = new URL(manifest.provenance.readmeUrl ?? "");
+  if (
+    expected.gltfVersion !== "2.0" ||
+    typeof expected.generator !== "string" ||
+    expected.generator.length === 0 ||
+    typeof expected.textures !== "boolean" ||
+    typeof expected.skins !== "boolean" ||
+    expected.animations !== 0 ||
+    !Array.isArray(expected.extensionsUsed) ||
+    expected.extensionsUsed.some((name) =>
+      typeof name !== "string" || name.length === 0) ||
+    scale.classification !== "product-scale-reference" ||
+    manifest.entry.byteLength < scale.minimumSourceBytes ||
+    expected.vertices < scale.minimumVertices ||
+    expected.triangles < scale.minimumTriangles ||
+    expected.geometryRangeBytes <
+      scale.minimumGeometryRangeBytes ||
+    expected.geometryRangeBytes >
+      manifest.browserQualification.rendererLimits
+        .maximumRangeBytes ||
+    manifest.browserQualification.maximumRequestBytes >
+      expected.geometryRangeBytes ||
+    readmeUrl.protocol !== "https:" ||
+    readmeUrl.hostname !== "github.com" ||
+    !readmeUrl.pathname.startsWith(
+      "/KhronosGroup/glTF-Sample-Assets/blob/" +
+        `${manifest.provenance.commit}/Models/`,
+    ) ||
+    manifest.license.url !==
+      "https://creativecommons.org/licenses/by/4.0/legalcode"
+  ) {
+    throw new Error("public product-scale glTF manifest is invalid");
+  }
 }
 
 function validateManifest(value) {
@@ -53,26 +202,30 @@ function validateManifest(value) {
     manifest.tracking,
     "public glTF tracking",
   );
+  const expectedName = path.posix.basename(
+    provenance.path ?? "",
+  );
+  const expectedRawUrl =
+    "https://raw.githubusercontent.com/KhronosGroup/" +
+    "glTF-Sample-Assets/" +
+    `${provenance.commit}/${provenance.path}`;
   if (
     manifest.schema !== "bim-explorer-public-gltf-fixture/1" ||
-    typeof manifest.fixtureId !== "string" ||
-    manifest.fixtureId.length === 0 ||
+    !FIXTURE_ID.test(manifest.fixtureId ?? "") ||
+    typeof manifest.purpose !== "string" ||
+    manifest.purpose.length === 0 ||
     provenance.repository !==
       "https://github.com/KhronosGroup/glTF-Sample-Assets" ||
     !COMMIT.test(provenance.commit ?? "") ||
     typeof provenance.path !== "string" ||
     !provenance.path.endsWith(".glb") ||
-    entry.name !== "Box.glb" ||
+    entry.name !== expectedName ||
     entry.mediaType !== "model/gltf-binary" ||
     !Number.isSafeInteger(entry.byteLength) ||
     entry.byteLength <= 0 ||
+    entry.byteLength > 64 * 1024 * 1024 ||
     !SHA256.test(entry.sha256 ?? "") ||
-    typeof entry.rawUrl !== "string" ||
-    !entry.rawUrl.startsWith(
-      "https://raw.githubusercontent.com/KhronosGroup/" +
-      "glTF-Sample-Assets/",
-    ) ||
-    !entry.rawUrl.includes(provenance.commit) ||
+    entry.rawUrl !== expectedRawUrl ||
     license.spdx !== "CC-BY-4.0" ||
     typeof license.attribution !== "string" ||
     license.attribution.length === 0 ||
@@ -83,6 +236,8 @@ function validateManifest(value) {
   ) {
     throw new Error("public glTF manifest is invalid");
   }
+  validateBrowserQualification(manifest.browserQualification);
+  validateProductScaleManifest(manifest);
   return Object.freeze(structuredClone(manifest));
 }
 

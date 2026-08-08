@@ -14,6 +14,7 @@ import validator from "gltf-validator";
 import {
   acquirePublicGltfFixture,
   loadPublicGltfFixtureManifest,
+  PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "../../scripts/public-gltf-fixture.mjs";
 import {
   syntheticGlbBytes,
@@ -33,6 +34,36 @@ test("public Khronos Box manifest pins provenance and rights", async () => {
       "2cd01537e4d62241b9acba023da3d54e",
   );
   assert.equal(manifest.license.spdx, "CC-BY-4.0");
+  assert.equal(manifest.tracking.artifactTracked, false);
+  assert.equal(manifest.tracking.releaseBundled, false);
+  assert.equal(manifest.tracking.networkAtRuntime, false);
+});
+
+test("public product-scale GLB manifest pins scale and rights", async () => {
+  const manifest = await loadPublicGltfFixtureManifest(
+    PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
+  );
+  assert.equal(
+    manifest.fixtureId,
+    "khronos-gltf-sample-assets-a-beautiful-game-glb",
+  );
+  assert.equal(manifest.entry.byteLength, 42_977_928);
+  assert.equal(
+    manifest.entry.sha256,
+    "bd7133b4b322aae97c589b8839dae815" +
+      "5ad2546acb35ae32a127e722a959d007",
+  );
+  assert.equal(manifest.license.spdx, "CC-BY-4.0");
+  assert.equal(
+    manifest.scale.classification,
+    "product-scale-reference",
+  );
+  assert.equal(manifest.expected.vertices, 417_028);
+  assert.equal(manifest.expected.triangles, 573_952);
+  assert.equal(
+    manifest.browserQualification.requireCenterPick,
+    false,
+  );
   assert.equal(manifest.tracking.artifactTracked, false);
   assert.equal(manifest.tracking.releaseBundled, false);
   assert.equal(manifest.tracking.networkAtRuntime, false);

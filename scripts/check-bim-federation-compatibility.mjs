@@ -27,6 +27,7 @@ const TRUE_GATES = Object.freeze([
   "referenceFormatCapabilityMatrix",
   "ifcAndGltfReferenceAdmission",
   "referenceNativeIdentityIsolation",
+  "productScaleGltfReferencePrerequisite",
   "gltfGlbCodec",
   "boundedLifecycle",
 ]);
@@ -277,7 +278,7 @@ export function validateBimFederationCompatibility(
     manifest.schema !==
       "bim-explorer-federation-compatibility/1" ||
     manifest.status !== "experimental" ||
-    manifest.asOf !== "2026-08-04" ||
+    manifest.asOf !== "2026-08-08" ||
     !equalJson(manifest.contract, CONTRACT)
   ) {
     throw new Error(
@@ -320,7 +321,10 @@ export function validateBimFederationCompatibility(
         "gltf-reference-source-khronos-box-2026-08-04.json" ||
     manifest.evidence?.gltfBrowserWebGl2 !==
       "compatibility/evidence/" +
-        "gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json"
+        "gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json" ||
+    manifest.evidence?.gltfProductScaleReference !==
+      "compatibility/evidence/" +
+        "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json"
   ) {
     throw new Error(
       "BIM federation Gate inventory is invalid",
@@ -336,6 +340,7 @@ export function validateBimFederationCompatibility(
     policy.allowImplicitDatumTransformation !== false ||
     policy.allowNonIfcSemanticAuthority !== false ||
     policy.claimQualifiedGltfCodec !== true ||
+    policy.claimProductScaleGltfReference !== true ||
     policy.claimUnqualifiedReferenceCodec !== false ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimUserDemand !== false ||

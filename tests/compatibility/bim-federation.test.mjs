@@ -26,7 +26,7 @@ test("BIM federation admits IFC and qualified glTF references", () => {
     ),
     {
       status: "experimental",
-      passedGates: 16,
+      passedGates: 17,
       heldGates: 7,
       registeredFormats: 9,
     },

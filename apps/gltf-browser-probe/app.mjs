@@ -41,38 +41,57 @@ async function run() {
     const input = await json("/probe-input.json");
     if (
       input.schema !==
-        "bim-explorer-gltf-browser-probe-input/1"
+        "bim-explorer-gltf-browser-probe-input/1" ||
+      input.qualification === null ||
+      typeof input.qualification !== "object"
     ) {
       throw new Error("glTF Browser input schema is invalid");
     }
+    const qualification = input.qualification;
+    const expected = qualification.expected;
     session = new BrowserGeometryRangeSession(input.snapshot);
     backend = createWebGl2Backend({
       canvas,
       width: 640,
       height: 480,
     });
-    renderer = createBounded3dRenderer({ backend });
+    renderer = createBounded3dRenderer({
+      backend,
+      limits: qualification.rendererLimits,
+    });
     const mount = await renderer.mount({
       session,
       snapshot: input.snapshot,
     });
-    const pick = await renderer.pick({
-      x: 320,
-      y: 240,
-    });
-    if (pick.status !== "hit") {
+    const pick = qualification.requireCenterPick
+      ? await renderer.pick({ x: 320, y: 240 })
+      : null;
+    if (
+      qualification.requireCenterPick &&
+      pick?.status !== "hit"
+    ) {
       throw new Error("glTF Browser center pick missed");
     }
-    const selected = await renderer.renderView({
-      camera: mount.backend.camera,
-      selectedPickIds: [pick.identity.pickId],
-    });
+    const selected = pick === null
+      ? null
+      : await renderer.renderView({
+          camera: mount.backend.camera,
+          selectedPickIds: [pick.identity.pickId],
+        });
     const rangeState = await json("/range-state.json");
     const sourceState = session.state;
     const release = await renderer.unmount();
     const rendererDisposed = await renderer.dispose();
     const sessionDisposed = await session.dispose();
-    const entity = input.snapshot.entities[0];
+    const entity = pick === null
+      ? input.snapshot.entities[0]
+      : input.snapshot.entities.find(
+          (candidate) =>
+            candidate.pickId === pick.identity.pickId,
+        );
+    if (entity === undefined) {
+      throw new Error("glTF Browser picked identity is unavailable");
+    }
     const report = {
       schema: "bim-explorer-gltf-browser-webgl2-report/1",
       status: "passed",
@@ -89,10 +108,10 @@ async function run() {
       identity: {
         nativeId: entity.nativeId,
         globalId: entity.globalId,
-        pickedNativeId: pick.identity.nativeId,
-        pickedGlobalId: pick.identity.globalId,
-        renderId: pick.identity.renderId,
-        pickId: pick.identity.pickId,
+        pickedNativeId: pick?.identity.nativeId ?? null,
+        pickedGlobalId: pick?.identity.globalId ?? null,
+        renderId: pick?.identity.renderId ?? entity.renderId,
+        pickId: pick?.identity.pickId ?? entity.pickId,
       },
       renderer: {
         backend: mount.backend.backendId,
@@ -105,21 +124,25 @@ async function run() {
         drawCalls: mount.backend.drawCalls,
         instances: mount.metrics.instances,
         triangles: mount.metrics.instancedTriangles,
+        uniqueTriangles: mount.metrics.uniqueTriangles,
         geometryRecords: mount.metrics.geometryRecords,
+        geometryPayloadBytes:
+          mount.metrics.geometryPayloadBytes,
         sourceReadBytes: mount.metrics.sourceReadBytes,
         sourceReads: mount.metrics.sourceReads,
         selectedInstances:
-          selected.selection.selectedInstances,
-        highlightPixels: selected.backend.highlightPixels,
+          selected?.selection.selectedInstances ?? 0,
+        highlightPixels:
+          selected?.backend.highlightPixels ?? 0,
       },
       picking: {
-        status: pick.status,
-        actualGpu: pick.backend.actualGpu,
+        status: pick?.status ?? "not-required",
+        actualGpu: pick?.backend.actualGpu ?? null,
         temporaryTargetBytes:
-          pick.backend.temporaryTargetBytes,
+          pick?.backend.temporaryTargetBytes ?? 0,
         temporaryReleased:
-          pick.backend.temporaryReleased,
-        worldPosition: pick.worldPosition,
+          pick?.backend.temporaryReleased ?? null,
+        worldPosition: pick?.worldPosition ?? null,
       },
       range: {
         clientReads: sourceState.rangeReads,
@@ -139,36 +162,56 @@ async function run() {
     if (
       report.source.format !== "glb" ||
       report.source.semanticAuthority !== false ||
-      report.identity.nativeId !==
-        report.identity.pickedNativeId ||
-      report.identity.globalId !== null ||
-      report.identity.pickedGlobalId !== null ||
       report.renderer.backend !== "webgl2" ||
       report.renderer.actualGpu !== true ||
       report.renderer.rendered !== true ||
       report.renderer.glError !== 0 ||
       report.renderer.nonBackgroundPixels <= 0 ||
-      report.renderer.uploadedBytes !== 800 ||
-      report.renderer.drawCalls !== 1 ||
-      report.renderer.instances !== 1 ||
-      report.renderer.triangles !== 12 ||
-      report.renderer.geometryRecords !== 1 ||
-      report.renderer.sourceReadBytes !== 756 ||
-      report.renderer.sourceReads !== 3 ||
-      report.renderer.selectedInstances !== 1 ||
-      report.renderer.highlightPixels <= 0 ||
-      report.picking.actualGpu !== true ||
-      report.picking.temporaryReleased !== true ||
-      report.range.clientReads !== 3 ||
-      report.range.clientBytes !== 756 ||
-      report.range.serverRequests !== 3 ||
-      report.range.serverBytes !== 756 ||
-      report.cleanup.releasedBytes !== 800 ||
+      report.renderer.uploadedBytes !== expected.uploadedBytes ||
+      report.renderer.drawCalls !== expected.drawCalls ||
+      report.renderer.instances !== expected.instances ||
+      report.renderer.triangles !==
+        expected.instancedTriangles ||
+      report.renderer.uniqueTriangles !==
+        expected.uniqueTriangles ||
+      report.renderer.geometryRecords !==
+        expected.geometryRecords ||
+      report.renderer.geometryPayloadBytes !==
+        expected.geometryPayloadBytes ||
+      report.renderer.sourceReadBytes !==
+        expected.sourceReadBytes ||
+      report.renderer.sourceReads !== expected.sourceReads ||
+      report.range.clientReads !== expected.sourceReads ||
+      report.range.clientBytes !== expected.sourceReadBytes ||
+      report.range.serverRequests !== expected.sourceReads ||
+      report.range.serverBytes !== expected.sourceReadBytes ||
+      report.cleanup.releasedBytes !== expected.uploadedBytes ||
       report.cleanup.rendererDisposed !== true ||
       report.cleanup.sessionDisposed !== true ||
       report.cleanup.backendDisposed !== true ||
       report.cleanup.activeBackendBytes !== 0 ||
-      report.cleanup.residentRanges !== 0
+      report.cleanup.residentRanges !== 0 ||
+      (
+        qualification.requireCenterPick &&
+        (
+          report.identity.nativeId !==
+            report.identity.pickedNativeId ||
+          report.identity.globalId !== null ||
+          report.identity.pickedGlobalId !== null ||
+          report.renderer.selectedInstances !== 1 ||
+          report.renderer.highlightPixels <= 0 ||
+          report.picking.actualGpu !== true ||
+          report.picking.temporaryReleased !== true
+        )
+      ) ||
+      (
+        !qualification.requireCenterPick &&
+        (
+          report.picking.status !== "not-required" ||
+          report.renderer.selectedInstances !== 0 ||
+          report.renderer.highlightPixels !== 0
+        )
+      )
     ) {
       throw new Error("glTF Browser WebGL2 receipt is invalid");
     }

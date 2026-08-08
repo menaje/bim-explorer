@@ -35,8 +35,19 @@ const federationEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.federation),
   "utf8",
 ));
+const productScaleEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.productScaleReference),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
+  "utf8",
+));
+const productScaleFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.productScaleFixtureManifest,
+  ),
   "utf8",
 ));
 
@@ -61,8 +72,11 @@ const trueGates = [
   "browserProductOpen",
   "vscodeProductOpen",
   "crossPlatformProductOpen",
+  "productScaleReferenceGeometry",
 ];
 const heldGates = [
+  "productScaleProductOpen",
+  "physicalGpu",
   "externalResourceBundle",
   "requiredExtensions",
   "write",
@@ -163,6 +177,9 @@ if (
   manifest.policy.roundTrip !== false ||
   manifest.policy.claimProductSupport !== true ||
   manifest.policy.claimCrossPlatformProductOpen !== true ||
+  manifest.policy.claimProductScaleReferenceGeometry !== true ||
+  manifest.policy.claimProductScaleProductOpen !== false ||
+  manifest.policy.claimPhysicalGpu !== false ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
   manifest.blockers.length !== 2 ||
@@ -178,6 +195,9 @@ if (
   manifest.evidence.productPlatformMatrix !==
     "compatibility/evidence/" +
       "gltf-product-platform-matrix-2026-08-08.json" ||
+  manifest.evidence.productScaleReference !==
+    "compatibility/evidence/" +
+      "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -353,7 +373,48 @@ if (
   federationEvidence.referenceMesh?.write !==
     "blocked-read-only" ||
   federationEvidence.referenceMesh?.roundTrip !==
-    "blocked-not-source-authority"
+    "blocked-not-source-authority" ||
+  productScaleEvidence.schema !==
+    "bim-explorer-gltf-product-scale-reference-qualification/1" ||
+  productScaleEvidence.status !== "passed-experimental" ||
+  productScaleEvidence.asOf !== "2026-08-08" ||
+  productScaleEvidence.contract !== manifest.contract ||
+  productScaleEvidence.fixture?.fixtureId !==
+    productScaleFixture.fixtureId ||
+  productScaleEvidence.fixture?.byteLength !==
+    productScaleFixture.entry.byteLength ||
+  productScaleEvidence.fixture?.sha256 !==
+    productScaleFixture.entry.sha256 ||
+  productScaleEvidence.fixture?.license !==
+    productScaleFixture.license.spdx ||
+  productScaleEvidence.fixture?.artifactTracked !== false ||
+  productScaleEvidence.fixture?.releaseBundled !== false ||
+  productScaleEvidence.fixture?.downloadOnDemand !== true ||
+  productScaleEvidence.headless?.geometry?.records !== 15 ||
+  productScaleEvidence.headless?.geometry?.instances !== 49 ||
+  productScaleEvidence.headless?.geometry?.vertices !== 417028 ||
+  productScaleEvidence.headless?.geometry?.triangles !== 573952 ||
+  productScaleEvidence.headless?.geometry?.rangeBytes !== 16896412 ||
+  productScaleEvidence.headless?.renderer?.instances !== 49 ||
+  productScaleEvidence.headless?.renderer?.uniqueTriangles !== 573952 ||
+  productScaleEvidence.headless?.renderer?.instancedTriangles !== 1499072 ||
+  productScaleEvidence.headless?.renderer?.uploadedBytes !== 16900016 ||
+  productScaleEvidence.headless?.cleanup?.activeBackendBytes !== 0 ||
+  productScaleEvidence.headless?.cleanup?.residentRanges !== 0 ||
+  productScaleEvidence.browser?.renderer?.actualGpu !== true ||
+  productScaleEvidence.browser?.renderer?.nonBackgroundPixels <= 0 ||
+  productScaleEvidence.browser?.renderer?.uploadedBytes !== 16900016 ||
+  productScaleEvidence.browser?.network?.externalOrigins?.length !== 0 ||
+  productScaleEvidence.browser?.cleanup?.activeBackendBytes !== 0 ||
+  !everyTrue(productScaleEvidence.assertions) ||
+  productScaleEvidence.decision?.productScaleReferenceGeometry !==
+    "passed-experimental" ||
+  productScaleEvidence.decision?.browserProductFileOpen !==
+    "held-separate-product-gate" ||
+  productScaleEvidence.decision?.vscodeProductFileOpen !==
+    "held-separate-product-gate" ||
+  productScaleEvidence.decision?.physicalGpu !== "not-claimed" ||
+  productScaleEvidence.decision?.productionClaims !== false
 ) {
   throw new Error(
     "glTF reference source compatibility check failed",
@@ -364,6 +425,7 @@ const serialized = JSON.stringify({
   browserEvidence,
   browserProductEvidence,
   federationEvidence,
+  productScaleEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

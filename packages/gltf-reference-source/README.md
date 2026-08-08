@@ -25,6 +25,15 @@ GLB는 Browser local file input, staged VS Code와 clean-installed VSIX에서
 path-free bridge와 cleanup을 통과했습니다. 모두 SwiftShader Chromium API
 evidence이며 physical GPU나 broader glTF profile을 뜻하지 않습니다.
 
+별도 product-scale reference qualification은 고정된 42.98MB Khronos
+`A Beautiful Game` GLB를 사용합니다. 공식 Validator issue 0개,
+417,028 vertices, 573,952 unique triangles, 49 instances와 1,499,072
+instanced triangles를 headless 및 실제 Chrome SwiftShader WebGL2에서
+검증했고 16,900,016-byte allocation을 전량 회수했습니다. embedded texture와
+`KHR_materials_transmission`/`KHR_materials_volume`은 source에 존재하지만
+이 bounded geometry projection의 material authority로 승격하지 않습니다.
+제품 file-open과 physical GPU는 별도 Gate입니다.
+
 qualified snapshot은 BIM federation에 `gltf`/`glb` reference slot으로
 등록할 수 있습니다. selection은 source slot, exact revision과
 source-native `nativeId`에 묶이며 unaligned source는 shared-coordinate
