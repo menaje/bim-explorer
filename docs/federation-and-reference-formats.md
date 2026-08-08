@@ -49,10 +49,13 @@ transform을 source slot별로 namespacing한 derived renderer projection을
 - renderer, projection, source session과 allocation의 deterministic cleanup
 
 근거는
-[`product-scale federation evidence`](../compatibility/evidence/bim-federation-product-scale-2026-08-08.json)가
-소유합니다. 두 IFC는 generated qualification fixture이고 GLB는 reference
-geometry이므로 실제 사용자 모델, Spatial consumer, 측량 datum 또는
-production federation을 증명하지 않습니다.
+[`product-scale federation evidence`](../compatibility/evidence/bim-federation-product-scale-2026-08-08.json)와
+[`macOS/Linux platform matrix`](../compatibility/evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json)가
+소유합니다. matrix의 portable projection은 geometry, range,
+render/highlight와 cleanup을 동일성 해시로 고정하고, runner별 memory/time은
+예산 내 개별 관측치로 남깁니다. 두 IFC는 generated qualification fixture이고
+GLB는 reference geometry이므로 실제 사용자 모델, Spatial consumer, 측량
+datum 또는 production federation을 증명하지 않습니다.
 
 ## Identity와 Spatial 경계
 

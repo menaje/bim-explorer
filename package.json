@@ -55,6 +55,7 @@
     "qualify:openbim": "node scripts/qualify-openbim-explorer.mjs",
     "qualify:federation": "node scripts/qualify-bim-federation.mjs",
     "qualify:federation:product-scale": "node scripts/qualify-bim-federation-product-scale.mjs",
+    "assemble:federation:product-scale:platform": "node scripts/assemble-bim-federation-product-scale-platform-matrix.mjs",
     "qualify:community-release": "node scripts/qualify-community-release.mjs",
     "qualify:bim-source": "node scripts/qualify-bim-model-source.mjs",
     "qualify:bim-source:metadata": "node scripts/qualify-bim-source-metadata.mjs",

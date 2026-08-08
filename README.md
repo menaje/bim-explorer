@@ -160,7 +160,11 @@ Chrome SwiftShader WebGL2에서 열고 16.9MB allocation을 전량 회수했습�
 같은 제품 규모 GLB와 generated IFC architecture/MEP source 두 개를 하나의
 aligned derived projection으로 동시에 구성한 federation Gate도 53 instances,
 573,976 unique triangles, 19회 bounded read와 16,902,256-byte upload를
-headless 및 실제 Chrome WebGL2에서 재현하고 전량 회수했습니다.
+headless 및 실제 Chrome WebGL2에서 재현하고 전량 회수했습니다. 같은
+federation projection은 macOS arm64와 Linux x64 CI에서 geometry, range,
+render/highlight와 cleanup이 동일함을 별도
+[`platform matrix`](compatibility/evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json)로
+통과했습니다.
 같은 파일은 Browser 제품의 실제 local file input, staged VS Code와 빈
 profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selection,
 path-free bridge, 닫기와 전량 cleanup을 통과했습니다. physical GPU 또는 BIM

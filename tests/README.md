@@ -109,7 +109,10 @@ qualification이 아닙니다.
 `npm run qualify:federation:product-scale`은 같은 공개 GLB와 generated IFC
 두 source를 하나의 aligned renderer projection으로 구성해 headless/실제
 Chrome WebGL2 first frame, aggregate memory, source-scoped highlight와 모든
-range/session/GPU cleanup을 검사합니다.
+range/session/GPU cleanup을 검사합니다. macOS/Linux CI receipt는 `npm run
+assemble:federation:product-scale:platform`으로 합치며 geometry, range,
+render/highlight와 cleanup의 portable projection이 동일하지 않으면
+실패합니다. memory/time은 runner별 예산 관측으로 분리해 보존합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

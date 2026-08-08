@@ -6,7 +6,12 @@ import {
   validateBimFederationCompatibility,
 } from "../../scripts/check-bim-federation-compatibility.mjs";
 
-const [manifest, evidence, productScaleEvidence] = await Promise.all([
+const [
+  manifest,
+  evidence,
+  productScaleEvidence,
+  productScalePlatformEvidence,
+] = await Promise.all([
   readFile(
     "compatibility/bim-federation.json",
     "utf8",
@@ -21,6 +26,11 @@ const [manifest, evidence, productScaleEvidence] = await Promise.all([
       "bim-federation-product-scale-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "bim-federation-product-scale-platform-matrix-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("BIM federation admits IFC and qualified glTF references", () => {
@@ -29,12 +39,14 @@ test("BIM federation admits IFC and qualified glTF references", () => {
       manifest,
       evidence,
       productScaleEvidence,
+      productScalePlatformEvidence,
     ),
     {
       status: "experimental",
-      passedGates: 18,
+      passedGates: 19,
       heldGates: 6,
       registeredFormats: 9,
+      qualifiedPlatforms: 2,
     },
   );
 });
@@ -47,6 +59,7 @@ test("BIM federation cannot merge native source identity", () => {
       overclaim,
       evidence,
       productScaleEvidence,
+      productScalePlatformEvidence,
     ),
     /overclaims capability/u,
   );
@@ -60,6 +73,7 @@ test("held reference codecs cannot become supported without evidence", () => {
       overclaim,
       evidence,
       productScaleEvidence,
+      productScalePlatformEvidence,
     ),
     /must remain held/u,
   );
@@ -73,6 +87,7 @@ test("federation evidence rejects datum transformation claims", () => {
       manifest,
       overclaim,
       productScaleEvidence,
+      productScalePlatformEvidence,
     ),
     /coordinate evidence is invalid/u,
   );
@@ -86,6 +101,7 @@ test("product-scale federation requires exact composite metrics", () => {
       manifest,
       evidence,
       invalid,
+      productScalePlatformEvidence,
     ),
     /Browser evidence is invalid/u,
   );
@@ -99,7 +115,36 @@ test("product-scale federation requires deterministic cleanup", () => {
       manifest,
       evidence,
       invalid,
+      productScalePlatformEvidence,
     ),
     /cleanup or decision evidence is invalid/u,
+  );
+});
+
+test("product-scale federation requires both CI platforms", () => {
+  const invalid = structuredClone(productScalePlatformEvidence);
+  invalid.platforms.pop();
+  assert.throws(
+    () => validateBimFederationCompatibility(
+      manifest,
+      evidence,
+      productScaleEvidence,
+      invalid,
+    ),
+    /platform matrix identity differs/u,
+  );
+});
+
+test("product-scale federation rejects divergent platform rendering", () => {
+  const invalid = structuredClone(productScalePlatformEvidence);
+  invalid.platforms[1].browser.renderer.highlightPixels += 1;
+  assert.throws(
+    () => validateBimFederationCompatibility(
+      manifest,
+      evidence,
+      productScaleEvidence,
+      invalid,
+    ),
+    /cross-platform evidence is incomplete/u,
   );
 });

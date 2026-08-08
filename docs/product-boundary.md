@@ -124,9 +124,10 @@ authority입니다.
 
 main의 product-scale federation qualification은 두 generated IFC source와
 제품 규모 GLB reference를 한 derived renderer projection으로 동시에
-검증합니다. 이는 Explorer의 bounded composition 성능 근거일 뿐 실제
-Spatial bundle, Canonical mapping, customer-model 수요나 surveyed alignment를
-승인하지 않습니다.
+검증하고, macOS arm64와 Linux x64 CI의 동일한 portable projection을 별도
+matrix로 비교합니다. 이는 Explorer의 bounded composition 성능 근거일 뿐
+실제 Spatial bundle, Canonical mapping, customer-model 수요나 surveyed
+alignment를 승인하지 않습니다.
 
 ## 비목표
 

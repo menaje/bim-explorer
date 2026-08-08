@@ -1,0 +1,682 @@
+{
+  "schema": "bim-explorer-federation-product-scale-platform-matrix/1",
+  "status": "experimental",
+  "source": {
+    "repository": "menaje/bim-explorer",
+    "workflow": "CI",
+    "runId": 31244548121,
+    "runUrl": "https://github.com/menaje/bim-explorer/actions/runs/31244548121",
+    "commit": "b843486cce7998aae23cd6885c6938bb13827308"
+  },
+  "platforms": [
+    {
+      "schema": "bim-explorer-federation-product-scale-qualification/1",
+      "status": "passed-experimental",
+      "asOf": "2026-08-08",
+      "contract": {
+        "federation": "bim-explorer-federation/0.1",
+        "rendererProjection": "bim-explorer-federated-renderer-projection/0.1",
+        "bimSourceProtocol": "bim-explorer-bim-source/0.2"
+      },
+      "fixture": {
+        "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+        "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+        "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+        "path": "Models/ABeautifulGame/glTF-Binary/ABeautifulGame.glb",
+        "readmeUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/ABeautifulGame/README.md",
+        "byteLength": 42977928,
+        "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+        "license": "CC-BY-4.0",
+        "attribution": "A Beautiful Game © 2020 ASWF MaterialX Project; glTF conversion © 2022 Ed Mackey, licensed under CC BY 4.0",
+        "artifactTracked": false,
+        "releaseBundled": false,
+        "downloadOnDemand": true
+      },
+      "federation": {
+        "federationId": "federation:product-scale-composite",
+        "sources": [
+          {
+            "federationSourceId": "source-slot:architecture",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+            "alignmentMethod": "projected-same-crs",
+            "alignmentProvenance": "ifc-map-conversion",
+            "datumTransformation": "not-performed"
+          },
+          {
+            "federationSourceId": "source-slot:glb-reference",
+            "format": "glb",
+            "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+            "alignmentMethod": "explicit",
+            "alignmentProvenance": "explicit-user-input",
+            "datumTransformation": "not-performed"
+          },
+          {
+            "federationSourceId": "source-slot:mep",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+            "alignmentMethod": "explicit",
+            "alignmentProvenance": "explicit-user-input",
+            "datumTransformation": "not-performed"
+          }
+        ],
+        "sourceSlots": [
+          {
+            "federationSourceId": "source-slot:architecture",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+            "entities": 2,
+            "instances": 2
+          },
+          {
+            "federationSourceId": "source-slot:glb-reference",
+            "format": "glb",
+            "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+            "entities": 49,
+            "instances": 49
+          },
+          {
+            "federationSourceId": "source-slot:mep",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+            "entities": 2,
+            "instances": 2
+          }
+        ],
+        "sourceIdentityMerged": false,
+        "entities": 53,
+        "instances": 53,
+        "firstFrameRanges": 3,
+        "distinctCompositeNativeIds": 53,
+        "largestDuplicateGlobalIdOccurrences": 2
+      },
+      "expected": {
+        "sources": 3,
+        "entities": 53,
+        "firstFrameRanges": 3,
+        "sourceReadBytes": 16898404,
+        "sourceReads": 19,
+        "geometryPayloadBytes": 16898016,
+        "geometryRecords": 17,
+        "vertices": 417096,
+        "indices": 1721928,
+        "uniqueTriangles": 573976,
+        "instances": 53,
+        "instancedTriangles": 1499120,
+        "drawCalls": 53,
+        "instanceBytes": 4240,
+        "cpuStagingBytes": 16902644,
+        "uploadedBytes": 16902256
+      },
+      "headless": {
+        "renderer": {
+          "backend": "headless",
+          "rendered": false,
+          "sourceReadBytes": 16898404,
+          "sourceReads": 19,
+          "geometryPayloadBytes": 16898016,
+          "geometryRecords": 17,
+          "vertices": 417096,
+          "indices": 1721928,
+          "uniqueTriangles": 573976,
+          "instances": 53,
+          "instancedTriangles": 1499120,
+          "drawCalls": 53,
+          "instanceBytes": 4240,
+          "cpuStagingBytes": 16902644,
+          "uploadedBytes": 16902256,
+          "limits": {
+            "maximumFirstFrameRanges": 3,
+            "maximumRangeBytes": 33554432,
+            "maximumSourceReadBytes": 33554432,
+            "maximumReadBytes": 1048576,
+            "maximumGeometryRecords": 100000,
+            "maximumGeometryPayloadBytes": 25165824,
+            "maximumInstances": 100000,
+            "maximumInstancedTriangles": 4000000,
+            "maximumDrawCalls": 100000,
+            "maximumCpuStagingBytes": 33554432,
+            "maximumGpuCacheBytes": 33554432
+          }
+        },
+        "memory": {
+          "residentSetSizeBeforeMount": 521338880,
+          "residentSetSizeAfterMount": 556990464,
+          "residentSetDeltaBytes": 35651584,
+          "heapUsedAfterMount": 28320432,
+          "maximumResidentSetSizeBytes": 560037888,
+          "budgetBytes": 1073741824
+        },
+        "performance": {
+          "sourceMs": 564.1052919999997,
+          "projectionMs": 11.439875000000029,
+          "mountMs": 52.198875000000044,
+          "limits": {
+            "maximumSourceMs": 5000,
+            "maximumProjectionMs": 1000,
+            "maximumMountMs": 5000
+          }
+        },
+        "range": {
+          "firstFrame": {
+            "disposed": false,
+            "rangeReads": 19,
+            "rangeBytes": 16898404,
+            "sourceCount": 3,
+            "ownsSourceSessions": false
+          },
+          "afterBrowserPreparation": {
+            "disposed": false,
+            "rangeReads": 38,
+            "rangeBytes": 33796808,
+            "sourceCount": 3,
+            "ownsSourceSessions": false
+          }
+        },
+        "cleanup": {
+          "releasedBytes": 16902256,
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "activeBackendBytes": 0,
+          "residentRanges": 0
+        }
+      },
+      "browser": {
+        "environment": {
+          "browser": "Google Chrome 150.0.7871.187",
+          "platform": "darwin-arm64",
+          "headless": true,
+          "webgl2": "actual Browser API via SwiftShader",
+          "physicalGpuClaimed": false
+        },
+        "federation": {
+          "federationId": "federation:product-scale-composite",
+          "sourceSlots": [
+            {
+              "federationSourceId": "source-slot:architecture",
+              "format": "ifc",
+              "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+              "entities": 2,
+              "instances": 2
+            },
+            {
+              "federationSourceId": "source-slot:glb-reference",
+              "format": "glb",
+              "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+              "entities": 49,
+              "instances": 49
+            },
+            {
+              "federationSourceId": "source-slot:mep",
+              "format": "ifc",
+              "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+              "entities": 2,
+              "instances": 2
+            }
+          ],
+          "sourceIdentityMerged": false,
+          "distinctCompositeNativeIds": 53,
+          "largestDuplicateGlobalIdOccurrences": 2
+        },
+        "renderer": {
+          "backend": "webgl2",
+          "actualGpu": true,
+          "rendered": true,
+          "glError": 0,
+          "nonBackgroundPixels": 20564,
+          "selectedInstances": 1,
+          "highlightedInstances": 1,
+          "highlightPixels": 1604,
+          "sourceReadBytes": 16898404,
+          "sourceReads": 19,
+          "geometryPayloadBytes": 16898016,
+          "geometryRecords": 17,
+          "uniqueTriangles": 573976,
+          "instances": 53,
+          "instancedTriangles": 1499120,
+          "drawCalls": 53,
+          "cpuStagingBytes": 16902644,
+          "uploadedBytes": 16902256
+        },
+        "range": {
+          "clientReads": 19,
+          "clientBytes": 16898404,
+          "serverRequests": 19,
+          "serverBytes": 16898404
+        },
+        "cleanup": {
+          "releasedBytes": 16902256,
+          "rendererDisposed": true,
+          "sessionDisposed": true,
+          "backendDisposed": true,
+          "activeBackendBytes": 0,
+          "residentRanges": 0
+        },
+        "network": {
+          "externalOrigins": [],
+          "requestCount": 31,
+          "runtimeErrors": []
+        }
+      },
+      "sourceCleanup": {
+        "projectionDisposed": true,
+        "projectionOwnsSourceSessions": false,
+        "underlyingSessionsRemainUsable": true,
+        "federationReleasedSources": 3,
+        "federationDisposed": true,
+        "sourceStates": [
+          {
+            "format": "ifc",
+            "rangeReads": 2,
+            "rangeBytesRead": 1992,
+            "remainingReadBytes": 0
+          },
+          {
+            "format": "ifc",
+            "rangeReads": 2,
+            "rangeBytesRead": 1992,
+            "remainingReadBytes": 0
+          },
+          {
+            "format": "glb",
+            "rangeReads": 34,
+            "rangeBytesRead": 33792824,
+            "remainingReadBytes": 0
+          }
+        ],
+        "sessionsDisposed": 3,
+        "sourcesDisposed": 3
+      },
+      "assertions": {
+        "exactPinnedFixture": true,
+        "simultaneousThreeSourceFrame": true,
+        "exactCompositeGeometry": true,
+        "nativeIdentityIsolation": true,
+        "boundedAlignment": true,
+        "aggregateMemoryBudget": true,
+        "headlessPerformanceBudget": true,
+        "actualBrowserWebGl2": true,
+        "exactBrowserRangeReads": true,
+        "localOnlyRuntime": true,
+        "deterministicCleanup": true,
+        "authorityBoundaries": true,
+        "pathFreeEvidence": true
+      },
+      "decision": {
+        "productScaleFederationPerformance": "passed-experimental",
+        "simultaneousMultiSourceFrame": "passed-two-generated-ifc-and-product-scale-glb",
+        "browserWebGl2": "passed-swiftshader",
+        "physicalGpu": "not-claimed",
+        "surveyedDatumTransformation": "not-claimed",
+        "actualSpatialConsumer": "not-qualified-by-this-evidence",
+        "actualMultiFormatUserDemand": "not-qualified-by-this-evidence",
+        "write": false,
+        "roundTrip": false,
+        "productionClaims": false
+      },
+      "limitations": [
+        "the two IFC sources are generated qualification fixtures, while A Beautiful Game is product-scale reference geometry and not a BIM semantic model",
+        "explicit MEP and GLB placement is qualification input, not surveyed control-point or datum-transformation evidence",
+        "SwiftShader proves the Browser WebGL2 API path and makes no physical GPU claim",
+        "this evidence does not establish actual Coni Spatial consumer conformance or user demand",
+        "the public GLB is fetched into a private cache and is not tracked or release-bundled",
+        "native mutation, write, round-trip and production federation claims remain blocked"
+      ]
+    },
+    {
+      "schema": "bim-explorer-federation-product-scale-qualification/1",
+      "status": "passed-experimental",
+      "asOf": "2026-08-08",
+      "contract": {
+        "federation": "bim-explorer-federation/0.1",
+        "rendererProjection": "bim-explorer-federated-renderer-projection/0.1",
+        "bimSourceProtocol": "bim-explorer-bim-source/0.2"
+      },
+      "fixture": {
+        "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+        "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+        "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+        "path": "Models/ABeautifulGame/glTF-Binary/ABeautifulGame.glb",
+        "readmeUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/ABeautifulGame/README.md",
+        "byteLength": 42977928,
+        "sha256": "bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+        "license": "CC-BY-4.0",
+        "attribution": "A Beautiful Game © 2020 ASWF MaterialX Project; glTF conversion © 2022 Ed Mackey, licensed under CC BY 4.0",
+        "artifactTracked": false,
+        "releaseBundled": false,
+        "downloadOnDemand": true
+      },
+      "federation": {
+        "federationId": "federation:product-scale-composite",
+        "sources": [
+          {
+            "federationSourceId": "source-slot:architecture",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+            "alignmentMethod": "projected-same-crs",
+            "alignmentProvenance": "ifc-map-conversion",
+            "datumTransformation": "not-performed"
+          },
+          {
+            "federationSourceId": "source-slot:glb-reference",
+            "format": "glb",
+            "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+            "alignmentMethod": "explicit",
+            "alignmentProvenance": "explicit-user-input",
+            "datumTransformation": "not-performed"
+          },
+          {
+            "federationSourceId": "source-slot:mep",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+            "alignmentMethod": "explicit",
+            "alignmentProvenance": "explicit-user-input",
+            "datumTransformation": "not-performed"
+          }
+        ],
+        "sourceSlots": [
+          {
+            "federationSourceId": "source-slot:architecture",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+            "entities": 2,
+            "instances": 2
+          },
+          {
+            "federationSourceId": "source-slot:glb-reference",
+            "format": "glb",
+            "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+            "entities": 49,
+            "instances": 49
+          },
+          {
+            "federationSourceId": "source-slot:mep",
+            "format": "ifc",
+            "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+            "entities": 2,
+            "instances": 2
+          }
+        ],
+        "sourceIdentityMerged": false,
+        "entities": 53,
+        "instances": 53,
+        "firstFrameRanges": 3,
+        "distinctCompositeNativeIds": 53,
+        "largestDuplicateGlobalIdOccurrences": 2
+      },
+      "expected": {
+        "sources": 3,
+        "entities": 53,
+        "firstFrameRanges": 3,
+        "sourceReadBytes": 16898404,
+        "sourceReads": 19,
+        "geometryPayloadBytes": 16898016,
+        "geometryRecords": 17,
+        "vertices": 417096,
+        "indices": 1721928,
+        "uniqueTriangles": 573976,
+        "instances": 53,
+        "instancedTriangles": 1499120,
+        "drawCalls": 53,
+        "instanceBytes": 4240,
+        "cpuStagingBytes": 16902644,
+        "uploadedBytes": 16902256
+      },
+      "headless": {
+        "renderer": {
+          "backend": "headless",
+          "rendered": false,
+          "sourceReadBytes": 16898404,
+          "sourceReads": 19,
+          "geometryPayloadBytes": 16898016,
+          "geometryRecords": 17,
+          "vertices": 417096,
+          "indices": 1721928,
+          "uniqueTriangles": 573976,
+          "instances": 53,
+          "instancedTriangles": 1499120,
+          "drawCalls": 53,
+          "instanceBytes": 4240,
+          "cpuStagingBytes": 16902644,
+          "uploadedBytes": 16902256,
+          "limits": {
+            "maximumFirstFrameRanges": 3,
+            "maximumRangeBytes": 33554432,
+            "maximumSourceReadBytes": 33554432,
+            "maximumReadBytes": 1048576,
+            "maximumGeometryRecords": 100000,
+            "maximumGeometryPayloadBytes": 25165824,
+            "maximumInstances": 100000,
+            "maximumInstancedTriangles": 4000000,
+            "maximumDrawCalls": 100000,
+            "maximumCpuStagingBytes": 33554432,
+            "maximumGpuCacheBytes": 33554432
+          }
+        },
+        "memory": {
+          "residentSetSizeBeforeMount": 352800768,
+          "residentSetSizeAfterMount": 269283328,
+          "residentSetDeltaBytes": 0,
+          "heapUsedAfterMount": 22848392,
+          "maximumResidentSetSizeBytes": 397070336,
+          "budgetBytes": 1073741824
+        },
+        "performance": {
+          "sourceMs": 492.673251,
+          "projectionMs": 5.437735999999973,
+          "mountMs": 49.99380599999995,
+          "limits": {
+            "maximumSourceMs": 5000,
+            "maximumProjectionMs": 1000,
+            "maximumMountMs": 5000
+          }
+        },
+        "range": {
+          "firstFrame": {
+            "disposed": false,
+            "rangeReads": 19,
+            "rangeBytes": 16898404,
+            "sourceCount": 3,
+            "ownsSourceSessions": false
+          },
+          "afterBrowserPreparation": {
+            "disposed": false,
+            "rangeReads": 38,
+            "rangeBytes": 33796808,
+            "sourceCount": 3,
+            "ownsSourceSessions": false
+          }
+        },
+        "cleanup": {
+          "releasedBytes": 16902256,
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "activeBackendBytes": 0,
+          "residentRanges": 0
+        }
+      },
+      "browser": {
+        "environment": {
+          "browser": "Google Chrome 150.0.7871.128",
+          "platform": "linux-x64",
+          "headless": true,
+          "webgl2": "actual Browser API via SwiftShader",
+          "physicalGpuClaimed": false
+        },
+        "federation": {
+          "federationId": "federation:product-scale-composite",
+          "sourceSlots": [
+            {
+              "federationSourceId": "source-slot:architecture",
+              "format": "ifc",
+              "sourceRevisionId": "source-snapshot:sha256:0a8f3818ec726e0658eb6ac4646b271e365d22b9e0b06752d21a91862df40ef7",
+              "entities": 2,
+              "instances": 2
+            },
+            {
+              "federationSourceId": "source-slot:glb-reference",
+              "format": "glb",
+              "sourceRevisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+              "entities": 49,
+              "instances": 49
+            },
+            {
+              "federationSourceId": "source-slot:mep",
+              "format": "ifc",
+              "sourceRevisionId": "source-snapshot:sha256:b65dde88beb826f585338385581008bff43e6704c3f32a2ddf63e8f6553c0f9d",
+              "entities": 2,
+              "instances": 2
+            }
+          ],
+          "sourceIdentityMerged": false,
+          "distinctCompositeNativeIds": 53,
+          "largestDuplicateGlobalIdOccurrences": 2
+        },
+        "renderer": {
+          "backend": "webgl2",
+          "actualGpu": true,
+          "rendered": true,
+          "glError": 0,
+          "nonBackgroundPixels": 20564,
+          "selectedInstances": 1,
+          "highlightedInstances": 1,
+          "highlightPixels": 1604,
+          "sourceReadBytes": 16898404,
+          "sourceReads": 19,
+          "geometryPayloadBytes": 16898016,
+          "geometryRecords": 17,
+          "uniqueTriangles": 573976,
+          "instances": 53,
+          "instancedTriangles": 1499120,
+          "drawCalls": 53,
+          "cpuStagingBytes": 16902644,
+          "uploadedBytes": 16902256
+        },
+        "range": {
+          "clientReads": 19,
+          "clientBytes": 16898404,
+          "serverRequests": 19,
+          "serverBytes": 16898404
+        },
+        "cleanup": {
+          "releasedBytes": 16902256,
+          "rendererDisposed": true,
+          "sessionDisposed": true,
+          "backendDisposed": true,
+          "activeBackendBytes": 0,
+          "residentRanges": 0
+        },
+        "network": {
+          "externalOrigins": [],
+          "requestCount": 31,
+          "runtimeErrors": []
+        }
+      },
+      "sourceCleanup": {
+        "projectionDisposed": true,
+        "projectionOwnsSourceSessions": false,
+        "underlyingSessionsRemainUsable": true,
+        "federationReleasedSources": 3,
+        "federationDisposed": true,
+        "sourceStates": [
+          {
+            "format": "ifc",
+            "rangeReads": 2,
+            "rangeBytesRead": 1992,
+            "remainingReadBytes": 0
+          },
+          {
+            "format": "ifc",
+            "rangeReads": 2,
+            "rangeBytesRead": 1992,
+            "remainingReadBytes": 0
+          },
+          {
+            "format": "glb",
+            "rangeReads": 34,
+            "rangeBytesRead": 33792824,
+            "remainingReadBytes": 0
+          }
+        ],
+        "sessionsDisposed": 3,
+        "sourcesDisposed": 3
+      },
+      "assertions": {
+        "exactPinnedFixture": true,
+        "simultaneousThreeSourceFrame": true,
+        "exactCompositeGeometry": true,
+        "nativeIdentityIsolation": true,
+        "boundedAlignment": true,
+        "aggregateMemoryBudget": true,
+        "headlessPerformanceBudget": true,
+        "actualBrowserWebGl2": true,
+        "exactBrowserRangeReads": true,
+        "localOnlyRuntime": true,
+        "deterministicCleanup": true,
+        "authorityBoundaries": true,
+        "pathFreeEvidence": true
+      },
+      "decision": {
+        "productScaleFederationPerformance": "passed-experimental",
+        "simultaneousMultiSourceFrame": "passed-two-generated-ifc-and-product-scale-glb",
+        "browserWebGl2": "passed-swiftshader",
+        "physicalGpu": "not-claimed",
+        "surveyedDatumTransformation": "not-claimed",
+        "actualSpatialConsumer": "not-qualified-by-this-evidence",
+        "actualMultiFormatUserDemand": "not-qualified-by-this-evidence",
+        "write": false,
+        "roundTrip": false,
+        "productionClaims": false
+      },
+      "limitations": [
+        "the two IFC sources are generated qualification fixtures, while A Beautiful Game is product-scale reference geometry and not a BIM semantic model",
+        "explicit MEP and GLB placement is qualification input, not surveyed control-point or datum-transformation evidence",
+        "SwiftShader proves the Browser WebGL2 API path and makes no physical GPU claim",
+        "this evidence does not establish actual Coni Spatial consumer conformance or user demand",
+        "the public GLB is fetched into a private cache and is not tracked or release-bundled",
+        "native mutation, write, round-trip and production federation claims remain blocked"
+      ]
+    }
+  ],
+  "crossPlatform": {
+    "requiredPlatforms": [
+      "darwin-arm64",
+      "linux-x64"
+    ],
+    "fixtureId": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+    "federationSources": 3,
+    "federationInstances": 53,
+    "portableProjection": [
+      "contract",
+      "fixture",
+      "federation",
+      "expected",
+      "headless-renderer-range-cleanup-and-budgets",
+      "browser-render-range-cleanup-and-local-only-runtime",
+      "source-cleanup",
+      "assertions",
+      "decision",
+      "limitations"
+    ],
+    "portableProjectionIdentical": true,
+    "portableProjectionSha256": "477b0d5f8db3639f3eeab6de3321992bf799afe63bd5c9f516d963e984cd7bf3"
+  },
+  "decision": {
+    "macosProductScaleFederation": "passed-experimental",
+    "linuxProductScaleFederation": "passed-experimental",
+    "crossPlatformProductScaleFederation": "passed-experimental",
+    "physicalGpu": "not-claimed",
+    "surveyedDatumTransformation": "not-claimed",
+    "actualSpatialConsumer": "not-qualified-by-this-evidence",
+    "actualMultiFormatUserDemand": "not-qualified-by-this-evidence",
+    "productionClaims": false
+  },
+  "limitations": [
+    "the two IFC sources are generated qualification fixtures, while A Beautiful Game is product-scale reference geometry and not a BIM semantic model",
+    "the matrix compares macOS arm64 and Linux x64 CI observations through the same portable projection",
+    "platform-specific resident memory and elapsed time are retained as bounded observations and excluded from projection equality",
+    "SwiftShader proves the Browser WebGL2 API path and makes no physical GPU claim",
+    "this evidence does not establish actual Coni Spatial consumer conformance, customer-model demand or surveyed datum transformation",
+    "native mutation, write, round-trip and production federation claims remain blocked"
+  ]
+}

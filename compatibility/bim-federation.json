@@ -32,6 +32,7 @@
     "actualMultiFormatUserDemand": false,
     "surveyedCoordinateDatumEvidence": false,
     "productScaleFederationPerformance": true,
+    "crossPlatformProductScaleFederation": true,
     "pointCloudCodec": false,
     "gltfGlbCodec": true,
     "gis3dTilesEngine": false,
@@ -43,7 +44,8 @@
     "gltfReferenceSource": "compatibility/evidence/gltf-reference-source-khronos-box-2026-08-04.json",
     "gltfBrowserWebGl2": "compatibility/evidence/gltf-reference-source-khronos-box-browser-webgl2-2026-08-04.json",
     "gltfProductScaleReference": "compatibility/evidence/gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json",
-    "productScaleFederation": "compatibility/evidence/bim-federation-product-scale-2026-08-08.json"
+    "productScaleFederation": "compatibility/evidence/bim-federation-product-scale-2026-08-08.json",
+    "productScaleFederationPlatformMatrix": "compatibility/evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json"
   },
   "blockers": [
     "actual Coni Spatial consumer composition remains consumer-owned",
@@ -55,7 +57,7 @@
   ],
   "limitations": [
     "the foundation evidence uses three generated IFC4 snapshots, including one refresh revision, plus one generated GLB source",
-    "the product-scale composite evidence uses two generated IFC sources and A Beautiful Game reference geometry simultaneously; it is not customer-model or actual Spatial consumer evidence",
+    "the product-scale composite and macOS/Linux matrix use two generated IFC sources and A Beautiful Game reference geometry simultaneously; they are not customer-model or actual Spatial consumer evidence",
     "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
     "federation admission remains independent from product support; bounded Browser and VS Code file-open is qualified by separate product evidence",
     "point-cloud, GIS and native SDK format entries remain held capability records",
@@ -70,6 +72,7 @@
     "claimQualifiedGltfCodec": true,
     "claimProductScaleGltfReference": true,
     "claimProductScaleFederationPerformance": true,
+    "claimCrossPlatformProductScaleFederation": true,
     "claimUnqualifiedReferenceCodec": false,
     "claimActualSpatialConsumer": false,
     "claimUserDemand": false,

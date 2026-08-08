@@ -200,8 +200,11 @@ partial/stale, incremental refresh와 cross-source saved view foundation은
 [`product-scale federation evidence`](evidence/bim-federation-product-scale-2026-08-08.json)는
 generated IFC 두 source와 42.98MB GLB를 한 aligned first frame으로 구성해
 53 instances·573,976 unique triangles·19회 range read·16,902,256-byte
-upload와 headless/Chrome WebGL2 cleanup을 재현합니다. 전체 18개 Gate가
-통과했고 actual Spatial consumer, 사용자 수요, 측량 datum, LAS/LAZ/E57,
+upload와 headless/Chrome WebGL2 cleanup을 재현합니다.
+[`platform matrix`](evidence/bim-federation-product-scale-platform-matrix-2026-08-08.json)는
+macOS arm64와 Linux x64의 동일한 geometry·range·render/highlight·cleanup
+projection을 고정하고 플랫폼별 bounded memory/time 관측을 보존합니다. 전체
+19개 Gate가 통과했고 actual Spatial consumer, 사용자 수요, 측량 datum, LAS/LAZ/E57,
 3D Tiles, RVT/DGN의 6개 Gate는 보류합니다. registry는 `ifc`, `gltf`,
 `glb`만 admission하고 다른 format은 fail closed합니다.
 

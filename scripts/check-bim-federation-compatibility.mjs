@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  validateBimFederationProductScalePlatformMatrix,
+} from "./bim-federation-product-scale-platform-evidence.mjs";
+
 const CONTRACT = Object.freeze({
   federation: "bim-explorer-federation/0.1",
   source: "bim-explorer-federation-source/0.1",
@@ -29,6 +33,7 @@ const TRUE_GATES = Object.freeze([
   "referenceNativeIdentityIsolation",
   "productScaleGltfReferencePrerequisite",
   "productScaleFederationPerformance",
+  "crossPlatformProductScaleFederation",
   "gltfGlbCodec",
   "boundedLifecycle",
 ]);
@@ -128,6 +133,14 @@ const PRODUCT_ASSERTION_KEYS = Object.freeze([
   "authorityBoundaries",
   "pathFreeEvidence",
 ]);
+const PRODUCT_PLATFORM_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "bim-federation-product-scale-platform-matrix-2026-08-08.json";
+const PRODUCT_PLATFORM_RUN_ID = 31_244_548_121;
+const PRODUCT_PLATFORM_COMMIT =
+  "b843486cce7998aae23cd6885c6938bb13827308";
+const PRODUCT_PLATFORM_PROJECTION_SHA256 =
+  "477b0d5f8db3639f3eeab6de3321992bf799afe63bd5c9f516d963e984cd7bf3";
 
 function plainRecord(value, label) {
   if (
@@ -623,16 +636,82 @@ export function validateBimFederationProductScaleEvidence(evidence) {
   }
 }
 
+export function validateBimFederationProductScalePlatformCompatibility(
+  matrix,
+) {
+  const result =
+    validateBimFederationProductScalePlatformMatrix(matrix, {
+      commit: PRODUCT_PLATFORM_COMMIT,
+      runId: PRODUCT_PLATFORM_RUN_ID,
+      validateObservation:
+        validateBimFederationProductScaleEvidence,
+    });
+  if (
+    result.projectionSha256 !==
+      PRODUCT_PLATFORM_PROJECTION_SHA256
+  ) {
+    throw new Error(
+      "product-scale federation platform projection differs",
+    );
+  }
+  const expectedEnvironments = {
+    "darwin-arm64": {
+      browser: "Google Chrome 150.0.7871.187",
+      maximumResidentSetSizeBytes: 560_037_888,
+      sourceMs: 564.1052919999997,
+      projectionMs: 11.439875000000029,
+      mountMs: 52.198875000000044,
+    },
+    "linux-x64": {
+      browser: "Google Chrome 150.0.7871.128",
+      maximumResidentSetSizeBytes: 397_070_336,
+      sourceMs: 492.673251,
+      projectionMs: 5.437735999999973,
+      mountMs: 49.99380599999995,
+    },
+  };
+  for (const observation of matrix.platforms) {
+    const platform = observation.browser.environment.platform;
+    const expected = expectedEnvironments[platform];
+    if (
+      expected === undefined ||
+      observation.browser.environment.browser !==
+        expected.browser ||
+      observation.headless.memory.maximumResidentSetSizeBytes !==
+        expected.maximumResidentSetSizeBytes ||
+      observation.headless.performance.sourceMs !==
+        expected.sourceMs ||
+      observation.headless.performance.projectionMs !==
+        expected.projectionMs ||
+      observation.headless.performance.mountMs !==
+        expected.mountMs ||
+      observation.browser.renderer.nonBackgroundPixels !== 20_564 ||
+      observation.browser.renderer.highlightPixels !== 1_604 ||
+      observation.browser.network.requestCount !== 31
+    ) {
+      throw new Error(
+        "product-scale federation platform runner observation differs",
+      );
+    }
+  }
+  return result;
+}
+
 export function validateBimFederationCompatibility(
   manifest,
   evidence,
   productScaleEvidence,
+  productScalePlatformEvidence,
 ) {
   plainRecord(manifest, "BIM federation manifest");
   validateBimFederationEvidence(evidence);
   validateBimFederationProductScaleEvidence(
     productScaleEvidence,
   );
+  const platformResult =
+    validateBimFederationProductScalePlatformCompatibility(
+      productScalePlatformEvidence,
+    );
   if (
     manifest.schema !==
       "bim-explorer-federation-compatibility/1" ||
@@ -686,7 +765,9 @@ export function validateBimFederationCompatibility(
         "gltf-reference-source-a-beautiful-game-product-scale-2026-08-08.json" ||
     manifest.evidence?.productScaleFederation !==
       "compatibility/evidence/" +
-        "bim-federation-product-scale-2026-08-08.json"
+        "bim-federation-product-scale-2026-08-08.json" ||
+    manifest.evidence?.productScaleFederationPlatformMatrix !==
+      PRODUCT_PLATFORM_EVIDENCE_PATH
   ) {
     throw new Error(
       "BIM federation Gate inventory is invalid",
@@ -704,6 +785,7 @@ export function validateBimFederationCompatibility(
     policy.claimQualifiedGltfCodec !== true ||
     policy.claimProductScaleGltfReference !== true ||
     policy.claimProductScaleFederationPerformance !== true ||
+    policy.claimCrossPlatformProductScaleFederation !== true ||
     policy.claimUnqualifiedReferenceCodec !== false ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimUserDemand !== false ||
@@ -721,11 +803,17 @@ export function validateBimFederationCompatibility(
     heldGates: HELD_GATES.length,
     registeredFormats:
       evidence.referenceFormats.registered,
+    qualifiedPlatforms: platformResult.passedPlatforms,
   });
 }
 
 async function main() {
-  const [manifest, evidence, productScaleEvidence] = await Promise.all([
+  const [
+    manifest,
+    evidence,
+    productScaleEvidence,
+    productScalePlatformEvidence,
+  ] = await Promise.all([
     readFile(
       "compatibility/bim-federation.json",
       "utf8",
@@ -740,17 +828,21 @@ async function main() {
         "bim-federation-product-scale-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(PRODUCT_PLATFORM_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
   ]);
   const result = validateBimFederationCompatibility(
     manifest,
     evidence,
     productScaleEvidence,
+    productScalePlatformEvidence,
   );
   process.stdout.write(
     `BIM federation compatibility check passed: ` +
       `${result.status}, ${result.passedGates} passed, ` +
       `${result.heldGates} held and ` +
-      `${result.registeredFormats} registered formats\n`,
+      `${result.registeredFormats} registered formats across ` +
+      `${result.qualifiedPlatforms} platforms\n`,
   );
 }
 
