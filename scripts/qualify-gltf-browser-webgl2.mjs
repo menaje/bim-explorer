@@ -12,10 +12,11 @@ import {
   createGltfBrowserProbeServer,
   preparePublicGltfBrowserProbe,
 } from "./serve-gltf-browser-probe.mjs";
+import {
+  resolveChromeQualificationExecutable,
+} from "./chrome-qualification-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
-const CHROME =
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const FIXTURE_SHA256 =
   "ed52f7192b8311d700ac0ce80644e385" +
   "2cd01537e4d62241b9acba023da3d54e";
@@ -56,8 +57,10 @@ async function closeServer(server) {
 }
 
 async function launchChrome(userDataDirectory) {
+  const chromeExecutable =
+    await resolveChromeQualificationExecutable();
   const child = spawn(
-    CHROME,
+    chromeExecutable,
     [
       "--headless=new",
       "--remote-debugging-port=0",
@@ -66,6 +69,7 @@ async function launchChrome(userDataDirectory) {
       "--disable-breakpad",
       "--disable-component-update",
       "--disable-default-apps",
+      "--disable-dev-shm-usage",
       "--disable-domain-reliability",
       "--disable-features=MediaRouter,OptimizationHints",
       "--disable-sync",
@@ -105,9 +109,16 @@ async function launchChrome(userDataDirectory) {
     15_000,
     "Chrome CDP startup",
   );
-  const browserVersion = spawnSync(CHROME, ["--version"], {
+  const version = spawnSync(chromeExecutable, ["--version"], {
     encoding: "utf8",
-  }).stdout.trim();
+  });
+  if (version.status !== 0) {
+    throw new Error(
+      `Chrome version probe failed: ` +
+        `${version.stderr || version.stdout}`,
+    );
+  }
+  const browserVersion = version.stdout.trim();
   return {
     child,
     browserVersion,

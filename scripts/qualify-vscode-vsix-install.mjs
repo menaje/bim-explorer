@@ -25,6 +25,9 @@ import {
 import {
   acquirePublicGltfFixture,
 } from "./public-gltf-fixture.mjs";
+import {
+  resolveVscodeQualificationRuntime,
+} from "./vscode-qualification-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EXTENSION_VERSION = JSON.parse(
@@ -39,41 +42,12 @@ const EXTENSION_VERSION = JSON.parse(
   ),
 ).version;
 
-function codeCli() {
-  if (
-    typeof process.env.BIM_EXPLORER_VSCODE_CLI === "string" &&
-    process.env.BIM_EXPLORER_VSCODE_CLI.length > 0
-  ) {
-    return process.env.BIM_EXPLORER_VSCODE_CLI;
-  }
-  if (process.platform === "darwin") {
-    return "/Applications/Visual Studio Code.app/Contents/" +
-      "Resources/app/bin/code";
-  }
-  throw new Error(
-    "Set BIM_EXPLORER_VSCODE_CLI to qualify VSIX install",
-  );
-}
-
-function codeExecutable() {
-  if (
-    typeof process.env.BIM_EXPLORER_VSCODE_EXECUTABLE ===
-      "string" &&
-    process.env.BIM_EXPLORER_VSCODE_EXECUTABLE.length > 0
-  ) {
-    return process.env.BIM_EXPLORER_VSCODE_EXECUTABLE;
-  }
-  if (process.platform === "darwin") {
-    return "/Applications/Visual Studio Code.app/" +
-      "Contents/MacOS/Code";
-  }
-  throw new Error(
-    "Set BIM_EXPLORER_VSCODE_EXECUTABLE to qualify VSIX runtime",
-  );
-}
-
-function runCode(argumentsValue) {
-  const result = spawnSync(codeCli(), argumentsValue, {
+function runCode(cli, argumentsValue) {
+  const [command, ...prefix] = cli;
+  const result = spawnSync(command, [
+    ...prefix,
+    ...argumentsValue,
+  ], {
     encoding: "utf8",
   });
   if (result.status !== 0) {
@@ -90,11 +64,20 @@ async function sha256(file) {
     .digest("hex");
 }
 
-export async function qualifyVscodeVsixInstall() {
-  const publicManifest = await loadPublicIfcFixtureManifest();
-  const publicFixture = await ensurePublicIfcFixture({
-    manifest: publicManifest,
-  });
+export async function qualifyVscodeVsixInstall({
+  includePublicFixture = true,
+  vscodeRuntime = null,
+} = {}) {
+  const runtimeHost = vscodeRuntime ??
+    await resolveVscodeQualificationRuntime();
+  const publicManifest = includePublicFixture
+    ? await loadPublicIfcFixtureManifest()
+    : null;
+  const publicFixture = includePublicFixture
+    ? await ensurePublicIfcFixture({
+        manifest: publicManifest,
+      })
+    : null;
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
   const temporary = await mkdtemp(
@@ -121,13 +104,13 @@ export async function qualifyVscodeVsixInstall() {
       "--extensions-dir",
       extensions,
     ];
-    const installOutput = runCode([
+    const installOutput = runCode(runtimeHost.cli, [
       ...common,
       "--install-extension",
       output,
       "--force",
     ]);
-    const installedList = runCode([
+    const installedList = runCode(runtimeHost.cli, [
       ...common,
       "--list-extensions",
       "--show-versions",
@@ -196,7 +179,7 @@ export async function qualifyVscodeVsixInstall() {
         )),
       ]);
     await runTests({
-      vscodeExecutablePath: codeExecutable(),
+      vscodeExecutablePath: runtimeHost.executable,
       extensionDevelopmentPath: path.join(
         ROOT,
         "tests",
@@ -220,8 +203,12 @@ export async function qualifyVscodeVsixInstall() {
       extensionTestsEnv: {
         BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
         BIM_EXPLORER_ROOT: ROOT,
-        BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
-          publicFixture.input,
+        ...(publicFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
+                publicFixture.input,
+            }),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
         BIM_EXPLORER_VSCODE_EVIDENCE:
@@ -264,21 +251,25 @@ export async function qualifyVscodeVsixInstall() {
         runtime.assertions?.pathFreeHostBridge === true,
       installedPackageClosesCleanly:
         runtime.assertions?.editorCloseObserved === true,
-      installedPackageOpensPublicFixture:
-        runtime.publicAssertions
-          ?.localPublicSourceOpened === true,
-      installedPublicFixtureIdentityExact:
-        runtime.publicAssertions
-          ?.publicSourceIdentityExact === true,
-      installedPublicFixtureUsesWebGl2:
-        runtime.publicAssertions
-          ?.publicVscodeChromiumWebGl2 === true,
-      installedPublicBridgeIsPathFree:
-        runtime.publicAssertions
-          ?.publicPathFreeHostBridge === true,
-      installedPublicFixtureClosesCleanly:
-        runtime.publicAssertions
-          ?.publicEditorCloseObserved === true,
+      ...(includePublicFixture
+        ? {
+            installedPackageOpensPublicFixture:
+              runtime.publicAssertions
+                ?.localPublicSourceOpened === true,
+            installedPublicFixtureIdentityExact:
+              runtime.publicAssertions
+                ?.publicSourceIdentityExact === true,
+            installedPublicFixtureUsesWebGl2:
+              runtime.publicAssertions
+                ?.publicVscodeChromiumWebGl2 === true,
+            installedPublicBridgeIsPathFree:
+              runtime.publicAssertions
+                ?.publicPathFreeHostBridge === true,
+            installedPublicFixtureClosesCleanly:
+              runtime.publicAssertions
+                ?.publicEditorCloseObserved === true,
+          }
+        : {}),
       installedPackageOpensReferenceFixture:
         runtime.referenceAssertions
           ?.localReferenceSourceOpened === true,
@@ -332,21 +323,30 @@ export async function qualifyVscodeVsixInstall() {
           renderer: runtime.observation?.renderer,
           lifecycle: runtime.observation?.lifecycle,
         },
-        publicRuntime: {
-          fixture: runtime.publicFixture,
-          hostKind: runtime.publicObservation?.hostKind,
-          model: runtime.publicObservation?.model,
-          performance:
-            runtime.publicObservation?.performance,
-          resources: runtime.publicObservation?.resources,
-          renderer: runtime.publicObservation?.renderer,
-          semantic: runtime.publicObservation?.semantic,
-          lifecycle: runtime.publicObservation?.lifecycle,
-          externalUpload:
-            runtime.publicObservation?.externalUpload,
-          telemetry:
-            runtime.publicObservation?.telemetry,
-        },
+        ...(includePublicFixture
+          ? {
+              publicRuntime: {
+                fixture: runtime.publicFixture,
+                hostKind:
+                  runtime.publicObservation?.hostKind,
+                model: runtime.publicObservation?.model,
+                performance:
+                  runtime.publicObservation?.performance,
+                resources:
+                  runtime.publicObservation?.resources,
+                renderer:
+                  runtime.publicObservation?.renderer,
+                semantic:
+                  runtime.publicObservation?.semantic,
+                lifecycle:
+                  runtime.publicObservation?.lifecycle,
+                externalUpload:
+                  runtime.publicObservation?.externalUpload,
+                telemetry:
+                  runtime.publicObservation?.telemetry,
+              },
+            }
+          : {}),
         referenceRuntime: {
           fixture: runtime.referenceFixture,
           hostKind:
@@ -371,7 +371,9 @@ export async function qualifyVscodeVsixInstall() {
       assertions,
       decision: {
         cleanInstall: "passed",
-        publicFixtureOpen: "passed",
+        publicFixtureOpen: includePublicFixture
+          ? "passed"
+          : "not-run",
         referenceFixtureOpen: "passed-bounded-read-only",
         marketplaceRelease: "held",
       },

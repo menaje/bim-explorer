@@ -52,3 +52,28 @@ jobs:
             web-ifc-platform-${{ runner.os }}/*.tgz
           if-no-files-found: error
           retention-days: 7
+
+      - name: Qualify glTF product surfaces on Linux
+        if: runner.os == 'Linux'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          xvfb-run -a
+          npm run qualify:gltf:product:platform --
+          --output gltf-product-${{ runner.os }}.json
+
+      - name: Qualify glTF product surfaces on macOS
+        if: runner.os == 'macOS'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          npm run qualify:gltf:product:platform --
+          --output gltf-product-${{ runner.os }}.json
+
+      - name: Upload glTF product platform evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gltf-product-${{ runner.os }}
+          path: gltf-product-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7

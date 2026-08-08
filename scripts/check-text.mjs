@@ -4,6 +4,7 @@ import path from "node:path";
 const ROOT = process.cwd();
 const SKIPPED_DIRECTORIES = new Set([
   ".git",
+  ".vscode-test",
   "node_modules",
   "coverage",
   "dist",

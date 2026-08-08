@@ -14,9 +14,9 @@ import {
 import {
   acquirePublicGltfFixture,
 } from "./public-gltf-fixture.mjs";
-
-const CHROME =
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+import {
+  resolveChromeQualificationExecutable,
+} from "./chrome-qualification-runtime.mjs";
 
 function timeoutError(label) {
   return new DOMException(
@@ -60,8 +60,10 @@ async function closeServer(server) {
 }
 
 async function launchChrome(userDataDirectory) {
+  const chromeExecutable =
+    await resolveChromeQualificationExecutable();
   const child = spawn(
-    CHROME,
+    chromeExecutable,
     [
       "--headless=new",
       "--remote-debugging-port=0",
@@ -70,6 +72,7 @@ async function launchChrome(userDataDirectory) {
       "--disable-breakpad",
       "--disable-component-update",
       "--disable-default-apps",
+      "--disable-dev-shm-usage",
       "--disable-domain-reliability",
       "--disable-features=MediaRouter,OptimizationHints",
       "--disable-sync",
@@ -111,9 +114,16 @@ async function launchChrome(userDataDirectory) {
     "Chrome CDP startup",
   );
   const browserWebSocket = await endpoint;
-  const browserVersion = spawnSync(CHROME, ["--version"], {
+  const version = spawnSync(chromeExecutable, ["--version"], {
     encoding: "utf8",
-  }).stdout.trim();
+  });
+  if (version.status !== 0) {
+    throw new Error(
+      `Chrome version probe failed: ` +
+        `${version.stderr || version.stdout}`,
+    );
+  }
+  const browserVersion = version.stdout.trim();
   return {
     browserVersion,
     browserWebSocket,

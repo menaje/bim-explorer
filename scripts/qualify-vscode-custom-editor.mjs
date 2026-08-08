@@ -16,27 +16,17 @@ import {
 import {
   acquirePublicGltfFixture,
 } from "./public-gltf-fixture.mjs";
+import {
+  resolveVscodeQualificationRuntime,
+} from "./vscode-qualification-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
-function executable() {
-  if (
-    typeof process.env.BIM_EXPLORER_VSCODE_EXECUTABLE ===
-      "string" &&
-    process.env.BIM_EXPLORER_VSCODE_EXECUTABLE.length > 0
-  ) {
-    return process.env.BIM_EXPLORER_VSCODE_EXECUTABLE;
-  }
-  if (process.platform === "darwin") {
-    return "/Applications/Visual Studio Code.app/" +
-      "Contents/MacOS/Code";
-  }
-  throw new Error(
-    "Set BIM_EXPLORER_VSCODE_EXECUTABLE to qualify VS Code",
-  );
-}
-
-export async function qualifyVscodeCustomEditor() {
+export async function qualifyVscodeCustomEditor({
+  vscodeRuntime = null,
+} = {}) {
+  const runtime = vscodeRuntime ??
+    await resolveVscodeQualificationRuntime();
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
   const temporary = await mkdtemp(
@@ -56,7 +46,7 @@ export async function qualifyVscodeCustomEditor() {
   try {
     await prepareVscodeExtensionStage(stagedExtension);
     await runTests({
-      vscodeExecutablePath: executable(),
+      vscodeExecutablePath: runtime.executable,
       extensionDevelopmentPath: stagedExtension,
       extensionTestsPath: path.join(
         ROOT,

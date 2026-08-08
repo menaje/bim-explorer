@@ -36,6 +36,7 @@
     "qualify:gltf:public": "node scripts/qualify-gltf-reference-source.mjs",
     "qualify:gltf:browser": "node scripts/qualify-gltf-browser-webgl2.mjs",
     "qualify:gltf:product": "node scripts/qualify-gltf-product-surfaces.mjs",
+    "qualify:gltf:product:platform": "node scripts/qualify-gltf-product-surfaces.mjs",
     "qualify:ifc:web": "node scripts/qualify-ifc-engine.mjs --engine web-ifc",
     "qualify:ifc:mapped": "node scripts/qualify-ifc-engine.mjs --engine web-ifc --fixture mapped",
     "qualify:ifc:negative": "node scripts/qualify-ifc-negative-corpus.mjs --engine web-ifc",

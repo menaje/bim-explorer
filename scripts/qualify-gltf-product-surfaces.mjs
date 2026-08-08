@@ -11,6 +11,9 @@ import {
 import {
   qualifyVscodeVsixInstall,
 } from "./qualify-vscode-vsix-install.mjs";
+import {
+  resolveVscodeQualificationRuntime,
+} from "./vscode-qualification-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EVIDENCE_ROOT = path.join(ROOT, "compatibility", "evidence");
@@ -30,15 +33,28 @@ const OUTPUTS = Object.freeze({
 });
 
 function parseArguments(values) {
-  if (values.length === 0) {
-    return false;
+  const options = {
+    output: null,
+    write: false,
+  };
+  for (let index = 0; index < values.length; index += 1) {
+    const name = values[index];
+    if (name === "--write") {
+      options.write = true;
+      continue;
+    }
+    if (name === "--output") {
+      const value = values[index + 1];
+      if (typeof value !== "string" || value.length === 0) {
+        throw new TypeError("--output requires a file path");
+      }
+      options.output = path.resolve(value);
+      index += 1;
+      continue;
+    }
+    throw new TypeError(`unknown argument ${name}`);
   }
-  if (values.length === 1 && values[0] === "--write") {
-    return true;
-  }
-  throw new TypeError(
-    "usage: node scripts/qualify-gltf-product-surfaces.mjs [--write]",
-  );
+  return options;
 }
 
 async function writeEvidence(file, value) {
@@ -51,13 +67,21 @@ async function writeEvidence(file, value) {
 }
 
 export async function qualifyGltfProductSurfaces({
+  output = null,
   write = false,
 } = {}) {
+  const vscodeRuntime =
+    await resolveVscodeQualificationRuntime();
   const browser = await qualifyBimProductShell({
     fixture: "gltf-public",
   });
-  const vscode = await qualifyVscodeCustomEditor();
-  const vscodeInstall = await qualifyVscodeVsixInstall();
+  const vscode = await qualifyVscodeCustomEditor({
+    vscodeRuntime,
+  });
+  const vscodeInstall = await qualifyVscodeVsixInstall({
+    includePublicFixture: write,
+    vscodeRuntime,
+  });
   if (write) {
     await Promise.all([
       writeEvidence(OUTPUTS.browser, browser),
@@ -65,37 +89,70 @@ export async function qualifyGltfProductSurfaces({
       writeEvidence(OUTPUTS.vscodeInstall, vscodeInstall),
     ]);
   }
-  return Object.freeze({
-    schema: "bim-explorer-gltf-product-surfaces-qualification/1",
+  const result = Object.freeze({
+    schema: "bim-explorer-gltf-product-surfaces-qualification/2",
     status: "passed",
+    capturedAt: new Date().toISOString(),
+    environment: {
+      platform: `${process.platform}-${process.arch}`,
+      node: process.version,
+      browser: browser.environment.browser,
+      browserHeadless: browser.environment.headless,
+      vscode: vscode.environment.vscode,
+      vscodeRuntimeSource: vscodeRuntime.source,
+      vscodeRequestedVersion:
+        vscodeRuntime.requestedVersion,
+      physicalGpuClaimed: false,
+      rendererQualification: "SwiftShader WebGL2",
+    },
+    fixture: browser.fixture,
     browser: {
       evidence: path.relative(ROOT, OUTPUTS.browser),
-      format: browser.fixture.format,
-      pixels:
-        browser.observation.renderer.nonBackgroundPixels,
-      nativeId:
-        browser.observation.reference.selectedNativeId,
+      hostKind: browser.observation.hostKind,
+      model: browser.observation.model,
+      resources: browser.observation.resources,
+      renderer: browser.observation.renderer,
+      reference: browser.observation.reference,
+      lifecycle: browser.observation.lifecycle,
+      externalOrigins:
+        browser.observation.network.externalOrigins,
+      runtimeErrors: browser.observation.runtimeErrors,
     },
     vscode: {
       evidence: path.relative(ROOT, OUTPUTS.vscode),
-      format: vscode.referenceFixture.format,
-      pixels:
-        vscode.referenceObservation.renderer
-          .nonBackgroundPixels,
-      nativeId:
-        vscode.referenceObservation.reference
-          .selectedNativeId,
+      fixture: vscode.referenceFixture,
+      hostKind: vscode.referenceObservation.hostKind,
+      model: vscode.referenceObservation.model,
+      resources: vscode.referenceObservation.resources,
+      renderer: vscode.referenceObservation.renderer,
+      reference: vscode.referenceObservation.reference,
+      lifecycle: vscode.referenceObservation.lifecycle,
+      externalUpload:
+        vscode.referenceObservation.externalUpload,
+      telemetry: vscode.referenceObservation.telemetry,
     },
     vscodeInstall: {
       evidence: path.relative(ROOT, OUTPUTS.vscodeInstall),
-      packageVersion: vscodeInstall.package.version,
-      packageBytes: vscodeInstall.package.byteLength,
-      format:
+      package: vscodeInstall.package,
+      fixture:
+        vscodeInstall.observation.referenceRuntime.fixture,
+      hostKind:
+        vscodeInstall.observation.referenceRuntime.hostKind,
+      model:
+        vscodeInstall.observation.referenceRuntime.model,
+      resources:
+        vscodeInstall.observation.referenceRuntime.resources,
+      renderer:
+        vscodeInstall.observation.referenceRuntime.renderer,
+      reference:
+        vscodeInstall.observation.referenceRuntime.reference,
+      lifecycle:
+        vscodeInstall.observation.referenceRuntime.lifecycle,
+      externalUpload:
         vscodeInstall.observation.referenceRuntime
-          .fixture.format,
-      pixels:
-        vscodeInstall.observation.referenceRuntime
-          .renderer.nonBackgroundPixels,
+          .externalUpload,
+      telemetry:
+        vscodeInstall.observation.referenceRuntime.telemetry,
     },
     assertions: {
       browser:
@@ -108,9 +165,33 @@ export async function qualifyGltfProductSurfaces({
         Object.values(
           vscodeInstall.assertions,
         ).every(Boolean),
-      written: write,
+      sameFixtureIdentity:
+        browser.fixture.fingerprint ===
+          vscode.referenceFixture.fingerprint &&
+        browser.fixture.fingerprint ===
+          vscodeInstall.observation.referenceRuntime
+            .fixture.fingerprint,
+      localOnly:
+        browser.observation.network.externalOrigins.length === 0 &&
+        vscode.referenceObservation.externalUpload === false &&
+        vscode.referenceObservation.telemetry === false &&
+        vscodeInstall.observation.referenceRuntime
+          .externalUpload === false &&
+        vscodeInstall.observation.referenceRuntime
+          .telemetry === false,
+      physicalGpuNotClaimed: true,
+    },
+    decision: {
+      platformProductOpen: "passed-experimental",
+      actualPhysicalGpu: "not-claimed",
+      productScaleReference: "held",
+      productionClaims: false,
     },
   });
+  if (output !== null) {
+    await writeEvidence(output, result);
+  }
+  return result;
 }
 
 if (
@@ -118,8 +199,7 @@ if (
   path.resolve(process.argv[1]) ===
     fileURLToPath(import.meta.url)
 ) {
-  const result = await qualifyGltfProductSurfaces({
-    write: parseArguments(process.argv.slice(2)),
-  });
+  const options = parseArguments(process.argv.slice(2));
+  const result = await qualifyGltfProductSurfaces(options);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
