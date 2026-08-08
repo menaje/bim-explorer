@@ -33,7 +33,7 @@ test("BIM surface records a clean-install release candidate without public overc
       heldGates: 4,
       blockers: 4,
       packageSha256:
-        "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2",
+        "bd6352525f1f91c7977199559cd58d471916fb9dc14904d63e7f260b2e86a9cc",
     },
   );
 });

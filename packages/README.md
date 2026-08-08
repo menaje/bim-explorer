@@ -34,9 +34,10 @@ RenderSource conformance를 통과했습니다.
 [`bim-surface`](bim-surface/README.md)는 source session, bounded mesh renderer
 host와 semantic explorer를 한 번 열고 exact cleanup하는 host-neutral
 read-only 경계입니다. Browser와 VS Code IFC 제품 경로가 generated runtime을
-사용합니다. zero-runtime-dependency release-candidate의 byte-identical pack과
-offline clean install은 통과했지만 public artifact publication과 실제 Spatial
-consumer exact-pin은 held입니다. experimental point reference runtime은 이
+사용합니다. zero-runtime-dependency package의 byte-identical pack과 offline
+clean install을 통과했으며, public distribution은 npm registry가 아니라
+`bim-surface-v<semver>` immutable GitHub Release가 소유합니다. 실제 Spatial
+consumer exact-pin은 별도 Gate이고 experimental point reference runtime은 이
 entrypoint에 포함하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry

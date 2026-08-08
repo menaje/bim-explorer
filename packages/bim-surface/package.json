@@ -4,11 +4,21 @@
   "private": true,
   "description": "Host-neutral read-only BIM exploration surface",
   "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/menaje/bim-explorer.git",
+    "directory": "packages/bim-surface"
+  },
+  "homepage": "https://github.com/menaje/bim-explorer#readme",
+  "bugs": {
+    "url": "https://github.com/menaje/bim-explorer/issues"
+  },
   "type": "module",
   "exports": "./runtime/index.mjs",
   "files": [
     "runtime/index.mjs",
-    "README.md"
+    "README.md",
+    "SOURCE_OFFER.md"
   ],
   "sideEffects": false,
   "engines": {

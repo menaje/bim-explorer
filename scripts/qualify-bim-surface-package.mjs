@@ -31,6 +31,12 @@ const PACKAGE_ROOT = path.join(
 );
 const PACKAGE_NAME = "@bim-explorer/bim-surface";
 const PACKAGE_VERSION = "0.1.0";
+export const BIM_SURFACE_PACKAGE = Object.freeze({
+  name: PACKAGE_NAME,
+  version: PACKAGE_VERSION,
+  contract: "bim-explorer-bim-surface/0.1",
+  releaseTag: `bim-surface-v${PACKAGE_VERSION}`,
+});
 const DEFAULT_OUTPUT = path.join(
   ROOT,
   "compatibility",
@@ -83,7 +89,7 @@ function fixtureJson(artifact) {
   });
 }
 
-async function stagePackage(destination) {
+export async function stageBimSurfacePackage(destination) {
   await mkdir(path.join(destination, "runtime"), {
     recursive: true,
   });
@@ -92,6 +98,15 @@ async function stagePackage(destination) {
     version: PACKAGE_VERSION,
     description: "Host-neutral read-only BIM exploration surface",
     license: "MPL-2.0",
+    repository: {
+      type: "git",
+      url: "git+https://github.com/menaje/bim-explorer.git",
+      directory: "packages/bim-surface",
+    },
+    homepage: "https://github.com/menaje/bim-explorer#readme",
+    bugs: {
+      url: "https://github.com/menaje/bim-explorer/issues",
+    },
     type: "module",
     exports: "./runtime/index.mjs",
     files: [
@@ -125,13 +140,15 @@ async function stagePackage(destination) {
     "SOURCE_OFFER.md",
   ]) {
     await copyFile(
-      path.join(ROOT, relative),
+      relative === "SOURCE_OFFER.md"
+        ? path.join(PACKAGE_ROOT, relative)
+        : path.join(ROOT, relative),
       path.join(destination, relative),
     );
   }
 }
 
-async function pack(stage, destination) {
+export async function packBimSurfacePackage(stage, destination) {
   await mkdir(destination, { recursive: true });
   const output = run(
     "npm",
@@ -366,12 +383,18 @@ export async function qualifyBimSurfacePackage() {
       path.join(temporary, "stage-b"),
     ];
     await Promise.all([
-      stagePackage(firstStage),
-      stagePackage(secondStage),
+      stageBimSurfacePackage(firstStage),
+      stageBimSurfacePackage(secondStage),
     ]);
     const [first, second] = await Promise.all([
-      pack(firstStage, path.join(temporary, "pack-a")),
-      pack(secondStage, path.join(temporary, "pack-b")),
+      packBimSurfacePackage(
+        firstStage,
+        path.join(temporary, "pack-a"),
+      ),
+      packBimSurfacePackage(
+        secondStage,
+        path.join(temporary, "pack-b"),
+      ),
     ]);
     if (
       first.sha256 !== second.sha256 ||

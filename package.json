@@ -40,6 +40,7 @@
     "probe:semantic": "node scripts/serve-semantic-explorer-probe.mjs",
     "package:vscode": "node scripts/package-vscode-extension.mjs",
     "release:bundle": "node scripts/build-community-release.mjs --out dist/community-release",
+    "release:bim-surface": "node scripts/build-bim-surface-release.mjs --out dist/bim-surface-release",
     "sbom": "node scripts/generate-community-sbom.mjs --out dist/sbom",
     "start:web": "node scripts/serve-bim-explorer-web.mjs",
     "qualify:ifc:public": "node scripts/qualify-public-ifc-performance.mjs",

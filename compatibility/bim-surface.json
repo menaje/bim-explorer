@@ -15,7 +15,7 @@
   "artifact": {
     "channel": "release-candidate",
     "filename": "bim-explorer-bim-surface-0.1.0.tgz",
-    "sha256": "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2",
+    "sha256": "bd6352525f1f91c7977199559cd58d471916fb9dc14904d63e7f260b2e86a9cc",
     "runtimeSha256": "0be0cef03795746cb4a36e2cbb6937fbc22a91f5dcc48c6621fdc34f8ef393e7",
     "runtimeDependencies": 0,
     "repositoryManifestPrivate": true

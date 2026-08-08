@@ -6,10 +6,10 @@
     "name": "@bim-explorer/bim-surface",
     "version": "0.1.0",
     "filename": "bim-explorer-bim-surface-0.1.0.tgz",
-    "byteLength": 66354,
-    "unpackedSize": 330001,
-    "sha256": "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2",
-    "integrity": "sha512-n4vdIw89rj/hqIaaM/9+izi0LHH0II0T0/Rd3wSlE/uuEa42G33vwnbzlsTWuwPOmsUU0hj3KoNNtsxiNZsnog==",
+    "byteLength": 66401,
+    "unpackedSize": 330397,
+    "sha256": "bd6352525f1f91c7977199559cd58d471916fb9dc14904d63e7f260b2e86a9cc",
+    "integrity": "sha512-Ea3UFyN9n1R0yobK/FCLc1hcOfTITmfLDTAjVfLLGyQxqe5YyJ74lpYQ+WmeS6Gy2bA1fvfdfpErA0C8QE5ayA==",
     "runtimeSha256": "0be0cef03795746cb4a36e2cbb6937fbc22a91f5dcc48c6621fdc34f8ef393e7",
     "files": [
       "LICENSE",
@@ -25,8 +25,8 @@
   "reproducibility": {
     "independentPackRuns": 2,
     "byteIdentical": true,
-    "firstSha256": "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2",
-    "secondSha256": "841165a7d1590dc310cb14efe4e0395c1945ed2407d28b98b0f6a2a55b52cfd2"
+    "firstSha256": "bd6352525f1f91c7977199559cd58d471916fb9dc14904d63e7f260b2e86a9cc",
+    "secondSha256": "bd6352525f1f91c7977199559cd58d471916fb9dc14904d63e7f260b2e86a9cc"
   },
   "consumer": {
     "install": "offline-local-tarball",
