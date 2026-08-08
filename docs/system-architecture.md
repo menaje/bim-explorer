@@ -326,8 +326,13 @@ compressed-vector와 `cartesianInvalidState` direction 필터를 통과했습니
 독립 `pye57/libE57Format` nanometer parity로 재현합니다. intensity omission은
 lossy로 표시합니다. 같은 point range는 actual Browser, staged VS Code와
 clean-installed VSIX에서 155,201 points·20,754 pixels로 재현되고 전량
-cleanup됩니다. E57의 CRS, scan pose 적용, surveyed datum,
-multiple-scan/extension profile과 format admission은 계속 별도 Gate입니다.
+cleanup됩니다. 별도 32 MiB qualification envelope는 cache-only 공개 E57의 다섯 scan,
+1,213,990개 record와 structured row/column stream을 해제하고 네 explicit
+quaternion/translation pose 및 한 implicit identity pose를 적용해 독립
+`pye57/libE57Format` digest parity를 통과했습니다. 이 경로는 제품 Worker에
+admission되지 않았으며 local registration을 CRS나 surveyed datum으로
+승격하지 않습니다. E57의 CRS/surveyed datum, multiple-scan 제품 open,
+extension profile과 format admission은 계속 별도 Gate입니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

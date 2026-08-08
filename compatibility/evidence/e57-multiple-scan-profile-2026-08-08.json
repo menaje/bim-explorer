@@ -1,0 +1,1130 @@
+{
+  "schema": "bim-explorer-e57-multiple-scan-profile-evidence/1",
+  "status": "passed-bounded-multiple-scan-pose-profile",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "e57-example-pump-no-invalid-multiple-scan",
+    "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+    "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+    "publishedAt": "2011-05-05T21:05:19Z",
+    "byteLength": 22146048,
+    "sha256": "5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+    "license": "LicenseRef-E57-Example-Test-Data",
+    "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+    "testOnly": true,
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false
+  },
+  "envelope": {
+    "signature": "ASTM-E57",
+    "formatVersion": "1.0",
+    "pageSize": 1024,
+    "pages": 21627,
+    "pageChecksum": "CRC-32C",
+    "validPageChecksums": 21627,
+    "xmlPhysicalOffset": 22123144,
+    "xmlLogicalLength": 22732
+  },
+  "profile": {
+    "scanCount": 5,
+    "sourcePointRecords": 1213990,
+    "pointRecords": 1213990,
+    "directionPointRecords": 0,
+    "invalidPointRecords": 0,
+    "decodedPointBytes": 35205710,
+    "explicitPoseScans": 4,
+    "implicitIdentityPoseScans": 1,
+    "coordinateRepresentation": "cartesian",
+    "structuredIndexFields": [
+      "rowIndex",
+      "columnIndex"
+    ],
+    "ignoredSemanticFields": [
+      "intensity",
+      "rowIndex",
+      "columnIndex"
+    ],
+    "aggregateWorldBounds": {
+      "min": [
+        -3.0344074660216376,
+        -5.8261088453196255,
+        -1.9824323681397051
+      ],
+      "max": [
+        1.7299581719103188,
+        -0.792648,
+        1.8476499300322442
+      ]
+    },
+    "aggregateWorldPositionNanometerInt64LeSha256": "d44fa31718500cf88129bc1f0fbd435446d929d142878712b08fd2d95e9af63a",
+    "aggregateRgbSha256": "cebed53b1493e874b11c5fc5bb4f411aa72851ba884d58e62a4d3023a0e8be11",
+    "scanEvidenceSha256": "1f8d1389f4fc1250139a8ef4144c0721f9cddd6e4b8297955632192ac8356cbf",
+    "scans": [
+      {
+        "index": 0,
+        "guid": "{96852C2F-4E85-406E-A6AD-73AA486CE087}",
+        "name": "pumps2",
+        "sourcePointRecords": 174479,
+        "pointRecords": 174479,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "pose": {
+          "explicit": true,
+          "rotation": [
+            0.9999944421817518,
+            0.0008200046676415476,
+            0.0026810152609109627,
+            -0.001804260270234466
+          ],
+          "translation": [
+            -3.028748,
+            -3.819741,
+            -1.384333
+          ]
+        },
+        "prototype": [
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianX",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianY",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianZ",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 15,
+            "kind": "scaled-integer",
+            "maximum": 32767,
+            "minimum": 0,
+            "name": "intensity",
+            "offset": 0,
+            "scale": 0.00003051850947599719
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorRed",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorGreen",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorBlue",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 11,
+            "kind": "integer",
+            "maximum": 2047,
+            "minimum": 0,
+            "name": "rowIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "columnIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 2,
+            "kind": "integer",
+            "maximum": 2,
+            "minimum": 0,
+            "name": "cartesianInvalidState",
+            "offset": 0,
+            "scale": 1
+          }
+        ],
+        "localBounds": {
+          "min": [
+            -0.00563,
+            -1.975784,
+            -0.470993
+          ],
+          "max": [
+            3.9682459999999997,
+            2.9360809999999997,
+            3.2422329999999997
+          ]
+        },
+        "worldBounds": {
+          "min": [
+            -3.0344074660216376,
+            -5.806561781990753,
+            -1.869967323104405
+          ],
+          "max": [
+            0.9400334207444887,
+            -0.889289357020969,
+            1.84243226865422
+          ]
+        },
+        "worldPositionNanometerInt64LeSha256": "a39be77fad0d4cb64eb266d4ba498725007c40bd9c10cd715dd64f7847f2f1a9",
+        "rgbSha256": "9365170688e290aba0d30eaf0143bba9b16f7142ef8408a660edcda9d53a3f39",
+        "packets": {
+          "dataPackets": 59,
+          "indexPackets": 0,
+          "sectionLength": 2880584,
+          "terminalPadding": [
+            {
+              "field": "cartesianX",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianY",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianZ",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "intensity",
+              "bits": 15,
+              "bytePaddingBits": 7
+            },
+            {
+              "field": "colorRed",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorGreen",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorBlue",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "rowIndex",
+              "bits": 11,
+              "bytePaddingBits": 3
+            },
+            {
+              "field": "columnIndex",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianInvalidState",
+              "bits": 2,
+              "bytePaddingBits": 2
+            }
+          ]
+        }
+      },
+      {
+        "index": 1,
+        "guid": "{22AB2655-811E-4576-BB5C-218AC438A821}",
+        "name": "pumps2_2",
+        "sourcePointRecords": 155201,
+        "pointRecords": 155201,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "pose": {
+          "explicit": false,
+          "rotation": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "prototype": [
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianX",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianY",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianZ",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 15,
+            "kind": "scaled-integer",
+            "maximum": 32767,
+            "minimum": 0,
+            "name": "intensity",
+            "offset": 0,
+            "scale": 0.00003051850947599719
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorRed",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorGreen",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorBlue",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 11,
+            "kind": "integer",
+            "maximum": 2047,
+            "minimum": 0,
+            "name": "rowIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 9,
+            "kind": "integer",
+            "maximum": 511,
+            "minimum": 0,
+            "name": "columnIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 2,
+            "kind": "integer",
+            "maximum": 2,
+            "minimum": 0,
+            "name": "cartesianInvalidState",
+            "offset": 0,
+            "scale": 1
+          }
+        ],
+        "localBounds": {
+          "min": [
+            -2.9037629999999996,
+            -5.301102,
+            -1.8997039999999998
+          ],
+          "max": [
+            1.721603,
+            -0.792648,
+            1.8430019999999998
+          ]
+        },
+        "worldBounds": {
+          "min": [
+            -2.9037629999999996,
+            -5.301102,
+            -1.8997039999999998
+          ],
+          "max": [
+            1.721603,
+            -0.792648,
+            1.8430019999999998
+          ]
+        },
+        "worldPositionNanometerInt64LeSha256": "de07f9bb1402a8cdd48b0c058fa9558fdbc14e74aede8f2705c60f8da702c1cd",
+        "rgbSha256": "269e22fc74d4fe6336b9e594f7adfd7c46bb69e40c6f2b054a94f0cf6bb5c699",
+        "packets": {
+          "dataPackets": 53,
+          "indexPackets": 0,
+          "sectionLength": 2581696,
+          "terminalPadding": [
+            {
+              "field": "cartesianX",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianY",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianZ",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "intensity",
+              "bits": 1,
+              "bytePaddingBits": 1
+            },
+            {
+              "field": "colorRed",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorGreen",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorBlue",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "rowIndex",
+              "bits": 5,
+              "bytePaddingBits": 5
+            },
+            {
+              "field": "columnIndex",
+              "bits": 7,
+              "bytePaddingBits": 7
+            },
+            {
+              "field": "cartesianInvalidState",
+              "bits": 6,
+              "bytePaddingBits": 6
+            }
+          ]
+        }
+      },
+      {
+        "index": 2,
+        "guid": "{2D90B8A9-9274-43E8-A485-D75244EECA52}",
+        "name": "pumps2_3",
+        "sourcePointRecords": 161619,
+        "pointRecords": 161619,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "pose": {
+          "explicit": true,
+          "rotation": [
+            0.793531444094947,
+            -0.0019876343834743897,
+            0.0007841531115022595,
+            -0.6085254979423979
+          ],
+          "translation": [
+            0.676397,
+            -5.783704,
+            -1.402221
+          ]
+        },
+        "prototype": [
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianX",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianY",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianZ",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 15,
+            "kind": "scaled-integer",
+            "maximum": 32767,
+            "minimum": 0,
+            "name": "intensity",
+            "offset": 0,
+            "scale": 0.00003051850947599719
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorRed",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorGreen",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorBlue",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 11,
+            "kind": "integer",
+            "maximum": 2047,
+            "minimum": 0,
+            "name": "rowIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "columnIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 2,
+            "kind": "integer",
+            "maximum": 2,
+            "minimum": 0,
+            "name": "cartesianInvalidState",
+            "offset": 0,
+            "scale": 1
+          }
+        ],
+        "localBounds": {
+          "min": [
+            -4.5281519999999995,
+            -2.864487,
+            -0.455032
+          ],
+          "max": [
+            -0.078751,
+            1.6847379999999998,
+            3.243484
+          ]
+        },
+        "worldBounds": {
+          "min": [
+            -2.9894529657919064,
+            -5.821520683572373,
+            -1.8530088497478503
+          ],
+          "max": [
+            1.7299581719103188,
+            -1.4384393377026239,
+            1.8431036467452273
+          ]
+        },
+        "worldPositionNanometerInt64LeSha256": "0bc5d9e1e458e0b53238450e77b4c4d48992063f6b51c2f4e13f58b8852574b5",
+        "rgbSha256": "159ec763da856dcd53adc198ef239f15c36841d23ce6e1ef5a0927e60e93cbef",
+        "packets": {
+          "dataPackets": 54,
+          "indexPackets": 0,
+          "sectionLength": 2668248,
+          "terminalPadding": [
+            {
+              "field": "cartesianX",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianY",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianZ",
+              "bits": 24,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "intensity",
+              "bits": 3,
+              "bytePaddingBits": 3
+            },
+            {
+              "field": "colorRed",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorGreen",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorBlue",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "rowIndex",
+              "bits": 15,
+              "bytePaddingBits": 7
+            },
+            {
+              "field": "columnIndex",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianInvalidState",
+              "bits": 2,
+              "bytePaddingBits": 2
+            }
+          ]
+        }
+      },
+      {
+        "index": 3,
+        "guid": "{347B80F6-96FA-43DF-97DD-5D923093BAE0}",
+        "name": "pumps2_4",
+        "sourcePointRecords": 118053,
+        "pointRecords": 118053,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "pose": {
+          "explicit": true,
+          "rotation": [
+            0.947786043232406,
+            0.0009962690256325702,
+            -0.001439934501172412,
+            0.31890210142067243
+          ],
+          "translation": [
+            2.048125,
+            -3.778927,
+            -0.027761
+          ]
+        },
+        "prototype": [
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianX",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianY",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 24,
+            "kind": "scaled-integer",
+            "maximum": 8388607,
+            "minimum": -8388608,
+            "name": "cartesianZ",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 15,
+            "kind": "scaled-integer",
+            "maximum": 32767,
+            "minimum": 0,
+            "name": "intensity",
+            "offset": 0,
+            "scale": 0.00003051850947599719
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorRed",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorGreen",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorBlue",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 11,
+            "kind": "integer",
+            "maximum": 2047,
+            "minimum": 0,
+            "name": "rowIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "columnIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 2,
+            "kind": "integer",
+            "maximum": 2,
+            "minimum": 0,
+            "name": "cartesianInvalidState",
+            "offset": 0,
+            "scale": 1
+          }
+        ],
+        "localBounds": {
+          "min": [
+            -3.4441379999999997,
+            -0.537308,
+            -1.845322
+          ],
+          "max": [
+            -0.22450299999999998,
+            4.350632,
+            1.881119
+          ]
+        },
+        "worldBounds": {
+          "min": [
+            -2.568463270453513,
+            -5.8261088453196255,
+            -1.8747207750317314
+          ],
+          "max": [
+            1.1130024588388716,
+            -0.8440642725541516,
+            1.8451654932606305
+          ]
+        },
+        "worldPositionNanometerInt64LeSha256": "f2abb7316da4887726d6a3aded66858e9733a01984d071f8fa19df6934b716bc",
+        "rgbSha256": "37a35d31d5ae4cd280e548e6a3301192ba5e1fe5ad6326677662aa98cb6a91e0",
+        "packets": {
+          "dataPackets": 40,
+          "indexPackets": 0,
+          "sectionLength": 1949012,
+          "terminalPadding": [
+            {
+              "field": "cartesianX",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianY",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianZ",
+              "bits": 8,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "intensity",
+              "bits": 5,
+              "bytePaddingBits": 5
+            },
+            {
+              "field": "colorRed",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorGreen",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorBlue",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "rowIndex",
+              "bits": 9,
+              "bytePaddingBits": 1
+            },
+            {
+              "field": "columnIndex",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianInvalidState",
+              "bits": 6,
+              "bytePaddingBits": 6
+            }
+          ]
+        }
+      },
+      {
+        "index": 4,
+        "guid": "{2A075735-ACED-4E39-8670-53D7C4287FD5}",
+        "name": "pumps2_5",
+        "sourcePointRecords": 604638,
+        "pointRecords": 604638,
+        "directionPointRecords": 0,
+        "invalidPointRecords": 0,
+        "pose": {
+          "explicit": true,
+          "rotation": [
+            0.9581909686858839,
+            -0.011201315355021174,
+            0.0024449717271942473,
+            -0.2858996680242531
+          ],
+          "translation": [
+            -0.642414,
+            -3.604942,
+            -1.430657
+          ]
+        },
+        "prototype": [
+          {
+            "bitSize": 32,
+            "kind": "scaled-integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "name": "cartesianX",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 32,
+            "kind": "scaled-integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "name": "cartesianY",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 32,
+            "kind": "scaled-integer",
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "name": "cartesianZ",
+            "offset": 0,
+            "scale": 0.000001
+          },
+          {
+            "bitSize": 15,
+            "kind": "scaled-integer",
+            "maximum": 32767,
+            "minimum": 0,
+            "name": "intensity",
+            "offset": 0,
+            "scale": 0.00003051850947599719
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorRed",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorGreen",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 8,
+            "kind": "integer",
+            "maximum": 255,
+            "minimum": 0,
+            "name": "colorBlue",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 11,
+            "kind": "integer",
+            "maximum": 2047,
+            "minimum": 0,
+            "name": "rowIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 10,
+            "kind": "integer",
+            "maximum": 1023,
+            "minimum": 0,
+            "name": "columnIndex",
+            "offset": 0,
+            "scale": 1
+          },
+          {
+            "bitSize": 2,
+            "kind": "integer",
+            "maximum": 2,
+            "minimum": 0,
+            "name": "cartesianInvalidState",
+            "offset": 0,
+            "scale": 1
+          }
+        ],
+        "localBounds": {
+          "min": [
+            -2.20665,
+            -1.331375,
+            -0.539566
+          ],
+          "max": [
+            1.5604099999999999,
+            1.8914339999999998,
+            3.248947
+          ]
+        },
+        "worldBounds": {
+          "min": [
+            -2.726176586608222,
+            -5.242798168925502,
+            -1.9824323681397051
+          ],
+          "max": [
+            1.1507571565440415,
+            -1.4248132963433071,
+            1.8476499300322442
+          ]
+        },
+        "worldPositionNanometerInt64LeSha256": "77fcb723e8d2db40aca9765b8c1d0727510c7d766cb05bc7c5170797823e90f8",
+        "rgbSha256": "8f566d72beb40c36bf82953216efc2ace5bc3ec6765212dfb0b9fcdbf9e39a61",
+        "packets": {
+          "dataPackets": 241,
+          "indexPackets": 0,
+          "sectionLength": 11948304,
+          "terminalPadding": [
+            {
+              "field": "cartesianX",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianY",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "cartesianZ",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "intensity",
+              "bits": 14,
+              "bytePaddingBits": 6
+            },
+            {
+              "field": "colorRed",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorGreen",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "colorBlue",
+              "bits": 0,
+              "bytePaddingBits": 0
+            },
+            {
+              "field": "rowIndex",
+              "bits": 6,
+              "bytePaddingBits": 6
+            },
+            {
+              "field": "columnIndex",
+              "bits": 4,
+              "bytePaddingBits": 4
+            },
+            {
+              "field": "cartesianInvalidState",
+              "bits": 4,
+              "bytePaddingBits": 4
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "resources": {
+    "sourceBytes": 22146048,
+    "decodedPointBytes": 35205710,
+    "positionBytes": 29135760,
+    "colorBytes": 4855960,
+    "maximumSourceBytes": 33554432,
+    "maximumPoints": 2000000,
+    "maximumPointsPerScan": 750000,
+    "maximumScans": 8,
+    "maximumDecodedPointBytes": 67108864
+  },
+  "performance": {
+    "decodeAndPoseMs": 2216.533458
+  },
+  "referenceDecoder": {
+    "id": "pye57",
+    "version": "0.4.18",
+    "repository": "https://github.com/davidcaron/pye57",
+    "commit": "46713644bf28cffad721724c41d248b70eb697b5",
+    "libE57FormatCommit": "1914b8ea972251d3bb49a33828497dde683205d9",
+    "license": "MIT",
+    "positionEncoding": "record-major-pose-applied-cartesian-xyz-nanometer-int64-little-endian",
+    "colorEncoding": "record-major-rgb-uint8",
+    "runtimeBundled": false,
+    "usedForExpectedResultsOnly": true
+  },
+  "capabilities": {
+    "envelopeInspection": true,
+    "pageIntegrity": true,
+    "multipleScanDecode": true,
+    "scanPoseMetadata": true,
+    "scanPoseApplication": true,
+    "structuredIndexStreamAlignment": true,
+    "productFileOpen": false
+  },
+  "cleanup": {
+    "downloadBufferCleared": true,
+    "scanOutputBuffersCleared": true
+  },
+  "decision": {
+    "sampleUse": "cache-only-technical-test",
+    "multipleScanProfile": "passed-pre-admission",
+    "scanPose": "passed-local-registration-metadata-and-projection",
+    "coordinateReference": "held",
+    "surveyedDatum": false,
+    "productSupport": false,
+    "pointCloudCodec": "held",
+    "formatAdmission": false
+  },
+  "assertions": {
+    "exactPinnedFixture": true,
+    "allPhysicalPageChecksums": true,
+    "fiveIndependentScanIdentities": true,
+    "boundedAggregatePointDecode": true,
+    "structuredIndexStreamAlignment": true,
+    "fourExplicitPoses": true,
+    "oneImplicitIdentityPose": true,
+    "independentPoseProjectionParity": true,
+    "independentRgbParity": true,
+    "deterministicCleanup": true,
+    "sampleNotTrackedOrBundled": true,
+    "coordinateAuthorityHeld": true,
+    "productOpenHeld": true,
+    "formatAdmissionHeld": true
+  },
+  "limitations": [
+    "the sample covers five registered Cartesian scans with structured row/column streams, intensity and RGB",
+    "one scan omits pose metadata and remains in the implicit identity frame; four scans carry explicit unit-quaternion rotation and translation",
+    "the pose is local registration metadata and does not establish CRS, surveyed control, datum transformation or accuracy authority",
+    "intensity and row/column values are decoded for packet alignment but omitted from the point display projection without semantic authority",
+    "the largest scan exceeds the current 500,000-point product range and no Browser, VS Code or clean VSIX multiple-scan open is claimed",
+    "the public sample remains in an ignored digest cache and is not tracked, redistributed or release-bundled",
+    "point identity, picking, LOD, extension records, write, round-trip and E57 format admission remain held"
+  ]
+}

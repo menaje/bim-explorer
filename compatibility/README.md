@@ -243,6 +243,14 @@ Float64/ScaledInteger, indexless compressed-vector와 Cartesian validity 필터�
 clean-installed VSIX에서 열어 155,201 points·2,483,216-byte GPU payload·20,754
 pixels, path-free/local-only 실행과 source/Worker/CPU/GPU/editor cleanup을
 재현합니다.
+별도 [`E57 multiple-scan profile`](evidence/e57-multiple-scan-profile-2026-08-08.json)은
+22,146,048-byte 공개 sample을 재배포하지 않고 digest cache에서만 사용합니다.
+다섯 scan의 1,213,990개 Cartesian/intensity/RGB/row/column record를 해제하고,
+네 explicit quaternion/translation pose와 한 implicit identity pose를 적용한
+nanometer-quantized position 및 RGB SHA-256가 독립
+`pye57@0.4.18/libE57Format` 기준과 일치합니다. 이는 bounded technical
+pre-admission evidence이며 Browser·VS Code multiple-scan 제품 open, CRS와
+surveyed datum authority를 승인하지 않습니다.
 paired LAS 1.2/LAZ
 10,201-point record를 exact `laz-perf@0.0.6`로 해제해
 raw record SHA-256 parity, Float64 좌표와 RGB를 확인했습니다. 별도
@@ -258,7 +266,7 @@ LAS와 LAZ 실제 local file input이 동일한 10,201 points·163,216-byte uplo
 [`VS Code product evidence`](evidence/las-laz-vscode-product-2026-08-08.json)는
 staged Custom Editor와 clean-installed VSIX가 같은 projection을 재현하고
 point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록합니다.
-전체 28개 Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
+전체 31개 Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
 admission 4개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.

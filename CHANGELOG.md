@@ -6,6 +6,13 @@
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing
   the binary; validate its header, all 116 page CRCs and 7,680-point XML profile;
+- open bounded single-scan Cartesian and spherical E57 profiles through the
+  Browser product, staged VS Code and clean-installed VSIX with exact point
+  projection and cleanup;
+- qualify cache-only E57 Float64/ScaledInteger, validity, indexless and
+  spherical profiles, then decode a five-scan 1,213,990-point sample with
+  structured indexes and independent local-pose/RGB parity without claiming
+  multiple-scan product support;
 - download a paired public LAS 1.2/LAZ fixture into an ignored cache and prove
   exact 10,201-point record parity, Float64 coordinates and RGB with a pinned
   qualification-only `laz-perf@0.0.6` decoder;
@@ -45,8 +52,8 @@
   Linux x64 CI through a committed portable matrix;
 - add a privacy-safe reference-format intake/triage contract and public issue
   form without promoting any held codec, SDK or authority Gate;
-- keep LAS/LAZ CRS and format admission, plus E57, 3D Tiles and
-  RVT/DGN, behind fail-closed capability Gates.
+- keep E57 and LAS/LAZ coordinate/format admission, plus 3D Tiles and RVT/DGN,
+  behind fail-closed capability Gates.
 
 ## 0.1.0 - 2026-08-04
 

@@ -719,6 +719,8 @@
   var E57_MAXIMUM_SOURCE_BYTES = 8 * 1024 * 1024;
   var E57_MAXIMUM_POINTS = 5e5;
   var E57_MAXIMUM_DECODED_POINT_BYTES = 16 * 1024 * 1024;
+  var E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES = 32 * 1024 * 1024;
+  var E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES = 64 * 1024 * 1024;
   var SIGNATURE = "ASTM-E57";
   var HEADER_BYTES2 = 48;
   var CHECKSUM_BYTES = 4;
@@ -728,7 +730,7 @@
   var SECTION_HEADER_BYTES = 32;
   var DATA_PACKET_HEADER_BYTES = 6;
   var INDEX_PACKET_HEADER_BYTES = 16;
-  var MAXIMUM_PROTOTYPE_FIELDS = 8;
+  var MAXIMUM_PROTOTYPE_FIELDS = 10;
   var CARTESIAN_COORDINATES = Object.freeze([
     "cartesianX",
     "cartesianY",
@@ -747,13 +749,17 @@
   var CARTESIAN_INVALID_STATE = "cartesianInvalidState";
   var SPHERICAL_INVALID_STATE = "sphericalInvalidState";
   var INTENSITY = "intensity";
+  var ROW_INDEX = "rowIndex";
+  var COLUMN_INDEX = "columnIndex";
   var FIELDS = /* @__PURE__ */ new Set([
     ...CARTESIAN_COORDINATES,
     ...SPHERICAL_COORDINATES,
     ...COLORS,
     CARTESIAN_INVALID_STATE,
     SPHERICAL_INVALID_STATE,
-    INTENSITY
+    INTENSITY,
+    ROW_INDEX,
+    COLUMN_INDEX
   ]);
   var CRC32C_POLYNOMIAL = 2197175160;
   var CRC32C_TABLE = Uint32Array.from(
@@ -992,51 +998,41 @@
     const bytesPerRecord = 28 + (hasInvalidState ? 1 : 0);
     return recordCount * bytesPerRecord;
   }
-  function parseXml(xml, limits) {
+  function validateXmlEnvelope(xml) {
     if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>') || !xml.includes(
       'xmlns="http://www.astm.org/COMMIT/E57/2010-e57-v1.0"'
     ) || /<!DOCTYPE|<!ENTITY|<\?|\u0000/iu.test(xml.slice(5))) {
       throw new Error("E57 XML metadata envelope is invalid");
     }
-    if ((xml.match(/<data3D\b/gu) ?? []).length !== 1) {
-      throw new TypeError("E57 profile requires one data3D vector");
-    }
-    const points = [...xml.matchAll(
-      /<points\b([^>]*)>([\s\S]*?)<\/points>/gu
-    )];
-    if (points.length !== 1) {
-      throw new TypeError("E57 profile requires one point scan");
-    }
-    const pointAttributes = parseAttributes(
-      points[0][1],
-      "E57 points"
-    );
-    if (requiredAttribute(pointAttributes, "type", "E57 points") !== "CompressedVector") {
-      throw new TypeError("E57 points vector is unsupported");
+  }
+  function pointProfile(point, limits, label = "E57 points") {
+    const pointAttributes = parseAttributes(point[1], label);
+    if (requiredAttribute(pointAttributes, "type", label) !== "CompressedVector") {
+      throw new TypeError(`${label} vector is unsupported`);
     }
     const fileOffset = integerAttribute(
       pointAttributes,
       "fileOffset",
-      "E57 points"
+      label
     );
     const recordCount = integerAttribute(
       pointAttributes,
       "recordCount",
-      "E57 points"
+      label
     );
     if (recordCount <= 0 || recordCount > limits.maximumPoints) {
       throw new RangeError("E57 point count exceeds its bounded profile");
     }
-    const prototypes = [...points[0][2].matchAll(
+    const prototypes = [...point[2].matchAll(
       /<prototype\b([^>]*)>([\s\S]*?)<\/prototype>/gu
     )];
-    const codecs = [...points[0][2].matchAll(
+    const codecs = [...point[2].matchAll(
       /<codecs\b([^>]*)>([\s\S]*?)<\/codecs>/gu
     )];
     if (prototypes.length !== 1 || codecs.length !== 1 || codecs[0][2].trim().length > 0) {
       throw new TypeError("E57 point codec profile is unsupported");
     }
-    const pointBodyWithoutProfile = points[0][2].replace(prototypes[0][0], "").replace(codecs[0][0], "");
+    const pointBodyWithoutProfile = point[2].replace(prototypes[0][0], "").replace(codecs[0][0], "");
     if (pointBodyWithoutProfile.trim().length > 0) {
       throw new TypeError("E57 points structure is unsupported");
     }
@@ -1069,6 +1065,19 @@
       fileOffset,
       recordCount
     });
+  }
+  function parseXml(xml, limits) {
+    validateXmlEnvelope(xml);
+    if ((xml.match(/<data3D\b/gu) ?? []).length !== 1) {
+      throw new TypeError("E57 profile requires one data3D vector");
+    }
+    const points = [...xml.matchAll(
+      /<points\b([^>]*)>([\s\S]*?)<\/points>/gu
+    )];
+    if (points.length !== 1) {
+      throw new TypeError("E57 profile requires one point scan");
+    }
+    return pointProfile(points[0], limits);
   }
   var Cursor = class {
     #bytes;
@@ -1216,9 +1225,9 @@
     }
     return result;
   }
-  function decodePackets(logical, header, pointProfile) {
+  function decodePackets(logical, header, pointProfile2) {
     const sectionStart = physicalToLogical(
-      pointProfile.fileOffset,
+      pointProfile2.fileOffset,
       header.physicalLength,
       header.pageSize,
       "E57 compressed-vector offset"
@@ -1268,23 +1277,23 @@
     if (dataOffset !== sectionStart + SECTION_HEADER_BYTES || dataEnd <= dataOffset || indexOffset !== null && sectionEnd <= indexOffset || sectionEnd > header.xmlLogicalOffset) {
       throw new RangeError("E57 compressed-vector range is invalid");
     }
-    const fields = pointProfile.fields;
+    const fields = pointProfile2.fields;
     const names = new Set(fields.map((field) => field.name));
     const hasColor = COLORS.every((name) => names.has(name));
     const invalidStateField = fields.findIndex(
-      (field) => field.name === pointProfile.invalidStateName
+      (field) => field.name === pointProfile2.invalidStateName
     );
     const streams = fields.map(() => new BitStream());
     const rawPositions = new Float64Array(
-      pointProfile.recordCount * 3
+      pointProfile2.recordCount * 3
     );
-    const colors = new Uint8Array(pointProfile.recordCount * 4);
+    const colors = new Uint8Array(pointProfile2.recordCount * 4);
     const rawColorRange = {
       min: [Infinity, Infinity, Infinity],
       max: [-Infinity, -Infinity, -Infinity]
     };
     const coordinateIndex = new Map(
-      pointProfile.coordinateFields.map(
+      pointProfile2.coordinateFields.map(
         (name, index) => [name, index]
       )
     );
@@ -1355,7 +1364,7 @@
         }
         const count = Math.min(
           available,
-          pointProfile.recordCount - records
+          pointProfile2.recordCount - records
         );
         for (let index = 0; index < count; index += 1) {
           coordinateValues.fill(0);
@@ -1383,12 +1392,12 @@
           }
           if (invalidState !== 0) {
             throw new RangeError(
-              `E57 ${pointProfile.invalidStateName} value is unsupported`
+              `E57 ${pointProfile2.invalidStateName} value is unsupported`
             );
           }
           const position = cartesianPosition(
             coordinateValues,
-            pointProfile.coordinateRepresentation
+            pointProfile2.coordinateRepresentation
           );
           rawPositions.set(position, validPointRecords * 3);
           if (hasColor) {
@@ -1422,11 +1431,11 @@
         records += count;
         dataPackets += 1;
       }
-      if (records !== pointProfile.recordCount || dataPackets === 0) {
+      if (records !== pointProfile2.recordCount || dataPackets === 0) {
         throw new Error("E57 decoded point count is incomplete");
       }
       const terminalStreams = fields.map((field, index) => ({
-        expected: field.bitSize === 0 ? 0 : (8 - pointProfile.recordCount * field.bitSize % 8) % 8,
+        expected: field.bitSize === 0 ? 0 : (8 - pointProfile2.recordCount * field.bitSize % 8) % 8,
         field,
         index,
         remaining: streams[index].availableBits
@@ -1607,24 +1616,24 @@
           xmlLogicalOffset + xmlLogicalLength
         )
       );
-      const pointProfile = parseXml(xml, limits);
+      const pointProfile2 = parseXml(xml, limits);
       const envelopeHeader = Object.freeze({
-        coordinateRepresentation: pointProfile.coordinateRepresentation,
-        decodedPointBytes: pointProfile.decodedPointBytes,
-        fields: pointProfile.fields,
+        coordinateRepresentation: pointProfile2.coordinateRepresentation,
+        decodedPointBytes: pointProfile2.decodedPointBytes,
+        fields: pointProfile2.fields,
         formatVersion: `${major}.${minor}`,
         pageChecksum: "CRC-32C",
         pageSize,
         pages,
         physicalLength,
         signature,
-        sourcePointRecords: pointProfile.recordCount,
+        sourcePointRecords: pointProfile2.recordCount,
         validPageChecksums: pages,
         xmlLogicalLength,
         xmlLogicalOffset,
         xmlPhysicalOffset
       });
-      decoded = decodePackets(logical, envelopeHeader, pointProfile);
+      decoded = decodePackets(logical, envelopeHeader, pointProfile2);
       const header = Object.freeze({
         ...envelopeHeader,
         directionPointRecords: decoded.directionPointRecords,
@@ -1767,7 +1776,11 @@
         profile: Object.freeze({
           attributeProjection: Object.freeze({
             ignoredFields: Object.freeze(
-              decoded.header.fields.map((field) => field.name).filter((name) => name === "intensity")
+              decoded.header.fields.map((field) => field.name).filter((name) => [
+                "columnIndex",
+                "intensity",
+                "rowIndex"
+              ].includes(name))
             ),
             lossiness: decoded.header.fields.some(
               (field) => field.name === "intensity"

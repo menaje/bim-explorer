@@ -40,6 +40,11 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   RAE/intensity/RGB record, 215,329개 invalid filter와 155,201개 Cartesian
   display point의 독립 `pye57/libE57Format` parity를 검증하는 manifest. 원본은
   재배포하지 않음
+- `e57/public-e57-example-multiple-scan`: 같은 배포처의 22,146,048-byte
+  `pumpNoInvalidPoints.e57`을 cache-only로 받아 다섯 scan·1,213,990개
+  Cartesian/intensity/RGB/row/column record, 네 explicit pose와 한 implicit
+  identity pose의 독립 `pye57/libE57Format` parity를 검증하는 manifest. 원본은
+  재배포하지 않으며 제품 file-open을 승인하지 않음
 - `las-laz/public-loaders-gl-ripple`: `visgl/loaders.gl`의 paired 347,061-byte
   LAS와 53,952-byte LAZ를 cache-only로 받아 LAS 1.2 point-format 3의
   10,201개 record, Float64 좌표·RGB와 압축 해제 후 exact record SHA-256
@@ -70,6 +75,8 @@ npm run fetch:e57:profiles
 npm run qualify:e57:profiles
 npm run fetch:e57:spherical
 npm run qualify:e57:spherical
+npm run fetch:e57:multiple-scan
+npm run qualify:e57:multiple-scan
 npm run qualify:e57:spherical:product:web
 npm run qualify:e57:spherical:product:vscode
 npm run fetch:las-laz:public

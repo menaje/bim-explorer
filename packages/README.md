@@ -88,8 +88,13 @@ Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를
 모든 page CRC와 packet boundary를 검증한 뒤 같은 source-neutral point range로
 투영합니다. optional intensity는 stream alignment까지만 해제하고 lossy omitted로
 표시합니다. 자체 JavaScript decoder는 격리 Worker 실행을 전제로 하며 CRS,
-scan pose, semantics, write 또는 round-trip authority를 제공하지 않습니다.
+scan-pose authority, semantics, write 또는 round-trip authority를 제공하지
+않습니다.
 현재 main은 Cartesian bounded profile뿐 아니라 spherical RAE/intensity/RGB
 profile도 Browser, staged VS Code와 clean-installed VSIX 제품 open을
 통과했습니다. intensity는 lossy omitted이고 E57 format family나 federation
-coordinate authority는 admission하지 않습니다.
+coordinate authority는 admission하지 않습니다. 별도 qualification-only
+경로는 cache-only 공개 sample의 다섯 scan·1,213,990개 record, structured
+row/column stream과 네 explicit pose/한 identity pose를 독립 기준과 동일하게
+해제·투영했습니다. multiple-scan Browser/VS Code 제품 open, CRS/surveyed datum,
+extension과 format admission은 계속 held입니다.

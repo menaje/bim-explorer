@@ -14,6 +14,12 @@ export {
   E57_MAXIMUM_DECODED_POINT_BYTES,
   E57_MAXIMUM_POINTS,
   E57_MAXIMUM_SOURCE_BYTES,
+  E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES,
+  E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+  E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN,
+  E57_MULTIPLE_SCAN_MAXIMUM_SCANS,
+  E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+  decodeE57MultipleScanSource,
   decodeE57PointSource,
 } from "./format.mjs";
 
@@ -172,7 +178,11 @@ export async function createE57PointSourceArtifact(
           ignoredFields: Object.freeze(
             decoded.header.fields
               .map((field) => field.name)
-              .filter((name) => name === "intensity"),
+              .filter((name) => [
+                "columnIndex",
+                "intensity",
+                "rowIndex",
+              ].includes(name)),
           ),
           lossiness: decoded.header.fields.some(
             (field) => field.name === "intensity",

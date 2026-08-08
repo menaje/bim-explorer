@@ -134,8 +134,12 @@ record의 Cartesian 변환, 215,329개 invalid filter, 독립 nanometer position
 digest와 intensity lossy omission을 검사합니다. `e57-spherical-browser-product`와
 `e57-spherical-vscode-product` test는 actual Browser, staged VS Code와
 clean-installed VSIX의 동일 point range·visible projection·cleanup 증거를
-검사합니다. Cartesian과 spherical 제품 open만 experimental로 승인하며 CRS/scan pose/surveyed
-datum, multiple scan/extension, point identity/pick, LOD와 format admission은
+검사합니다. 별도 `e57-multiple-scan-profile` test는 cache-only 공개 sample의
+다섯 scan·1,213,990개 record, structured row/column packet alignment, 네
+explicit pose와 한 implicit identity pose의 독립 position/RGB digest parity,
+CRC와 source/per-scan limit fail-closed를 검사합니다. Cartesian과 spherical
+단일-scan 제품 open만 experimental로 승인하며 CRS/surveyed datum,
+multiple-scan 제품 open·extension, point identity/pick, LOD와 format admission은
 계속 거부합니다.
 
 `las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest

@@ -157,7 +157,12 @@ compressed-vector를 추가로 통과했습니다. 별도 공개 spherical sampl
 370,530개 RAE/intensity/RGB record 중 invalid 215,329개를 제거해 155,201개
 Cartesian display point를 독립 기준과 동일하게 만들고, 실제 Browser·staged
 VS Code·clean-installed VSIX에서 같은 2,483,216-byte GPU projection으로
-열립니다. intensity omission은 lossy로 기록합니다. 3D Tiles와 RVT/DGN은
+열립니다. intensity omission은 lossy로 기록합니다. 별도 cache-only 5-scan
+E57 기술 profile은 1,213,990개 Cartesian record와 row/column stream을
+해제하고, 네 explicit quaternion/translation pose와 한 implicit identity
+pose를 적용한 좌표 및 RGB digest가 독립 `pye57/libE57Format` 기준과
+일치합니다. 이 profile은 제품 file-open이나 CRS authority를 승인하지
+않습니다. 3D Tiles와 RVT/DGN은
 capability Gate만 등록했고 제품 codec/SDK evidence 전에는 열기를 거부합니다.
 LAS/LAZ는 bounded Browser, staged VS Code와
 clean-installed VSIX 제품 source/open Gate까지 통과했습니다. 두 point-cloud
@@ -197,6 +202,11 @@ Cartesian position과 RGB digest parity 및 2,483,216-byte point payload를
 검증합니다. 같은 payload는 실제 Browser, staged VS Code 1.131.0과
 clean-installed VSIX에서 155,201 points·20,754 pixels로 재현되고 source
 buffer, Worker, CPU range, GPU와 editor 자원이 전량 회수됩니다.
+22,146,048-byte `pumpNoInvalidPoints.e57`은 재배포하지 않고 digest cache에서만
+사용해 다섯 scan·1,213,990 points, structured row/column packet alignment와
+네 explicit pose 적용의 nanometer-quantized position/RGB parity를 검증합니다.
+한 scan의 생략된 pose는 identity로 처리합니다. 이는 qualification-only
+기술 증거이며 Browser·VS Code 제품 open은 아직 승인하지 않습니다.
 paired LAS 1.2/LAZ의
 10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
 parity를 검증했습니다. LAZ는 실제 Chrome의 disposable Worker에서도 4,063,232
@@ -215,8 +225,9 @@ VSIX에서 각각 열어 동일한 10,201 points·163,216-byte GPU payload·36,9
 pixels를 재현하고 source buffer, Worker, CPU range와 GPU 자원을 전량
 회수했습니다. exact `laz-perf@0.0.6`은 전용 product Worker에서 실행하며,
 VSIX의 generated glue는 Webview CSP에 `unsafe-eval`을 추가하지 않도록 dynamic
-Function construction을 동등한 closure로 치환합니다. CRS/scan pose/datum,
-multiple-scan/extension, point identity/picking·LOD와 format admission은 계속
+Function construction을 동등한 closure로 치환합니다. E57 local scan pose
+projection은 기술 profile을 통과했지만 CRS/surveyed datum, multiple-scan 제품
+open·extension, point identity/picking·LOD와 format admission은 계속
 held입니다.
 
 ## 비목표

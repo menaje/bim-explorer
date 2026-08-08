@@ -11,6 +11,7 @@ const [
   e57Evidence,
   e57ProfileMatrixEvidence,
   e57SphericalProfileEvidence,
+  e57MultipleScanProfileEvidence,
   e57SphericalBrowserProductEvidence,
   e57SphericalVscodeProductEvidence,
   e57BrowserProductEvidence,
@@ -38,6 +39,11 @@ const [
   readFile(
     "compatibility/evidence/" +
       "e57-spherical-profile-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "e57-multiple-scan-profile-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
   readFile(
@@ -94,6 +100,7 @@ test("reference sample probes remain separate from format admission", () => {
       e57Evidence,
       e57ProfileMatrixEvidence,
       e57SphericalProfileEvidence,
+      e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
       e57BrowserProductEvidence,
@@ -106,7 +113,7 @@ test("reference sample probes remain separate from format admission", () => {
     ),
     {
       status: "pre-admission",
-      passedGates: 28,
+      passedGates: 31,
       heldGates: 4,
       sampleFormats: 3,
     },
@@ -122,6 +129,7 @@ test("an E57 product open cannot claim format admission", () => {
       e57Evidence,
       e57ProfileMatrixEvidence,
       e57SphericalProfileEvidence,
+      e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
       e57BrowserProductEvidence,
@@ -145,6 +153,7 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       e57Evidence,
       e57ProfileMatrixEvidence,
       e57SphericalProfileEvidence,
+      e57MultipleScanProfileEvidence,
       e57SphericalBrowserProductEvidence,
       e57SphericalVscodeProductEvidence,
       e57BrowserProductEvidence,

@@ -4,6 +4,13 @@
 export const E57_MAXIMUM_SOURCE_BYTES = 8 * 1024 * 1024;
 export const E57_MAXIMUM_POINTS = 500_000;
 export const E57_MAXIMUM_DECODED_POINT_BYTES = 16 * 1024 * 1024;
+export const E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES =
+  32 * 1024 * 1024;
+export const E57_MULTIPLE_SCAN_MAXIMUM_POINTS = 2_000_000;
+export const E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN = 750_000;
+export const E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES =
+  64 * 1024 * 1024;
+export const E57_MULTIPLE_SCAN_MAXIMUM_SCANS = 8;
 
 const SIGNATURE = "ASTM-E57";
 const HEADER_BYTES = 48;
@@ -14,7 +21,7 @@ const MAXIMUM_XML_BYTES = 1024 * 1024;
 const SECTION_HEADER_BYTES = 32;
 const DATA_PACKET_HEADER_BYTES = 6;
 const INDEX_PACKET_HEADER_BYTES = 16;
-const MAXIMUM_PROTOTYPE_FIELDS = 8;
+const MAXIMUM_PROTOTYPE_FIELDS = 10;
 const CARTESIAN_COORDINATES = Object.freeze([
   "cartesianX",
   "cartesianY",
@@ -33,6 +40,8 @@ const COLORS = Object.freeze([
 const CARTESIAN_INVALID_STATE = "cartesianInvalidState";
 const SPHERICAL_INVALID_STATE = "sphericalInvalidState";
 const INTENSITY = "intensity";
+const ROW_INDEX = "rowIndex";
+const COLUMN_INDEX = "columnIndex";
 const FIELDS = new Set([
   ...CARTESIAN_COORDINATES,
   ...SPHERICAL_COORDINATES,
@@ -40,6 +49,8 @@ const FIELDS = new Set([
   CARTESIAN_INVALID_STATE,
   SPHERICAL_INVALID_STATE,
   INTENSITY,
+  ROW_INDEX,
+  COLUMN_INDEX,
 ]);
 const CRC32C_POLYNOMIAL = 0x82f63b78;
 
@@ -341,7 +352,7 @@ function decodedPointBytes(fields, recordCount) {
   return recordCount * bytesPerRecord;
 }
 
-function parseXml(xml, limits) {
+function validateXmlEnvelope(xml) {
   if (
     !xml.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") ||
     !xml.includes(
@@ -351,34 +362,25 @@ function parseXml(xml, limits) {
   ) {
     throw new Error("E57 XML metadata envelope is invalid");
   }
-  if ((xml.match(/<data3D\b/gu) ?? []).length !== 1) {
-    throw new TypeError("E57 profile requires one data3D vector");
-  }
-  const points = [...xml.matchAll(
-    /<points\b([^>]*)>([\s\S]*?)<\/points>/gu,
-  )];
-  if (points.length !== 1) {
-    throw new TypeError("E57 profile requires one point scan");
-  }
-  const pointAttributes = parseAttributes(
-    points[0][1],
-    "E57 points",
-  );
+}
+
+function pointProfile(point, limits, label = "E57 points") {
+  const pointAttributes = parseAttributes(point[1], label);
   if (
-    requiredAttribute(pointAttributes, "type", "E57 points") !==
+    requiredAttribute(pointAttributes, "type", label) !==
       "CompressedVector"
   ) {
-    throw new TypeError("E57 points vector is unsupported");
+    throw new TypeError(`${label} vector is unsupported`);
   }
   const fileOffset = integerAttribute(
     pointAttributes,
     "fileOffset",
-    "E57 points",
+    label,
   );
   const recordCount = integerAttribute(
     pointAttributes,
     "recordCount",
-    "E57 points",
+    label,
   );
   if (
     recordCount <= 0 ||
@@ -386,10 +388,10 @@ function parseXml(xml, limits) {
   ) {
     throw new RangeError("E57 point count exceeds its bounded profile");
   }
-  const prototypes = [...points[0][2].matchAll(
+  const prototypes = [...point[2].matchAll(
     /<prototype\b([^>]*)>([\s\S]*?)<\/prototype>/gu,
   )];
-  const codecs = [...points[0][2].matchAll(
+  const codecs = [...point[2].matchAll(
     /<codecs\b([^>]*)>([\s\S]*?)<\/codecs>/gu,
   )];
   if (
@@ -399,7 +401,7 @@ function parseXml(xml, limits) {
   ) {
     throw new TypeError("E57 point codec profile is unsupported");
   }
-  const pointBodyWithoutProfile = points[0][2]
+  const pointBodyWithoutProfile = point[2]
     .replace(prototypes[0][0], "")
     .replace(codecs[0][0], "");
   if (pointBodyWithoutProfile.trim().length > 0) {
@@ -437,6 +439,235 @@ function parseXml(xml, limits) {
     ...prototype,
     fileOffset,
     recordCount,
+  });
+}
+
+function parseXml(xml, limits) {
+  validateXmlEnvelope(xml);
+  if ((xml.match(/<data3D\b/gu) ?? []).length !== 1) {
+    throw new TypeError("E57 profile requires one data3D vector");
+  }
+  const points = [...xml.matchAll(
+    /<points\b([^>]*)>([\s\S]*?)<\/points>/gu,
+  )];
+  if (points.length !== 1) {
+    throw new TypeError("E57 profile requires one point scan");
+  }
+  return pointProfile(points[0], limits);
+}
+
+function structureBody(body, name, label) {
+  const matches = [...body.matchAll(
+    new RegExp(`<${name}\\b([^>]*)>([\\s\\S]*?)<\\/${name}>`, "gu"),
+  )];
+  if (matches.length !== 1) {
+    throw new TypeError(`${label} is missing or duplicated`);
+  }
+  const attributes = parseAttributes(matches[0][1], label);
+  if (requiredAttribute(attributes, "type", label) !== "Structure") {
+    throw new TypeError(`${label} type is unsupported`);
+  }
+  return matches[0];
+}
+
+function cdataString(body, name, label) {
+  const matches = [...body.matchAll(
+    new RegExp(
+      `<${name}\\b([^>]*)><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${name}>`,
+      "gu",
+    ),
+  )];
+  if (matches.length !== 1) {
+    throw new TypeError(`${label} is missing or duplicated`);
+  }
+  const attributes = parseAttributes(matches[0][1], label);
+  const value = matches[0][2];
+  if (
+    requiredAttribute(attributes, "type", label) !== "String" ||
+    value.length === 0 ||
+    value.length > 256 ||
+    /[<>\u0000]/u.test(value)
+  ) {
+    throw new TypeError(`${label} is invalid`);
+  }
+  return value;
+}
+
+function numericElement(body, name, label) {
+  const matches = [...body.matchAll(
+    new RegExp(`<${name}\\b([^>]*)>([^<]*)<\\/${name}>`, "gu"),
+  )];
+  if (matches.length !== 1) {
+    throw new TypeError(`${label} is missing or duplicated`);
+  }
+  const attributes = parseAttributes(matches[0][1], label);
+  const value = Number(matches[0][2]);
+  if (
+    requiredAttribute(attributes, "type", label) !== "Float" ||
+    !Number.isFinite(value)
+  ) {
+    throw new TypeError(`${label} is invalid`);
+  }
+  return value;
+}
+
+function scanPose(body, label) {
+  const matches = [...body.matchAll(
+    /<pose\b([^>]*)>([\s\S]*?)<\/pose>/gu,
+  )];
+  if (matches.length === 0) {
+    return Object.freeze({
+      explicit: false,
+      rotation: Object.freeze([1, 0, 0, 0]),
+      translation: Object.freeze([0, 0, 0]),
+    });
+  }
+  if (matches.length !== 1) {
+    throw new TypeError(`${label} pose is duplicated`);
+  }
+  const poseAttributes = parseAttributes(
+    matches[0][1],
+    `${label} pose`,
+  );
+  if (
+    requiredAttribute(poseAttributes, "type", `${label} pose`) !==
+      "Structure"
+  ) {
+    throw new TypeError(`${label} pose type is unsupported`);
+  }
+  const rotation = structureBody(
+    matches[0][2],
+    "rotation",
+    `${label} rotation`,
+  );
+  const translation = structureBody(
+    matches[0][2],
+    "translation",
+    `${label} translation`,
+  );
+  if (
+    matches[0][2]
+      .replace(rotation[0], "")
+      .replace(translation[0], "")
+      .trim().length > 0
+  ) {
+    throw new TypeError(`${label} pose structure is unsupported`);
+  }
+  const quaternion = ["w", "x", "y", "z"].map((name) =>
+    numericElement(
+      rotation[2],
+      name,
+      `${label} rotation.${name}`,
+    ));
+  const offset = ["x", "y", "z"].map((name) =>
+    numericElement(
+      translation[2],
+      name,
+      `${label} translation.${name}`,
+    ));
+  const normSquared = quaternion.reduce(
+    (sum, value) => sum + value * value,
+    0,
+  );
+  if (Math.abs(normSquared - 1) > 1e-9) {
+    throw new RangeError(`${label} rotation is not a unit quaternion`);
+  }
+  return Object.freeze({
+    explicit: true,
+    rotation: Object.freeze(quaternion),
+    translation: Object.freeze(offset),
+  });
+}
+
+function parseMultipleScanXml(xml, limits) {
+  validateXmlEnvelope(xml);
+  const data3d = [...xml.matchAll(
+    /<data3D\b([^>]*)>([\s\S]*?)<\/data3D>/gu,
+  )];
+  if (data3d.length !== 1) {
+    throw new TypeError("E57 profile requires one data3D vector");
+  }
+  const dataAttributes = parseAttributes(data3d[0][1], "E57 data3D");
+  if (
+    requiredAttribute(dataAttributes, "type", "E57 data3D") !==
+      "Vector"
+  ) {
+    throw new TypeError("E57 data3D vector is unsupported");
+  }
+  const children = [...data3d[0][2].matchAll(
+    /<vectorChild\b([^>]*)>([\s\S]*?)<\/vectorChild>/gu,
+  )];
+  const remaining = children.reduce(
+    (body, child) => body.replace(child[0], ""),
+    data3d[0][2],
+  );
+  if (
+    children.length < 2 ||
+    children.length > limits.maximumScans ||
+    remaining.trim().length > 0
+  ) {
+    throw new RangeError("E57 scan count exceeds its bounded profile");
+  }
+  const scans = children.map((child, index) => {
+    const label = `E57 scan ${index}`;
+    const attributes = parseAttributes(child[1], label);
+    if (requiredAttribute(attributes, "type", label) !== "Structure") {
+      throw new TypeError(`${label} type is unsupported`);
+    }
+    const points = [...child[2].matchAll(
+      /<points\b([^>]*)>([\s\S]*?)<\/points>/gu,
+    )];
+    if (points.length !== 1) {
+      throw new TypeError(`${label} requires one point vector`);
+    }
+    const profile = pointProfile(points[0], {
+      maximumDecodedPointBytes: limits.maximumDecodedPointBytes,
+      maximumPoints: limits.maximumPointsPerScan,
+    }, `${label} points`);
+    const guid = cdataString(child[2], "guid", `${label} guid`);
+    const name = cdataString(child[2], "name", `${label} name`);
+    if (!/^\{[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\}$/u.test(guid)) {
+      throw new TypeError(`${label} guid is invalid`);
+    }
+    return Object.freeze({
+      ...profile,
+      guid,
+      index,
+      name,
+      pose: scanPose(child[2], label),
+    });
+  });
+  const recordCount = scans.reduce(
+    (sum, scan) => sum + scan.recordCount,
+    0,
+  );
+  const decodedBytes = scans.reduce(
+    (sum, scan) => sum + scan.decodedPointBytes,
+    0,
+  );
+  const representations = new Set(
+    scans.map((scan) => scan.coordinateRepresentation),
+  );
+  const fieldNames = JSON.stringify(
+    scans[0].fields.map((field) => field.name),
+  );
+  if (
+    recordCount > limits.maximumPoints ||
+    decodedBytes > limits.maximumDecodedPointBytes ||
+    representations.size !== 1 ||
+    scans.some((scan, index) =>
+      index > 0 && scan.fileOffset <= scans[index - 1].fileOffset) ||
+    scans.some((scan) =>
+      JSON.stringify(scan.fields.map((field) => field.name)) !==
+        fieldNames)
+  ) {
+    throw new RangeError("E57 multiple-scan profile is unsupported");
+  }
+  return Object.freeze({
+    coordinateRepresentation: scans[0].coordinateRepresentation,
+    decodedPointBytes: decodedBytes,
+    recordCount,
+    scans: Object.freeze(scans),
   });
 }
 
@@ -621,6 +852,50 @@ function cartesianPosition(values, representation) {
     throw new RangeError("E57 spherical projection is non-finite");
   }
   return result;
+}
+
+function applyScanPose(positions, pose) {
+  const [w, x, y, z] = pose.rotation;
+  const [tx, ty, tz] = pose.translation;
+  const matrix = [
+    1 - 2 * (y * y + z * z),
+    2 * (x * y - z * w),
+    2 * (x * z + y * w),
+    2 * (x * y + z * w),
+    1 - 2 * (x * x + z * z),
+    2 * (y * z - x * w),
+    2 * (x * z - y * w),
+    2 * (y * z + x * w),
+    1 - 2 * (x * x + y * y),
+  ];
+  const bounds = {
+    min: [Infinity, Infinity, Infinity],
+    max: [-Infinity, -Infinity, -Infinity],
+  };
+  for (let point = 0; point < positions.length / 3; point += 1) {
+    const offset = point * 3;
+    const px = positions[offset];
+    const py = positions[offset + 1];
+    const pz = positions[offset + 2];
+    const world = [
+      matrix[0] * px + matrix[1] * py + matrix[2] * pz + tx,
+      matrix[3] * px + matrix[4] * py + matrix[5] * pz + ty,
+      matrix[6] * px + matrix[7] * py + matrix[8] * pz + tz,
+    ];
+    if (world.some((value) => !Number.isFinite(value))) {
+      throw new RangeError("E57 scan pose projection is non-finite");
+    }
+    positions.set(world, offset);
+    for (let axis = 0; axis < 3; axis += 1) {
+      bounds.min[axis] = Math.min(bounds.min[axis], world[axis]);
+      bounds.max[axis] = Math.max(bounds.max[axis], world[axis]);
+    }
+  }
+  matrix.fill(0);
+  return Object.freeze({
+    min: Object.freeze([...bounds.min]),
+    max: Object.freeze([...bounds.max]),
+  });
 }
 
 function decodePackets(logical, header, pointProfile) {
@@ -1113,6 +1388,224 @@ export function decodeE57PointSource(
       ...decoded,
       header,
     });
+  } finally {
+    logical.fill(0);
+  }
+}
+
+export function decodeE57MultipleScanSource(
+  bytes,
+  {
+    maximumDecodedPointBytes =
+      E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES,
+    maximumPoints = E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+    maximumPointsPerScan =
+      E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN,
+    maximumScans = E57_MULTIPLE_SCAN_MAXIMUM_SCANS,
+    maximumSourceBytes =
+      E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+  } = {},
+) {
+  if (!(bytes instanceof Uint8Array)) {
+    throw new TypeError("E57 source must be a Uint8Array");
+  }
+  const limits = Object.freeze({
+    maximumDecodedPointBytes: positiveLimit(
+      maximumDecodedPointBytes,
+      E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES,
+      "E57 multiple-scan decoded point byte limit",
+    ),
+    maximumPoints: positiveLimit(
+      maximumPoints,
+      E57_MULTIPLE_SCAN_MAXIMUM_POINTS,
+      "E57 multiple-scan point limit",
+    ),
+    maximumPointsPerScan: positiveLimit(
+      maximumPointsPerScan,
+      E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN,
+      "E57 per-scan point limit",
+    ),
+    maximumScans: positiveLimit(
+      maximumScans,
+      E57_MULTIPLE_SCAN_MAXIMUM_SCANS,
+      "E57 scan limit",
+    ),
+    maximumSourceBytes: positiveLimit(
+      maximumSourceBytes,
+      E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES,
+      "E57 multiple-scan source byte limit",
+    ),
+  });
+  if (
+    limits.maximumSourceBytes >
+      E57_MULTIPLE_SCAN_MAXIMUM_SOURCE_BYTES ||
+    limits.maximumPoints > E57_MULTIPLE_SCAN_MAXIMUM_POINTS ||
+    limits.maximumPointsPerScan >
+      E57_MULTIPLE_SCAN_MAXIMUM_POINTS_PER_SCAN ||
+    limits.maximumScans > E57_MULTIPLE_SCAN_MAXIMUM_SCANS ||
+    limits.maximumDecodedPointBytes >
+      E57_MULTIPLE_SCAN_MAXIMUM_DECODED_POINT_BYTES ||
+    limits.maximumPointsPerScan > limits.maximumPoints ||
+    bytes.byteLength < HEADER_BYTES ||
+    bytes.byteLength > limits.maximumSourceBytes
+  ) {
+    throw new RangeError(
+      "E57 multiple-scan source exceeds its bounded profile",
+    );
+  }
+  const signature = new TextDecoder("ascii", { fatal: true })
+    .decode(bytes.subarray(0, 8));
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength,
+  );
+  const major = view.getUint32(8, true);
+  const minor = view.getUint32(12, true);
+  const physicalLength = safeUnsigned64(
+    view,
+    16,
+    "E57 physical length",
+  );
+  const xmlPhysicalOffset = safeUnsigned64(
+    view,
+    24,
+    "E57 XML offset",
+  );
+  const xmlLogicalLength = safeUnsigned64(
+    view,
+    32,
+    "E57 XML length",
+  );
+  const pageSize = safeUnsigned64(view, 40, "E57 page size");
+  if (
+    signature !== SIGNATURE ||
+    major !== 1 ||
+    minor !== 0 ||
+    physicalLength !== bytes.byteLength
+  ) {
+    throw new Error("E57 header identity is invalid");
+  }
+  if (
+    pageSize < MINIMUM_PAGE_BYTES ||
+    pageSize > MAXIMUM_PAGE_BYTES ||
+    (pageSize & (pageSize - 1)) !== 0 ||
+    bytes.byteLength % pageSize !== 0 ||
+    xmlLogicalLength <= 0 ||
+    xmlLogicalLength > MAXIMUM_XML_BYTES
+  ) {
+    throw new RangeError("E57 physical page layout is invalid");
+  }
+  const { logical, pages } = logicalFile(bytes, pageSize);
+  const decodedScans = [];
+  try {
+    const xmlLogicalOffset = physicalToLogical(
+      xmlPhysicalOffset,
+      physicalLength,
+      pageSize,
+      "E57 XML offset",
+    );
+    if (
+      xmlLogicalOffset + xmlLogicalLength > logical.byteLength
+    ) {
+      throw new RangeError("E57 XML range is truncated");
+    }
+    const xml = new TextDecoder("utf-8", { fatal: true }).decode(
+      logical.subarray(
+        xmlLogicalOffset,
+        xmlLogicalOffset + xmlLogicalLength,
+      ),
+    );
+    const profile = parseMultipleScanXml(xml, limits);
+    const envelopeHeader = Object.freeze({
+      coordinateRepresentation: profile.coordinateRepresentation,
+      decodedPointBytes: profile.decodedPointBytes,
+      formatVersion: `${major}.${minor}`,
+      pageChecksum: "CRC-32C",
+      pageSize,
+      pages,
+      physicalLength,
+      scanCount: profile.scans.length,
+      signature,
+      sourcePointRecords: profile.recordCount,
+      validPageChecksums: pages,
+      xmlLogicalLength,
+      xmlLogicalOffset,
+      xmlPhysicalOffset,
+    });
+    for (const scan of profile.scans) {
+      const decoded = decodePackets(
+        logical,
+        envelopeHeader,
+        scan,
+      );
+      try {
+        const worldBounds = applyScanPose(
+          decoded.rawPositions,
+          scan.pose,
+        );
+        decodedScans.push(Object.freeze({
+          colors: decoded.colors,
+          header: Object.freeze({
+            coordinateRepresentation:
+              scan.coordinateRepresentation,
+            decodedPointBytes: scan.decodedPointBytes,
+            directionPointRecords: decoded.directionPointRecords,
+            fields: scan.fields,
+            guid: scan.guid,
+            index: scan.index,
+            invalidPointRecords: decoded.invalidPointRecords,
+            name: scan.name,
+            pointRecords: decoded.validPointRecords,
+            pose: scan.pose,
+            sourcePointRecords: scan.recordCount,
+          }),
+          localBounds: decoded.rawBounds,
+          packetProfile: decoded.packetProfile,
+          rawColorRange: decoded.rawColorRange,
+          worldBounds,
+          worldPositions: decoded.rawPositions,
+        }));
+      } catch (error) {
+        decoded.rawPositions.fill(0);
+        decoded.colors.fill(0);
+        throw error;
+      }
+    }
+    const pointRecords = decodedScans.reduce(
+      (sum, scan) => sum + scan.header.pointRecords,
+      0,
+    );
+    const directionPointRecords = decodedScans.reduce(
+      (sum, scan) =>
+        sum + scan.header.directionPointRecords,
+      0,
+    );
+    const invalidPointRecords = decodedScans.reduce(
+      (sum, scan) => sum + scan.header.invalidPointRecords,
+      0,
+    );
+    return Object.freeze({
+      header: Object.freeze({
+        ...envelopeHeader,
+        directionPointRecords,
+        explicitPoseScans: decodedScans.filter(
+          (scan) => scan.header.pose.explicit,
+        ).length,
+        implicitIdentityPoseScans: decodedScans.filter(
+          (scan) => !scan.header.pose.explicit,
+        ).length,
+        invalidPointRecords,
+        pointRecords,
+      }),
+      scans: Object.freeze(decodedScans),
+    });
+  } catch (error) {
+    for (const scan of decodedScans) {
+      scan.worldPositions.fill(0);
+      scan.colors.fill(0);
+    }
+    throw error;
   } finally {
     logical.fill(0);
   }
