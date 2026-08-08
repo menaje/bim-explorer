@@ -13,6 +13,10 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
   묶인 instance plan
 - headless backend의 upload/draw/resource 영수증
 - WebGL2 backend의 geometry·instance upload, first-frame pixel 영수증
+- `application/vnd.bim-explorer.point-range.v1`의 Float64 origin +
+  relative Float32/RGBA8 point primitive decode
+- 별도 headless/WebGL2 point backend의 단일 `POINTS` draw, bounded staging과
+  exact resource-release 영수증
 - perspective/orthographic fit과 orbit·pan·zoom camera state
 - active revision의 Render ID hide/show와 view revision 영수증
 - offscreen WebGL2 Pick ID pass와 revision-bound selection/highlight
@@ -39,6 +43,13 @@ renderer authority로 만들지 않습니다.
 
 reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-local
 identity를 유지합니다.
+
+point range는 source semantic identity를 만들지 않습니다. 현재 cache-only
+LAS/LAZ parity sample로 actual Chrome WebGL2 primitive와 cleanup만
+qualification했으며, LAS/LAZ source adapter, CRS/datum, point picking,
+level-of-detail streaming과 Browser/VS Code file-open은 포함하지 않습니다.
+따라서 point renderer 계약은 format admission이나 제품 지원을 뜻하지
+않습니다.
 
 renderer 단독 사용 시 session/source lifecycle은 호출자가 소유합니다.
 host adapter를 사용하면 active range session과 Worker lease를 소스 교체와

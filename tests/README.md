@@ -132,9 +132,16 @@ cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Floa
 `las-laz-browser-worker` test는 같은 cache-only LAZ를 actual Chrome의
 disposable classic Worker에서 해제해 input/output와 WASM heap budget,
 checkpoint cooperative cancellation, 동기 decode 중 강제 종료, timeout,
-truncated payload cleanup과 fresh-Worker recovery를 검증합니다. 강제 종료의
-explicit cleanup, complete Browser RSS, CRS, point renderer와 제품 admission은
-주장하지 않습니다.
+truncated payload cleanup과 fresh-Worker recovery를 검증합니다. 이 Worker
+test 자체는 강제 종료의 explicit cleanup, complete Browser RSS, CRS,
+point renderer와 제품 admission을 주장하지 않습니다.
+
+`las-laz-point-renderer` test는 exact parity LAS records를 source-neutral
+Float64-origin/relative-Float32/RGBA8 range로 투영하고 range decoder,
+loopback-only delivery·buffer zeroing과 committed actual Chrome WebGL2 evidence를
+검사합니다. 이 test는 단일 `POINTS` draw와 exact CPU/GPU cleanup만 승인하며
+CRS, point identity/pick, LOD, 제품 file-open과 format admission은 계속
+거부합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

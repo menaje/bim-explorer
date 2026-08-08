@@ -49,6 +49,8 @@ const COPY_FILES = Object.freeze([
   ["packages/bim-renderer-3d/src/host-adapter.mjs"],
   ["packages/bim-renderer-3d/src/index.mjs"],
   ["packages/bim-renderer-3d/src/measurement.mjs"],
+  ["packages/bim-renderer-3d/src/point-cloud.mjs"],
+  ["packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs"],
   ["packages/bim-renderer-3d/src/webgl2-backend.mjs"],
   ["packages/bim-semantic-explorer/src/index.mjs"],
   ["node_modules/web-ifc/LICENSE.md"],

@@ -37,6 +37,27 @@ jobs:
       - name: Check
         run: npm run check
 
+      - name: Qualify LAS/LAZ point renderer on Linux
+        if: runner.os == 'Linux'
+        run: >-
+          xvfb-run -a
+          npm run qualify:las-laz:renderer --
+          --out las-laz-point-renderer-${{ runner.os }}.json
+
+      - name: Qualify LAS/LAZ point renderer on macOS
+        if: runner.os == 'macOS'
+        run: >-
+          npm run qualify:las-laz:renderer --
+          --out las-laz-point-renderer-${{ runner.os }}.json
+
+      - name: Upload LAS/LAZ point renderer evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: las-laz-point-renderer-${{ runner.os }}
+          path: las-laz-point-renderer-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify web-ifc platform package
         run: >-
           npm run qualify:ifc:platform-package --

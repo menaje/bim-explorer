@@ -10,6 +10,9 @@ import {
 import {
   validateLasLazBrowserWorkerQualification,
 } from "./qualify-las-laz-browser-worker.mjs";
+import {
+  validateLasLazPointRendererQualification,
+} from "./qualify-las-laz-point-renderer.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -25,13 +28,14 @@ const PASSED_GATES = Object.freeze([
   "lasLazWorkerLifecycle",
   "lasLazWorkerMemoryBudget",
   "lasLazMalformedInputIsolation",
+  "lasLazPointRange",
+  "lasLazRenderer",
 ]);
 const HELD_GATES = Object.freeze([
   "e57PointDecode",
   "e57Renderer",
   "e57ProductOpen",
   "lasLazCoordinateReference",
-  "lasLazRenderer",
   "lasLazProductOpen",
 ]);
 
@@ -40,11 +44,15 @@ export function validateReferenceFormatProbeCompatibility(
   e57Evidence,
   lasLazEvidence,
   lasLazWorkerEvidence,
+  lasLazPointRendererEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateLasLazPublicSampleProbe(lasLazEvidence);
   validateLasLazBrowserWorkerQualification(
     lasLazWorkerEvidence,
+  );
+  validateLasLazPointRendererQualification(
+    lasLazPointRendererEvidence,
   );
   if (
     manifest?.schema !==
@@ -59,7 +67,10 @@ export function validateReferenceFormatProbeCompatibility(
         "las-laz-public-sample-probe-2026-08-08.json" ||
     manifest.evidence?.lasLazBrowserWorker !==
       "compatibility/evidence/" +
-        "las-laz-browser-worker-2026-08-08.json"
+        "las-laz-browser-worker-2026-08-08.json" ||
+    manifest.evidence?.lasLazPointRenderer !==
+      "compatibility/evidence/" +
+        "las-laz-point-renderer-2026-08-08.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -112,6 +123,7 @@ async function main() {
     e57Evidence,
     lasLazEvidence,
     lasLazWorkerEvidence,
+    lasLazPointRendererEvidence,
   ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
@@ -130,6 +142,11 @@ async function main() {
         "las-laz-browser-worker-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "las-laz-point-renderer-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
@@ -137,6 +154,7 @@ async function main() {
       e57Evidence,
       lasLazEvidence,
       lasLazWorkerEvidence,
+      lasLazPointRendererEvidence,
     ),
   ));
 }

@@ -304,9 +304,11 @@ view/query/write/round-trip Gate를 분리해 기록하고 제품 codec/SDK,
 coordinate와 lifecycle evidence 전에는 source admission을 거부합니다.
 cache-only LAS/LAZ probe는 paired LAS 1.2 point record decode에 이어 실제
 Chrome Worker의 bounded WASM heap, checkpoint/forced cancellation, timeout,
-truncated payload 격리와 fresh-Worker recovery까지 통과했습니다. 다만 decoder와
-sample은 qualification-only이고 CRS, point renderer와 제품 open이 없으므로
-source admission에는 영향을 주지 않습니다.
+truncated payload 격리와 fresh-Worker recovery까지 통과했습니다. 같은 exact
+parity record의 source-neutral point range도 actual Chrome WebGL2에서 단일
+`POINTS` draw, visible pixels와 exact cleanup을 통과했습니다. 다만 decoder와
+sample은 qualification-only이고 CRS, 제품 source/file-open과 admission이
+없으므로 source admission에는 영향을 주지 않습니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic
 foundation을 통과했습니다. derived renderer projection은 generated IFC

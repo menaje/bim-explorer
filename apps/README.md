@@ -69,3 +69,10 @@ LAZ를 exact `laz-perf@0.0.6` classic Web Worker에서 해제합니다. 실제 C
 WASM heap budget, checkpoint cooperative cancellation, 동기 decode 중 강제
 종료, timeout, truncated payload 격리와 fresh-Worker 복구를 검증하지만 제품
 file-open, CRS authority, point renderer 또는 format admission은 아닙니다.
+
+[`las-laz-point-renderer-probe`](las-laz-point-renderer-probe/README.md)는
+이미 exact LAS/LAZ parity가 증명된 cache-only record에서 source-neutral
+point range를 만들고 actual Chrome WebGL2의 단일 `POINTS` draw, pixel output,
+bounded CPU/GPU bytes와 deterministic cleanup을 검증합니다. Browser에 LAS/LAZ
+원본이나 decoder를 제공하지 않으며 제품 file-open·CRS·point picking·format
+admission을 승인하지 않습니다.

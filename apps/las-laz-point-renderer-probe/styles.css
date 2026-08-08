@@ -1,0 +1,38 @@
+:root {
+  color-scheme: dark;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #07111d;
+  color: #d9e7f5;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 32px;
+}
+
+.eyebrow {
+  color: #66d9bf;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+canvas {
+  background: #07131f;
+  border: 1px solid #29445b;
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+pre {
+  background: #0c1a28;
+  border: 1px solid #29445b;
+  overflow: auto;
+  padding: 16px;
+  white-space: pre-wrap;
+}

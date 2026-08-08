@@ -12,6 +12,9 @@
 - isolate that LAZ decoder in an actual Chrome Worker with bounded WASM heap,
   checkpoint and forced in-call cancellation, timeout, malformed payload
   rejection and fresh-Worker recovery without opening product support;
+- add a source-neutral Float64-origin point range and bounded headless/WebGL2
+  `POINTS` renderer, qualifying 10,201 LAS/LAZ-parity points and exact cleanup
+  in Chrome without admitting product file-open or a point-cloud format;
 - add an experimental multi-IFC federation contract with source-scoped
   identity, visibility, partial/stale state, explicit Float64 alignment,
   incremental refresh, cross-source selection and saved views;

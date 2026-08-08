@@ -60,6 +60,7 @@ npm run qualify:e57:probe
 npm run fetch:las-laz:public
 npm run qualify:las-laz:probe
 npm run qualify:las-laz:worker
+npm run qualify:las-laz:renderer
 npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode

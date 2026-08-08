@@ -4,8 +4,9 @@ status: draft
 authority:
   - internal-bim-renderer-3d
   - geometry-staging-limits
+  - point-range-staging-limits
   - renderer-resource-receipt
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-08
 ---
 
 # BIM renderer 3D v0.1
@@ -46,6 +47,49 @@ range는 handle의 `maximumRequestBytes`와 renderer의 `maximumReadBytes` 중
 만듭니다. range count, encoded bytes, decoded payload, geometry record,
 instance, triangle, draw-call과 CPU staging limit은 backend 호출 전에
 적용합니다.
+
+## Point range consumer
+
+삼각형 geometry range와 별도로 다음 source-neutral point media type을
+정의합니다.
+
+```text
+application/vnd.bim-explorer.point-range.v1
+```
+
+v1 binary layout은 하나의 bounded draw range만 표현합니다.
+
+| Offset | Type | Meaning |
+| ---: | --- | --- |
+| 0 | 8-byte ASCII | `BEXPTS01` magic |
+| 8 | uint32 LE | version `1` |
+| 12 | uint32 LE | point count |
+| 16 | uint32 LE | stride `16` |
+| 20 | uint32 LE | flag `1` = RGBA8 |
+| 24 | 3×float64 LE | source-coordinate origin XYZ |
+| 48 | repeated 16 bytes | relative float32 XYZ + RGBA8 |
+
+decoder는 exact byte length, magic/version/stride/flag, non-zero point count,
+finite origin/relative position, trailing bytes와 configured point/payload
+상한을 backend보다 먼저 검사합니다. 기본 mount 상한은 range·CPU staging·GPU
+payload 각각 8 MiB, 500,000 points, point size 1–16 px입니다. 한 range는 한
+번의 `POINTS` draw만 만들며 renderer가 range의 SHA-256을 확인합니다.
+
+`bim-explorer-bounded-point-renderer/0.1`은 source fingerprint/revision,
+`semanticAuthority: false`와 coordinate-reference qualification 상태를
+receipt에 보존합니다. backend `mount()`가 payload를 소비한 뒤 CPU staging을
+zero-fill하고, invalid backend receipt도 반환 handle을 즉시 unmount합니다.
+`bim-explorer-bounded-point-renderer-release-receipt/0.1`은 uploaded bytes와
+point count의 exact release 및 terminal active byte/range 0을 요구합니다.
+
+WebGL2 point backend는 Float64 origin을 camera target에서 빼고 relative
+Float32 position만 GPU에 upload합니다. RGBA8 color를 normalized attribute로
+읽고 circular point sprite를 `drawArrays(POINTS)`로 그립니다. cache-only
+LAS/LAZ parity sample은 actual Chrome에서 10,201 points, 163,216-byte upload,
+한 draw와 40,471 non-background pixels를 재현하고 buffer/program/VAO를 전량
+회수했습니다. 이는 source-neutral primitive qualification이며 LAS/LAZ parser
+packaging, CRS/datum, per-point identity/pick, LOD streaming, 제품 file-open이나
+format admission을 승인하지 않습니다.
 
 ## Mount plan과 identity
 

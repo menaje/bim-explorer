@@ -76,14 +76,19 @@ input/output와 64MiB WASM heap budget 아래 해제하고 checkpoint cooperativ
 cancellation, 동기 WASM 중 강제 종료, timeout, truncated compressed payload
 거부와 fresh-Worker 복구를 검증했습니다. 강제 종료 시 explicit cleanup은
 주장하지 않으며 pinned Emscripten glue의 `unsafe-eval`은 loopback qualification
-CSP에만 허용합니다. 샘플에는 qualified CRS가 없고 point renderer와 제품
-file-open도 없으므로 LAS/LAZ admission과 `pointCloudCodec`은 계속 held입니다.
+CSP에만 허용합니다. 샘플에는 qualified CRS와 제품 file-open이 없으므로
+LAS/LAZ admission과 `pointCloudCodec`은 계속 held입니다.
+후속 point primitive Gate는 exact parity record를 Float64 origin + relative
+Float32/RGBA8 range로 투영해 actual Chrome에서 10,201 points·1 draw와 exact
+resource cleanup을 통과했습니다. 이 renderer는 source-neutral derived range만
+소비하므로 LAS/LAZ 제품 source, CRS, point picking 또는 file-open을 제공하지
+않습니다.
 
 ## 현재 상태
 
 intake 계약과 공개 issue form, cache-only E57 및 LAS/LAZ pre-admission
-decode/Worker probe는 준비됐지만 실제 외부 packet과 제품 point-cloud
-source/renderer는 아직 없습니다.
+decode/Worker/point-renderer probe는 준비됐지만 실제 외부 packet과 제품
+point-cloud source/file-open은 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에

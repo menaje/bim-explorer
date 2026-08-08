@@ -178,9 +178,12 @@ semantic authority는 승인하지 않습니다. 다음 held format 제안은
 10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
 parity를 검증했습니다. LAZ는 실제 Chrome의 disposable Worker에서도 4,063,232
 byte peak WASM heap, checkpoint 취소, 동기 decode 중 강제 종료, timeout,
-truncated payload 거부와 fresh-Worker 복구를 통과했습니다. CRS, point renderer와
-제품 file-open은 검증하지 않았으므로 sample probe는 format admission이나 제품
-지원을 뜻하지 않습니다.
+truncated payload 거부와 fresh-Worker 복구를 통과했습니다. 이어
+source-neutral Float64-origin/relative-Float32
+point range를 actual Chrome WebGL2에서 10,201 points·1 draw·40,471 pixels로
+검증하고 allocation을 전량 회수했습니다. 따라서 point primitive renderer
+Gate는 통과했지만 CRS/datum, LAS/LAZ 제품 source·file-open과 admission은 계속
+held입니다.
 
 ## 비목표
 

@@ -16,24 +16,25 @@
     "lasLazWorkerLifecycle": true,
     "lasLazWorkerMemoryBudget": true,
     "lasLazMalformedInputIsolation": true,
+    "lasLazPointRange": true,
+    "lasLazRenderer": true,
     "e57PointDecode": false,
     "e57Renderer": false,
     "e57ProductOpen": false,
     "lasLazCoordinateReference": false,
-    "lasLazRenderer": false,
     "lasLazProductOpen": false
   },
   "evidence": {
     "e57PublicSample": "compatibility/evidence/e57-public-sample-probe-2026-08-08.json",
     "lasLazPublicSample": "compatibility/evidence/las-laz-public-sample-probe-2026-08-08.json",
-    "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json"
+    "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
+    "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json"
   },
   "blockers": [
     "E57 compressed point payload decode is not implemented",
     "E57 has no qualified point renderer",
     "Browser and VS Code do not open E57 files",
     "the LAS/LAZ sample has no qualified CRS or surveyed datum authority",
-    "the bounded renderer has no LAS/LAZ point primitive contract",
     "Browser and VS Code do not open LAS or LAZ files"
   ],
   "limitations": [
@@ -43,6 +44,8 @@
     "the LAS/LAZ probe covers one paired LAS 1.2 point-format 3 sample",
     "laz-perf is a qualification-only dev dependency and not a product runtime",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
+    "the point renderer consumes a source-neutral derived range and does not open LAS or LAZ files",
+    "the point renderer has no point identity, picking, semantics or level-of-detail streaming",
     "sample-based testing does not establish user demand, surveyed accuracy or format admission"
   ],
   "policy": {

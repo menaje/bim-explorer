@@ -2479,6 +2479,24 @@ export {
 } from "./webgl2-backend.mjs";
 
 export {
+  BIM_POINT_RANGE_MEDIA_TYPE,
+  BIM_POINT_RENDERER_CONTRACT,
+  BIM_POINT_RENDERER_RECEIPT,
+  BIM_POINT_RENDERER_RELEASE_RECEIPT,
+  BoundedPointCloudRenderer,
+  HeadlessPointCloudBackend,
+  createBoundedPointCloudRenderer,
+  createHeadlessPointCloudBackend,
+  decodeBimPointRange,
+  encodeBimPointRange,
+} from "./point-cloud.mjs";
+
+export {
+  PointCloudWebGl2Backend,
+  createPointCloudWebGl2Backend,
+} from "./point-cloud-webgl2-backend.mjs";
+
+export {
   BIM_RENDERER_3D_HOST_CONTRACT,
   BIM_RENDERER_3D_HOST_RECEIPT,
   BimRenderer3dHost,

@@ -1,0 +1,192 @@
+{
+  "schema": "bim-explorer-las-laz-point-renderer-qualification/1",
+  "status": "passed-pre-admission-point-renderer",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "loaders-gl-ripple-las-laz",
+    "las": {
+      "byteLength": 347061,
+      "sha256": "dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852"
+    },
+    "laz": {
+      "byteLength": 53952,
+      "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034"
+    },
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "acquisition": {
+    "schema": "bim-explorer-public-las-laz-acquisition/1",
+    "fixtureId": "loaders-gl-ripple-las-laz",
+    "entries": {
+      "las": {
+        "byteLength": 347061,
+        "sha256": "dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+        "cacheHit": true
+      },
+      "laz": {
+        "byteLength": 53952,
+        "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+        "cacheHit": true
+      }
+    },
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "provenance": {
+    "pointRecordSha256": "31124633910e8b01c3cbd7d159c85b7140b0ed20438fee70f9570ad2420c026e",
+    "exactLasLazPointRecordParity": true,
+    "derivationInput": "cache-only LAS records previously proven equal to LAZ decode"
+  },
+  "pointRange": {
+    "mediaType": "application/vnd.bim-explorer.point-range.v1",
+    "byteLength": 163264,
+    "payloadBytes": 163216,
+    "pointStrideBytes": 16,
+    "points": 10201,
+    "sha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449",
+    "coordinateProjection": "float64-origin-plus-relative-float32",
+    "origin": [
+      0,
+      0,
+      0.2167949972270401
+    ],
+    "rawBounds": {
+      "min": [
+        -5,
+        -5,
+        -0.6664100289344788
+      ],
+      "max": [
+        5,
+        5,
+        1.100000023388559
+      ]
+    },
+    "projectedBounds": {
+      "min": [
+        -5,
+        -5,
+        -0.6664099993588058
+      ],
+      "max": [
+        5,
+        5,
+        1.0999999938128862
+      ]
+    },
+    "maximumAbsoluteProjectionError": 2.9791268563172935e-8,
+    "crsAuthority": false,
+    "colorProjection": "round-uint16-div-257-to-rgba8",
+    "rgba8ColorRange": {
+      "min": [
+        0,
+        68,
+        0,
+        255
+      ],
+      "max": [
+        254,
+        198,
+        63,
+        255
+      ]
+    }
+  },
+  "environment": {
+    "browser": "Google Chrome 151.0.7922.108",
+    "platform": "darwin-arm64",
+    "headless": true,
+    "api": "actual WebGL2",
+    "physicalGpuClaimed": false
+  },
+  "budget": {
+    "maximumCpuStagingBytes": 8388608,
+    "maximumGpuBytes": 8388608,
+    "maximumPointPayloadBytes": 8388608,
+    "maximumPoints": 500000,
+    "maximumRangeBytes": 8388608,
+    "maximumPointSize": 16
+  },
+  "renderer": {
+    "contract": "bim-explorer-bounded-point-renderer/0.1",
+    "backend": "webgl2-points",
+    "actualGpu": true,
+    "rendered": true,
+    "pointPrimitive": "POINTS",
+    "points": 10201,
+    "pointSize": 3,
+    "drawCalls": 1,
+    "uploadedBytes": 163216,
+    "cpuStagingPeakBytes": 163264,
+    "nonBackgroundPixels": 40471,
+    "readbackBytes": 1228800,
+    "glVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "glError": 0,
+    "frameMs": 533.7999999970198,
+    "uploadMs": 0.7000000029802322
+  },
+  "cleanup": {
+    "rendererStagingReleased": true,
+    "fetchedInputCleared": true,
+    "releasedBytes": 163216,
+    "releasedPoints": 10201,
+    "backendResourcesDeleted": true,
+    "rendererDisposed": true,
+    "backendDisposed": true,
+    "activeBackendBytes": 0,
+    "residentRanges": 0,
+    "serverBuffersCleared": true
+  },
+  "network": {
+    "externalOrigins": [],
+    "runtimeErrors": [],
+    "requestCount": 14,
+    "rangeRequests": 1,
+    "rangeBytes": 163264
+  },
+  "assertions": {
+    "actualBrowserWebGl2": true,
+    "pinnedCacheOnlyFixture": true,
+    "exactLasLazParityProvenance": true,
+    "boundedPointRange": true,
+    "float64OriginProjection": true,
+    "boundedProjectionError": true,
+    "boundedRgba8Projection": true,
+    "singlePointPrimitiveDraw": true,
+    "visiblePixelOutput": true,
+    "boundedCpuStaging": true,
+    "boundedGpuUpload": true,
+    "exactResourceCleanup": true,
+    "localOnly": true,
+    "noRuntimeErrors": true,
+    "serverBuffersCleared": true,
+    "noProductAdmission": true,
+    "pathFreeEvidence": true
+  },
+  "decision": {
+    "pointRangeContract": "passed",
+    "pointRenderer": "passed",
+    "coordinateReference": "held",
+    "pointPicking": "held",
+    "browserProductOpen": "held",
+    "vscodeProductOpen": "held",
+    "formatAdmission": false,
+    "pointCloudCodec": "held",
+    "productSupport": false
+  },
+  "limitations": [
+    "the probe covers one cache-only LAS 1.2 point-format 3 sample pair",
+    "the Browser receives a source-neutral derived range, not a LAS or LAZ file",
+    "LAZ parity relies on the separately qualified exact point-record digest",
+    "the range preserves a Float64 origin but the sample has no qualified CRS or datum",
+    "the point primitive has no point identity, picking, semantics or level-of-detail streaming",
+    "SwiftShader WebGL2 is an API qualification and does not claim a physical GPU",
+    "the sample, LAS derivation input and laz-perf are not bundled into a product or release",
+    "Browser and VS Code product file-open and format admission remain held"
+  ]
+}

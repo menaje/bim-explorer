@@ -3,6 +3,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  validateLasLazPointRendererQualification,
+} from "./qualify-las-laz-point-renderer.mjs";
+
+const BASELINE_AS_OF = "2026-08-04";
+
 const TRUE_GATES = [
   "sourceNeutralGeometryDecoder",
   "boundedInitialRangeRead",
@@ -25,6 +31,9 @@ const TRUE_GATES = [
   "visibilityDrivenFirstFrame",
   "browserVscodeConformance",
   "viewerCoreConformance",
+  "sourceNeutralPointRange",
+  "boundedPointPrimitiveWebGl2",
+  "pointResourceAccounting",
 ];
 const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
@@ -302,7 +311,7 @@ function validateBrowserEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-public-browser-webgl2-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !== "experimental-browser-gpu-api" ||
     evidence.fixture?.id !== fixture.id ||
     evidence.fixture?.schema !== fixture.schema ||
@@ -533,7 +542,7 @@ function validateBrowserViewEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-public-browser-view-state-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !== "experimental-browser-view-state" ||
     evidence.fixture?.id !== fixture.id ||
     evidence.fixture?.schema !== fixture.schema ||
@@ -768,7 +777,7 @@ function validateBrowserPickEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-public-browser-picking-selection-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-picking-selection" ||
     evidence.fixture?.id !== fixture.id ||
@@ -957,7 +966,7 @@ function validateBrowserLifecycleEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-public-browser-renderer-lifecycle-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-renderer-lifecycle" ||
     evidence.publicFixture?.id !== fixture.id ||
@@ -1181,7 +1190,7 @@ function validateBrowserSectionEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-public-browser-section-measurement-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-section-measurement" ||
     evidence.fixture?.id !== fixture.id ||
@@ -1405,7 +1414,7 @@ function validateBrowserPrecisionEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-browser-large-coordinate-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-large-coordinate" ||
     fixture.id !== "synthetic-ifc4-large-coordinate" ||
@@ -1572,7 +1581,7 @@ function validateBrowserProgressiveEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-browser-progressive-range-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-progressive-range" ||
     fixture.id !== manifest.fixture.id ||
@@ -1815,7 +1824,7 @@ function validateBrowserDeltaEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-browser-atomic-delta-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !== "experimental-browser-atomic-delta" ||
     fixture.id !== manifest.fixture.id ||
     fixture.schema !== manifest.fixture.schema ||
@@ -1962,7 +1971,7 @@ function validateBrowserCameraInputEvidence(manifest, evidence) {
   if (
     evidence.schema !==
       "bim-explorer-browser-camera-input-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !== "experimental-browser-camera-input" ||
     fixture.id !== manifest.fixture.id ||
     fixture.schema !== manifest.fixture.schema ||
@@ -2107,7 +2116,7 @@ function validateBrowserVisibilityFirstFrameEvidence(
     evidence.schema !==
       "bim-explorer-browser-" +
         "visibility-first-frame-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-browser-visibility-first-frame" ||
     fixture.id !== manifest.fixture.id ||
@@ -2296,7 +2305,7 @@ function validateBrowserVscodeHostEvidence(
     evidence.schema !==
       "bim-explorer-browser-vscode-" +
         "renderer-host-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !==
       "experimental-internal-host-contract" ||
     fixture.id !== manifest.fixture.id ||
@@ -2549,10 +2558,17 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.browserWorkerLifecycle,
     "Browser Worker lifecycle evidence",
   );
+  const browserPointPrimitiveEvidence = plainRecord(
+    evidenceBundle.browserPointPrimitive,
+    "Browser point primitive BIM renderer evidence",
+  );
+  validateLasLazPointRendererQualification(
+    browserPointPrimitiveEvidence,
+  );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
-    manifest.asOf !== "2026-08-04" ||
+    manifest.asOf !== "2026-08-08" ||
     manifest.status !== "experimental" ||
     manifest.contract?.renderer !==
       "bim-explorer-bim-renderer-3d/0.1" ||
@@ -2575,12 +2591,24 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-bim-renderer-3d-host-receipt/0.1" ||
     manifest.contract?.geometryMediaType !==
       "application/vnd.bim-explorer.geometry-range.v1" ||
+    manifest.contract?.pointRenderer !==
+      "bim-explorer-bounded-point-renderer/0.1" ||
+    manifest.contract?.pointReceipt !==
+      "bim-explorer-bounded-point-renderer-receipt/0.1" ||
+    manifest.contract?.pointReleaseReceipt !==
+      "bim-explorer-bounded-point-renderer-release-receipt/0.1" ||
+    manifest.contract?.pointMediaType !==
+      "application/vnd.bim-explorer.point-range.v1" ||
     manifest.backend?.id !== "headless" ||
     manifest.backend?.actualGpu !== false ||
     manifest.browserBackend?.id !== "webgl2" ||
     manifest.browserBackend?.actualBrowser !== true ||
     manifest.browserBackend?.gpuApi !== true ||
-    manifest.browserBackend?.physicalGpuClaimed !== false
+    manifest.browserBackend?.physicalGpuClaimed !== false ||
+    manifest.pointBackend?.headlessId !== "headless-points" ||
+    manifest.pointBackend?.browserId !== "webgl2-points" ||
+    manifest.pointBackend?.actualBrowser !== true ||
+    manifest.pointBackend?.physicalGpuClaimed !== false
   ) {
     throw new Error("BIM renderer manifest identity is invalid");
   }
@@ -2646,7 +2674,10 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "web-ifc-browser-public-representative-" +
         "performance-2026-08-03.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 14 ||
+    manifest.evidence?.browserPointPrimitive !==
+      "compatibility/evidence/" +
+        "las-laz-point-renderer-2026-08-08.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 15 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2660,15 +2691,38 @@ export function validateBimRenderer3dCompatibility(
       "compatibility/evidence/" +
         "viewer-core-release-2026-08-04.json" ||
     manifest.policy?.claimViewerCoreCompatibility !== true ||
-    manifest.policy?.claimProductionRenderer !== false
+    manifest.policy?.claimProductionRenderer !== false ||
+    manifest.policy?.claimPointFormatAdmission !== false ||
+    manifest.policy?.claimPointPicking !== false
   ) {
     throw new Error("BIM renderer policy overclaims compatibility");
+  }
+  const expectedPointRenderer = plainRecord(
+    manifest.expected.pointRenderer,
+    "manifest expected point renderer",
+  );
+  if (
+    expectedPointRenderer.points !==
+      browserPointPrimitiveEvidence.renderer.points ||
+    expectedPointRenderer.rangeBytes !==
+      browserPointPrimitiveEvidence.pointRange.byteLength ||
+    expectedPointRenderer.uploadedBytes !==
+      browserPointPrimitiveEvidence.renderer.uploadedBytes ||
+    expectedPointRenderer.drawCalls !==
+      browserPointPrimitiveEvidence.renderer.drawCalls ||
+    browserPointPrimitiveEvidence.renderer.nonBackgroundPixels <
+      expectedPointRenderer.minimumNonBackgroundPixels ||
+    expectedPointRenderer.maximumAbsoluteProjectionError !==
+      browserPointPrimitiveEvidence.pointRange
+        .maximumAbsoluteProjectionError
+  ) {
+    throw new Error("BIM point renderer evidence metrics are invalid");
   }
   const fixture = manifest.fixture;
   if (
     evidence.schema !==
       "bim-explorer-public-bim-renderer-3d-evidence/0.1" ||
-    evidence.asOf !== manifest.asOf ||
+    evidence.asOf !== BASELINE_AS_OF ||
     evidence.status !== "experimental-headless-only" ||
     evidence.fixture?.id !== fixture.id ||
     evidence.fixture?.schema !== fixture.schema ||
@@ -2962,6 +3016,10 @@ export function validateBimRenderer3dCompatibility(
         .selection.selectedRangeIds[0],
     browserVscodeHostKinds:
       browserVscodeHostReport.runs.map((run) => run.kind),
+    browserPointPixels:
+      browserPointPrimitiveEvidence.renderer.nonBackgroundPixels,
+    browserPointCount:
+      browserPointPrimitiveEvidence.renderer.points,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -3053,6 +3111,13 @@ async function main() {
       ),
       "utf8",
     )),
+    browserPointPrimitive: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserPointPrimitive,
+      ),
+      "utf8",
+    )),
   };
   const result = validateBimRenderer3dCompatibility(
     manifest,
@@ -3067,6 +3132,7 @@ async function main() {
       `${result.browserPickHighlightPixels} highlight pixels, ` +
       `${result.browserLifecycleMounts} lifecycle mounts, ` +
       `${result.browserMeasuredDistance.toFixed(3)} measured units, ` +
+      `${result.browserPointCount} Browser points, ` +
       `${result.passedGates} passed and ${result.heldGates} held gates`,
   );
 }

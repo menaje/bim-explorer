@@ -485,6 +485,8 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/bim-model-source/src/index.mjs",
       "packages/gltf-reference-source/src/index.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
+      "packages/bim-renderer-3d/src/point-cloud.mjs",
+      "packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
       "packages/bim-semantic-explorer/src/index.mjs",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",

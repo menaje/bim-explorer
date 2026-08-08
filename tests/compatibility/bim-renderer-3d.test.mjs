@@ -64,6 +64,10 @@ async function fixtures() {
       manifest.evidence.browserWorkerLifecycle,
       "utf8",
     )),
+    browserPointPrimitive: JSON.parse(await readFile(
+      manifest.evidence.browserPointPrimitive,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -100,7 +104,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
     "browser",
     "vscode-webview",
   ]);
-  assert.equal(result.passedGates, 21);
+  assert.equal(result.browserPointCount, 10_201);
+  assert.equal(result.browserPointPixels, 40_471);
+  assert.equal(result.passedGates, 24);
   assert.equal(result.heldGates, 0);
 });
 
@@ -234,6 +240,17 @@ test("Browser and VS Code host evidence pins editor cleanup", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /host lifecycle is invalid/u,
+  );
+});
+
+test("Browser point evidence pins one bounded primitive draw", async () => {
+  const { manifest, evidence } = await fixtures();
+  const corrupted = structuredClone(evidence);
+  corrupted.browserPointPrimitive.renderer.drawCalls = 2;
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, corrupted),
+    /point renderer qualification evidence is invalid/u,
   );
 });
 

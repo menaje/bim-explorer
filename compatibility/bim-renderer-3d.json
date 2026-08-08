@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-bim-renderer-3d-compatibility/1",
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-08",
   "status": "experimental",
   "contract": {
     "renderer": "bim-explorer-bim-renderer-3d/0.1",
@@ -12,7 +12,11 @@
     "camera": "bim-explorer-camera-3d/0.1",
     "host": "bim-explorer-bim-renderer-3d-host/0.1",
     "hostReceipt": "bim-explorer-bim-renderer-3d-host-receipt/0.1",
-    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1"
+    "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
+    "pointRenderer": "bim-explorer-bounded-point-renderer/0.1",
+    "pointReceipt": "bim-explorer-bounded-point-renderer-receipt/0.1",
+    "pointReleaseReceipt": "bim-explorer-bounded-point-renderer-release-receipt/0.1",
+    "pointMediaType": "application/vnd.bim-explorer.point-range.v1"
   },
   "backend": {
     "id": "headless",
@@ -22,6 +26,12 @@
     "id": "webgl2",
     "actualBrowser": true,
     "gpuApi": true,
+    "physicalGpuClaimed": false
+  },
+  "pointBackend": {
+    "headlessId": "headless-points",
+    "browserId": "webgl2-points",
+    "actualBrowser": true,
     "physicalGpuClaimed": false
   },
   "fixture": {
@@ -135,7 +145,15 @@
       "uploadedBytes": 4332836,
       "nonBackgroundPixels": 292357
     },
-    "deferredBytes": 5096828
+    "deferredBytes": 5096828,
+    "pointRenderer": {
+      "points": 10201,
+      "rangeBytes": 163264,
+      "uploadedBytes": 163216,
+      "drawCalls": 1,
+      "minimumNonBackgroundPixels": 1,
+      "maximumAbsoluteProjectionError": 2.9791268563172935e-8
+    }
   },
   "gates": {
     "sourceNeutralGeometryDecoder": true,
@@ -158,7 +176,10 @@
     "actualGpuFirstFrame": true,
     "cameraInteraction": true,
     "browserVscodeConformance": true,
-    "viewerCoreConformance": true
+    "viewerCoreConformance": true,
+    "sourceNeutralPointRange": true,
+    "boundedPointPrimitiveWebGl2": true,
+    "pointResourceAccounting": true
   },
   "evidence": {
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
@@ -174,7 +195,8 @@
     "browserVisibilityFirstFrame": "compatibility/evidence/bim-renderer-3d-public-browser-visibility-first-frame-2026-08-04.json",
     "browserVscodeHost": "compatibility/evidence/bim-renderer-3d-browser-vscode-host-2026-08-04.json",
     "browserWorkerLifecycle": "compatibility/evidence/web-ifc-browser-public-representative-performance-2026-08-03.json",
-    "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json"
+    "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json",
+    "browserPointPrimitive": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json"
   },
   "blockers": [],
   "policy": {
@@ -184,6 +206,8 @@
     "claimRenderedFirstFrame": true,
     "claimPhysicalGpuQualification": false,
     "claimViewerCoreCompatibility": true,
-    "claimProductionRenderer": false
+    "claimProductionRenderer": false,
+    "claimPointFormatAdmission": false,
+    "claimPointPicking": false
   }
 }
