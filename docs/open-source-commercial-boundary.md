@@ -27,6 +27,7 @@ BIM Explorer의 공개 가치는 원본 BIM 모델을 계정 없이 안전하게
 | tree/property/relation/search | Agent query/change/build/check |
 | section/isolate/measure | semantic/geometry/render/export diff |
 | source-local viewpoint | refresh/reconcile/conflict |
+| source-scoped reference anchor receipt | authored 3D operation·constraint·dependency |
 | BCF·IDS·bSDD read-only exploration | validation-to-revision diagnostics |
 | public source/renderer conformance | human accept/publish |
 | local Browser/VS Code shell | verified native delivery와 support |
@@ -51,6 +52,13 @@ Workspace, Canonical ID, Agent change, accept/publish 또는 verified delivery�
 deterministic pack과 offline clean install을 통과했고
 `bim-surface-v0.1.0` immutable GitHub prerelease로 공개했습니다. public artifact
 publication과 실제 Spatial 소비·Workspace authority는 계속 독립 Gate입니다.
+
+차기 federated Surface와 reference anchor도 Explorer의 공개 read/explore
+가치에 포함할 수 있습니다. 유료 경계는 파일을 볼 수 있는지 여부가 아니라
+external base를 Workspace에 등록하고, 의미 있는 3D 객체와 placement·constraint를
+작성하며, source refresh 영향을 reconcile하고 revision을 승인·납품하는
+workflow입니다. anchor receipt 자체를 유료 authority 또는 Spatial 설계
+데이터로 취급하지 않습니다.
 
 ## Community 공개 Gate
 

@@ -1,0 +1,127 @@
+---
+type: specification
+status: draft
+authority:
+  - federated-bim-surface-contract
+  - multi-source-surface-lifecycle
+  - source-role-composition
+last_reviewed: 2026-08-09
+---
+
+# BIM Surface v0.2
+
+## 상태와 목적
+
+`bim-explorer-bim-surface/0.2`는 여러 immutable source를 하나의 bounded 3D
+context에서 탐색하고 외부 설계 소비자에게 source-scoped selection과 reference
+anchor를 제공하는 host-neutral draft다.
+
+v0.2는 단일 source인 [`bim-surface/0.1`](bim-surface-v0.1.md)의 의미를
+바꾸지 않는다. package implementation, public artifact와 actual Spatial
+consumer는 별도 qualification 전까지 지원으로 주장하지 않는다.
+
+## Contract pin
+
+첫 draft는 다음 public/internal contract를 명시적으로 협상한다.
+
+```text
+bim-explorer-bim-surface/0.2
+bim-explorer-federation/0.1
+bim-explorer-reference-anchor/0.1
+bim-explorer-bim-source/0.2
+bim-explorer-gltf-reference-source/0.1
+menaje-viewer-render-protocol/0.1.0
+```
+
+지원하지 않는 major identifier, source profile 또는 renderer projection은
+fail closed한다.
+
+## Source slot input
+
+`open`은 1–8개의 source slot과 하나의 renderer host를 받는다. 각 slot은
+다음을 가진다.
+
+- stable `federationSourceId`
+- exact native fingerprint/revision/schema/profile
+- admitted source session과 snapshot 또는 source-neutral render projection
+- `semantic-base`, `geometric-reference`, `observation-reference`,
+  `consumer-overlay` 중 caller-provided `sourceRole`
+- source별 visibility와 `ready`/`partial`/`stale` state
+- optional explicit `sourceToFederation` alignment
+- `transferred` 또는 `borrowed` lifecycle ownership
+
+`sourceRole`은 composition과 UI 설명을 위한 metadata다. format/profile이
+제공하지 않는 semantic, geometry, write 또는 round-trip capability를 만들지
+않는다. `consumer-overlay`도 Explorer의 authored source가 아니며 원래
+consumer revision과 identity를 그대로 유지한다.
+
+서로 다른 source slot의 GlobalId, native ID, Render/Pick ID와 range handle은
+항상 namespacing한다. 같은 GlobalId를 source 사이에서 merge하지 않는다.
+
+## Semantic exploration과 selection
+
+semantic query는 capability가 있는 source slot을 명시해야 한다. mesh 또는
+observation reference를 IFC tree/property source로 승격하지 않는다.
+
+selection key는 최소 다음에 묶인다.
+
+```text
+(federationSourceId, native revision, native identity, occurrence path)
+```
+
+surface는 cross-source selection을 반환할 수 있지만 Canonical Entity ID를
+만들거나 여러 source identity를 한 객체로 reconcile하지 않는다.
+
+depth-backed pick이 hit를 만들면 surface는
+[`bim-explorer-reference-anchor/0.1`](bim-reference-anchor-v0.1.md) receipt를
+요청할 수 있다. anchor가 unavailable인 source/profile은 object selection은
+유지하되 명시적인 unsupported diagnostic을 반환한다.
+
+## Coordinate alignment
+
+shared projection은 `bim-explorer-federation/0.1`의 same-CRS MapConversion
+또는 provenance가 있는 explicit matrix만 사용한다. unaligned source는 독립
+local view로 탐색할 수 있지만 shared-coordinate measurement, anchor 또는
+overlay composition에는 사용하지 않는다.
+
+alignment metadata는 Float64이고 renderer tessellation은 lossy display
+projection이다. surface는 datum transformation이나 source-precision geometry를
+주장하지 않는다.
+
+## Lifecycle
+
+surface state는 `idle`, `opening`, `ready`, `refreshing`, `disposing`,
+`disposed`, `failed`다.
+
+- open 성공 전에 모든 source identity, alignment와 projection을 검증한다.
+- `transferred` session/Worker/range/GPU ownership은 open 실패와 dispose에서
+  surface가 역순으로 회수한다.
+- `borrowed` resource는 surface가 dispose하지 않으며 receipt에 남긴다.
+- source 하나의 refresh는 expected revision을 요구하고 해당 slot의 prior
+  selection, saved view와 anchor만 stale로 만든다.
+- 반복 dispose는 `false`이며 disposed/failed surface는 다시 열 수 없다.
+
+cleanup receipt는 source slot별 transferred/borrowed resource, renderer
+allocation, active selection/anchor count와 terminal state를 기록한다.
+
+## Authority
+
+v0.1과 같이 Workspace, Canonical Entity ID, source/geometry/revision mutation,
+constraint, accept, publish와 export authority는 모두 `false`다. Surface event,
+selection과 anchor는 consumer product의 authorization 또는 human approval가
+아니다.
+
+## Package와 conformance Gate
+
+차기 package가 v0.2를 주장하려면 다음을 actual Browser 또는 Webview consumer
+surface에서 재현해야 한다.
+
+- IFC semantic base + GLB reference + consumer overlay 동시 projection
+- source별 tree/query/visibility/selection identity
+- source-local anchor와 alignment/projection fingerprint
+- source refresh 뒤 stale anchor 거부
+- open failure, source 교체와 terminal dispose의 exact cleanup
+- standalone Spatial bundle의 exact package pin과 authority-free composition
+
+이 evidence 전에는 `bim-surface-v0.2.0` release, registry publication이나
+production support를 만들지 않는다.

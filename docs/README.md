@@ -29,6 +29,7 @@ last_reviewed: 2026-08-09
 | [ADR-0001](adr/ADR-0001-independent-product-boundary.md) | `adr` · `accepted` | 독립 제품·저장소·release 결정 |
 | [ADR-0002](adr/ADR-0002-viewer-core-consumer-admission.md) | `adr` · `accepted` | 공용 Viewer Core artifact와 3D consumer admission |
 | [ADR-0003](adr/ADR-0003-host-neutral-bim-surface.md) | `adr` · `accepted` | host-neutral BIM Surface와 외부 package 경계 |
+| [ADR-0004](adr/ADR-0004-federated-reference-authoring-surface.md) | `adr` · `accepted` | 외부 3D 기반 설계를 위한 federated Surface·reference anchor 경계 |
 
 ## 문서 상태
 

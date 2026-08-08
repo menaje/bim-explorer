@@ -41,6 +41,12 @@ consumer exact-pin은 별도 Gate입니다. 0.1.0은 macOS/Linux byte identity,
 checksum, SPDX, release/build attestations까지 통과했으며 experimental point
 reference runtime은 이 entrypoint에 포함하지 않습니다.
 
+차기 `bim-surface/0.2`는 `bim-federation/0.1`과
+`reference-anchor/0.1`을 조합해 external base + consumer overlay context를
+제공하는 draft입니다. 아직 package export, compatibility evidence나 release
+asset이 없으므로 현재 `@bim-explorer/bim-surface@0.1.0`의 기능으로 표현하지
+않습니다.
+
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를
 구현합니다. 공개 모델 첫 range의 headless mount와 실제 Chromium WebGL2
@@ -69,6 +75,11 @@ selection을 service-owned Canonical mapping, synchronized 2D/3D identity,
 opaque Context Reference와 BIM base + Spatial diff review로 연결하는 optional
 bridge입니다. Spatial private package나 설치된 extension에 의존하지
 않습니다.
+
+차기 integration v0.2 draft는 format-neutral source slot/native identity와
+reference anchor handoff를 정의합니다. 실제 Workspace 등록, authored 3D,
+constraint, refresh reconcile와 accept/publish는 계속 Spatial package가
+소유합니다.
 
 [`openbim-explorer`](openbim-explorer/README.md)는 bounded BCF XML 3.0
 local import/export, IDS 1.0 document/result와 explicit bSDD lookup을 같은

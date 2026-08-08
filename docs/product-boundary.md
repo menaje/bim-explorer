@@ -44,6 +44,7 @@ admission은 아직 보류합니다.
 | Canonical Entity ID | 없음 | 없음 | authority |
 | Agent change | 없음 | 없음 | query/proposal/build/check |
 | revision/diff | 없음 | source snapshot만 | authority |
+| 3D reference | 없음 | source-scoped anchor receipt | authored placement·constraint와 reconcile |
 | accept/publish/export | 없음 | 없음 | human-only authority |
 
 Viewer Core와 render protocol은 공개 `@menaje/*` 0.1 contract를 exact
@@ -81,8 +82,11 @@ selection이 authority가 되지 않습니다.
 ## Runtime과 release 독립성
 
 - BIM Explorer는 자체 Browser/VS Code shell과 version을 가집니다.
-- `bim-surface`는 제품 이름을 대체하지 않고 한 BIM source의 host-neutral
-  표시·semantic 탐색 lifecycle만 재사용합니다.
+- 공개된 `bim-surface/0.1`은 제품 이름을 대체하지 않고 한 BIM source의
+  host-neutral 표시·semantic 탐색 lifecycle만 재사용합니다.
+- 차기 `bim-surface/0.2` draft는 federation과 source-local reference anchor를
+  합성하지만 authored object, constraint와 Workspace authority는 포함하지
+  않습니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는
@@ -145,6 +149,14 @@ main의 product-scale federation qualification은 두 generated IFC source와
 matrix로 비교합니다. 이는 Explorer의 bounded composition 성능 근거일 뿐
 실제 Spatial bundle, Canonical mapping, customer-model 수요나 surveyed
 alignment를 승인하지 않습니다.
+
+외부 모형을 먼저 배치하고 Spatial에서 내부·부가 3D 설계를 진행하는 경우에도
+경계는 같습니다. Explorer는 exact source slot/revision/native identity,
+source-local hit point·normal과 alignment/projection fingerprint를
+[`reference-anchor/0.1`](../specs/bim-reference-anchor-v0.1.md) receipt로
+제공할 수 있습니다. Spatial만 이 receipt를 Workspace reference로 등록하고
+authored object의 placement, offset, host 관계와 constraint를 관리합니다.
+source refresh 뒤 anchor를 새 revision으로 자동 이월하지 않습니다.
 
 ## 비목표
 

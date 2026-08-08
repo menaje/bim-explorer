@@ -189,6 +189,26 @@ E57/LAS/LAZ point reference runtime은 experimental source-neutral 경계로
 Workspace, Canonical Entity ID, mutation, accept, publish와 export를 모두
 거부합니다.
 
+차기 [`bim-surface/0.2`](../specs/bim-surface-v0.2.md)는 v0.1을 덮어쓰지 않고
+federation source slot을 합성합니다.
+
+```text
+immutable semantic/reference sources
+  -> bim-federation/0.1
+  -> source-scoped renderer projection
+  -> bim-surface/0.2
+     - per-source visibility/query/selection
+     - reference-anchor/0.1 receipt
+     - transferred/borrowed resource cleanup
+  -> consumer-owned Workspace/authoring bridge
+```
+
+source role은 caller-provided display metadata이며 capability나 authority가
+아닙니다. surface는 source-local point·normal을 반환할 수 있지만 이를
+Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부착하지
+않습니다. actual package와 public release는 Spatial consumer evidence 전까지
+held입니다.
+
 ## Viewer Core와 3D presentation
 
 공용 Viewer Core가 제공해야 하는 최소 계약은 다음입니다.
@@ -399,3 +419,12 @@ Explorer 소유 `bim-surface-v0.1.0` public immutable package의 offline clean
 install, macOS/Linux byte identity와 attestations까지 통과했습니다. 실제 Spatial
 consumer와 standalone Spatial bundle의 exact-pin·composition은 Spatial #8/#16과
 consumer package admission Gate가 소유합니다.
+
+외부 3D 기반 설계의 차기 경계는
+[`bim-spatial-integration/0.2`](../specs/bim-spatial-integration-v0.2.md)가
+소유합니다. IFC 전용 GlobalId handoff를 format-neutral source slot/native
+identity/occurrence path로 확장하고, `reference-anchor/0.1`을 Spatial의 opaque
+registered reference로 전달합니다. Explorer는 authored 3D와 constraint를
+저장하지 않고 Spatial은 native base range를 자신의 revision으로 재라벨링하지
+않습니다. source refresh 뒤 mapping/anchor impact와 human acceptance는 전부
+Spatial consumer Gate입니다.

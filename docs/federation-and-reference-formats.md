@@ -74,6 +74,37 @@ Canonical Entity ID, Workspace ownership, revision reconcile, accept/publish는
 source refresh는 새 immutable source snapshot을 stable slot에 교체할 뿐,
 native file을 patch하거나 이전 identity를 자동 reconcile하지 않습니다.
 
+## 외부 3D 기반 Spatial 설계
+
+외부 shell/site/BIM 모형을 먼저 정하고 그 위에 Spatial-authored 3D를
+합성하는 과업은 federation의 read-only identity를 그대로 사용합니다.
+
+```text
+external IFC/GLB source slot
+  -> exact native revision + sourceToFederation
+  -> source-scoped pick
+  -> source-local reference anchor receipt
+  -> Spatial registered reference + authored 3D/constraint
+```
+
+Explorer의 `sourceRole`은 `semantic-base`, `geometric-reference`,
+`observation-reference`, `consumer-overlay`를 화면에서 구분하는 composition
+metadata일 뿐 ownership이나 semantic authority가 아닙니다. `consumer-overlay`
+또한 Explorer가 작성한 geometry가 아니며 Spatial Revision identity를
+보존합니다.
+
+[`reference-anchor/0.1`](../specs/bim-reference-anchor-v0.1.md)은 source slot,
+native revision/identity, occurrence path, source-local point·normal과 exact
+alignment/projection fingerprint를 묶습니다. triangle/barycentric locator는
+기본적으로 `derived`이며 stable native face ID나 source-precision topology로
+표현하지 않습니다. source, alignment 또는 projection 의미가 바뀌면 anchor는
+stale이고 Spatial consumer가 다시 resolve/reconcile해야 합니다.
+
+차기 [`bim-surface/0.2`](../specs/bim-surface-v0.2.md)는 이 federation과 anchor
+lifecycle을 host-neutral surface로 합성하는 draft입니다. 현재 main의
+federation evidence나 공개 `bim-surface-v0.1.0`이 actual Spatial authoring
+consumer를 검증했다는 뜻은 아닙니다.
+
 ## Coordinate와 precision 경계
 
 same-CRS alignment는 IFC MapConversion의 Float64 matrix에서 federation
