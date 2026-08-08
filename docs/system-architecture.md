@@ -302,8 +302,10 @@ admission할 수 있지만 IFC semantic authority를 부여하지 않습니다.
 LAS/LAZ/E57, 3D Tiles와 RVT/DGN은 capability registry에
 view/query/write/round-trip Gate를 분리해 기록하고 제품 codec/SDK,
 coordinate와 lifecycle evidence 전에는 source admission을 거부합니다.
-cache-only LAS/LAZ probe는 paired LAS 1.2 point record decode까지 통과했지만
-CRS, Worker isolation·cancellation·budget, point renderer와 제품 open이 없어
+cache-only LAS/LAZ probe는 paired LAS 1.2 point record decode에 이어 실제
+Chrome Worker의 bounded WASM heap, checkpoint/forced cancellation, timeout,
+truncated payload 격리와 fresh-Worker recovery까지 통과했습니다. 다만 decoder와
+sample은 qualification-only이고 CRS, point renderer와 제품 open이 없으므로
 source admission에는 영향을 주지 않습니다.
 
 현재 generated IFC4 두 source와 GLB reference source 하나의 synthetic

@@ -34,7 +34,8 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
 - `las-laz/public-loaders-gl-ripple`: `visgl/loaders.gl`의 paired 347,061-byte
   LAS와 53,952-byte LAZ를 cache-only로 받아 LAS 1.2 point-format 3의
   10,201개 record, Float64 좌표·RGB와 압축 해제 후 exact record SHA-256
-  parity를 검증하는 manifest. 샘플 binary는 재배포하지 않음
+  parity 및 actual Chrome Worker lifecycle을 검증하는 manifest. 샘플
+  binary는 재배포하지 않음
 
 어느 performance fixture도 artifact를 추적하지 않습니다. public fixture는
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로
@@ -58,6 +59,7 @@ npm run fetch:e57:public
 npm run qualify:e57:probe
 npm run fetch:las-laz:public
 npm run qualify:las-laz:probe
+npm run qualify:las-laz:worker
 npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode

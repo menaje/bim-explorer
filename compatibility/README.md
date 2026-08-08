@@ -212,10 +212,13 @@ projection을 고정하고 플랫폼별 bounded memory/time 관측을 보존합�
 배포하지 않는 pre-admission 기술 테스트를 기록합니다. E57 공개 샘플의 고정
 digest 다운로드, header, 116개 page CRC와 7,680-point XML metadata 선언에
 더해 paired LAS 1.2/LAZ 10,201-point record를 exact `laz-perf@0.0.6`로 해제해
-raw record SHA-256 parity, Float64 좌표와 RGB를 확인했습니다. 전체 10개 Gate가
-통과했고 E57 decode/product, LAS/LAZ CRS·Worker lifecycle·renderer·제품 open
-7개 Gate는 held입니다. 이 결과는 federation의 `pointCloudCodec`이나 어떤
-point-cloud format admission도 바꾸지 않습니다.
+raw record SHA-256 parity, Float64 좌표와 RGB를 확인했습니다. 별도
+[`Browser Worker evidence`](evidence/las-laz-browser-worker-2026-08-08.json)는
+actual Chrome의 4,063,232-byte peak WASM heap, checkpoint/forced cancellation,
+timeout, truncated payload cleanup과 fresh-Worker recovery를 기록합니다. 전체
+13개 Gate가 통과했고 E57 decode/renderer/product, LAS/LAZ CRS·renderer·제품
+open 6개 Gate는 held입니다. 이 결과는 federation의 `pointCloudCodec`이나
+어떤 point-cloud format admission도 바꾸지 않습니다.
 
 bounded glTF 2.0/GLB reference mesh는
 [`gltf-reference-source.json`](gltf-reference-source.json)이 별도

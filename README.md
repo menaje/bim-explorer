@@ -176,9 +176,11 @@ semantic authority는 승인하지 않습니다. 다음 held format 제안은
 공개 sample은 재배포하지 않고 cache-only pre-admission probe에 사용할 수 있으며,
 현재 E57 envelope·page integrity·metadata profile과, paired LAS 1.2/LAZ의
 10,201개 point-format 3 record·Float64 좌표·RGB 및 압축 해제 후 exact SHA-256
-parity를 검증했습니다. LAS/LAZ의 CRS, Worker cancellation·memory budget,
-point renderer와 제품 file-open은 검증하지 않았으므로 sample probe는 format
-admission이나 제품 지원을 뜻하지 않습니다.
+parity를 검증했습니다. LAZ는 실제 Chrome의 disposable Worker에서도 4,063,232
+byte peak WASM heap, checkpoint 취소, 동기 decode 중 강제 종료, timeout,
+truncated payload 거부와 fresh-Worker 복구를 통과했습니다. CRS, point renderer와
+제품 file-open은 검증하지 않았으므로 sample probe는 format admission이나 제품
+지원을 뜻하지 않습니다.
 
 ## 비목표
 

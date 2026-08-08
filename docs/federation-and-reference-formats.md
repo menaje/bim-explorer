@@ -122,9 +122,11 @@ clean-installed VSIX도 동일한 49개 source-native entity·573,952 unique
 triangles, 16.9MB upload와 editor cleanup을 재현했습니다. physical GPU는
 승인하지 않습니다.
 cache-only LAS/LAZ pre-admission probe는 paired LAS 1.2/LAZ의 10,201개
-point-format 3 record와 압축 해제 parity까지 통과했습니다. 하지만 CRS/datum,
-Worker cancellation·resource budget, point primitive renderer와 Browser/VS Code
-file-open이 없으므로 위 표의 admission은 계속 `held`입니다.
+point-format 3 record와 압축 해제 parity를 통과했습니다. actual Chrome
+qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperative
+취소, 동기 decode 중 강제 종료, timeout, truncated payload 격리와 fresh-Worker
+복구를 통과했습니다. 하지만 CRS/datum, point primitive renderer와 Browser/VS
+Code file-open이 없으므로 위 표의 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

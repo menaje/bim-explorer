@@ -63,3 +63,9 @@ explicit alignment가 보존된 한 projection으로 구성합니다. 실제 Chr
 WebGL2 first frame, cross-source highlight, aggregate range/GPU budget과
 deterministic cleanup을 검증하며 Spatial authority·survey datum·physical
 GPU 또는 production federation을 주장하지 않습니다.
+
+[`las-laz-worker-probe`](las-laz-worker-probe/README.md)는 cache-only 공개
+LAZ를 exact `laz-perf@0.0.6` classic Web Worker에서 해제합니다. 실제 Chrome
+WASM heap budget, checkpoint cooperative cancellation, 동기 decode 중 강제
+종료, timeout, truncated payload 격리와 fresh-Worker 복구를 검증하지만 제품
+file-open, CRS authority, point renderer 또는 format admission은 아닙니다.

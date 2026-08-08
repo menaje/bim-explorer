@@ -7,6 +7,9 @@ import {
 import {
   validateLasLazPublicSampleProbe,
 } from "./qualify-las-laz-public-sample.mjs";
+import {
+  validateLasLazBrowserWorkerQualification,
+} from "./qualify-las-laz-browser-worker.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -19,13 +22,15 @@ const PASSED_GATES = Object.freeze([
   "lasPointDecode",
   "lazPointDecode",
   "lasLazPointRecordParity",
+  "lasLazWorkerLifecycle",
+  "lasLazWorkerMemoryBudget",
+  "lasLazMalformedInputIsolation",
 ]);
 const HELD_GATES = Object.freeze([
   "e57PointDecode",
   "e57Renderer",
   "e57ProductOpen",
   "lasLazCoordinateReference",
-  "lasLazWorkerLifecycle",
   "lasLazRenderer",
   "lasLazProductOpen",
 ]);
@@ -34,9 +39,13 @@ export function validateReferenceFormatProbeCompatibility(
   manifest,
   e57Evidence,
   lasLazEvidence,
+  lasLazWorkerEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateLasLazPublicSampleProbe(lasLazEvidence);
+  validateLasLazBrowserWorkerQualification(
+    lasLazWorkerEvidence,
+  );
   if (
     manifest?.schema !==
       "bim-explorer-reference-format-probes-compatibility/1" ||
@@ -47,7 +56,10 @@ export function validateReferenceFormatProbeCompatibility(
         "e57-public-sample-probe-2026-08-08.json" ||
     manifest.evidence?.lasLazPublicSample !==
       "compatibility/evidence/" +
-        "las-laz-public-sample-probe-2026-08-08.json"
+        "las-laz-public-sample-probe-2026-08-08.json" ||
+    manifest.evidence?.lasLazBrowserWorker !==
+      "compatibility/evidence/" +
+        "las-laz-browser-worker-2026-08-08.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -95,7 +107,12 @@ export function validateReferenceFormatProbeCompatibility(
 }
 
 async function main() {
-  const [manifest, e57Evidence, lasLazEvidence] = await Promise.all([
+  const [
+    manifest,
+    e57Evidence,
+    lasLazEvidence,
+    lasLazWorkerEvidence,
+  ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
     readFile(
@@ -108,12 +125,18 @@ async function main() {
         "las-laz-public-sample-probe-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "las-laz-browser-worker-2026-08-08.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
       manifest,
       e57Evidence,
       lasLazEvidence,
+      lasLazWorkerEvidence,
     ),
   ));
 }

@@ -9,6 +9,9 @@
 - download a paired public LAS 1.2/LAZ fixture into an ignored cache and prove
   exact 10,201-point record parity, Float64 coordinates and RGB with a pinned
   qualification-only `laz-perf@0.0.6` decoder;
+- isolate that LAZ decoder in an actual Chrome Worker with bounded WASM heap,
+  checkpoint and forced in-call cancellation, timeout, malformed payload
+  rejection and fresh-Worker recovery without opening product support;
 - add an experimental multi-IFC federation contract with source-scoped
   identity, visibility, partial/stale state, explicit Float64 alignment,
   incremental refresh, cross-source selection and saved views;

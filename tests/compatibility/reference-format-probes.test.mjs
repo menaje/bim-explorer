@@ -6,7 +6,12 @@ import {
   validateReferenceFormatProbeCompatibility,
 } from "../../scripts/check-reference-format-probes-compatibility.mjs";
 
-const [manifest, e57Evidence, lasLazEvidence] = await Promise.all([
+const [
+  manifest,
+  e57Evidence,
+  lasLazEvidence,
+  lasLazWorkerEvidence,
+] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
     "utf8",
@@ -21,6 +26,11 @@ const [manifest, e57Evidence, lasLazEvidence] = await Promise.all([
       "las-laz-public-sample-probe-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "las-laz-browser-worker-2026-08-08.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
@@ -29,11 +39,12 @@ test("reference sample probes remain separate from format admission", () => {
       manifest,
       e57Evidence,
       lasLazEvidence,
+      lasLazWorkerEvidence,
     ),
     {
       status: "pre-admission",
-      passedGates: 10,
-      heldGates: 7,
+      passedGates: 13,
+      heldGates: 6,
       sampleFormats: 3,
     },
   );
@@ -47,6 +58,7 @@ test("an E57 sample probe cannot claim point decode", () => {
       overclaim,
       e57Evidence,
       lasLazEvidence,
+      lasLazWorkerEvidence,
     ),
     /must be held/u,
   );
@@ -60,6 +72,7 @@ test("a LAS/LAZ point probe cannot claim product open", () => {
       overclaim,
       e57Evidence,
       lasLazEvidence,
+      lasLazWorkerEvidence,
     ),
     /must be held/u,
   );

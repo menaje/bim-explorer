@@ -127,8 +127,14 @@ point decode와 renderer admission은 테스트 결과에 포함하지 않습니
 `las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest
 cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Float64
 좌표·RGB와 LAZ 해제 후 LAS raw record SHA-256 parity를 확인합니다. exact
-`laz-perf` WASM allocation은 회수하지만 CRS, Browser Worker lifecycle,
-point renderer와 제품 admission은 테스트 결과에 포함하지 않습니다.
+`laz-perf` WASM allocation도 회수합니다.
+
+`las-laz-browser-worker` test는 같은 cache-only LAZ를 actual Chrome의
+disposable classic Worker에서 해제해 input/output와 WASM heap budget,
+checkpoint cooperative cancellation, 동기 decode 중 강제 종료, timeout,
+truncated payload cleanup과 fresh-Worker recovery를 검증합니다. 강제 종료의
+explicit cleanup, complete Browser RSS, CRS, point renderer와 제품 admission은
+주장하지 않습니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

@@ -1,0 +1,435 @@
+{
+  "schema": "bim-explorer-las-laz-browser-worker-qualification/1",
+  "status": "passed-pre-admission-worker-lifecycle",
+  "asOf": "2026-08-08",
+  "fixture": {
+    "fixtureId": "loaders-gl-ripple-las-laz",
+    "byteLength": 53952,
+    "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "acquisition": {
+    "schema": "bim-explorer-public-las-laz-acquisition/1",
+    "fixtureId": "loaders-gl-ripple-las-laz",
+    "entries": {
+      "las": {
+        "byteLength": 347061,
+        "sha256": "dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+        "cacheHit": true
+      },
+      "laz": {
+        "byteLength": 53952,
+        "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+        "cacheHit": true
+      }
+    },
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "decoder": {
+    "id": "laz-perf",
+    "version": "0.0.6",
+    "license": "Apache-2.0",
+    "backend": "browser-wasm-worker-qualification",
+    "role": "qualification-only-dev-dependency",
+    "productBundled": false
+  },
+  "environment": {
+    "browser": "Google Chrome 151.0.7922.108",
+    "platform": "darwin-arm64",
+    "headless": true,
+    "worker": "classic Web Worker",
+    "wasm": "actual Browser WebAssembly API",
+    "csp": "loopback-only unsafe-eval for pinned Emscripten glue",
+    "physicalGpuClaimed": false
+  },
+  "budget": {
+    "maxInitializationMs": 5000,
+    "maxDecodeMs": 5000,
+    "maxTotalMs": 8000,
+    "maxWallClockMs": 10000,
+    "maxWasmHeapCapacityBytes": 67108864,
+    "timeoutMs": 10000,
+    "cancellationGraceMs": 250,
+    "inCallCancellationGraceMs": 25,
+    "stallTimeoutMs": 500
+  },
+  "qualification": {
+    "inCallDecodePasses": 256,
+    "malformedMutation": "truncate-128-trailing-bytes",
+    "productRuntime": false
+  },
+  "success": {
+    "first": {
+      "report": {
+        "schema": "bim-explorer-laz-worker-result/0.1",
+        "requestId": "19dad5c9-b924-42be-b77c-4280316be3cd",
+        "status": "passed",
+        "decoder": {
+          "id": "laz-perf",
+          "version": "0.0.6",
+          "backend": "browser-wasm-worker-qualification",
+          "license": "Apache-2.0"
+        },
+        "source": {
+          "id": "first-success",
+          "format": "laz",
+          "byteLength": 53952,
+          "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034"
+        },
+        "header": {
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "pointRecordLength": 34,
+          "pointRecords": 10201
+        },
+        "profile": {
+          "pointRecords": 10201,
+          "decodedBounds": {
+            "min": [
+              -5,
+              -5,
+              -0.6664100289344788
+            ],
+            "max": [
+              5,
+              5,
+              1.100000023388559
+            ]
+          },
+          "firstPosition": [
+            -5,
+            -5,
+            -0.3533200030526521
+          ],
+          "lastPosition": [
+            5,
+            5,
+            -0.3533200030526521
+          ],
+          "intensityRange": [
+            0,
+            0
+          ],
+          "classifications": [
+            0
+          ],
+          "colorRange": {
+            "min": [
+              0,
+              17408,
+              0
+            ],
+            "max": [
+              65280,
+              50944,
+              16128
+            ]
+          },
+          "firstColor": [
+            2560,
+            30464,
+            14080
+          ],
+          "lastColor": [
+            2560,
+            30464,
+            14080
+          ],
+          "pointRecordSha256": "31124633910e8b01c3cbd7d159c85b7140b0ed20438fee70f9570ad2420c026e"
+        },
+        "performance": {
+          "initializationMs": 3.399999998509884,
+          "decodeMs": 11.5,
+          "totalMs": 15.800000004470348
+        },
+        "resources": {
+          "inputBytes": 53952,
+          "decodedPointBytes": 346834,
+          "wasmHeapCapacityBytes": {
+            "afterInitialization": 262144,
+            "afterDecode": 4063232,
+            "peakObserved": 4063232
+          }
+        },
+        "cleanup": {
+          "decoderReleased": true,
+          "wasmAllocationsReleased": true,
+          "sourceBufferCleared": true,
+          "moduleRetainedUntilWorkerTermination": true
+        },
+        "diagnostics": []
+      },
+      "receipt": {
+        "outcome": "completed",
+        "cancelled": false,
+        "cooperativeCancellation": false,
+        "timedOut": false,
+        "lastPhase": "decode-complete",
+        "workerTerminationRequested": true,
+        "explicitCleanup": true,
+        "sourceTransferred": true,
+        "wallClockMs": 149.69999999552965,
+        "cleanup": {
+          "decoderReleased": true,
+          "wasmAllocationsReleased": true,
+          "sourceBufferCleared": true,
+          "moduleRetainedUntilWorkerTermination": true
+        }
+      }
+    },
+    "recovery": {
+      "report": {
+        "schema": "bim-explorer-laz-worker-result/0.1",
+        "requestId": "7969b7d0-5830-4bb1-9518-36c0df916c42",
+        "status": "passed",
+        "decoder": {
+          "id": "laz-perf",
+          "version": "0.0.6",
+          "backend": "browser-wasm-worker-qualification",
+          "license": "Apache-2.0"
+        },
+        "source": {
+          "id": "fresh-recovery",
+          "format": "laz",
+          "byteLength": 53952,
+          "sha256": "64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034"
+        },
+        "header": {
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "pointRecordLength": 34,
+          "pointRecords": 10201
+        },
+        "profile": {
+          "pointRecords": 10201,
+          "decodedBounds": {
+            "min": [
+              -5,
+              -5,
+              -0.6664100289344788
+            ],
+            "max": [
+              5,
+              5,
+              1.100000023388559
+            ]
+          },
+          "firstPosition": [
+            -5,
+            -5,
+            -0.3533200030526521
+          ],
+          "lastPosition": [
+            5,
+            5,
+            -0.3533200030526521
+          ],
+          "intensityRange": [
+            0,
+            0
+          ],
+          "classifications": [
+            0
+          ],
+          "colorRange": {
+            "min": [
+              0,
+              17408,
+              0
+            ],
+            "max": [
+              65280,
+              50944,
+              16128
+            ]
+          },
+          "firstColor": [
+            2560,
+            30464,
+            14080
+          ],
+          "lastColor": [
+            2560,
+            30464,
+            14080
+          ],
+          "pointRecordSha256": "31124633910e8b01c3cbd7d159c85b7140b0ed20438fee70f9570ad2420c026e"
+        },
+        "performance": {
+          "initializationMs": 2.2999999970197678,
+          "decodeMs": 8,
+          "totalMs": 10.799999997019768
+        },
+        "resources": {
+          "inputBytes": 53952,
+          "decodedPointBytes": 346834,
+          "wasmHeapCapacityBytes": {
+            "afterInitialization": 262144,
+            "afterDecode": 4063232,
+            "peakObserved": 4063232
+          }
+        },
+        "cleanup": {
+          "decoderReleased": true,
+          "wasmAllocationsReleased": true,
+          "sourceBufferCleared": true,
+          "moduleRetainedUntilWorkerTermination": true
+        },
+        "diagnostics": []
+      },
+      "receipt": {
+        "outcome": "completed",
+        "cancelled": false,
+        "cooperativeCancellation": false,
+        "timedOut": false,
+        "lastPhase": "decode-complete",
+        "workerTerminationRequested": true,
+        "explicitCleanup": true,
+        "sourceTransferred": true,
+        "wallClockMs": 15.600000001490116,
+        "cleanup": {
+          "decoderReleased": true,
+          "wasmAllocationsReleased": true,
+          "sourceBufferCleared": true,
+          "moduleRetainedUntilWorkerTermination": true
+        }
+      }
+    }
+  },
+  "lifecycle": {
+    "cooperative": {
+      "outcome": "cancelled-cooperative",
+      "cancelled": true,
+      "cooperativeCancellation": true,
+      "timedOut": false,
+      "lastPhase": "decoder-initialized",
+      "workerTerminationRequested": true,
+      "explicitCleanup": true,
+      "sourceTransferred": true,
+      "wallClockMs": 8.899999998509884,
+      "cancellationWaitMs": 0.6000000014901161,
+      "cleanup": {
+        "decoderReleased": true,
+        "wasmAllocationsReleased": true,
+        "sourceBufferCleared": true,
+        "moduleRetainedUntilWorkerTermination": true
+      }
+    },
+    "forcedInCall": {
+      "outcome": "cancelled-forced",
+      "cancelled": true,
+      "cooperativeCancellation": false,
+      "timedOut": false,
+      "lastPhase": "decode-call-starting",
+      "workerTerminationRequested": true,
+      "explicitCleanup": false,
+      "sourceTransferred": true,
+      "wallClockMs": 34,
+      "cancellationWaitMs": 26.700000002980232
+    },
+    "timeout": {
+      "outcome": "timed-out",
+      "cancelled": false,
+      "cooperativeCancellation": false,
+      "timedOut": true,
+      "lastPhase": "decoder-initialized",
+      "workerTerminationRequested": true,
+      "explicitCleanup": false,
+      "sourceTransferred": true,
+      "wallClockMs": 502.5
+    },
+    "malformed": {
+      "outcome": "input-rejected",
+      "cancelled": false,
+      "cooperativeCancellation": false,
+      "timedOut": false,
+      "lastPhase": "decode-call-starting",
+      "workerTerminationRequested": true,
+      "explicitCleanup": true,
+      "sourceTransferred": true,
+      "wallClockMs": 9.299999997019768,
+      "cleanup": {
+        "decoderReleased": true,
+        "wasmAllocationsReleased": true,
+        "sourceBufferCleared": true,
+        "moduleRetainedUntilWorkerTermination": true
+      },
+      "rejection": {
+        "code": "BROWSER_LAZ_INPUT_REJECTED",
+        "phase": "point-decode",
+        "source": {
+          "id": "truncated-payload",
+          "format": "laz",
+          "byteLength": 53824,
+          "sha256": "c7d6ca201b7abcf469c90c7f69fb73a1e0f0764996c91e3838dbc59c24efa32c"
+        }
+      }
+    }
+  },
+  "network": {
+    "externalOrigins": [],
+    "runtimeErrors": [],
+    "requestCount": 16,
+    "fixtureRequests": 6,
+    "fixtureBytes": 323584
+  },
+  "cleanup": {
+    "successfulAllocationsReleased": true,
+    "cooperativeAllocationsReleased": true,
+    "malformedAllocationsReleased": true,
+    "forcedTerminationDoesNotClaimExplicitCleanup": true,
+    "timeoutTerminationDoesNotClaimExplicitCleanup": true,
+    "serverBuffersCleared": true
+  },
+  "assertions": {
+    "actualBrowserWorker": true,
+    "pinnedCacheOnlyFixture": true,
+    "exactDecoderArtifact": true,
+    "boundedInputTransfer": true,
+    "boundedDecodedOutput": true,
+    "wasmHeapBudget": true,
+    "cooperativeCheckpointCancellation": true,
+    "forcedInCallTermination": true,
+    "forcedCleanupNotOverclaimed": true,
+    "boundedTimeoutTermination": true,
+    "malformedPayloadRejected": true,
+    "malformedExplicitCleanup": true,
+    "freshWorkerRecovery": true,
+    "deterministicSuccessfulCleanup": true,
+    "localOnly": true,
+    "noRuntimeErrors": true,
+    "serverBuffersCleared": true,
+    "noProductAdmission": true,
+    "pathFreeEvidence": true
+  },
+  "decision": {
+    "workerLifecycle": "passed",
+    "malformedInputIsolation": "passed",
+    "memoryBudget": "passed",
+    "coordinateReference": "held",
+    "pointRenderer": "held",
+    "browserProductOpen": "held",
+    "vscodeProductOpen": "held",
+    "formatAdmission": false,
+    "pointCloudCodec": "held",
+    "productSupport": false
+  },
+  "limitations": [
+    "the probe covers one cache-only LAS 1.2 point-format 3 LAZ sample",
+    "cooperative cancellation is available only at protocol checkpoints",
+    "synchronous laz-perf work requires Worker termination for in-call cancellation",
+    "forced termination cannot run or attest explicit decoder cleanup",
+    "the memory Gate observes WASM heap capacity and bounded buffers, not complete browser process RSS",
+    "the malformed case truncates 128 trailing compressed bytes and is not an exhaustive corpus",
+    "pinned Emscripten glue requires unsafe-eval only on this loopback qualification CSP",
+    "the sample has no qualified CRS or surveyed datum authority",
+    "no point renderer or Browser/VS Code product file-open is included",
+    "laz-perf and the sample are not bundled into a product or release"
+  ]
+}
