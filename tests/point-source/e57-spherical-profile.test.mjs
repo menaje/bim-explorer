@@ -23,6 +23,11 @@ test("E57 spherical coordinates match the independent reference", async () => {
     "25d3abf28dbf71fce25f55d524fcb81a" +
       "cdbc75b8a5d5ef5c47a268a3a82b6af6",
   );
+  assert.equal(
+    report.pointSource.pointRangeSha256,
+    "b0a0c2cd5cb5f3a051d208332824318e" +
+      "7561e1098ef24a4dd718e460b3fd303f",
+  );
   assert.deepEqual(report.pointSource.ignoredFields, ["intensity"]);
 });
 

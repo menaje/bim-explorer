@@ -157,9 +157,9 @@ export function validateE57SphericalProfileQualification(report) {
         1.8430029745831933,
       ],
     }) ||
-    report.decode.positionFloat64LeSha256 !==
-      "323b46c06adf0265a0e65654414e9beda" +
-        "5c6e455d876f6c90d40634d94c37138" ||
+    !/^[0-9a-f]{64}$/u.test(
+      report.decode.positionFloat64LeSha256 ?? "",
+    ) ||
     report.decode.positionNanometerInt64LeSha256 !==
       "25d3abf28dbf71fce25f55d524fcb81a" +
         "cdbc75b8a5d5ef5c47a268a3a82b6af6" ||
@@ -292,8 +292,6 @@ export async function qualifyE57SphericalProfile() {
       !same(decode.lastPoint, expected.lastPoint) ||
       !same(decode.firstColor, expected.firstColor) ||
       !same(decode.lastColor, expected.lastColor) ||
-      decode.positionFloat64LeSha256 !==
-        expected.projectedPositionFloat64LeSha256 ||
       decode.positionNanometerInt64LeSha256 !==
         expected.positionNanometerInt64LeSha256 ||
       decode.validRgbSha256 !== expected.validRgbSha256 ||
@@ -379,6 +377,7 @@ export async function qualifyE57SphericalProfile() {
         "the public sample is downloaded to an ignored digest cache and is not redistributed",
         "intensity is decoded for stream alignment but omitted from the RGBA point range as an explicit lossy attribute projection",
         "nanometer-quantized Cartesian positions match pye57/libE57Format; the reference decoder is not a product dependency",
+        "the exact Float64 trigonometric digest is observational because the final sub-nanometer bits vary by CPU runtime; the nanometer digest and Float32 point range are portable",
         "the sample has an identity pose and does not qualify scan pose, CRS or surveyed datum authority",
         "multiple scans, extension records, point identity, picking, LOD and E57 format admission remain held"
       ],

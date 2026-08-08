@@ -267,6 +267,7 @@
     "the public sample is downloaded to an ignored digest cache and is not redistributed",
     "intensity is decoded for stream alignment but omitted from the RGBA point range as an explicit lossy attribute projection",
     "nanometer-quantized Cartesian positions match pye57/libE57Format; the reference decoder is not a product dependency",
+    "the exact Float64 trigonometric digest is observational because the final sub-nanometer bits vary by CPU runtime; the nanometer digest and Float32 point range are portable",
     "the sample has an identity pose and does not qualify scan pose, CRS or surveyed datum authority",
     "multiple scans, extension records, point identity, picking, LOD and E57 format admission remain held"
   ]
