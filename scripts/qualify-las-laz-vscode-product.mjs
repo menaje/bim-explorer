@@ -75,6 +75,15 @@ function same(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function exactPointModel(value, points, chunks, levels) {
+  return same(value, { points, ranges: 1 }) || same(value, {
+    points,
+    ranges: 1,
+    chunks,
+    levels,
+  });
+}
+
 function allTrue(value) {
   return (
     value !== null &&
@@ -117,7 +126,7 @@ function exactObservation(value, format) {
       );
   return (
     value?.hostKind === "vscode-webview" &&
-    same(value.model, { points: 10_201, ranges: 1 }) &&
+    exactPointModel(value.model, 10_201, 1, 1) &&
     value.resources?.sourceBytes === expected.bytes &&
     value.resources.decodedPointBytes === 346_834 &&
     value.resources.pointRangeBytes === 163_264 &&

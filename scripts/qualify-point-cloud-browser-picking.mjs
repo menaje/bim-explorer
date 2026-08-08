@@ -22,9 +22,21 @@ const RANGE_SHA = Object.freeze({
     "85b40fa7019b2a6dad448e373381e697",
 });
 const EXPECTED = Object.freeze({
-  las: Object.freeze({ points: 10_201, sourceBytes: 347_061 }),
-  laz: Object.freeze({ points: 10_201, sourceBytes: 53_952 }),
+  las: Object.freeze({
+    chunks: 1,
+    levels: 1,
+    points: 10_201,
+    sourceBytes: 347_061,
+  }),
+  laz: Object.freeze({
+    chunks: 1,
+    levels: 1,
+    points: 10_201,
+    sourceBytes: 53_952,
+  }),
   e57: Object.freeze({
+    chunks: 51,
+    levels: 3,
     points: 1_213_990,
     sourceBytes: 22_146_048,
   }),
@@ -69,6 +81,18 @@ function same(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function exactPointModel(value, expected) {
+  return same(value, {
+    points: expected.points,
+    ranges: 1,
+  }) || same(value, {
+    points: expected.points,
+    ranges: 1,
+    chunks: expected.chunks,
+    levels: expected.levels,
+  });
+}
+
 function allTrue(value) {
   return (
     value !== null &&
@@ -94,10 +118,7 @@ function exactSurface(surface, format) {
     surface.fixture.sourceBytes === expected.sourceBytes &&
     surface.fixture.provenance?.bundled === false &&
     surface.fixture.provenance.sampleRedistributed === false &&
-    same(surface.observation?.model, {
-      points: expected.points,
-      ranges: 1,
-    }) &&
+    exactPointModel(surface.observation?.model, expected) &&
     surface.observation.pointCloud?.rangeSha256 ===
       RANGE_SHA[format] &&
     surface.observation.pointCloud.coordinateReferenceStatus ===

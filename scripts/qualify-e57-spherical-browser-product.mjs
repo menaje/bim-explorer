@@ -52,6 +52,15 @@ function same(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function exactPointModel(value, points, chunks, levels) {
+  return same(value, { points, ranges: 1 }) || same(value, {
+    points,
+    ranges: 1,
+    chunks,
+    levels,
+  });
+}
+
 function allTrue(value) {
   return (
     value !== null &&
@@ -89,10 +98,12 @@ function exactSurface(surface) {
       "Copyright 2008 Carnahan-Proctor and Cross, Inc." &&
     surface.fixture.provenance.bundled === false &&
     surface.fixture.provenance.sampleRedistributed === false &&
-    same(surface.observation?.model, {
-      points: 155_201,
-      ranges: 1,
-    }) &&
+    exactPointModel(
+      surface.observation?.model,
+      155_201,
+      8,
+      2,
+    ) &&
     surface.observation.resources?.sourceBytes === 5_168_128 &&
     surface.observation.resources.decodedPointBytes === 10_745_370 &&
     surface.observation.resources.pointRangeBytes === 2_483_264 &&
