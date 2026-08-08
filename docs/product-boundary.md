@@ -6,7 +6,7 @@ authority:
   - product-responsibility
   - source-identity-boundary
   - standalone-product-invariants
-last_reviewed: 2026-08-08
+last_reviewed: 2026-08-09
 ---
 
 # 제품과 저장소 경계
@@ -17,8 +17,9 @@ BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조
 속성과 관계를 탐색하는 독립 제품입니다. 첫 semantic vertical slice는
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
 추가했습니다. bounded E57/LAS/LAZ는 Browser와 VS Code에서 열 수 있는
-experimental point reference이며 CRS, point identity와 format admission은
-아직 보류합니다.
+experimental point reference입니다. exact source revision과 range digest 안의
+파생 point selection은 통과했지만 CRS/surveyed datum, source-declared point
+semantics·LOD와 format admission은 아직 보류합니다.
 
 제품 성공의 최소 기준은 다음과 같습니다.
 
@@ -38,7 +39,7 @@ experimental point reference이며 CRS, point identity와 format admission은
 | raw source | DWG | IFC + qualified mesh reference + experimental E57/LAS/LAZ | registered multi-source |
 | 기본 표현 | 2D drawing review | generic 3D/BIM exploration | 2D/3D revision review |
 | source adapter | DWG Scene Cache | semantic/reference source snapshot | native change/reconcile adapter |
-| source-local identity | DWG handle | IFC GlobalId·Express ID 또는 reference native ID | native reference mapping |
+| source-local identity | DWG handle | IFC GlobalId·Express ID, reference native ID 또는 revision/range-scoped derived point ID | native reference mapping |
 | Canonical Entity ID | 없음 | 없음 | authority |
 | Agent change | 없음 | 없음 | query/proposal/build/check |
 | revision/diff | 없음 | source snapshot만 | authority |
@@ -54,11 +55,11 @@ message를 기본 integration으로 사용하지 않습니다. prerelease 소비
 ```text
 source bytes
 -> source fingerprint
--> native identity
+-> source-local or derived identity
    - IFC GlobalId: profile이 허용하는 durable source identity
    - Express ID: exact source snapshot 안에서만 유효
    - glTF/GLB native ID: exact reference snapshot 안에서만 유효
-   - E57/LAS/LAZ: 현재 range identity만 있고 개별 point identity는 없음
+   - E57/LAS/LAZ `point:n`: exact source revision과 range digest 안의 파생 range-order identity
 -> Render/Pick ID: exact snapshot/layer에 묶인 projection
 -> optional Spatial mapping
    -> Workspace + Spatial Revision + Canonical Entity ID
@@ -68,6 +69,9 @@ BIM Explorer는 source fingerprint에서 Render/Pick ID까지 소유합니다.
 GlobalId가 존재하더라도 source fingerprint 없이 전역 identity로
 사용하지 않습니다. Express ID는 rewrite·reopen 뒤 안정적이라고 가정하지
 않습니다.
+파생 `point:n`도 다른 revision/range와 합치거나 source-declared record ID로
+해석하지 않습니다. E57 invalid record가 제거된 경우에는 원본 record index를
+보존하지 않습니다.
 
 Coni Spatial만 native identity를 Canonical Entity ID에 연결합니다. 이
 mapping은 Workspace와 Spatial Revision에 묶이며 Explorer cache나 Viewer

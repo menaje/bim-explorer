@@ -378,7 +378,45 @@ async function qualifyPointSource({
     sourceBufferCleared: true,
     workerTerminatedAfterTransfer: true,
   });
-  const serialized = JSON.stringify(ready);
+  assert.equal(
+    await vscode.commands.executeCommand(
+      "bimExplorer.pickVisiblePoint",
+    ),
+    true,
+  );
+  const selected = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    return report?.status === "ready" &&
+      report.pointSelection?.status === "hit"
+      ? report
+      : null;
+  }, `${format.toUpperCase()} point selection`);
+  assert.equal(
+    selected.pointSelection.schema,
+    "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+  );
+  assert.equal(
+    selected.pointSelection.identity.authority,
+    "derived-point-range-order",
+  );
+  assert.match(
+    selected.pointSelection.identity.nativeId,
+    /^point:\d+$/u,
+  );
+  assert.equal(
+    selected.pointSelection.identity.rangeSha256,
+    ready.pointCloud.rangeSha256,
+  );
+  assert.equal(selected.pointSelection.backend.actualGpu, true);
+  assert.equal(
+    selected.pointSelection.backend.temporaryReleased,
+    true,
+  );
+  assert.equal(
+    selected.pointSelection.worldPosition.every(Number.isFinite),
+    true,
+  );
+  const serialized = JSON.stringify(selected);
   assert.equal(serialized.includes(sourcePath), false);
   assert.equal(
     serialized.includes(path.basename(sourcePath)),
@@ -423,11 +461,13 @@ async function qualifyPointSource({
     },
     observation: {
       hostKind: ready.hostKind,
+      source: ready.source,
       model: ready.model,
       performance: ready.performance,
       resources: ready.resources,
       renderer: ready.renderer,
       pointCloud: ready.pointCloud,
+      pointSelection: selected.pointSelection,
       productLifecycle: ready.productLifecycle,
       lifecycle: {
         opened: ready.status,
@@ -442,6 +482,7 @@ async function qualifyPointSource({
       noCoordinateOrSemanticAuthority: true,
       vscodeChromiumWebGl2: true,
       boundedPointRenderer: true,
+      sourceScopedPointIdentityAndPicking: true,
       pointWorkerAndCpuCleanup: true,
       pathFreeHostBridge: true,
       editorCloseObserved: disposed.status === "disposed",
@@ -516,6 +557,7 @@ async function run() {
       "bimExplorer.cancel",
       "bimExplorer.retry",
       "bimExplorer.showDiagnostics",
+      "bimExplorer.pickVisiblePoint",
     ]) {
       assert.ok(commands.includes(command), command);
     }

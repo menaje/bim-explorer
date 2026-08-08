@@ -138,9 +138,9 @@ clean-installed VSIX의 동일 point range·visible projection·cleanup 증거�
 다섯 scan·1,213,990개 record, structured row/column packet alignment, 네
 explicit pose와 한 implicit identity pose의 독립 position/RGB digest parity,
 CRC와 source/per-scan limit fail-closed를 검사합니다. Cartesian과 spherical
-단일-scan 제품 open만 experimental로 승인하며 CRS/surveyed datum,
-multiple-scan 제품 open·extension, point identity/pick, LOD와 format admission은
-계속 거부합니다.
+단일-scan 및 multiple-scan 제품 open은 experimental로 승인하며
+CRS/surveyed datum, extension, source-declared point identity, LOD와 format
+admission은 계속 거부합니다.
 
 `las-laz-public-sample-probe` test는 공개 paired LAS/LAZ를 ignored digest
 cache로만 획득하고 LAS 1.2 header, 10,201개 point-format 3 record의 Float64
@@ -158,14 +158,23 @@ point renderer와 제품 admission을 주장하지 않습니다.
 Float64-origin/relative-Float32/RGBA8 range로 투영하고 range decoder,
 loopback-only delivery·buffer zeroing과 committed actual Chrome WebGL2 evidence를
 검사합니다. 이 test는 단일 `POINTS` draw와 exact CPU/GPU cleanup만 승인하며
-CRS, point identity/pick, LOD와 format admission은 계속
-거부합니다.
+단독으로는 CRS, point identity/pick, LOD와 format admission을 승인하지
+않습니다.
 
 `las-laz-point-source`, `point-source-client`와 `las-laz-browser-product`
 test는 bounded header/source projection, one-shot Worker transfer·termination과
 실제 BIM Explorer Browser local file input의 LAS/LAZ exact range·visual parity를
 검사합니다. Browser, staged VS Code와 clean-installed VSIX open만 experimental로
-승인하며 CRS, point identity/pick, LOD와 format admission은 계속 거부합니다.
+승인하며 이 open evidence만으로 CRS, point identity/pick, LOD와 format
+admission을 승인하지 않습니다.
+
+`point-cloud-browser-picking`과 `point-cloud-vscode-picking` test는 cache-only
+LAS/LAZ 및 five-scan E57의 actual Browser, staged VS Code와 clean-installed
+VSIX evidence를 검사합니다. `point:n`이 exact source revision/range SHA-256에
+묶이고, 32-bit index가 17-bit ceiling을 넘는 대형 E57 point도 선택되며,
+world coordinate 12-byte GPU readback과 transient target cleanup이 재현되어야
+합니다. source-declared identity, CRS/surveyed datum, LOD와 format admission은
+계속 거부합니다.
 
 `renderer` test는 geometry range의 독립 decode, primitive slice/count
 conformance, initial-range budget, shared geometry instance, Render/Pick

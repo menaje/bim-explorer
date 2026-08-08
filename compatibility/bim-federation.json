@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-federation-compatibility/1",
   "status": "experimental",
-  "asOf": "2026-08-08",
+  "asOf": "2026-08-09",
   "contract": {
     "federation": "bim-explorer-federation/0.1",
     "source": "bim-explorer-federation-source/0.1",
@@ -51,7 +51,7 @@
     "actual Coni Spatial consumer composition remains consumer-owned",
     "two-format user demand must be evidenced without publishing customer models",
     "surveyed control points and datum transformation need qualified geospatial evidence",
-    "bounded LAS/LAZ and E57 product opens are qualified, but point-cloud federation admission still requires CRS, point identity/picking and chunk/LOD evidence",
+    "bounded LAS/LAZ and E57 product opens plus product-local derived point picking are qualified, but point-cloud federation admission still requires surveyed CRS/datum and chunk/LOD evidence",
     "3D Tiles and GIS context require engine, network and precision qualification",
     "RVT and DGN require SDK rights, platform packaging and reopen qualification"
   ],
@@ -60,6 +60,7 @@
     "the product-scale composite and macOS/Linux matrix use two generated IFC sources and A Beautiful Game reference geometry simultaneously; they are not customer-model or actual Spatial consumer evidence",
     "the contract performs no datum transformation and accepts only exact same-CRS or explicit provenance",
     "federation admission remains independent from product support; bounded Browser and VS Code file-open is qualified by separate product evidence",
+    "derived point selection is scoped to an exact source revision and range digest and does not establish point-cloud federation identity or admission",
     "point-cloud, GIS and native SDK format entries remain held capability records",
     "source identity, GlobalId and ownership remain scoped to each federation source slot",
     "the foundation grants no native mutation, Spatial acceptance, publish or Canonical Entity authority"

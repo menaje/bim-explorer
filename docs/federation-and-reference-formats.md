@@ -6,7 +6,7 @@ authority:
   - coordinate-alignment-boundary
   - reference-format-admission
   - federation-refresh-lifecycle
-last_reviewed: 2026-08-08
+last_reviewed: 2026-08-09
 ---
 
 # Federation과 reference format 경계
@@ -133,8 +133,10 @@ LAS/LAZ가 동일한 point range와 visible frame을 만들고 source/Worker/CPU
 cleanup을 통과했습니다. staged VS Code Custom Editor와 빈 profile에
 clean-installed VSIX도 같은 point range, visible frame, path-free bridge와
 cleanup을 재현했습니다. VSIX는 exact `laz-perf@0.0.6` WASM과 strict-CSP용
-generated glue를 포함하지만 public sample은 포함하지 않습니다. CRS/datum,
-point identity/picking·LOD가 없으므로 위 표의 admission은 계속 `held`입니다.
+generated glue를 포함하지만 public sample은 포함하지 않습니다. 별도 actual
+Browser·staged VS Code·clean VSIX Gate는 source revision/range digest scoped
+derived `point:n` pick을 통과했습니다. CRS/datum, source-declared semantics와
+LOD가 없으므로 위 표의 admission은 계속 `held`입니다.
 cache-only E57 probe도 116개 page CRC 검증 뒤 단일 Cartesian XYZ/RGB
 default-BitPack scan의 7,680개 record를 해제해 122,880-byte point payload와
 exact buffer cleanup을 통과했습니다. 후속 실제 Browser local file input,
@@ -155,8 +157,9 @@ stream을 해제하고 네 explicit pose 및 한 implicit identity pose를 적�
 `pye57/libE57Format` position/RGB digest parity를 통과했습니다. 이 결과는 local
 registration metadata만 검증합니다. 후속 actual Browser, staged VS Code와
 clean-installed VSIX는 같은 1,213,990-point pose-applied projection과 cleanup을
-재현했습니다. CRS/surveyed datum, extension과 point identity/picking·LOD가
-없으므로 E57 admission은 계속 `held`입니다.
+재현했습니다. 이 대형 range의 32-bit derived point pick도 같은 세 제품
+경로에서 통과했습니다. CRS/surveyed datum, extension, source-declared point
+semantics와 LOD가 없으므로 E57 admission은 계속 `held`입니다.
 RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 요구합니다.
 

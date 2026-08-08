@@ -6,7 +6,7 @@ authority:
   - vscode-readonly-custom-editor
   - local-source-worker-lifecycle
   - path-free-host-bridge
-last_reviewed: 2026-08-08
+last_reviewed: 2026-08-09
 ---
 
 # BIM product hosts v0.1
@@ -100,7 +100,8 @@ GLB 및 LAS/LAZ sample은 package에 포함하지 않습니다.
 - public Viewer Core artifact와 cross-repository conformance
 - physical GPU와 cross-platform GPU/memory qualification
 - external glTF resource bundle과 required extension
-- LAS/LAZ CRS/datum, point identity/picking·LOD와 format admission
+- E57/LAS/LAZ CRS/surveyed datum, source-declared point semantics·LOD와
+  format admission; 파생 `point:n` pick은 exact revision/range에만 유효
 - license, signing과 marketplace release
 
 공개 IFC2X3 product-scale open은 통과했지만 engine/profile admission으로

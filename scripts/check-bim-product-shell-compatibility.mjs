@@ -26,6 +26,12 @@ import {
 import {
   validateE57MultipleScanVscodeProductQualification,
 } from "./qualify-e57-multiple-scan-vscode-product.mjs";
+import {
+  validatePointCloudBrowserPickingQualification,
+} from "./qualify-point-cloud-browser-picking.mjs";
+import {
+  validatePointCloudVscodePickingQualification,
+} from "./qualify-point-cloud-vscode-picking.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -67,6 +73,9 @@ const PASSED_GATES = [
   "browserReadonlyE57MultipleScanOpen",
   "vscodeReadonlyE57MultipleScanOpen",
   "cleanVsixE57MultipleScanOpen",
+  "browserPointIdentityPicking",
+  "vscodePointIdentityPicking",
+  "cleanVsixPointIdentityPicking",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
@@ -268,6 +277,8 @@ export function validateBimProductShellCompatibility(
   e57SphericalVscodeProduct,
   e57MultipleScanBrowserProduct,
   e57MultipleScanVscodeProduct,
+  pointCloudBrowserPicking,
+  pointCloudVscodePicking,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -317,10 +328,16 @@ export function validateBimProductShellCompatibility(
   validateE57MultipleScanVscodeProductQualification(
     e57MultipleScanVscodeProduct,
   );
+  validatePointCloudBrowserPickingQualification(
+    pointCloudBrowserPicking,
+  );
+  validatePointCloudVscodePickingQualification(
+    pointCloudVscodePicking,
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
-    manifest.asOf !== "2026-08-08" ||
+    manifest.asOf !== "2026-08-09" ||
     manifest.status !== "experimental" ||
     browser.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
@@ -368,7 +385,9 @@ export function validateBimProductShellCompatibility(
     contracts?.pointSourceWorkerRequest !==
       "bim-explorer-point-source-worker-request/0.1" ||
     contracts?.pointSourceWorkerResponse !==
-      "bim-explorer-point-source-worker-response/0.1"
+      "bim-explorer-point-source-worker-response/0.1" ||
+    contracts?.pointPickReceipt !==
+      "bim-explorer-bounded-point-renderer-pick-receipt/0.1"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -943,6 +962,12 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.vscodeE57MultipleScan !==
       "compatibility/evidence/" +
         "e57-multiple-scan-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.browserPointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-browser-picking-2026-08-09.json" ||
+    manifest.evidence?.vscodePointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-vscode-picking-2026-08-09.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -965,6 +990,13 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimBrowserE57MultipleScanOpen !== true ||
     manifest.policy?.claimVscodeE57MultipleScanOpen !== true ||
     manifest.policy?.claimCleanVsixE57MultipleScanOpen !== true ||
+    manifest.policy?.claimBrowserPointPicking !== true ||
+    manifest.policy?.claimVscodePointPicking !== true ||
+    manifest.policy?.claimCleanVsixPointPicking !== true ||
+    manifest.policy?.pointIdentityAuthority !==
+      "derived-point-range-order" ||
+    manifest.policy?.pointIdentityScope !==
+      "source-revision-and-range-digest" ||
     manifest.policy?.claimE57FormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
@@ -992,6 +1024,8 @@ export function validateBimProductShellCompatibility(
         e57SphericalVscodeProduct,
         e57MultipleScanBrowserProduct,
         e57MultipleScanVscodeProduct,
+        pointCloudBrowserPicking,
+        pointCloudVscodePicking,
         installation,
         manifest,
         vscode,
@@ -1041,6 +1075,8 @@ async function main() {
     e57SphericalVscodeProduct,
     e57MultipleScanBrowserProduct,
     e57MultipleScanVscodeProduct,
+    pointCloudBrowserPicking,
+    pointCloudVscodePicking,
     vscode,
     installation,
   ] = await Promise.all([
@@ -1111,6 +1147,14 @@ async function main() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      path.join(root, manifest.evidence.browserPointPicking),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.vscodePointPicking),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       path.join(root, manifest.evidence.vscodeSynthetic),
       "utf8",
     ).then(JSON.parse),
@@ -1137,6 +1181,8 @@ async function main() {
     e57SphericalVscodeProduct,
     e57MultipleScanBrowserProduct,
     e57MultipleScanVscodeProduct,
+    pointCloudBrowserPicking,
+    pointCloudVscodePicking,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

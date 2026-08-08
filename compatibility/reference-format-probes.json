@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-reference-format-probes-compatibility/1",
   "status": "pre-admission",
-  "asOf": "2026-08-08",
+  "asOf": "2026-08-09",
   "gates": {
     "cacheOnlyPublicFixture": true,
     "pinnedDigestAcquisition": true,
@@ -36,6 +36,8 @@
     "e57Renderer": true,
     "e57BrowserProductOpen": true,
     "e57VscodeProductOpen": true,
+    "browserPointIdentityPicking": true,
+    "vscodePointIdentityPicking": true,
     "e57CoordinateReference": false,
     "e57FormatAdmission": false,
     "lasLazCoordinateReference": false,
@@ -56,7 +58,9 @@
     "lasLazBrowserWorker": "compatibility/evidence/las-laz-browser-worker-2026-08-08.json",
     "lasLazPointRenderer": "compatibility/evidence/las-laz-point-renderer-2026-08-08.json",
     "lasLazBrowserProduct": "compatibility/evidence/las-laz-browser-product-2026-08-08.json",
-    "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json"
+    "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json",
+    "browserPointPicking": "compatibility/evidence/point-cloud-browser-picking-2026-08-09.json",
+    "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json"
   },
   "blockers": [
     "the E57 samples have no qualified CRS or surveyed datum authority; scan poses establish local registration only",
@@ -73,7 +77,7 @@
     "laz-perf is an exact Browser and VSIX product Worker runtime dependency but is not in immutable Community v0.1.0 or its release bundle",
     "the Browser Worker Gate observes WASM heap capacity, not complete browser process RSS",
     "the Browser product opens bounded LAS/LAZ point-format 2 or 3 sources without coordinate authority",
-    "the point renderer has no point identity, picking, semantics or level-of-detail streaming",
+    "the point renderer exposes source-revision-and-range-digest scoped derived range-order identity and picking, not source-declared semantics, original source-record identity or level-of-detail streaming",
     "sample-based testing does not establish user demand, surveyed accuracy or format admission"
   ],
   "policy": {
@@ -91,6 +95,9 @@
     "e57VscodeExperimentalProductOpen": true,
     "e57MultipleScanBrowserExperimentalProductOpen": true,
     "e57MultipleScanVscodeExperimentalProductOpen": true,
+    "derivedPointIdentityPicking": true,
+    "pointIdentityAuthority": "derived-point-range-order",
+    "pointIdentityScope": "source-revision-and-range-digest",
     "formatAdmission": false,
     "productSupport": false
   }

@@ -1,6 +1,6 @@
 {
   "schema": "bim-explorer-product-shell-compatibility/1",
-  "asOf": "2026-08-08",
+  "asOf": "2026-08-09",
   "status": "experimental",
   "contracts": {
     "hostMessage": "bim-explorer-product-host-message/0.1",
@@ -14,7 +14,8 @@
     "e57PointSource": "bim-explorer-e57-point-source/0.1",
     "pointSource": "bim-explorer-las-laz-point-source/0.1",
     "pointSourceWorkerRequest": "bim-explorer-point-source-worker-request/0.1",
-    "pointSourceWorkerResponse": "bim-explorer-point-source-worker-response/0.1"
+    "pointSourceWorkerResponse": "bim-explorer-point-source-worker-response/0.1",
+    "pointPickReceipt": "bim-explorer-bounded-point-renderer-pick-receipt/0.1"
   },
   "fixture": {
     "id": "synthetic-semantic-ifc4",
@@ -149,6 +150,9 @@
     "browserReadonlyE57MultipleScanOpen": true,
     "vscodeReadonlyE57MultipleScanOpen": true,
     "cleanVsixE57MultipleScanOpen": true,
+    "browserPointIdentityPicking": true,
+    "vscodePointIdentityPicking": true,
+    "cleanVsixPointIdentityPicking": true,
     "publicViewerCoreConformance": false,
     "physicalGpuQualification": false,
     "marketplaceRelease": false
@@ -170,7 +174,9 @@
     "browserE57Spherical": "compatibility/evidence/e57-spherical-browser-product-2026-08-08.json",
     "vscodeE57Spherical": "compatibility/evidence/e57-spherical-vscode-product-2026-08-08.json",
     "browserE57MultipleScan": "compatibility/evidence/e57-multiple-scan-browser-product-2026-08-08.json",
-    "vscodeE57MultipleScan": "compatibility/evidence/e57-multiple-scan-vscode-product-2026-08-08.json"
+    "vscodeE57MultipleScan": "compatibility/evidence/e57-multiple-scan-vscode-product-2026-08-08.json",
+    "browserPointPicking": "compatibility/evidence/point-cloud-browser-picking-2026-08-09.json",
+    "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json"
   },
   "blockers": [
     "product entrypoints have not adopted the qualified public Viewer Core consumer",
@@ -200,6 +206,11 @@
     "claimBrowserE57MultipleScanOpen": true,
     "claimVscodeE57MultipleScanOpen": true,
     "claimCleanVsixE57MultipleScanOpen": true,
+    "claimBrowserPointPicking": true,
+    "claimVscodePointPicking": true,
+    "claimCleanVsixPointPicking": true,
+    "pointIdentityAuthority": "derived-point-range-order",
+    "pointIdentityScope": "source-revision-and-range-digest",
     "claimE57FormatAdmission": false,
     "claimPublicViewerCore": false,
     "claimPublicScale": true,

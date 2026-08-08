@@ -16,8 +16,9 @@ range와 `POINTS` renderer로 분기합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
-  회수하며 CRS, point identity/picking·LOD와 BIM semantic authority는
-  제공하지 않습니다.
+  회수합니다. point pick의 `point:n`은 exact source revision과 range digest의
+  파생 순서 identity이며 CRS, surveyed datum, source semantics·LOD 또는 BIM
+  semantic authority를 제공하지 않습니다.
 - timing과 source/geometry/metadata/range budget을 diagnostics로 표시합니다.
 - account, telemetry, 외부 upload를 요구하지 않습니다.
 
@@ -56,3 +57,7 @@ intensity는 display range에서 lossy omitted이며 원본 sample은 cache-only
 cache-only E57을 pose-applied range로 열어 Browser, staged VS Code와
 clean-installed VSIX의 동일 투영 및 cleanup을 검증합니다. pose는 local
 registration으로만 취급합니다.
+`npm run qualify:point-cloud:picking:web`은 cache-only LAS, LAZ와 five-scan
+E57을 actual Chrome에서 열고 32-bit point selection, 선택 좌표 GPU readback과
+transient target/source/Worker/CPU/GPU cleanup을 검증합니다. 샘플은 재배포하거나
+제품에 포함하지 않습니다.

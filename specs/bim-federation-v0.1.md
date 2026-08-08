@@ -195,5 +195,7 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 측량 control point와 datum transformation
 - glTF/GLB external resource bundle와 required extension; bounded 제품
   file-open은 별도 product-shell evidence에서 통과
-- LAS/LAZ CRS·point identity/LOD·VS Code file-open과 admission, E57와 3D Tiles parser/engine
+- point-cloud surveyed CRS/datum, chunk/LOD와 federation admission; 제품의
+  파생 point pick은 federation identity authority가 아님
+- 3D Tiles parser/engine
 - RVT/DGN native SDK bridge와 reopen qualification

@@ -31,8 +31,11 @@ The source has no BIM semantic authority, native write or round-trip
 authority. Coordinates remain `unqualified`: local scan-pose application does
 not infer a CRS, datum, surveyed control or accuracy. Spherical input is
 converted to Cartesian display coordinates. Extension records, images,
-point identity, picking and LOD streaming
-remain outside the product profile. Omitting intensity from the display range
+source-declared point identity and LOD streaming remain outside the product
+profile. The product renderer may derive and pick `point:n` from the exact
+projected range order within one source revision and range digest. This does not
+preserve the original index of filtered invalid records or create E57 semantic
+authority. Omitting intensity from the display range
 is reported as lossy and does not create intensity semantic authority.
 
 Default bounds are 8 MiB source bytes, 500,000 records, 16 MiB decoded point

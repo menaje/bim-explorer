@@ -26,7 +26,7 @@ export function validateGltfProductPlatformCompatibility(
     result.projectionSha256 !==
       "6645aeeaff7e221a0bc14d999ef165bbb1805730" +
         "179337a0d403a7ba3a1d1c77" ||
-    productManifest?.asOf !== "2026-08-08" ||
+    productManifest?.asOf !== "2026-08-09" ||
     productManifest?.gates?.crossPlatformGltfProductOpen !== true ||
     productManifest?.evidence?.gltfProductPlatformMatrix !==
       EVIDENCE_PATH ||

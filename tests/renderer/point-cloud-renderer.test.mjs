@@ -140,8 +140,15 @@ test("headless point renderer accounts for and releases the exact upload", async
     disposed: false,
     mounting: false,
     mounts: 1,
+    picking: false,
+    picks: 0,
     unmounts: 0,
   });
+
+  await assert.rejects(
+    renderer.pick({ x: 0, y: 0 }),
+    { name: "NotSupportedError" },
+  );
 
   const release = await renderer.unmount();
   assert.equal(

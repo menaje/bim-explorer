@@ -213,6 +213,75 @@ function sanitizeReport(value) {
           "maximumDomRows",
         ]),
       };
+  const pointSelection =
+    !pointSource || value.pointSelection == null
+      ? null
+      : {
+          schema: stringOrNull(
+            value.pointSelection?.schema,
+          ),
+          status: stringOrNull(
+            value.pointSelection?.status,
+          ),
+          coordinates: {
+            origin: stringOrNull(
+              value.pointSelection?.coordinates?.origin,
+            ),
+            ...numericRecord(
+              value.pointSelection?.coordinates,
+              ["x", "y"],
+            ),
+          },
+          identity:
+            value.pointSelection?.identity === null
+              ? null
+              : {
+                  authority: stringOrNull(
+                    value.pointSelection?.identity?.authority,
+                  ),
+                  nativeId: stringOrNull(
+                    value.pointSelection?.identity?.nativeId,
+                    /^point:\d+$/u,
+                  ),
+                  pointIndex: numberOrNull(
+                    value.pointSelection?.identity?.pointIndex,
+                  ),
+                  rangeHandleId: stringOrNull(
+                    value.pointSelection?.identity?.rangeHandleId,
+                  ),
+                  rangeSha256: stringOrNull(
+                    value.pointSelection?.identity?.rangeSha256,
+                    /^[0-9a-f]{64}$/u,
+                  ),
+                },
+          worldPosition:
+            value.pointSelection?.worldPosition === null
+              ? null
+              : numericArray(
+                  value.pointSelection?.worldPosition,
+                  3,
+                ),
+          backend: {
+            actualGpu:
+              value.pointSelection?.backend?.actualGpu === true,
+            backendId: stringOrNull(
+              value.pointSelection?.backend?.backendId,
+            ),
+            temporaryReleased:
+              value.pointSelection?.backend?.temporaryReleased === true,
+            ...numericRecord(
+              value.pointSelection?.backend,
+              [
+                "drawCalls",
+                "glError",
+                "pointIndex",
+                "temporaryTargetBytes",
+                "x",
+                "y",
+              ],
+            ),
+          },
+        };
   return Object.freeze({
     schema: REPORT_SCHEMA,
     status: value.status,
@@ -405,6 +474,7 @@ function sanitizeReport(value) {
             /^[0-9a-f]{64}$/u,
           ),
         },
+    pointSelection,
     productLifecycle: !pointSource
       ? null
       : {
@@ -837,6 +907,10 @@ function activateBimExplorerExtension(vscode, context) {
     vscode.commands.registerCommand(
       "bimExplorer.showDiagnostics",
       () => provider.showDiagnostics(),
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.pickVisiblePoint",
+      () => provider.postActive("pick-visible-point"),
     ),
   ];
   context.subscriptions.push(

@@ -164,6 +164,15 @@ function validateResult(value, expected) {
   const maximumRangeBytes = multipleScanE57
     ? BIM_POINT_RANGE_MAXIMUM_BYTES
     : 8 * 1024 * 1024;
+  const pointFormatValid =
+    (
+      typeof source.pointFormat === "string" &&
+      source.pointFormat.length > 0
+    ) ||
+    (
+      Number.isSafeInteger(source.pointFormat) &&
+      source.pointFormat >= 0
+    );
   if (
     artifact.schema !== CONTRACTS.get(expected.format) ||
     source.format !== expected.format ||
@@ -173,8 +182,7 @@ function validateResult(value, expected) {
     source.revisionId.length === 0 ||
     source.semanticAuthority !== false ||
     source.coordinateReferenceStatus !== "unqualified" ||
-    typeof source.pointFormat !== "string" ||
-    source.pointFormat.length === 0 ||
+    !pointFormatValid ||
     source.sourceRole !== "derived-or-reference-points" ||
     range.mediaType !== BIM_POINT_RANGE_MEDIA_TYPE ||
     !SHA256.test(range.sha256 ?? "") ||

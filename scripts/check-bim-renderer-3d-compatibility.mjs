@@ -6,6 +6,12 @@ import { pathToFileURL } from "node:url";
 import {
   validateLasLazPointRendererQualification,
 } from "./qualify-las-laz-point-renderer.mjs";
+import {
+  validatePointCloudBrowserPickingQualification,
+} from "./qualify-point-cloud-browser-picking.mjs";
+import {
+  validatePointCloudVscodePickingQualification,
+} from "./qualify-point-cloud-vscode-picking.mjs";
 
 const BASELINE_AS_OF = "2026-08-04";
 
@@ -34,6 +40,7 @@ const TRUE_GATES = [
   "sourceNeutralPointRange",
   "boundedPointPrimitiveWebGl2",
   "pointResourceAccounting",
+  "pointIdentityPicking",
 ];
 const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
@@ -2562,13 +2569,27 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.browserPointPrimitive,
     "Browser point primitive BIM renderer evidence",
   );
+  const browserPointPickingEvidence = plainRecord(
+    evidenceBundle.browserPointPicking,
+    "Browser point picking BIM renderer evidence",
+  );
+  const vscodePointPickingEvidence = plainRecord(
+    evidenceBundle.vscodePointPicking,
+    "VS Code point picking BIM renderer evidence",
+  );
   validateLasLazPointRendererQualification(
     browserPointPrimitiveEvidence,
+  );
+  validatePointCloudBrowserPickingQualification(
+    browserPointPickingEvidence,
+  );
+  validatePointCloudVscodePickingQualification(
+    vscodePointPickingEvidence,
   );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
-    manifest.asOf !== "2026-08-08" ||
+    manifest.asOf !== "2026-08-09" ||
     manifest.status !== "experimental" ||
     manifest.contract?.renderer !==
       "bim-explorer-bim-renderer-3d/0.1" ||
@@ -2595,6 +2616,8 @@ export function validateBimRenderer3dCompatibility(
       "bim-explorer-bounded-point-renderer/0.1" ||
     manifest.contract?.pointReceipt !==
       "bim-explorer-bounded-point-renderer-receipt/0.1" ||
+    manifest.contract?.pointPickReceipt !==
+      "bim-explorer-bounded-point-renderer-pick-receipt/0.1" ||
     manifest.contract?.pointReleaseReceipt !==
       "bim-explorer-bounded-point-renderer-release-receipt/0.1" ||
     manifest.contract?.pointMediaType !==
@@ -2677,7 +2700,13 @@ export function validateBimRenderer3dCompatibility(
     manifest.evidence?.browserPointPrimitive !==
       "compatibility/evidence/" +
         "las-laz-point-renderer-2026-08-08.json" ||
-    Object.keys(manifest.evidence ?? {}).length !== 15 ||
+    manifest.evidence?.browserPointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-browser-picking-2026-08-09.json" ||
+    manifest.evidence?.vscodePointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-vscode-picking-2026-08-09.json" ||
+    Object.keys(manifest.evidence ?? {}).length !== 17 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2693,7 +2722,11 @@ export function validateBimRenderer3dCompatibility(
     manifest.policy?.claimViewerCoreCompatibility !== true ||
     manifest.policy?.claimProductionRenderer !== false ||
     manifest.policy?.claimPointFormatAdmission !== false ||
-    manifest.policy?.claimPointPicking !== false
+    manifest.policy?.claimPointPicking !== true ||
+    manifest.policy?.pointIdentityAuthority !==
+      "derived-point-range-order" ||
+    manifest.policy?.pointIdentityScope !==
+      "source-revision-and-range-digest"
   ) {
     throw new Error("BIM renderer policy overclaims compatibility");
   }
@@ -2717,6 +2750,39 @@ export function validateBimRenderer3dCompatibility(
         .maximumAbsoluteProjectionError
   ) {
     throw new Error("BIM point renderer evidence metrics are invalid");
+  }
+  const expectedPointPicking = plainRecord(
+    expectedPointRenderer.picking,
+    "manifest expected point picking",
+  );
+  const browserLargePick =
+    browserPointPickingEvidence.surfaces.e57MultipleScan
+      .observation.pointSelection;
+  if (
+    expectedPointPicking.identityAuthority !==
+      browserPointPickingEvidence.runtime.identityAuthority ||
+    expectedPointPicking.identityScope !==
+      browserPointPickingEvidence.runtime.identityScope ||
+    expectedPointPicking.pointIndexEncodingBits !==
+      browserPointPickingEvidence.runtime.pointIndexEncodingBits ||
+    expectedPointPicking.selectedCoordinateReadbackBytes !==
+      browserPointPickingEvidence.runtime
+        .selectedCoordinateReadbackBytes ||
+    expectedPointPicking.temporaryTargetBytes !==
+      browserPointPickingEvidence.runtime.temporaryTargetBytes ||
+    browserLargePick.identity.pointIndex <
+      expectedPointPicking.largePointIndexMinimum ||
+    vscodePointPickingEvidence.runtime.identityAuthority !==
+      expectedPointPicking.identityAuthority ||
+    vscodePointPickingEvidence.runtime.identityScope !==
+      expectedPointPicking.identityScope ||
+    vscodePointPickingEvidence.runtime.pointIndexEncodingBits !==
+      expectedPointPicking.pointIndexEncodingBits ||
+    vscodePointPickingEvidence.runtime
+      .selectedCoordinateReadbackBytes !==
+      expectedPointPicking.selectedCoordinateReadbackBytes
+  ) {
+    throw new Error("BIM point picking evidence metrics are invalid");
   }
   const fixture = manifest.fixture;
   if (
@@ -3115,6 +3181,20 @@ async function main() {
       path.join(
         root,
         manifest.evidence.browserPointPrimitive,
+      ),
+      "utf8",
+    )),
+    browserPointPicking: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.browserPointPicking,
+      ),
+      "utf8",
+    )),
+    vscodePointPicking: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.vscodePointPicking,
       ),
       "utf8",
     )),

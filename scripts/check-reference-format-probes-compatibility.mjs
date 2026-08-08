@@ -46,6 +46,12 @@ import {
 import {
   validateLasLazVscodeProductQualification,
 } from "./qualify-las-laz-vscode-product.mjs";
+import {
+  validatePointCloudBrowserPickingQualification,
+} from "./qualify-point-cloud-browser-picking.mjs";
+import {
+  validatePointCloudVscodePickingQualification,
+} from "./qualify-point-cloud-vscode-picking.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -81,6 +87,8 @@ const PASSED_GATES = Object.freeze([
   "lasLazProductSource",
   "lasLazBrowserProductOpen",
   "lasLazVscodeProductOpen",
+  "browserPointIdentityPicking",
+  "vscodePointIdentityPicking",
 ]);
 const HELD_GATES = Object.freeze([
   "e57CoordinateReference",
@@ -106,6 +114,8 @@ export function validateReferenceFormatProbeCompatibility(
   lasLazPointRendererEvidence,
   lasLazBrowserProductEvidence,
   lasLazVscodeProductEvidence,
+  pointCloudBrowserPickingEvidence,
+  pointCloudVscodePickingEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateE57ProfileMatrixQualification(e57ProfileMatrixEvidence);
@@ -146,11 +156,17 @@ export function validateReferenceFormatProbeCompatibility(
   validateLasLazVscodeProductQualification(
     lasLazVscodeProductEvidence,
   );
+  validatePointCloudBrowserPickingQualification(
+    pointCloudBrowserPickingEvidence,
+  );
+  validatePointCloudVscodePickingQualification(
+    pointCloudVscodePickingEvidence,
+  );
   if (
     manifest?.schema !==
       "bim-explorer-reference-format-probes-compatibility/1" ||
     manifest.status !== "pre-admission" ||
-    manifest.asOf !== "2026-08-08" ||
+    manifest.asOf !== "2026-08-09" ||
     manifest.evidence?.e57PublicSample !==
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json" ||
@@ -195,7 +211,13 @@ export function validateReferenceFormatProbeCompatibility(
         "las-laz-browser-product-2026-08-08.json" ||
     manifest.evidence?.lasLazVscodeProduct !==
       "compatibility/evidence/" +
-        "las-laz-vscode-product-2026-08-08.json"
+        "las-laz-vscode-product-2026-08-08.json" ||
+    manifest.evidence?.browserPointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-browser-picking-2026-08-09.json" ||
+    manifest.evidence?.vscodePointPicking !==
+      "compatibility/evidence/" +
+        "point-cloud-vscode-picking-2026-08-09.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -238,6 +260,11 @@ export function validateReferenceFormatProbeCompatibility(
       true ||
     manifest.policy.e57MultipleScanVscodeExperimentalProductOpen !==
       true ||
+    manifest.policy.derivedPointIdentityPicking !== true ||
+    manifest.policy.pointIdentityAuthority !==
+      "derived-point-range-order" ||
+    manifest.policy.pointIdentityScope !==
+      "source-revision-and-range-digest" ||
     manifest.policy.formatAdmission !== false ||
     manifest.policy.productSupport !== false ||
     manifest.blockers?.length !== HELD_GATES.length ||
@@ -271,6 +298,8 @@ async function main() {
     lasLazPointRendererEvidence,
     lasLazBrowserProductEvidence,
     lasLazVscodeProductEvidence,
+    pointCloudBrowserPickingEvidence,
+    pointCloudVscodePickingEvidence,
   ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
@@ -349,6 +378,16 @@ async function main() {
         "las-laz-vscode-product-2026-08-08.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "point-cloud-browser-picking-2026-08-09.json",
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "point-cloud-vscode-picking-2026-08-09.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
@@ -368,6 +407,8 @@ async function main() {
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
       lasLazVscodeProductEvidence,
+      pointCloudBrowserPickingEvidence,
+      pointCloudVscodePickingEvidence,
     ),
   ));
 }

@@ -5,7 +5,7 @@ authority:
   - reference-format-demand-intake
   - evidence-privacy
   - qualification-entry-gate
-last_reviewed: 2026-08-08
+last_reviewed: 2026-08-09
 ---
 
 # Reference format evidence intake
@@ -70,8 +70,9 @@ XYZ/RGB, empty codec vector의 3개 data packet을 모두 해제해 독립 refer
 cleanup을 재현했습니다. 후속 Browser, staged VS Code와 clean-installed VSIX
 제품 Gate는 같은 7,680 points·122,880-byte GPU payload·39,561 pixels,
 path-free bridge와 source/Worker/CPU/GPU cleanup을 재현했습니다. 다만 CRS,
-scan pose, surveyed datum과 point identity/picking·LOD가 없으므로 E57
-admission과 `pointCloudCodec`은 계속 held입니다.
+surveyed datum, extension과 LOD가 없으므로 E57 admission과
+`pointCloudCodec`은 계속 held입니다. point selection은 아래 별도 Gate의
+derived range-order identity이며 E57 native record authority가 아닙니다.
 
 후속 profile matrix는 같은 고정 commit의 Test Data License 대상
 `bunnyDouble.e57`과 `bunnyInt32.e57`을 재배포하지 않고 cache-only로 사용합니다.
@@ -100,8 +101,9 @@ JavaScript decoder로 해제하고, 네 explicit unit-quaternion/translation pos
 SHA-256는 독립 `pye57@0.4.18/libE57Format` 기준과 일치합니다. 이 pose는 local
 registration일 뿐 CRS·surveyed control·datum authority가 아닙니다. 후속 actual
 Browser, staged VS Code와 clean-installed VSIX Gate는 동일한 1,213,990-point
-pose-applied range와 cleanup을 재현했습니다. extension/identity/picking·LOD는
-아직 Gate를 통과하지 않았습니다.
+pose-applied range와 cleanup을 재현했습니다. 같은 대형 range의 32-bit derived
+point pick도 통과했지만 extension, source-declared identity와 LOD는 아직 Gate를
+통과하지 않았습니다.
 
 두 번째 probe는 `visgl/loaders.gl`의 paired `ripple.las`/`ripple.laz`를 같은
 고정 commit에서 내려받습니다. exact `laz-perf@0.0.6` Apache-2.0 dependency로
@@ -124,7 +126,11 @@ staged runtime과 빈 profile에 clean-installed VSIX에서 같은 point-range/v
 projection, path-free bridge와 cleanup을 재현했습니다. VSIX의 generated
 Emscripten glue는 strict CSP를 위해 dynamic Function construction을 동등한
 closure로 치환하고 original `laz-perf.wasm`은 수정하지 않습니다. 좌표는 계속
-unqualified이며 point identity/picking·LOD는 제공하지 않습니다.
+unqualified입니다. 후속 point-picking Gate는 LAS/LAZ와 five-scan E57에 대해
+exact source revision/range digest scoped `point:n`, 32-bit Pick ID, 선택 좌표
+12-byte GPU readback과 transient target cleanup을 actual Browser, staged VS Code
+및 clean-installed VSIX에서 재현했습니다. 이는 source-declared identity나
+LOD를 제공하지 않습니다.
 
 ## 현재 상태
 
@@ -134,7 +140,8 @@ staged VS Code와 clean-installed VSIX 제품 source/file-open까지 통과했�
 E57도 bounded Browser, staged VS Code와 clean-installed VSIX에서 Cartesian,
 spherical 단일-scan 및 다섯-scan pose-applied 제품 source/file-open을
 통과했습니다. multiple-scan은 scan identity·structured index와 local pose
-적용을 보존하지만 extension과 surveyed coordinate evidence는 아직 없습니다.
+적용을 보존합니다. E57/LAS/LAZ의 derived point selection도 세 제품 경로에서
+통과했지만 extension, surveyed coordinate evidence와 LOD는 아직 없습니다.
 따라서
 `actualMultiFormatUserDemand`, `surveyedCoordinateDatumEvidence`와 여섯 후보
 format Gate는 계속 held입니다. 고객 모델이나 검증되지 않은 SDK를 저장소에

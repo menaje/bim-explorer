@@ -26,7 +26,8 @@
     "onCommand:bimExplorer.openWith",
     "onCommand:bimExplorer.cancel",
     "onCommand:bimExplorer.retry",
-    "onCommand:bimExplorer.showDiagnostics"
+    "onCommand:bimExplorer.showDiagnostics",
+    "onCommand:bimExplorer.pickVisiblePoint"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -73,6 +74,10 @@
       {
         "command": "bimExplorer.showDiagnostics",
         "title": "BIM Explorer: Show Local Diagnostics"
+      },
+      {
+        "command": "bimExplorer.pickVisiblePoint",
+        "title": "BIM Explorer: Pick Visible Point"
       }
     ],
     "configuration": {

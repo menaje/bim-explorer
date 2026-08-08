@@ -44,6 +44,43 @@ void main() {
 }
 `;
 
+const PICK_VERTEX_SHADER = `#version 300 es
+layout(location = 0) in vec3 a_position;
+
+uniform mat4 u_world_to_clip;
+uniform float u_point_size;
+
+flat out uint v_point_index;
+
+void main() {
+  gl_Position = u_world_to_clip * vec4(a_position, 1.0);
+  gl_PointSize = u_point_size;
+  v_point_index = uint(gl_VertexID) + 1u;
+}
+`;
+
+const PICK_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+precision highp int;
+
+flat in uint v_point_index;
+out vec4 out_color;
+
+void main() {
+  vec2 centered = gl_PointCoord * 2.0 - 1.0;
+  if (dot(centered, centered) > 1.0) {
+    discard;
+  }
+  uvec4 encoded = uvec4(
+    v_point_index & 255u,
+    (v_point_index >> 8u) & 255u,
+    (v_point_index >> 16u) & 255u,
+    (v_point_index >> 24u) & 255u
+  );
+  out_color = vec4(encoded) / 255.0;
+}
+`;
+
 function invalidState(message) {
   return new DOMException(message, "InvalidStateError");
 }
@@ -113,24 +150,34 @@ function compileShader(gl, type, source, label) {
   return shader;
 }
 
-function createProgram(gl) {
+function createProgram(gl, {
+  fragmentSource = FRAGMENT_SHADER,
+  label = "point",
+  vertexSource = VERTEX_SHADER,
+} = {}) {
   const vertex = compileShader(
     gl,
     gl.VERTEX_SHADER,
-    VERTEX_SHADER,
-    "point vertex",
+    vertexSource,
+    `${label} vertex`,
   );
-  const fragment = compileShader(
-    gl,
-    gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER,
-    "point fragment",
-  );
+  let fragment;
+  try {
+    fragment = compileShader(
+      gl,
+      gl.FRAGMENT_SHADER,
+      fragmentSource,
+      `${label} fragment`,
+    );
+  } catch (error) {
+    gl.deleteShader(vertex);
+    throw error;
+  }
   const program = gl.createProgram();
   if (program === null) {
     gl.deleteShader(vertex);
     gl.deleteShader(fragment);
-    throw new Error("WebGL2 could not allocate a point program");
+    throw new Error(`WebGL2 could not allocate a ${label} program`);
   }
   try {
     gl.attachShader(program, vertex);
@@ -138,7 +185,7 @@ function createProgram(gl) {
     gl.linkProgram(program);
     if (gl.getProgramParameter(program, gl.LINK_STATUS) !== true) {
       throw new Error(
-        "WebGL2 point program link failed: " +
+        `WebGL2 ${label} program link failed: ` +
           (gl.getProgramInfoLog(program) || "no diagnostic"),
       );
     }
@@ -174,9 +221,135 @@ function releaseResources(gl, resources) {
   if (resources === null) {
     return;
   }
-  gl.deleteBuffer(resources.buffer);
-  gl.deleteVertexArray(resources.vertexArray);
-  gl.deleteProgram(resources.program);
+  if (resources.buffer !== null) {
+    gl.deleteBuffer(resources.buffer);
+  }
+  if (resources.vertexArray !== null) {
+    gl.deleteVertexArray(resources.vertexArray);
+  }
+  if (resources.program !== null) {
+    gl.deleteProgram(resources.program);
+  }
+  if (resources.pickProgram !== null) {
+    gl.deleteProgram(resources.pickProgram);
+  }
+}
+
+function pickTarget(gl, width, height) {
+  const framebuffer = gl.createFramebuffer();
+  const color = gl.createTexture();
+  const depth = gl.createRenderbuffer();
+  if (
+    framebuffer === null ||
+    color === null ||
+    depth === null
+  ) {
+    if (framebuffer !== null) {
+      gl.deleteFramebuffer(framebuffer);
+    }
+    if (color !== null) {
+      gl.deleteTexture(color);
+    }
+    if (depth !== null) {
+      gl.deleteRenderbuffer(depth);
+    }
+    throw new Error("WebGL2 could not allocate a point pick target");
+  }
+  gl.bindTexture(gl.TEXTURE_2D, color);
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    gl.NEAREST,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MAG_FILTER,
+    gl.NEAREST,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_S,
+    gl.CLAMP_TO_EDGE,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_T,
+    gl.CLAMP_TO_EDGE,
+  );
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    width,
+    height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    null,
+  );
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+  gl.renderbufferStorage(
+    gl.RENDERBUFFER,
+    gl.DEPTH_COMPONENT16,
+    width,
+    height,
+  );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    color,
+    0,
+  );
+  gl.framebufferRenderbuffer(
+    gl.FRAMEBUFFER,
+    gl.DEPTH_ATTACHMENT,
+    gl.RENDERBUFFER,
+    depth,
+  );
+  if (
+    gl.checkFramebufferStatus(gl.FRAMEBUFFER) !==
+      gl.FRAMEBUFFER_COMPLETE
+  ) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(framebuffer);
+    gl.deleteTexture(color);
+    gl.deleteRenderbuffer(depth);
+    throw new Error("WebGL2 point pick framebuffer is incomplete");
+  }
+  return Object.freeze({
+    bytes: width * height * 6,
+    color,
+    depth,
+    framebuffer,
+  });
+}
+
+function deletePickTarget(gl, target) {
+  if (target === null) {
+    return;
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  gl.deleteFramebuffer(target.framebuffer);
+  gl.deleteTexture(target.color);
+  gl.deleteRenderbuffer(target.depth);
+}
+
+function decodedPointIndex(bytes, pointCount) {
+  const encoded = (
+    bytes[0] |
+    (bytes[1] << 8) |
+    (bytes[2] << 16) |
+    (bytes[3] << 24)
+  ) >>> 0;
+  if (encoded === 0) {
+    return null;
+  }
+  const pointIndex = encoded - 1;
+  return pointIndex < pointCount ? pointIndex : null;
 }
 
 export class PointCloudWebGl2Backend {
@@ -186,6 +359,7 @@ export class PointCloudWebGl2Backend {
   #gl;
   #height;
   #mounts = 0;
+  #picks = 0;
   #unmounts = 0;
   #width;
 
@@ -242,6 +416,7 @@ export class PointCloudWebGl2Backend {
       disposed: this.#disposed,
       glVersion: this.#gl.getParameter(this.#gl.VERSION),
       mounts: this.#mounts,
+      picks: this.#picks,
       residentRanges: this.#active === null ? 0 : 1,
       unmounts: this.#unmounts,
     });
@@ -279,21 +454,28 @@ export class PointCloudWebGl2Backend {
     const started = performance.now();
     try {
       const program = createProgram(gl);
-      const buffer = gl.createBuffer();
-      const vertexArray = gl.createVertexArray();
-      if (buffer === null || vertexArray === null) {
-        if (buffer !== null) {
-          gl.deleteBuffer(buffer);
-        }
-        if (vertexArray !== null) {
-          gl.deleteVertexArray(vertexArray);
-        }
-        gl.deleteProgram(program);
+      resources = {
+        buffer: null,
+        pickProgram: null,
+        program,
+        vertexArray: null,
+      };
+      resources.pickProgram = createProgram(gl, {
+        fragmentSource: PICK_FRAGMENT_SHADER,
+        label: "point pick",
+        vertexSource: PICK_VERTEX_SHADER,
+      });
+      resources.buffer = gl.createBuffer();
+      resources.vertexArray = gl.createVertexArray();
+      if (
+        resources.buffer === null ||
+        resources.vertexArray === null
+      ) {
         throw new Error(
           "WebGL2 could not allocate point buffer resources",
         );
       }
-      resources = { buffer, program, vertexArray };
+      const { buffer, vertexArray } = resources;
       gl.bindVertexArray(vertexArray);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       const uploadStarted = performance.now();
@@ -364,15 +546,33 @@ export class PointCloudWebGl2Backend {
         throw new Error("WebGL2 point readback failed");
       }
       let nonBackgroundPixels = 0;
+      let suggestedPickCoordinates = null;
+      let suggestedPickDistance = Infinity;
       for (let offset = 3; offset < pixels.length; offset += 4) {
         if (pixels[offset] !== 0) {
           nonBackgroundPixels += 1;
+          const pixelIndex = (offset - 3) / 4;
+          const x = pixelIndex % this.#width;
+          const y =
+            this.#height - Math.floor(pixelIndex / this.#width) - 1;
+          const distance = Math.hypot(
+            x - this.#width / 2,
+            y - this.#height / 2,
+          );
+          if (distance < suggestedPickDistance) {
+            suggestedPickDistance = distance;
+            suggestedPickCoordinates = Object.freeze({ x, y });
+          }
         }
       }
       this.#mounts += 1;
       const handleId = `webgl2-point-mount:${this.#mounts}`;
       this.#active = {
         handleId,
+        camera,
+        origin: decoded.origin,
+        pointCount: decoded.pointCount,
+        pointSize: metrics.pointSize,
         resources,
         uploadedBytes: decoded.payloadBytes,
       };
@@ -394,6 +594,7 @@ export class PointCloudWebGl2Backend {
           readbackBytes: pixels.byteLength,
           rendered: true,
           stagingConsumed: true,
+          suggestedPickCoordinates,
           uploadedBytes: decoded.payloadBytes,
           uploadMs,
         },
@@ -405,6 +606,141 @@ export class PointCloudWebGl2Backend {
       pixels?.fill(0);
       gl.bindBuffer(gl.ARRAY_BUFFER, null);
       gl.bindVertexArray(null);
+    }
+  }
+
+  async pick(
+    handleId,
+    { x, y } = {},
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("point WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("point WebGL2 mount handle is not active");
+    }
+    if (
+      !Number.isSafeInteger(x) ||
+      !Number.isSafeInteger(y) ||
+      x < 0 ||
+      x >= this.#width ||
+      y < 0 ||
+      y >= this.#height
+    ) {
+      throw new RangeError(
+        "point WebGL2 pick coordinates are outside the frame",
+      );
+    }
+    const state = this.#active;
+    const gl = this.#gl;
+    const started = performance.now();
+    let pixel = null;
+    let position = null;
+    let target = null;
+    try {
+      target = pickTarget(gl, this.#width, this.#height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+      gl.viewport(0, 0, this.#width, this.#height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clearDepth(1);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(state.resources.pickProgram);
+      const camera = state.camera;
+      const matrix = new Float32Array(
+        cameraViewProjectionMatrix(
+          camera,
+          this.#width / this.#height,
+        ),
+      );
+      gl.uniformMatrix4fv(
+        requiredUniform(
+          gl,
+          state.resources.pickProgram,
+          "u_world_to_clip",
+        ),
+        false,
+        matrix,
+      );
+      gl.uniform1f(
+        requiredUniform(
+          gl,
+          state.resources.pickProgram,
+          "u_point_size",
+        ),
+        state.pointSize,
+      );
+      matrix.fill(0);
+      gl.bindVertexArray(state.resources.vertexArray);
+      aborted(signal);
+      gl.drawArrays(gl.POINTS, 0, state.pointCount);
+      gl.finish();
+      if (gl.getError() !== gl.NO_ERROR) {
+        throw new Error("WebGL2 point pick frame failed");
+      }
+      pixel = new Uint8Array(4);
+      gl.readPixels(
+        x,
+        this.#height - y - 1,
+        1,
+        1,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        pixel,
+      );
+      if (gl.getError() !== gl.NO_ERROR) {
+        throw new Error("WebGL2 point pick readback failed");
+      }
+      const pointIndex = decodedPointIndex(
+        pixel,
+        state.pointCount,
+      );
+      let worldPosition = null;
+      if (pointIndex !== null) {
+        position = new Float32Array(3);
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.resources.buffer);
+        gl.getBufferSubData(
+          gl.ARRAY_BUFFER,
+          pointIndex * POINT_STRIDE_BYTES,
+          position,
+        );
+        worldPosition = Object.freeze(
+          [...position].map(
+            (value, axis) => value + state.origin[axis],
+          ),
+        );
+      }
+      this.#picks += 1;
+      return {
+        receipt: {
+          actualGpu: true,
+          backendId: "webgl2-points",
+          drawCalls: 1,
+          frameId:
+            `webgl2-point-pick:${this.#mounts}:${this.#picks}`,
+          frameMs: performance.now() - started,
+          glError: 0,
+          hit: pointIndex !== null,
+          pointIndex,
+          temporaryReleased: true,
+          temporaryTargetBytes: target.bytes,
+          worldPosition,
+          x,
+          y,
+        },
+      };
+    } finally {
+      pixel?.fill(0);
+      position?.fill(0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      gl.bindVertexArray(null);
+      deletePickTarget(gl, target);
     }
   }
 

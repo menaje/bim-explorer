@@ -1,0 +1,1416 @@
+{
+  "schema": "bim-explorer-point-cloud-vscode-picking-evidence/1",
+  "status": "passed-source-scoped-vscode-point-picking",
+  "asOf": "2026-08-09",
+  "capturedAt": "2026-08-08T17:06:13.554Z",
+  "environment": {
+    "node": "v24.11.1",
+    "platform": "darwin-arm64",
+    "vscode": "1.131.0",
+    "runtimeSource": "local-installation",
+    "requestedVersion": null,
+    "downloadAttempts": 0
+  },
+  "surfaces": {
+    "staged": {
+      "environment": {
+        "vscode": "1.131.0",
+        "platform": "darwin-arm64",
+        "runtimeLayout": "staged"
+      },
+      "fixtures": {
+        "e57": {
+          "id": "libe57format-coloured-cube-float-e57",
+          "committed": false,
+          "format": "e57",
+          "sourceBytes": 118784,
+          "fingerprint": "sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+          "formatVersion": "1.0",
+          "pointFormat": "cartesian-xyz-rgb",
+          "provenance": {
+            "repository": "https://github.com/asmaloney/libE57Format-test-data",
+            "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+            "license": "CC0-1.0",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "las": {
+          "id": "loaders-gl-ripple-las-laz-las",
+          "committed": false,
+          "format": "las",
+          "sourceBytes": 347061,
+          "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "laz": {
+          "id": "loaders-gl-ripple-las-laz-laz",
+          "committed": false,
+          "format": "laz",
+          "sourceBytes": 53952,
+          "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "e57MultipleScan": {
+          "id": "e57-example-pump-no-invalid-multiple-scan",
+          "committed": false,
+          "format": "e57",
+          "sourceBytes": 22146048,
+          "fingerprint": "sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+          "formatVersion": "1.0",
+          "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+          "provenance": {
+            "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+            "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+            "publishedAt": "2011-05-05T21:05:19Z",
+            "license": "LicenseRef-E57-Example-Test-Data",
+            "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        }
+      },
+      "observations": {
+        "e57": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+            "revisionId": "source-snapshot:sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+            "snapshotId": null,
+            "byteLength": 118784,
+            "ifcSchema": null,
+            "format": "e57",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.0",
+            "pointFormat": "cartesian-xyz-rgb",
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 7680,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 36.69999998807907,
+            "sourceMs": 0,
+            "totalMs": 39.1000000089407
+          },
+          "resources": {
+            "decodedPointBytes": 215040,
+            "pointRangeBytes": 122928,
+            "pointRangePayloadBytes": 122880,
+            "sourceBytes": 118784,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 39561,
+            "sourceReadBytes": 122928,
+            "uploadedBytes": 122880
+          },
+          "pointCloud": {
+            "attributeProjection": {
+              "ignoredFields": [],
+              "lossiness": "lossless-for-admitted-fields",
+              "method": "decode-for-stream-alignment-without-semantic-authority"
+            },
+            "bounds": {
+              "min": [
+                -0.5,
+                -0.5,
+                -0.5
+              ],
+              "max": [
+                0.5,
+                0.5,
+                0.5
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "max": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": "cartesian",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "bim-explorer-e57-bitpack-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0",
+              "reference": {
+                "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+                "id": "cry-inc/e57",
+                "license": "MIT",
+                "version": "0.10.5"
+              }
+            },
+            "maximumProjectionError": 0,
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:1632",
+              "pointIndex": 1632,
+              "rangeHandleId": "range:e57:points:dcc6868c55c79a51d315bfc4",
+              "rangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa"
+            },
+            "worldPosition": [
+              -0.494290828704834,
+              -0.5,
+              -0.4111473560333252
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 1632,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "las": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+            "revisionId": "source-snapshot:sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+            "snapshotId": null,
+            "byteLength": 347061,
+            "ifcSchema": null,
+            "format": "las",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 8,
+            "sourceMs": 0,
+            "totalMs": 12.299999997019768
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 347061,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "attributeProjection": null,
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": null,
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "las-point-record-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:5712",
+              "pointIndex": 5712,
+              "rangeHandleId": "range:las:points:8383abce84d57b8f50ee1f39",
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "worldPosition": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6951500175116928
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 5712,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "laz": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+            "revisionId": "source-snapshot:sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+            "snapshotId": null,
+            "byteLength": 53952,
+            "ifcSchema": null,
+            "format": "laz",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 33.400000005960464,
+            "sourceMs": 0,
+            "totalMs": 34.79999999701977
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 53952,
+            "wasmHeapCapacityBytes": {
+              "afterDecode": 4063232,
+              "afterInitialization": 262144,
+              "peakObserved": 4063232
+            }
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "attributeProjection": null,
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": null,
+            "decoder": {
+              "backend": "browser-wasm-worker-product-source",
+              "id": "laz-perf",
+              "license": "Apache-2.0",
+              "version": "0.0.6"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:5712",
+              "pointIndex": 5712,
+              "rangeHandleId": "range:laz:points:8383abce84d57b8f50ee1f39",
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "worldPosition": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6951500175116928
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 5712,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "e57MultipleScan": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+            "revisionId": "source-snapshot:sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+            "snapshotId": null,
+            "byteLength": 22146048,
+            "ifcSchema": null,
+            "format": "e57",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.0",
+            "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 1213990,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 2194.7000000029802,
+            "sourceMs": 0,
+            "totalMs": 2339.9000000059605
+          },
+          "resources": {
+            "decodedPointBytes": 35205710,
+            "pointRangeBytes": 19423888,
+            "pointRangePayloadBytes": 19423840,
+            "sourceBytes": 22146048,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 28206,
+            "sourceReadBytes": 19423888,
+            "uploadedBytes": 19423840
+          },
+          "pointCloud": {
+            "attributeProjection": {
+              "ignoredFields": [
+                "intensity",
+                "rowIndex",
+                "columnIndex"
+              ],
+              "lossiness": "lossy",
+              "method": "decode-for-stream-alignment-without-semantic-authority"
+            },
+            "bounds": {
+              "min": [
+                -3.034407483588252,
+                -5.8261087311925275,
+                -1.9824324273209424
+              ],
+              "max": [
+                1.7299581894769334,
+                -0.7926481141270978,
+                1.8476499892134814
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "max": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": "cartesian",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "bim-explorer-e57-bitpack-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0",
+              "reference": {
+                "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+                "id": "cry-inc/e57",
+                "license": "MIT",
+                "version": "0.10.5"
+              }
+            },
+            "maximumProjectionError": 1.1920501918893933e-7,
+            "origin": [
+              -0.6522246470556594,
+              -3.3093784226598126,
+              -0.06739121905373047
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 407,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:536823",
+              "pointIndex": 536823,
+              "rangeHandleId": "range:e57:multiple-scan:4dd5bbef38ffd815c00a01cf",
+              "rangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697"
+            },
+            "worldPosition": [
+              -1.4517723789320327,
+              -3.8250738157452924,
+              -0.6061921142678113
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 536823,
+              "temporaryTargetBytes": 2160000,
+              "x": 407,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        }
+      },
+      "assertions": {
+        "e57": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "las": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "laz": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "e57MultipleScan": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        }
+      }
+    },
+    "installed": {
+      "environment": {
+        "platform": "darwin-arm64",
+        "cleanUserData": true,
+        "cleanExtensionsDirectory": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1341378,
+        "installedRuntimeFiles": 13,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "f3c926913c0afab32150d8f72e3c6ed7fd8a1d162952e70270058cc5ae4aa07d",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      },
+      "fixtures": {
+        "e57": {
+          "id": "libe57format-coloured-cube-float-e57",
+          "committed": false,
+          "format": "e57",
+          "sourceBytes": 118784,
+          "fingerprint": "sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+          "formatVersion": "1.0",
+          "pointFormat": "cartesian-xyz-rgb",
+          "provenance": {
+            "repository": "https://github.com/asmaloney/libE57Format-test-data",
+            "commit": "1ca737e03d6277c384f1b05c4046e10caab331b5",
+            "license": "CC0-1.0",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "las": {
+          "id": "loaders-gl-ripple-las-laz-las",
+          "committed": false,
+          "format": "las",
+          "sourceBytes": 347061,
+          "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "laz": {
+          "id": "loaders-gl-ripple-las-laz-laz",
+          "committed": false,
+          "format": "laz",
+          "sourceBytes": 53952,
+          "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+          "formatVersion": "1.2",
+          "pointFormat": 3,
+          "provenance": {
+            "repository": "https://github.com/visgl/loaders.gl",
+            "commit": "44e7a4e978a63fad0ee257fedb688826f5f279e5",
+            "license": "MIT",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        },
+        "e57MultipleScan": {
+          "id": "e57-example-pump-no-invalid-multiple-scan",
+          "committed": false,
+          "format": "e57",
+          "sourceBytes": 22146048,
+          "fingerprint": "sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+          "formatVersion": "1.0",
+          "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+          "provenance": {
+            "repository": "https://sourceforge.net/projects/e57-3d-imgfmt/files/E57Example-data/",
+            "sourcePage": "https://e57-3d-imgfmt.sourceforge.net/data.html",
+            "publishedAt": "2011-05-05T21:05:19Z",
+            "license": "LicenseRef-E57-Example-Test-Data",
+            "notice": "Copyright 2008 Carnahan-Proctor and Cross, Inc.",
+            "bundled": false,
+            "sampleRedistributed": false
+          }
+        }
+      },
+      "observations": {
+        "e57": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+            "revisionId": "source-snapshot:sha256:6dbf7972b358bd7dd0864c7893a4aa7b61a339fd6ee27c71b3031f763c977d33",
+            "snapshotId": null,
+            "byteLength": 118784,
+            "ifcSchema": null,
+            "format": "e57",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.0",
+            "pointFormat": "cartesian-xyz-rgb",
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 7680,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 39.599999994039536,
+            "sourceMs": 0,
+            "totalMs": 40.70000000298023
+          },
+          "resources": {
+            "decodedPointBytes": 215040,
+            "pointRangeBytes": 122928,
+            "pointRangePayloadBytes": 122880,
+            "sourceBytes": 118784,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 39561,
+            "sourceReadBytes": 122928,
+            "uploadedBytes": 122880
+          },
+          "pointCloud": {
+            "attributeProjection": {
+              "ignoredFields": [],
+              "lossiness": "lossless-for-admitted-fields",
+              "method": "decode-for-stream-alignment-without-semantic-authority"
+            },
+            "bounds": {
+              "min": [
+                -0.5,
+                -0.5,
+                -0.5
+              ],
+              "max": [
+                0.5,
+                0.5,
+                0.5
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "max": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": "cartesian",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "bim-explorer-e57-bitpack-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0",
+              "reference": {
+                "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+                "id": "cry-inc/e57",
+                "license": "MIT",
+                "version": "0.10.5"
+              }
+            },
+            "maximumProjectionError": 0,
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:1632",
+              "pointIndex": 1632,
+              "rangeHandleId": "range:e57:points:dcc6868c55c79a51d315bfc4",
+              "rangeSha256": "dcc6868c55c79a51d315bfc4b287ca38f8217e3d572554ef56b0da77359cd6aa"
+            },
+            "worldPosition": [
+              -0.494290828704834,
+              -0.5,
+              -0.4111473560333252
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 1632,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "las": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+            "revisionId": "source-snapshot:sha256:dbe194dd8529300f341a591e0b2e2ac57a96880db6dffa120dc1a41465026852",
+            "snapshotId": null,
+            "byteLength": 347061,
+            "ifcSchema": null,
+            "format": "las",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 7.700000002980232,
+            "sourceMs": 0,
+            "totalMs": 10.600000008940697
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 347061,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "attributeProjection": null,
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": null,
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "las-point-record-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:5712",
+              "pointIndex": 5712,
+              "rangeHandleId": "range:las:points:8383abce84d57b8f50ee1f39",
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "worldPosition": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6951500175116928
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 5712,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "laz": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+            "revisionId": "source-snapshot:sha256:64cc16cf7b38d3ec3d13e96b7af66bf887be2a5d35d55e86c41fd38fa79c9034",
+            "snapshotId": null,
+            "byteLength": 53952,
+            "ifcSchema": null,
+            "format": "laz",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.2",
+            "pointFormat": 3,
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 10201,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 27.299999997019768,
+            "sourceMs": 0,
+            "totalMs": 28
+          },
+          "resources": {
+            "decodedPointBytes": 346834,
+            "pointRangeBytes": 163264,
+            "pointRangePayloadBytes": 163216,
+            "sourceBytes": 53952,
+            "wasmHeapCapacityBytes": {
+              "afterDecode": 4063232,
+              "afterInitialization": 262144,
+              "peakObserved": 4063232
+            }
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 36934,
+            "sourceReadBytes": 163264,
+            "uploadedBytes": 163216
+          },
+          "pointCloud": {
+            "attributeProjection": null,
+            "bounds": {
+              "min": [
+                -5,
+                -5,
+                -0.6664099993588058
+              ],
+              "max": [
+                5,
+                5,
+                1.0999999938128862
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                68,
+                0,
+                255
+              ],
+              "max": [
+                254,
+                198,
+                63,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": null,
+            "decoder": {
+              "backend": "browser-wasm-worker-product-source",
+              "id": "laz-perf",
+              "license": "Apache-2.0",
+              "version": "0.0.6"
+            },
+            "maximumProjectionError": 2.9791268563172935e-8,
+            "origin": [
+              0,
+              0,
+              0.2167949972270401
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 400,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:5712",
+              "pointIndex": 5712,
+              "rangeHandleId": "range:laz:points:8383abce84d57b8f50ee1f39",
+              "rangeSha256": "8383abce84d57b8f50ee1f39aa1d442a7f258cd759ab9812aff1a0625ab10449"
+            },
+            "worldPosition": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6951500175116928
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 5712,
+              "temporaryTargetBytes": 2160000,
+              "x": 400,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "e57MultipleScan": {
+          "hostKind": "vscode-webview",
+          "source": {
+            "fingerprint": "sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+            "revisionId": "source-snapshot:sha256:5b85b18fe9860e9f9a2f397434530f2d403fefcc15cf1ff92d75d96d274ff5a5",
+            "snapshotId": null,
+            "byteLength": 22146048,
+            "ifcSchema": null,
+            "format": "e57",
+            "gltfVersion": null,
+            "coordinateReferenceStatus": "unqualified",
+            "formatVersion": "1.0",
+            "pointFormat": "cartesian-xyz-rgb-multiple-scan",
+            "profile": null,
+            "sourceRole": "derived-or-reference-points",
+            "semanticAuthority": false
+          },
+          "model": {
+            "points": 1213990,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 2200.7000000029802,
+            "sourceMs": 0,
+            "totalMs": 2346.2999999970198
+          },
+          "resources": {
+            "decodedPointBytes": 35205710,
+            "pointRangeBytes": 19423888,
+            "pointRangePayloadBytes": 19423840,
+            "sourceBytes": 22146048,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 28206,
+            "sourceReadBytes": 19423888,
+            "uploadedBytes": 19423840
+          },
+          "pointCloud": {
+            "attributeProjection": {
+              "ignoredFields": [
+                "intensity",
+                "rowIndex",
+                "columnIndex"
+              ],
+              "lossiness": "lossy",
+              "method": "decode-for-stream-alignment-without-semantic-authority"
+            },
+            "bounds": {
+              "min": [
+                -3.034407483588252,
+                -5.8261087311925275,
+                -1.9824324273209424
+              ],
+              "max": [
+                1.7299581894769334,
+                -0.7926481141270978,
+                1.8476499892134814
+              ]
+            },
+            "colorRange": {
+              "min": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "max": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "coordinateReferenceStatus": "unqualified",
+            "coordinateRepresentation": "cartesian",
+            "decoder": {
+              "backend": "bounded-native-js-product-source",
+              "id": "bim-explorer-e57-bitpack-reader",
+              "license": "MPL-2.0",
+              "version": "0.1.0",
+              "reference": {
+                "commit": "7a7498f679b30588dc9298beb7aafab2245a2d0c",
+                "id": "cry-inc/e57",
+                "license": "MIT",
+                "version": "0.10.5"
+              }
+            },
+            "maximumProjectionError": 1.1920501918893933e-7,
+            "origin": [
+              -0.6522246470556594,
+              -3.3093784226598126,
+              -0.06739121905373047
+            ],
+            "pointPrimitive": "POINTS",
+            "pointSize": 3,
+            "rangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697"
+          },
+          "pointSelection": {
+            "schema": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+            "status": "hit",
+            "coordinates": {
+              "origin": "canvas-top-left",
+              "x": 407,
+              "y": 225
+            },
+            "identity": {
+              "authority": "derived-point-range-order",
+              "nativeId": "point:536823",
+              "pointIndex": 536823,
+              "rangeHandleId": "range:e57:multiple-scan:4dd5bbef38ffd815c00a01cf",
+              "rangeSha256": "4dd5bbef38ffd815c00a01cf3feaa07a85b40fa7019b2a6dad448e373381e697"
+            },
+            "worldPosition": [
+              -1.4517723789320327,
+              -3.8250738157452924,
+              -0.6061921142678113
+            ],
+            "backend": {
+              "actualGpu": true,
+              "backendId": "webgl2-points",
+              "temporaryReleased": true,
+              "drawCalls": 1,
+              "glError": 0,
+              "pointIndex": 536823,
+              "temporaryTargetBytes": 2160000,
+              "x": 407,
+              "y": 225
+            }
+          },
+          "productLifecycle": {
+            "cpuPointRangeCleared": true,
+            "sourceBufferCleared": true,
+            "workerTerminatedAfterTransfer": true
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "externalUpload": false,
+          "telemetry": false
+        }
+      },
+      "assertions": {
+        "e57": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "las": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "laz": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        },
+        "e57MultipleScan": {
+          "localPointSourceOpened": true,
+          "pointSourceIdentityExact": true,
+          "noCoordinateOrSemanticAuthority": true,
+          "vscodeChromiumWebGl2": true,
+          "boundedPointRenderer": true,
+          "sourceScopedPointIdentityAndPicking": true,
+          "pointWorkerAndCpuCleanup": true,
+          "pathFreeHostBridge": true,
+          "editorCloseObserved": true
+        }
+      }
+    }
+  },
+  "runtime": {
+    "pickReceipt": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+    "identityAuthority": "derived-point-range-order",
+    "identityScope": "source-revision-and-range-digest",
+    "pointIndexEncodingBits": 32,
+    "selectedCoordinateReadbackBytes": 12,
+    "temporaryTargetBytes": 2160000,
+    "lazDecoder": {
+      "id": "laz-perf",
+      "version": "0.0.6",
+      "license": "Apache-2.0",
+      "strictCspAdaptation": true,
+      "webviewUnsafeEval": false
+    },
+    "actualPhysicalGpu": "not-claimed"
+  },
+  "fixturePolicy": {
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "testOnly": true
+  },
+  "decision": {
+    "browserPointIdentityPicking": "passed-derived-range-order",
+    "vscodePointIdentityPicking": "passed-derived-range-order",
+    "coordinateReference": "held",
+    "levelOfDetail": "held",
+    "pointCloudCodec": "held",
+    "formatAdmission": false,
+    "marketplaceRelease": "held"
+  },
+  "assertions": {
+    "stagedVscodePointPicking": true,
+    "cleanInstalledVsixPointPicking": true,
+    "sameSourceRevisionRangeIdentity": true,
+    "lasLazProjectionParityWithoutSourceMerge": true,
+    "largeE57PointIndex": true,
+    "strictCspLazRuntime": true,
+    "transientPickTargetReleased": true,
+    "sourceWorkerAndGpuCleanup": true,
+    "pathFreeHostBridge": true,
+    "spatialIndependent": true,
+    "sampleNotTrackedOrBundled": true,
+    "coordinateReferenceHeld": true,
+    "levelOfDetailHeld": true,
+    "formatAdmissionHeld": true
+  },
+  "limitations": [
+    "point:n is a derived range-order identity scoped to one exact source revision and range digest, not source-declared BIM semantics",
+    "filtered E57 records are identified by rendered range order and do not preserve an original invalid-record index",
+    "selected coordinates do not establish CRS or surveyed datum authority",
+    "point hierarchy and level-of-detail streaming remain outside this gate",
+    "SwiftShader exercises actual VS Code WebGL2 APIs but does not claim a physical GPU",
+    "public samples stay in ignored digest caches and are not redistributed or bundled",
+    "point selection alone does not admit LAS, LAZ, E57, or pointCloudCodec"
+  ]
+}

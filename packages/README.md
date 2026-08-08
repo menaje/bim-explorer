@@ -80,8 +80,9 @@ mesh reference일 뿐 BIM semantics, write 또는 round-trip authority가
 [`las-laz-point-source`](las-laz-point-source/README.md)는 LAS 1.0–1.3의
 point-format 2/3과 LASzip LAZ를 bounded Float64-origin/relative-Float32/RGBA8
 range로 투영합니다. exact `laz-perf@0.0.6`은 Browser 전용 Worker에서
-실행하며 CRS, point identity/picking·LOD, semantics, write 또는 round-trip
-authority를 제공하지 않습니다.
+실행하며 CRS, source-declared point identity·LOD, semantics, write 또는
+round-trip authority를 제공하지 않습니다. 제품 renderer의 `point:n` 선택은
+exact source revision과 range digest 안의 파생 순서 identity입니다.
 
 [`e57-point-source`](e57-point-source/README.md)는 E57 1.0 단일 scan의
 Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를
@@ -97,4 +98,6 @@ coordinate authority는 admission하지 않습니다. 별도 qualification-only
 경로는 cache-only 공개 sample의 다섯 scan·1,213,990개 record, structured
 row/column stream과 네 explicit pose/한 identity pose를 독립 기준과 동일하게
 해제·투영했습니다. multiple-scan Browser/VS Code 제품 open, CRS/surveyed datum,
-extension과 format admission은 계속 held입니다.
+extension과 format admission은 계속 held입니다. 파생 point 선택은 별도 actual
+Browser·VS Code·clean VSIX Gate를 통과했지만 E57 native identity나 coordinate
+authority를 만들지 않습니다.

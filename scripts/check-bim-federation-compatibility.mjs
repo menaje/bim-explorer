@@ -716,7 +716,7 @@ export function validateBimFederationCompatibility(
     manifest.schema !==
       "bim-explorer-federation-compatibility/1" ||
     manifest.status !== "experimental" ||
-    manifest.asOf !== "2026-08-08" ||
+    manifest.asOf !== "2026-08-09" ||
     !equalJson(manifest.contract, CONTRACT)
   ) {
     throw new Error(

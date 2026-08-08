@@ -11,6 +11,10 @@ export const BIM_POINT_RENDERER_RECEIPT =
   "bim-explorer-bounded-point-renderer-receipt/0.1";
 export const BIM_POINT_RENDERER_RELEASE_RECEIPT =
   "bim-explorer-bounded-point-renderer-release-receipt/0.1";
+export const BIM_POINT_RENDERER_PICK_RECEIPT =
+  "bim-explorer-bounded-point-renderer-pick-receipt/0.1";
+export const BIM_POINT_IDENTITY_AUTHORITY =
+  "derived-point-range-order";
 
 const MAGIC = "BEXPTS01";
 const HEADER_BYTES = 48;
@@ -473,6 +477,71 @@ function validateBackendRelease(value, expectedBytes) {
   return Object.freeze({ ...receipt });
 }
 
+function validateBackendPick(value, {
+  pointCount,
+  x,
+  y,
+}) {
+  const result = plainRecord(
+    value,
+    "point renderer backend pick result",
+  );
+  const receipt = plainRecord(
+    result.receipt,
+    "point renderer backend pick receipt",
+  );
+  nonEmptyString(
+    receipt.backendId,
+    "point renderer backend pick receipt.backendId",
+  );
+  nonEmptyString(
+    receipt.frameId,
+    "point renderer backend pick receipt.frameId",
+  );
+  const hit = receipt.hit === true;
+  const pointIndex = hit ? receipt.pointIndex : null;
+  const worldPosition = hit
+    ? finiteVector(
+        receipt.worldPosition,
+        3,
+        "point renderer backend pick worldPosition",
+      )
+    : null;
+  if (
+    typeof receipt.actualGpu !== "boolean" ||
+    typeof receipt.hit !== "boolean" ||
+    receipt.x !== x ||
+    receipt.y !== y ||
+    receipt.drawCalls !== 1 ||
+    receipt.temporaryReleased !== true ||
+    !Number.isSafeInteger(receipt.temporaryTargetBytes) ||
+    receipt.temporaryTargetBytes <= 0 ||
+    receipt.glError !== 0 ||
+    (
+      hit &&
+      (
+        !Number.isSafeInteger(pointIndex) ||
+        pointIndex < 0 ||
+        pointIndex >= pointCount
+      )
+    ) ||
+    (
+      !hit &&
+      (
+        receipt.pointIndex !== null ||
+        receipt.worldPosition !== null
+      )
+    )
+  ) {
+    throw new Error("point renderer backend pick receipt is invalid");
+  }
+  return Object.freeze({
+    ...receipt,
+    pointIndex,
+    worldPosition,
+  });
+}
+
 export class HeadlessPointCloudBackend {
   #active = null;
   #disposed = false;
@@ -568,6 +637,8 @@ export class BoundedPointCloudRenderer {
   #disposed = false;
   #mounting = false;
   #mounts = 0;
+  #picking = false;
+  #picks = 0;
   #pointSize;
   #unmounts = 0;
 
@@ -601,6 +672,8 @@ export class BoundedPointCloudRenderer {
       disposed: this.#disposed,
       mounting: this.#mounting,
       mounts: this.#mounts,
+      picking: this.#picking,
+      picks: this.#picks,
       unmounts: this.#unmounts,
     });
   }
@@ -614,7 +687,7 @@ export class BoundedPointCloudRenderer {
     if (this.#disposed) {
       throw invalidState("bounded point renderer is disposed");
     }
-    if (this.#mounting || this.#active !== null) {
+    if (this.#mounting || this.#picking || this.#active !== null) {
       throw invalidState("bounded point renderer is already active");
     }
     const source = validatedSource(sourceValue);
@@ -679,6 +752,11 @@ export class BoundedPointCloudRenderer {
         backendHandleId,
         gpuBytes: metrics.gpuBytes,
         points: metrics.points,
+        range: Object.freeze({
+          handleId: range.handleId,
+          mediaType: range.mediaType,
+          sha256,
+        }),
         source,
       };
       return Object.freeze({
@@ -719,6 +797,77 @@ export class BoundedPointCloudRenderer {
     }
   }
 
+  async pick({ x, y, signal } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded point renderer is disposed");
+    }
+    if (this.#mounting || this.#picking) {
+      throw invalidState(
+        "bounded point renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded point renderer is not mounted");
+    }
+    if (typeof this.#backend.pick !== "function") {
+      throw new DOMException(
+        "point renderer backend does not support picking",
+        "NotSupportedError",
+      );
+    }
+    if (
+      !Number.isSafeInteger(x) ||
+      !Number.isSafeInteger(y) ||
+      x < 0 ||
+      y < 0
+    ) {
+      throw new TypeError(
+        "point renderer pick coordinates must be non-negative integers",
+      );
+    }
+    const active = this.#active;
+    this.#picking = true;
+    try {
+      aborted(signal);
+      const result = await this.#backend.pick(
+        active.backendHandleId,
+        { x, y },
+        { signal },
+      );
+      const backend = validateBackendPick(result, {
+        pointCount: active.points,
+        x,
+        y,
+      });
+      this.#picks += 1;
+      const identity = backend.hit
+        ? Object.freeze({
+            authority: BIM_POINT_IDENTITY_AUTHORITY,
+            nativeId: `point:${backend.pointIndex}`,
+            pointIndex: backend.pointIndex,
+            rangeHandleId: active.range.handleId,
+            rangeSha256: active.range.sha256,
+          })
+        : null;
+      return Object.freeze({
+        schema: BIM_POINT_RENDERER_PICK_RECEIPT,
+        status: backend.hit ? "hit" : "miss",
+        source: active.source,
+        range: active.range,
+        coordinates: Object.freeze({
+          origin: "canvas-top-left",
+          x,
+          y,
+        }),
+        identity,
+        worldPosition: backend.worldPosition,
+        backend,
+      });
+    } finally {
+      this.#picking = false;
+    }
+  }
+
   async #releaseActive() {
     if (this.#active === null) {
       return null;
@@ -741,8 +890,8 @@ export class BoundedPointCloudRenderer {
   }
 
   async unmount() {
-    if (this.#mounting) {
-      throw invalidState("bounded point renderer mount is in progress");
+    if (this.#mounting || this.#picking) {
+      throw invalidState("bounded point renderer operation is in progress");
     }
     return this.#releaseActive();
   }
@@ -751,8 +900,8 @@ export class BoundedPointCloudRenderer {
     if (this.#disposed) {
       return false;
     }
-    if (this.#mounting) {
-      throw invalidState("bounded point renderer mount is in progress");
+    if (this.#mounting || this.#picking) {
+      throw invalidState("bounded point renderer operation is in progress");
     }
     await this.#releaseActive();
     if (await this.#backend.dispose() !== true) {

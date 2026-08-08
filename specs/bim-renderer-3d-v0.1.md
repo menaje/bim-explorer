@@ -6,7 +6,7 @@ authority:
   - geometry-staging-limits
   - point-range-staging-limits
   - renderer-resource-receipt
-last_reviewed: 2026-08-08
+last_reviewed: 2026-08-09
 ---
 
 # BIM renderer 3D v0.1
@@ -82,14 +82,26 @@ zero-fill하고, invalid backend receipt도 반환 handle을 즉시 unmount합�
 `bim-explorer-bounded-point-renderer-release-receipt/0.1`은 uploaded bytes와
 point count의 exact release 및 terminal active byte/range 0을 요구합니다.
 
+`bim-explorer-bounded-point-renderer-pick-receipt/0.1`은 canvas top-left
+좌표, exact source fingerprint/revision, range handle/SHA-256와 선택 결과를
+묶습니다. WebGL2 pick shader는 `gl_VertexID + 1`을 RGBA8 32-bit 값으로
+기록하고 zero를 miss로 예약합니다. depth buffer가 겹친 point의 nearest
+fragment를 결정하며 hit이면 해당 GPU buffer의 relative XYZ 12 bytes만 읽어
+Float64 origin과 다시 합칩니다. identity는 `derived-point-range-order`의
+`point:n`이며 exact source revision과 range digest 안에서만 유효합니다. 이는
+source-declared record identity, BIM semantics 또는 E57 invalid-filter 이전
+index가 아닙니다. pick target은 완료 전에 즉시 회수해야 합니다.
+
 WebGL2 point backend는 Float64 origin을 camera target에서 빼고 relative
 Float32 position만 GPU에 upload합니다. RGBA8 color를 normalized attribute로
 읽고 circular point sprite를 `drawArrays(POINTS)`로 그립니다. cache-only
 LAS/LAZ parity sample은 actual Chrome에서 10,201 points, 163,216-byte upload,
 한 draw와 40,471 non-background pixels를 재현하고 buffer/program/VAO를 전량
 회수했습니다. 이는 source-neutral primitive qualification이며 LAS/LAZ parser
-packaging, CRS/datum, per-point identity/pick, LOD streaming, 제품 file-open이나
-format admission을 승인하지 않습니다.
+packaging이나 format admission을 승인하지 않습니다. 별도 actual Browser,
+staged VS Code와 clean-installed VSIX Gate는 32-bit derived point pick을
+통과했지만 CRS/datum, source-declared point semantics와 LOD streaming은
+계속 renderer 밖입니다.
 
 ## Mount plan과 identity
 

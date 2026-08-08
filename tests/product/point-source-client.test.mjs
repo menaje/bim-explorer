@@ -88,7 +88,7 @@ function success(request) {
         format: request.options.format,
         pointFormat: request.options.format === "e57"
           ? "cartesian-xyz-rgb"
-          : "cartesian-xyz-rgb16",
+          : 3,
         revisionId: "source-snapshot:fake",
         semanticAuthority: false,
         sourceRole: "derived-or-reference-points",

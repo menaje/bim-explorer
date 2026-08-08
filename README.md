@@ -230,8 +230,10 @@ pixels를 재현하고 source buffer, Worker, CPU range와 GPU 자원을 전량
 회수했습니다. exact `laz-perf@0.0.6`은 전용 product Worker에서 실행하며,
 VSIX의 generated glue는 Webview CSP에 `unsafe-eval`을 추가하지 않도록 dynamic
 Function construction을 동등한 closure로 치환합니다. E57 local scan pose
-projection과 multiple-scan 제품 open은 통과했지만 CRS/surveyed datum,
-extension, point identity/picking·LOD와 format admission은 계속 held입니다.
+projection과 multiple-scan 제품 open, E57/LAS/LAZ의 source-revision/range-digest
+scoped 파생 point selection은 Browser, staged VS Code 및 clean-installed VSIX에서
+통과했습니다. CRS/surveyed datum, E57 extension, source-declared point
+semantics·LOD와 format admission은 계속 held입니다.
 
 ## 비목표
 

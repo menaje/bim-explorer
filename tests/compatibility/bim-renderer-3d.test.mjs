@@ -68,6 +68,14 @@ async function fixtures() {
       manifest.evidence.browserPointPrimitive,
       "utf8",
     )),
+    browserPointPicking: JSON.parse(await readFile(
+      manifest.evidence.browserPointPicking,
+      "utf8",
+    )),
+    vscodePointPicking: JSON.parse(await readFile(
+      manifest.evidence.vscodePointPicking,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -106,7 +114,7 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.passedGates, 24);
+  assert.equal(result.passedGates, 25);
   assert.equal(result.heldGates, 0);
 });
 

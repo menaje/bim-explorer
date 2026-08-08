@@ -622,6 +622,35 @@ test("extension diagnostics preserve bounded point evidence only", () => {
       pointSize: 3,
       rangeSha256: "d".repeat(64),
     },
+    pointSelection: {
+      schema:
+        "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
+      status: "hit",
+      coordinates: {
+        origin: "canvas-top-left",
+        x: 320,
+        y: 240,
+      },
+      identity: {
+        authority: "derived-point-range-order",
+        nativeId: "point:42",
+        pointIndex: 42,
+        rangeHandleId: "range:laz:points:test",
+        rangeSha256: "d".repeat(64),
+      },
+      worldPosition: [1, 2, 3],
+      backend: {
+        actualGpu: true,
+        backendId: "webgl2-points",
+        drawCalls: 1,
+        glError: 0,
+        pointIndex: 42,
+        temporaryReleased: true,
+        temporaryTargetBytes: 1_843_200,
+        x: 320,
+        y: 240,
+      },
+    },
     lifecycle: {
       cpuPointRangeCleared: true,
       sourceBufferCleared: true,
@@ -640,6 +669,9 @@ test("extension diagnostics preserve bounded point evidence only", () => {
     "spherical",
   );
   assert.equal(report.productLifecycle.cpuPointRangeCleared, true);
+  assert.equal(report.pointSelection.identity.nativeId, "point:42");
+  assert.deepEqual(report.pointSelection.worldPosition, [1, 2, 3]);
+  assert.equal(report.pointSelection.backend.temporaryReleased, true);
   assert.equal(JSON.stringify(report).includes("/private"), false);
 });
 

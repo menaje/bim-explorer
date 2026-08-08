@@ -307,6 +307,24 @@ function assertions(
     /^node:\d+\/mesh:\d+\/primitive:\d+$/u.test(
       interaction.selectedNativeId,
     );
+  const selectedPointIdentity =
+    typeof interaction.selectedNativeId === "string" &&
+    /^point:\d+$/u.test(interaction.selectedNativeId) &&
+    Number.isSafeInteger(
+      interaction.pointSelection?.identity?.pointIndex,
+    ) &&
+    interaction.pointSelection.identity.authority ===
+      "derived-point-range-order" &&
+    interaction.pointSelection.identity.nativeId ===
+      interaction.selectedNativeId &&
+    interaction.pointSelection.identity.rangeSha256 ===
+      opened.pointCloud?.rangeSha256 &&
+    interaction.pointSelection.status === "hit" &&
+    interaction.pointSelection.coordinates?.origin ===
+      "canvas-top-left" &&
+    Array.isArray(interaction.pointSelection.worldPosition) &&
+    interaction.pointSelection.worldPosition.length === 3 &&
+    interaction.pointSelection.worldPosition.every(Number.isFinite);
   return Object.freeze({
     actualBrowserWebGl2:
       opened.renderer.actualGpu === true &&
@@ -343,9 +361,10 @@ function assertions(
     ...(pointCloud
       ? {
           pointCloudAnd3d:
-            interaction.pickDisabled === true &&
+            interaction.pickDisabled === false &&
             interaction.searchDisabled === true &&
-            interaction.selectionOrigin === "not applicable" &&
+            interaction.selectionOrigin === "3d" &&
+            selectedPointIdentity &&
             opened.pointCloud?.pointPrimitive === "POINTS" &&
             opened.pointCloud.coordinateReferenceStatus ===
               "unqualified" &&
@@ -796,7 +815,9 @@ export async function qualifyBimProductShell({
       `(() => {
         const report = globalThis.__bimExplorerProductReport;
         if (report?.status === "failed") {
-          throw new Error(report.diagnostic?.code ?? "open failed");
+          throw new Error(JSON.stringify(
+            report.diagnostic ?? { code: "open failed" }
+          ));
         }
         return report?.status === "ready"
           ? JSON.parse(JSON.stringify(report))
@@ -829,6 +850,19 @@ export async function qualifyBimProductShell({
         client,
         `document.querySelector("#selection-origin").textContent === "3d"`,
       );
+    } else {
+      await client.evaluate(
+        `document.querySelector("#pick-model").click(); true`,
+      );
+      await poll(
+        client,
+        `(() => {
+          const report = globalThis.__bimExplorerProductReport;
+          return report?.pointSelection?.status === "hit" &&
+            document.querySelector("#selection-origin")
+              .textContent === "3d";
+        })()`,
+      );
     }
     const interaction = await client.evaluate(`(() => {
       const report = globalThis.__bimExplorerProductReport;
@@ -849,9 +883,15 @@ export async function qualifyBimProductShell({
           )?.dataset.expressId
         ) || null,
         selectedNativeId:
+          report?.pointSelection?.identity?.nativeId ??
           document.querySelector(
             "#model-tree [aria-selected=true]"
-          )?.dataset.nativeId || null,
+          )?.dataset.nativeId ?? null,
+        pointSelection:
+          report?.pointSelection === null ||
+          report?.pointSelection === undefined
+            ? null
+            : JSON.parse(JSON.stringify(report.pointSelection)),
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
         pickDisabled:
@@ -941,6 +981,7 @@ export async function qualifyBimProductShell({
           : pointCloud
             ? {
                 pointCloud: opened.pointCloud,
+                pointSelection: interaction.pointSelection,
                 productLifecycle: opened.lifecycle,
               }
             : { reference: opened.reference }),
@@ -950,6 +991,8 @@ export async function qualifyBimProductShell({
             interaction.selectedExpressId,
           selectedNativeId:
             interaction.selectedNativeId,
+          pointIndex:
+            interaction.pointSelection?.identity?.pointIndex ?? null,
           selectionOrigin:
             interaction.selectionOrigin,
           pickDisabled: interaction.pickDisabled,

@@ -80,6 +80,8 @@ admission을 승인하지 않습니다.
 실제 [`bim-explorer-web`](bim-explorer-web/README.md)은 이 qualified range를
 제품 source 경계로 채택해 bounded E57/LAS/LAZ local file input을 전용 Worker에서
 처리합니다. Browser, staged VS Code와 clean-installed VSIX 제품 open은
-통과했지만 CRS, point identity/picking·LOD와 format admission은 계속 별도
-Gate입니다. E57은 single-scan Cartesian XYZ/RGB default-BitPack profile로
-한정하며 scan pose, surveyed datum과 broader profile도 승인하지 않습니다.
+통과했습니다. 같은 세 경로의 32-bit point pick은 exact source revision과
+range digest에 묶인 파생 `point:n` identity로 통과했지만, CRS/surveyed datum,
+source-declared semantics·LOD와 format admission은 계속 별도 Gate입니다.
+E57은 bounded Cartesian/spherical 및 five-scan pose-applied profile만
+qualification했으며 extension profile은 승인하지 않습니다.

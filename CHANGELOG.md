@@ -24,6 +24,9 @@
 - add a source-neutral Float64-origin point range and bounded headless/WebGL2
   `POINTS` renderer, qualifying 10,201 LAS/LAZ-parity points and exact cleanup
   in Chrome without admitting a point-cloud format;
+- add a 32-bit WebGL2 point pick pass and source-revision/range-digest scoped
+  derived `point:n` selection, then qualify Browser, staged VS Code and a
+  clean-installed VSIX without claiming source semantics, CRS or LOD;
 - add a bounded LAS/LAZ product source and one-shot decoder Worker, then open
   both paired files through the actual Browser local-file product with exact
   point-range/visual parity and deterministic source/Worker/CPU/GPU cleanup;

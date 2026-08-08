@@ -23,6 +23,8 @@ const [
   lasLazPointRendererEvidence,
   lasLazBrowserProductEvidence,
   lasLazVscodeProductEvidence,
+  pointCloudBrowserPickingEvidence,
+  pointCloudVscodePickingEvidence,
 ] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
@@ -103,6 +105,16 @@ const [
       "las-laz-vscode-product-2026-08-08.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "point-cloud-browser-picking-2026-08-09.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "point-cloud-vscode-picking-2026-08-09.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
@@ -124,10 +136,12 @@ test("reference sample probes remain separate from format admission", () => {
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
       lasLazVscodeProductEvidence,
+      pointCloudBrowserPickingEvidence,
+      pointCloudVscodePickingEvidence,
     ),
     {
       status: "pre-admission",
-      passedGates: 33,
+      passedGates: 35,
       heldGates: 4,
       sampleFormats: 3,
     },
@@ -155,6 +169,8 @@ test("an E57 product open cannot claim format admission", () => {
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
       lasLazVscodeProductEvidence,
+      pointCloudBrowserPickingEvidence,
+      pointCloudVscodePickingEvidence,
     ),
     /must be held/u,
   );
@@ -181,6 +197,8 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       lasLazPointRendererEvidence,
       lasLazBrowserProductEvidence,
       lasLazVscodeProductEvidence,
+      pointCloudBrowserPickingEvidence,
+      pointCloudVscodePickingEvidence,
     ),
     /must be held/u,
   );

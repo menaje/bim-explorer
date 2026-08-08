@@ -6,7 +6,7 @@ authority:
   - adapter-process-boundary
   - host-runtime-boundary
   - data-lifecycle
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-09
 ---
 
 # 시스템 아키텍처
@@ -314,8 +314,10 @@ source/Worker/CPU/GPU cleanup도 통과했습니다. VS Code Webview는 point Wo
 strict-CSP `laz-perf` glue와 WASM을 bounded read한 뒤 각각 `blob:` capability로
 주입합니다. staged Custom Editor와 clean-installed VSIX도 같은 projection과
 cleanup을 통과했으며 Webview CSP는 `unsafe-eval`을 허용하지 않습니다. 샘플은
-qualification-only이며 CRS, point identity/picking·LOD와 format admission이
-없으므로 federation source admission에는 영향을 주지 않습니다. E57도
+qualification-only입니다. 별도 Browser, staged VS Code와 clean-installed VSIX
+Gate는 exact source revision/range digest에 묶인 32-bit derived point pick과
+선택 좌표 readback을 통과했습니다. CRS, source-declared semantics·LOD와 format
+admission은 없으므로 federation source admission에는 영향을 주지 않습니다. E57도
 single-scan Cartesian XYZ/optional RGB default-BitPack profile을 같은 bounded
 point Worker와 renderer로 열며, Browser·staged VS Code·clean-installed VSIX에서
 7,680-point projection과 cleanup을 통과했습니다. 같은 Worker decoder는 별도

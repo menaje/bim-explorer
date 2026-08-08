@@ -6,8 +6,10 @@ Custom Editor host입니다.
 IFC는 `BimModelSource`와 semantic explorer를 사용하고, glTF/GLB는
 source-native reference mesh explorer를 사용합니다. LAS/LAZ는 8 MiB·
 500,000-point 한도, E57 multiple-scan은 최대 32 MiB·2,000,000-point의 명시적
-상한 안에서 source-neutral point range로 열며 CRS, point identity, picking,
-LOD 또는 BIM semantic authority를 주장하지 않습니다.
+상한 안에서 source-neutral point range로 엽니다. `point:n` 선택은 exact source
+revision과 range digest 안의 파생 순서 identity일 뿐이며 CRS, surveyed datum,
+source-declared point semantics, LOD 또는 BIM semantic authority를 주장하지
+않습니다.
 
 - source URI는 extension host 안에서만 사용하며 webview message와
   diagnostics에 넣지 않습니다.
@@ -59,3 +61,7 @@ cache-only E57의 다섯 scan과 1,213,990 points를 staged Custom Editor 및
 clean-installed VSIX에서 동일한 pose-applied point range로 엽니다. 네 explicit
 pose와 한 implicit identity pose는 local registration으로만 취급하며, CRS나
 surveyed datum authority 및 E57 format admission으로 승격하지 않습니다.
+
+`npm run qualify:point-cloud:picking:vscode`는 E57/LAS/LAZ point selection을
+staged VS Code 1.131.0과 빈 profile에 clean-installed VSIX에서 동일하게
+재현하고 path-free bridge와 transient pick target cleanup을 검증합니다.

@@ -240,7 +240,7 @@ function controls(state) {
   const pointCloud = active?.kind === "point-cloud";
   elements.cancel.disabled = !opening;
   elements.close.disabled = !ready;
-  elements.pick.disabled = !ready || pointCloud;
+  elements.pick.disabled = !ready;
   elements.showAll.disabled = !ready || pointCloud;
   elements.searchInput.disabled = !ready || pointCloud;
   elements.retry.disabled =
@@ -456,13 +456,15 @@ function renderInspector(state) {
 function renderPointCloud() {
   const artifact = active.opened.artifact;
   const mount = active.mount;
+  const selection = active.selection;
   clear(elements.tree);
   clear(elements.results);
   clear(elements.inspector);
   elements.treeTitle.textContent = "Point source";
   elements.treeCount.textContent = "1";
   elements.treeOmission.textContent =
-    "Per-point identity and hierarchy are not available.";
+    "Point identity is scoped to this exact source revision and " +
+    "derived range; hierarchy is not available.";
   elements.searchLabel.textContent =
     "Point metadata search is not available";
   elements.searchOmission.textContent =
@@ -470,9 +472,11 @@ function renderPointCloud() {
   elements.moreResults.disabled = true;
   elements.isolateResults.disabled = true;
   elements.inspectorTitle.textContent = "Point cloud profile";
-  elements.selectionOrigin.textContent = "not applicable";
+  elements.selectionOrigin.textContent =
+    selection === null ? "none" : "3d";
   elements.subtitle.textContent =
-    "Open bounded LAS/LAZ point observations locally.";
+    "Open bounded E57, LAS, or LAZ point observations locally.";
+  elements.pick.textContent = "Pick visible point";
   const summary = document.createElement("dl");
   for (const [label, value] of [
     ["Format", artifact.source.format.toUpperCase()],
@@ -489,10 +493,28 @@ function renderPointCloud() {
   }
   elements.inspector.append(
     summary,
+    ...(selection === null
+      ? []
+      : [
+          text("h3", "Selected point"),
+          text(
+            "p",
+            `${selection.identity.nativeId} · ` +
+              selection.worldPosition
+                .map((value) => value.toPrecision(12))
+                .join(", "),
+          ),
+          text(
+            "p",
+            "Derived range-order identity; coordinates retain the " +
+              "source values but have no qualified CRS authority.",
+            "limitation",
+          ),
+        ]),
     text(
       "p",
-      "Read-only display only; point picking, identity, LOD and " +
-        "surveyed coordinate claims are outside this profile.",
+      "Read-only display and point selection only; LOD and surveyed " +
+        "coordinate claims are outside this profile.",
       "limitation",
     ),
   );
@@ -507,6 +529,7 @@ function render() {
     return;
   }
   const state = active.explorer.state;
+  elements.pick.textContent = "Pick center";
   const reference = active.format !== "ifc";
   elements.treeTitle.textContent =
     reference ? "Reference nodes" : "Model tree";
@@ -1067,7 +1090,9 @@ async function openPointBytes(bytesValue, {
       opened,
       origin,
       pointRangeCleared,
+      report: null,
       renderer,
+      selection: null,
     };
     if (openingClient === sourceClient) {
       openingClient = null;
@@ -1100,7 +1125,7 @@ async function openPointBytes(bytesValue, {
       `Ready: local ${format.toUpperCase()} points are open read-only.`,
     );
     controls("ready");
-    publishReport("ready", {
+    active.report = publishReport("ready", {
       source: {
         byteLength: artifact.source.byteLength,
         coordinateReferenceStatus:
@@ -1175,6 +1200,7 @@ async function openPointBytes(bytesValue, {
         workerTerminatedAfterTransfer:
           opened.cleanup.workerTerminatedAfterTransfer,
       },
+      pointSelection: null,
       priorCleanup,
     });
     return active;
@@ -1658,6 +1684,18 @@ elements.showAll.addEventListener("click", async () => {
 });
 
 async function pickVisible() {
+  if (active.kind === "point-cloud") {
+    const coordinates =
+      active.mount.backend.suggestedPickCoordinates;
+    if (coordinates === null) {
+      throw new Error("no visible point was available for picking");
+    }
+    const receipt = await active.renderer.pick(coordinates);
+    if (receipt.status !== "hit") {
+      throw new Error("the visible point pick did not resolve");
+    }
+    return receipt;
+  }
   const coordinates = [
     [400, 225],
     [400, 150],
@@ -1674,14 +1712,32 @@ async function pickVisible() {
   throw new Error("no visible BIM object was picked");
 }
 
-elements.pick.addEventListener("click", async () => {
-  if (active === null || active.kind === "point-cloud") {
-    return;
+async function selectVisible() {
+  if (active === null) {
+    return null;
   }
   const pick = await pickVisible();
+  if (active.kind === "point-cloud") {
+    active.selection = pick;
+    render();
+    setStatus(
+      "ready",
+      `Selected ${pick.identity.nativeId} in the active source revision.`,
+    );
+    active.report = publishReport("ready", {
+      ...active.report,
+      pointSelection: pick,
+    });
+    return pick;
+  }
   await active.explorer.selectPick(pick);
   await applySelectionView();
   render();
+  return pick;
+}
+
+elements.pick.addEventListener("click", async () => {
+  await selectVisible();
 });
 
 elements.tree.addEventListener("keydown", async (event) => {
@@ -1803,6 +1859,8 @@ globalThis.addEventListener("message", async (event) => {
       behavior: "smooth",
       block: "nearest",
     });
+  } else if (message.type === "pick-visible-point") {
+    await selectVisible();
   } else if (message.type === "dispose") {
     const cleanup = await disposeActive("editor-close");
     publishReport("disposed", { cleanup });
