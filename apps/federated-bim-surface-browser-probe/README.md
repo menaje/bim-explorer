@@ -1,7 +1,7 @@
 # Federated BIM Surface Browser Probe
 
-실제 headless Chrome WebGL2에서 내부 BIM Surface v0.2를 여는 qualification
-entrypoint입니다.
+실제 headless Chrome WebGL2에서 private federated BIM Surface 0.2.0 candidate
+runtime을 여는 qualification entrypoint입니다.
 
 - generated IFC semantic base, generated GLB geometric reference와 generated
   GLB consumer overlay를 서로 다른 source slot으로 엽니다.
@@ -14,3 +14,5 @@ entrypoint입니다.
 
 fixture와 Browser bundle은 qualification 동안 loopback server에서만 제공하며
 release에 포함하지 않습니다.
+이 probe는 public package publication이나 Spatial consumer support를 승인하지
+않습니다.

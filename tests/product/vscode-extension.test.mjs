@@ -1002,6 +1002,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/bim-reference-anchor/src/index.mjs",
       "packages/bim-surface-hit/src/index.mjs",
       "packages/federated-bim-surface/src/index.mjs",
+      "packages/federated-bim-surface/runtime/index.mjs",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",

@@ -1,21 +1,11 @@
 import {
   cameraViewProjectionMatrix,
-} from "../../packages/bim-renderer-3d/src/camera.mjs";
-import {
-  createBounded3dRenderer,
-} from "../../packages/bim-renderer-3d/src/index.mjs";
-import {
-  createWebGl2Backend,
-} from "../../packages/bim-renderer-3d/src/webgl2-backend.mjs";
-import {
-  createExplicitAlignment,
-} from "../../packages/bim-federation/src/index.mjs";
-import {
-  createFederatedBimSurface,
-} from "../../packages/federated-bim-surface/src/index.mjs";
-import {
   createBimSurfaceHitRenderer,
-} from "../../packages/bim-surface-hit/src/index.mjs";
+  createBounded3dRenderer,
+  createExplicitAlignment,
+  createFederatedBimSurface,
+  createWebGl2Backend,
+} from "../../packages/federated-bim-surface/runtime/index.mjs";
 import {
   createBimProductSourceWorkerClient,
 } from "../bim-explorer-web/worker-source-client.mjs";

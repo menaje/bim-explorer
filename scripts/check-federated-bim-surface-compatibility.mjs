@@ -8,10 +8,13 @@ import {
 import {
   validateFederatedBimSurfaceVscodeQualification,
 } from "./qualify-federated-bim-surface-vscode.mjs";
+import {
+  validateFederatedBimSurfacePackageQualification,
+} from "./qualify-federated-bim-surface-package.mjs";
 
 const CONTRACT = Object.freeze({
   package: "@bim-explorer/federated-bim-surface",
-  packageVersion: "0.0.0",
+  packageVersion: "0.2.0",
   surface: "bim-explorer-bim-surface/0.2",
   receipt: "bim-explorer-bim-surface-receipt/0.2",
   refresh: "bim-explorer-bim-surface-refresh/0.2",
@@ -46,6 +49,7 @@ const TRUE_GATES = Object.freeze([
   "actualBrowserSurfaceNormal",
   "actualBrowserAnchor",
   "actualVscodeSurface",
+  "reproduciblePackageCandidate",
 ]);
 const HELD_GATES = Object.freeze([
   "actualSpatialConsumer",
@@ -67,6 +71,9 @@ const BROWSER_EVIDENCE_PATH =
 const VSCODE_EVIDENCE_PATH =
   "compatibility/evidence/" +
   "federated-bim-surface-vscode-2026-08-09.json";
+const PACKAGE_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "federated-bim-surface-package-2026-08-09.json";
 const BROWSER_CONTRACT = Object.freeze({
   surface: CONTRACT.surface,
   surfaceHit: "bim-explorer-bim-surface-hit/0.1",
@@ -662,6 +669,7 @@ export function validateFederatedBimSurfaceCompatibility(
   evidence,
   browserEvidence,
   vscodeEvidence,
+  packageEvidence,
 ) {
   plainRecord(manifest, "federated BIM Surface manifest");
   if (
@@ -698,7 +706,9 @@ export function validateFederatedBimSurfaceCompatibility(
       BROWSER_EVIDENCE_PATH ||
     manifest.evidence.actualVscode !==
       VSCODE_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 3 ||
+    manifest.evidence.packageCandidate !==
+      PACKAGE_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence).length !== 4 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -722,6 +732,7 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.claimHeadlessFoundation !== true ||
     policy.claimBrowserAnchor !== true ||
     policy.claimVscodeSurface !== true ||
+    policy.claimReproduciblePackageCandidate !== true ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimPublicV02Package !== false ||
     policy.claimProductionSupport !== false
@@ -735,6 +746,8 @@ export function validateFederatedBimSurfaceCompatibility(
     validateFederatedBimSurfaceBrowserEvidence(browserEvidence);
   const vscode =
     validateFederatedBimSurfaceVscodeQualification(vscodeEvidence);
+  const packageCandidate =
+    validateFederatedBimSurfacePackageQualification(packageEvidence);
   return Object.freeze({
     status: manifest.status,
     passedGates: TRUE_GATES.length,
@@ -744,6 +757,8 @@ export function validateFederatedBimSurfaceCompatibility(
     surfaceHits: browser.surfaceHits,
     vscodeAnchors:
       vscode.surfaces.staged.observation.qualified.anchors.length,
+    packageVersion: packageCandidate.version,
+    packageBytes: packageCandidate.byteLength,
   });
 }
 
@@ -753,6 +768,7 @@ async function main() {
     evidence,
     browserEvidence,
     vscodeEvidence,
+    packageEvidence,
   ] = await Promise.all([
     readFile(
       "compatibility/federated-bim-surface.json",
@@ -761,19 +777,21 @@ async function main() {
     readFile(HEADLESS_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(BROWSER_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(VSCODE_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(PACKAGE_EVIDENCE_PATH, "utf8").then(JSON.parse),
   ]);
   const result = validateFederatedBimSurfaceCompatibility(
     manifest,
     evidence,
     browserEvidence,
     vscodeEvidence,
+    packageEvidence,
   );
   process.stdout.write(
     `Federated BIM Surface compatibility check passed: ` +
       `${result.status}, ${result.passedGates} passed, ` +
       `${result.heldGates} held, ${result.sourceCount} sources and ` +
       `${result.anchors} Browser / ${result.vscodeAnchors} VS Code ` +
-      `anchors\n`,
+      `anchors, ${result.packageBytes}-byte package candidate\n`,
   );
 }
 

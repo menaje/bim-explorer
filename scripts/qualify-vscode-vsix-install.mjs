@@ -275,6 +275,7 @@ export async function qualifyVscodeVsixInstall({
       "packages/bim-reference-anchor/src/index.mjs",
       "packages/bim-surface-hit/src/index.mjs",
       "packages/federated-bim-surface/src/index.mjs",
+      "packages/federated-bim-surface/runtime/index.mjs",
       "LICENSES/e57-rs-MIT.txt",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",

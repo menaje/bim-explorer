@@ -65,6 +65,10 @@
 - qualify three exact source-local WebGL2 hits, normals and derived triangle
   anchors in staged VS Code and a clean-installed VSIX, including replay,
   session, Worker and GPU cleanup without changing public Surface v0.1;
+- build a private zero-runtime-dependency federated BIM Surface 0.2.0 package
+  candidate, consume its exact runtime in Browser and VS Code, then prove two
+  byte-identical packs plus offline clean-install composition and cleanup
+  without authorizing a public tag or release;
 - add a privacy-safe reference-format intake/triage contract and public issue
   form without promoting any held codec, SDK or authority Gate;
 - keep E57 and LAS/LAZ coordinate/format admission, plus 3D Tiles and RVT/DGN,

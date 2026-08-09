@@ -70,8 +70,9 @@ Chrome WebGL2에서 하나의 v0.2 Surface로 엽니다. source-scoped semantic�
 selection을 유지하면서 GPU depth와 exact geometry로 세 source의 winding
 normal·triangle-barycentric locator·source-local anchor를 재현하고 replay
 range, 임시 CPU geometry, transferred session과 GPU cleanup을 검증합니다.
-VS Code, 실제 Spatial consumer, native face·CRS 또는 physical GPU authority는
-승인하지 않습니다.
+Browser와 VS Code는 private 0.2.0 candidate runtime을 공유합니다. actual
+Spatial consumer, public v0.2 release, native face·CRS 또는 physical GPU
+authority는 승인하지 않습니다.
 
 [`las-laz-worker-probe`](las-laz-worker-probe/README.md)는 cache-only 공개
 LAZ를 exact `laz-perf@0.0.6` classic Web Worker에서 해제합니다. 실제 Chrome

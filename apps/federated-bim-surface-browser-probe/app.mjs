@@ -1,28 +1,14 @@
 import {
   BIM_SOURCE_PROTOCOL_VERSION,
-  createBimModelSource,
-} from "../../packages/bim-model-source/src/index.mjs";
-import {
   cameraViewProjectionMatrix,
-} from "../../packages/bim-renderer-3d/src/camera.mjs";
-import {
-  createBounded3dRenderer,
-} from "../../packages/bim-renderer-3d/src/index.mjs";
-import {
-  createWebGl2Backend,
-} from "../../packages/bim-renderer-3d/src/webgl2-backend.mjs";
-import {
-  createExplicitAlignment,
-} from "../../packages/bim-federation/src/index.mjs";
-import {
-  createFederatedBimSurface,
-} from "../../packages/federated-bim-surface/src/index.mjs";
-import {
+  createBimModelSource,
   createBimSurfaceHitRenderer,
-} from "../../packages/bim-surface-hit/src/index.mjs";
-import {
+  createBounded3dRenderer,
+  createExplicitAlignment,
+  createFederatedBimSurface,
   createGltfReferenceSource,
-} from "../../packages/gltf-reference-source/src/index.mjs";
+  createWebGl2Backend,
+} from "../../packages/federated-bim-surface/runtime/index.mjs";
 
 const WIDTH = 800;
 const HEIGHT = 600;

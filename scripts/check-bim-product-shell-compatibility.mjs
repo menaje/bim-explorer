@@ -768,7 +768,7 @@ export function validateBimProductShellCompatibility(
     vscodeCleanInstallProductScaleReference.package?.version !==
       "0.1.0" ||
     vscodeCleanInstallProductScaleReference.package?.byteLength <= 0 ||
-    ![7, 23].includes(
+    ![7, 23, 24].includes(
       vscodeCleanInstallProductScaleReference.package
         ?.installedRuntimeFiles,
     ) ||
@@ -898,7 +898,7 @@ export function validateBimProductShellCompatibility(
     installation.package?.id !== "menaje.bim-explorer" ||
     installation.package?.version !== "0.1.0" ||
     installation.package?.byteLength <= 0 ||
-    ![7, 23].includes(
+    ![7, 23, 24].includes(
       installation.package?.installedRuntimeFiles,
     ) ||
     !/^[0-9a-f]{64}$/u.test(

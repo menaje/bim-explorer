@@ -46,6 +46,9 @@ triangle-barycentric anchor를 확인합니다. 이는 native face, source preci
 CRS/datum, Workspace, mutation, acceptance, publish 또는 export authority가
 아닙니다. `npm run qualify:bim-surface:v0.2:vscode`가 staged 확장과
 clean-installed VSIX의 동일 composition과 전체 자원 정리를 검증합니다.
+Webview는 private `@bim-explorer/federated-bim-surface@0.2.0` candidate의
+generated runtime을 직접 사용하며 VSIX도 같은 파일을 stage합니다. 이 결합은
+public v0.2 tag나 Spatial consumer support를 승인하지 않습니다.
 
 - source URI는 extension host 안에서만 사용하며 webview message와
   diagnostics에 넣지 않습니다.
@@ -71,8 +74,9 @@ bounded WebGL2 projection과 close cleanup을 재현합니다. 이 검증은
 package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 bytes만
 보내며 local URI나 IFC GlobalId를 전달하거나 합성하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
-검증 정책이 포함됩니다. VSIX stage는 generated `bim-surface` runtime도
-명시적으로 포함하며 stale bundle 검사를 먼저 통과해야 합니다.
+검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
+runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며
+두 stale bundle 검사를 먼저 통과해야 합니다.
 
 `npm run qualify:las-laz:product:vscode`는 cache-only paired LAS/LAZ를
 staged Custom Editor와 빈 profile에 clean-installed VSIX에서 각각 열어

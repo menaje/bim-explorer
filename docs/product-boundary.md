@@ -87,7 +87,9 @@ selection이 authority가 되지 않습니다.
 - 차기 `bim-surface/0.2` draft는 federation과 source-local reference anchor를
   합성하지만 authored object, constraint와 Workspace authority는 포함하지
   않습니다. 내부 Browser와 path-free `.bimfed.json` VS Code entrypoint는
-  검증됐지만 public v0.2 package와 Spatial consumer는 별도 Gate입니다.
+  private 0.2.0 candidate runtime을 사용해 검증됐고 byte-identical pack과
+  offline clean install도 통과했지만 public v0.2 release와 Spatial consumer는
+  별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는

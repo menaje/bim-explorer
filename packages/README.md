@@ -45,9 +45,11 @@ reference runtime은 이 entrypoint에 포함하지 않습니다.
 
 차기 `bim-surface/0.2`는 `bim-federation/0.1`과
 `reference-anchor/0.1`을 조합해 external base + consumer overlay context를
-제공하는 draft입니다. 아직 package export, compatibility evidence나 release
-asset이 없으므로 현재 `@bim-explorer/bim-surface@0.1.0`의 기능으로 표현하지
-않습니다.
+제공합니다. private `@bim-explorer/federated-bim-surface@0.2.0` candidate는
+zero-runtime-dependency package export, byte-identical pack과 offline clean
+install evidence를 갖지만 public release asset과 actual Spatial consumer는
+없습니다. 따라서 현재 `@bim-explorer/bim-surface@0.1.0`의 기능이나 public
+v0.2 지원으로 표현하지 않습니다.
 
 [`bim-reference-anchor`](bim-reference-anchor/README.md)는 federated pick을
 exact source revision, source-native identity, occurrence path와 source-local
@@ -57,10 +59,11 @@ surface normal을 제공하지 않는 경로에서는 anchor를 합성하지 않
 selection만 유지합니다.
 
 [`federated-bim-surface`](federated-bim-surface/README.md)는 공개 v0.1
-artifact와 분리된 `bim-surface/0.2` 내부 구현입니다. 1–8개 aligned source,
+artifact와 분리된 private `bim-surface/0.2` package candidate입니다. 1–8개 aligned source,
 source-scoped semantics/selection/anchor, 한 source refresh invalidation과
-`transferred`·`borrowed` cleanup을 조합합니다. 실제 Browser/Webview 제품
-qualification과 public v0.2 artifact는 아직 주장하지 않습니다.
+`transferred`·`borrowed` cleanup을 조합합니다. 실제 Browser/Webview 제품과
+clean-installed candidate tarball은 통과했지만 actual Spatial consumer,
+immutable public v0.2 artifact와 production support는 아직 주장하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를

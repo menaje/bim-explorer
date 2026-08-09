@@ -1,7 +1,8 @@
 # Federated BIM Surface
 
 기존 공개 `@bim-explorer/bim-surface@0.1.0`을 변경하지 않고
-`bim-explorer-bim-surface/0.2` multi-source 계약을 구현하는 내부 draft입니다.
+`bim-explorer-bim-surface/0.2` multi-source 계약을 구현하는 private
+`@bim-explorer/federated-bim-surface@0.2.0` release candidate입니다.
 
 - 1–8개의 aligned IFC 또는 qualified glTF/GLB source slot을 한 bounded
   renderer projection에 올립니다.
@@ -23,5 +24,20 @@ triangle index와 barycentric locator를 만든 뒤 source-local anchor로 변�
 임시 CPU geometry는 즉시 지우며 native face나 source precision은 주장하지
 않습니다. wrapper가 없거나 교차가 모호하면 object selection을 유지하고
 `unsupported` diagnostic을 반환합니다. generated GLB–IFC–GLB actual Browser와
-staged/clean-installed VS Code Webview qualification은 통과했습니다. 실제
-Spatial consumer와 public v0.2 release는 별도 Gate입니다.
+staged/clean-installed VS Code Webview qualification은 통과했습니다.
+
+`runtime/index.mjs`는 BIM source, bounded mesh renderer, federation,
+reference-anchor와 surface-hit 경계를 하나로 합친 0-runtime-dependency ESM입니다.
+Browser와 VS Code v0.2 제품 entrypoint가 이 exact runtime을 사용합니다.
+
+```bash
+npm run build:bim-surface:v0.2
+npm run qualify:bim-surface:v0.2:package
+```
+
+qualification은 독립 stage 두 곳에서 byte-identical tarball을 만들고, 빈 offline
+consumer에 설치해 GLB–IFC–GLB composition, source-scoped search/selection,
+세 anchor와 terminal cleanup을 재현합니다. repository와 staged manifest는
+`private: true`이며 expected public tag도 발급하지 않습니다. 실제 Spatial
+consumer exact pin, immutable public release와 production support는 별도 held
+Gate입니다.

@@ -19,6 +19,7 @@ import {
 
 export const BIM_FEDERATED_SURFACE_CONTRACT =
   "bim-explorer-bim-surface/0.2";
+export const BIM_FEDERATED_SURFACE_PACKAGE_VERSION = "0.2.0";
 export const BIM_FEDERATED_SURFACE_RECEIPT =
   "bim-explorer-bim-surface-receipt/0.2";
 export const BIM_FEDERATED_SURFACE_SELECTION_SCHEMA =

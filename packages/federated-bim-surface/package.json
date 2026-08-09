@@ -1,11 +1,26 @@
 {
   "name": "@bim-explorer/federated-bim-surface",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Host-neutral federated BIM exploration surface v0.2 draft",
+  "description": "Host-neutral read-only federated BIM exploration surface",
   "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/menaje/bim-explorer.git",
+    "directory": "packages/federated-bim-surface"
+  },
+  "homepage": "https://github.com/menaje/bim-explorer#readme",
+  "bugs": {
+    "url": "https://github.com/menaje/bim-explorer/issues"
+  },
   "type": "module",
-  "exports": "./src/index.mjs",
+  "exports": "./runtime/index.mjs",
+  "files": [
+    "runtime/index.mjs",
+    "README.md",
+    "SOURCE_OFFER.md"
+  ],
+  "sideEffects": false,
   "engines": {
     "node": ">=24"
   }

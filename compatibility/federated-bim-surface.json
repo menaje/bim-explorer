@@ -4,7 +4,7 @@
   "asOf": "2026-08-09",
   "contract": {
     "package": "@bim-explorer/federated-bim-surface",
-    "packageVersion": "0.0.0",
+    "packageVersion": "0.2.0",
     "surface": "bim-explorer-bim-surface/0.2",
     "receipt": "bim-explorer-bim-surface-receipt/0.2",
     "refresh": "bim-explorer-bim-surface-refresh/0.2",
@@ -30,6 +30,7 @@
     "actualBrowserSurfaceNormal": true,
     "actualBrowserAnchor": true,
     "actualVscodeSurface": true,
+    "reproduciblePackageCandidate": true,
     "actualSpatialConsumer": false,
     "publicV02Package": false,
     "productionSupport": false
@@ -37,11 +38,12 @@
   "evidence": {
     "headlessGenerated": "compatibility/evidence/federated-bim-surface-headless-2026-08-09.json",
     "actualBrowser": "compatibility/evidence/federated-bim-surface-browser-2026-08-09.json",
-    "actualVscode": "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json"
+    "actualVscode": "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json",
+    "packageCandidate": "compatibility/evidence/federated-bim-surface-package-2026-08-09.json"
   },
   "blockers": [
     "the actual Coni Spatial consumer composition remains consumer-owned",
-    "a public v0.2 package requires clean-install, reproducibility and immutable release evidence",
+    "the private v0.2 package candidate is reproducible, but a public release requires actual consumer exact-pin and immutable release evidence",
     "stable production support requires public multi-source adoption and support-policy evidence"
   ],
   "limitations": [
@@ -49,7 +51,7 @@
     "surface points, winding normals and triangle-barycentric locators are derived from exact display geometry and do not claim native source face identity",
     "alignment is explicit placement provenance and performs no qualified CRS or datum transformation",
     "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
-    "the package is private and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
+    "the 0.2.0 package candidate is private, zero-runtime-dependency and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
     "the actual VS Code Webview entrypoint uses a local path-free .bimfed.json host bridge and remains read-only without Spatial authority",
     "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
   ],
@@ -63,6 +65,7 @@
     "claimHeadlessFoundation": true,
     "claimBrowserAnchor": true,
     "claimVscodeSurface": true,
+    "claimReproduciblePackageCandidate": true,
     "claimActualSpatialConsumer": false,
     "claimPublicV02Package": false,
     "claimProductionSupport": false

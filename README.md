@@ -146,12 +146,14 @@ manifest와 npm registry publication은 계속 private이며 실제 Spatial cons
 exact-pin도 별도 Gate입니다. Surface는 Workspace, Canonical Entity ID, mutation,
 accept, publish와 export authority를 발급하지 않습니다.
 
-내부 federated Surface v0.2는 generated GLB–IFC–GLB를 actual Browser와
+private federated Surface 0.2.0 package candidate는 generated GLB–IFC–GLB를 actual Browser와
 VS Code 1.131.0 Webview에 합성해 source별 exact WebGL2 hit·normal,
 triangle-barycentric anchor와 cleanup을 검증했습니다. VS Code는 같은 폴더의
 bounded source만 참조하는 path-free `.bimfed.json`을 열며 staged 확장과
 clean-installed VSIX가 같은 결과를 재현합니다. 이는 공개 v0.2 package,
-Spatial consumer 또는 authoring authority 승격이 아닙니다.
+Spatial consumer 또는 authoring authority 승격이 아닙니다. exact 461,431-byte
+runtime을 두 번 byte-identical pack하고 offline clean consumer에 설치하는
+private candidate Gate도 통과했지만 public tag/release는 생성하지 않았습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)

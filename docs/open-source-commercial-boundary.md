@@ -60,6 +60,12 @@ external base를 Workspace에 등록하고, 의미 있는 3D 객체와 placement
 workflow입니다. anchor receipt 자체를 유료 authority 또는 Spatial 설계
 데이터로 취급하지 않습니다.
 
+현재 private `@bim-explorer/federated-bim-surface@0.2.0` candidate는
+zero-runtime-dependency pack과 offline clean install까지만 검증했습니다.
+repository/staged manifest는 `private: true`이고 public tag나 release asset은
+없습니다. 이 준비 상태도 Workspace authoring이나 Spatial consumer 지원을
+발급하지 않습니다.
+
 ## Community 공개 Gate
 
 - exact Viewer Core `@menaje/*@0.1.2` release asset 고정

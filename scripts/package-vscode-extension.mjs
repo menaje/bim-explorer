@@ -16,6 +16,9 @@ import {
   checkBimSurfaceBundle,
 } from "./build-bim-surface.mjs";
 import {
+  checkFederatedBimSurfaceBundle,
+} from "./build-federated-bim-surface.mjs";
+import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
 import {
@@ -76,6 +79,7 @@ const COPY_FILES = Object.freeze([
   ["packages/bim-reference-anchor/src/index.mjs"],
   ["packages/bim-surface-hit/src/index.mjs"],
   ["packages/federated-bim-surface/src/index.mjs"],
+  ["packages/federated-bim-surface/runtime/index.mjs"],
   ["node_modules/laz-perf/lib/worker/laz-perf.wasm"],
   ["node_modules/laz-perf/package.json"],
   ["node_modules/web-ifc/LICENSE.md"],
@@ -123,6 +127,7 @@ export async function prepareVscodeExtensionStage(destination) {
   }
   await checkVscodeWorkerBundle();
   await checkBimSurfaceBundle();
+  await checkFederatedBimSurfaceBundle();
   await mkdir(destination, {
     recursive: true,
   });

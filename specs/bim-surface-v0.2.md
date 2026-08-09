@@ -17,8 +17,9 @@ context에서 탐색하고 외부 설계 소비자에게 source-scoped selection
 anchor를 제공하는 host-neutral draft다.
 
 v0.2는 단일 source인 [`bim-surface/0.1`](bim-surface-v0.1.md)의 의미를
-바꾸지 않는다. package implementation, public artifact와 actual Spatial
-consumer는 별도 qualification 전까지 지원으로 주장하지 않는다.
+바꾸지 않는다. private 0.2.0 package candidate는 별도로 qualification하지만
+public artifact와 actual Spatial consumer는 별도 Gate 전까지 지원으로
+주장하지 않는다.
 
 ## Contract pin
 
@@ -123,8 +124,11 @@ selection과 anchor는 consumer product의 authorization 또는 human approval�
 
 generated GLB–IFC–GLB 세 source의 actual Chrome WebGL2 composition,
 source-scoped semantic/selection, 세 개의 derived source-local anchor와 exact
-cleanup은 Browser Gate를 통과했다. 차기 public package가 v0.2를 주장하려면
-남은 실제 Webview/consumer 및 release Gate를 포함해 다음을 재현해야 한다.
+cleanup은 Browser와 VS Code Gate를 통과했다. private
+`@bim-explorer/federated-bim-surface@0.2.0` candidate도 두 번의 byte-identical
+pack, offline clean install과 같은 3-source lifecycle을 통과했다. 차기 public
+release가 v0.2를 주장하려면 남은 consumer 및 release Gate를 포함해 다음을
+재현해야 한다.
 
 - IFC semantic base + GLB reference + consumer overlay 동시 projection
 - source별 tree/query/visibility/selection identity
