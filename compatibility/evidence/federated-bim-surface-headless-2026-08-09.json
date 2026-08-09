@@ -1,0 +1,168 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-qualification/1",
+  "status": "passed-headless-foundation",
+  "asOf": "2026-08-09",
+  "contract": {
+    "surface": "bim-explorer-bim-surface/0.2",
+    "receipt": "bim-explorer-bim-surface-receipt/0.2",
+    "refresh": "bim-explorer-bim-surface-refresh/0.2",
+    "selection": "bim-explorer-bim-surface-selection/0.2",
+    "referenceAnchor": "bim-explorer-reference-anchor/0.1",
+    "federation": "bim-explorer-federation/0.1",
+    "source": "bim-explorer-bim-source/0.2"
+  },
+  "composition": {
+    "federationId": "federation:surface-v0.2-qualification",
+    "sourceCount": 2,
+    "formats": [
+      "glb",
+      "ifc"
+    ],
+    "sourceRoles": [
+      "geometric-reference",
+      "semantic-base"
+    ],
+    "lifecycleOwnership": [
+      "borrowed",
+      "transferred"
+    ],
+    "semanticAvailability": [
+      false,
+      true
+    ],
+    "compositeProjectionFingerprint": "sha256:9be3dc231d694fb5f7fbade1c3b133689bacda17707fa379ad30218f299c3e47",
+    "sourceProjectionFingerprints": [
+      "sha256:b818e433b278b3d88fb0fa0301531ccacf4e8104e59f3e399309a65a1c4403c6",
+      "sha256:cc1f65d0b79306f5398691b0bce581e374125096ac23063873d7b0fd0a1b2a05"
+    ],
+    "identityMerged": false
+  },
+  "semantics": {
+    "sourceScoped": true,
+    "queriedSource": "source-slot:z-semantic",
+    "query": "wall",
+    "returned": 2,
+    "referenceSemanticsRejected": true
+  },
+  "selection": {
+    "schema": "bim-explorer-bim-surface-selection/0.2",
+    "items": 2,
+    "sourceSlots": [
+      "source-slot:a-reference",
+      "source-slot:z-semantic"
+    ],
+    "distinctKeys": 2,
+    "mergeAcrossSources": false,
+    "savedViewSchema": "bim-explorer-bim-surface-saved-view/0.2"
+  },
+  "anchors": {
+    "unsupportedWithoutSourceLocalHit": true,
+    "reference": {
+      "sourceSlot": "source-slot:a-reference",
+      "format": "glb",
+      "identityKind": "glb-native-id",
+      "nativeId": "node:0/mesh:0/primitive:0",
+      "globalId": null,
+      "coordinateSpace": "source-local",
+      "stability": "point-only",
+      "authority": {
+        "workspace": false,
+        "canonicalEntityId": false,
+        "sourceMutation": false,
+        "geometryMutation": false,
+        "constraintMutation": false,
+        "acceptance": false,
+        "publish": false,
+        "export": false
+      }
+    },
+    "semantic": {
+      "sourceSlot": "source-slot:z-semantic",
+      "format": "ifc",
+      "identityKind": "ifc-global-id",
+      "nativeId": "ifc-globalid:0AAAAAAAAAAAAAAAAAAA16",
+      "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+      "coordinateSpace": "source-local",
+      "stability": "point-only",
+      "authority": {
+        "workspace": false,
+        "canonicalEntityId": false,
+        "sourceMutation": false,
+        "geometryMutation": false,
+        "constraintMutation": false,
+        "acceptance": false,
+        "publish": false,
+        "export": false
+      }
+    },
+    "afterRefresh": {
+      "refreshedSource": "stale",
+      "unchangedSource": "current",
+      "active": 1,
+      "stale": 1
+    }
+  },
+  "refresh": {
+    "schema": "bim-explorer-bim-surface-refresh/0.2",
+    "refreshedSource": "source-slot:a-reference",
+    "previousRevisionId": "source-snapshot:sha256:4150173cc663b894b7432caef8a404eb1f44c624ed5d497b66d6b79bbfa7cbc1",
+    "currentRevisionId": "source-snapshot:sha256:15bae2035f2cfefb92b891ea79ace5e339d693bd97d413afbd666a1e3b4dfbed",
+    "unchangedFederationSources": 1,
+    "invalidated": {
+      "selectionItems": 1,
+      "anchors": 1,
+      "savedViews": 1
+    },
+    "retainedSelectionItems": 1,
+    "retainedSelectionSource": "source-slot:z-semantic",
+    "replayCacheReleased": true,
+    "previousProjectionDisposed": true,
+    "unchangedSourceRangeReadsBefore": 1,
+    "unchangedSourceRangeReadsAfter": 1,
+    "oldBorrowedRevision": "source-snapshot:sha256:4150173cc663b894b7432caef8a404eb1f44c624ed5d497b66d6b79bbfa7cbc1"
+  },
+  "lifecycle": {
+    "rendererMounts": 2,
+    "rendererPicks": 2,
+    "rendererDisposed": true,
+    "rendererActiveBytes": 0,
+    "projectionDisposed": true,
+    "federationDisposed": true,
+    "semanticExplorersDisposed": true,
+    "transferredSessionReleased": true,
+    "transferredWorkerReleased": true,
+    "borrowedSessionReleased": false,
+    "borrowedRevisionAfterDispose": "source-snapshot:sha256:15bae2035f2cfefb92b891ea79ace5e339d693bd97d413afbd666a1e3b4dfbed",
+    "oldBorrowedRevisionAfterRefresh": "source-snapshot:sha256:4150173cc663b894b7432caef8a404eb1f44c624ed5d497b66d6b79bbfa7cbc1",
+    "projectionCachesReleased": true,
+    "repeatedDispose": false
+  },
+  "authority": {
+    "workspace": false,
+    "canonicalEntityId": false,
+    "sourceMutation": false,
+    "revisionMutation": false,
+    "geometryMutation": false,
+    "constraintMutation": false,
+    "acceptance": false,
+    "publish": false,
+    "export": false
+  },
+  "held": {
+    "actualBrowserSurfaceNormal": false,
+    "actualBrowserAnchor": false,
+    "actualVscodeSurface": false,
+    "actualSpatialConsumer": false,
+    "publicV02Package": false,
+    "productionSupport": false
+  },
+  "decision": {
+    "internalSurfaceImplementation": "passed-headless-generated",
+    "browserSurfaceNormal": "held-renderer-pick-has-no-normal-or-triangle-locator",
+    "browserProductComposition": "held-no-v0.2-entrypoint",
+    "vscodeProductComposition": "held-no-v0.2-entrypoint",
+    "actualSpatialConsumer": "held-consumer-owned",
+    "publicV02Package": "held-qualification-and-release",
+    "productionClaims": false
+  }
+}

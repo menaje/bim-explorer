@@ -43,6 +43,17 @@ provenance를 통과했습니다. exact 결과는
 [release evidence](evidence/bim-surface-release-v0.1.0-2026-08-09.json)에
 고정합니다.
 
+차기 multi-source lifecycle은 공개 v0.1 manifest와 분리된
+[`federated-bim-surface.json`](federated-bim-surface.json)이 소유합니다.
+generated IFC4 semantic base와 GLB reference를 headless composite로 열어
+source-scoped semantic, cross-source selection, source-local anchor 두 개,
+한 source refresh와 unchanged-source range replay, transferred/borrowed cleanup을
+재현했습니다. actual Browser surface normal·triangle locator, Browser anchor,
+VS Code v0.2 entrypoint, 실제 Spatial consumer와 public v0.2 package는 held입니다.
+exact 결과는
+[`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)에
+고정합니다.
+
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
 Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,

@@ -1,0 +1,70 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-09",
+  "contract": {
+    "package": "@bim-explorer/federated-bim-surface",
+    "packageVersion": "0.0.0",
+    "surface": "bim-explorer-bim-surface/0.2",
+    "receipt": "bim-explorer-bim-surface-receipt/0.2",
+    "refresh": "bim-explorer-bim-surface-refresh/0.2",
+    "selection": "bim-explorer-bim-surface-selection/0.2",
+    "referenceAnchor": "bim-explorer-reference-anchor/0.1",
+    "federation": "bim-explorer-federation/0.1",
+    "source": "bim-explorer-bim-source/0.2"
+  },
+  "gates": {
+    "isolatedV02PackageBoundary": true,
+    "boundedAlignedSourceComposition": true,
+    "callerProvidedSourceRoles": true,
+    "sourceScopedSemantics": true,
+    "crossSourceSelectionIsolation": true,
+    "sourceLocalReferenceAnchors": true,
+    "staleAnchorFailClosed": true,
+    "singleSourceRefreshIsolation": true,
+    "unchangedSourceRangeReplay": true,
+    "transferredBorrowedLifecycle": true,
+    "deterministicCleanup": true,
+    "authorityFree": true,
+    "headlessGeneratedConformance": true,
+    "actualBrowserSurfaceNormal": false,
+    "actualBrowserAnchor": false,
+    "actualVscodeSurface": false,
+    "actualSpatialConsumer": false,
+    "publicV02Package": false,
+    "productionSupport": false
+  },
+  "evidence": {
+    "headlessGenerated": "compatibility/evidence/federated-bim-surface-headless-2026-08-09.json"
+  },
+  "blockers": [
+    "the current renderer pick receipt has no surface normal or triangle locator",
+    "an actual Browser WebGL2 v0.2 product surface must reproduce source-local anchors",
+    "the VS Code Webview product has not adopted the v0.2 surface entrypoint",
+    "the actual Coni Spatial consumer composition remains consumer-owned",
+    "a public v0.2 package requires clean-install, reproducibility and immutable release evidence",
+    "stable production support requires public multi-source adoption and support-policy evidence"
+  ],
+  "limitations": [
+    "the passed evidence uses generated IFC4 and GLB sources with a deterministic headless pick backend",
+    "the caller supplies a verified source-local point and normal because the renderer does not return them",
+    "alignment is explicit identity provenance and performs no datum transformation",
+    "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
+    "the package is private and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
+    "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
+  ],
+  "policy": {
+    "readOnly": true,
+    "mergeNativeIdentity": false,
+    "allowImplicitAlignment": false,
+    "allowRoleDerivedCapability": false,
+    "requireSourceLocalAnchorHit": true,
+    "repositoryPublishDisabled": true,
+    "claimHeadlessFoundation": true,
+    "claimBrowserAnchor": false,
+    "claimVscodeSurface": false,
+    "claimActualSpatialConsumer": false,
+    "claimPublicV02Package": false,
+    "claimProductionSupport": false
+  }
+}
