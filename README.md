@@ -360,6 +360,11 @@ npm run package:vscode
 npm run release:bundle
 ```
 
+일반 `push`와 pull request에서는 Ubuntu/macOS의 `npm run check`만 실행한다.
+Browser, VS Code, IFC, E57, LAS/LAZ와 product-scale platform evidence를 만드는
+전체 qualification은 Actions의 `CI` workflow를 수동 실행할 때만 수행한다.
+수동 실행은 두 플랫폼 결과를 수집한 뒤 federation platform matrix까지 조립한다.
+
 저장소 구조와 authority 문서는 [docs/README.md](docs/README.md), 현재
 Viewer Core admission 상태는
 [compatibility/viewer-core.json](compatibility/viewer-core.json), IFC engine
