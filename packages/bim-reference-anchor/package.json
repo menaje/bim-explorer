@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/bim-reference-anchor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Authority-free source-scoped BIM reference anchor receipts",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}
