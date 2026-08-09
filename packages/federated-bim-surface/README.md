@@ -22,6 +22,6 @@ pick을 exact revision geometry와 대조해 projection-local point, winding nor
 triangle index와 barycentric locator를 만든 뒤 source-local anchor로 변환합니다.
 임시 CPU geometry는 즉시 지우며 native face나 source precision은 주장하지
 않습니다. wrapper가 없거나 교차가 모호하면 object selection을 유지하고
-`unsupported` diagnostic을 반환합니다. generated GLB–IFC–GLB actual Browser
-qualification은 통과했지만 VS Code Webview, 실제 Spatial consumer와 public
-v0.2 release는 별도 Gate입니다.
+`unsupported` diagnostic을 반환합니다. generated GLB–IFC–GLB actual Browser와
+staged/clean-installed VS Code Webview qualification은 통과했습니다. 실제
+Spatial consumer와 public v0.2 release는 별도 Gate입니다.

@@ -546,6 +546,281 @@ async function qualifyPointSource({
   };
 }
 
+function translation(x) {
+  return [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    x, 0, 0, 1,
+  ];
+}
+
+async function qualifyFederatedSurface({ api, root, temporary }) {
+  const generatedIfc = await import(
+    pathToFileURL(
+      path.join(root, "scripts", "generate-synthetic-ifc.mjs"),
+    ).href
+  );
+  const generatedGltf = await import(
+    pathToFileURL(
+      path.join(root, "scripts", "generate-synthetic-gltf.mjs"),
+    ).href
+  );
+  const files = {
+    manifest: path.join(
+      temporary,
+      "qualification-federation.bimfed.json",
+    ),
+    reference: path.join(
+      temporary,
+      "qualification-reference.glb",
+    ),
+    semantic: path.join(
+      temporary,
+      "qualification-semantic.ifc",
+    ),
+    overlay: path.join(
+      temporary,
+      "qualification-overlay.glb",
+    ),
+  };
+  await Promise.all([
+    writeFile(
+      files.reference,
+      generatedGltf.syntheticGlbBytes({ secondNodeX: 3 }),
+    ),
+    writeFile(
+      files.semantic,
+      generatedIfc.syntheticMappedIfc(),
+      "utf8",
+    ),
+    writeFile(
+      files.overlay,
+      generatedGltf.syntheticGlbBytes({ secondNodeX: 6 }),
+    ),
+  ]);
+  const manifest = {
+    schema: "bim-explorer-federation-document/0.1",
+    federationId: "federation:vscode-surface-v0.2",
+    sources: [
+      {
+        federationSourceId: "source-slot:a-reference",
+        sourceRole: "geometric-reference",
+        file: path.basename(files.reference),
+        sourceToFederation: translation(-8),
+        reference: "vscode:reference-placement",
+        discipline: "external-reference",
+        owner: "external-source",
+      },
+      {
+        federationSourceId: "source-slot:m-semantic",
+        sourceRole: "semantic-base",
+        file: path.basename(files.semantic),
+        sourceToFederation: translation(0),
+        reference: "vscode:semantic-placement",
+        discipline: "architecture",
+        owner: "external-source",
+      },
+      {
+        federationSourceId: "source-slot:z-overlay",
+        sourceRole: "consumer-overlay",
+        file: path.basename(files.overlay),
+        sourceToFederation: translation(8),
+        reference: "vscode:overlay-placement",
+        discipline: "consumer-overlay",
+        owner: "consumer-source",
+      },
+    ],
+  };
+  await writeFile(
+    files.manifest,
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    "utf8",
+  );
+  await vscode.commands.executeCommand(
+    "vscode.openWith",
+    vscode.Uri.file(files.manifest),
+    "bimExplorer.federationEditor",
+  );
+  const ready = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    if (report?.status === "failed") {
+      throw new Error(
+        `Federated Surface failed: ${JSON.stringify(report)}`,
+      );
+    }
+    return report?.schema ===
+        "bim-explorer-federated-vscode-surface-report/1" &&
+      report.status === "ready"
+      ? report
+      : null;
+  }, "Federated Surface ready report", 120_000);
+  assert.equal(ready.hostKind, "vscode-webview");
+  assert.equal(ready.externalUpload, false);
+  assert.equal(ready.telemetry, false);
+  assert.equal(ready.contract, "bim-explorer-bim-surface/0.2");
+  assert.deepEqual(ready.composition.formats, ["glb", "ifc", "glb"]);
+  assert.deepEqual(ready.composition.sourceRoles, [
+    "geometric-reference",
+    "semantic-base",
+    "consumer-overlay",
+  ]);
+  assert.deepEqual(
+    ready.composition.semanticAvailability,
+    [false, true, false],
+  );
+  assert.equal(ready.composition.sourceCount, 3);
+  assert.equal(ready.composition.identityMerged, false);
+  assert.equal(ready.semantics.returned, 2);
+  assert.equal(ready.semantics.referenceSemanticsRejected, true);
+  assert.equal(ready.renderer.actualGpu, true);
+  assert.equal(ready.renderer.context, "webgl2");
+  assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(
+    await vscode.commands.executeCommand(
+      "bimExplorer.verifyFederatedAnchors",
+    ),
+    true,
+  );
+  const qualified = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    if (report?.status === "failed") {
+      throw new Error(
+        `Federated anchor verification failed: ` +
+          `${JSON.stringify(report)}`,
+      );
+    }
+    return report?.status === "qualified" ? report : null;
+  }, "Federated Surface anchor report", 120_000);
+  assert.equal(qualified.selection.items, 3);
+  assert.equal(qualified.selection.distinctKeys, 3);
+  assert.equal(qualified.selection.mergeAcrossSources, false);
+  assert.equal(qualified.renderer.surfaceHits, 3);
+  assert.equal(qualified.renderer.retainedGeometryBytes, 0);
+  assert.equal(qualified.picks.length, 3);
+  assert.equal(qualified.anchors.length, 3);
+  for (const pick of qualified.picks) {
+    assert.equal(
+      pick.surfaceHitCapability,
+      "source-local-surface-hit",
+    );
+    assert.equal(pick.coordinateSpace, "projection-local");
+    assert.equal(pick.locator.kind, "triangle-barycentric");
+    assert.equal(pick.verification.actualGpuDepth, true);
+    assert.equal(pick.verification.exactGeometryDigest, true);
+    assert.equal(pick.verification.nearestUniqueTriangle, true);
+    assert.equal(pick.resources.retainedGeometryBytes, 0);
+    assert.equal(pick.resources.temporaryGeometryReleased, true);
+    assert.equal(Object.values(pick.authority).some(Boolean), false);
+  }
+  for (const anchor of qualified.anchors) {
+    assert.equal(anchor.stability, "derived");
+    assert.equal(anchor.locator.kind, "triangle-barycentric");
+    assert.equal(Object.values(anchor.authority).some(Boolean), false);
+  }
+  assert.equal(
+    qualified.ranges.sources.every((source) => source.reads === 1),
+    true,
+  );
+  assert.equal(
+    qualified.ranges.unchangedBySurfaceResolution,
+    true,
+  );
+  assert.equal(Object.values(qualified.authority).some(Boolean), false);
+  const serialized = JSON.stringify(qualified);
+  for (const file of Object.values(files)) {
+    assert.equal(serialized.includes(file), false);
+    assert.equal(serialized.includes(path.basename(file)), false);
+  }
+  assert.equal(
+    await vscode.commands.executeCommand(
+      "bimExplorer.disposeFederatedSurface",
+    ),
+    true,
+  );
+  const disposed = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    if (report?.status === "failed") {
+      throw new Error(
+        `Federated Surface cleanup failed: ${JSON.stringify(report)}`,
+      );
+    }
+    return report?.status === "disposed" ? report : null;
+  }, "Federated Surface cleanup report", 120_000);
+  assert.deepEqual(disposed.cleanup, {
+    surfaceStatus: "disposed",
+    rendererDisposed: true,
+    backendDisposed: true,
+    backendActiveBytes: 0,
+    backendResidentRanges: 0,
+    retainedGeometryBytes: 0,
+    projectionCachesReleased: true,
+    transferredSessionsReleased: true,
+    sourceSessionsDisposed: true,
+    workersTerminated: true,
+    clientsDisposed: true,
+    runtimeUrlsRevoked: true,
+    repeatedDispose: false,
+  });
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
+  const closed = await waitFor(() => {
+    const report = api.qualificationReports().at(-1);
+    return report?.status === "disposed" &&
+      report.editorClosed === true
+      ? report
+      : null;
+  }, "Federated Surface editor close");
+  return {
+    fixture: {
+      id: "generated-ifc-glb-glb-vscode-surface-v0.2",
+      committed: false,
+      releaseBundled: false,
+      sourceCount: 3,
+      formats: ["glb", "ifc", "glb"],
+    },
+    observation: {
+      hostKind: ready.hostKind,
+      externalUpload: ready.externalUpload,
+      telemetry: ready.telemetry,
+      ready: {
+        composition: ready.composition,
+        semantics: ready.semantics,
+        renderer: ready.renderer,
+      },
+      qualified: {
+        selection: qualified.selection,
+        renderer: qualified.renderer,
+        picks: qualified.picks,
+        anchors: qualified.anchors,
+        ranges: qualified.ranges,
+        authority: qualified.authority,
+      },
+      cleanup: disposed.cleanup,
+      lifecycle: {
+        opened: ready.status,
+        anchors: qualified.status,
+        disposed: disposed.status,
+        editorClosed: closed.editorClosed,
+      },
+    },
+    assertions: {
+      actualVscodeFederatedSurface: true,
+      threeSourceCompositionExact: true,
+      sourceScopedSemanticsAndIdentity: true,
+      actualVscodeChromiumWebGl2: true,
+      exactSourceLocalHits: true,
+      derivedAnchorsCurrent: true,
+      rangeReplayBounded: true,
+      noWorkspaceOrMutationAuthority: true,
+      pathFreeHostBridge: true,
+      transferredResourcesReleased: true,
+      editorCloseObserved: true,
+    },
+  };
+}
+
 async function run() {
   const root = process.env.BIM_EXPLORER_ROOT;
   const evidencePath =
@@ -569,6 +844,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_E57_SPHERICAL_SOURCE;
   const e57MultipleScanSourcePath =
     process.env.BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE;
+  const includeFederatedSurface =
+    process.env.BIM_EXPLORER_VSCODE_FEDERATED_SURFACE === "true";
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -615,6 +892,9 @@ async function run() {
       "bimExplorer.showDiagnostics",
       "bimExplorer.pickVisiblePoint",
       "bimExplorer.refinePointLod",
+      "bimExplorer.openFederation",
+      "bimExplorer.verifyFederatedAnchors",
+      "bimExplorer.disposeFederatedSurface",
     ]) {
       assert.ok(commands.includes(command), command);
     }
@@ -932,6 +1212,9 @@ async function run() {
     }
     const hasPointQualifications =
       Object.keys(pointQualifications).length > 0;
+    const federatedSurfaceQualification = includeFederatedSurface
+      ? await qualifyFederatedSurface({ api, root, temporary })
+      : null;
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -1012,6 +1295,16 @@ async function run() {
               ),
             ),
           }),
+      ...(federatedSurfaceQualification === null
+        ? {}
+        : {
+            federatedSurfaceFixture:
+              federatedSurfaceQualification.fixture,
+            federatedSurfaceObservation:
+              federatedSurfaceQualification.observation,
+            federatedSurfaceAssertions:
+              federatedSurfaceQualification.assertions,
+          }),
       assertions: {
         actualVscodeChromiumWebGl2:
           ready.renderer.actualGpu === true &&
@@ -1063,6 +1356,13 @@ async function run() {
       )) {
         assert.ok(Object.values(assertions).every(Boolean));
       }
+    }
+    if (evidence.federatedSurfaceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.federatedSurfaceAssertions,
+        ).every(Boolean),
+      );
     }
     await writeFile(
       evidencePath,

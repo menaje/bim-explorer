@@ -104,6 +104,8 @@ class WorkerRangeSemanticSession {
   #client;
   #disposed = false;
   #generation;
+  #rangeBytesRead = 0;
+  #rangeReads = 0;
 
   constructor(client, generation, descriptor) {
     this.#client = client;
@@ -115,6 +117,8 @@ class WorkerRangeSemanticSession {
     return Object.freeze({
       disposed: this.#disposed,
       generation: this.#generation,
+      rangeBytesRead: this.#rangeBytesRead,
+      rangeReads: this.#rangeReads,
     });
   }
 
@@ -136,7 +140,12 @@ class WorkerRangeSemanticSession {
       offset,
       length,
       {},
-    ]).then((value) => new Uint8Array(value));
+    ]).then((value) => {
+      const bytes = new Uint8Array(value);
+      this.#rangeReads += 1;
+      this.#rangeBytesRead += bytes.byteLength;
+      return bytes;
+    });
   }
 
   getEntity(request, options = {}) {

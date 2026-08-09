@@ -29,17 +29,17 @@
     "headlessGeneratedConformance": true,
     "actualBrowserSurfaceNormal": true,
     "actualBrowserAnchor": true,
-    "actualVscodeSurface": false,
+    "actualVscodeSurface": true,
     "actualSpatialConsumer": false,
     "publicV02Package": false,
     "productionSupport": false
   },
   "evidence": {
     "headlessGenerated": "compatibility/evidence/federated-bim-surface-headless-2026-08-09.json",
-    "actualBrowser": "compatibility/evidence/federated-bim-surface-browser-2026-08-09.json"
+    "actualBrowser": "compatibility/evidence/federated-bim-surface-browser-2026-08-09.json",
+    "actualVscode": "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json"
   },
   "blockers": [
-    "the VS Code Webview product has not adopted the v0.2 surface entrypoint",
     "the actual Coni Spatial consumer composition remains consumer-owned",
     "a public v0.2 package requires clean-install, reproducibility and immutable release evidence",
     "stable production support requires public multi-source adoption and support-policy evidence"
@@ -50,7 +50,7 @@
     "alignment is explicit placement provenance and performs no qualified CRS or datum transformation",
     "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
     "the package is private and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
-    "the VS Code Webview and actual Coni Spatial consumer are separate held gates",
+    "the actual VS Code Webview entrypoint uses a local path-free .bimfed.json host bridge and remains read-only without Spatial authority",
     "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
   ],
   "policy": {
@@ -62,7 +62,7 @@
     "repositoryPublishDisabled": true,
     "claimHeadlessFoundation": true,
     "claimBrowserAnchor": true,
-    "claimVscodeSurface": false,
+    "claimVscodeSurface": true,
     "claimActualSpatialConsumer": false,
     "claimPublicV02Package": false,
     "claimProductionSupport": false

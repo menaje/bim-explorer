@@ -60,6 +60,11 @@
   WebGL2 first frame, aggregate memory and deterministic cleanup;
 - compare that product-scale federation projection across macOS arm64 and
   Linux x64 CI through a committed portable matrix;
+- add a path-free `.bimfed.json` read-only VS Code Custom Editor that composes
+  isolated IFC/GLB source Workers through the internal Surface v0.2 contract;
+- qualify three exact source-local WebGL2 hits, normals and derived triangle
+  anchors in staged VS Code and a clean-installed VSIX, including replay,
+  session, Worker and GPU cleanup without changing public Surface v0.1;
 - add a privacy-safe reference-format intake/triage contract and public issue
   form without promoting any held codec, SDK or authority Gate;
 - keep E57 and LAS/LAZ coordinate/format admission, plus 3D Tiles and RVT/DGN,

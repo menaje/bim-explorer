@@ -65,9 +65,11 @@ Explorer는 anchor를 Spatial constraint, Canonical Entity ID 또는 acceptance�
 해석하지 않는다. Spatial Service가 현재 Workspace와 Spatial Revision 안에서
 anchor를 등록하고 authored object와의 관계·offset·constraint를 소유한다.
 
-v0.2 package와 release는 actual Spatial consumer가 exact pin, external base +
-authored overlay composition, anchor invalidation과 cleanup을 재현한 뒤에만
-qualification한다. contract draft만으로 지원·배포를 주장하지 않는다.
+내부 v0.2 entrypoint는 actual Browser와 VS Code Webview에서 검증할 수 있다.
+public v0.2 package와 release는 actual Spatial consumer가 exact pin, external
+base + authored overlay composition, anchor invalidation과 cleanup을 재현한
+뒤에만 qualification한다. Explorer 제품 evidence만으로 Spatial 지원·배포를
+주장하지 않는다.
 
 ## 거부 이유
 
@@ -85,8 +87,9 @@ qualification한다. contract draft만으로 지원·배포를 주장하지 않�
   `bim-reference-anchor/0.1`을 draft로 추가한다.
 - `bim-federation/0.1`의 source-scoped identity와 alignment 원칙은 그대로
   재사용한다. 이 ADR만으로 federation v0.2를 만들지 않는다.
-- package implementation, compatibility manifest와 release asset은 실제
-  consumer evidence 전까지 변경하지 않는다.
+- 내부 package/제품 implementation과 compatibility evidence는 Explorer가
+  독립 검증하되 public v0.2 package와 release asset은 실제 consumer evidence
+  전까지 만들지 않는다.
 - Coni Spatial은 standalone BIM Explorer 설치 없이 차기 public package를
   bundle하고, 자체 Workspace에서 external base와 authored 3D를 합성한다.
 - Explorer의 MPL-2.0 공개 가치와 Spatial의 상용 authoring/revision 가치를

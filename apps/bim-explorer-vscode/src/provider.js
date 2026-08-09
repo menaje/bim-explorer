@@ -6,6 +6,10 @@ const path = require("node:path");
 const {
   renderBimExplorerWebviewHtml,
 } = require("./webview-html.js");
+const {
+  FEDERATION_VIEW_TYPE,
+  FederatedBimSurfaceReadonlyEditorProvider,
+} = require("./federation-provider.js");
 
 const VIEW_TYPE = "bimExplorer.ifcEditor";
 const HOST_MESSAGE =
@@ -981,10 +985,26 @@ function activateBimExplorerExtension(vscode, context) {
     vscode,
     context,
   );
+  const federationProvider =
+    new FederatedBimSurfaceReadonlyEditorProvider(
+      vscode,
+      context,
+    );
   const registration =
     vscode.window.registerCustomEditorProvider(
       VIEW_TYPE,
       provider,
+      {
+        supportsMultipleEditorsPerDocument: false,
+        webviewOptions: {
+          retainContextWhenHidden: false,
+        },
+      },
+    );
+  const federationRegistration =
+    vscode.window.registerCustomEditorProvider(
+      FEDERATION_VIEW_TYPE,
+      federationProvider,
       {
         supportsMultipleEditorsPerDocument: false,
         webviewOptions: {
@@ -1030,13 +1050,47 @@ function activateBimExplorerExtension(vscode, context) {
       "bimExplorer.refinePointLod",
       () => provider.postActive("refine-point-lod"),
     ),
+    vscode.commands.registerCommand(
+      "bimExplorer.openFederation",
+      async (uri) => {
+        const selected = uri ??
+          vscode.window.activeTextEditor?.document?.uri;
+        if (selected === undefined) {
+          throw new Error(
+            "Choose a local .bimfed.json file first",
+          );
+        }
+        return await vscode.commands.executeCommand(
+          "vscode.openWith",
+          selected,
+          FEDERATION_VIEW_TYPE,
+        );
+      },
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.verifyFederatedAnchors",
+      () => federationProvider.postActive("verify-anchors"),
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.disposeFederatedSurface",
+      () => federationProvider.postActive("dispose"),
+    ),
   ];
   context.subscriptions.push(
     registration,
+    federationRegistration,
     ...commands,
     provider,
+    federationProvider,
   );
-  return provider;
+  return Object.freeze({
+    qualificationReports() {
+      return Object.freeze([
+        ...provider.qualificationReports(),
+        ...federationProvider.qualificationReports(),
+      ]);
+    },
+  });
 }
 
 module.exports = {

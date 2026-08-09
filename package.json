@@ -65,6 +65,7 @@
     "qualify:bim-surface:package": "node scripts/qualify-bim-surface-package.mjs",
     "qualify:bim-surface:v0.2": "node scripts/qualify-federated-bim-surface.mjs",
     "qualify:bim-surface:v0.2:browser": "node scripts/qualify-federated-bim-surface-browser.mjs",
+    "qualify:bim-surface:v0.2:vscode": "node scripts/qualify-federated-bim-surface-vscode.mjs",
     "qualify:spatial-integration": "node scripts/qualify-spatial-integration.mjs",
     "qualify:openbim": "node scripts/qualify-openbim-explorer.mjs",
     "qualify:federation": "node scripts/qualify-bim-federation.mjs",

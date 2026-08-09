@@ -1,7 +1,7 @@
 {
   "name": "bim-explorer",
   "displayName": "BIM Explorer",
-  "description": "Local-first read-only IFC, reference mesh, E57, and bounded LAS/LAZ point exploration",
+  "description": "Local-first read-only IFC, federated BIM, reference mesh, E57, and bounded LAS/LAZ point exploration",
   "version": "0.1.0",
   "publisher": "menaje",
   "private": true,
@@ -28,7 +28,11 @@
     "onCommand:bimExplorer.retry",
     "onCommand:bimExplorer.showDiagnostics",
     "onCommand:bimExplorer.pickVisiblePoint",
-    "onCommand:bimExplorer.refinePointLod"
+    "onCommand:bimExplorer.refinePointLod",
+    "onCustomEditor:bimExplorer.federationEditor",
+    "onCommand:bimExplorer.openFederation",
+    "onCommand:bimExplorer.verifyFederatedAnchors",
+    "onCommand:bimExplorer.disposeFederatedSurface"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -54,6 +58,16 @@
           },
           {
             "filenamePattern": "*.laz"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "bimExplorer.federationEditor",
+        "displayName": "Federated BIM Surface",
+        "selector": [
+          {
+            "filenamePattern": "*.bimfed.json"
           }
         ],
         "priority": "default"
@@ -83,6 +97,18 @@
       {
         "command": "bimExplorer.refinePointLod",
         "title": "BIM Explorer: Refine Point Detail"
+      },
+      {
+        "command": "bimExplorer.openFederation",
+        "title": "BIM Explorer: Open Federated Surface"
+      },
+      {
+        "command": "bimExplorer.verifyFederatedAnchors",
+        "title": "BIM Explorer: Verify Visible Federated Anchors"
+      },
+      {
+        "command": "bimExplorer.disposeFederatedSurface",
+        "title": "BIM Explorer: Close Federated Surface"
       }
     ],
     "configuration": {

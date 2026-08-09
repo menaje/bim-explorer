@@ -102,8 +102,8 @@ stale이고 Spatial consumer가 다시 resolve/reconcile해야 합니다.
 
 차기 [`bim-surface/0.2`](../specs/bim-surface-v0.2.md)는 이 federation과 anchor
 lifecycle을 host-neutral surface로 합성하는 draft입니다. 현재 main의
-federation evidence나 공개 `bim-surface-v0.1.0`이 actual Spatial authoring
-consumer를 검증했다는 뜻은 아닙니다.
+Browser/VS Code v0.2 entrypoint evidence나 공개 `bim-surface-v0.1.0`이 actual
+Spatial authoring consumer를 검증했다는 뜻은 아닙니다.
 
 ## Coordinate와 precision 경계
 

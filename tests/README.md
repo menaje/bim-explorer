@@ -121,6 +121,11 @@ range/session/GPU cleanup을 검사합니다. macOS/Linux CI receipt는 `npm run
 assemble:federation:product-scale:platform`으로 합치며 geometry, range,
 render/highlight와 cleanup의 portable projection이 동일하지 않으면
 실패합니다. memory/time은 runner별 예산 관측으로 분리해 보존합니다.
+`npm run qualify:bim-surface:v0.2:vscode`는 generated GLB–IFC–GLB와
+path-free `.bimfed.json`을 staged VS Code 1.131.0 및 빈 profile에 설치한
+VSIX에서 열어 source별 Worker, actual WebGL2 hit·normal,
+triangle-barycentric anchor, unchanged range read와 전체 cleanup을 검증합니다.
+이 결과는 실제 Spatial consumer나 public v0.2 package를 승인하지 않습니다.
 
 `reference-format-intake` test는 held LAS/LAZ/E57, 3D Tiles, RVT/DGN 제안을
 실제 multi-source 과업, public fixture, implementation 권리, coordinate와

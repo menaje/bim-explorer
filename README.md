@@ -116,6 +116,7 @@ BIM Explorer가 소유할 범위:
 - generic 3D camera, picking, section과 measurement
 - model tree, property, relation과 search
 - standalone Browser diagnostic surface와 VS Code Custom Editor
+- path-free `.bimfed.json` 기반 source-scoped federated VS Code Surface v0.2
 - IFC engine, format, license, 성능과 compatibility qualification
 - bounded glTF/GLB reference source와 source-native identity exploration
 - bounded E57/LAS/LAZ point source와 source-neutral point rendering
@@ -144,6 +145,13 @@ package는 deterministic pack과 offline clean install을 통과했고
 manifest와 npm registry publication은 계속 private이며 실제 Spatial consumer
 exact-pin도 별도 Gate입니다. Surface는 Workspace, Canonical Entity ID, mutation,
 accept, publish와 export authority를 발급하지 않습니다.
+
+내부 federated Surface v0.2는 generated GLB–IFC–GLB를 actual Browser와
+VS Code 1.131.0 Webview에 합성해 source별 exact WebGL2 hit·normal,
+triangle-barycentric anchor와 cleanup을 검증했습니다. VS Code는 같은 폴더의
+bounded source만 참조하는 path-free `.bimfed.json`을 열며 staged 확장과
+clean-installed VSIX가 같은 결과를 재현합니다. 이는 공개 v0.2 package,
+Spatial consumer 또는 authoring authority 승격이 아닙니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
@@ -344,6 +352,7 @@ npm run qualify:viewer-core
 npm run qualify:openbim
 npm run qualify:federation
 npm run qualify:federation:product-scale
+npm run qualify:bim-surface:v0.2:vscode
 npm run qualify:community-release
 npm run package:vscode
 npm run release:bundle

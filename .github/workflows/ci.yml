@@ -58,6 +58,31 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Qualify federated BIM Surface VS Code anchors on Linux
+        if: runner.os == 'Linux'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          xvfb-run -a
+          npm run qualify:bim-surface:v0.2:vscode --
+          --out federated-bim-surface-vscode-${{ runner.os }}.json
+
+      - name: Qualify federated BIM Surface VS Code anchors on macOS
+        if: runner.os == 'macOS'
+        env:
+          BIM_EXPLORER_VSCODE_VERSION: 1.131.0
+        run: >-
+          npm run qualify:bim-surface:v0.2:vscode --
+          --out federated-bim-surface-vscode-${{ runner.os }}.json
+
+      - name: Upload federated BIM Surface VS Code evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: federated-bim-surface-vscode-${{ runner.os }}
+          path: federated-bim-surface-vscode-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify E57 coordinate profile matrix
         run: >-
           npm run qualify:e57:profiles --

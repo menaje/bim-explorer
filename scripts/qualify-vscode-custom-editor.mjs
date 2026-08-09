@@ -39,6 +39,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
 function parseArguments(values) {
   const options = {
+    includeFederatedSurfaceFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
@@ -47,6 +48,10 @@ function parseArguments(values) {
   };
   for (let index = 0; index < values.length; index += 1) {
     const name = values[index];
+    if (name === "--federated-surface") {
+      options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
     if (name === "--product-scale") {
       options.includeProductScaleFixture = true;
       continue;
@@ -77,7 +82,8 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
-        "[--product-scale] [--point-cloud] [--e57-spherical] " +
+        "[--federated-surface] [--product-scale] [--point-cloud] " +
+        "[--e57-spherical] " +
         "[--e57-multiple-scan] " +
         "[--output path]",
     );
@@ -86,6 +92,7 @@ function parseArguments(values) {
 }
 
 export async function qualifyVscodeCustomEditor({
+  includeFederatedSurfaceFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
@@ -157,6 +164,11 @@ export async function qualifyVscodeCustomEditor({
       extensionTestsEnv: {
         BIM_EXPLORER_ROOT: ROOT,
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
+        ...(includeFederatedSurfaceFixture
+          ? {
+              BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
+            }
+          : {}),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
         ...(pointFixtures === null

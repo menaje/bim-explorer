@@ -1,0 +1,826 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-vscode-qualification/1",
+  "status": "passed-vscode-surface-anchor",
+  "asOf": "2026-08-09",
+  "capturedAt": "2026-08-09T02:24:22.690Z",
+  "contract": {
+    "surface": "bim-explorer-bim-surface/0.2",
+    "surfaceHit": "bim-explorer-bim-surface-hit/0.1",
+    "surfaceHitReceipt": "bim-explorer-bim-surface-hit-receipt/0.1",
+    "referenceAnchor": "bim-explorer-reference-anchor/0.1",
+    "source": "bim-explorer-bim-source/0.2",
+    "federationDocument": "bim-explorer-federation-document/0.1",
+    "vscodeReport": "bim-explorer-federated-vscode-surface-report/1",
+    "publicV01BundleBytes": 309505
+  },
+  "environment": {
+    "node": "v24.11.1",
+    "platform": "darwin-arm64",
+    "vscode": "1.131.0",
+    "runtimeSource": "local-installation",
+    "requestedVersion": null,
+    "downloadAttempts": 0,
+    "rendererQualification": "SwiftShader WebGL2",
+    "physicalGpuClaimed": false
+  },
+  "surfaces": {
+    "staged": {
+      "environment": {
+        "vscode": "1.131.0",
+        "platform": "darwin-arm64",
+        "runtimeLayout": "staged"
+      },
+      "fixture": {
+        "id": "generated-ifc-glb-glb-vscode-surface-v0.2",
+        "committed": false,
+        "releaseBundled": false,
+        "sourceCount": 3,
+        "formats": [
+          "glb",
+          "ifc",
+          "glb"
+        ]
+      },
+      "observation": {
+        "hostKind": "vscode-webview",
+        "externalUpload": false,
+        "telemetry": false,
+        "ready": {
+          "composition": {
+            "federationId": "federation:vscode-surface-v0.2",
+            "sourceCount": 3,
+            "formats": [
+              "glb",
+              "ifc",
+              "glb"
+            ],
+            "sourceRoles": [
+              "geometric-reference",
+              "semantic-base",
+              "consumer-overlay"
+            ],
+            "semanticAvailability": [
+              false,
+              true,
+              false
+            ],
+            "projectionFingerprint": "sha256:0f56442c145f1cdf431c8da23af923ca6ed4ee4677aa37009304880faf819320",
+            "sourceProjectionFingerprints": [
+              "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+              "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+              "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+            ],
+            "identityMerged": false
+          },
+          "semantics": {
+            "queriedSource": "source-slot:m-semantic",
+            "query": "wall",
+            "returned": 2,
+            "referenceSemanticsRejected": true
+          },
+          "renderer": {
+            "backend": "webgl2",
+            "actualGpu": true,
+            "context": "webgl2",
+            "nonBackgroundPixels": 8292,
+            "uploadedBytes": 1608,
+            "surfaceHits": 0,
+            "surfaceMisses": 0,
+            "retainedGeometryBytes": 0
+          }
+        },
+        "qualified": {
+          "selection": {
+            "items": 3,
+            "sourceSlots": [
+              "source-slot:a-reference",
+              "source-slot:m-semantic",
+              "source-slot:z-overlay"
+            ],
+            "distinctKeys": 3,
+            "mergeAcrossSources": false,
+            "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+          },
+          "renderer": {
+            "backend": "webgl2",
+            "actualGpu": true,
+            "context": "webgl2",
+            "nonBackgroundPixels": 8292,
+            "uploadedBytes": 1608,
+            "surfaceHits": 3,
+            "surfaceMisses": 5,
+            "retainedGeometryBytes": 0
+          },
+          "picks": [
+            {
+              "sourceSlot": "source-slot:a-reference",
+              "sourceRevisionId": "source-snapshot:sha256:4150173cc663b894b7432caef8a404eb1f44c624ed5d497b66d6b79bbfa7cbc1",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.24129525347312297,
+                  0.24874918328822893,
+                  0.5099555632386481
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:m-semantic",
+              "sourceRevisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+              "nativeId": null,
+              "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 8,
+                "barycentric": [
+                  0.4740037218821231,
+                  0.4786396909545032,
+                  0.0473565871633738
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:z-overlay",
+              "sourceRevisionId": "source-snapshot:sha256:ae27290d10091b450deef71eb4dd792d7570f53e59b7464c2fd3697800fd8216",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.46962659468285767,
+                  0.3377303350917087,
+                  0.19264307022543373
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            }
+          ],
+          "anchors": [
+            {
+              "sourceSlot": "source-slot:a-reference",
+              "format": "glb",
+              "identityKind": "glb-native-id",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "point": [
+                0.007453929815105731,
+                0.019911126477296204,
+                0
+              ],
+              "normal": [
+                0,
+                0,
+                1
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.24129525347312297,
+                  0.24874918328822893,
+                  0.5099555632386481
+                ]
+              },
+              "alignmentFingerprint": "sha256:29184ab0c0ba40401621a9520ad721353a5471d4b0e0e71f1fa2432a84e3d8f4",
+              "projectionFingerprint": "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:m-semantic",
+              "format": "ifc",
+              "identityKind": "ifc-global-id",
+              "nativeId": "ifc-globalid:0AAAAAAAAAAAAAAAAAAA16",
+              "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+              "point": [
+                2.0854412361819876,
+                1.1000000014901161,
+                1.577988834353631
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 8,
+                "barycentric": [
+                  0.4740037218821231,
+                  0.4786396909545032,
+                  0.0473565871633738
+                ]
+              },
+              "alignmentFingerprint": "sha256:2efffae03256f37974452ecd77e5fa6cd0e14bfff67634dd946236eff6a75f88",
+              "projectionFingerprint": "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:z-overlay",
+              "format": "glb",
+              "identityKind": "glb-native-id",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "point": [
+                -0.1318962595911488,
+                -0.6147138595491327,
+                0
+              ],
+              "normal": [
+                0,
+                0,
+                1
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.46962659468285767,
+                  0.3377303350917087,
+                  0.19264307022543373
+                ]
+              },
+              "alignmentFingerprint": "sha256:03436b6db1ff2f88f7d63503887ee49678912afe9290ce0dc8f9201d1b142e91",
+              "projectionFingerprint": "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            }
+          ],
+          "ranges": {
+            "sources": [
+              {
+                "sourceSlot": "source-slot:a-reference",
+                "reads": 1,
+                "bytesRead": 120
+              },
+              {
+                "sourceSlot": "source-slot:m-semantic",
+                "reads": 1,
+                "bytesRead": 996
+              },
+              {
+                "sourceSlot": "source-slot:z-overlay",
+                "reads": 1,
+                "bytesRead": 120
+              }
+            ],
+            "unchangedBySurfaceResolution": true
+          },
+          "authority": {
+            "workspace": false,
+            "canonicalEntityId": false,
+            "sourceMutation": false,
+            "revisionMutation": false,
+            "geometryMutation": false,
+            "constraintMutation": false,
+            "acceptance": false,
+            "publish": false,
+            "export": false
+          }
+        },
+        "cleanup": {
+          "surfaceStatus": "disposed",
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "backendActiveBytes": 0,
+          "backendResidentRanges": 0,
+          "retainedGeometryBytes": 0,
+          "projectionCachesReleased": true,
+          "transferredSessionsReleased": true,
+          "sourceSessionsDisposed": true,
+          "workersTerminated": true,
+          "clientsDisposed": true,
+          "runtimeUrlsRevoked": true,
+          "repeatedDispose": false
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "anchors": "qualified",
+          "disposed": "disposed",
+          "editorClosed": true
+        }
+      },
+      "assertions": {
+        "actualVscodeFederatedSurface": true,
+        "threeSourceCompositionExact": true,
+        "sourceScopedSemanticsAndIdentity": true,
+        "actualVscodeChromiumWebGl2": true,
+        "exactSourceLocalHits": true,
+        "derivedAnchorsCurrent": true,
+        "rangeReplayBounded": true,
+        "noWorkspaceOrMutationAuthority": true,
+        "pathFreeHostBridge": true,
+        "transferredResourcesReleased": true,
+        "editorCloseObserved": true
+      }
+    },
+    "installed": {
+      "environment": {
+        "platform": "darwin-arm64",
+        "cleanUserData": true,
+        "cleanExtensionsDirectory": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1475063,
+        "installedRuntimeFiles": 23,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "3d9d64d03801a40ec493596822b38affda1e0d51ae5ebd2e7362797192e7e977",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      },
+      "fixture": {
+        "id": "generated-ifc-glb-glb-vscode-surface-v0.2",
+        "committed": false,
+        "releaseBundled": false,
+        "sourceCount": 3,
+        "formats": [
+          "glb",
+          "ifc",
+          "glb"
+        ]
+      },
+      "observation": {
+        "hostKind": "vscode-webview",
+        "externalUpload": false,
+        "telemetry": false,
+        "ready": {
+          "composition": {
+            "federationId": "federation:vscode-surface-v0.2",
+            "sourceCount": 3,
+            "formats": [
+              "glb",
+              "ifc",
+              "glb"
+            ],
+            "sourceRoles": [
+              "geometric-reference",
+              "semantic-base",
+              "consumer-overlay"
+            ],
+            "semanticAvailability": [
+              false,
+              true,
+              false
+            ],
+            "projectionFingerprint": "sha256:0f56442c145f1cdf431c8da23af923ca6ed4ee4677aa37009304880faf819320",
+            "sourceProjectionFingerprints": [
+              "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+              "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+              "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+            ],
+            "identityMerged": false
+          },
+          "semantics": {
+            "queriedSource": "source-slot:m-semantic",
+            "query": "wall",
+            "returned": 2,
+            "referenceSemanticsRejected": true
+          },
+          "renderer": {
+            "backend": "webgl2",
+            "actualGpu": true,
+            "context": "webgl2",
+            "nonBackgroundPixels": 8292,
+            "uploadedBytes": 1608,
+            "surfaceHits": 0,
+            "surfaceMisses": 0,
+            "retainedGeometryBytes": 0
+          }
+        },
+        "qualified": {
+          "selection": {
+            "items": 3,
+            "sourceSlots": [
+              "source-slot:a-reference",
+              "source-slot:m-semantic",
+              "source-slot:z-overlay"
+            ],
+            "distinctKeys": 3,
+            "mergeAcrossSources": false,
+            "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+          },
+          "renderer": {
+            "backend": "webgl2",
+            "actualGpu": true,
+            "context": "webgl2",
+            "nonBackgroundPixels": 8292,
+            "uploadedBytes": 1608,
+            "surfaceHits": 3,
+            "surfaceMisses": 5,
+            "retainedGeometryBytes": 0
+          },
+          "picks": [
+            {
+              "sourceSlot": "source-slot:a-reference",
+              "sourceRevisionId": "source-snapshot:sha256:4150173cc663b894b7432caef8a404eb1f44c624ed5d497b66d6b79bbfa7cbc1",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.24129525347312297,
+                  0.24874918328822893,
+                  0.5099555632386481
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:m-semantic",
+              "sourceRevisionId": "source-snapshot:sha256:400071d0a99f14ef37c46560bde1651965a378e0586b5f470be3fda81e585243",
+              "nativeId": null,
+              "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 8,
+                "barycentric": [
+                  0.4740037218821231,
+                  0.4786396909545032,
+                  0.0473565871633738
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:z-overlay",
+              "sourceRevisionId": "source-snapshot:sha256:ae27290d10091b450deef71eb4dd792d7570f53e59b7464c2fd3697800fd8216",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "surfaceHitCapability": "source-local-surface-hit",
+              "coordinateSpace": "projection-local",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.46962659468285767,
+                  0.3377303350917087,
+                  0.19264307022543373
+                ]
+              },
+              "verification": {
+                "actualGpuDepth": true,
+                "exactGeometryDigest": true,
+                "nearestUniqueTriangle": true
+              },
+              "resources": {
+                "retainedGeometryBytes": 0,
+                "temporaryGeometryReleased": true
+              },
+              "authority": {
+                "nativeFace": false,
+                "sourcePrecision": false,
+                "coordinateReference": false,
+                "mutation": false
+              }
+            }
+          ],
+          "anchors": [
+            {
+              "sourceSlot": "source-slot:a-reference",
+              "format": "glb",
+              "identityKind": "glb-native-id",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "point": [
+                0.007453929815105731,
+                0.019911126477296204,
+                0
+              ],
+              "normal": [
+                0,
+                0,
+                1
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.24129525347312297,
+                  0.24874918328822893,
+                  0.5099555632386481
+                ]
+              },
+              "alignmentFingerprint": "sha256:29184ab0c0ba40401621a9520ad721353a5471d4b0e0e71f1fa2432a84e3d8f4",
+              "projectionFingerprint": "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:m-semantic",
+              "format": "ifc",
+              "identityKind": "ifc-global-id",
+              "nativeId": "ifc-globalid:0AAAAAAAAAAAAAAAAAAA16",
+              "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+              "point": [
+                2.0854412361819876,
+                1.1000000014901161,
+                1.577988834353631
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 8,
+                "barycentric": [
+                  0.4740037218821231,
+                  0.4786396909545032,
+                  0.0473565871633738
+                ]
+              },
+              "alignmentFingerprint": "sha256:2efffae03256f37974452ecd77e5fa6cd0e14bfff67634dd946236eff6a75f88",
+              "projectionFingerprint": "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            },
+            {
+              "sourceSlot": "source-slot:z-overlay",
+              "format": "glb",
+              "identityKind": "glb-native-id",
+              "nativeId": "node:0/mesh:0/primitive:0",
+              "globalId": null,
+              "point": [
+                -0.1318962595911488,
+                -0.6147138595491327,
+                0
+              ],
+              "normal": [
+                0,
+                0,
+                1
+              ],
+              "stability": "derived",
+              "locator": {
+                "kind": "triangle-barycentric",
+                "triangleIndex": 0,
+                "barycentric": [
+                  0.46962659468285767,
+                  0.3377303350917087,
+                  0.19264307022543373
+                ]
+              },
+              "alignmentFingerprint": "sha256:03436b6db1ff2f88f7d63503887ee49678912afe9290ce0dc8f9201d1b142e91",
+              "projectionFingerprint": "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f",
+              "authority": {
+                "workspace": false,
+                "canonicalEntityId": false,
+                "sourceMutation": false,
+                "geometryMutation": false,
+                "constraintMutation": false,
+                "acceptance": false,
+                "publish": false,
+                "export": false
+              }
+            }
+          ],
+          "ranges": {
+            "sources": [
+              {
+                "sourceSlot": "source-slot:a-reference",
+                "reads": 1,
+                "bytesRead": 120
+              },
+              {
+                "sourceSlot": "source-slot:m-semantic",
+                "reads": 1,
+                "bytesRead": 996
+              },
+              {
+                "sourceSlot": "source-slot:z-overlay",
+                "reads": 1,
+                "bytesRead": 120
+              }
+            ],
+            "unchangedBySurfaceResolution": true
+          },
+          "authority": {
+            "workspace": false,
+            "canonicalEntityId": false,
+            "sourceMutation": false,
+            "revisionMutation": false,
+            "geometryMutation": false,
+            "constraintMutation": false,
+            "acceptance": false,
+            "publish": false,
+            "export": false
+          }
+        },
+        "cleanup": {
+          "surfaceStatus": "disposed",
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "backendActiveBytes": 0,
+          "backendResidentRanges": 0,
+          "retainedGeometryBytes": 0,
+          "projectionCachesReleased": true,
+          "transferredSessionsReleased": true,
+          "sourceSessionsDisposed": true,
+          "workersTerminated": true,
+          "clientsDisposed": true,
+          "runtimeUrlsRevoked": true,
+          "repeatedDispose": false
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "anchors": "qualified",
+          "disposed": "disposed",
+          "editorClosed": true
+        }
+      },
+      "assertions": {
+        "actualVscodeFederatedSurface": true,
+        "threeSourceCompositionExact": true,
+        "sourceScopedSemanticsAndIdentity": true,
+        "actualVscodeChromiumWebGl2": true,
+        "exactSourceLocalHits": true,
+        "derivedAnchorsCurrent": true,
+        "rangeReplayBounded": true,
+        "noWorkspaceOrMutationAuthority": true,
+        "pathFreeHostBridge": true,
+        "transferredResourcesReleased": true,
+        "editorCloseObserved": true
+      }
+    }
+  },
+  "fixturePolicy": {
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "generatedTestOnly": true
+  },
+  "assertions": {
+    "stagedVscodeFederatedSurface": true,
+    "cleanInstalledVsixFederatedSurface": true,
+    "threeSourceCompositionExact": true,
+    "sourceScopedSemanticsAndIdentity": true,
+    "actualVscodeChromiumWebGl2": true,
+    "exactSourceLocalHits": true,
+    "derivedTriangleAnchors": true,
+    "unchangedSourceReads": true,
+    "zeroRetainedCpuGeometry": true,
+    "transferredResourceCleanup": true,
+    "pathFreeHostBridge": true,
+    "spatialIndependent": true,
+    "generatedTestOnly": true,
+    "authorityFree": true,
+    "physicalGpuNotClaimed": true,
+    "publicV01ArtifactUnchanged": true
+  },
+  "held": {
+    "actualSpatialConsumer": false,
+    "publicV02Package": false,
+    "productionSupport": false
+  },
+  "decision": {
+    "vscodeProductComposition": "passed-source-scoped-surface-v0.2",
+    "vscodeAnchor": "passed-derived-source-local-triangle-anchor",
+    "actualSpatialConsumer": "held-consumer-owned",
+    "publicV02Package": "held-qualification-and-release",
+    "productionClaims": false
+  },
+  "limitations": [
+    "the VS Code qualification uses generated test-only IFC4 and GLB sources",
+    "SwiftShader WebGL2 qualifies the actual VS Code Chromium API path but does not claim a physical GPU",
+    "the triangle-barycentric locator is derived from exact display geometry and is not a native source face identity",
+    "source points and normals do not claim source precision, CRS, datum, Workspace, mutation, acceptance, publish, or export authority",
+    "the Coni Spatial consumer and public v0.2 package remain separate held gates",
+    "the private v0.2 entrypoint does not change the immutable public BIM Surface v0.1 artifact"
+  ]
+}

@@ -206,8 +206,8 @@ immutable semantic/reference sources
 source role은 caller-provided display metadata이며 capability나 authority가
 아닙니다. surface는 source-local point·normal을 반환할 수 있지만 이를
 Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부착하지
-않습니다. actual package와 public release는 Spatial consumer evidence 전까지
-held입니다.
+않습니다. 내부 Browser/VS Code product entrypoint는 검증됐지만 public v0.2
+package와 release는 Spatial consumer evidence 전까지 held입니다.
 
 ## Viewer Core와 3D presentation
 

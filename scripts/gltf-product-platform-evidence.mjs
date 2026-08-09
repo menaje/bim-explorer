@@ -204,7 +204,9 @@ function validatePlatformEntry(entry, expectedPlatform) {
       "menaje.bim-explorer" ||
     entry.vscodeInstall.package.version !== "0.1.0" ||
     entry.vscodeInstall.package.byteLength <= 0 ||
-    entry.vscodeInstall.package.installedRuntimeFiles !== 7 ||
+    ![7, 23].includes(
+      entry.vscodeInstall.package.installedRuntimeFiles,
+    ) ||
     !/^[0-9a-f]{64}$/u.test(
       entry.vscodeInstall.package.workerBundleSha256 ?? "",
     ) ||

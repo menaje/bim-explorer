@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -23,6 +23,18 @@ const {
   renderBimExplorerWebviewHtml,
 } = require(
   "../../apps/bim-explorer-vscode/src/webview-html.js",
+);
+const {
+  FederatedBimSurfaceReadonlyEditorProvider,
+  sanitizeFederationReport,
+  validateFederationDocument,
+} = require(
+  "../../apps/bim-explorer-vscode/src/federation-provider.js",
+);
+const {
+  renderFederatedBimSurfaceWebviewHtml,
+} = require(
+  "../../apps/bim-explorer-vscode/src/federation-webview-html.js",
 );
 
 class FakeUri {
@@ -220,8 +232,283 @@ test("VS Code manifest associates bounded BIM sources with a read-only product h
     manifest.contributes.customEditors[0].priority,
     "default",
   );
+  assert.deepEqual(manifest.contributes.customEditors[1], {
+    viewType: "bimExplorer.federationEditor",
+    displayName: "Federated BIM Surface",
+    selector: [{ filenamePattern: "*.bimfed.json" }],
+    priority: "default",
+  });
   assert.equal(manifest.dependencies["web-ifc"], "0.0.77");
   assert.equal(manifest.dependencies["laz-perf"], "0.0.6");
+});
+
+test("federated Webview HTML is strict and never embeds its manifest URI", async () => {
+  const template = await readFile(
+    path.join(
+      ROOT,
+      "apps",
+      "federated-bim-surface-vscode",
+      "index.html",
+    ),
+    "utf8",
+  );
+  const manifestUriText =
+    "file:///private/customer/coordination.bimfed.json";
+  const html = renderFederatedBimSurfaceWebviewHtml(template, {
+    appUri: "vscode-webview://test/federated/app.mjs",
+    cspSource: "vscode-webview://test",
+    manifestUriText,
+    profile: "ReferenceView_V1.2",
+    stylesUri: "vscode-webview://test/federated/styles.css",
+    wasmUri: "vscode-webview://test/vendor/",
+    webIfcModuleUri:
+      "vscode-webview://test/vendor/web-ifc-api.js",
+    workerModuleUri:
+      "vscode-webview://test/source-worker.bundle.mjs",
+  });
+  assert.match(html, /Content-Security-Policy/u);
+  assert.match(
+    html,
+    /worker-src vscode-webview:\/\/test blob:/u,
+  );
+  assert.equal(html.includes("'unsafe-inline'"), false);
+  assert.equal(html.includes("'unsafe-eval'"), false);
+  assert.equal(html.includes(manifestUriText), false);
+  assert.equal(html.includes("coordination.bimfed.json"), false);
+});
+
+test("federation document admits explicit source-scoped local composition only", () => {
+  const document = validateFederationDocument({
+    schema: "bim-explorer-federation-document/0.1",
+    federationId: "federation:unit-test",
+    sources: [
+      {
+        federationSourceId: "source-slot:a-reference",
+        sourceRole: "geometric-reference",
+        file: "reference.glb",
+        sourceToFederation: [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          -8, 0, 0, 1,
+        ],
+      },
+      {
+        federationSourceId: "source-slot:m-semantic",
+        sourceRole: "semantic-base",
+        file: "semantic.ifc",
+        sourceToFederation: [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          0, 0, 0, 1,
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(
+    document.sources.map((source) => source.format),
+    ["glb", "ifc"],
+  );
+  assert.throws(
+    () => validateFederationDocument({
+      ...document,
+      sources: [{
+        ...document.sources[0],
+        file: "../reference.glb",
+      }],
+    }),
+    /leaf file name/u,
+  );
+  assert.throws(
+    () => validateFederationDocument({
+      ...document,
+      federationId: "/private/customer/coordination",
+    }),
+    /document ID is invalid/u,
+  );
+});
+
+test("Federated Custom Editor sends source-scoped bytes without file identity", async () => {
+  const temporary = await mkdtemp(
+    path.join(tmpdir(), "bim-explorer-federation-host-test-"),
+  );
+  const manifestPath = path.join(
+    temporary,
+    "coordination.bimfed.json",
+  );
+  const referencePath = path.join(temporary, "private-reference.glb");
+  const semanticPath = path.join(temporary, "private-semantic.ifc");
+  try {
+    await Promise.all([
+      writeFile(referencePath, Uint8Array.from([1, 2, 3, 4])),
+      writeFile(
+        semanticPath,
+        "ISO-10303-21;\nEND-ISO-10303-21;\n",
+        "utf8",
+      ),
+      writeFile(
+        manifestPath,
+        JSON.stringify({
+          schema: "bim-explorer-federation-document/0.1",
+          federationId: "federation:host-unit-test",
+          sources: [
+            {
+              federationSourceId: "source-slot:reference",
+              sourceRole: "geometric-reference",
+              file: path.basename(referencePath),
+              sourceToFederation: [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                -8, 0, 0, 1,
+              ],
+            },
+            {
+              federationSourceId: "source-slot:semantic",
+              sourceRole: "semantic-base",
+              file: path.basename(semanticPath),
+              sourceToFederation: [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1,
+              ],
+            },
+          ],
+        }),
+        "utf8",
+      ),
+    ]);
+    const configuration = {
+      ifcProfile: "ReferenceView_V1.2",
+      maximumSourceBytes: 64 * 1024 * 1024,
+      openTimeoutMs: 30_000,
+    };
+    const vscode = {
+      Uri: {
+        joinPath(uri, ...segments) {
+          return new FakeUri(path.join(uri.fsPath, ...segments));
+        },
+      },
+      window: {
+        createOutputChannel() {
+          return {
+            dispose() {},
+            info() {},
+          };
+        },
+      },
+      workspace: {
+        fs: {
+          async readFile(uri) {
+            return new Uint8Array(await readFile(uri.fsPath));
+          },
+        },
+        getConfiguration() {
+          return {
+            get(name) {
+              return configuration[name];
+            },
+          };
+        },
+      },
+    };
+    const context = {
+      extensionUri: new FakeUri(
+        path.join(ROOT, "apps", "bim-explorer-vscode"),
+      ),
+      subscriptions: [],
+    };
+    const provider =
+      new FederatedBimSurfaceReadonlyEditorProvider(
+        vscode,
+        context,
+        { runtimeRoot: new FakeUri(ROOT) },
+      );
+    const document = await provider.openCustomDocument(
+      new FakeUri(manifestPath),
+    );
+    const host = fakePanel();
+    await provider.resolveCustomEditor(document, host.panel);
+    await host.receive({
+      schema:
+        "bim-explorer-federated-product-host-message/0.1",
+      type: "ready",
+    });
+    const message = host.posted.find((item) =>
+      item.type === "federation-sources");
+    assert.equal(message.generation, 1);
+    assert.equal(message.federationId, "federation:host-unit-test");
+    assert.deepEqual(
+      message.sources.map((source) => source.format),
+      ["glb", "ifc"],
+    );
+    assert.equal(
+      message.sources.every((source) =>
+        source.bytes instanceof ArrayBuffer &&
+        source.bytes.byteLength > 0),
+      true,
+    );
+    const serialized = JSON.stringify(message);
+    for (const file of [manifestPath, referencePath, semanticPath]) {
+      assert.equal(serialized.includes(file), false);
+      assert.equal(serialized.includes(path.basename(file)), false);
+    }
+    document.dispose();
+    provider.dispose();
+  } finally {
+    await rm(temporary, { force: true, recursive: true });
+  }
+});
+
+test("federated diagnostics retain exact anchor evidence but strip arbitrary fields", () => {
+  const report = sanitizeFederationReport({
+    schema: "bim-explorer-federated-vscode-surface-report/1",
+    status: "qualified",
+    hostKind: "vscode-webview",
+    externalUpload: false,
+    telemetry: false,
+    path: "/private/customer/coordination.bimfed.json",
+    composition: {
+      federationId: "federation:unit-test",
+      sourceCount: 3,
+      formats: ["glb", "ifc", "glb"],
+      sourceRoles: [
+        "geometric-reference",
+        "semantic-base",
+        "consumer-overlay",
+      ],
+      semanticAvailability: [false, true, false],
+      identityMerged: false,
+    },
+    picks: [{
+      sourceSlot: "source-slot:m-semantic",
+      surfaceHitCapability: "source-local-surface-hit",
+      coordinateSpace: "projection-local",
+      locator: {
+        kind: "triangle-barycentric",
+        triangleIndex: 4,
+        barycentric: [0.2, 0.3, 0.5],
+      },
+      verification: {
+        actualGpuDepth: true,
+        exactGeometryDigest: true,
+        nearestUniqueTriangle: true,
+      },
+      resources: {
+        retainedGeometryBytes: 0,
+        temporaryGeometryReleased: true,
+      },
+      authority: { workspace: false },
+      path: "/private/customer/semantic.ifc",
+    }],
+  });
+  assert.equal(report.composition.sourceCount, 3);
+  assert.equal(report.picks[0].locator.kind, "triangle-barycentric");
+  assert.equal(report.picks[0].verification.actualGpuDepth, true);
+  assert.equal(JSON.stringify(report).includes("/private"), false);
+  assert.equal(JSON.stringify(report).includes("path"), false);
 });
 
 test("webview HTML uses the shared app with strict path-free CSP", async () => {
@@ -686,6 +973,8 @@ test("extension staging is complete and independently path-safe", async () => {
     for (const relative of [
       "extension.js",
       "src/provider.js",
+      "src/federation-provider.js",
+      "src/federation-webview-html.js",
       "apps/bim-explorer-web/app.mjs",
       "apps/bim-explorer-web/laz-perf-worker-csp.js",
       "apps/bim-explorer-web/point-source-client.mjs",
@@ -706,6 +995,13 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/bim-renderer-3d/src/point-cloud.mjs",
       "packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
       "packages/bim-semantic-explorer/src/index.mjs",
+      "apps/federated-bim-surface-vscode/app.mjs",
+      "apps/federated-bim-surface-vscode/index.html",
+      "packages/bim-federation/src/index.mjs",
+      "packages/bim-federation/src/renderer-projection.mjs",
+      "packages/bim-reference-anchor/src/index.mjs",
+      "packages/bim-surface-hit/src/index.mjs",
+      "packages/federated-bim-surface/src/index.mjs",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",

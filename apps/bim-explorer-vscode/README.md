@@ -13,6 +13,40 @@ revision과 root range digest 안의 파생 순서 identity입니다. 대형 poi
 단계로 전환합니다. 이는 CRS, surveyed datum, source-native hierarchy,
 source-declared point semantics 또는 BIM semantic authority를 주장하지 않습니다.
 
+별도 `*.bimfed.json` Custom Editor는 1–8개의 같은 폴더 IFC/glTF/GLB를
+source-scoped `bim-surface/0.2`로 합성합니다. manifest의 file 값은 separator가
+없는 leaf 이름만 허용하고 extension host가 manifest/source symlink, 읽기 중
+변경, source별 64 MiB와 합산 64 MiB 상한을 검사합니다. 경로와 파일 이름은
+Webview report로 보내지 않으며 source마다 독립 Worker/session을 사용합니다.
+예시는 다음과 같습니다.
+
+```json
+{
+  "schema": "bim-explorer-federation-document/0.1",
+  "federationId": "federation:local-coordination",
+  "sources": [
+    {
+      "federationSourceId": "source-slot:architecture",
+      "sourceRole": "semantic-base",
+      "file": "architecture.ifc",
+      "sourceToFederation": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    }
+  ]
+}
+```
+
+`BIM Explorer: Verify Visible Federated Anchors`는 actual WebGL2 depth와 exact
+display geometry를 대조해 source-local point·normal과 derived
+triangle-barycentric anchor를 확인합니다. 이는 native face, source precision,
+CRS/datum, Workspace, mutation, acceptance, publish 또는 export authority가
+아닙니다. `npm run qualify:bim-surface:v0.2:vscode`가 staged 확장과
+clean-installed VSIX의 동일 composition과 전체 자원 정리를 검증합니다.
+
 - source URI는 extension host 안에서만 사용하며 webview message와
   diagnostics에 넣지 않습니다.
 - `file:` URI, regular file, non-symlink와 최대 64 MiB를 읽기 전후에

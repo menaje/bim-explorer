@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="bim-profile" content="ReferenceView_V1.2">
+    <meta name="bim-wasm-path" content="/vendor/">
+    <meta name="bim-web-ifc-module" content="/vendor/web-ifc-api.js">
+    <meta name="bim-worker-module" content="../bim-explorer-web/source-worker.bundle.mjs">
+    <title>Federated BIM Surface</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">BIM Explorer · Surface v0.2</p>
+          <h1>Federated BIM Surface</h1>
+          <p id="status" data-state="idle">
+            Waiting for a bounded local federation document…
+          </p>
+        </div>
+        <div class="actions">
+          <button id="verify-anchors" type="button" disabled>
+            Verify visible anchors
+          </button>
+          <button id="dispose-surface" type="button" disabled>
+            Close surface
+          </button>
+        </div>
+      </header>
+      <section class="surface">
+        <canvas id="model-canvas" width="800" height="600"></canvas>
+        <aside>
+          <h2>Source-scoped composition</h2>
+          <dl id="composition"></dl>
+          <h2>Authority</h2>
+          <p class="limitation">
+            Read-only derived display geometry. No native-face, CRS,
+            Workspace, mutation, acceptance, publish, or export authority.
+          </p>
+        </aside>
+      </section>
+      <details>
+        <summary>Qualification receipt</summary>
+        <pre id="receipt"></pre>
+      </details>
+    </main>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

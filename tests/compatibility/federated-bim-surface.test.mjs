@@ -6,7 +6,12 @@ import {
   validateFederatedBimSurfaceCompatibility,
 } from "../../scripts/check-federated-bim-surface-compatibility.mjs";
 
-const [manifest, evidence, browserEvidence] = await Promise.all([
+const [
+  manifest,
+  evidence,
+  browserEvidence,
+  vscodeEvidence,
+] = await Promise.all([
   readFile(
     "compatibility/federated-bim-surface.json",
     "utf8",
@@ -21,36 +26,44 @@ const [manifest, evidence, browserEvidence] = await Promise.all([
       "federated-bim-surface-browser-2026-08-09.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "federated-bim-surface-vscode-2026-08-09.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
-test("federated BIM Surface admits actual Browser anchors", () => {
+test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
   assert.deepEqual(
     validateFederatedBimSurfaceCompatibility(
       manifest,
       evidence,
       browserEvidence,
+      vscodeEvidence,
     ),
     {
       status: "experimental",
-      passedGates: 15,
-      heldGates: 4,
+      passedGates: 16,
+      heldGates: 3,
       sourceCount: 3,
       anchors: 3,
       surfaceHits: 3,
+      vscodeAnchors: 3,
     },
   );
 });
 
-test("federated BIM Surface cannot claim a VS Code surface", () => {
-  const overclaim = structuredClone(manifest);
-  overclaim.gates.actualVscodeSurface = true;
+test("federated BIM Surface cannot demote its qualified VS Code surface", () => {
+  const invalid = structuredClone(manifest);
+  invalid.gates.actualVscodeSurface = false;
   assert.throws(
     () => validateFederatedBimSurfaceCompatibility(
-      overclaim,
+      invalid,
       evidence,
       browserEvidence,
+      vscodeEvidence,
     ),
-    /held Gate must remain false/u,
+    /passed Gate is missing/u,
   );
 });
 
@@ -62,6 +75,7 @@ test("federated BIM Surface requires unchanged-source range replay", () => {
       manifest,
       invalid,
       browserEvidence,
+      vscodeEvidence,
     ),
     /refresh evidence is invalid/u,
   );
@@ -75,6 +89,7 @@ test("federated BIM Surface evidence cannot gain authority", () => {
       manifest,
       overclaim,
       browserEvidence,
+      vscodeEvidence,
     ),
     /overclaims authority/u,
   );
@@ -88,6 +103,7 @@ test("federated BIM Surface rejects an altered Browser normal", () => {
       manifest,
       evidence,
       invalid,
+      vscodeEvidence,
     ),
     /surface 0 is invalid/u,
   );
@@ -101,6 +117,7 @@ test("federated BIM Surface rejects an altered Browser locator", () => {
       manifest,
       evidence,
       invalid,
+      vscodeEvidence,
     ),
     /surface 1 is invalid/u,
   );
@@ -114,7 +131,23 @@ test("federated BIM Surface Browser hit cannot gain authority", () => {
       manifest,
       evidence,
       overclaim,
+      vscodeEvidence,
     ),
     /overclaims authority/u,
+  );
+});
+
+test("federated BIM Surface rejects incomplete VS Code Worker cleanup", () => {
+  const invalid = structuredClone(vscodeEvidence);
+  invalid.surfaces.installed.observation.cleanup.workersTerminated =
+    false;
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      invalid,
+    ),
+    /VS Code qualification is invalid/u,
   );
 });

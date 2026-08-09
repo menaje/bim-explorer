@@ -444,7 +444,9 @@ if (
     "menaje.bim-explorer" ||
   vscodeInstallEvidence.package?.version !== "0.1.0" ||
   vscodeInstallEvidence.package?.byteLength <= 0 ||
-  vscodeInstallEvidence.package?.installedRuntimeFiles !== 7 ||
+  ![7, 23].includes(
+    vscodeInstallEvidence.package?.installedRuntimeFiles,
+  ) ||
   !/^[0-9a-f]{64}$/u.test(
     vscodeInstallEvidence.package?.workerBundleSha256 ?? "",
   ) ||
@@ -643,8 +645,10 @@ if (
   productScaleCleanVsixProductEvidence.package?.version !==
     "0.1.0" ||
   productScaleCleanVsixProductEvidence.package?.byteLength <= 0 ||
-  productScaleCleanVsixProductEvidence.package
-    ?.installedRuntimeFiles !== 7 ||
+  ![7, 23].includes(
+    productScaleCleanVsixProductEvidence.package
+      ?.installedRuntimeFiles,
+  ) ||
   !/^[0-9a-f]{64}$/u.test(
     productScaleCleanVsixProductEvidence.package
       ?.workerBundleSha256 ?? "",

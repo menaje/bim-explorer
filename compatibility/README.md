@@ -52,10 +52,15 @@ source-scoped semantic, cross-source selection, source-local anchor 두 개,
 올리고 GPU depth를 exact revision geometry와 대조해 세 개의 winding normal,
 triangle-barycentric locator와 derived source-local anchor를 만들었습니다.
 추가 원본 range read 없이 임시 CPU geometry와 모든 source/GPU allocation을
-회수했습니다. VS Code v0.2 entrypoint, 실제 Spatial consumer와 public v0.2
-package는 held입니다. exact 결과는
+회수했습니다. 이어 path-free `.bimfed.json` manifest를 여는 실제 VS Code
+Webview v0.2 entrypoint를 staged 확장과 빈 profile의 clean-installed VSIX에서
+검증했습니다. source마다 독립 Worker/session을 사용하고 같은 세 source의
+exact hit·normal·triangle anchor, 1회 range read와 Surface/replay/GPU/Worker
+cleanup을 동일하게 재현했습니다. 실제 Spatial consumer와 public v0.2 package는
+held입니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
-[`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json)에
+[`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
+[`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json)에
 고정합니다.
 
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only

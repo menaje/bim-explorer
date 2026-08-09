@@ -5,6 +5,9 @@ import { pathToFileURL } from "node:url";
 import {
   isEvidenceTimestampAtOrAfter,
 } from "./evidence-timestamp.mjs";
+import {
+  validateFederatedBimSurfaceVscodeQualification,
+} from "./qualify-federated-bim-surface-vscode.mjs";
 
 const CONTRACT = Object.freeze({
   package: "@bim-explorer/federated-bim-surface",
@@ -42,9 +45,9 @@ const TRUE_GATES = Object.freeze([
   "headlessGeneratedConformance",
   "actualBrowserSurfaceNormal",
   "actualBrowserAnchor",
+  "actualVscodeSurface",
 ]);
 const HELD_GATES = Object.freeze([
-  "actualVscodeSurface",
   "actualSpatialConsumer",
   "publicV02Package",
   "productionSupport",
@@ -52,6 +55,7 @@ const HELD_GATES = Object.freeze([
 const HEADLESS_HELD_GATES = Object.freeze([
   "actualBrowserSurfaceNormal",
   "actualBrowserAnchor",
+  "actualVscodeSurface",
   ...HELD_GATES,
 ]);
 const HEADLESS_EVIDENCE_PATH =
@@ -60,6 +64,9 @@ const HEADLESS_EVIDENCE_PATH =
 const BROWSER_EVIDENCE_PATH =
   "compatibility/evidence/" +
   "federated-bim-surface-browser-2026-08-09.json";
+const VSCODE_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "federated-bim-surface-vscode-2026-08-09.json";
 const BROWSER_CONTRACT = Object.freeze({
   surface: CONTRACT.surface,
   surfaceHit: "bim-explorer-bim-surface-hit/0.1",
@@ -654,6 +661,7 @@ export function validateFederatedBimSurfaceCompatibility(
   manifest,
   evidence,
   browserEvidence,
+  vscodeEvidence,
 ) {
   plainRecord(manifest, "federated BIM Surface manifest");
   if (
@@ -688,7 +696,9 @@ export function validateFederatedBimSurfaceCompatibility(
       HEADLESS_EVIDENCE_PATH ||
     manifest.evidence.actualBrowser !==
       BROWSER_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 2 ||
+    manifest.evidence.actualVscode !==
+      VSCODE_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence).length !== 3 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -711,7 +721,7 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.repositoryPublishDisabled !== true ||
     policy.claimHeadlessFoundation !== true ||
     policy.claimBrowserAnchor !== true ||
-    policy.claimVscodeSurface !== false ||
+    policy.claimVscodeSurface !== true ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimPublicV02Package !== false ||
     policy.claimProductionSupport !== false
@@ -723,6 +733,8 @@ export function validateFederatedBimSurfaceCompatibility(
   validateFederatedBimSurfaceEvidence(evidence);
   const browser =
     validateFederatedBimSurfaceBrowserEvidence(browserEvidence);
+  const vscode =
+    validateFederatedBimSurfaceVscodeQualification(vscodeEvidence);
   return Object.freeze({
     status: manifest.status,
     passedGates: TRUE_GATES.length,
@@ -730,28 +742,38 @@ export function validateFederatedBimSurfaceCompatibility(
     sourceCount: browser.sourceCount,
     anchors: browser.anchors,
     surfaceHits: browser.surfaceHits,
+    vscodeAnchors:
+      vscode.surfaces.staged.observation.qualified.anchors.length,
   });
 }
 
 async function main() {
-  const [manifest, evidence, browserEvidence] = await Promise.all([
+  const [
+    manifest,
+    evidence,
+    browserEvidence,
+    vscodeEvidence,
+  ] = await Promise.all([
     readFile(
       "compatibility/federated-bim-surface.json",
       "utf8",
     ).then(JSON.parse),
     readFile(HEADLESS_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(BROWSER_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(VSCODE_EVIDENCE_PATH, "utf8").then(JSON.parse),
   ]);
   const result = validateFederatedBimSurfaceCompatibility(
     manifest,
     evidence,
     browserEvidence,
+    vscodeEvidence,
   );
   process.stdout.write(
     `Federated BIM Surface compatibility check passed: ` +
       `${result.status}, ${result.passedGates} passed, ` +
       `${result.heldGates} held, ${result.sourceCount} sources and ` +
-      `${result.anchors} Browser anchors\n`,
+      `${result.anchors} Browser / ${result.vscodeAnchors} VS Code ` +
+      `anchors\n`,
   );
 }
 

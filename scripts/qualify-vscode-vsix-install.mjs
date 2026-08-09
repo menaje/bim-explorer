@@ -59,6 +59,7 @@ const EXTENSION_VERSION = JSON.parse(
 
 function parseArguments(values) {
   const options = {
+    includeFederatedSurfaceFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
@@ -68,6 +69,10 @@ function parseArguments(values) {
   };
   for (let index = 0; index < values.length; index += 1) {
     const name = values[index];
+    if (name === "--federated-surface") {
+      options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
     if (name === "--product-scale") {
       options.includeProductScaleFixture = true;
       continue;
@@ -102,7 +107,8 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
-        "[--product-scale] [--point-cloud] [--e57-spherical] " +
+        "[--federated-surface] [--product-scale] [--point-cloud] " +
+          "[--e57-spherical] " +
           "[--e57-multiple-scan] " +
           "[--no-public] " +
           "[--output path]",
@@ -144,6 +150,7 @@ async function sha256(file) {
 }
 
 export async function qualifyVscodeVsixInstall({
+  includeFederatedSurfaceFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
@@ -251,14 +258,23 @@ export async function qualifyVscodeVsixInstall({
     const required = [
       "extension.js",
       "src/provider.js",
+      "src/federation-provider.js",
+      "src/federation-webview-html.js",
       "apps/bim-explorer-web/app.mjs",
       "apps/bim-explorer-web/reference-mesh-explorer.mjs",
       "apps/bim-explorer-web/source-worker.bundle.mjs",
       "apps/bim-explorer-web/point-source-worker.bundle.js",
       "apps/bim-explorer-web/laz-perf-worker-csp.js",
+      "apps/federated-bim-surface-vscode/app.mjs",
+      "apps/federated-bim-surface-vscode/index.html",
       "packages/e57-point-source/src/format.mjs",
       "packages/e57-point-source/src/index.mjs",
       "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
+      "packages/bim-federation/src/index.mjs",
+      "packages/bim-federation/src/renderer-projection.mjs",
+      "packages/bim-reference-anchor/src/index.mjs",
+      "packages/bim-surface-hit/src/index.mjs",
+      "packages/federated-bim-surface/src/index.mjs",
       "LICENSES/e57-rs-MIT.txt",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",
@@ -366,6 +382,11 @@ export async function qualifyVscodeVsixInstall({
       extensionTestsEnv: {
         BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
         BIM_EXPLORER_ROOT: ROOT,
+        ...(includeFederatedSurfaceFixture
+          ? {
+              BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
+            }
+          : {}),
         ...(publicFixture === null
           ? {}
           : {
@@ -447,6 +468,15 @@ export async function qualifyVscodeVsixInstall({
           { filenamePattern: "*.las" },
           { filenamePattern: "*.laz" },
         ]),
+      readOnlyFederationAssociation:
+        JSON.stringify(
+          manifest.contributes.customEditors[1],
+        ) === JSON.stringify({
+          viewType: "bimExplorer.federationEditor",
+          displayName: "Federated BIM Surface",
+          selector: [{ filenamePattern: "*.bimfed.json" }],
+          priority: "default",
+        }),
       installedPackageOpensFixture:
         runtime.assertions?.localSourceOpened === true,
       installedPackageUsesWebGl2:
@@ -456,6 +486,12 @@ export async function qualifyVscodeVsixInstall({
         runtime.assertions?.pathFreeHostBridge === true,
       installedPackageClosesCleanly:
         runtime.assertions?.editorCloseObserved === true,
+      ...(includeFederatedSurfaceFixture
+        ? {
+            installedFederatedSurfaceQualified:
+              allTrue(runtime.federatedSurfaceAssertions),
+          }
+        : {}),
       ...(includePublicFixture
         ? {
             installedPackageOpensPublicFixture:
@@ -709,6 +745,17 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
+        ...(includeFederatedSurfaceFixture
+          ? {
+              federatedSurfaceRuntime: {
+                fixture: runtime.federatedSurfaceFixture,
+                observation:
+                  runtime.federatedSurfaceObservation,
+                assertions:
+                  runtime.federatedSurfaceAssertions,
+              },
+            }
+          : {}),
       },
       assertions,
       decision: {
@@ -727,6 +774,10 @@ export async function qualifyVscodeVsixInstall({
           includeE57MultipleScanFixture
           ? "passed-bounded-read-only-unqualified-coordinates"
           : "not-run",
+        federatedSurface:
+          includeFederatedSurfaceFixture
+            ? "passed-actual-vscode-surface-anchor"
+            : "not-run",
         marketplaceRelease: "held",
       },
     });
