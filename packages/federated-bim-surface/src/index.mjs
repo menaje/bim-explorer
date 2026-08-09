@@ -13,6 +13,9 @@ import {
   fingerprintReferenceAnchorContext,
   validateBimReferenceAnchor,
 } from "../../bim-reference-anchor/src/index.mjs";
+import {
+  BIM_SURFACE_HIT_SCHEMA,
+} from "../../bim-surface-hit/src/index.mjs";
 
 export const BIM_FEDERATED_SURFACE_CONTRACT =
   "bim-explorer-bim-surface/0.2";
@@ -566,6 +569,180 @@ function mappingIdentityMatches(mapping, anchor) {
   return identity.nativeId === anchor.nativeIdentity.nativeId;
 }
 
+function finiteVector(value, length, label) {
+  if (
+    !Array.isArray(value) ||
+    value.length !== length ||
+    value.some((component) =>
+      typeof component !== "number" || !Number.isFinite(component))
+  ) {
+    throw new TypeError(
+      `${label} must contain ${length} finite numbers`,
+    );
+  }
+  return [...value];
+}
+
+function normalizedVector(value, label) {
+  const vector = finiteVector(value, 3, label);
+  const magnitude = Math.hypot(...vector);
+  if (!Number.isFinite(magnitude) || magnitude <= Number.EPSILON) {
+    throw new RangeError(`${label} must not be zero`);
+  }
+  return vector.map((component) => {
+    const normalized = component / magnitude;
+    return Object.is(normalized, -0) ? 0 : normalized;
+  });
+}
+
+function affineProjection(value, label) {
+  const matrix = finiteVector(value, 16, label);
+  const scale = matrix[15];
+  if (
+    Math.abs(scale) <= Number.EPSILON ||
+    [matrix[3], matrix[7], matrix[11]].some((component) =>
+      Math.abs(component) > Number.EPSILON)
+  ) {
+    throw unsupported(
+      "surface-hit anchor requires an invertible affine alignment",
+    );
+  }
+  const normalized = matrix.map((component) => component / scale);
+  const determinant =
+    normalized[0] * (
+      normalized[5] * normalized[10] -
+      normalized[9] * normalized[6]
+    ) -
+    normalized[4] * (
+      normalized[1] * normalized[10] -
+      normalized[9] * normalized[2]
+    ) +
+    normalized[8] * (
+      normalized[1] * normalized[6] -
+      normalized[5] * normalized[2]
+    );
+  if (!Number.isFinite(determinant) ||
+    Math.abs(determinant) <= Number.EPSILON) {
+    throw unsupported(
+      "surface-hit anchor alignment is not invertible",
+    );
+  }
+  const inverseDeterminant = 1 / determinant;
+  const inverse = [
+    (normalized[5] * normalized[10] -
+      normalized[9] * normalized[6]) * inverseDeterminant,
+    (normalized[9] * normalized[2] -
+      normalized[1] * normalized[10]) * inverseDeterminant,
+    (normalized[1] * normalized[6] -
+      normalized[5] * normalized[2]) * inverseDeterminant,
+    (normalized[8] * normalized[6] -
+      normalized[4] * normalized[10]) * inverseDeterminant,
+    (normalized[0] * normalized[10] -
+      normalized[8] * normalized[2]) * inverseDeterminant,
+    (normalized[4] * normalized[2] -
+      normalized[0] * normalized[6]) * inverseDeterminant,
+    (normalized[4] * normalized[9] -
+      normalized[8] * normalized[5]) * inverseDeterminant,
+    (normalized[8] * normalized[1] -
+      normalized[0] * normalized[9]) * inverseDeterminant,
+    (normalized[0] * normalized[5] -
+      normalized[4] * normalized[1]) * inverseDeterminant,
+  ];
+  return {
+    determinant,
+    inverse,
+    matrix: normalized,
+  };
+}
+
+function projectionHitToSourceLocal(
+  rendererPick,
+  source,
+  projection,
+) {
+  const hit = plainRecord(
+    rendererPick.surfaceHit,
+    "federated BIM surface renderer surface hit",
+  );
+  if (
+    hit.schema !== BIM_SURFACE_HIT_SCHEMA ||
+    hit.status !== "resolved" ||
+    hit.coordinateSpace !== "projection-local" ||
+    hit.projection?.fingerprint !==
+      projection.snapshot.source.fingerprint ||
+    hit.projection.revisionId !== projection.snapshot.revisionId ||
+    hit.identity?.pickId !== rendererPick.identity?.pickId ||
+    hit.verification?.actualGpuDepth !== true ||
+    hit.verification.exactGeometryDigest !== true ||
+    hit.verification.identityBound !== true ||
+    hit.verification.nearestUniqueTriangle !== true ||
+    hit.resources?.retainedGeometryBytes !== 0 ||
+    hit.resources.temporaryGeometryReleased !== true ||
+    Object.values(hit.authority ?? {}).some((value) => value !== false)
+  ) {
+    throw new TypeError(
+      "federated BIM surface renderer hit is not verified",
+    );
+  }
+  const point = finiteVector(
+    hit.point,
+    3,
+    "federated BIM surface projection hit point",
+  );
+  const normal = normalizedVector(
+    hit.normal,
+    "federated BIM surface projection hit normal",
+  );
+  const transform = affineProjection(
+    source.alignment.sourceToFederation,
+    "federated BIM surface source alignment",
+  );
+  const translated = point.map(
+    (value, axis) => value - transform.matrix[12 + axis],
+  );
+  const sourcePoint = [
+    transform.inverse[0] * translated[0] +
+      transform.inverse[3] * translated[1] +
+      transform.inverse[6] * translated[2],
+    transform.inverse[1] * translated[0] +
+      transform.inverse[4] * translated[1] +
+      transform.inverse[7] * translated[2],
+    transform.inverse[2] * translated[0] +
+      transform.inverse[5] * translated[1] +
+      transform.inverse[8] * translated[2],
+  ];
+  const orientation = Math.sign(transform.determinant);
+  const sourceNormal = normalizedVector([
+    orientation * (
+      transform.matrix[0] * normal[0] +
+      transform.matrix[1] * normal[1] +
+      transform.matrix[2] * normal[2]
+    ),
+    orientation * (
+      transform.matrix[4] * normal[0] +
+      transform.matrix[5] * normal[1] +
+      transform.matrix[6] * normal[2]
+    ),
+    orientation * (
+      transform.matrix[8] * normal[0] +
+      transform.matrix[9] * normal[1] +
+      transform.matrix[10] * normal[2]
+    ),
+  ], "federated BIM surface source-local normal");
+  return {
+    anchorPick: {
+      ...rendererPick,
+      worldPosition: point,
+    },
+    locator: hit.locator,
+    sourceLocalHit: {
+      coordinateSpace: "source-local",
+      point: sourcePoint,
+      normal: sourceNormal,
+    },
+  };
+}
+
 export class FederatedBimSurface {
   #activeAnchors = [];
   #explorers = new Map();
@@ -1060,7 +1237,10 @@ export class FederatedBimSurface {
       sourceRevisionId: mapping.sourceRevisionId,
       rendererPick,
       selection,
-      anchorCapability: "requires-source-local-hit",
+      anchorCapability:
+        rendererPick.surfaceHit?.schema === BIM_SURFACE_HIT_SCHEMA
+          ? "source-local-surface-hit"
+          : "requires-source-local-hit",
       authority: BIM_FEDERATED_SURFACE_AUTHORITY,
     });
     return this.#lastPick;
@@ -1089,7 +1269,30 @@ export class FederatedBimSurface {
         "federated BIM surface anchor pick is stale or incompatible",
       );
     }
-    if (sourceLocalHit === null) {
+    const source = this.#sourceDescriptors.get(
+      pick.federationSourceId,
+    );
+    let effectivePick = pick.rendererPick;
+    let effectiveHit = sourceLocalHit;
+    let effectiveLocator = locator;
+    let effectiveStability = stability;
+    if (
+      effectiveHit === null &&
+      pick.rendererPick.surfaceHit?.schema === BIM_SURFACE_HIT_SCHEMA
+    ) {
+      const resolved = projectionHitToSourceLocal(
+        pick.rendererPick,
+        source,
+        this.#projection,
+      );
+      effectivePick = resolved.anchorPick;
+      effectiveHit = resolved.sourceLocalHit;
+      if (effectiveLocator === null) {
+        effectiveLocator = resolved.locator;
+      }
+      effectiveStability = "derived";
+    }
+    if (effectiveHit === null) {
       return deepFreeze({
         schema: BIM_FEDERATED_SURFACE_ANCHOR_RESULT_SCHEMA,
         status: "unsupported",
@@ -1099,17 +1302,14 @@ export class FederatedBimSurface {
         authority: BIM_FEDERATED_SURFACE_AUTHORITY,
       });
     }
-    const source = this.#sourceDescriptors.get(
-      pick.federationSourceId,
-    );
     const anchor = await createBimReferenceAnchorFromFederatedPick({
-      pick: pick.rendererPick,
+      pick: effectivePick,
       projection: this.#projection,
       source,
-      sourceLocalHit,
+      sourceLocalHit: effectiveHit,
       occurrencePath,
-      locator,
-      stability,
+      locator: effectiveLocator,
+      stability: effectiveStability,
     });
     this.#activeAnchors.push(anchor);
     return deepFreeze({

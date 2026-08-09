@@ -21,6 +21,9 @@ import {
   createFederatedBimSurface,
 } from "../../packages/federated-bim-surface/src/index.mjs";
 import {
+  BIM_SURFACE_HIT_SCHEMA,
+} from "../../packages/bim-surface-hit/src/index.mjs";
+import {
   createGltfReferenceSource,
 } from "../../packages/gltf-reference-source/src/index.mjs";
 import {
@@ -154,6 +157,108 @@ class FailingRenderer {
       return false;
     }
     this.disposed = true;
+    return true;
+  }
+}
+
+class VerifiedSurfaceHitRenderer {
+  #disposed = false;
+  #snapshot = null;
+
+  get state() {
+    return {
+      disposed: this.#disposed,
+      mounted: this.#snapshot !== null,
+      retainedGeometryBytes: 0,
+    };
+  }
+
+  async mount({ snapshot }) {
+    this.#snapshot = snapshot;
+    return {
+      backend: {
+        backendId: "verified-surface-hit",
+      },
+    };
+  }
+
+  async pick({ x, y }) {
+    const entity = this.#snapshot.entities.find((candidate) =>
+      candidate.renderable === true);
+    assert.ok(entity);
+    const point = [12, 26, 18];
+    return {
+      schema: "bim-explorer-bim-renderer-3d-pick-receipt/0.1",
+      status: "hit",
+      source: {
+        fingerprint: this.#snapshot.source.fingerprint,
+        revisionId: this.#snapshot.revisionId,
+      },
+      viewRevision: 0,
+      coordinates: {
+        x,
+        y,
+        origin: "canvas-top-left",
+      },
+      identity: {
+        expressId: entity.expressId,
+        nativeId: entity.nativeId,
+        pickId: entity.pickId,
+      },
+      worldPosition: point,
+      backend: {
+        actualGpu: true,
+        context: "webgl2",
+        temporaryReleased: true,
+      },
+      surfaceHitCapability: "resolved-exact-triangle",
+      surfaceHit: {
+        schema: BIM_SURFACE_HIT_SCHEMA,
+        status: "resolved",
+        coordinateSpace: "projection-local",
+        projection: {
+          fingerprint: this.#snapshot.source.fingerprint,
+          revisionId: this.#snapshot.revisionId,
+        },
+        identity: {
+          expressId: entity.expressId,
+          nativeId: entity.nativeId,
+          pickId: entity.pickId,
+        },
+        point,
+        normal: [0, 0, 1],
+        locator: {
+          kind: "triangle-barycentric",
+          primitiveId: "primitive:projection:1:0:1",
+          triangleIndex: 4,
+          barycentric: [0.25, 0.25, 0.5],
+        },
+        verification: {
+          actualGpuDepth: true,
+          exactGeometryDigest: true,
+          identityBound: true,
+          nearestUniqueTriangle: true,
+        },
+        resources: {
+          retainedGeometryBytes: 0,
+          temporaryGeometryReleased: true,
+        },
+        authority: {
+          nativeFace: false,
+          sourcePrecision: false,
+          coordinateReference: false,
+          mutation: false,
+        },
+      },
+    };
+  }
+
+  async dispose() {
+    if (this.#disposed) {
+      return false;
+    }
+    this.#snapshot = null;
+    this.#disposed = true;
     return true;
   }
 }
@@ -450,6 +555,62 @@ test("federated Surface keeps source-local anchors scoped across one-source refr
     await disposeFixture(ifc);
     await disposeFixture(glb);
     await disposeFixture(replacement);
+  }
+});
+
+test("federated Surface converts verified projection hits into source-local anchors", async () => {
+  const glb = await glbFixture();
+  const renderer = new VerifiedSurfaceHitRenderer();
+  const surface = createFederatedBimSurface({ renderer });
+  const sourceToFederation = [
+    2, 0, 0, 0,
+    0, 3, 0, 0,
+    0, 0, -4, 0,
+    10, 20, 30, 1,
+  ];
+  try {
+    await surface.open({
+      federationId: "federation:verified-surface-hit",
+      sources: [{
+        federationSourceId: "source-slot:reference",
+        sourceRole: "geometric-reference",
+        lifecycleOwnership: "borrowed",
+        session: glb.session,
+        snapshot: glb.snapshot,
+        alignment: createExplicitAlignment({
+          sourceRevisionId: glb.snapshot.revisionId,
+          sourceCoordinateSystem:
+            glb.snapshot.coordinateSystem.source,
+          federationCoordinateSystem: "federation-local",
+          sourceToFederation,
+          reference: "test:reflected-nonuniform-placement",
+        }),
+      }],
+    });
+
+    const pick = await surface.pick({ x: 4, y: 5 });
+    assert.equal(pick.anchorCapability, "source-local-surface-hit");
+    const result = await surface.createAnchor({ pick });
+    assert.equal(result.status, "created");
+    assert.deepEqual(result.anchor.hit.point, [1, 2, 3]);
+    assert.deepEqual(result.anchor.hit.normal, [0, 0, 1]);
+    assert.equal(result.anchor.stability, "derived");
+    assert.deepEqual(result.anchor.locator, {
+      kind: "triangle-barycentric",
+      primitiveId: "primitive:projection:1:0:1",
+      triangleIndex: 4,
+      barycentric: [0.25, 0.25, 0.5],
+    });
+    assert.ok(
+      Object.values(result.anchor.authority).every((value) => !value),
+    );
+    assert.equal(
+      (await surface.evaluateAnchor(result.anchor)).status,
+      "current",
+    );
+  } finally {
+    await surface.dispose();
+    await disposeFixture(glb);
   }
 });
 
