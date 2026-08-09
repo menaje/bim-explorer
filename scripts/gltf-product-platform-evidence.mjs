@@ -3,6 +3,9 @@ import { createHash } from "node:crypto";
 import {
   canonicalJson,
 } from "../packages/ifc-engine-contract/src/index.mjs";
+import {
+  isEvidenceTimestampAtOrAfter,
+} from "./evidence-timestamp.mjs";
 
 export const GLTF_PRODUCT_PLATFORM_MATRIX_SCHEMA =
   "bim-explorer-gltf-product-platform-matrix/1";
@@ -167,9 +170,9 @@ function validatePlatformEntry(entry, expectedPlatform) {
   plainRecord(entry, `${expectedPlatform} platform evidence`);
   const environment = entry.environment;
   if (
-    typeof entry.capturedAt !== "string" ||
-    !/^2026-08-08T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(
+    !isEvidenceTimestampAtOrAfter(
       entry.capturedAt,
+      "2026-08-08",
     ) ||
     environment?.platform !== expectedPlatform ||
     !/^v24\.\d+\.\d+$/u.test(environment?.node ?? "") ||

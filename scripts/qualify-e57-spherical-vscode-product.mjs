@@ -11,6 +11,9 @@ import {
 import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
+import {
+  isEvidenceTimestampAtOrAfter,
+} from "./evidence-timestamp.mjs";
 
 const SCHEMA =
   "bim-explorer-e57-spherical-vscode-product-evidence/1";
@@ -209,8 +212,9 @@ export function validateE57SphericalVscodeProductQualification(
     report.status !==
       "passed-experimental-spherical-vscode-product-open" ||
     report.asOf !== "2026-08-08" ||
-    !/^2026-08-08T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(
-      report.capturedAt ?? "",
+    !isEvidenceTimestampAtOrAfter(
+      report.capturedAt,
+      report.asOf,
     ) ||
     !/^v24\.\d+\.\d+$/u.test(report.environment?.node ?? "") ||
     !/^(?:darwin-arm64|linux-x64)$/u.test(
