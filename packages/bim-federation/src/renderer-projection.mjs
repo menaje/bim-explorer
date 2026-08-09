@@ -455,7 +455,7 @@ export async function createFederatedRendererProjection({
   );
   if (
     !Number.isSafeInteger(maximumSources) ||
-    maximumSources < 2 ||
+    maximumSources < 1 ||
     maximumSources > 32 ||
     !Number.isSafeInteger(maximumEntities) ||
     maximumEntities <= 0 ||
@@ -464,7 +464,7 @@ export async function createFederatedRendererProjection({
     maximumInstances <= 0 ||
     maximumInstances > 1_000_000 ||
     !Array.isArray(sources) ||
-    sources.length < 2 ||
+    sources.length < 1 ||
     sources.length > maximumSources
   ) {
     throw new RangeError(
@@ -512,45 +512,53 @@ export async function createFederatedRendererProjection({
       }
     }
   }
+  const sourceSeeds = entries.map((entry) => ({
+    federationSourceId: entry.federationSourceId,
+    fingerprint: entry.source.fingerprint,
+    revisionId: entry.snapshot.revisionId,
+    snapshotId: entry.snapshot.snapshotId,
+    cacheFingerprint: entry.snapshot.cacheFingerprint ?? null,
+    format: entry.source.format ?? "ifc",
+    sourceToFederation: entry.sourceToFederation,
+    sourceFromStorage: entry.sourceFromStorage,
+    geometryBounds: entry.snapshot.geometry.bounds,
+    ranges: [
+      ...entry.snapshot.loadPlan.firstFrameRangeIds,
+      ...entry.snapshot.loadPlan.deferredRangeIds,
+    ].map((handleId) => {
+      const handle = entry.handles.get(handleId);
+      return {
+        handleId,
+        sha256: handle.sha256,
+        byteLength: handle.byteLength,
+        maximumRequestBytes: handle.maximumRequestBytes,
+      };
+    }),
+    firstFrameRangeIds:
+      entry.snapshot.loadPlan.firstFrameRangeIds,
+    entities: entry.snapshot.entities
+      .filter((entity) => entity.renderable === true)
+      .map((entity) => ({
+        expressId: entity.expressId,
+        globalId: entity.globalId ?? null,
+        nativeId: entity.nativeId ?? null,
+        externalIdentityToken:
+          entity.externalIdentityToken,
+        bounds: entity.bounds,
+        primitives: entity.primitives,
+      })),
+  }));
+  const sourceProjectionFingerprints = await Promise.all(
+    sourceSeeds.map(async (sourceSeed) =>
+      `sha256:${await digestText(JSON.stringify({
+        schema: BIM_FEDERATED_RENDERER_PROJECTION_SCHEMA,
+        source: sourceSeed,
+      }))}`),
+  );
   const seed = JSON.stringify({
     schema: BIM_FEDERATED_RENDERER_PROJECTION_SCHEMA,
     federationId: id,
-    sources: entries.map((entry) => ({
-      federationSourceId: entry.federationSourceId,
-      fingerprint: entry.source.fingerprint,
-      revisionId: entry.snapshot.revisionId,
-      snapshotId: entry.snapshot.snapshotId,
-      cacheFingerprint: entry.snapshot.cacheFingerprint ?? null,
-      format: entry.source.format ?? "ifc",
-      sourceToFederation: entry.sourceToFederation,
-      sourceFromStorage: entry.sourceFromStorage,
-      geometryBounds: entry.snapshot.geometry.bounds,
-      ranges: [
-        ...entry.snapshot.loadPlan.firstFrameRangeIds,
-        ...entry.snapshot.loadPlan.deferredRangeIds,
-      ].map((handleId) => {
-        const handle = entry.handles.get(handleId);
-        return {
-          handleId,
-          sha256: handle.sha256,
-          byteLength: handle.byteLength,
-          maximumRequestBytes: handle.maximumRequestBytes,
-        };
-      }),
-      firstFrameRangeIds:
-        entry.snapshot.loadPlan.firstFrameRangeIds,
-      entities: entry.snapshot.entities
-        .filter((entity) => entity.renderable === true)
-        .map((entity) => ({
-          expressId: entity.expressId,
-          globalId: entity.globalId ?? null,
-          nativeId: entity.nativeId ?? null,
-          externalIdentityToken:
-            entity.externalIdentityToken,
-          bounds: entity.bounds,
-          primitives: entity.primitives,
-        })),
-    })),
+    sources: sourceSeeds,
   });
   const digest = await digestText(seed);
   const fingerprint = `sha256:${digest}`;
@@ -747,6 +755,8 @@ export async function createFederatedRendererProjection({
         pickId,
         federationSourceId: entry.federationSourceId,
         sourceRevisionId: entry.snapshot.revisionId,
+        sourceProjectionFingerprint:
+          sourceProjectionFingerprints[sourceIndex],
         nativeIdentity,
       });
       nextExpressId += 1;
@@ -825,9 +835,11 @@ export async function createFederatedRendererProjection({
         maximumEntities,
         maximumInstances,
       },
-      sourceSlots: entries.map((entry) => ({
+      sourceSlots: entries.map((entry, index) => ({
         federationSourceId: entry.federationSourceId,
         sourceRevisionId: entry.snapshot.revisionId,
+        sourceProjectionFingerprint:
+          sourceProjectionFingerprints[index],
         format: entry.source.format ?? "ifc",
         alignmentMethod: entry.alignment.method,
       })),

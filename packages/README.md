@@ -14,6 +14,7 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 - `openbim-explorer`: source-bound BCF·IDS·bSDD read-only exploration
 - `bim-federation`: multi-source identity·alignment·reference-format Gate
 - `bim-reference-anchor`: source-scoped native identity와 source-local hit receipt
+- `federated-bim-surface`: isolated multi-source BIM Surface v0.2 draft
 - `gltf-reference-source`: bounded glTF/GLB read-only reference mesh
 - `las-laz-point-source`: bounded LAS/LAZ read-only point-range projection
 - `e57-point-source`: bounded E57 read-only point-range projection
@@ -54,6 +55,12 @@ point·normal에 묶습니다. source 또는 alignment/projection 변경은 stal
 판정하며 Workspace나 constraint authority를 만들지 않습니다. 현재 renderer가
 surface normal을 제공하지 않는 경로에서는 anchor를 합성하지 않고 object
 selection만 유지합니다.
+
+[`federated-bim-surface`](federated-bim-surface/README.md)는 공개 v0.1
+artifact와 분리된 `bim-surface/0.2` 내부 구현입니다. 1–8개 aligned source,
+source-scoped semantics/selection/anchor, 한 source refresh invalidation과
+`transferred`·`borrowed` cleanup을 조합합니다. 실제 Browser/Webview 제품
+qualification과 public v0.2 artifact는 아직 주장하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를

@@ -625,8 +625,8 @@ export async function createBimReferenceAnchorFromFederatedPick({
     alignmentFingerprint:
       await fingerprintReferenceAnchorContext(alignment),
     projectionFingerprint: fingerprint(
-      projection.snapshot.source.fingerprint,
-      "federated renderer projection fingerprint",
+      mapping.sourceProjectionFingerprint,
+      "federated renderer source projection fingerprint",
     ),
   });
 }

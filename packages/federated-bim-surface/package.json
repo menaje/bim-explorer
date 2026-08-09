@@ -1,0 +1,12 @@
+{
+  "name": "@bim-explorer/federated-bim-surface",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Host-neutral federated BIM exploration surface v0.2 draft",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -147,6 +147,19 @@ test("federated renderer mounts aligned IFC and GLB in one frame", async () => {
       )],
       ["source-slot:architecture", "source-slot:reference"],
     );
+    assert.equal(
+      new Set(
+        projection.identityMap.map((entry) =>
+          entry.sourceProjectionFingerprint),
+      ).size,
+      2,
+    );
+    assert.ok(
+      projection.identityMap.every((entry) =>
+        /^sha256:[0-9a-f]{64}$/u.test(
+          entry.sourceProjectionFingerprint,
+        )),
+    );
 
     const backend = createHeadless3dBackend();
     renderer = createBounded3dRenderer({
@@ -186,6 +199,10 @@ test("federated renderer mounts aligned IFC and GLB in one frame", async () => {
     assert.equal(
       reordered.snapshot.source.fingerprint,
       projection.snapshot.source.fingerprint,
+    );
+    assert.deepEqual(
+      reordered.snapshot.federation.sourceSlots,
+      projection.snapshot.federation.sourceSlots,
     );
     assert.equal(await reordered.session.dispose(), true);
   } finally {

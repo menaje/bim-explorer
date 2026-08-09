@@ -84,6 +84,7 @@ function projectionFixture({
       pickId: "pick:federated:test:1",
       federationSourceId: `source-slot:${format}`,
       sourceRevisionId,
+      sourceProjectionFingerprint: B,
       nativeIdentity,
     }],
   };
@@ -292,7 +293,7 @@ test("federated IFC pick resolves to source GlobalId without composite identity"
     "ifc-globalid:0123456789ABCDEFGHIJKL",
   );
   assert.equal("pickId" in anchor.nativeIdentity, false);
-  assert.equal(anchor.projectionFingerprint, C);
+  assert.equal(anchor.projectionFingerprint, B);
 });
 
 test("federated GLB pick preserves reference-native identity and no GlobalId", async () => {
