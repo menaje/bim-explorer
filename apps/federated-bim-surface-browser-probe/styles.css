@@ -1,0 +1,33 @@
+:root {
+  color-scheme: dark;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #07101d;
+  color: #dcecff;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  margin: 0 auto;
+  max-width: 880px;
+  padding: 20px;
+}
+
+canvas {
+  background: #07101d;
+  border: 1px solid #294563;
+  display: block;
+  height: 600px;
+  width: 800px;
+}
+
+pre {
+  background: #0b1728;
+  border: 1px solid #294563;
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}

@@ -26,6 +26,7 @@ consumer는 별도 qualification 전까지 지원으로 주장하지 않는다.
 
 ```text
 bim-explorer-bim-surface/0.2
+bim-explorer-bim-surface-hit/0.1
 bim-explorer-federation/0.1
 bim-explorer-reference-anchor/0.1
 bim-explorer-bim-source/0.2
@@ -77,6 +78,13 @@ depth-backed pick이 hit를 만들면 surface는
 요청할 수 있다. anchor가 unavailable인 source/profile은 object selection은
 유지하되 명시적인 unsupported diagnostic을 반환한다.
 
+actual WebGL2 경로는 GPU depth와 Pick ID를 exact revision의 resident geometry
+range에 다시 대조한다. SHA-256이 일치하고 가장 가까운 단일 triangle이 GPU
+depth quantization 범위 안에서 재현될 때만 projection-local point, winding
+normal과 triangle-barycentric locator를 만든다. 이 값은 exact display geometry의
+derived locator이며 native source face 또는 source-precision geometry가 아니다.
+임시 range bytes는 해석 뒤 지우고 CPU geometry cache로 보존하지 않는다.
+
 ## Coordinate alignment
 
 shared projection은 `bim-explorer-federation/0.1`의 same-CRS MapConversion
@@ -113,8 +121,10 @@ selection과 anchor는 consumer product의 authorization 또는 human approval�
 
 ## Package와 conformance Gate
 
-차기 package가 v0.2를 주장하려면 다음을 actual Browser 또는 Webview consumer
-surface에서 재현해야 한다.
+generated GLB–IFC–GLB 세 source의 actual Chrome WebGL2 composition,
+source-scoped semantic/selection, 세 개의 derived source-local anchor와 exact
+cleanup은 Browser Gate를 통과했다. 차기 public package가 v0.2를 주장하려면
+남은 실제 Webview/consumer 및 release Gate를 포함해 다음을 재현해야 한다.
 
 - IFC semantic base + GLB reference + consumer overlay 동시 projection
 - source별 tree/query/visibility/selection identity

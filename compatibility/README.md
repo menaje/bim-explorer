@@ -48,10 +48,14 @@ provenance를 통과했습니다. exact 결과는
 generated IFC4 semantic base와 GLB reference를 headless composite로 열어
 source-scoped semantic, cross-source selection, source-local anchor 두 개,
 한 source refresh와 unchanged-source range replay, transferred/borrowed cleanup을
-재현했습니다. actual Browser surface normal·triangle locator, Browser anchor,
-VS Code v0.2 entrypoint, 실제 Spatial consumer와 public v0.2 package는 held입니다.
-exact 결과는
-[`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)에
+재현했습니다. 이어 generated GLB–IFC–GLB 세 source를 actual Chrome WebGL2에
+올리고 GPU depth를 exact revision geometry와 대조해 세 개의 winding normal,
+triangle-barycentric locator와 derived source-local anchor를 만들었습니다.
+추가 원본 range read 없이 임시 CPU geometry와 모든 source/GPU allocation을
+회수했습니다. VS Code v0.2 entrypoint, 실제 Spatial consumer와 public v0.2
+package는 held입니다. exact 결과는
+[`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
+[`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json)에
 고정합니다.
 
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only

@@ -17,7 +17,11 @@
 - 한 source refresh는 그 source의 selection과 anchor, 이를 포함한 saved view만
   stale로 만듭니다.
 
-현재 renderer pick은 surface normal이나 triangle locator를 제공하지 않습니다.
-따라서 `createAnchor()`는 검증된 `sourceLocalHit`이 없으면 object selection을
-유지하고 `unsupported` diagnostic을 반환합니다. Browser/Webview 제품
-qualification과 public v0.2 release는 아직 별도 Gate입니다.
+내부 `@bim-explorer/bim-surface-hit` wrapper를 사용하면 actual WebGL2 depth
+pick을 exact revision geometry와 대조해 projection-local point, winding normal,
+triangle index와 barycentric locator를 만든 뒤 source-local anchor로 변환합니다.
+임시 CPU geometry는 즉시 지우며 native face나 source precision은 주장하지
+않습니다. wrapper가 없거나 교차가 모호하면 object selection을 유지하고
+`unsupported` diagnostic을 반환합니다. generated GLB–IFC–GLB actual Browser
+qualification은 통과했지만 VS Code Webview, 실제 Spatial consumer와 public
+v0.2 release는 별도 Gate입니다.

@@ -37,6 +37,27 @@ jobs:
       - name: Check
         run: npm run check
 
+      - name: Qualify federated BIM Surface Browser anchors on Linux
+        if: runner.os == 'Linux'
+        run: >-
+          xvfb-run -a
+          npm run qualify:bim-surface:v0.2:browser --
+          --out federated-bim-surface-browser-${{ runner.os }}.json
+
+      - name: Qualify federated BIM Surface Browser anchors on macOS
+        if: runner.os == 'macOS'
+        run: >-
+          npm run qualify:bim-surface:v0.2:browser --
+          --out federated-bim-surface-browser-${{ runner.os }}.json
+
+      - name: Upload federated BIM Surface Browser evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: federated-bim-surface-browser-${{ runner.os }}
+          path: federated-bim-surface-browser-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Qualify E57 coordinate profile matrix
         run: >-
           npm run qualify:e57:profiles --

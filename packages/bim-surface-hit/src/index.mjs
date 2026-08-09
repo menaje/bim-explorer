@@ -690,7 +690,7 @@ export async function resolveBimSurfaceHit(
       Math.max(1, ...best.point.map(Math.abs)) * 1e-9 ||
     depth.error > depth.tolerance
   ) {
-    throw new RangeError(
+    throw unavailable(
       "exact surface hit is outside GPU depth quantization",
     );
   }

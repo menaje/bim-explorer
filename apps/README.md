@@ -64,6 +64,15 @@ WebGL2 first frame, cross-source highlight, aggregate range/GPU budget과
 deterministic cleanup을 검증하며 Spatial authority·survey datum·physical
 GPU 또는 production federation을 주장하지 않습니다.
 
+[`federated-bim-surface-browser-probe`](federated-bim-surface-browser-probe/README.md)는
+generated GLB reference, IFC semantic base와 GLB consumer overlay를 actual
+Chrome WebGL2에서 하나의 v0.2 Surface로 엽니다. source-scoped semantic과
+selection을 유지하면서 GPU depth와 exact geometry로 세 source의 winding
+normal·triangle-barycentric locator·source-local anchor를 재현하고 replay
+range, 임시 CPU geometry, transferred session과 GPU cleanup을 검증합니다.
+VS Code, 실제 Spatial consumer, native face·CRS 또는 physical GPU authority는
+승인하지 않습니다.
+
 [`las-laz-worker-probe`](las-laz-worker-probe/README.md)는 cache-only 공개
 LAZ를 exact `laz-perf@0.0.6` classic Web Worker에서 해제합니다. 실제 Chrome
 WASM heap budget, checkpoint cooperative cancellation, 동기 decode 중 강제
