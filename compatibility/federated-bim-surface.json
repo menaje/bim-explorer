@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-federated-bim-surface-compatibility/1",
   "status": "experimental",
-  "asOf": "2026-08-09",
+  "asOf": "2026-08-11",
   "contract": {
     "package": "@bim-explorer/federated-bim-surface",
     "packageVersion": "0.2.0",
@@ -31,7 +31,8 @@
     "actualBrowserAnchor": true,
     "actualVscodeSurface": true,
     "reproduciblePackageCandidate": true,
-    "actualSpatialConsumer": false,
+    "actualSpatialConsumer": true,
+    "releaseReadyPackageConsumerRevalidation": false,
     "publicV02Package": false,
     "productionSupport": false
   },
@@ -39,11 +40,12 @@
     "headlessGenerated": "compatibility/evidence/federated-bim-surface-headless-2026-08-09.json",
     "actualBrowser": "compatibility/evidence/federated-bim-surface-browser-2026-08-09.json",
     "actualVscode": "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json",
-    "packageCandidate": "compatibility/evidence/federated-bim-surface-package-2026-08-09.json"
+    "packageCandidate": "compatibility/evidence/federated-bim-surface-package-2026-08-11.json",
+    "actualSpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-consumer-2026-08-11.json"
   },
   "blockers": [
-    "the actual Coni Spatial consumer composition remains consumer-owned",
-    "the private v0.2 package candidate is reproducible, but a public release requires actual consumer exact-pin and immutable release evidence",
+    "the release-ready package documentation changes the tarball digest and requires exact-byte Spatial consumer revalidation",
+    "the v0.2 package has no immutable public prerelease asset yet",
     "stable production support requires public multi-source adoption and support-policy evidence"
   ],
   "limitations": [
@@ -51,7 +53,8 @@
     "surface points, winding normals and triangle-barycentric locators are derived from exact display geometry and do not claim native source face identity",
     "alignment is explicit placement provenance and performs no qualified CRS or datum transformation",
     "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
-    "the 0.2.0 package candidate is private, zero-runtime-dependency and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
+    "the 0.2.0 release-ready package candidate is private, zero-runtime-dependency and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
+    "the admitted Spatial evidence consumed the prior exact private candidate; the unchanged runtime is qualified but the release-ready tarball digest still requires downstream revalidation",
     "the actual VS Code Webview entrypoint uses a local path-free .bimfed.json host bridge and remains read-only without Spatial authority",
     "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
   ],
@@ -66,7 +69,8 @@
     "claimBrowserAnchor": true,
     "claimVscodeSurface": true,
     "claimReproduciblePackageCandidate": true,
-    "claimActualSpatialConsumer": false,
+    "claimActualSpatialConsumer": true,
+    "claimReleaseReadyPackageConsumerRevalidation": false,
     "claimPublicV02Package": false,
     "claimProductionSupport": false
   }

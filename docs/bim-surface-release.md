@@ -4,7 +4,7 @@ status: accepted
 authority:
   - bim-surface-package-release
   - bim-surface-supply-chain
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # BIM Surface package release
@@ -13,6 +13,11 @@ last_reviewed: 2026-08-09
 재사용 경계입니다. 공식 package tag는 `bim-surface-v<semver>`, GitHub Release
 이름은 `BIM Surface v<semver>`를 사용합니다. Community의 `v<semver>` tag,
 release asset과 latest 상태는 변경하지 않습니다.
+
+브랜치 승격은 [`dev` → `prerelease` → `main`](branch-release-workflow.md)을
+따릅니다. experimental package tag는 `prerelease`의 exact HEAD에서만
+발급하며 이 release workflow는 VSIX나 Marketplace/Open VSX publication을
+포함하지 않습니다.
 
 ## Publication boundary
 
@@ -87,3 +92,21 @@ macOS/Linux 337/337 conformance, cross-platform byte identity와 두 attestation
 검증 결과는
 [release evidence](../compatibility/evidence/bim-surface-release-v0.1.0-2026-08-09.json)가
 소유합니다.
+
+## Federated v0.2.0 release-ready Gate
+
+`@bim-explorer/federated-bim-surface@0.2.0`은
+`bim-surface-v0.2.0` experimental prerelease를 준비합니다. 기존 v0.1 package와
+tag는 변경하지 않습니다.
+
+```bash
+npm run qualify:bim-surface:v0.2:package
+npm run release:bim-surface:v0.2
+```
+
+이 package는 actual Spatial consumer가 이전 private candidate의 runtime과
+contract를 exact-pin한 증거를 가집니다. release-ready README와 source offer가
+tarball digest를 변경하므로 최종 package bytes에 대한 downstream 재검증 전에는
+`publicationAuthorized`를 false로 유지합니다. 재검증 뒤에도 공개 범위는 tgz,
+SPDX, checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지
+않습니다.

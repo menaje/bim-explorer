@@ -129,8 +129,10 @@ triangle-barycentric anchor, unchanged range read와 전체 cleanup을 검증합
 `npm run qualify:bim-surface:v0.2:package`는 Browser/VS Code가 사용하는 exact
 generated runtime을 독립 stage에서 두 번 pack하고 offline clean project에
 설치해 GLB–IFC–GLB search/selection/anchor와 transferred cleanup을 재현합니다.
-candidate와 installed manifest는 private이며 public tag, release asset과 Spatial
-consumer support를 발급하지 않습니다.
+Spatial actual headless consumer가 이전 private candidate를 exact-pin한 evidence도
+검증합니다. release-ready tgz는 package 문서 변경으로 digest가 달라졌으므로 이
+test는 새 tgz의 downstream revalidation을 대신하지 않으며 public tag, release
+asset, 새 VSIX 또는 Marketplace/Open VSX publication을 발급하지 않습니다.
 
 `reference-format-intake` test는 held LAS/LAZ/E57, 3D Tiles, RVT/DGN 제안을
 실제 multi-source 과업, public fixture, implementation 권리, coordinate와

@@ -5,7 +5,7 @@ authority:
   - open-source-product-boundary
   - spatial-commercial-boundary
   - license-decision-gates
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # 오픈소스 Explorer와 유료 Spatial 경계
@@ -61,10 +61,12 @@ workflow입니다. anchor receipt 자체를 유료 authority 또는 Spatial 설�
 데이터로 취급하지 않습니다.
 
 현재 private `@bim-explorer/federated-bim-surface@0.2.0` candidate는
-zero-runtime-dependency pack과 offline clean install까지만 검증했습니다.
-repository/staged manifest는 `private: true`이고 public tag나 release asset은
-없습니다. 이 준비 상태도 Workspace authoring이나 Spatial consumer 지원을
-발급하지 않습니다.
+zero-runtime-dependency pack과 offline clean install을 통과했고, Spatial actual
+headless consumer가 이전 exact tgz에서 external base + authored overlay와
+authority-free anchor lifecycle을 재현했습니다. repository/staged manifest는
+`private: true`이고 release-ready tgz의 exact-byte 재검증과 public tag/release는
+아직 held입니다. 이 준비 상태도 Workspace authoring authority, 새 VSIX
+publication 또는 production support를 발급하지 않습니다.
 
 ## Community 공개 Gate
 

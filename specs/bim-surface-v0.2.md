@@ -5,7 +5,7 @@ authority:
   - federated-bim-surface-contract
   - multi-source-surface-lifecycle
   - source-role-composition
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # BIM Surface v0.2
@@ -17,9 +17,9 @@ context에서 탐색하고 외부 설계 소비자에게 source-scoped selection
 anchor를 제공하는 host-neutral draft다.
 
 v0.2는 단일 source인 [`bim-surface/0.1`](bim-surface-v0.1.md)의 의미를
-바꾸지 않는다. private 0.2.0 package candidate는 별도로 qualification하지만
-public artifact와 actual Spatial consumer는 별도 Gate 전까지 지원으로
-주장하지 않는다.
+바꾸지 않는다. private 0.2.0 package candidate와 실제 Spatial headless consumer
+composition은 통과했지만 release-ready tgz의 exact-byte 재검증, immutable
+public artifact와 production support는 별도 Gate로 유지한다.
 
 ## Contract pin
 
@@ -126,9 +126,8 @@ generated GLB–IFC–GLB 세 source의 actual Chrome WebGL2 composition,
 source-scoped semantic/selection, 세 개의 derived source-local anchor와 exact
 cleanup은 Browser와 VS Code Gate를 통과했다. private
 `@bim-explorer/federated-bim-surface@0.2.0` candidate도 두 번의 byte-identical
-pack, offline clean install과 같은 3-source lifecycle을 통과했다. 차기 public
-release가 v0.2를 주장하려면 남은 consumer 및 release Gate를 포함해 다음을
-재현해야 한다.
+pack, offline clean install과 같은 3-source lifecycle을 통과했다. actual Spatial
+headless consumer는 이전 exact candidate에서 다음 consumer 범위를 재현했다.
 
 - IFC semantic base + GLB reference + consumer overlay 동시 projection
 - source별 tree/query/visibility/selection identity
@@ -137,5 +136,8 @@ release가 v0.2를 주장하려면 남은 consumer 및 release Gate를 포함해
 - open failure, source 교체와 terminal dispose의 exact cleanup
 - standalone Spatial bundle의 exact package pin과 authority-free composition
 
-이 evidence 전에는 `bim-surface-v0.2.0` release, registry publication이나
-production support를 만들지 않는다.
+release-ready package는 같은 461,431-byte runtime과 contract를 유지하지만
+README·source offer 변경으로 tgz digest가 달라졌다. Spatial이 그 최종 exact
+bytes를 다시 검증하고 `prerelease` 승격 Gate가 통과하기 전에는
+`bim-surface-v0.2.0` release를 만들지 않는다. npm registry와 새 VSIX
+Marketplace/Open VSX publication, stable production support도 승인하지 않는다.

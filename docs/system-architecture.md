@@ -6,7 +6,7 @@ authority:
   - adapter-process-boundary
   - host-runtime-boundary
   - data-lifecycle
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # 시스템 아키텍처
@@ -207,8 +207,10 @@ source role은 caller-provided display metadata이며 capability나 authority가
 아닙니다. surface는 source-local point·normal을 반환할 수 있지만 이를
 Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부착하지
 않습니다. Browser/VS Code product entrypoint와 private 0.2.0
-zero-runtime-dependency package candidate는 검증됐지만 public v0.2 release는
-Spatial consumer exact-pin evidence와 immutable release Gate 전까지 held입니다.
+zero-runtime-dependency package candidate는 검증됐고, Spatial actual headless
+consumer도 이전 exact candidate를 고정해 composition과 anchor lifecycle을
+통과했습니다. release-ready tgz의 새 digest 재검증과 immutable public v0.2
+release는 계속 held입니다.
 
 ## Viewer Core와 3D presentation
 
@@ -415,11 +417,12 @@ protocol 0.1.0을 exact pin합니다. Context request에는 Canonical ID를
 Render/Pick ID를 다시 resolve합니다. BIM base layer와 Spatial layer는
 source/revision/owner를 합치지 않습니다.
 
-현재 generated IFC4와 synthetic bridge provider conformance, 그리고
-Explorer 소유 `bim-surface-v0.1.0` public immutable package의 offline clean
-install, macOS/Linux byte identity와 attestations까지 통과했습니다. 실제 Spatial
-consumer와 standalone Spatial bundle의 exact-pin·composition은 Spatial #8/#16과
-consumer package admission Gate가 소유합니다.
+현재 generated IFC4와 synthetic bridge provider conformance, Explorer 소유
+`bim-surface-v0.1.0` public immutable package의 offline clean install,
+macOS/Linux byte identity와 attestations까지 통과했습니다. federated Surface
+0.2의 actual Spatial headless consumer는 이전 private candidate를 exact-pin해
+composition을 통과했고, release-ready/public artifact 재검증과 standalone
+Spatial product admission은 Spatial #22의 consumer-owned Gate가 소유합니다.
 
 외부 3D 기반 설계의 차기 경계는
 [`bim-spatial-integration/0.2`](../specs/bim-spatial-integration-v0.2.md)가

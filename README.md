@@ -142,26 +142,30 @@ Code의 IFC 경로가 이 surface로 source session, bounded 3D host, semantic
 explorer와 cleanup을 합성합니다. zero-runtime-dependency 0.1.0
 package는 deterministic pack과 offline clean install을 통과했고
 `bim-surface-v0.1.0` immutable GitHub prerelease로 공개했습니다. repository
-manifest와 npm registry publication은 계속 private이며 실제 Spatial consumer
-exact-pin도 별도 Gate입니다. Surface는 Workspace, Canonical Entity ID, mutation,
-accept, publish와 export authority를 발급하지 않습니다.
+manifest와 npm registry publication은 계속 private입니다. Surface는 Workspace,
+Canonical Entity ID, mutation, accept, publish와 export authority를 발급하지
+않습니다.
 
-private federated Surface 0.2.0 package candidate는 generated GLB–IFC–GLB를 actual Browser와
-VS Code 1.131.0 Webview에 합성해 source별 exact WebGL2 hit·normal,
+federated Surface 0.2.0 package candidate는 generated GLB–IFC–GLB를 actual
+Browser와 VS Code 1.131.0 Webview에 합성해 source별 exact WebGL2 hit·normal,
 triangle-barycentric anchor와 cleanup을 검증했습니다. VS Code는 같은 폴더의
 bounded source만 참조하는 path-free `.bimfed.json`을 열며 staged 확장과
-clean-installed VSIX가 같은 결과를 재현합니다. 이는 공개 v0.2 package,
-Spatial consumer 또는 authoring authority 승격이 아닙니다. exact 461,431-byte
-runtime을 두 번 byte-identical pack하고 offline clean consumer에 설치하는
-private candidate Gate도 통과했지만 public tag/release는 생성하지 않았습니다.
+clean-installed VSIX가 같은 결과를 재현합니다. exact 461,431-byte runtime을
+사용한 이전 private tgz는 actual Spatial headless consumer에서 external base와
+Spatial overlay, Canonical selection, durable anchor, stale/no-remap과 cleanup을
+통과했습니다. release-ready tgz는 runtime/API를 유지하지만 package 문서 변경으로
+SHA-256이 `3bdb747d…c63cb`가 됐으므로 Spatial의 새 exact-byte 재검증 전에는
+`bim-surface-v0.2.0` tag와 public release를 만들지 않습니다. 이 경로는
+authoring authority나 새 VSIX/Marketplace publication을 승인하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
 bridge를 사용합니다. Explorer는 source-bound GlobalId와 viewpoint만
 제공하고 Spatial Service가 Canonical mapping, 2D/3D selection과 opaque
 Context Reference를 발급합니다. 현재 synthetic provider conformance는
-통과했으며 실제 Spatial consumer와 독립 Spatial bundle 검증은 Spatial
-저장소 이슈가 소유합니다.
+통과했습니다. federated Surface 0.2의 actual private-candidate consumer evidence는
+Spatial 저장소가 소유하며 release-ready tgz와 이후 immutable public artifact의
+재검증도 같은 consumer-owned Gate로 유지합니다.
 
 post-v0.1 federation foundation은
 [`bim-explorer-federation/0.1`](specs/bim-federation-v0.1.md)로
@@ -192,7 +196,7 @@ profile 모두 CRS와 federation format admission은 계속 분리해 보류합�
 cache-only decoder probe만으로는
 제품 codec/SDK evidence가
 되지 않습니다. 이 기능은 immutable Community v0.1.0 asset에는
-포함되지 않습니다. 현재 main의 bounded glTF/GLB profile은 Browser,
+포함되지 않습니다. 개발 기준선의 bounded glTF/GLB profile은 Browser,
 VS Code와 clean-installed VSIX 제품 file-open을 별도 evidence로
 통과했고, macOS arm64와 Linux x64 제품 매트릭스에서도 동일하게
 재현했습니다. 별도 product-scale reference Gate는 CC BY 4.0
@@ -336,6 +340,11 @@ license와 packaging Gate를 통과한 profile만 지원 대상으로 올립니�
 ## 개발 기준선
 
 Node.js 24가 필요합니다.
+
+개발은 `dev`, 공개 package prerelease 승격은 `prerelease`, 정식 release
+승격은 `main`에서 진행합니다. 새 VSIX의 Marketplace/Open VSX 게시는 별도
+승인 전까지 보류합니다. 세부 규칙은
+[`Branch and release workflow`](docs/branch-release-workflow.md)를 따릅니다.
 
 ```bash
 npm ci

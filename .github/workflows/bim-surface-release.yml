@@ -28,6 +28,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify package tag is current prerelease branch HEAD
+        shell: bash
+        run: |
+          git fetch --no-tags origin prerelease
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/prerelease)" ]]; then
+            echo "BIM Surface prerelease tags must point to the current prerelease HEAD" >&2
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -35,13 +44,26 @@ jobs:
           cache: npm
 
       - name: Verify tag and BIM Surface version
-        run: >-
-          node --input-type=module --eval
-          'import manifest from "./packages/bim-surface/package.json"
-          with {type:"json"};
-          if (process.env.GITHUB_REF_NAME !==
-          `bim-surface-v${manifest.version}`)
-          throw new Error("tag and BIM Surface version differ");'
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            bim-surface-v0.1.0)
+              package_manifest="packages/bim-surface/package.json"
+              ;;
+            bim-surface-v0.2.0)
+              package_manifest="packages/federated-bim-surface/package.json"
+              ;;
+            *)
+              echo "Unsupported BIM Surface release tag" >&2
+              exit 1
+              ;;
+          esac
+          node --input-type=module --eval \
+            'import {readFileSync} from "node:fs";
+            const manifest = JSON.parse(readFileSync(process.argv[1], "utf8"));
+            if (process.env.GITHUB_REF_NAME !== `bim-surface-v${manifest.version}`)
+            throw new Error("tag and BIM Surface version differ");' \
+            "$package_manifest"
 
       - name: Clean install
         run: npm ci
@@ -53,7 +75,16 @@ jobs:
         run: npm audit --omit=dev
 
       - name: Build deterministic BIM Surface release bundle
-        run: npm run release:bim-surface
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            bim-surface-v0.1.0)
+              npm run release:bim-surface
+              ;;
+            bim-surface-v0.2.0)
+              npm run release:bim-surface:v0.2
+              ;;
+          esac
 
       - name: Upload platform BIM Surface bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -78,6 +109,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify package tag is current prerelease branch HEAD
+        shell: bash
+        run: |
+          git fetch --no-tags origin prerelease
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/prerelease)" ]]; then
+            echo "BIM Surface prerelease tags must point to the current prerelease HEAD" >&2
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -95,10 +135,16 @@ jobs:
           merge-multiple: false
 
       - name: Compare macOS and Linux bytes
-        run: >-
-          node scripts/compare-bim-surface-release.mjs
-          --left dist/platforms/bim-surface-release-Linux
-          --right dist/platforms/bim-surface-release-macOS
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+            comparator="scripts/compare-federated-bim-surface-release.mjs"
+          else
+            comparator="scripts/compare-bim-surface-release.mjs"
+          fi
+          node "$comparator" \
+            --left dist/platforms/bim-surface-release-Linux \
+            --right dist/platforms/bim-surface-release-macOS
 
       - name: Select verified BIM Surface bundle
         run: >-
@@ -106,12 +152,23 @@ jobs:
           dist/platforms/bim-surface-release-Linux
           dist/release
 
+      - name: Verify publication Gate
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+            node --input-type=module --eval \
+              'import {readFileSync} from "node:fs";
+              const manifest = JSON.parse(readFileSync(
+                "dist/release/release-manifest.json", "utf8"));
+              if (manifest.releaseGate?.publicationAuthorized !== true)
+              throw new Error("Federated BIM Surface publication is not authorized");'
+          fi
+
       - name: Attest executable package and supply-chain manifests
         uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
         with:
           subject-path: |
-            dist/release/bim-explorer-bim-surface-*.tgz
-            dist/release/bim-explorer-bim-surface-*.spdx.json
+            dist/release/*.tgz
+            dist/release/*.spdx.json
             dist/release/release-manifest.json
 
       - name: Publish or verify immutable package release
@@ -127,7 +184,12 @@ jobs:
             fi
             mkdir -p dist/published
             gh release download "$GITHUB_REF_NAME" --dir dist/published
-            node scripts/compare-bim-surface-release.mjs \
+            if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+              comparator="scripts/compare-federated-bim-surface-release.mjs"
+            else
+              comparator="scripts/compare-bim-surface-release.mjs"
+            fi
+            node "$comparator" \
               --left dist/release \
               --right dist/published
           else
@@ -164,8 +226,13 @@ jobs:
             echo "Immutable release attestation was not available" >&2
             exit 1
           fi
+          package_assets=(dist/release/*.tgz)
+          if [[ "${#package_assets[@]}" -ne 1 ]]; then
+            echo "Expected exactly one BIM Surface package asset" >&2
+            exit 1
+          fi
           gh release verify-asset "$GITHUB_REF_NAME" \
-            dist/release/bim-explorer-bim-surface-0.1.0.tgz
+            "${package_assets[0]}"
           gh attestation verify \
             --repo "$GITHUB_REPOSITORY" \
-            dist/release/bim-explorer-bim-surface-0.1.0.tgz
+            "${package_assets[0]}"

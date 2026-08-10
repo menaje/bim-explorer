@@ -1,0 +1,35 @@
+name: Promotion Policy
+
+on:
+  pull_request:
+    branches:
+      - prerelease
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  promotion-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify ordered branch promotion
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          if [[ "$HEAD_REPOSITORY" != "$TARGET_REPOSITORY" ]]; then
+            echo "release promotion must originate in this repository" >&2
+            exit 1
+          fi
+          if [[ "$BASE_BRANCH" == "prerelease" && "$HEAD_BRANCH" != "dev" ]]; then
+            echo "prerelease accepts promotion only from dev" >&2
+            exit 1
+          fi
+          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "prerelease" ]]; then
+            echo "main accepts promotion only from prerelease" >&2
+            exit 1
+          fi

@@ -12,6 +12,7 @@ const [
   browserEvidence,
   vscodeEvidence,
   packageEvidence,
+  spatialConsumerEvidence,
 ] = await Promise.all([
   readFile(
     "compatibility/federated-bim-surface.json",
@@ -34,7 +35,12 @@ const [
   ).then(JSON.parse),
   readFile(
     "compatibility/evidence/" +
-      "federated-bim-surface-package-2026-08-09.json",
+      "federated-bim-surface-package-2026-08-11.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "federated-bim-surface-spatial-consumer-2026-08-11.json",
     "utf8",
   ).then(JSON.parse),
 ]);
@@ -47,17 +53,19 @@ test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     {
       status: "experimental",
-      passedGates: 17,
+      passedGates: 18,
       heldGates: 3,
       sourceCount: 3,
       anchors: 3,
       surfaceHits: 3,
       vscodeAnchors: 3,
       packageVersion: "0.2.0",
-      packageBytes: 97293,
+      packageBytes: 97623,
+      spatialConsumer: "passed-private-candidate-actual-consumer",
     },
   );
 });
@@ -72,6 +80,7 @@ test("federated BIM Surface cannot demote its qualified VS Code surface", () => 
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /passed Gate is missing/u,
   );
@@ -87,6 +96,7 @@ test("federated BIM Surface requires unchanged-source range replay", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /refresh evidence is invalid/u,
   );
@@ -102,6 +112,7 @@ test("federated BIM Surface evidence cannot gain authority", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /overclaims authority/u,
   );
@@ -117,6 +128,7 @@ test("federated BIM Surface rejects an altered Browser normal", () => {
       invalid,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /surface 0 is invalid/u,
   );
@@ -132,6 +144,7 @@ test("federated BIM Surface rejects an altered Browser locator", () => {
       invalid,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /surface 1 is invalid/u,
   );
@@ -147,6 +160,7 @@ test("federated BIM Surface Browser hit cannot gain authority", () => {
       overclaim,
       vscodeEvidence,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /overclaims authority/u,
   );
@@ -163,6 +177,7 @@ test("federated BIM Surface rejects incomplete VS Code Worker cleanup", () => {
       browserEvidence,
       invalid,
       packageEvidence,
+      spatialConsumerEvidence,
     ),
     /VS Code qualification is invalid/u,
   );
@@ -178,7 +193,57 @@ test("federated BIM Surface package candidate cannot become public", () => {
       browserEvidence,
       vscodeEvidence,
       invalid,
+      spatialConsumerEvidence,
     ),
     /package qualification is invalid/u,
+  );
+});
+
+test("release-ready package requires a new exact-byte consumer run", () => {
+  const invalid = structuredClone(packageEvidence);
+  invalid.releaseGate.releaseReadyPackageConsumerRevalidation = true;
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      invalid,
+      spatialConsumerEvidence,
+    ),
+    /package qualification is invalid/u,
+  );
+});
+
+test("Spatial actual-consumer admission is digest-bound", () => {
+  const invalid = structuredClone(spatialConsumerEvidence);
+  invalid.source.evidenceSha256 = "0".repeat(64);
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      invalid,
+    ),
+    /Spatial consumer admission evidence is invalid/u,
+  );
+});
+
+test("Spatial consumer admission cannot redirect its evidence URL", () => {
+  const invalid = structuredClone(spatialConsumerEvidence);
+  invalid.source.evidenceUrl =
+    "https://github.com/menaje/coni-spatial/blob/main/README.md";
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      invalid,
+    ),
+    /Spatial consumer admission evidence is invalid/u,
   );
 });

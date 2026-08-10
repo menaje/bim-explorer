@@ -4,7 +4,7 @@ status: active
 authority:
   - documentation-navigation
   - documentation-governance
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # BIM Explorer 문서
@@ -21,6 +21,7 @@ last_reviewed: 2026-08-09
 | [오픈소스와 유료 Spatial 경계](open-source-commercial-boundary.md) | `strategy` · `accepted` | 공개 Explorer 가치와 Spatial 상품 가치 |
 | [Community release](community-release.md) | `release-policy` · `accepted` | 공식 배포 채널, 지원 범위, 재현 빌드와 migration |
 | [BIM Surface package release](bim-surface-release.md) | `release-policy` · `accepted` | 재사용 package tag, immutable asset와 provenance |
+| [Branch and release workflow](branch-release-workflow.md) | `release-policy` · `accepted` | `dev`→`prerelease`→`main` 승격과 VS Code publication hold |
 | [IFC engine qualification](ifc-engine-qualification.md) | `qualification` · `active` | 후보 측정, experimental profile과 production Gate |
 | [openBIM 탐색 경계](openbim-exploration.md) | `architecture` · `accepted` | BCF·IDS·bSDD profile, source binding과 network 경계 |
 | [Federation과 reference format](federation-and-reference-formats.md) | `architecture` · `accepted` | multi-source identity, coordinate alignment와 format admission |

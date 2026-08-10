@@ -9,7 +9,7 @@ import {
 
 const evidencePath =
   "compatibility/evidence/" +
-  "federated-bim-surface-package-2026-08-09.json";
+  "federated-bim-surface-package-2026-08-11.json";
 
 test("federated BIM Surface candidate is reproducible and clean-installs", async () => {
   const expected = JSON.parse(await readFile(evidencePath, "utf8"));
@@ -21,6 +21,16 @@ test("federated package candidate cannot authorize publication", async () => {
   const evidence = JSON.parse(await readFile(evidencePath, "utf8"));
   const invalid = structuredClone(evidence);
   invalid.releaseGate.publicationAuthorized = true;
+  assert.throws(
+    () => validateFederatedBimSurfacePackageQualification(invalid),
+    /qualification is invalid/u,
+  );
+});
+
+test("release-ready package requires exact-byte Spatial revalidation", async () => {
+  const evidence = JSON.parse(await readFile(evidencePath, "utf8"));
+  const invalid = structuredClone(evidence);
+  invalid.releaseGate.releaseReadyPackageConsumerRevalidation = true;
   assert.throws(
     () => validateFederatedBimSurfacePackageQualification(invalid),
     /qualification is invalid/u,
