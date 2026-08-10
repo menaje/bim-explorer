@@ -10,7 +10,8 @@ on:
   pull_request:
 
 concurrency:
-  group: bim-explorer-ci-${{ github.workflow }}-${{ github.ref }}
+  group: >-
+    bim-explorer-ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 permissions:

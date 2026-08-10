@@ -24,6 +24,10 @@ test("development promotes through prerelease before main", async () => {
   for (const branch of ["dev", "prerelease", "main"]) {
     assert.match(ci, new RegExp(`- ${branch}`, "u"));
   }
+  assert.match(
+    ci,
+    /github\.workflow.*github\.event_name.*github\.ref/u,
+  );
   assert.match(stableRelease, /current main branch HEAD/u);
   assert.match(packageRelease, /current prerelease branch HEAD/u);
   assert.doesNotMatch(packageRelease, /vsce publish/u);
