@@ -13,6 +13,7 @@ test("development promotes through prerelease before main", async () => {
     ]);
 
   assert.match(policy, /dev -> prerelease -> main/u);
+  assert.match(policy, /`dev`를 GitHub 기본 브랜치/u);
   assert.match(policy, /Marketplace, Open VSX/u);
   assert.match(workflow, /BASE_BRANCH.*prerelease/u);
   assert.match(workflow, /HEAD_BRANCH.*dev/u);

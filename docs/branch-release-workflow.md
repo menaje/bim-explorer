@@ -27,9 +27,10 @@ dev -> prerelease -> main
 - `main`은 정식 지원 기준선입니다. `prerelease`에서만 승격하며 Community
   stable tag는 이 브랜치의 exact HEAD에서만 발급합니다.
 
-`main`은 GitHub 기본 브랜치로 유지합니다. 세 브랜치에서 force-push로 공개
-이력을 바꾸지 않습니다. 긴 기능 격리가 필요하면 짧은 feature branch를
-`dev`로 합치되 release branch를 우회하지 않습니다.
+`dev`를 GitHub 기본 브랜치로 사용해 새 개발 PR의 기본 대상도 개발 기준선과
+일치시킵니다. `main`은 정식 지원 기준선 역할만 유지합니다. 세 브랜치에서
+force-push로 공개 이력을 바꾸지 않습니다. 긴 기능 격리가 필요하면 짧은
+feature branch를 `dev`로 합치되 release branch를 우회하지 않습니다.
 
 ## Promotion Gate
 
