@@ -122,6 +122,16 @@ jobs:
           dist/platforms/community-release-Linux
           dist/release
 
+      - name: Verify VS Code publication Gate
+        env:
+          VSCODE_PUBLICATION_AUTHORIZED: ${{ vars.VSCODE_PUBLICATION_AUTHORIZED }}
+        shell: bash
+        run: |
+          if [[ "$VSCODE_PUBLICATION_AUTHORIZED" != "true" ]]; then
+            echo "New VSIX publication is currently on hold" >&2
+            exit 1
+          fi
+
       - name: Attest release artifacts
         uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
         with:

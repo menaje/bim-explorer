@@ -5,7 +5,7 @@ authority:
   - community-release-channel
   - compatibility-and-migration
   - security-and-support
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-11
 ---
 
 # Community release
@@ -27,6 +27,12 @@ and signed GitHub provenance are fixed in
 [`community-release-v0.1.0-2026-08-04.json`](../compatibility/evidence/community-release-v0.1.0-2026-08-04.json).
 The annotated Git tag is not cryptographically signed; the published build and
 release asset provenance is signed and independently verifiable.
+
+No newer Community VSIX is currently authorized for publication. The stable
+release workflow fails before attestation or draft creation unless the
+repository variable `VSCODE_PUBLICATION_AUTHORIZED` is explicitly set to
+`true` after a user release decision. Local staging and clean-installed VSIX
+qualification remain permitted and do not publish an extension.
 
 ## Supported flow
 

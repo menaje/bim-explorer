@@ -57,6 +57,11 @@ VS Code Webview와 clean-installed VSIX는 계속 제품 conformance 입력으�
 Marketplace, Open VSX 또는 federated BIM Surface package prerelease asset으로
 게시하지 않습니다.
 
+Community stable release workflow도 repository variable
+`VSCODE_PUBLICATION_AUTHORIZED=true`가 명시적으로 설정되지 않으면 attestation과
+draft 생성 전에 실패합니다. 이 variable은 사용자가 새 VSIX publication을
+승인한 뒤에만 설정합니다. 기존 immutable v0.1.0 release는 변경하지 않습니다.
+
 Federated BIM Surface v0.2 prerelease는 host-neutral tgz, SPDX SBOM,
 checksum, source offer, release manifest와 provenance만 공개합니다. 이 package
 prerelease는 standalone BIM Explorer extension release나 marketplace 지원을
