@@ -303,6 +303,11 @@ capability로 module Worker에 주입합니다. Browser는 같은 Worker source�
 same-origin module로 직접 실행합니다. 두 Host의 IFC와 reference 결과는
 [product shell compatibility](../compatibility/bim-product-shells.json)가
 각각 같은 fingerprint와 role-specific projection으로 비교합니다.
+대표 공개 IFC와 product-scale GLB는 software rasterizer를 끈 Apple M2 Metal
+경로에서도 actual Browser, staged VS Code와 clean-installed local VSIX 간
+model/render/selection/cleanup parity를 통과했습니다. 이는 두 파일을 각각 연
+macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 합성이나
+cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
 
 ## openBIM exploration
 

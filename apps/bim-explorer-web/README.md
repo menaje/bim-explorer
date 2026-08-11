@@ -41,6 +41,11 @@ bounded Worker/renderer, 검색·3D pick과 close cleanup을 확인합니다.
 `npm run qualify:gltf:product-scale:vscode-install`은 같은 파일을 staged
 Custom Editor와 빈 profile에 설치한 VSIX에서 열어 동일한 bounded reference
 projection과 editor cleanup을 확인합니다.
+`npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
+공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
+Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 합산 source
+bytes가 64MiB 제품 상한을 넘으므로 두 모델의 동시 합성, Linux/Windows,
+OS-level peak GPU memory와 production support는 승인하지 않습니다.
 `npm run qualify:las-laz:product:web`은 cache-only 공개 LAS/LAZ pair를 각각
 실제 Browser local file input으로 열어 exact point-range/visual parity,
 `laz-perf@0.0.6` Worker isolation과 source/Worker/CPU/GPU cleanup을 확인합니다.

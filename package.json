@@ -99,6 +99,7 @@
     "qualify:bim-source:public": "node scripts/qualify-public-bim-model-source.mjs",
     "qualify:product:web": "node scripts/qualify-bim-product-shell.mjs",
     "qualify:product:web:public": "node scripts/qualify-bim-product-shell.mjs --fixture public",
+    "qualify:product:representative:physical-gpu": "node scripts/qualify-representative-models-physical-gpu.mjs",
     "qualify:product:vscode": "node scripts/qualify-vscode-custom-editor.mjs",
     "qualify:product:vscode-install": "node scripts/qualify-vscode-vsix-install.mjs",
     "qualify:renderer:public": "node scripts/qualify-public-bim-renderer-3d.mjs",

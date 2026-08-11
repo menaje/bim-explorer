@@ -35,6 +35,9 @@ import {
 import {
   validatePointCloudLodProductQualification,
 } from "./qualify-point-cloud-lod-products.mjs";
+import {
+  validateRepresentativeModelsPhysicalGpuQualification,
+} from "./qualify-representative-models-physical-gpu.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -82,10 +85,10 @@ const PASSED_GATES = [
   "browserDerivedPointHierarchyLod",
   "vscodeDerivedPointHierarchyLod",
   "cleanVsixDerivedPointHierarchyLod",
+  "physicalGpuQualification",
 ];
 const HELD_GATES = [
   "publicViewerCoreConformance",
-  "physicalGpuQualification",
   "marketplaceRelease",
 ];
 
@@ -286,6 +289,7 @@ export function validateBimProductShellCompatibility(
   pointCloudBrowserPicking,
   pointCloudVscodePicking,
   pointCloudLodProducts,
+  representativePhysicalGpu,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -344,10 +348,14 @@ export function validateBimProductShellCompatibility(
   validatePointCloudLodProductQualification(
     pointCloudLodProducts,
   );
+  const physicalGpu =
+    validateRepresentativeModelsPhysicalGpuQualification(
+      representativePhysicalGpu,
+    );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
-    manifest.asOf !== "2026-08-09" ||
+    manifest.asOf !== "2026-08-11" ||
     manifest.status !== "experimental" ||
     browser.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
@@ -625,6 +633,37 @@ export function validateBimProductShellCompatibility(
       })
   ) {
     throw new Error("BIM product shell limits are invalid");
+  }
+  if (
+    JSON.stringify(manifest.physicalGpuScope) !==
+      JSON.stringify({
+        platform: "darwin-arm64",
+        hardware: "Apple M2",
+        renderer: "ANGLE Metal",
+        representativeFormats: ["ifc", "glb"],
+        simultaneousComposition: false,
+        crossPlatform: false,
+        osLevelPeakGpuMemory: false,
+        productionSupport: false,
+      }) ||
+    representativePhysicalGpu.browser?.ifc?.fixture?.id !==
+      manifest.publicFixture?.id ||
+    representativePhysicalGpu.browser?.ifc?.fixture
+      ?.sourceBytes !== manifest.publicFixture?.byteLength ||
+    representativePhysicalGpu.browser?.ifc?.fixture
+      ?.fingerprint !== `sha256:${manifest.publicFixture?.sha256}` ||
+    representativePhysicalGpu.browser?.glb?.fixture?.id !==
+      manifest.productScaleReferenceFixture?.id ||
+    representativePhysicalGpu.browser?.glb?.fixture
+      ?.sourceBytes !==
+        manifest.productScaleReferenceFixture?.byteLength ||
+    representativePhysicalGpu.browser?.glb?.fixture
+      ?.fingerprint !==
+        `sha256:${manifest.productScaleReferenceFixture?.sha256}`
+  ) {
+    throw new Error(
+      "representative physical GPU scope is invalid",
+    );
   }
   if (
     !everyTrue(browser.assertions) ||
@@ -989,6 +1028,10 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.pointCloudLodProducts !==
       "compatibility/evidence/" +
         "point-cloud-lod-products-2026-08-09.json" ||
+    manifest.evidence?.representativePhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-physical-gpu-" +
+        "darwin-arm64-2026-08-11.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -1025,7 +1068,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimE57FormatAdmission !== false ||
     manifest.policy?.claimPublicViewerCore !== false ||
     manifest.policy?.claimPublicScale !== true ||
-    manifest.policy?.claimPhysicalGpu !== false ||
+    manifest.policy?.claimPhysicalGpu !== true ||
     manifest.policy?.claimMarketplaceRelease !== false
   ) {
     throw new Error(
@@ -1052,6 +1095,7 @@ export function validateBimProductShellCompatibility(
         pointCloudBrowserPicking,
         pointCloudVscodePicking,
         pointCloudLodProducts,
+        representativePhysicalGpu,
         installation,
         manifest,
         vscode,
@@ -1070,6 +1114,7 @@ export function validateBimProductShellCompatibility(
       vscode.observation.hostKind,
     ]),
     passedGates: PASSED_GATES.length,
+    physicalGpu: physicalGpu.status,
     publicProducts:
       browserPublic.observation.model.products,
     status: manifest.status,
@@ -1106,6 +1151,7 @@ async function main() {
     pointCloudLodProducts,
     vscode,
     installation,
+    representativePhysicalGpu,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1193,6 +1239,13 @@ async function main() {
       path.join(root, manifest.evidence.vscodeCleanInstall),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.representativePhysicalGpu,
+      ),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1215,6 +1268,7 @@ async function main() {
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
     pointCloudLodProducts,
+    representativePhysicalGpu,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

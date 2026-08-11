@@ -93,8 +93,11 @@ selection이 authority가 되지 않습니다.
   immutable public v0.2 package prerelease로 공개됐고 그 asset의 Spatial Phase B
   exact-pin admission도 통과했습니다. 별도 post-release 검증에서 generated
   3-source Browser와 VS Code staged/clean-installed local VSIX는 Apple M2 Metal
-  physical GPU를 통과했습니다. Spatial VSIX BIM runtime, Spatial 실제 BIM UI,
-  Linux/Windows hardware와 production support는 별도 Gate입니다.
+  physical GPU를 통과했습니다. 같은 hardware profile에서 공개 46.77MB IFC와
+  42.98MB GLB도 actual Browser, staged VS Code와 clean-installed local VSIX의
+  개별 제품 세션으로 통과했습니다. 두 sample의 동시 합성, Spatial VSIX BIM
+  runtime, Spatial 실제 BIM UI, Linux/Windows hardware, OS-level peak GPU
+  memory와 production support는 별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는

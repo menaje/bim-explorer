@@ -21,6 +21,10 @@
 - qualify the generated federated GLB–IFC–GLB Surface on an Apple M2 Metal GPU
   through two actual Chrome 151 runs plus staged and locally clean-installed
   VS Code 1.132 paths, with software fallback disabled and no new VSIX publish;
+- qualify the pinned public IFC2X3 and product-scale GLB in separate actual
+  Chrome 151, staged VS Code 1.132 and clean-installed local VSIX sessions on
+  Apple M2 Metal, while holding simultaneous composition, cross-platform GPU,
+  OS-level peak memory, publication and production claims;
 - allow cache-only public test fixtures without requiring sample redistribution,
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing

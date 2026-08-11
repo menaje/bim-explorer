@@ -16,6 +16,10 @@ import {
   prepareVscodeExtensionStage,
 } from "./package-vscode-extension.mjs";
 import {
+  ensurePublicIfcFixture,
+  loadPublicIfcFixtureManifest,
+} from "./public-ifc-fixture.mjs";
+import {
   acquirePublicGltfFixture,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
@@ -44,6 +48,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
+    includePublicFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
@@ -55,6 +60,10 @@ function parseArguments(values) {
     const name = values[index];
     if (name === "--federated-surface") {
       options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
+    if (name === "--public") {
+      options.includePublicFixture = true;
       continue;
     }
     if (name === "--product-scale") {
@@ -92,6 +101,7 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
+        "[--public] " +
         "[--e57-spherical] " +
         "[--e57-multiple-scan] " +
         "[--physical-gpu] " +
@@ -107,12 +117,19 @@ export async function qualifyVscodeCustomEditor({
   includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
+  includePublicFixture = false,
   rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
   validateGpuQualificationMode(rendererMode);
   const runtime = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
+  const publicManifest = includePublicFixture
+    ? await loadPublicIfcFixtureManifest()
+    : null;
+  const publicFixture = includePublicFixture
+    ? await ensurePublicIfcFixture({ manifest: publicManifest })
+    : null;
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
   const productScaleReferenceFixture =
@@ -181,6 +198,12 @@ export async function qualifyVscodeCustomEditor({
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
             }
           : {}),
+        ...(publicFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
+                publicFixture.input,
+            }),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
         ...(pointFixtures === null

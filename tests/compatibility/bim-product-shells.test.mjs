@@ -31,6 +31,7 @@ async function fixtures() {
     pointCloudLodProducts,
     vscode,
     installation,
+    representativePhysicalGpu,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -108,6 +109,10 @@ async function fixtures() {
       manifest.evidence.vscodeCleanInstall,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.representativePhysicalGpu,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -128,6 +133,7 @@ async function fixtures() {
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
     pointCloudLodProducts,
+    representativePhysicalGpu,
     manifest,
     vscode,
   };
@@ -155,6 +161,7 @@ function validate(values) {
     values.pointCloudBrowserPicking,
     values.pointCloudVscodePicking,
     values.pointCloudLodProducts,
+    values.representativePhysicalGpu,
   );
 }
 
@@ -164,9 +171,11 @@ test("product shells pin the same source and render projection", async () => {
     validate(values),
     {
       fixture: "synthetic-semantic-ifc4",
-      heldGates: 3,
+      heldGates: 2,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 45,
+      passedGates: 46,
+      physicalGpu:
+        "passed-darwin-arm64-apple-metal-representative-products",
       publicProducts: 3_569,
       status: "experimental",
     },
@@ -285,5 +294,25 @@ test("product shells require product-scale clean install", async () => {
   assert.throws(
     () => validate(values),
     /product-scale VS Code product evidence is incomplete/u,
+  );
+});
+
+test("product shells reject a software representative renderer", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.browser.ifc.gpu
+    .unmaskedRenderer = "ANGLE (Google, SwiftShader)";
+  assert.throws(
+    () => validate(values),
+    /physical GPU (?:evidence|identity) is invalid/u,
+  );
+});
+
+test("product shells keep cross-platform physical GPU held", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.held.crossPlatformPhysicalGpu =
+    true;
+  assert.throws(
+    () => validate(values),
+    /representative model physical GPU evidence is invalid/u,
   );
 });

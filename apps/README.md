@@ -21,7 +21,9 @@ bridge와 close cleanup까지 재검증했습니다. public Viewer Core conforma
 별개로, 46.77MB 공개 IFC도 Browser와 clean-installed VSIX에서 같은
 3,569-product source/model projection과 첫-range WebGL2 결과로
 재현했습니다. IFC2X3 profile admission, physical GPU와 release는 이
-product-scale 결과로 승격하지 않습니다.
+product-scale software 결과만으로 승격하지 않습니다. 별도 actual Chrome
+151 및 VS Code 1.132 staged/clean-installed local VSIX 검증에서는 같은 공개
+IFC를 Apple M2 Metal로 열어 model/render/selection/cleanup을 통과했습니다.
 
 같은 두 Host는 bounded glTF/GLB를 BIM semantic source가 아닌 reference
 mesh로 분기합니다. 공개 Khronos Box GLB는 Browser local file input,
@@ -30,7 +32,9 @@ selection, `globalId: null`, 실제 Chromium WebGL2, path-free bridge와
 cleanup을 재현했습니다. 42.98MB product-scale reference GLB도 세 제품
 경로에서 49개 entity·573,952 unique triangles와 동일한 bounded render
 projection·cleanup을 통과했습니다. external resource/required extension과
-physical GPU는 계속 보류합니다.
+physical GPU는 별도 Apple M2 Metal Gate에서 product-scale GLB까지
+통과했습니다. Linux/Windows hardware, OS-level peak GPU memory와 공개 IFC를
+포함한 동시 합성은 계속 보류합니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과

@@ -160,8 +160,11 @@ evidence에서 통과했습니다. 42.98MB `A Beautiful Game`은 on-demand CC BY
 16.9MB allocation cleanup에 이어 Browser product shell의 local file input,
 검색·3D pick과 close cleanup을 통과했습니다. staged VS Code와 빈 profile에
 clean-installed VSIX도 동일한 49개 source-native entity·573,952 unique
-triangles, 16.9MB upload와 editor cleanup을 재현했습니다. physical GPU는
-승인하지 않습니다.
+triangles, 16.9MB upload와 editor cleanup을 재현했습니다. 같은 GLB와 공개
+IFC는 software fallback을 끈 actual Browser, staged VS Code 및
+clean-installed local VSIX에서 Apple M2 Metal physical GPU를 각각
+통과했습니다. Linux/Windows, OS-level peak GPU memory와 두 대표 모델의 동시
+합성은 승인하지 않습니다.
 cache-only LAS/LAZ pre-admission probe는 paired LAS 1.2/LAZ의 10,201개
 point-format 3 record와 압축 해제 parity를 통과했습니다. actual Chrome
 qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperative
@@ -216,8 +219,9 @@ Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
 재현했습니다. 별도 product-scale source/renderer probe와 Browser, staged
 VS Code, clean-installed VSIX 제품 file-open도 통과했습니다. multi-source
 composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모 GLB
-조합으로 통과했습니다. federated Surface v0.2의 generated 3-source 경로만
-Apple M2 Metal physical GPU를 통과했으며, 다른 포맷·Linux/Windows hardware와
+조합으로 통과했습니다. federated Surface v0.2의 generated 3-source 경로와
+개별 공개 IFC·product-scale GLB 제품 경로는 Apple M2 Metal physical GPU를
+통과했으며, 두 대표 모델의 동시 합성, 다른 포맷·Linux/Windows hardware와
 실제 사용자/Spatial/survey evidence는 계속 held입니다. 이 결과는 v0.1.0
 asset이나 broader glTF profile을 소급 승인하지 않습니다.
 

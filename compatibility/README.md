@@ -99,6 +99,7 @@ path-free host bridge와 clean VSIX install 결과는
 [`reference Browser product evidence`](evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json),
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json),
 [`LAS/LAZ VS Code evidence`](evidence/las-laz-vscode-product-2026-08-08.json),
 [`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
@@ -117,9 +118,15 @@ paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
 points·163,216-byte payload·36,934 pixels를 재현하고 path-free bridge,
 source/Worker/CPU/GPU/editor cleanup을 통과했습니다. VSIX는 strict-CSP용
 generated `laz-perf@0.0.6` glue와 exact WASM을 포함하되 sample은 포함하지
-않습니다.
+않습니다. software fallback을 끈 actual Chrome 151과 VS Code 1.132
+staged/clean-installed local VSIX는 공개 IFC와 product-scale GLB를 각각 Apple
+M2 Metal로 열어 동일한 3,569 products·261,424 triangles 및 49 entities·573,952
+unique triangles, visible frame, read-only selection과 terminal cleanup을
+재현했습니다. 두 sample은 합산 source bytes가 64MiB 상한을 넘으므로 동시
+합성하지 않았고 Git·VSIX·release에 포함하지 않습니다.
 entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
-glTF profile, physical GPU와 marketplace release는 계속 보류합니다.
+glTF profile, Linux/Windows physical GPU, OS-level peak GPU memory와
+marketplace release는 계속 보류합니다.
 
 IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture

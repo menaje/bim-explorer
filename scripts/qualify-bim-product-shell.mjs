@@ -35,6 +35,34 @@ import {
 import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+  validatePhysicalGpuIdentity,
+} from "./gpu-qualification-profile.mjs";
+
+const GPU_IDENTITY_EXPRESSION = `(() => {
+  const gl = document.querySelector("#model-canvas")
+    ?.getContext("webgl2");
+  const debug = gl?.getExtension("WEBGL_debug_renderer_info");
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: Boolean(gl),
+    debugRendererInfo: Boolean(debug),
+    vendor: gl?.getParameter(gl.VENDOR) ?? null,
+    renderer: gl?.getParameter(gl.RENDERER) ?? null,
+    unmaskedVendor: debug
+      ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL)
+      : null,
+    unmaskedRenderer: debug
+      ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+      : null,
+    version: gl?.getParameter(gl.VERSION) ?? null,
+    shadingLanguageVersion:
+      gl?.getParameter(gl.SHADING_LANGUAGE_VERSION) ?? null,
+    contextAttributes: gl?.getContextAttributes() ?? null
+  };
+})()`;
 
 function timeoutError(label) {
   return new DOMException(
@@ -77,7 +105,7 @@ async function closeServer(server) {
   });
 }
 
-async function launchChrome(userDataDirectory) {
+async function launchChrome(userDataDirectory, rendererMode) {
   const chromeExecutable =
     await resolveChromeQualificationExecutable();
   const child = spawn(
@@ -94,13 +122,10 @@ async function launchChrome(userDataDirectory) {
       "--disable-domain-reliability",
       "--disable-features=MediaRouter,OptimizationHints",
       "--disable-sync",
-      "--enable-unsafe-swiftshader",
-      "--enable-webgl",
-      "--ignore-gpu-blocklist",
       "--metrics-recording-only",
       "--no-first-run",
       "--no-pings",
-      "--use-angle=swiftshader",
+      ...gpuQualificationLaunchArguments(rendererMode),
       "about:blank",
     ],
     {
@@ -732,7 +757,9 @@ async function qualificationFixture(kind) {
 
 export async function qualifyBimProductShell({
   fixture: fixtureKind = "synthetic",
+  rendererMode = "swiftshader",
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
   const fixture = await qualificationFixture(fixtureKind);
   const pointCloud = ["e57", "las", "laz"].includes(
     fixture.format,
@@ -747,7 +774,7 @@ export async function qualifyBimProductShell({
   let chrome = null;
   let client = null;
   try {
-    chrome = await launchChrome(userDataDirectory);
+    chrome = await launchChrome(userDataDirectory, rendererMode);
     const endpoint = new URL(chrome.browserWebSocket);
     const newTarget = new URL(
       `http://${endpoint.host}/json/new`,
@@ -832,6 +859,12 @@ export async function qualifyBimProductShell({
               : 30_000,
       },
     );
+    const gpu = await client.evaluate(GPU_IDENTITY_EXPRESSION);
+    if (rendererMode === "physical") {
+      validatePhysicalGpuIdentity(gpu, {
+        platform: `${process.platform}-${process.arch}`,
+      });
+    }
     const initialPointLod = pointCloud &&
       opened.pointCloud?.hierarchy?.levels?.length > 1
         ? {
@@ -984,8 +1017,11 @@ export async function qualifyBimProductShell({
         browser: chrome.browserVersion,
         headless: true,
         platform: `${process.platform}-${process.arch}`,
-        rendererQualification:
-          "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed",
+        rendererMode,
+        rendererQualification: rendererMode === "physical"
+          ? "actual Browser WebGL2 API via physical Apple Metal"
+          : "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed",
+        ...(rendererMode === "physical" ? { gpu } : {}),
       },
       fixture: {
         id: fixture.id,
@@ -1083,7 +1119,9 @@ export async function qualifyBimProductShell({
         pointCloudProductOpen: pointCloud
           ? "passed-bounded-read-only-unqualified-coordinates"
           : "not-applicable",
-        actualPhysicalGpu: "not-claimed",
+        actualPhysicalGpu: rendererMode === "physical"
+          ? "passed-observed-apple-metal"
+          : "not-claimed",
         publicViewerCoreConformance: "held",
         vscodeChromiumRuntime: "separate-gate",
       },
@@ -1127,6 +1165,7 @@ function parseArguments(values) {
   ]);
   const options = {
     fixture: "synthetic",
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
@@ -1149,11 +1188,16 @@ function parseArguments(values) {
       index += 1;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     throw new TypeError(
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
         "gltf-product-scale|e57-public|e57-spherical-public|" +
         "e57-multiple-scan-public|las-public|laz-public] " +
+        "[--physical-gpu] " +
         "[--output path]",
     );
   }
@@ -1168,6 +1212,7 @@ if (
   const options = parseArguments(process.argv.slice(2));
   const evidence = await qualifyBimProductShell({
     fixture: options.fixture,
+    rendererMode: options.rendererMode,
   });
   if (options.output !== null) {
     await mkdir(path.dirname(options.output), {

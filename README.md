@@ -47,10 +47,13 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > IFC4 projected CRS/MapConversion과 fingerprinted source
 > precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
 > property, 실제 측량 좌표/datum 변환과 source-precision geometry export는
-> 제한합니다. federated Surface v0.2의 generated GLB–IFC–GLB 제품 경로는
-> Apple M2 Metal physical GPU를 actual Browser와 VS Code에서 통과했지만,
-> Linux/Windows physical GPU와 다른 포맷의 hardware coverage는 아직
-> 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
+> 제한합니다. federated Surface v0.2의 generated GLB–IFC–GLB와 별도로,
+> 46.77MB 공개 IFC 및 42.98MB product-scale GLB 제품 경로도 software
+> rasterizer를 끈 actual Browser, staged VS Code와 clean-installed local
+> VSIX에서 Apple M2 Metal physical GPU를 통과했습니다. 두 대표 모델은 합산
+> source bytes가 64MiB 제품 상한을 넘으므로 각각의 세션에서 검증했으며,
+> Linux/Windows physical GPU, 동시 합성, 다른 포맷과 OS-level peak GPU
+> memory는 아직 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
 > cleanup과 Browser/native resource exhaustion도 보류합니다. 첫 engine은
 > exact `web-ifc@0.0.77`, 첫 profile은 IFC4
 > `ReferenceView_V1.2`의 local read-only exploration으로 experimental
@@ -404,6 +407,9 @@ Viewer Core admission 상태는
 Browser/VS Code 제품 Host 계약의 상태는
 [compatibility/bim-product-shells.json](compatibility/bim-product-shells.json)을
 따릅니다.
+대표 공개 IFC·GLB의 Apple M2 Metal 제품 검증은
+[physical GPU evidence](compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)에
+고정합니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을
 따릅니다.
