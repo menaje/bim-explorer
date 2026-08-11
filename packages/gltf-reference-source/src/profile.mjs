@@ -10,6 +10,9 @@ const GLB_MAGIC = 0x46546c67;
 const JSON_CHUNK = 0x4e4f534a;
 const BIN_CHUNK = 0x004e4942;
 const KHR_MESH_QUANTIZATION = "KHR_mesh_quantization";
+const EXT_MESHOPT_COMPRESSION = "EXT_meshopt_compression";
+export const MESHOPT_DECODER_REQUIRED_MESSAGE =
+  "EXT_meshopt_compression decoder is unavailable";
 const COMPONENT_BYTES = new Map([
   [5120, 1],
   [5121, 1],
@@ -22,6 +25,8 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
   maximumJsonBytes: 4 * 1024 * 1024,
   maximumBufferBytes: 64 * 1024 * 1024,
+  maximumMeshoptDecodedBytes: 64 * 1024 * 1024,
+  maximumMeshoptCompressionRatio: 256,
   maximumExternalResources: 16,
   maximumExternalResourceNameBytes: 128,
   maximumNodes: 4_096,
@@ -265,6 +270,7 @@ function loadBuffers(
   format,
   limits,
   externalResources,
+  placeholderBuffers = new Set(),
 ) {
   const buffers = collection(
     document.buffers,
@@ -287,6 +293,21 @@ function loadBuffers(
       );
       if (buffer.byteLength > limits.maximumBufferBytes) {
         throw new RangeError("glTF buffer exceeds its byte limit");
+      }
+      if (placeholderBuffers.has(index)) {
+        if (buffer.uri !== undefined) {
+          throw new DOMException(
+            "EXT_meshopt_compression fallback bytes are unsupported",
+            "NotSupportedError",
+          );
+        }
+        if (format === "glb" && index === 0) {
+          throw new Error(
+            "EXT_meshopt_compression placeholder cannot be GLB buffer 0",
+          );
+        }
+        loaded.push(null);
+        continue;
       }
       let bytes;
       if (buffer.uri === undefined) {
@@ -348,7 +369,7 @@ function loadBuffers(
     }
   } catch (error) {
     for (const bytes of loaded) {
-      bytes.fill(0);
+      bytes?.fill(0);
     }
     throw error;
   }
@@ -362,6 +383,324 @@ function loadBuffers(
   };
 }
 
+function meshoptDecoder(value) {
+  if (value === null || value === undefined) {
+    throw new DOMException(
+      MESHOPT_DECODER_REQUIRED_MESSAGE,
+      "NotSupportedError",
+    );
+  }
+  const decoder = plainRecord(value, "meshopt decoder");
+  if (
+    decoder.id !== "meshoptimizer" ||
+    decoder.version !== "1.2.0" ||
+    decoder.supported !== true ||
+    typeof decoder.decodeGltfBuffer !== "function"
+  ) {
+    throw new TypeError("meshopt decoder capability is invalid");
+  }
+  return decoder;
+}
+
+function meshoptCompressionProfile(
+  document,
+  limits,
+  extensionsRequired,
+  decoderCapability,
+) {
+  const enabled = extensionsRequired.includes(
+    EXT_MESHOPT_COMPRESSION,
+  );
+  const buffers = collection(
+    document.buffers,
+    limits.maximumAccessors,
+    "glTF buffers",
+  );
+  const bufferViews = collection(
+    document.bufferViews,
+    limits.maximumBufferViews,
+    "glTF bufferViews",
+  );
+  const fallbackMarkers = new Set();
+  for (let index = 0; index < buffers.length; index += 1) {
+    const buffer = plainRecord(
+      buffers[index],
+      `glTF buffers[${index}]`,
+    );
+    if (buffer.extensions === undefined) {
+      continue;
+    }
+    const extensions = plainRecord(
+      buffer.extensions,
+      `glTF buffers[${index}].extensions`,
+    );
+    if (
+      Object.keys(extensions).length !== 1 ||
+      extensions[EXT_MESHOPT_COMPRESSION] === undefined
+    ) {
+      throw new DOMException(
+        "glTF buffer extensions are unsupported",
+        "NotSupportedError",
+      );
+    }
+    const marker = plainRecord(
+      extensions[EXT_MESHOPT_COMPRESSION],
+      `glTF buffers[${index}] meshopt extension`,
+    );
+    if (
+      Object.keys(marker).length !== 1 ||
+      marker.fallback !== true
+    ) {
+      throw new Error("meshopt fallback buffer marker is invalid");
+    }
+    fallbackMarkers.add(index);
+  }
+
+  const views = new Map();
+  const parentBuffers = new Set();
+  const compressedBuffers = new Set();
+  const rangesByBuffer = new Map();
+  let compressedBytes = 0;
+  let decodedBytes = 0;
+  for (let index = 0; index < bufferViews.length; index += 1) {
+    const bufferView = plainRecord(
+      bufferViews[index],
+      `glTF bufferViews[${index}]`,
+    );
+    if (bufferView.extensions === undefined) {
+      continue;
+    }
+    const extensions = plainRecord(
+      bufferView.extensions,
+      `glTF bufferViews[${index}].extensions`,
+    );
+    if (
+      Object.keys(extensions).length !== 1 ||
+      extensions[EXT_MESHOPT_COMPRESSION] === undefined
+    ) {
+      throw new DOMException(
+        "glTF bufferView extensions are unsupported",
+        "NotSupportedError",
+      );
+    }
+    if (!enabled) {
+      throw new Error(
+        "EXT_meshopt_compression must be a required extension",
+      );
+    }
+    const extension = plainRecord(
+      extensions[EXT_MESHOPT_COMPRESSION],
+      `glTF bufferViews[${index}] meshopt extension`,
+    );
+    const supportedFields = new Set([
+      "buffer",
+      "byteLength",
+      "byteOffset",
+      "byteStride",
+      "count",
+      "filter",
+      "mode",
+    ]);
+    if (
+      Object.keys(extension).some((field) =>
+        !supportedFields.has(field))
+    ) {
+      throw new TypeError("meshopt bufferView fields are invalid");
+    }
+    const parentBuffer = arrayIndex(
+      bufferView.buffer,
+      buffers.length,
+      `glTF bufferViews[${index}] fallback buffer`,
+    );
+    const compressedBuffer = arrayIndex(
+      extension.buffer,
+      buffers.length,
+      `glTF bufferViews[${index}] compressed buffer`,
+    );
+    const parentOffset = bufferView.byteOffset ?? 0;
+    const compressedOffset = extension.byteOffset ?? 0;
+    for (const [value, label, allowZero] of [
+      [bufferView.byteLength, "bufferView.byteLength", false],
+      [parentOffset, "bufferView.byteOffset", true],
+      [extension.byteLength, "extension.byteLength", false],
+      [compressedOffset, "extension.byteOffset", true],
+      [extension.byteStride, "extension.byteStride", false],
+      [extension.count, "extension.count", false],
+    ]) {
+      if (
+        !Number.isSafeInteger(value) ||
+        value < (allowZero ? 0 : 1)
+      ) {
+        throw new RangeError(`meshopt ${label} is invalid`);
+      }
+    }
+    const mode = extension.mode;
+    const filter = extension.filter ?? "NONE";
+    if (!["ATTRIBUTES", "TRIANGLES", "INDICES"].includes(mode)) {
+      throw new DOMException(
+        "meshopt compression mode is unsupported",
+        "NotSupportedError",
+      );
+    }
+    if (filter !== "NONE") {
+      throw new DOMException(
+        "meshopt compression filter is unsupported",
+        "NotSupportedError",
+      );
+    }
+    if (
+      (bufferView.byteStride !== undefined &&
+        bufferView.byteStride !== extension.byteStride) ||
+      extension.count * extension.byteStride !==
+        bufferView.byteLength ||
+      (mode === "ATTRIBUTES" &&
+        (extension.byteStride % 4 !== 0 ||
+          extension.byteStride > 252)) ||
+      (mode !== "ATTRIBUTES" &&
+        ![2, 4].includes(extension.byteStride)) ||
+      (mode === "TRIANGLES" && extension.count % 3 !== 0)
+    ) {
+      throw new RangeError("meshopt bufferView layout is invalid");
+    }
+    const parent = plainRecord(
+      buffers[parentBuffer],
+      `glTF buffers[${parentBuffer}]`,
+    );
+    const compressed = plainRecord(
+      buffers[compressedBuffer],
+      `glTF buffers[${compressedBuffer}]`,
+    );
+    positiveInteger(
+      parent.byteLength,
+      `glTF buffers[${parentBuffer}].byteLength`,
+    );
+    positiveInteger(
+      compressed.byteLength,
+      `glTF buffers[${compressedBuffer}].byteLength`,
+    );
+    if (
+      parentOffset + bufferView.byteLength > parent.byteLength ||
+      compressedOffset + extension.byteLength >
+        compressed.byteLength
+    ) {
+      throw new RangeError("meshopt bufferView range is invalid");
+    }
+    const ratio = bufferView.byteLength / extension.byteLength;
+    decodedBytes += bufferView.byteLength;
+    compressedBytes += extension.byteLength;
+    if (
+      decodedBytes > limits.maximumMeshoptDecodedBytes ||
+      ratio > limits.maximumMeshoptCompressionRatio
+    ) {
+      throw new RangeError(
+        "meshopt decoded bytes exceed the bounded profile",
+      );
+    }
+    const ranges = rangesByBuffer.get(compressedBuffer) ?? [];
+    const end = compressedOffset + extension.byteLength;
+    if (ranges.some((range) =>
+      compressedOffset < range.end && end > range.start)) {
+      throw new Error("meshopt compressed buffer ranges overlap");
+    }
+    ranges.push({ start: compressedOffset, end });
+    rangesByBuffer.set(compressedBuffer, ranges);
+    parentBuffers.add(parentBuffer);
+    compressedBuffers.add(compressedBuffer);
+    views.set(index, {
+      compressedBuffer,
+      compressedByteLength: extension.byteLength,
+      compressedOffset,
+      count: extension.count,
+      decodedByteLength: bufferView.byteLength,
+      filter,
+      mode,
+      stride: extension.byteStride,
+    });
+  }
+  if (!enabled) {
+    if (fallbackMarkers.size > 0) {
+      throw new Error(
+        "EXT_meshopt_compression fallback is not declared",
+      );
+    }
+    return null;
+  }
+  if (views.size === 0) {
+    throw new Error(
+      "EXT_meshopt_compression has no compressed bufferView",
+    );
+  }
+  for (const index of parentBuffers) {
+    const buffer = buffers[index];
+    if (
+      buffer.uri !== undefined ||
+      compressedBuffers.has(index) ||
+      bufferViews.some((view, viewIndex) =>
+        view.buffer === index && !views.has(viewIndex))
+    ) {
+      throw new DOMException(
+        "meshopt fallback buffer profile is unsupported",
+        "NotSupportedError",
+      );
+    }
+  }
+  for (const index of fallbackMarkers) {
+    if (!parentBuffers.has(index)) {
+      throw new Error("meshopt fallback buffer is unused");
+    }
+  }
+  return {
+    compressedBytes,
+    decodedBytes,
+    decoder: meshoptDecoder(decoderCapability),
+    fallbackMarkers,
+    placeholderBuffers: parentBuffers,
+    views,
+  };
+}
+
+function decodeMeshoptBufferViews(
+  document,
+  buffers,
+  profile,
+  ownedBuffers,
+) {
+  if (profile === null) {
+    return;
+  }
+  for (const [viewIndex, item] of profile.views) {
+    const sourceBuffer = buffers[item.compressedBuffer];
+    if (!(sourceBuffer instanceof Uint8Array)) {
+      throw new Error("meshopt compressed buffer is unavailable");
+    }
+    const source = sourceBuffer.subarray(
+      item.compressedOffset,
+      item.compressedOffset + item.compressedByteLength,
+    );
+    const decoded = new Uint8Array(item.decodedByteLength);
+    try {
+      profile.decoder.decodeGltfBuffer(
+        decoded,
+        item.count,
+        item.stride,
+        source,
+        item.mode,
+        item.filter,
+      );
+    } catch {
+      decoded.fill(0);
+      throw new Error("meshopt compressed buffer is malformed");
+    }
+    const bufferView = document.bufferViews[viewIndex];
+    bufferView.buffer = buffers.length;
+    bufferView.byteOffset = 0;
+    bufferView.byteLength = decoded.byteLength;
+    delete bufferView.extensions;
+    buffers.push(decoded);
+    ownedBuffers.push(decoded);
+  }
+}
+
 function accessorLayout(
   document,
   buffers,
@@ -371,6 +710,7 @@ function accessorLayout(
     componentType,
     type,
     label,
+    meshoptViews = null,
     vertexAttribute = false,
   },
 ) {
@@ -454,8 +794,10 @@ function accessorLayout(
   return {
     accessor,
     buffer: buffers[bufferIndex],
+    meshopt: meshoptViews?.get(viewIndex) ?? null,
     offset: byteOffset + accessorOffset,
     stride,
+    viewIndex,
   };
 }
 
@@ -482,6 +824,7 @@ function readVec3(
   label,
   {
     meshQuantization = false,
+    meshoptViews = null,
     semantic,
   },
 ) {
@@ -523,9 +866,16 @@ function readVec3(
       componentType: accessor.componentType,
       type: "VEC3",
       label,
+      meshoptViews,
       vertexAttribute: true,
     },
   );
+  if (
+    layout.meshopt !== null &&
+    layout.meshopt.mode !== "ATTRIBUTES"
+  ) {
+    throw new Error(`${label} meshopt mode is not ATTRIBUTES`);
+  }
   const result = new Float32Array(layout.accessor.count * 3);
   const view = new DataView(
     layout.buffer.buffer,
@@ -574,7 +924,14 @@ function readVec3(
   return result;
 }
 
-function readIndices(document, buffers, index, vertexCount, label) {
+function readIndices(
+  document,
+  buffers,
+  index,
+  vertexCount,
+  label,
+  meshoptViews = null,
+) {
   const accessors = collection(
     document.accessors,
     DEFAULT_LIMITS.maximumAccessors,
@@ -595,8 +952,15 @@ function readIndices(document, buffers, index, vertexCount, label) {
       componentType: accessor.componentType,
       type: "SCALAR",
       label,
+      meshoptViews,
     },
   );
+  if (
+    layout.meshopt !== null &&
+    !["TRIANGLES", "INDICES"].includes(layout.meshopt.mode)
+  ) {
+    throw new Error(`${label} meshopt mode is not index data`);
+  }
   if (layout.accessor.count % 3 !== 0) {
     throw new Error(`${label} count is not triangles`);
   }
@@ -679,6 +1043,7 @@ function primitiveRecord(
   primitiveIndex,
   limits,
   extensionsRequired,
+  meshoptViews,
 ) {
   const mesh = plainRecord(
     document.meshes[meshIndex],
@@ -723,6 +1088,7 @@ function primitiveRecord(
     {
       meshQuantization:
         extensionsRequired.includes(KHR_MESH_QUANTIZATION),
+      meshoptViews,
       semantic: "POSITION",
     },
   );
@@ -734,6 +1100,7 @@ function primitiveRecord(
     {
       meshQuantization:
         extensionsRequired.includes(KHR_MESH_QUANTIZATION),
+      meshoptViews,
       semantic: "NORMAL",
     },
   );
@@ -760,6 +1127,7 @@ function primitiveRecord(
     primitive.indices,
     positions.length / 3,
     `${label} indices`,
+    meshoptViews,
   );
   return {
     key: `${meshIndex}:${primitiveIndex}`,
@@ -833,7 +1201,10 @@ function validateAsset(document, limits) {
   );
   if (
     extensionsRequired.some((name) =>
-      name !== KHR_MESH_QUANTIZATION)
+      ![
+        KHR_MESH_QUANTIZATION,
+        EXT_MESHOPT_COMPRESSION,
+      ].includes(name))
   ) {
     throw new DOMException(
       "required glTF extensions are unsupported",
@@ -854,6 +1225,14 @@ function validateAsset(document, limits) {
   ) {
     throw new Error(
       "KHR_mesh_quantization must be a required extension",
+    );
+  }
+  if (
+    extensionsUsed.includes(EXT_MESHOPT_COMPRESSION) &&
+    !extensionsRequired.includes(EXT_MESHOPT_COMPRESSION)
+  ) {
+    throw new Error(
+      "EXT_meshopt_compression must be a required extension",
     );
   }
   for (const field of ["animations", "skins"]) {
@@ -910,6 +1289,7 @@ export function parseGltfReferenceProfile(
   input,
   {
     limits: limitOverrides = {},
+    meshoptDecoder: decoderCapability = null,
     resources: externalResourceValues = [],
   } = {},
 ) {
@@ -949,6 +1329,12 @@ export function parseGltfReferenceProfile(
       extensionsRequired,
       extensionsUsed,
     } = validateAsset(document, limits);
+    const compression = meshoptCompressionProfile(
+      document,
+      limits,
+      extensionsRequired,
+      decoderCapability,
+    );
     const nodes = collection(
       document.nodes,
       limits.maximumNodes,
@@ -994,9 +1380,18 @@ export function parseGltfReferenceProfile(
       format,
       limits,
       externalResources,
+      compression?.placeholderBuffers,
     );
     const buffers = loadedBuffers.buffers;
-    ownedBuffers.push(...buffers);
+    ownedBuffers.push(
+      ...buffers.filter((buffer) => buffer instanceof Uint8Array),
+    );
+    decodeMeshoptBufferViews(
+      document,
+      buffers,
+      compression,
+      ownedBuffers,
+    );
     const records = new Map();
     const occurrences = [];
     const parentByNode = new Map();
@@ -1073,6 +1468,7 @@ export function parseGltfReferenceProfile(
               primitiveIndex,
               limits,
               extensionsRequired,
+              compression?.views ?? null,
             );
             vertices += record.positions.length / 3;
             triangles += record.indices.length / 3;
@@ -1171,6 +1567,29 @@ export function parseGltfReferenceProfile(
       },
       externalResourceUris:
         loadedBuffers.externalResourceUris,
+      compression: compression === null
+        ? null
+        : {
+            extension: EXT_MESHOPT_COMPRESSION,
+            bufferViews: compression.views.size,
+            compressedBytes: compression.compressedBytes,
+            decodedBytes: compression.decodedBytes,
+            decoder: {
+              id: compression.decoder.id,
+              version: compression.decoder.version,
+              runtime: compression.decoder.runtime,
+            },
+            fallbackBuffers: compression.placeholderBuffers.size,
+            fallbackMarkers: compression.fallbackMarkers.size,
+            filters: [...new Set(
+              [...compression.views.values()].map((item) =>
+                item.filter),
+            )].sort(),
+            modes: [...new Set(
+              [...compression.views.values()].map((item) =>
+                item.mode),
+            )].sort(),
+          },
       extensionsRequired,
       extensionsUsed,
     };

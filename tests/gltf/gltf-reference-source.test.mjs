@@ -15,6 +15,7 @@ import {
   syntheticGltfExternalBundle,
   syntheticGlbBytes,
   syntheticGltfJsonBytes,
+  syntheticMeshoptGlbBytes,
   syntheticQuantizedGltfJsonBytes,
   syntheticQuantizedGlbBytes,
 } from "../../scripts/generate-synthetic-gltf.mjs";
@@ -155,8 +156,171 @@ test("KHR_mesh_quantization declarations and layouts fail closed", () => {
     () => parseGltfReferenceProfile(
       new TextEncoder().encode(JSON.stringify(unsupported)),
     ),
+    /has no compressed bufferView/u,
+  );
+});
+
+test("EXT_meshopt_compression decodes bounded attribute and index views", async () => {
+  const { loadMeshoptDecoder } = await import(
+    "../../packages/gltf-reference-source/src/meshopt-decoder.mjs"
+  );
+  const decoder = await loadMeshoptDecoder();
+  for (const indexMode of ["TRIANGLES", "INDICES"]) {
+    const bytes = await syntheticMeshoptGlbBytes({ indexMode });
+    assert.throws(
+      () => parseGltfReferenceProfile(bytes),
+      /decoder is unavailable/u,
+    );
+    const profile = parseGltfReferenceProfile(bytes, {
+      meshoptDecoder: decoder,
+    });
+    assert.deepEqual(profile.extensionsUsed, [
+      "EXT_meshopt_compression",
+    ]);
+    assert.deepEqual(profile.extensionsRequired, [
+      "EXT_meshopt_compression",
+    ]);
+    assert.equal(profile.compression.extension,
+      "EXT_meshopt_compression");
+    assert.equal(profile.compression.bufferViews, 3);
+    assert.equal(profile.compression.decodedBytes, 78);
+    assert.equal(profile.compression.decoder.id, "meshoptimizer");
+    assert.equal(profile.compression.decoder.version, "1.2.0");
+    assert.deepEqual(profile.compression.filters, ["NONE"]);
+    assert.deepEqual(
+      profile.compression.modes,
+      ["ATTRIBUTES", indexMode].sort(),
+    );
+    assert.deepEqual(
+      [...profile.records[0].positions],
+      [-1, -1, 0, 1, -1, 0, 0, 1, 0],
+    );
+    assert.deepEqual(
+      [...profile.records[0].indices],
+      [0, 1, 2],
+    );
+
+    const source = await createGltfReferenceSource(bytes);
+    const session = await source.open({
+      protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+    });
+    const snapshot = await session.getSnapshot();
+    assert.equal(snapshot.geometry.vertices, 3);
+    assert.equal(snapshot.geometry.triangles, 1);
+    assert.deepEqual(
+      snapshot.referenceMetadata.compression,
+      profile.compression,
+    );
+    assert.equal(await session.dispose(), true);
+    assert.equal(await source.dispose(), true);
+    for (const record of profile.records) {
+      record.positions.fill(0);
+      record.normals.fill(0);
+      record.indices.fill(0);
+    }
+    bytes.fill(0);
+  }
+});
+
+function mutateGlbDocument(bytes, update) {
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength,
+  );
+  const jsonLength = view.getUint32(12, true);
+  const binaryHeader = 20 + jsonLength;
+  const document = JSON.parse(
+    new TextDecoder().decode(bytes.slice(20, binaryHeader))
+      .replace(/[\u0000\u0020]+$/u, ""),
+  );
+  update(document);
+  const json = new TextEncoder().encode(JSON.stringify(document));
+  const paddedJsonLength = Math.ceil(json.byteLength / 4) * 4;
+  const binaryLength = view.getUint32(binaryHeader, true);
+  const binary = bytes.slice(binaryHeader + 8);
+  const result = new Uint8Array(
+    12 + 8 + paddedJsonLength + 8 + binaryLength,
+  );
+  const resultView = new DataView(result.buffer);
+  resultView.setUint32(0, 0x46546c67, true);
+  resultView.setUint32(4, 2, true);
+  resultView.setUint32(8, result.byteLength, true);
+  resultView.setUint32(12, paddedJsonLength, true);
+  resultView.setUint32(16, 0x4e4f534a, true);
+  result.fill(0x20, 20, 20 + paddedJsonLength);
+  result.set(json, 20);
+  const resultBinaryHeader = 20 + paddedJsonLength;
+  resultView.setUint32(resultBinaryHeader, binaryLength, true);
+  resultView.setUint32(resultBinaryHeader + 4, 0x004e4942, true);
+  result.set(binary, resultBinaryHeader + 8);
+  binary.fill(0);
+  return result;
+}
+
+test("EXT_meshopt_compression metadata and malformed streams fail closed", async () => {
+  const source = await syntheticMeshoptGlbBytes();
+  const optional = mutateGlbDocument(source, (document) => {
+    document.extensionsRequired = [];
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(optional),
+    /must be a required extension/u,
+  );
+
+  const filtered = mutateGlbDocument(source, (document) => {
+    document.bufferViews[0].extensions
+      .EXT_meshopt_compression.filter = "OCTAHEDRAL";
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(filtered),
     { name: "NotSupportedError" },
   );
+
+  const overlap = mutateGlbDocument(source, (document) => {
+    document.bufferViews[1].extensions
+      .EXT_meshopt_compression.byteOffset =
+        document.bufferViews[0].extensions
+          .EXT_meshopt_compression.byteOffset;
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(overlap),
+    /ranges overlap/u,
+  );
+
+  await assert.rejects(
+    createGltfReferenceSource(source, {
+      limits: { maximumMeshoptDecodedBytes: 77 },
+    }),
+    /decoded bytes exceed/u,
+  );
+  const highRatio = mutateGlbDocument(source, (document) => {
+    document.bufferViews[0].extensions
+      .EXT_meshopt_compression.byteLength = 1;
+  });
+  await assert.rejects(
+    createGltfReferenceSource(highRatio, {
+      limits: { maximumMeshoptCompressionRatio: 1 },
+    }),
+    /decoded bytes exceed/u,
+  );
+
+  const malformed = Uint8Array.from(source);
+  const malformedView = new DataView(malformed.buffer);
+  const malformedBinaryHeader =
+    20 + malformedView.getUint32(12, true);
+  malformed[malformedBinaryHeader + 8] = 0;
+  await assert.rejects(
+    createGltfReferenceSource(malformed),
+    /compressed buffer is malformed/u,
+  );
+
+  source.fill(0);
+  optional.fill(0);
+  filtered.fill(0);
+  highRatio.fill(0);
+  overlap.fill(0);
+  malformed.fill(0);
 });
 
 test("GLB reference source mounts without inventing IFC identity", async () => {

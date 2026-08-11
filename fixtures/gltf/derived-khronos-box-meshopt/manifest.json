@@ -1,0 +1,95 @@
+{
+  "schema": "bim-explorer-derived-gltf-meshopt-fixture/1",
+  "fixtureId": "khronos-box-derived-ext-meshopt",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "sourcePath": "Models/Box/glTF-Binary/Box.glb",
+    "sourceByteLength": 1664,
+    "sourceSha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e"
+  },
+  "extension": {
+    "name": "EXT_meshopt_compression",
+    "status": "ratified",
+    "specificationRepository": "https://github.com/KhronosGroup/glTF",
+    "specificationCommit": "2b29723d025a995971726f2989697cdc49b1222a",
+    "specificationPath": "extensions/2.0/Vendor/EXT_meshopt_compression/README.md",
+    "specificationUrl": "https://github.com/KhronosGroup/glTF/blob/2b29723d025a995971726f2989697cdc49b1222a/extensions/2.0/Vendor/EXT_meshopt_compression/README.md"
+  },
+  "codec": {
+    "package": "meshoptimizer",
+    "version": "1.2.0",
+    "license": "MIT",
+    "sourceCommit": "9d9890c73011d75920af614485296d1e03e95448",
+    "integrity": "sha512-davRZeIJbxJrE24cwQle7ZDsxjdk/OphNOV83oX+efQinyoHY9Jcyz3MHbaoG0qySZajldGztNZ1RN/T19PZsg==",
+    "runtime": "embedded-wasm-single-thread"
+  },
+  "entry": {
+    "name": "BoxMeshopt.glb",
+    "mediaType": "model/gltf-binary",
+    "byteLength": 1696,
+    "sha256": "fb499f1a3b6b68c16100e0b71624a39bb9230854f5b3af5927fdab8e63d0e2f5"
+  },
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "attribution": "Khronos Group glTF Sample Assets Box; deterministic meshopt encoding by BIM Explorer"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "extensionsUsed": [
+      "EXT_meshopt_compression"
+    ],
+    "extensionsRequired": [
+      "EXT_meshopt_compression"
+    ],
+    "sourceFingerprint": "sha256:fb499f1a3b6b68c16100e0b71624a39bb9230854f5b3af5927fdab8e63d0e2f5",
+    "geometryRecords": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "ranges": 1,
+    "geometryRangeBytes": 756,
+    "geometryRangeSha256": "e4270028699c6f6302320a31008c316bfc1886ec9a1f431ae39d2ba966408766",
+    "gpuUploadBytes": 800,
+    "bounds": {
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "meshoptBufferViews": 2,
+    "meshoptCompressedBytes": 192,
+    "meshoptDecodedBytes": 648,
+    "meshoptModes": [
+      "ATTRIBUTES",
+      "TRIANGLES"
+    ],
+    "meshoptFilters": [
+      "NONE"
+    ],
+    "validator": {
+      "errors": 0,
+      "warnings": 0,
+      "infos": 2,
+      "hints": 0,
+      "knownInfoCodes": [
+        "UNSUPPORTED_EXTENSION",
+        "UNUSED_OBJECT"
+      ]
+    },
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "sourceArtifactTracked": false,
+    "derivedArtifactTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

@@ -113,6 +113,42 @@
     "license": "CC-BY-4.0",
     "extensionSpecificationCommit": "2b29723d025a995971726f2989697cdc49b1222a"
   },
+  "meshoptReferenceFixture": {
+    "id": "khronos-box-derived-ext-meshopt",
+    "byteLength": 1696,
+    "sha256": "fb499f1a3b6b68c16100e0b71624a39bb9230854f5b3af5927fdab8e63d0e2f5",
+    "sourceByteLength": 1664,
+    "sourceSha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "format": "glb",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "extensionsUsed": [
+      "EXT_meshopt_compression"
+    ],
+    "extensionsRequired": [
+      "EXT_meshopt_compression"
+    ],
+    "meshoptModes": [
+      "ATTRIBUTES",
+      "TRIANGLES"
+    ],
+    "meshoptFilters": [
+      "NONE"
+    ],
+    "compressedBytes": 192,
+    "decodedBytes": 648,
+    "artifactCommitted": false,
+    "sourceArtifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "CC-BY-4.0",
+    "extensionSpecificationCommit": "2b29723d025a995971726f2989697cdc49b1222a",
+    "codecPackage": "meshoptimizer",
+    "codecVersion": "1.2.0",
+    "codecLicense": "MIT"
+  },
   "limits": {
     "maximumSourceBytes": 67108864,
     "openTimeoutMs": 30000,
@@ -177,6 +213,7 @@
     "publicViewerCoreProductEntrypoint": true,
     "localExternalGltfBundleProductSurfaces": 3,
     "khrMeshQuantizationProductSurfaces": 3,
+    "extMeshoptCompressionProductSurfaces": 3,
     "pointCloudProductSurfaces": 12,
     "pointCloudFormatAdmission": false,
     "simultaneousComposition": false,
@@ -218,6 +255,9 @@
     "browserKhrMeshQuantizationOpen": true,
     "vscodeKhrMeshQuantizationOpen": true,
     "cleanVsixKhrMeshQuantizationOpen": true,
+    "browserExtMeshoptCompressionOpen": true,
+    "vscodeExtMeshoptCompressionOpen": true,
+    "cleanVsixExtMeshoptCompressionOpen": true,
     "browserReadonlyLasLazOpen": true,
     "vscodeReadonlyLasLazOpen": true,
     "cleanVsixLasLazOpen": true,
@@ -266,7 +306,8 @@
     "representativePointCloudsPhysicalGpu": "compatibility/evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json",
     "viewerCoreProductEntrypoints": "compatibility/evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json",
     "gltfExternalResourceProducts": "compatibility/evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json",
-    "gltfMeshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json"
+    "gltfMeshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json",
+    "gltfMeshoptProducts": "compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json"
   },
   "blockers": [
     "marketplace release remains behind license and release gates"
@@ -284,6 +325,8 @@
     "claimLocalExternalGltfBundleOpen": true,
     "localExternalGltfBundleScope": "single-source-product-surface",
     "claimKhrMeshQuantizationOpen": true,
+    "claimExtMeshoptCompressionOpen": true,
+    "extMeshoptCompressionScope": "required-buffer-view-filter-none",
     "claimArbitraryGltfUri": false,
     "claimBrowserLasLazOpen": true,
     "claimVscodeLasLazOpen": true,

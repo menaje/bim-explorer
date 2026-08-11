@@ -3,6 +3,7 @@ import {
   encodeGltfGeometryRange,
 } from "./geometry.mjs";
 import {
+  MESHOPT_DECODER_REQUIRED_MESSAGE,
   parseGltfReferenceProfile,
 } from "./profile.mjs";
 
@@ -281,6 +282,7 @@ export class GltfReferenceSource {
         generator: profile.asset.generator,
         extensionsRequired: profile.extensionsRequired,
         extensionsUsed: profile.extensionsUsed,
+        compression: profile.compression,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
         resourceBundle: {
@@ -528,10 +530,28 @@ export async function createGltfReferenceSource(
   let profile;
   let encoded;
   try {
-    profile = parseGltfReferenceProfile(bytes, {
-      limits,
-      resources: ownedResources,
-    });
+    try {
+      profile = parseGltfReferenceProfile(bytes, {
+        limits,
+        resources: ownedResources,
+      });
+    } catch (error) {
+      if (
+        error?.name !== "NotSupportedError" ||
+        error.message !== MESHOPT_DECODER_REQUIRED_MESSAGE
+      ) {
+        throw error;
+      }
+      const { loadMeshoptDecoder } = await import(
+        "./meshopt-decoder.mjs"
+      );
+      const decoder = await loadMeshoptDecoder({ signal });
+      profile = parseGltfReferenceProfile(bytes, {
+        limits,
+        meshoptDecoder: decoder,
+        resources: ownedResources,
+      });
+    }
     const sourceDigest = await bundleSha256(
       bytes,
       ownedResources,

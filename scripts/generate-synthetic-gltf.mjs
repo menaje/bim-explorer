@@ -277,3 +277,117 @@ export function syntheticQuantizedGlbBytes({
   binary.fill(0);
   return bytes;
 }
+
+export async function syntheticMeshoptGlbBytes({
+  indexMode = "TRIANGLES",
+  secondNodeX = 3,
+} = {}) {
+  if (!["TRIANGLES", "INDICES"].includes(indexMode)) {
+    throw new TypeError("synthetic meshopt index mode is invalid");
+  }
+  const { MeshoptEncoder } = await import("meshoptimizer/encoder");
+  await MeshoptEncoder.ready;
+  const source = binaryPayload();
+  const inputs = [
+    {
+      bytes: source.slice(0, 36),
+      count: 3,
+      mode: "ATTRIBUTES",
+      stride: 12,
+    },
+    {
+      bytes: source.slice(36, 72),
+      count: 3,
+      mode: "ATTRIBUTES",
+      stride: 12,
+    },
+    {
+      bytes: source.slice(72, 78),
+      count: 3,
+      mode: indexMode,
+      stride: 2,
+    },
+  ];
+  source.fill(0);
+  const encoded = [];
+  try {
+    for (const input of inputs) {
+      encoded.push(MeshoptEncoder.encodeGltfBuffer(
+        input.bytes,
+        input.count,
+        input.stride,
+        input.mode,
+      ));
+      input.bytes.fill(0);
+    }
+    const offsets = [];
+    let binaryLength = 0;
+    for (const item of encoded) {
+      binaryLength = aligned(binaryLength);
+      offsets.push(binaryLength);
+      binaryLength += item.byteLength;
+    }
+    binaryLength = aligned(binaryLength);
+    const binary = new Uint8Array(binaryLength);
+    for (let index = 0; index < encoded.length; index += 1) {
+      binary.set(encoded[index], offsets[index]);
+    }
+    const document = documentFor(null, secondNodeX);
+    document.asset.generator =
+      "BIM Explorer deterministic EXT_meshopt_compression fixture";
+    document.extensionsUsed = ["EXT_meshopt_compression"];
+    document.extensionsRequired = ["EXT_meshopt_compression"];
+    document.bufferViews = document.bufferViews.map(
+      (bufferView, index) => ({
+        ...bufferView,
+        buffer: 1,
+        extensions: {
+          EXT_meshopt_compression: {
+            buffer: 0,
+            byteOffset: offsets[index],
+            byteLength: encoded[index].byteLength,
+            byteStride: inputs[index].stride,
+            count: inputs[index].count,
+            mode: inputs[index].mode,
+            filter: "NONE",
+          },
+        },
+      }),
+    );
+    document.buffers = [
+      { byteLength: binary.byteLength },
+      {
+        byteLength: 80,
+        extensions: {
+          EXT_meshopt_compression: { fallback: true },
+        },
+      },
+    ];
+    const json = new TextEncoder().encode(JSON.stringify(document));
+    const jsonLength = aligned(json.byteLength);
+    const bytes = new Uint8Array(
+      12 + 8 + jsonLength + 8 + binary.byteLength,
+    );
+    const view = new DataView(bytes.buffer);
+    view.setUint32(0, 0x46546c67, true);
+    view.setUint32(4, 2, true);
+    view.setUint32(8, bytes.byteLength, true);
+    view.setUint32(12, jsonLength, true);
+    view.setUint32(16, 0x4e4f534a, true);
+    bytes.fill(0x20, 20, 20 + jsonLength);
+    bytes.set(json, 20);
+    const binHeader = 20 + jsonLength;
+    view.setUint32(binHeader, binary.byteLength, true);
+    view.setUint32(binHeader + 4, 0x004e4942, true);
+    bytes.set(binary, binHeader + 8);
+    binary.fill(0);
+    return bytes;
+  } finally {
+    for (const input of inputs) {
+      input.bytes.fill(0);
+    }
+    for (const item of encoded) {
+      item.fill(0);
+    }
+  }
+}

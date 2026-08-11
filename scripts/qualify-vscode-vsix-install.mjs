@@ -35,6 +35,9 @@ import {
   acquirePublicQuantizedGltfFixture,
 } from "./public-gltf-quantized-fixture.mjs";
 import {
+  acquirePublicMeshoptGltfFixture,
+} from "./public-gltf-meshopt-fixture.mjs";
+import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
@@ -71,6 +74,7 @@ function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
     includeExternalResourceFixture: false,
+    includeMeshoptFixture: false,
     includeQuantizedFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
@@ -92,6 +96,10 @@ function parseArguments(values) {
     }
     if (name === "--quantized-gltf") {
       options.includeQuantizedFixture = true;
+      continue;
+    }
+    if (name === "--meshopt-gltf") {
+      options.includeMeshoptFixture = true;
       continue;
     }
     if (name === "--product-scale") {
@@ -134,6 +142,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
           "[--external-gltf] " +
+          "[--meshopt-gltf] " +
           "[--quantized-gltf] " +
           "[--e57-spherical] " +
           "[--e57-multiple-scan] " +
@@ -180,6 +189,7 @@ async function sha256(file) {
 export async function qualifyVscodeVsixInstall({
   includeFederatedSurfaceFixture = false,
   includeExternalResourceFixture = false,
+  includeMeshoptFixture = false,
   includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
@@ -220,6 +230,10 @@ export async function qualifyVscodeVsixInstall({
     ? await acquirePublicQuantizedGltfFixture()
     : null;
   quantizedReferenceFixture?.bytes.fill(0);
+  const meshoptReferenceFixture = includeMeshoptFixture
+    ? await acquirePublicMeshoptGltfFixture()
+    : null;
+  meshoptReferenceFixture?.bytes.fill(0);
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
     : null;
@@ -521,6 +535,12 @@ export async function qualifyVscodeVsixInstall({
               BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE:
                 quantizedReferenceFixture.cachePath,
             }),
+        ...(meshoptReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_MESHOPT_SOURCE:
+                meshoptReferenceFixture.cachePath,
+            }),
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -711,6 +731,30 @@ export async function qualifyVscodeVsixInstall({
                   ?.extensionsUsed,
               ) === JSON.stringify(
                 quantizedReferenceFixture.manifest.expected
+                  .extensionsUsed,
+              ),
+          }
+        : {}),
+      ...(includeMeshoptFixture
+        ? {
+            installedPackageOpensMeshoptReference:
+              allTrue(runtime.meshoptReferenceAssertions),
+            installedMeshoptReferenceIdentityExact:
+              runtime.meshoptReferenceFixture?.fingerprint ===
+                meshoptReferenceFixture.manifest.expected
+                  .sourceFingerprint,
+            installedMeshoptRequiredExtensionExact:
+              JSON.stringify(
+                runtime.meshoptReferenceFixture
+                  ?.extensionsRequired,
+              ) === JSON.stringify(
+                meshoptReferenceFixture.manifest.expected
+                  .extensionsRequired,
+              ) &&
+              JSON.stringify(
+                runtime.meshoptReferenceFixture?.extensionsUsed,
+              ) === JSON.stringify(
+                meshoptReferenceFixture.manifest.expected
                   .extensionsUsed,
               ),
           }
@@ -963,6 +1007,33 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
+        ...(includeMeshoptFixture
+          ? {
+              meshoptReferenceRuntime: {
+                fixture: runtime.meshoptReferenceFixture,
+                gpu: runtime.meshoptReferenceObservation?.gpu,
+                hostKind:
+                  runtime.meshoptReferenceObservation?.hostKind,
+                model: runtime.meshoptReferenceObservation?.model,
+                performance:
+                  runtime.meshoptReferenceObservation?.performance,
+                resources:
+                  runtime.meshoptReferenceObservation?.resources,
+                renderer:
+                  runtime.meshoptReferenceObservation?.renderer,
+                reference:
+                  runtime.meshoptReferenceObservation?.reference,
+                lifecycle:
+                  runtime.meshoptReferenceObservation?.lifecycle,
+                viewerCore:
+                  runtime.meshoptReferenceObservation?.viewerCore,
+                externalUpload:
+                  runtime.meshoptReferenceObservation?.externalUpload,
+                telemetry:
+                  runtime.meshoptReferenceObservation?.telemetry,
+              },
+            }
+          : {}),
         ...(includePointFixtures ||
         includeE57SphericalFixture ||
         includeE57MultipleScanFixture
@@ -1004,6 +1075,10 @@ export async function qualifyVscodeVsixInstall({
         quantizedReferenceFixtureOpen:
           includeQuantizedFixture
             ? "passed-khr-mesh-quantization"
+            : "not-run",
+        meshoptReferenceFixtureOpen:
+          includeMeshoptFixture
+            ? "passed-ext-meshopt-compression"
             : "not-run",
         pointFixtureOpen:
           includePointFixtures ||

@@ -14,6 +14,10 @@ import {
   GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH,
   validateGltfMeshQuantizationProductsQualification,
 } from "./qualify-gltf-mesh-quantization-products.mjs";
+import {
+  GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshoptProductsQualification,
+} from "./qualify-gltf-meshopt-products.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
@@ -106,6 +110,10 @@ const meshQuantizationProductsEvidence = JSON.parse(
     "utf8",
   ),
 );
+const meshoptProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.meshoptProducts),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -129,6 +137,10 @@ const meshQuantizationFixture = JSON.parse(await readFile(
     ROOT,
     manifest.evidence.meshQuantizationFixtureManifest,
   ),
+  "utf8",
+));
+const meshoptFixture = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.meshoptFixtureManifest),
   "utf8",
 ));
 
@@ -160,6 +172,7 @@ const trueGates = [
   "physicalGpu",
   "externalResourceBundle",
   "khrMeshQuantization",
+  "extMeshoptCompression",
 ];
 const heldGates = [
   "requiredExtensions",
@@ -297,6 +310,10 @@ export function validateGltfMeshQuantizationAdmission(
       evidenceValue,
     );
   const extension = ["KHR_mesh_quantization"];
+  const admitted = [
+    "KHR_mesh_quantization",
+    "EXT_meshopt_compression",
+  ];
   if (
     manifestValue?.evidence?.meshQuantizationProducts !==
       GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
@@ -307,7 +324,7 @@ export function validateGltfMeshQuantizationAdmission(
     manifestValue?.gates?.requiredExtensions !== false ||
     JSON.stringify(
       manifestValue?.policy?.allowedRequiredExtensions,
-    ) !== JSON.stringify(extension) ||
+    ) !== JSON.stringify(admitted) ||
     manifestValue?.policy?.allowGenericRequiredExtensions !==
       false ||
     manifestValue?.policy?.claimKhrMeshQuantization !== true ||
@@ -352,6 +369,97 @@ export function validateGltfMeshQuantizationAdmission(
   ) {
     throw new Error(
       "KHR_mesh_quantization admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
+export function validateGltfMeshoptAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report = validateGltfMeshoptProductsQualification(
+    evidenceValue,
+  );
+  const extension = ["EXT_meshopt_compression"];
+  const admitted = [
+    "KHR_mesh_quantization",
+    "EXT_meshopt_compression",
+  ];
+  if (
+    manifestValue?.evidence?.meshoptProducts !==
+      GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.meshoptFixtureManifest !==
+      "fixtures/gltf/derived-khronos-box-meshopt/manifest.json" ||
+    manifestValue?.gates?.extMeshoptCompression !== true ||
+    manifestValue?.gates?.requiredExtensions !== false ||
+    JSON.stringify(
+      manifestValue?.policy?.allowedRequiredExtensions,
+    ) !== JSON.stringify(admitted) ||
+    manifestValue?.policy?.allowGenericRequiredExtensions !== false ||
+    manifestValue?.policy?.meshoptCompressionScope !==
+      "required-buffer-view-filter-none" ||
+    JSON.stringify(manifestValue?.policy?.meshoptSupportedModes) !==
+      JSON.stringify(["ATTRIBUTES", "TRIANGLES", "INDICES"]) ||
+    JSON.stringify(manifestValue?.policy?.meshoptSupportedFilters) !==
+      JSON.stringify(["NONE"]) ||
+    manifestValue?.policy?.maximumMeshoptDecodedBytes !==
+      64 * 1024 * 1024 ||
+    manifestValue?.policy?.maximumMeshoptCompressionRatio !== 256 ||
+    manifestValue?.policy?.claimExtMeshoptCompression !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-derived-gltf-meshopt-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.provenance?.repository !==
+      evidenceValue?.fixture?.provenance?.repository ||
+    fixtureValue?.provenance?.commit !==
+      evidenceValue?.fixture?.provenance?.commit ||
+    fixtureValue?.provenance?.sourceByteLength !== 1_664 ||
+    fixtureValue?.provenance?.sourceSha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.extension?.name !== extension[0] ||
+    fixtureValue?.extension?.status !== "ratified" ||
+    fixtureValue?.extension?.specificationCommit !==
+      evidenceValue?.fixture?.manifest?.specificationCommit ||
+    fixtureValue?.codec?.package !== "meshoptimizer" ||
+    fixtureValue?.codec?.version !== "1.2.0" ||
+    fixtureValue?.codec?.license !== "MIT" ||
+    fixtureValue?.codec?.integrity !== evidenceValue?.decoder?.integrity ||
+    fixtureValue?.entry?.name !== "BoxMeshopt.glb" ||
+    fixtureValue?.entry?.byteLength !== report.sourceBytes ||
+    fixtureValue?.entry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.derivedSha256 ||
+    fixtureValue?.license?.spdx !== "CC-BY-4.0" ||
+    JSON.stringify(fixtureValue?.expected?.extensionsUsed) !==
+      JSON.stringify(extension) ||
+    JSON.stringify(fixtureValue?.expected?.extensionsRequired) !==
+      JSON.stringify(extension) ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint ||
+    fixtureValue?.expected?.vertices !== 24 ||
+    fixtureValue?.expected?.triangles !== 12 ||
+    fixtureValue?.expected?.geometryRangeBytes !== 756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 800 ||
+    fixtureValue?.expected?.meshoptBufferViews !== 2 ||
+    fixtureValue?.expected?.meshoptCompressedBytes !== 192 ||
+    fixtureValue?.expected?.meshoptDecodedBytes !== 648 ||
+    JSON.stringify(fixtureValue?.expected?.meshoptModes) !==
+      JSON.stringify(["ATTRIBUTES", "TRIANGLES"]) ||
+    JSON.stringify(fixtureValue?.expected?.meshoptFilters) !==
+      JSON.stringify(["NONE"]) ||
+    fixtureValue?.tracking?.sourceArtifactTracked !== false ||
+    fixtureValue?.tracking?.derivedArtifactTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.extension !== extension[0] ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 1_696
+  ) {
+    throw new Error(
+      "EXT_meshopt_compression admission evidence is invalid",
     );
   }
   return report;
@@ -495,6 +603,11 @@ validateGltfMeshQuantizationAdmission(
   meshQuantizationProductsEvidence,
   meshQuantizationFixture,
 );
+validateGltfMeshoptAdmission(
+  manifest,
+  meshoptProductsEvidence,
+  meshoptFixture,
+);
 
 if (
   manifest.schema !==
@@ -512,7 +625,10 @@ if (
   manifest.policy.externalResourceBundleScope !==
     "single-source-browser-vscode" ||
   JSON.stringify(manifest.policy.allowedRequiredExtensions) !==
-    JSON.stringify(["KHR_mesh_quantization"]) ||
+    JSON.stringify([
+      "KHR_mesh_quantization",
+      "EXT_meshopt_compression",
+    ]) ||
   manifest.policy.allowGenericRequiredExtensions !== false ||
   manifest.policy.inventIfcGlobalId !== false ||
   manifest.policy.allowBimSemanticAuthority !== false ||
@@ -526,6 +642,7 @@ if (
   manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
   manifest.policy.claimExternalResourceBundle !== true ||
   manifest.policy.claimKhrMeshQuantization !== true ||
+  manifest.policy.claimExtMeshoptCompression !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -565,6 +682,10 @@ if (
   manifest.evidence.meshQuantizationFixtureManifest !==
     "fixtures/gltf/derived-khronos-box-mesh-quantization/" +
       "manifest.json" ||
+  manifest.evidence.meshoptProducts !==
+    GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.meshoptFixtureManifest !==
+    "fixtures/gltf/derived-khronos-box-meshopt/manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -964,6 +1085,7 @@ const serialized = JSON.stringify({
   representativePhysicalGpuEvidence,
   externalResourceProductsEvidence,
   meshQuantizationProductsEvidence,
+  meshoptProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

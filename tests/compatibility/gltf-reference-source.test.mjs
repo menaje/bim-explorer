@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   validateGltfExternalResourceAdmission,
+  validateGltfMeshoptAdmission,
   validateGltfMeshQuantizationAdmission,
   validateGltfPhysicalGpuAdmission,
 } from "../../scripts/check-gltf-reference-source-compatibility.mjs";
@@ -58,6 +59,26 @@ async function meshQuantizationInputs() {
     ).then(JSON.parse),
     readFile(
       manifest.evidence.meshQuantizationFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+  ]);
+  return { evidence, fixture, manifest };
+}
+
+async function meshoptInputs() {
+  const manifest = JSON.parse(
+    await readFile(
+      "compatibility/gltf-reference-source.json",
+      "utf8",
+    ),
+  );
+  const [evidence, fixture] = await Promise.all([
+    readFile(
+      manifest.evidence.meshoptProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.meshoptFixtureManifest,
       "utf8",
     ).then(JSON.parse),
   ]);
@@ -217,5 +238,57 @@ test("glTF mesh quantization admission requires the immutable v0.2 boundary", as
       fixture,
     ),
     /KHR_mesh_quantization product evidence is invalid/u,
+  );
+});
+
+test("glTF reference source admits exact EXT_meshopt_compression evidence", async () => {
+  const { evidence, fixture, manifest } = await meshoptInputs();
+  assert.deepEqual(
+    validateGltfMeshoptAdmission(manifest, evidence, fixture),
+    {
+      status: "passed-darwin-arm64-apple-metal-ext-meshopt",
+      surfaces: 3,
+      sourceBytes: 1_696,
+      extension: "EXT_meshopt_compression",
+    },
+  );
+});
+
+test("glTF meshopt admission rejects changed decoder integrity", async () => {
+  const { evidence, fixture, manifest } = await meshoptInputs();
+  evidence.decoder.integrity = "sha512-invalid";
+  assert.throws(
+    () => validateGltfMeshoptAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /EXT_meshopt_compression product evidence is invalid/u,
+  );
+});
+
+test("glTF meshopt admission keeps other filters held", async () => {
+  const { evidence, fixture, manifest } = await meshoptInputs();
+  evidence.held.otherMeshoptFilters = true;
+  assert.throws(
+    () => validateGltfMeshoptAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /EXT_meshopt_compression product evidence is invalid/u,
+  );
+});
+
+test("glTF meshopt admission requires the immutable v0.2 boundary", async () => {
+  const { evidence, fixture, manifest } = await meshoptInputs();
+  evidence.immutableFederatedSurfaceV02.meshoptBackported = true;
+  assert.throws(
+    () => validateGltfMeshoptAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /EXT_meshopt_compression product evidence is invalid/u,
   );
 });

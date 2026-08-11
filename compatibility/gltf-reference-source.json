@@ -32,6 +32,7 @@
     "physicalGpu": true,
     "externalResourceBundle": true,
     "khrMeshQuantization": true,
+    "extMeshoptCompression": true,
     "requiredExtensions": false,
     "write": false,
     "roundTrip": false,
@@ -51,14 +52,16 @@
     "representativePhysicalGpu": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
     "externalResourceProducts": "compatibility/evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json",
     "meshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json",
+    "meshoptProducts": "compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json",
     "productScaleFixtureManifest": "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json",
     "externalResourceFixtureManifest": "fixtures/gltf/public-khronos-box-external/manifest.json",
-    "meshQuantizationFixtureManifest": "fixtures/gltf/derived-khronos-box-mesh-quantization/manifest.json"
+    "meshQuantizationFixtureManifest": "fixtures/gltf/derived-khronos-box-mesh-quantization/manifest.json",
+    "meshoptFixtureManifest": "fixtures/gltf/derived-khronos-box-meshopt/manifest.json"
   },
   "blockers": [
-    "required extensions other than KHR_mesh_quantization and compression extensions remain unsupported"
+    "required extensions other than KHR_mesh_quantization and the bounded EXT_meshopt_compression FILTER_NONE profile remain unsupported"
   ],
   "limitations": [
     "the 1664-byte Khronos Box remains the cross-platform product-surface smoke fixture",
@@ -67,9 +70,12 @@
     "external glTF support is limited to at most 16 explicitly supplied same-folder ASCII .bin files under one 64MiB aggregate source cap",
     "the external resource product Gate is single-source only and does not change the immutable federated BIM Surface v0.2 runtime or .bimfed.json admission",
     "arbitrary paths, schemes, query or fragment URIs, percent-encoded names, symlinks, unused sidecars, external images and runtime network fetch remain blocked",
-    "KHR_mesh_quantization is the only admitted required extension and is decoded without a runtime codec; Draco, meshopt and every other required extension remain blocked",
+    "required KHR_mesh_quantization and EXT_meshopt_compression with FILTER_NONE are admitted; Draco, other meshopt filters and every other required extension remain blocked",
     "the cache-only Box-derived quantized fixture passes the official Validator, headless projection and Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX",
     "KHR_mesh_quantization is not backported to the immutable federated BIM Surface v0.2 runtime and requires a later semantic-versioned surface contract before federation use",
+    "EXT_meshopt_compression uses exact meshoptimizer 1.2.0 embedded single-thread WASM lazily inside the existing source Worker with a 64MiB decoded cap and 256:1 compression-ratio cap",
+    "the cache-only Box-derived meshopt fixture has 192 compressed and 648 decoded bytes and passes headless projection plus Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX",
+    "meshopt filters other than NONE and meshopt support in the immutable federated BIM Surface v0.2 runtime require separate admission",
     "actual Browser and VS Code product qualification passes macOS arm64 and Linux x64 CI with SwiftShader",
     "the product-scale GLB and exact local Box.gltf plus Box0.bin bundle pass actual Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX but do not claim Linux or Windows physical GPU coverage",
     "the output is a lossy display cache and has no source write authority",
@@ -82,9 +88,21 @@
     "allowLocalExternalResourceBundle": true,
     "externalResourceBundleScope": "single-source-browser-vscode",
     "allowedRequiredExtensions": [
-      "KHR_mesh_quantization"
+      "KHR_mesh_quantization",
+      "EXT_meshopt_compression"
     ],
     "allowGenericRequiredExtensions": false,
+    "meshoptCompressionScope": "required-buffer-view-filter-none",
+    "meshoptSupportedModes": [
+      "ATTRIBUTES",
+      "TRIANGLES",
+      "INDICES"
+    ],
+    "meshoptSupportedFilters": [
+      "NONE"
+    ],
+    "maximumMeshoptDecodedBytes": 67108864,
+    "maximumMeshoptCompressionRatio": 256,
     "inventIfcGlobalId": false,
     "allowBimSemanticAuthority": false,
     "nativeWrite": false,
@@ -97,6 +115,7 @@
     "claimProductScaleCleanVsixProductOpen": true,
     "claimExternalResourceBundle": true,
     "claimKhrMeshQuantization": true,
+    "claimExtMeshoptCompression": true,
     "claimPhysicalGpu": true,
     "claimProduction": false
   }

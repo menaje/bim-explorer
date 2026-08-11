@@ -67,8 +67,15 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 > 공식 Validator issue 0개, headless projection과 Browser·staged VS Code·
 > clean-installed local VSIX의 Apple M2 Metal 3개 표면에서 동일한 12 triangles,
 > 86,486 pixels, 756-byte read·800-byte upload와 cleanup을 재현했습니다. 이 확장에는
-> runtime codec을 추가하지 않았고 Draco·meshopt·그 밖의 required extension은
-> 계속 fail-closed입니다.
+> runtime codec을 추가하지 않았습니다.
+> ratified `EXT_meshopt_compression`도 exact Box GLB를 1,696-byte cache-only
+> fixture로 결정적으로 파생해 별도 승인했습니다. exact `meshoptimizer@1.2.0`
+> single-thread WASM은 기존 source Worker에 bundle되고 압축 source에서만 lazy
+> 초기화됩니다. 192 compressed bytes를 648 bytes로 복원한 headless 결과와
+> Browser·staged VS Code·clean-installed local VSIX의 Apple M2 Metal 3개 표면이
+> 같은 12 triangles, 86,486 pixels, 756-byte read·800-byte upload와 cleanup을
+> 재현했습니다. `FILTER_NONE`만 허용하며 Draco·다른 meshopt filter·그 밖의
+> required extension은 계속 fail-closed입니다.
 > 이 기능은 single-source Browser/VS Code 제품 범위이며 이미 공개되고 Spatial이
 > exact-pin한 federated BIM Surface v0.2 runtime이나 `.bimfed.json` 경로에는
 > 소급 반영하지 않습니다.
@@ -153,7 +160,8 @@ BIM Explorer가 소유할 범위:
 - path-free `.bimfed.json` 기반 source-scoped federated VS Code Surface v0.2
 - IFC engine, format, license, 성능과 compatibility qualification
 - bounded glTF/GLB reference source, local `.gltf + .bin` bundle,
-  `KHR_mesh_quantization`과 source-native identity exploration
+  `KHR_mesh_quantization`, `EXT_meshopt_compression` `FILTER_NONE`과
+  source-native identity exploration
 - bounded E57/LAS/LAZ point source와 source-neutral point rendering
 - BCF viewpoint, IDS result와 bSDD reference의 read-only exploration
 
@@ -261,9 +269,10 @@ profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selec
 path-free bridge, 닫기와 전량 cleanup을 통과했습니다. 현재 public Viewer Core
 제품 entrypoint를 사용한 Apple M2 Metal 검증도 세 제품 경로에서 통과해 bounded
 GLB physical GPU Gate를 승인했습니다. 별도 local `.gltf + .bin` bundle과
-`KHR_mesh_quantization`도 세 제품 표면의 Apple M2 Metal Gate를 통과했습니다.
-현재 glTF manifest는 27 passed / 4 held, product shell은 54 passed / 1 held입니다.
-Linux/Windows hardware, 임의 URI, external image, Draco·meshopt·그 밖의 required
+`KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`도 세 제품 표면의
+Apple M2 Metal Gate를 통과했습니다. 현재 glTF manifest는 28 passed / 4 held,
+product shell은 57 passed / 1 held입니다. Linux/Windows hardware, 임의 URI,
+external image, Draco·다른 meshopt filter·그 밖의 required
 extension 또는 BIM semantic authority는 승인하지 않습니다. 다음 held
 format 제안은
 [`reference format evidence intake`](docs/reference-format-intake.md)로 실제
@@ -461,6 +470,9 @@ Browser/VS Code 제품 Host 계약의 상태는
 고정합니다.
 `KHR_mesh_quantization`의 공식 Validator·headless·3-surface Apple M2 Metal 검증은
 [mesh quantization evidence](compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json)에
+고정합니다.
+`EXT_meshopt_compression` `FILTER_NONE`의 decoder·headless·3-surface Apple M2 Metal
+검증은 [meshopt evidence](compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json)에
 고정합니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을

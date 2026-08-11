@@ -62,7 +62,7 @@ const ROUTES = new Map([
     type: JAVASCRIPT,
   }],
   ["/source-worker.mjs", {
-    file: path.join(APP, "source-worker.mjs"),
+    file: path.join(APP, "source-worker.bundle.mjs"),
     type: JAVASCRIPT,
   }],
   ["/worker-source-client.mjs", {

@@ -11,6 +11,8 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 - indexed `TRIANGLES`
 - Float32 `POSITION`/`NORMAL`, 또는 required `KHR_mesh_quantization` 아래의
   bounded integer `POSITION`과 normalized signed integer `NORMAL`
+- required `EXT_meshopt_compression`의 `ATTRIBUTES`·`TRIANGLES`·`INDICES` mode와
+  `FILTER_NONE`; exact meshoptimizer 1.2.0 decoder는 압축 source에서만 lazy load
 - material `baseColorFactor`
 - source-local `nativeId`와 immutable range session
 
@@ -18,7 +20,7 @@ local resource bundle은 최대 16개 sidecar와 document 합산 64MiB로 제한
 Browser는 source와 sidecar를 한 번에 명시적으로 고르고, VS Code는 JSON에 선언된
 동일 폴더 regular non-symlink `.bin`만 안정적으로 읽습니다. scheme, separator,
 `..`, query/fragment, percent-encoded name, 누락·중복·미사용 resource, 외부 image와
-network fetch, `KHR_mesh_quantization` 이외 required extension, animation, skin,
+network fetch, 두 승인 확장 이외 required extension, 다른 meshopt filter, animation, skin,
 morph target, sparse accessor,
 write와 round-trip은 거부합니다. 출력 geometry는
 `application/vnd.bim-explorer.geometry-range.v1` display cache이며 원본
@@ -53,7 +55,13 @@ clean-installed local VSIX에서 동일한 composite SHA-256, 756-byte geometry 
 결정적으로 파생한 1,632-byte cache-only GLB에서 공식 Validator issue 0개와 같은
 세 Apple M2 Metal 제품 표면을 통과했습니다. 이 경로는 코덱을 추가하지 않으며
 확장은 `extensionsUsed`와 `extensionsRequired` 양쪽에 정확히 선언되어야 합니다.
-Linux/Windows hardware, arbitrary URI, external image, Draco·meshopt·그 밖의
+`EXT_meshopt_compression`은 같은 Box의 1,696-byte cache-only GLB에서 192 compressed
+bytes를 648 bytes로 복원했고, headless와 같은 세 Apple M2 Metal 제품 표면을
+통과했습니다. exact meshoptimizer 1.2.0 single-thread WASM은 기존 source Worker에
+bundle되어 압축 source에서만 초기화됩니다. decoded aggregate 64MiB, ratio 256:1,
+payload 없는 fallback placeholder와 `FILTER_NONE`만 허용합니다. 공식 Validator의
+고정 info 2개는 extension schema 미지원과 placeholder buffer 진단으로 기록합니다.
+Linux/Windows hardware, arbitrary URI, external image, Draco·다른 meshopt filter·그 밖의
 required extension,
 OS-level peak GPU memory와 production support는 별도 Gate입니다.
 

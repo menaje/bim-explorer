@@ -29,6 +29,10 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   normal과 normalized SHORT position으로 결정적으로 파생한 1,632-byte
   `KHR_mesh_quantization` qualification manifest. 원본과 파생 GLB는 모두
   cache-only이며 재배포하지 않음
+- `gltf/derived-khronos-box-meshopt`: exact Box GLB를 exact
+  `meshoptimizer@1.2.0`으로 결정적으로 파생한 1,696-byte
+  `EXT_meshopt_compression` `FILTER_NONE` qualification manifest. 192 compressed
+  bytes와 648 decoded bytes를 고정하며 원본과 파생 GLB는 cache-only이고 재배포하지 않음
 - `gltf/public-khronos-a-beautiful-game`: 42,977,928-byte embedded GLB의
   417,028 vertices·573,952 unique triangles를 product-scale reference
   source, SwiftShader WebGL2, Browser/VS Code/clean VSIX 제품 file-open과

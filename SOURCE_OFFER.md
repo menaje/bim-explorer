@@ -48,3 +48,12 @@ to reproduce the generated executable transformation. The locally qualified
 VSIX includes the exact upstream package manifests, LICENSE and NOTICE files.
 It has not been published to the VS Code Marketplace or Open VSX, and this
 section does not alter the immutable v0.1.0 release.
+
+The unpublished candidate also embeds the unmodified single-thread decoder
+payload from `meshoptimizer@1.2.0` into the generated source Worker bundle.
+Its exact MIT-licensed corresponding source is available from
+<https://github.com/zeux/meshoptimizer/tree/9d9890c73011d75920af614485296d1e03e95448>;
+the package integrity and license text are recorded in
+`THIRD_PARTY_NOTICES.md` and `LICENSES/meshoptimizer-MIT.txt`. BIM Explorer's
+adapter and bundling source remains in this repository. The sample model is
+not part of the candidate or this source offer.

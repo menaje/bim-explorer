@@ -18,8 +18,9 @@ BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
 추가했습니다. `.gltf`의 JSON-declared 동일 폴더 `.bin`도 명시적 local bundle로
 열 수 있지만 최대 16개·합산 64MiB이고 임의 URI·external image·network fetch는
-허용하지 않습니다. required extension은 코덱 없는 `KHR_mesh_quantization`만
-bounded display decode하고 Draco·meshopt·그 밖의 extension은 거부합니다. bounded
+허용하지 않습니다. required extension은 코덱 없는 `KHR_mesh_quantization`과
+exact meshoptimizer 1.2.0을 쓰는 `EXT_meshopt_compression` `FILTER_NONE`만 bounded
+display decode하고 Draco·다른 meshopt filter·그 밖의 extension은 거부합니다. bounded
 E57/LAS/LAZ는 Browser와 VS Code에서 열 수 있는
 experimental point reference입니다. exact source revision과 root range digest
 안의 파생 point selection, octree leaf chunk와 coarse-to-full LOD는 통과했지만
@@ -63,8 +64,8 @@ sidecar name·byte length·SHA-256 descriptor를 함께 묶습니다. Browser의
 다중 파일 선택과 VS Code의 sibling resolution은 같은 fingerprint를 만들지만,
 경로나 파일 이름을 public Viewer/Spatial identity로 승격하지 않습니다.
 공개된 federated BIM Surface v0.2와 `.bimfed.json`은 exact runtime/API를
-유지하므로 이 single-source bundle 또는 `KHR_mesh_quantization` 기능을 포함한다고
-주장하지 않습니다. federation에 포함하려면 새 semver contract와 Explorer package
+유지하므로 이 single-source bundle, `KHR_mesh_quantization` 또는 meshopt 기능을
+포함한다고 주장하지 않습니다. federation에 포함하려면 새 semver contract와 Explorer package
 qualification, Spatial consumer admission이 필요합니다.
 
 ## Identity 경계

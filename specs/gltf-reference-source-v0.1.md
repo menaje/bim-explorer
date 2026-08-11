@@ -42,6 +42,9 @@ roundTripAuthority: false
 - 또는 `extensionsUsed`와 `extensionsRequired` 양쪽에 선언된 ratified
   `KHR_mesh_quantization`: BYTE/UNSIGNED_BYTE/SHORT/UNSIGNED_SHORT `POSITION`과
   normalized BYTE/SHORT `NORMAL`
+- 또는 양쪽 extension 배열에 required로 선언된 ratified
+  `EXT_meshopt_compression`: `ATTRIBUTES`, `TRIANGLES`, `INDICES` mode와
+  `FILTER_NONE` bufferView. fallback buffer는 payload 없는 placeholder만 허용
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
 
@@ -49,9 +52,9 @@ local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$` 범위이고 `..`를
 포함할 수 없습니다. scheme, slash/backslash, query/fragment, percent-encoding을
 포함한 외부 HTTP, file 및 path URI는 fetch하지 않고 `NotSupportedError`로
 거부합니다. caller가 공급한 누락·중복·미사용 sidecar도 fail closed합니다.
-`KHR_mesh_quantization` 이외 required extension, primitive extension, external
-image, animation, skin, morph target, sparse accessor와 collapsed transform도
-first profile 밖입니다. 양자화 vertex accessor는 glTF extension의 4-byte alignment를
+두 승인 확장 이외 required extension, primitive extension, external image,
+animation, skin, morph target, sparse accessor와 collapsed transform도 first
+profile 밖입니다. 양자화 vertex accessor는 glTF extension의 4-byte alignment를
 따르며 signed normalized normal은 decode 뒤 단위 벡터로 다시 정규화합니다.
 optional texture/image metadata는 geometry 입출력이나 network authority를
 부여하지 않습니다.
@@ -65,6 +68,8 @@ optional texture/image metadata는 geometry 입출력이나 network authority를
 | document + external resource aggregate | 64 MiB |
 | JSON bytes | 4 MiB |
 | decoded aggregate buffer | 64 MiB |
+| meshopt decoded bufferView aggregate | 64 MiB |
+| meshopt decoded/compressed ratio | 256:1 |
 | external `.bin` resource | 16개 |
 | external resource leaf-name | UTF-8 128 bytes |
 | node | 4,096 |
@@ -112,14 +117,17 @@ source는 단일 immutable session만 엽니다. 모든 range handle은 protocol
 session, source, revision, snapshot과 layer context를 포함하며 stale
 context를 거부합니다.
 
-parser가 소유한 source/buffer/sidecar 복사본과 intermediate accessor array는
-projection 뒤 지웁니다. terminal source dispose는 retained geometry range를
+parser가 소유한 source/buffer/sidecar 복사본, meshopt decode buffer와 intermediate
+accessor array는 projection 뒤 지웁니다. meshoptimizer 1.2.0 single-thread WASM은
+압축 source를 열 때만 기존 source Worker 안에서 초기화하며 cancel/switch는 Worker
+종료로 동기 decode를 격리합니다. terminal source dispose는 retained geometry range를
 0으로 덮고 identity index를 비웁니다. caller-owned input bytes와 renderer
 GPU allocation은 source가 소유하지 않습니다.
 
 ## 보류
 
-- Draco, meshopt와 `KHR_mesh_quantization` 이외 required extension
+- Draco, meshopt의 OCTAHEDRAL/QUATERNION/EXPONENTIAL filter와 두 승인 확장 이외
+  required extension
 - arbitrary URI, nested path와 external image
 - texture/image decode와 material fidelity
 - animation, skin과 morph target
@@ -168,6 +176,16 @@ triangles, 756-byte geometry read, 800-byte upload와 86,486 pixels를 재현했
 원본과 파생 GLB는 cache-only이며 Git·VSIX·release에 포함하지 않습니다. 이 승인은
 런타임 codec을 추가하지 않고 해당 required extension 하나만 허용합니다.
 
+같은 Box를 `meshoptimizer@1.2.0`으로 결정적으로 파생한 1,696-byte
+`EXT_meshopt_compression` fixture는 192 compressed bytes를 648 decoded bytes로
+복원합니다. 공식 Validator는 error·warning·hint 0개와 Validator가 아직 확장
+schema를 해석하지 못해 발생하는 고정 info 2개를 보고했습니다. headless renderer와
+actual Chrome 151, staged VS Code 1.132, clean-installed local VSIX는 Apple M2
+Metal에서 같은 24 vertices·12 triangles, 756-byte geometry read, 800-byte upload,
+86,486 pixels와 terminal cleanup을 재현했습니다. decoder는 exact MIT dependency이고
+Worker bundle에 포함되지만 sample은 cache-only입니다. 이 승인은 required
+bufferView compression의 `FILTER_NONE`만 허용합니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
@@ -175,6 +193,6 @@ upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 �
 포함하지 않습니다.
 
 이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
-external image, Draco·meshopt·그 밖의 required extension, broader material/geometry fidelity,
+external image, Draco·다른 meshopt filter·그 밖의 required extension, broader material/geometry fidelity,
 Linux/Windows physical GPU, BIM semantic authority, write와 round-trip은
 승인하지 않습니다.

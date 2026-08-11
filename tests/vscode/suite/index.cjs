@@ -81,6 +81,7 @@ function physicalAppleMetalGpu(value) {
 async function qualifyReference({
   api,
   manifestPath = undefined,
+  meshopt = false,
   productScale = false,
   quantized = false,
   resourceBundle = false,
@@ -94,6 +95,8 @@ async function qualifyReference({
         "scripts",
         resourceBundle
           ? "public-gltf-resource-bundle-fixture.mjs"
+          : meshopt
+            ? "public-gltf-meshopt-fixture.mjs"
           : quantized
             ? "public-gltf-quantized-fixture.mjs"
           : "public-gltf-fixture.mjs",
@@ -104,6 +107,10 @@ async function qualifyReference({
     ? await fixtureModule.loadPublicGltfResourceBundleManifest(
         manifestPath,
       )
+    : meshopt
+      ? await fixtureModule.loadPublicMeshoptGltfManifest(
+          manifestPath,
+        )
     : quantized
       ? await fixtureModule.loadPublicQuantizedGltfManifest(
           manifestPath,
@@ -112,7 +119,7 @@ async function qualifyReference({
   const entry = resourceBundle ? manifest.document : manifest.entry;
   const timeoutMs = resourceBundle
     ? 30_000
-    : quantized
+    : quantized || meshopt
       ? 30_000
     : manifest.browserQualification.timeoutMs;
   const metadata = await stat(sourcePath);
@@ -137,6 +144,8 @@ async function qualifyReference({
     ? "product-scale reference"
     : resourceBundle
       ? "external-resource reference"
+      : meshopt
+        ? "meshopt reference"
       : quantized
         ? "quantized reference"
       : "reference";
@@ -176,14 +185,14 @@ async function qualifyReference({
     ? manifest.expected.geometryRangeBytes
     : resourceBundle
       ? manifest.expected.geometryRangeBytes
-      : quantized
+      : quantized || meshopt
         ? manifest.expected.geometryRangeBytes
       : 756;
   const expectedUploadedBytes = productScale
     ? 16_900_016
     : resourceBundle
       ? manifest.expected.gpuUploadBytes
-      : quantized
+      : quantized || meshopt
         ? manifest.expected.gpuUploadBytes
       : 800;
   assert.equal(ready.hostKind, "vscode-webview");
@@ -202,7 +211,7 @@ async function qualifyReference({
       ? manifest.expected.aggregateSourceBytes
       : manifest.entry.byteLength,
   );
-  if (quantized) {
+  if (quantized || meshopt) {
     assert.deepEqual(
       ready.source.extensionsRequired,
       manifest.expected.extensionsRequired,
@@ -280,7 +289,7 @@ async function qualifyReference({
       ...(resourceBundle
         ? { resourceBundle: ready.source.resourceBundle }
         : {}),
-      ...(quantized
+      ...(quantized || meshopt
         ? {
             extensionsRequired:
               ready.source.extensionsRequired,
@@ -337,7 +346,7 @@ async function qualifyReference({
           ready.source.resourceBundle?.networkAtRuntime === false
         ),
       exactRequiredExtensions:
-        !quantized ||
+        !(quantized || meshopt) ||
         (
           JSON.stringify(ready.source.extensionsRequired) ===
             JSON.stringify(manifest.expected.extensionsRequired) &&
@@ -1006,6 +1015,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
   const quantizedReferenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE;
+  const meshoptReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_MESHOPT_SOURCE;
   const lasSourcePath =
     process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
   const lazSourcePath =
@@ -1387,6 +1398,41 @@ async function run() {
         },
       };
     }
+    let meshoptReferenceQualification = null;
+    if (
+      typeof meshoptReferenceSourcePath === "string" &&
+      meshoptReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        meshopt: true,
+        root,
+        sourcePath: meshoptReferenceSourcePath,
+      });
+      meshoptReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localMeshoptReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          meshoptReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          meshoptReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          meshoptReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          meshoptRequiredExtensionExact:
+            qualified.assertions.exactRequiredExtensions,
+          meshoptReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          meshoptReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          meshoptReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
     const pointQualifications = {};
     if (
       typeof lasSourcePath === "string" &&
@@ -1588,6 +1634,16 @@ async function run() {
             quantizedReferenceAssertions:
               quantizedReferenceQualification.assertions,
           }),
+      ...(meshoptReferenceQualification === null
+        ? {}
+        : {
+            meshoptReferenceFixture:
+              meshoptReferenceQualification.fixture,
+            meshoptReferenceObservation:
+              meshoptReferenceQualification.observation,
+            meshoptReferenceAssertions:
+              meshoptReferenceQualification.assertions,
+          }),
       ...(!hasPointQualifications
         ? {}
         : {
@@ -1686,6 +1742,13 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.quantizedReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.meshoptReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.meshoptReferenceAssertions,
         ).every(Boolean),
       );
     }

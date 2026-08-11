@@ -21,7 +21,9 @@ range와 `POINTS` renderer로 분기합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
 - required `KHR_mesh_quantization`은 bounded integer position/normal을 Worker에서
-  display range로 decode합니다. Draco·meshopt·그 밖의 required extension은
+  display range로 decode합니다. required `EXT_meshopt_compression`은 exact
+  meshoptimizer 1.2.0을 압축 source에서만 lazy load하고 `FILTER_NONE` bufferView를
+  bounded decode합니다. Draco·다른 meshopt filter·그 밖의 required extension은
   source admission 전에 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
@@ -59,6 +61,10 @@ cleanup을 검증합니다. sample은 Git, package 또는 release에 포함하�
 staged VS Code와 clean-installed local VSIX의 Apple M2 Metal로 검증합니다. 원본과
 파생 fixture는 cache-only이며 runtime codec이나 federated v0.2 지원을 추가하지
 않습니다.
+`npm run qualify:gltf:meshopt-products`는 exact Box-derived
+`EXT_meshopt_compression` GLB를 공식 Validator의 고정 info 2건, headless decode,
+Browser·staged VS Code·clean-installed local VSIX의 Apple M2 Metal로 검증합니다.
+`FILTER_NONE`만 승인하며 sample과 immutable federated v0.2는 변경하지 않습니다.
 `npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
 공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
 Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact

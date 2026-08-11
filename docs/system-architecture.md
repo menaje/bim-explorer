@@ -268,7 +268,7 @@ sidecar를 하나의 composite fingerprint로 묶고 모든 owned copy를 termin
 cleanup에서 지웁니다.
 이 additive path는 single-source 제품 Worker에만 연결합니다. 이미 공개된
 federated BIM Surface v0.2 runtime은 exact release digest로 동결되며 resource
-bundle 기능을 backport하지 않습니다.
+bundle, mesh quantization 또는 meshopt 기능을 backport하지 않습니다.
 
 공개 `@menaje/viewer-core`와
 `@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
@@ -329,9 +329,15 @@ M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 임
 external image는 여전히 Worker admission 전에 거부합니다. ratified
 `KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
 4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.
-코덱은 추가하지 않으며 Draco·meshopt·그 밖의 required extension은 fail-closed입니다.
+`EXT_meshopt_compression`은 exact meshoptimizer 1.2.0 single-thread WASM을 같은
+source Worker bundle에서 압축 source에만 lazy 초기화합니다. required bufferView의
+`ATTRIBUTES`·`TRIANGLES`·`INDICES`, `FILTER_NONE`, payload 없는 fallback placeholder,
+64MiB decoded aggregate와 256:1 ratio만 허용합니다. source switch/cancel은 Worker를
+종료해 동기 decode를 격리하고 owned compressed/decoded copy를 정리합니다.
+Draco·다른 meshopt filter·그 밖의 required extension은 fail-closed입니다.
 Box-derived cache-only GLB는 headless와 Browser·staged VS Code·clean-installed
-local VSIX의 Apple M2 Metal에서 같은 projection과 cleanup을 통과했습니다.
+local VSIX의 Apple M2 Metal에서 두 승인 extension 각각 같은 projection과 cleanup을
+통과했습니다.
 
 ## openBIM exploration
 

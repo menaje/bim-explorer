@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- admit required `EXT_meshopt_compression` for bounded bufferView
+  `ATTRIBUTES`/`TRIANGLES`/`INDICES` with `FILTER_NONE`, using exact
+  `meshoptimizer@1.2.0` single-thread WASM lazily inside the existing source
+  Worker; pin decoded-byte and compression-ratio limits, malformed corpus,
+  MIT disclosure, a deterministic cache-only Box fixture, known Validator
+  infos, headless decode and three Apple M2 Metal product surfaces without
+  backporting the immutable federated v0.2 runtime or publishing a VSIX;
 - requalify the newly adopted public Viewer Core 0.1.2 IFC/glTF/GLB product
   entrypoints on Apple M2 Metal in actual Chrome 151, staged VS Code 1.132 and
   a clean-installed local VSIX, including exact range reads, selection events

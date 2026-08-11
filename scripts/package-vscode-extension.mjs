@@ -60,6 +60,7 @@ const COPY_FILES = Object.freeze([
   ["packages/gltf-reference-source/src/geometry.mjs"],
   ["packages/gltf-reference-source/src/index.mjs"],
   ["packages/gltf-reference-source/src/math.mjs"],
+  ["packages/gltf-reference-source/src/meshopt-decoder.mjs"],
   ["packages/gltf-reference-source/src/profile.mjs"],
   ["packages/e57-point-source/src/format.mjs"],
   ["packages/e57-point-source/src/index.mjs"],
@@ -97,6 +98,7 @@ const COPY_FILES = Object.freeze([
   ["node_modules/@menaje/viewer-render-protocol/NOTICE"],
   ["node_modules/@menaje/viewer-render-protocol/package.json"],
   ["LICENSES/e57-rs-MIT.txt"],
+  ["LICENSES/meshoptimizer-MIT.txt"],
   ["specs/LICENSE"],
 ]);
 const EXTENSION_FILES = Object.freeze([

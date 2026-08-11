@@ -27,6 +27,9 @@ import {
   acquirePublicQuantizedGltfFixture,
 } from "./public-gltf-quantized-fixture.mjs";
 import {
+  acquirePublicMeshoptGltfFixture,
+} from "./public-gltf-meshopt-fixture.mjs";
+import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
@@ -749,6 +752,49 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "gltf-meshopt-public") {
+    const acquired = await acquirePublicMeshoptGltfFixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: manifest.expected.sourceFingerprint,
+      gltfVersion: manifest.expected.gltfVersion,
+      extensionsRequired: manifest.expected.extensionsRequired,
+      extensionsUsed: manifest.expected.extensionsUsed,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        sourceSha256: manifest.provenance.sourceSha256,
+        extension: manifest.extension.name,
+        extensionSpecificationCommit:
+          manifest.extension.specificationCommit,
+        codec: manifest.codec.package,
+        codecVersion: manifest.codec.version,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
   if (kind === "e57-public") {
     const acquired = await acquirePublicE57Fixture();
     const { manifest } = acquired;
@@ -899,7 +945,7 @@ async function qualificationFixture(kind) {
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
       "gltf-public, gltf-product-scale, gltf-external-public, " +
-      "gltf-quantized-public, " +
+      "gltf-quantized-public, gltf-meshopt-public, " +
       "e57-public, " +
       "e57-spherical-public, e57-multiple-scan-public, " +
       "las-public, or laz-public",
@@ -1334,6 +1380,7 @@ export async function qualifyBimProductShell({
 function parseArguments(values) {
   const allowedFixtures = new Set([
     "gltf-external-public",
+    "gltf-meshopt-public",
     "gltf-quantized-public",
     "gltf-product-scale",
     "gltf-public",
@@ -1378,7 +1425,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
         "gltf-product-scale|gltf-external-public|e57-public|" +
-        "gltf-quantized-public|" +
+        "gltf-quantized-public|gltf-meshopt-public|" +
         "e57-spherical-public|" +
         "e57-multiple-scan-public|las-public|laz-public] " +
         "[--physical-gpu] " +

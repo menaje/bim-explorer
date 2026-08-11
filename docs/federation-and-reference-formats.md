@@ -171,12 +171,14 @@ clean-installed local VSIX에서 Apple M2 Metal physical GPU를 각각
 clean-installed local VSIX에서 같은 composite source identity와 Apple M2 Metal
 projection·cleanup을 통과했습니다. `KHR_mesh_quantization`도 exact Box-derived
 cache-only GLB의 공식 Validator, headless와 같은 세 Apple M2 Metal 제품 표면에서
-통과했습니다. 코덱 없는 이 required extension 하나만 single-source glTF profile에
-허용하며 Draco·meshopt·그 밖의 required extension, nested/arbitrary URI,
+통과했습니다. 별도 `EXT_meshopt_compression` Box-derived cache-only GLB도 exact
+meshoptimizer 1.2.0, 192 compressed/648 decoded bytes, `FILTER_NONE` headless decode와
+같은 세 Apple M2 Metal 제품 표면을 통과했습니다. 두 required extension만
+single-source glTF profile에 허용하며 Draco·다른 meshopt filter·그 밖의 required extension, nested/arbitrary URI,
 external image와 Linux/Windows physical GPU는 계속 보류합니다.
 이 결과는 glTF source와 single-source 제품 Gate에 한정됩니다. immutable
 federated BIM Surface v0.2 package와 `.bimfed.json` host에는 backport하지 않으며,
-후속 federated bundle 또는 mesh quantization 지원은 새 version과 별도 Spatial
+후속 federated bundle, mesh quantization 또는 meshopt 지원은 새 version과 별도 Spatial
 consumer Gate가 필요합니다.
 cache-only LAS/LAZ pre-admission probe는 paired LAS 1.2/LAZ의 10,201개
 point-format 3 record와 압축 해제 parity를 통과했습니다. actual Chrome

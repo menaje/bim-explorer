@@ -89,6 +89,24 @@ glTF reference source qualification은 Khronos Group의 공식 Validator를
   `sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==`
 - [Apache License 2.0 full text](specs/LICENSE)
 
+Required `EXT_meshopt_compression` bufferView decode uses the exact
+`meshoptimizer` JavaScript decoder. Its single-thread WebAssembly payload is
+embedded into the generated source Worker bundle and initialized only when a
+compressed source is opened.
+
+- `meshoptimizer@1.2.0`
+- MIT
+- <https://github.com/zeux/meshoptimizer>
+- exact source commit:
+  <https://github.com/zeux/meshoptimizer/tree/9d9890c73011d75920af614485296d1e03e95448>
+- npm integrity:
+  `sha512-davRZeIJbxJrE24cwQle7ZDsxjdk/OphNOV83oX+efQinyoHY9Jcyz3MHbaoG0qySZajldGztNZ1RN/T19PZsg==`
+- [MIT license text](LICENSES/meshoptimizer-MIT.txt)
+
+Only the bounded `FILTER_NONE` profile is admitted. The Khronos Box source and
+deterministically derived meshopt GLB are cache-only qualification inputs and
+are not included in Git, VSIX or release artifacts.
+
 공개 qualification fixture는 Khronos Group
 `glTF-Sample-Assets`의 Cesium Box GLB이며 CC-BY-4.0입니다. 고정된 source,
 digest와 attribution은
