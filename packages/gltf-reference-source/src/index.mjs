@@ -1,6 +1,8 @@
 import {
   BIM_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
   encodeGltfGeometryRange,
+  encodeGltfTexturedGeometryRange,
 } from "./geometry.mjs";
 import {
   MESHOPT_DECODER_REQUIRED_MESSAGE,
@@ -127,6 +129,7 @@ export class GltfReferenceSource {
     sourceDigest,
     geometryBytes,
     geometryDigest,
+    geometryMediaType,
     geometryMetadata,
     maximumRequestBytes = 1024 * 1024,
     sessionReadBudgetBytes = geometryBytes.byteLength,
@@ -190,6 +193,10 @@ export class GltfReferenceSource {
             },
             transform: occurrence.transform,
             color: occurrence.color,
+            ...(geometryMediaType ===
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE
+              ? { textureIndex: record.textureIndex }
+              : {}),
           }],
           provenance: {
             format: profile.format,
@@ -217,7 +224,7 @@ export class GltfReferenceSource {
     const handle = deepFreeze({
       ...baseContext,
       handleId: rangeId,
-      mediaType: BIM_GEOMETRY_MEDIA_TYPE,
+      mediaType: geometryMediaType,
       byteLength: this.#geometryBytes.byteLength,
       maximumRequestBytes: this.maximumRequestBytes,
       sha256: geometryDigest,
@@ -283,6 +290,7 @@ export class GltfReferenceSource {
         extensionsRequired: profile.extensionsRequired,
         extensionsUsed: profile.extensionsUsed,
         compression: profile.compression,
+        appearance: profile.appearance,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
         resourceBundle: {
@@ -292,6 +300,15 @@ export class GltfReferenceSource {
             profile.resourceBundle.externalResourceBytes,
           externalResources:
             profile.resourceBundle.externalResources,
+          ...(profile.resourceBundle.externalImageResources ===
+            undefined
+            ? {}
+            : {
+                externalBufferResources:
+                  profile.resourceBundle.externalBufferResources,
+                externalImageResources:
+                  profile.resourceBundle.externalImageResources,
+              }),
           networkAtRuntime: false,
         },
         metadataQuery: "bounded-node-mesh-material-projection",
@@ -360,6 +377,9 @@ export class GltfReferenceSource {
         "bounded-reference-metadata",
         "source-display-geometry-separation",
         "pick-resolve",
+        ...(this.#snapshot.referenceMetadata.appearance === null
+          ? []
+          : ["bounded-base-color-texture"]),
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
       sourceRole: "derived-or-reference-mesh",
@@ -558,7 +578,12 @@ export async function createGltfReferenceSource(
       profile.externalResourceUris,
     );
     aborted(signal);
-    encoded = encodeGltfGeometryRange(profile.records);
+    encoded = profile.textures.length === 0
+      ? encodeGltfGeometryRange(profile.records)
+      : encodeGltfTexturedGeometryRange(
+          profile.records,
+          profile.textures,
+        );
     const geometryDigest = await sha256(encoded.bytes);
     aborted(signal);
     return new GltfReferenceSource({
@@ -566,6 +591,7 @@ export async function createGltfReferenceSource(
       sourceDigest,
       geometryBytes: encoded.bytes,
       geometryDigest,
+      geometryMediaType: encoded.mediaType,
       geometryMetadata: encoded.metadata,
       maximumRequestBytes,
       sessionReadBudgetBytes,
@@ -576,6 +602,10 @@ export async function createGltfReferenceSource(
       record.positions.fill(0);
       record.normals.fill(0);
       record.indices.fill(0);
+      record.texcoords?.fill(0);
+    }
+    for (const texture of profile?.textures ?? []) {
+      texture.bytes.fill(0);
     }
     for (const resource of ownedResources) {
       resource.bytes?.fill?.(0);
@@ -585,5 +615,6 @@ export async function createGltfReferenceSource(
 
 export {
   BIM_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
   parseGltfReferenceProfile,
 };

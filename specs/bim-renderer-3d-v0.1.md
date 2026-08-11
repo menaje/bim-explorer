@@ -6,7 +6,7 @@ authority:
   - geometry-staging-limits
   - point-range-staging-limits
   - renderer-resource-receipt
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # BIM renderer 3D v0.1
@@ -24,28 +24,38 @@ WebGL2 backend는 experimental qualification surface에서만 검증했습니다
 - digest와 byte/request limit이 있는 geometry range handle
 - 초기 range와 deferred range의 명시적 목록
 - geometry slice/count, occurrence transform와 color
+- optional interleaved `TEXCOORD_0`와 bounded external PNG base-color texture
 - source revision에 묶인 Render/Pick ID
 
 IFC class, property와 Spatial authority는 renderer plan에 포함하지 않습니다.
 
 ## Geometry consumer
 
-현재 geometry media type은 다음입니다.
+현재 geometry media type은 다음 두 개입니다.
 
 ```text
 application/vnd.bim-explorer.geometry-range.v1
+application/vnd.bim-explorer.geometry-range.v2
 ```
+
+v1 `BEXGEO01`은 기존 position/normal/index/color layout을 byte-identical하게
+유지합니다. v2 `BEXGEO02`는 geometry record에 interleaved Float32 UV slice와
+texture index를 추가하고 range 끝에 exact PNG payload table을 둡니다.
 
 renderer는 adapter/source validator와 별도로 magic, version, record count,
 payload length, finite vertex, index bounds, duplicate geometry Express ID와
 trailing bytes를 다시 검사합니다. primitive의 range ID, slice, vertex/index와
 triangle count가 decoded record와 정확히 일치하지 않으면 backend를
-호출하지 않습니다.
+호출하지 않습니다. v2는 UV bounds, geometry-to-texture reference, texture count와
+encoded/decoded aggregate, PNG signature/chunk ordering/CRC, width/height,
+bit-depth/color-type/interlace, decoded ratio, unused texture와 trailing bytes도
+독립 검증합니다. 지원 범위는 non-interlaced 8-bit RGB/RGBA/indexed PNG이며
+APNG와 unknown critical chunk는 fail closed입니다.
 
 range는 handle의 `maximumRequestBytes`와 renderer의 `maximumReadBytes` 중
 작은 크기로만 읽습니다. range별 digest를 확인한 뒤에만 mount plan을
-만듭니다. range count, encoded bytes, decoded payload, geometry record,
-instance, triangle, draw-call과 CPU staging limit은 backend 호출 전에
+만듭니다. range count, encoded bytes, decoded geometry/texture payload,
+geometry record, texture, instance, triangle, draw-call과 CPU/GPU staging limit은 backend 호출 전에
 적용합니다.
 
 ## Point range consumer
@@ -152,8 +162,9 @@ backend는 `mount(plan)`, `unmount(handleId)`, `dispose()`를 구현합니다.
 mount receipt는 다음을 구분합니다.
 
 - geometry payload bytes
+- texture source/decoded base RGBA/mipmap-aware GPU bytes와 texture count
 - instance buffer bytes
-- uploaded bytes와 draw calls
+- uploaded bytes, GPU texture count와 draw calls
 - 실제 rendered frame 여부
 
 source switch는 이전 backend handle을 먼저 unmount합니다. invalid backend
@@ -187,12 +198,21 @@ shader compilation, rasterization이나 first-frame 시간으로 해석하지
 
 `webgl2` backend는 decoded vertex/index payload와 occurrence
 transform·color instance buffer를 실제 WebGL2 context에 upload합니다.
+v2 range는 UV를 vertex attribute location 7에 upload하고 PNG를 color-space
+conversion·premultiply·flip 없이 `ImageBitmap`으로 decode한 뒤 WebGL2
+`SRGB8_ALPHA8` texture로 올립니다. sampler wrap/min/mag filter를 적용하고
+필요하면 mipmap을 생성합니다. mipmap min filter는 1×1까지의 전체 floor-halved
+chain을 `textureGpuBytes`에 포함하며 renderer는 upload 전에 이를
+`maximumGpuCacheBytes`에 합산합니다. fragment shader는 base color factor와 sRGB
+texture sample을 곱하며 texture/image bitmap도 mount/unmount/evict/dispose와
+context invalidation에서 geometry buffer와 함께 회수합니다.
 source 좌표계 변환과 camera view-projection matrix를 적용하고
 `drawElementsInstanced` frame을 그린 뒤 다음을 영수증으로 남깁니다.
 normal은 composed source/model matrix의 inverse-transpose로 변환해
 non-uniform scale에서도 lighting 방향을 유지합니다.
 
 - geometry, instance와 전체 uploaded bytes
+- texture source/decoded base RGBA/mipmap-aware GPU bytes와 GPU texture 수
 - draw-call과 GPU buffer 수
 - frame 크기, WebGL version과 GL error
 - non-background pixel, upload와 first-frame 시간
@@ -202,6 +222,15 @@ non-uniform scale에서도 lighting 방향을 유지합니다.
 non-background pixels를 만들고 4,399,252 bytes를 전량 회수했습니다.
 이는 실제 Browser GPU API 경로의 증거입니다. masked WebGL context만
 관찰했으므로 physical GPU 종류·전용 memory·driver 성능은 주장하지 않습니다.
+
+별도 BoxTextured qualification은 3,750-byte PNG, 262,144-byte decoded base RGBA와
+349,524-byte mipmap-aware GPU texture를
+포함한 4,756-byte v2 range를 headless와 actual Chrome 151, staged VS Code
+1.132, clean-installed local VSIX에서 검증했습니다. Apple M2 Metal의 세 제품
+표면은 각각 86,486 non-background pixels, 262,144-byte decoded base RGBA,
+349,524-byte mipmap-aware GPU texture, 350,516-byte total upload와 GPU texture 1개,
+terminal active bytes 0을 재현했습니다. 이는 OPAQUE base-color display 경로의
+승인이지 broader material renderer나 image/network authority의 승인이 아닙니다.
 
 ## Camera와 visibility view state
 
@@ -329,6 +358,8 @@ compatibility를 승인하지 않습니다.
 
 ## 현재 보류
 
-- physical GPU·driver와 GPU memory qualification
+- Linux/Windows physical GPU·driver와 OS-level GPU memory qualification
 - touch gesture와 실제 VS Code extension shell integration
 - 공용 Viewer Core 3D consumer conformance
+- JPEG, alpha mode, normal/metallic-roughness/occlusion/emissive texture와
+  `KHR_texture_transform`

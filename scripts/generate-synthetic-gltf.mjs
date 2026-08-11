@@ -1,5 +1,81 @@
+import { deflateSync } from "node:zlib";
+
 function aligned(value, multiple = 4) {
   return Math.ceil(value / multiple) * multiple;
+}
+
+const PNG_CRC_TABLE = Object.freeze(
+  Array.from({ length: 256 }, (_, value) => {
+    let crc = value;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc & 1) === 1
+        ? 0xedb88320 ^ (crc >>> 1)
+        : crc >>> 1;
+    }
+    return crc >>> 0;
+  }),
+);
+
+function pngCrc32(bytes) {
+  let crc = 0xffff_ffff;
+  for (const value of bytes) {
+    crc = PNG_CRC_TABLE[(crc ^ value) & 0xff] ^
+      (crc >>> 8);
+  }
+  return (crc ^ 0xffff_ffff) >>> 0;
+}
+
+export function syntheticPngChunk(type, data) {
+  const typeBytes = new TextEncoder().encode(type);
+  const bytes = new Uint8Array(12 + data.byteLength);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, data.byteLength, false);
+  bytes.set(typeBytes, 4);
+  bytes.set(data, 8);
+  view.setUint32(
+    8 + data.byteLength,
+    pngCrc32(bytes.subarray(4, 8 + data.byteLength)),
+    false,
+  );
+  return bytes;
+}
+
+function syntheticPngBytes() {
+  const signature = Uint8Array.from([
+    0x89, 0x50, 0x4e, 0x47,
+    0x0d, 0x0a, 0x1a, 0x0a,
+  ]);
+  const ihdr = new Uint8Array(13);
+  const ihdrView = new DataView(ihdr.buffer);
+  ihdrView.setUint32(0, 2, false);
+  ihdrView.setUint32(4, 2, false);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  const scanlines = Uint8Array.from([
+    0, 255, 0, 0, 255, 0, 255, 0, 255,
+    0, 0, 0, 255, 255, 255, 255, 255, 255,
+  ]);
+  const idat = Uint8Array.from(deflateSync(scanlines, {
+    level: 9,
+  }));
+  const chunks = [
+    syntheticPngChunk("IHDR", ihdr),
+    syntheticPngChunk("IDAT", idat),
+    syntheticPngChunk("IEND", new Uint8Array()),
+  ];
+  const byteLength = signature.byteLength + chunks.reduce(
+    (total, chunk) => total + chunk.byteLength,
+    0,
+  );
+  const bytes = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const value of [signature, ...chunks]) {
+    bytes.set(value, offset);
+    offset += value.byteLength;
+  }
+  idat.fill(0);
+  scanlines.fill(0);
+  return bytes;
 }
 
 function binaryPayload() {
@@ -54,6 +130,36 @@ function quantizedBinaryPayload() {
   for (const value of [0, 1, 2]) {
     view.setUint16(offset, value, true);
     offset += 2;
+  }
+  return bytes;
+}
+
+function texturedBinaryPayload() {
+  const bytes = new Uint8Array(104);
+  const view = new DataView(bytes.buffer);
+  const positions = [
+    -1, -1, 0,
+    1, -1, 0,
+    0, 1, 0,
+  ];
+  const normals = [
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+  ];
+  const texcoords = [
+    0, 0,
+    1, 0,
+    0.5, 1,
+  ];
+  let offset = 0;
+  for (const value of [...positions, ...normals, ...texcoords]) {
+    view.setFloat32(offset, value, true);
+    offset += Float32Array.BYTES_PER_ELEMENT;
+  }
+  for (const value of [0, 1, 2]) {
+    view.setUint16(offset, value, true);
+    offset += Uint16Array.BYTES_PER_ELEMENT;
   }
   return bytes;
 }
@@ -185,6 +291,56 @@ function quantizedDocumentFor(secondNodeX = 3, uri = null) {
   };
 }
 
+function texturedDocumentFor({
+  binaryUri,
+  imageUri,
+  secondNodeX = 3,
+}) {
+  const document = documentFor(binaryUri, secondNodeX);
+  document.asset.generator =
+    "BIM Explorer deterministic external PNG texture fixture";
+  document.buffers[0].byteLength = 104;
+  document.bufferViews = [
+    { buffer: 0, byteOffset: 0, byteLength: 36 },
+    { buffer: 0, byteOffset: 36, byteLength: 36 },
+    { buffer: 0, byteOffset: 72, byteLength: 24 },
+    { buffer: 0, byteOffset: 96, byteLength: 6 },
+  ];
+  document.accessors = [
+    document.accessors[0],
+    document.accessors[1],
+    {
+      bufferView: 2,
+      componentType: 5126,
+      count: 3,
+      type: "VEC2",
+    },
+    {
+      bufferView: 3,
+      componentType: 5123,
+      count: 3,
+      type: "SCALAR",
+    },
+  ];
+  document.meshes[0].primitives[0].attributes.TEXCOORD_0 = 2;
+  document.meshes[0].primitives[0].indices = 3;
+  document.materials = [{
+    pbrMetallicRoughness: {
+      baseColorFactor: [1, 1, 1, 1],
+      baseColorTexture: { index: 0 },
+    },
+  }];
+  document.samplers = [{
+    magFilter: 9729,
+    minFilter: 9987,
+    wrapS: 10497,
+    wrapT: 10497,
+  }];
+  document.textures = [{ sampler: 0, source: 0 }];
+  document.images = [{ uri: imageUri, mimeType: "image/png" }];
+  return document;
+}
+
 export function syntheticGltfJsonBytes() {
   const binary = binaryPayload();
   const uri =
@@ -208,6 +364,47 @@ export function syntheticGltfExternalBundle({
       uri,
       bytes,
     }],
+  };
+}
+
+export function syntheticTexturedGltfExternalBundle({
+  binaryUri = "geometry.bin",
+  forbiddenTransparencyChunk = false,
+  imageUri = "base-color.png",
+  secondNodeX = 3,
+} = {}) {
+  const binary = texturedBinaryPayload();
+  let image = syntheticPngBytes();
+  if (forbiddenTransparencyChunk) {
+    const transparency = syntheticPngChunk(
+      "tRNS",
+      Uint8Array.from([0]),
+    );
+    const invalidImage = new Uint8Array(
+      image.byteLength + transparency.byteLength,
+    );
+    invalidImage.set(image.subarray(0, 33), 0);
+    invalidImage.set(transparency, 33);
+    invalidImage.set(
+      image.subarray(33),
+      33 + transparency.byteLength,
+    );
+    image.fill(0);
+    transparency.fill(0);
+    image = invalidImage;
+  }
+  return {
+    bytes: new TextEncoder().encode(JSON.stringify(
+      texturedDocumentFor({
+        binaryUri,
+        imageUri,
+        secondNodeX,
+      }),
+    )),
+    resources: [
+      { uri: binaryUri, bytes: binary },
+      { uri: imageUri, bytes: image },
+    ],
   };
 }
 

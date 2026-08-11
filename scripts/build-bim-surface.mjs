@@ -1,8 +1,10 @@
 import {
+  copyFile,
   mkdtemp,
   readFile,
   rm,
 } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +26,16 @@ const OUTPUT = path.join(
   "runtime",
   "index.mjs",
 );
+const IMMUTABLE_RELEASE_RUNTIME = Object.freeze({
+  byteLength: 309_505,
+  sha256:
+    "0be0cef03795746cb4a36e2cbb6937fbc22a91f5dcc48c6621fdc34f8ef393e7",
+  tag: "bim-surface-v0.1.0",
+});
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
 
 async function createBundle(output) {
   await build({
@@ -45,30 +57,42 @@ async function createBundle(output) {
 }
 
 export async function checkBimSurfaceBundle() {
+  const runtime = await readFile(OUTPUT);
+  if (
+    runtime.byteLength !== IMMUTABLE_RELEASE_RUNTIME.byteLength ||
+    sha256(runtime) !== IMMUTABLE_RELEASE_RUNTIME.sha256
+  ) {
+    throw new Error(
+      "BIM surface v0.1 runtime differs from immutable " +
+        IMMUTABLE_RELEASE_RUNTIME.tag,
+    );
+  }
+  process.stdout.write(
+    `BIM surface immutable release bundle check passed: ` +
+      `${runtime.byteLength} bytes\n`,
+  );
+}
+
+async function rebuildImmutableReleaseBundle() {
   const temporary = await mkdtemp(
     path.join(tmpdir(), "bim-explorer-surface-"),
   );
   try {
     const generated = path.join(temporary, "index.mjs");
     await createBundle(generated);
-    const [expected, observed] = await Promise.all([
-      readFile(OUTPUT),
-      readFile(generated),
-    ]);
-    if (!expected.equals(observed)) {
+    const runtime = await readFile(generated);
+    if (
+      runtime.byteLength !== IMMUTABLE_RELEASE_RUNTIME.byteLength ||
+      sha256(runtime) !== IMMUTABLE_RELEASE_RUNTIME.sha256
+    ) {
       throw new Error(
-        "BIM surface bundle is stale; run npm run build:bim-surface",
+        "BIM surface v0.1 is immutable; rebuild from " +
+          `${IMMUTABLE_RELEASE_RUNTIME.tag} or start a new version`,
       );
     }
-    process.stdout.write(
-      `BIM surface bundle check passed: ` +
-        `${expected.byteLength} bytes\n`,
-    );
+    await copyFile(generated, OUTPUT);
   } finally {
-    await rm(temporary, {
-      force: true,
-      recursive: true,
-    });
+    await rm(temporary, { force: true, recursive: true });
   }
 }
 
@@ -85,7 +109,7 @@ async function main() {
       "usage: node scripts/build-bim-surface.mjs [--check]",
     );
   }
-  await createBundle(OUTPUT);
+  await rebuildImmutableReleaseBundle();
   const body = await readFile(OUTPUT);
   process.stdout.write(
     `BIM surface bundle built: ${body.byteLength} bytes\n`,

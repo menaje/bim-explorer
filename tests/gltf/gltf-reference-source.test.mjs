@@ -10,14 +10,17 @@ import {
   createBounded3dRenderer,
   createHeadless3dBackend,
   decodeBimGeometryRange,
+  decodeBimTexturedGeometryRange,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
   syntheticGltfExternalBundle,
   syntheticGlbBytes,
   syntheticGltfJsonBytes,
   syntheticMeshoptGlbBytes,
+  syntheticPngChunk,
   syntheticQuantizedGltfJsonBytes,
   syntheticQuantizedGlbBytes,
+  syntheticTexturedGltfExternalBundle,
 } from "../../scripts/generate-synthetic-gltf.mjs";
 
 for (const [format, fixture] of [
@@ -426,6 +429,215 @@ test("local external glTF buffer bundle is exact and source-bound", async () => 
   originalResource.fill(0);
   bundle.bytes.fill(0);
   bundle.resources[0].bytes.fill(0);
+});
+
+test("external PNG base color texture projects an exact v2 range", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle();
+  const profile = parseGltfReferenceProfile(bundle.bytes, {
+    resources: bundle.resources,
+  });
+  assert.deepEqual(profile.externalResourceUris, [
+    "base-color.png",
+    "geometry.bin",
+  ]);
+  assert.deepEqual(profile.appearance, {
+    profile: "base-color-texture-png-opaque-v0.1",
+    textureCoordinateSet: 0,
+    textureSourceBytes: 76,
+    textureDecodedBytes: 16,
+    textures: 1,
+    imageMediaTypes: ["image/png"],
+    colorSpace: "srgb-to-linear-webgl2",
+  });
+  assert.deepEqual(profile.resourceBundle, {
+    documentBytes: bundle.bytes.byteLength,
+    externalResourceBytes: 180,
+    externalResources: 2,
+    externalBufferResources: 1,
+    externalImageResources: 1,
+  });
+  assert.deepEqual([...profile.records[0].texcoords], [
+    0, 0, 1, 0, 0.5, 1,
+  ]);
+
+  const source = await createGltfReferenceSource(bundle.bytes, {
+    resources: bundle.resources,
+    sessionReadBudgetBytes: 1024 * 1024,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const handle = snapshot.layers[0].rangeHandles[0];
+  assert.equal(
+    handle.mediaType,
+    "application/vnd.bim-explorer.geometry-range.v2",
+  );
+  assert.equal(snapshot.entities[0].primitives[0].textureIndex, 0);
+  const range = await session.readRange(
+    handle,
+    0,
+    handle.byteLength,
+  );
+  const decoded = decodeBimTexturedGeometryRange(range);
+  assert.equal(decoded.textureCount, 1);
+  assert.equal(decoded.textureSourceBytes, 76);
+  assert.equal(decoded.textureDecodedBytes, 16);
+  assert.equal(decoded.textureGpuBytes, 20);
+  assert.equal(decoded.records[0].textureIndex, 0);
+  assert.equal(decoded.records[0].texcoordByteOffset, 24);
+  assert.deepEqual(decoded.textures[0].sampler, {
+    magFilter: 9729,
+    minFilter: 9987,
+    wrapS: 10497,
+    wrapT: 10497,
+  });
+  const corruptedRange = Uint8Array.from(range);
+  corruptedRange[
+    decoded.textures[0].sourcePayload.offset + 45
+  ] ^= 0x01;
+  assert.throws(
+    () => decodeBimTexturedGeometryRange(corruptedRange),
+    /PNG chunk is invalid/u,
+  );
+  corruptedRange.fill(0);
+
+  const transparency = syntheticPngChunk(
+    "tRNS",
+    Uint8Array.from([0]),
+  );
+  const sourceOffset = decoded.textures[0].sourcePayload.offset;
+  const malformedRange = new Uint8Array(range.byteLength + 16);
+  malformedRange.set(range.subarray(0, sourceOffset + 33), 0);
+  malformedRange.set(transparency, sourceOffset + 33);
+  malformedRange.set(
+    range.subarray(sourceOffset + 33),
+    sourceOffset + 33 + transparency.byteLength,
+  );
+  new DataView(malformedRange.buffer).setUint32(
+    sourceOffset - 24,
+    76 + transparency.byteLength,
+    true,
+  );
+  assert.throws(
+    () => decodeBimTexturedGeometryRange(malformedRange),
+    /PNG transparency is invalid/u,
+  );
+  malformedRange.fill(0);
+  transparency.fill(0);
+
+  const boundedRenderer = createBounded3dRenderer({
+    backend: createHeadless3dBackend(),
+    limits: { maximumGpuCacheBytes: 287 },
+  });
+  await assert.rejects(
+    () => boundedRenderer.mount({ session, snapshot }),
+    /resident GPU cache exceeds/u,
+  );
+  assert.equal(await boundedRenderer.dispose(), true);
+
+  const renderer = createBounded3dRenderer({
+    backend: createHeadless3dBackend(),
+  });
+  const receipt = await renderer.mount({ session, snapshot });
+  assert.equal(receipt.metrics.textures, 1);
+  assert.equal(receipt.metrics.textureDecodedBytes, 16);
+  assert.equal(receipt.metrics.textureGpuBytes, 20);
+  assert.equal(receipt.backend.textureBytes, 20);
+  assert.equal(receipt.backend.uploadedBytes, 288);
+  assert.equal(await renderer.dispose(), true);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  range.fill(0);
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+});
+
+test("external texture admission fails closed at image and material boundaries", () => {
+  const fixture = () => syntheticTexturedGltfExternalBundle();
+
+  const missing = fixture();
+  assert.throws(
+    () => parseGltfReferenceProfile(missing.bytes, {
+      resources: [missing.resources[0]],
+    }),
+    { name: "NotSupportedError" },
+  );
+
+  const invalidCrc = fixture();
+  invalidCrc.resources[1].bytes[45] ^= 0x01;
+  assert.throws(
+    () => parseGltfReferenceProfile(invalidCrc.bytes, {
+      resources: invalidCrc.resources,
+    }),
+    /chunk CRC is invalid/u,
+  );
+
+  const invalidTransparency = syntheticTexturedGltfExternalBundle({
+    forbiddenTransparencyChunk: true,
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(invalidTransparency.bytes, {
+      resources: invalidTransparency.resources,
+    }),
+    /tRNS chunk is invalid/u,
+  );
+
+  const unsupported = fixture();
+  const document = JSON.parse(
+    new TextDecoder().decode(unsupported.bytes),
+  );
+  document.materials[0].alphaMode = "BLEND";
+  unsupported.bytes = new TextEncoder().encode(
+    JSON.stringify(document),
+  );
+  assert.throws(
+    () => parseGltfReferenceProfile(unsupported.bytes, {
+      resources: unsupported.resources,
+    }),
+    { name: "NotSupportedError" },
+  );
+
+  const otherTexcoord = fixture();
+  const otherDocument = JSON.parse(
+    new TextDecoder().decode(otherTexcoord.bytes),
+  );
+  otherDocument.materials[0]
+    .pbrMetallicRoughness.baseColorTexture.texCoord = 1;
+  otherTexcoord.bytes = new TextEncoder().encode(
+    JSON.stringify(otherDocument),
+  );
+  assert.throws(
+    () => parseGltfReferenceProfile(otherTexcoord.bytes, {
+      resources: otherTexcoord.resources,
+    }),
+    { name: "NotSupportedError" },
+  );
+
+  const bounded = fixture();
+  assert.throws(
+    () => parseGltfReferenceProfile(bounded.bytes, {
+      limits: { maximumTextureDecodedBytes: 15 },
+      resources: bounded.resources,
+    }),
+    /bounded profile/u,
+  );
+
+  for (const bundle of [
+    missing,
+    invalidCrc,
+    invalidTransparency,
+    unsupported,
+    otherTexcoord,
+    bounded,
+  ]) {
+    bundle.bytes.fill(0);
+    for (const resource of bundle.resources) {
+      resource.bytes.fill(0);
+    }
+  }
 });
 
 test("external glTF bundle rejects paths, missing and unused resources", () => {

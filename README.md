@@ -5,7 +5,7 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 
 첫 semantic vertical slice는 read-only IFC이고, 첫 비 IFC format은
 bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 고른
-동일 폴더 `.bin` sidecar까지 bounded local bundle로 열 수 있습니다. 제품명과 저장소 이름은
+동일 폴더 `.bin`과 `.png` sidecar까지 bounded local bundle로 열 수 있습니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
 > 현재 상태: 공개·immutable v0.1.0 Community release와 read-only
@@ -60,8 +60,9 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 > staged VS Code의 선언된 sibling read와 clean-installed local VSIX에서 같은
 > 3,546-byte composite fingerprint, 12 triangles, 86,486 pixels와 cleanup을
 > Apple M2 Metal로 재현했습니다. 이 Gate는 최대 16개 same-folder ASCII `.bin`과
-> 합산 64MiB까지만 허용하며 임의 URI, path traversal, symlink, 외부 image,
-> runtime network를 계속 거부합니다.
+> 합산 64MiB까지만 허용하며 임의 URI, path traversal, symlink와 runtime network를
+> 거부합니다. 외부 image는 이 buffer Gate와 분리해 아래 PNG texture Gate에서만
+> 제한적으로 승인합니다.
 > ratified `KHR_mesh_quantization`은 exact Box GLB에서 position/normal을
 > deterministic하게 양자화한 1,632-byte cache-only fixture로 별도 승인했습니다.
 > 공식 Validator issue 0개, headless projection과 Browser·staged VS Code·
@@ -76,6 +77,16 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 > 같은 12 triangles, 86,486 pixels, 756-byte read·800-byte upload와 cleanup을
 > 재현했습니다. `FILTER_NONE`만 허용하며 Draco·다른 meshopt filter·그 밖의
 > required extension은 계속 fail-closed입니다.
+> 외부 PNG `baseColorTexture`도 별도 exact Khronos BoxTextured cache-only
+> fixture로 승인했습니다. source는 `TEXCOORD_0`, OPAQUE material과 표준 sampler만
+> geometry-range v2에 투영하고 renderer는 PNG를 독립 재검증한 뒤 WebGL2
+> `SRGB8_ALPHA8` texture로 실제 upload합니다. Browser·staged VS Code·
+> clean-installed local VSIX의 Apple M2 Metal 3개 표면은 모두 12 triangles,
+> 86,486 pixels, 4,756-byte range read, 262,144-byte decoded base RGBA,
+> 349,524-byte mipmap-aware GPU texture와 350,516-byte total upload, terminal
+> cleanup을 재현했습니다. JPEG, alpha mode, normal/metallic-roughness/occlusion/
+> emissive texture, `KHR_texture_transform`, 임의 URI와 embedded texture의
+> material 투영은 계속 fail-closed 또는 metadata-only입니다.
 > 이 기능은 single-source Browser/VS Code 제품 범위이며 이미 공개되고 Spatial이
 > exact-pin한 federated BIM Surface v0.2 runtime이나 `.bimfed.json` 경로에는
 > 소급 반영하지 않습니다.
@@ -125,7 +136,7 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 ## 첫 사용자 흐름
 
 ```text
-local IFC, bounded glTF/GLB(필요하면 명시적 same-folder .bin 포함) 또는 bounded E57/LAS/LAZ 선택
+local IFC, bounded glTF/GLB(필요하면 명시적 same-folder .bin/.png 포함) 또는 bounded E57/LAS/LAZ 선택
 -> isolated adapter가 immutable source snapshot 생성
 -> model tree와 3D overview 표시
 -> 객체 선택
@@ -159,9 +170,9 @@ BIM Explorer가 소유할 범위:
 - standalone Browser diagnostic surface와 VS Code Custom Editor
 - path-free `.bimfed.json` 기반 source-scoped federated VS Code Surface v0.2
 - IFC engine, format, license, 성능과 compatibility qualification
-- bounded glTF/GLB reference source, local `.gltf + .bin` bundle,
+- bounded glTF/GLB reference source, local `.gltf + .bin/.png` bundle,
   `KHR_mesh_quantization`, `EXT_meshopt_compression` `FILTER_NONE`과
-  source-native identity exploration
+  OPAQUE PNG `baseColorTexture`, source-native identity exploration
 - bounded E57/LAS/LAZ point source와 source-neutral point rendering
 - BCF viewpoint, IDS result와 bSDD reference의 read-only exploration
 
@@ -268,11 +279,13 @@ render/highlight와 cleanup이 동일함을 별도
 profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selection,
 path-free bridge, 닫기와 전량 cleanup을 통과했습니다. 현재 public Viewer Core
 제품 entrypoint를 사용한 Apple M2 Metal 검증도 세 제품 경로에서 통과해 bounded
-GLB physical GPU Gate를 승인했습니다. 별도 local `.gltf + .bin` bundle과
+GLB physical GPU Gate를 승인했습니다. 별도 local `.gltf + .bin/.png` bundle과
 `KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`도 세 제품 표면의
-Apple M2 Metal Gate를 통과했습니다. 현재 glTF manifest는 28 passed / 4 held,
-product shell은 57 passed / 1 held입니다. Linux/Windows hardware, 임의 URI,
-external image, Draco·다른 meshopt filter·그 밖의 required
+Apple M2 Metal Gate를 통과했습니다. 외부 PNG `baseColorTexture`의 geometry-range
+v2와 실제 sRGB texture upload도 같은 세 표면에서 통과했습니다. 현재 glTF
+manifest는 29 passed / 4 held, product shell은 60 passed / 1 held입니다.
+Linux/Windows hardware, 임의 URI, JPEG·투명/다중 material texture,
+Draco·다른 meshopt filter·그 밖의 required
 extension 또는 BIM semantic authority는 승인하지 않습니다. 다음 held
 format 제안은
 [`reference format evidence intake`](docs/reference-format-intake.md)로 실제
@@ -473,6 +486,9 @@ Browser/VS Code 제품 Host 계약의 상태는
 고정합니다.
 `EXT_meshopt_compression` `FILTER_NONE`의 decoder·headless·3-surface Apple M2 Metal
 검증은 [meshopt evidence](compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json)에
+고정합니다.
+외부 PNG `baseColorTexture`의 source·geometry-range v2·3-surface Apple M2 Metal
+검증은 [texture evidence](compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json)에
 고정합니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을

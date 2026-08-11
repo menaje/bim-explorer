@@ -8,13 +8,15 @@ IFC는 Browser와 같은 host-neutral `bim-surface/0.1` runtime으로
 source-native reference mesh explorer를 사용합니다. 두 경로의 renderer range,
 selection과 lifecycle은 exact public Viewer Core product adapter를 통과합니다.
 단일-source `.gltf` Custom Editor는 JSON에 명시된 최대 16개의 동일 폴더 ASCII
-leaf-name `.bin`을 extension host에서만 해결합니다. document와 sidecar 합산
+leaf-name `.bin`과 `.png`를 extension host에서만 해결합니다. document와 sidecar 합산
 64MiB, regular non-symlink, 읽기 전후 size/mtime을 검사하며 resource 변경도
 watch합니다. webview에는 경로가 아닌 resource name과 transferable bytes만 보내고
 누락·중복·미사용 sidecar, separator/`..`/scheme/query/fragment/percent URI와
-runtime network를 거부합니다. 외부 image는 미지원이며 required extension은
-`KHR_mesh_quantization` 하나만 bounded decode합니다. Draco·meshopt와 그 밖의
-required extension은 fail-closed입니다.
+runtime network를 거부합니다. 외부 PNG image는 OPAQUE `baseColorTexture`,
+`TEXCOORD_0`과 표준 sampler에만 허용하고 JPEG, 비-OPAQUE alpha material mode와 다른 material texture
+role은 fail-closed입니다. required extension은 `KHR_mesh_quantization`과
+`EXT_meshopt_compression` `FILTER_NONE`만 bounded decode하며 Draco·다른 meshopt
+filter와 그 밖의 required extension은 거부합니다.
 이 bundle 경로는 single-source Custom Editor에만 적용되며 immutable federated
 Surface v0.2의 `*.bimfed.json` source admission에는 소급 적용하지 않습니다.
 LAS/LAZ는 8 MiB·
@@ -94,8 +96,11 @@ package에 포함하지 않습니다. `npm run
 qualify:gltf:mesh-quantization-products`는 cache-only Box-derived
 `KHR_mesh_quantization` GLB를 같은 세 Apple M2 Metal 제품 표면과 공식
 Validator/headless renderer에서 검증합니다. 이 single-source 기능은 immutable
-federated Surface v0.2에 소급 반영하지 않습니다. package
-안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
+federated Surface v0.2에 소급 반영하지 않습니다.
+`npm run qualify:gltf:texture-products`는 cache-only Khronos BoxTextured의 외부
+PNG를 staged Custom Editor와 clean-installed local VSIX에서도 actual WebGL2
+sRGB texture로 검증합니다. sample은 package에 포함하지 않습니다.
+package 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
 runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며
 두 stale bundle 검사를 먼저 통과해야 합니다. 또한 generated Viewer Core

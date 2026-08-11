@@ -6,6 +6,8 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
 현재 vertical slice는 다음만 구현합니다.
 
 - `application/vnd.bim-explorer.geometry-range.v1`의 독립 consumer-side decode
+- `application/vnd.bim-explorer.geometry-range.v2`의 interleaved UV와 bounded
+  PNG texture table 독립 재검증
 - snapshot의 `firstFrameRangeIds`만 bounded chunk read
 - camera target과 entity bounds 기반 visibility-first range 선택
 - geometry record와 primitive slice/count의 교차 검증
@@ -13,6 +15,8 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
   묶인 instance plan
 - headless backend의 upload/draw/resource 영수증
 - WebGL2 backend의 geometry·instance upload, first-frame pixel 영수증
+- WebGL2 `SRGB8_ALPHA8` base-color texture upload, 표준 sampler·mipmap과
+  texture source/decoded/GPU allocation의 exact release 영수증
 - `application/vnd.bim-explorer.point-range.v1`의 Float64 origin +
   relative Float32/RGBA8 point primitive decode
 - 별도 headless/WebGL2 point backend의 단일 `POINTS` draw, bounded staging과
@@ -48,6 +52,16 @@ renderer authority로 만들지 않습니다.
 
 reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-local
 identity를 유지합니다.
+
+textured v2 range는 OPAQUE PNG `baseColorTexture`와 `TEXCOORD_0`만 소비합니다.
+renderer는 source와 별도로 PNG signature/chunk/CRC, dimensions, decoded ratio,
+geometry-to-texture reference와 trailing/unused payload를 검증합니다. actual
+BoxTextured Gate는 3,750-byte PNG를 262,144-byte decoded base RGBA와
+349,524-byte mipmap-aware sRGB GPU texture로 산정해 Browser, staged VS Code와
+clean-installed local VSIX에서 각각 86,486 pixels와 350,516-byte total GPU
+allocation을 만들고 texture/image bitmap을 포함한 모든
+resource를 회수했습니다. material semantics, image fetch와 BIM authority는
+renderer가 소유하지 않습니다.
 
 point range는 source semantic identity를 만들지 않습니다. renderer는 exact
 source revision과 root range SHA-256 안의 배열 순서에서만 `point:n`을 파생하고,

@@ -12,6 +12,7 @@ import {
 } from "../../scripts/package-vscode-extension.mjs";
 import {
   syntheticGltfExternalBundle,
+  syntheticTexturedGltfExternalBundle,
 } from "../../scripts/generate-synthetic-gltf.mjs";
 
 const require = createRequire(import.meta.url);
@@ -731,6 +732,59 @@ test("Custom Editor sends only declared same-folder glTF resources", async () =>
   provider.dispose();
 });
 
+test("Custom Editor sends declared glTF buffer and PNG image resources", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle({
+    binaryUri: "BoxTextured0.bin",
+    imageUri: "BaseColor.png",
+  });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/BoxTextured.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: Object.fromEntries(
+      bundle.resources.map((resource) => [
+        resource.uri,
+        resource.bytes,
+      ]),
+    ),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.deepEqual(
+    sourceMessage.resources.map((resource) => resource.uri),
+    ["BoxTextured0.bin", "BaseColor.png"],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+  document.dispose();
+  provider.dispose();
+});
+
 test("Custom Editor rejects a declared glTF resource symlink", async () => {
   const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
   const { sourceUri, vscode } = fakeVscode({
@@ -1016,6 +1070,24 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       extensionsRequired: ["KHR_mesh_quantization"],
       extensionsUsed: ["KHR_mesh_quantization"],
       profile: "gltf-2.0-bounded-reference-mesh-v0.1",
+      appearance: {
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet: 0,
+        textureSourceBytes: 3750,
+        textureDecodedBytes: 262144,
+        textures: 1,
+        imageMediaTypes: ["image/png"],
+        colorSpace: "srgb-to-linear-webgl2",
+      },
+      resourceBundle: {
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: 3695,
+        externalResourceBytes: 4590,
+        externalResources: 2,
+        externalBufferResources: 1,
+        externalImageResources: 1,
+        networkAtRuntime: false,
+      },
       sourceRole: "derived-or-reference-mesh",
       semanticAuthority: false,
       path: "/private/customer/acme.glb",
@@ -1033,14 +1105,39 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       treeRows: 1,
       maximumDomRows: 64,
     },
+    resources: {
+      sourceBytes: 8285,
+      geometryBytes: 4756,
+      textureSourceBytes: 3750,
+      textureDecodedBytes: 262144,
+      textures: 1,
+      externalBufferResources: 1,
+      externalImageResources: 1,
+    },
+    renderer: {
+      actualGpu: true,
+      nonBackgroundPixels: 100,
+      sourceReadBytes: 4756,
+      uploadedBytes: 350516,
+      textureSourceBytes: 3750,
+      textureDecodedBytes: 262144,
+      textureGpuBytes: 349524,
+      textures: 1,
+      gpuTextures: 1,
+    },
   });
   assert.equal(report.source.format, "glb");
   assert.equal(report.source.semanticAuthority, false);
+  assert.equal(report.source.appearance.textures, 1);
+  assert.equal(report.source.resourceBundle.externalImageResources, 1);
   assert.deepEqual(
     report.source.extensionsRequired,
     ["KHR_mesh_quantization"],
   );
   assert.equal(report.reference.globalId, null);
+  assert.equal(report.resources.textureDecodedBytes, 262144);
+  assert.equal(report.renderer.gpuTextures, 1);
+  assert.equal(report.renderer.textureGpuBytes, 349524);
   assert.equal(
     report.reference.selectedNativeId,
     "node:1/mesh:0/primitive:0",
@@ -1194,6 +1291,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
       "packages/bim-renderer-3d/src/point-cloud.mjs",
       "packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
+      "packages/bim-renderer-3d/src/textured-geometry.mjs",
       "packages/bim-semantic-explorer/src/index.mjs",
       "apps/federated-bim-surface-vscode/app.mjs",
       "apps/federated-bim-surface-vscode/index.html",

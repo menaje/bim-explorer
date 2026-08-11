@@ -1,0 +1,77 @@
+{
+  "schema": "bim-explorer-public-gltf-resource-bundle-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-box-textured-external-png",
+  "purpose": "cache-only qualification of one bounded same-folder external glTF buffer and PNG base color texture bundle",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "directory": "Models/BoxTextured/glTF",
+    "modelOwner": "Cesium",
+    "modelYear": 2017
+  },
+  "document": {
+    "name": "BoxTextured.gltf",
+    "mediaType": "model/gltf+json",
+    "byteLength": 3695,
+    "sha256": "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef",
+    "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF/BoxTextured.gltf"
+  },
+  "resources": [
+    {
+      "name": "BoxTextured0.bin",
+      "mediaType": "application/octet-stream",
+      "byteLength": 840,
+      "sha256": "2e8c0483fa6665c686ec345f89dcbb2a694a587442584d09f8a83a59633327bc",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF/BoxTextured0.bin"
+    },
+    {
+      "name": "CesiumLogoFlat.png",
+      "mediaType": "image/png",
+      "byteLength": 3750,
+      "sha256": "9c22b05c5b136d03c5621a8765e50a8322be6c35b9de53e9fe22685840d7f469",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF/CesiumLogoFlat.png"
+    }
+  ],
+  "license": {
+    "spdx": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+    "name": "CC BY 4.0 International with trademark limitations and Cesium legal mark terms",
+    "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/LICENSES/LicenseRef-CC-BY-TM.txt",
+    "trademarkUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/LICENSES/LicenseRef-LegalMark-Cesium.txt",
+    "attribution": "Box Textured © 2017 Cesium; Cesium logo © 2015 Cesium",
+    "redistribution": "cache-only test input; not tracked or release-bundled"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "COLLADA2GLTF",
+    "externalResources": 2,
+    "externalBufferResources": 1,
+    "externalImageResources": 1,
+    "externalResourceBytes": 4590,
+    "aggregateSourceBytes": 8285,
+    "sourceFingerprint": "dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+    "geometryRecords": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "ranges": 1,
+    "geometryRangeMediaType": "application/vnd.bim-explorer.geometry-range.v2",
+    "geometryRangeBytes": 4756,
+    "geometryRangeSha256": "ce04af8c146d03daf9e08e5b26f54e2f44fbe5a5203df50f0d642e459509a3cd",
+    "geometryPayloadBytes": 912,
+    "textureSourceBytes": 3750,
+    "textureDecodedBytes": 262144,
+    "textureGpuBytes": 349524,
+    "textures": 1,
+    "imageMediaType": "image/png",
+    "textureCoordinateSet": 0,
+    "gpuUploadBytes": 350516,
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactsTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

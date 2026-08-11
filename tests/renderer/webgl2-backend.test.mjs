@@ -9,6 +9,9 @@ import {
   createBimModelSource,
 } from "../../packages/bim-model-source/src/index.mjs";
 import {
+  createGltfReferenceSource,
+} from "../../packages/gltf-reference-source/src/index.mjs";
+import {
   createBounded3dRenderer,
   createFitCamera3d,
   createWebGl2Backend,
@@ -16,6 +19,9 @@ import {
   panCamera3d,
   zoomCamera3d,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
+import {
+  syntheticTexturedGltfExternalBundle,
+} from "../../scripts/generate-synthetic-gltf.mjs";
 import {
   syntheticMappedIfc,
 } from "../../scripts/generate-synthetic-ifc.mjs";
@@ -40,11 +46,14 @@ class FakeWebGl2Context {
   LINK_STATUS = 0x8b82;
   MAX_VERTEX_ATTRIBS = 0x8869;
   NEAREST = 0x2600;
+  NONE = 0;
   NO_ERROR = 0;
   RENDERBUFFER = 0x8d41;
   RGBA = 0x1908;
   SCISSOR_TEST = 0x0c11;
   STATIC_DRAW = 0x88e4;
+  SRGB8_ALPHA8 = 0x8c43;
+  TEXTURE0 = 0x84c0;
   TEXTURE_2D = 0x0de1;
   TEXTURE_MAG_FILTER = 0x2800;
   TEXTURE_MIN_FILTER = 0x2801;
@@ -53,6 +62,9 @@ class FakeWebGl2Context {
   TRIANGLES = 0x0004;
   UNSIGNED_BYTE = 0x1401;
   UNSIGNED_INT = 0x1405;
+  UNPACK_COLORSPACE_CONVERSION_WEBGL = 0x9243;
+  UNPACK_FLIP_Y_WEBGL = 0x9240;
+  UNPACK_PREMULTIPLY_ALPHA_WEBGL = 0x9241;
   VERSION = 0x1f02;
 
   constructor() {
@@ -64,11 +76,14 @@ class FakeWebGl2Context {
     this.deletedTextures = 0;
     this.drawCalls = 0;
     this.framebuffer = null;
+    this.generatedMipmaps = 0;
     this.lost = false;
     this.pickIndex = 0;
     this.scissors = [];
+    this.textureUploads = [];
   }
 
+  activeTexture() {}
   attachShader() {}
   bindBuffer() {}
   bindFramebuffer(target, value) {
@@ -122,6 +137,7 @@ class FakeWebGl2Context {
   }
   depthFunc() {}
   disable() {}
+  disableVertexAttribArray() {}
   drawElementsInstanced() {
     this.drawCalls += 1;
   }
@@ -130,6 +146,9 @@ class FakeWebGl2Context {
   finish() {}
   framebufferRenderbuffer() {}
   framebufferTexture2D() {}
+  generateMipmap() {
+    this.generatedMipmaps += 1;
+  }
   getError() {
     return this.NO_ERROR;
   }
@@ -183,6 +202,7 @@ class FakeWebGl2Context {
     return this.lost;
   }
   linkProgram() {}
+  pixelStorei() {}
   readPixels(
     x,
     y,
@@ -212,7 +232,11 @@ class FakeWebGl2Context {
     this.scissors.push({ height, width, x, y });
   }
   shaderSource() {}
-  texImage2D() {}
+  texImage2D(...values) {
+    if (values.length === 6 && values[2] === this.SRGB8_ALPHA8) {
+      this.textureUploads.push(values);
+    }
+  }
   texParameteri() {}
   uniform1i() {}
   uniform1ui(location, value) {
@@ -222,21 +246,12 @@ class FakeWebGl2Context {
   uniformMatrix4fv() {}
   useProgram() {}
   vertexAttribDivisor() {}
+  vertexAttrib2f() {}
   vertexAttribPointer() {}
   viewport() {}
 }
 
-test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
-  const bytes = new TextEncoder().encode(syntheticMappedIfc());
-  const artifact = await createWebIfcSourceArtifact(bytes);
-  const source = createBimModelSource(artifact, {
-    maximumRequestBytes: 128,
-  });
-  const session = await source.open({
-    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
-  });
-  const snapshot = await session.getSnapshot();
-  const context = new FakeWebGl2Context();
+function fakeCanvas(context) {
   const listeners = new Map();
   const canvas = {
     height: 0,
@@ -248,10 +263,7 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     },
     dispatch(type) {
       for (const listener of listeners.get(type) ?? []) {
-        listener({
-          preventDefault() {},
-          type,
-        });
+        listener({ preventDefault() {}, type });
       }
     },
     getContext(name, options) {
@@ -264,6 +276,85 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
     },
   };
   context.canvas = canvas;
+  return canvas;
+}
+
+test("WebGL2 backend decodes and uploads bounded base color textures", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle();
+  const source = await createGltfReferenceSource(bundle.bytes, {
+    resources: bundle.resources,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = new FakeWebGl2Context();
+  let closedImages = 0;
+  const backend = createWebGl2Backend({
+    canvas: fakeCanvas(context),
+    frameScheduler(callback) {
+      callback(0);
+    },
+    height: 90,
+    imageDecoder(bytes, metadata) {
+      assert.deepEqual([...bytes.slice(0, 8)], [
+        0x89, 0x50, 0x4e, 0x47,
+        0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
+      assert.equal(metadata.mediaType, "image/png");
+      return {
+        width: metadata.width,
+        height: metadata.height,
+        close() {
+          closedImages += 1;
+        },
+      };
+    },
+    width: 160,
+  });
+  const renderer = createBounded3dRenderer({ backend });
+  const receipt = await renderer.mount({ session, snapshot });
+
+  assert.equal(receipt.metrics.textures, 1);
+  assert.equal(receipt.metrics.textureSourceBytes, 76);
+  assert.equal(receipt.metrics.textureDecodedBytes, 16);
+  assert.equal(receipt.metrics.textureGpuBytes, 20);
+  assert.equal(receipt.backend.textureBytes, 20);
+  assert.equal(receipt.backend.gpuTextures, 1);
+  assert.equal(receipt.backend.uploadedBytes, 288);
+  assert.equal(context.textureUploads.length, 1);
+  assert.equal(context.generatedMipmaps, 1);
+  assert.equal(closedImages, 1);
+  assert.deepEqual(
+    context.bufferUploads.map((upload) => upload.byteLength),
+    [96, 12, 160],
+  );
+  assert.equal(backend.state.activeBytes, 288);
+
+  const released = await renderer.unmount();
+  assert.equal(released.releasedBytes, 288);
+  assert.equal(context.deletedTextures, 1);
+  assert.equal(await renderer.dispose(), true);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+});
+
+test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
+  const bytes = new TextEncoder().encode(syntheticMappedIfc());
+  const artifact = await createWebIfcSourceArtifact(bytes);
+  const source = createBimModelSource(artifact, {
+    maximumRequestBytes: 128,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = new FakeWebGl2Context();
+  const canvas = fakeCanvas(context);
   const backend = createWebGl2Backend({
     canvas,
     frameScheduler(callback) {

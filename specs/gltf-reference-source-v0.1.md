@@ -35,6 +35,8 @@ roundTripAuthority: false
   `application/gltf-buffer` data URI
 - glTF 2.0 JSON이 참조하고 caller가 명시적으로 공급한 동일 폴더 ASCII
   leaf-name `.bin` buffer
+- glTF 2.0 JSON이 참조하고 caller가 명시적으로 공급한 동일 폴더 ASCII
+  leaf-name `.png` image
 - 하나의 default scene과 bounded node hierarchy
 - node의 column-major matrix 또는 translation/rotation/scale
 - indexed `TRIANGLES`
@@ -47,17 +49,22 @@ roundTripAuthority: false
   `FILTER_NONE` bufferView. fallback buffer는 payload 없는 placeholder만 허용
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
+- OPAQUE material의 외부 PNG `baseColorTexture`, bounded `TEXCOORD_0`과
+  glTF core 범위의 standard sampler
 
-local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$` 범위이고 `..`를
+local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.(bin|png)$` 범위이고 `..`를
 포함할 수 없습니다. scheme, slash/backslash, query/fragment, percent-encoding을
 포함한 외부 HTTP, file 및 path URI는 fetch하지 않고 `NotSupportedError`로
 거부합니다. caller가 공급한 누락·중복·미사용 sidecar도 fail closed합니다.
-두 승인 확장 이외 required extension, primitive extension, external image,
+두 승인 확장 이외 required extension, primitive extension, JPEG 또는 profile 밖 image,
 animation, skin, morph target, sparse accessor와 collapsed transform도 first
 profile 밖입니다. 양자화 vertex accessor는 glTF extension의 4-byte alignment를
 따르며 signed normalized normal은 decode 뒤 단위 벡터로 다시 정규화합니다.
-optional texture/image metadata는 geometry 입출력이나 network authority를
-부여하지 않습니다.
+embedded texture/image metadata는 geometry 입출력이나 network authority를
+부여하지 않습니다. 외부 PNG texture는 `baseColorTexture.texCoord = 0`,
+primitive의 `TEXCOORD_0`, OPAQUE alpha mode와 한 개의 image source를 정확히
+참조해야 합니다. normal, metallic-roughness, occlusion, emissive texture,
+`KHR_texture_transform`, alpha mask/blend와 unused image/resource는 거부합니다.
 
 ## 상한
 
@@ -70,7 +77,12 @@ optional texture/image metadata는 geometry 입출력이나 network authority를
 | decoded aggregate buffer | 64 MiB |
 | meshopt decoded bufferView aggregate | 64 MiB |
 | meshopt decoded/compressed ratio | 256:1 |
-| external `.bin` resource | 16개 |
+| external `.bin` + `.png` resource | 16개 |
+| external PNG texture | 16개 |
+| encoded PNG texture aggregate | 8 MiB |
+| decoded PNG RGBA aggregate | 16 MiB |
+| PNG width 또는 height | 2,048 px |
+| decoded/encoded PNG ratio | 256:1 |
 | external resource leaf-name | UTF-8 128 bytes |
 | node | 4,096 |
 | node depth | 256 |
@@ -89,6 +101,10 @@ glTF의 meter, right-handed, Y-up local coordinates를
 `gltf-local-meter-y-up`으로 명시합니다. node hierarchy의 world transform은
 Float64 JavaScript number metadata로 계산하고, geometry range는
 Float32 position/normal과 Uint32 index인 lossy display cache로 인코딩합니다.
+texture가 없는 projection은 기존 `application/vnd.bim-explorer.geometry-range.v1`
+(`BEXGEO01`)을 byte-identical하게 유지합니다. 승인된 base-color texture가 있으면
+interleaved Float32 `TEXCOORD_0`와 exact PNG table을
+`application/vnd.bim-explorer.geometry-range.v2` (`BEXGEO02`)로 인코딩합니다.
 
 같은 mesh primitive를 여러 node가 참조하면 geometry record는 한 번만
 인코딩하고 occurrence transform을 각각 유지합니다. 전체 bounds는 active
@@ -117,19 +133,21 @@ source는 단일 immutable session만 엽니다. 모든 range handle은 protocol
 session, source, revision, snapshot과 layer context를 포함하며 stale
 context를 거부합니다.
 
-parser가 소유한 source/buffer/sidecar 복사본, meshopt decode buffer와 intermediate
+parser가 소유한 source/buffer/image sidecar 복사본, PNG decode scratch,
+meshopt decode buffer와 intermediate
 accessor array는 projection 뒤 지웁니다. meshoptimizer 1.2.0 single-thread WASM은
 압축 source를 열 때만 기존 source Worker 안에서 초기화하며 cancel/switch는 Worker
 종료로 동기 decode를 격리합니다. terminal source dispose는 retained geometry range를
-0으로 덮고 identity index를 비웁니다. caller-owned input bytes와 renderer
+0으로 덮고 identity index와 retained texture payload를 비웁니다. caller-owned input bytes와 renderer
 GPU allocation은 source가 소유하지 않습니다.
 
 ## 보류
 
 - Draco, meshopt의 OCTAHEDRAL/QUATERNION/EXPONENTIAL filter와 두 승인 확장 이외
   required extension
-- arbitrary URI, nested path와 external image
-- texture/image decode와 material fidelity
+- arbitrary URI, nested path, JPEG와 embedded image material projection
+- alpha mode, normal/metallic-roughness/occlusion/emissive texture,
+  `KHR_texture_transform`과 broader material fidelity
 - animation, skin과 morph target
 - source write, conversion과 round-trip
 - BIM property/classification authority
@@ -186,6 +204,19 @@ Metal에서 같은 24 vertices·12 triangles, 756-byte geometry read, 800-byte u
 Worker bundle에 포함되지만 sample은 cache-only입니다. 이 승인은 required
 bufferView compression의 `FILTER_NONE`만 허용합니다.
 
+고정된 Khronos `BoxTextured.gltf` 3,695 bytes, `BoxTextured0.bin` 840 bytes와
+`CesiumLogoFlat.png` 3,750 bytes는 원본 commit과 각 SHA-256을 cache-only
+manifest로 고정했습니다. 공식 Validator의 두 external resource 검사도
+error·warning·info·hint가 모두 0입니다. source는 24 vertices·12 triangles,
+3,750-byte texture source와 262,144-byte decoded base RGBA를 4,756-byte
+geometry-range v2로 투영합니다. headless renderer와 actual Chrome 151, staged
+VS Code 1.132, clean-installed local VSIX는 Apple M2 Metal에서 같은 86,486
+pixels, 349,524-byte mipmap-aware GPU texture, 350,516-byte total upload와
+terminal cleanup을 재현했습니다. sample의
+원 라이선스와 Cesium 표장 조건은 manifest에 고정하며 binary는 Git·VSIX·release에
+재배포하지 않습니다. 이 승인은 single-source 제품 범위이고 immutable federated
+BIM Surface v0.2 runtime과 `.bimfed.json`에는 backport하지 않습니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
@@ -193,6 +224,7 @@ upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 �
 포함하지 않습니다.
 
 이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
-external image, Draco·다른 meshopt filter·그 밖의 required extension, broader material/geometry fidelity,
+JPEG·투명/다중 material texture, Draco·다른 meshopt filter·그 밖의 required extension,
+broader material/geometry fidelity,
 Linux/Windows physical GPU, BIM semantic authority, write와 round-trip은
 승인하지 않습니다.

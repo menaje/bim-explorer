@@ -74,6 +74,7 @@ test("product server exposes only its same-origin allowlist", async () => {
       "/packages/bim-renderer-3d/src/index.mjs",
       "/packages/bim-renderer-3d/src/point-cloud.mjs",
       "/packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
+      "/packages/bim-renderer-3d/src/textured-geometry.mjs",
       "/packages/bim-semantic-explorer/src/index.mjs",
     ]) {
       assert.equal(

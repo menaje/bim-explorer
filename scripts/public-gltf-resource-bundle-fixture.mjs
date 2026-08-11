@@ -17,9 +17,17 @@ export const PUBLIC_GLTF_RESOURCE_BUNDLE_MANIFEST = path.join(
   "public-khronos-box-external",
   "manifest.json",
 );
+export const PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST = path.join(
+  ROOT,
+  "fixtures",
+  "gltf",
+  "public-khronos-box-textured",
+  "manifest.json",
+);
 const SHA256 = /^[0-9a-f]{64}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
-const RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
+const RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -60,31 +68,62 @@ function validateManifest(value) {
   const rawBase =
     "https://raw.githubusercontent.com/KhronosGroup/" +
     `glTF-Sample-Assets/${provenance.commit}/${provenance.directory}`;
+  const fixture = manifest.fixtureId ===
+      "khronos-gltf-sample-assets-box-external-buffer"
+    ? {
+        directory: "Models/Box/glTF",
+        documentName: "Box.gltf",
+        resources: [["Box0.bin", "application/octet-stream"]],
+        licenseSpdx: "CC-BY-4.0",
+        licenseUrl:
+          "https://creativecommons.org/licenses/by/4.0/legalcode",
+      }
+    : manifest.fixtureId ===
+        "khronos-gltf-sample-assets-box-textured-external-png"
+      ? {
+          directory: "Models/BoxTextured/glTF",
+          documentName: "BoxTextured.gltf",
+          resources: [
+            ["BoxTextured0.bin", "application/octet-stream"],
+            ["CesiumLogoFlat.png", "image/png"],
+          ],
+          licenseSpdx:
+            "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          licenseUrl:
+            "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+            `blob/${provenance.commit}/LICENSES/LicenseRef-CC-BY-TM.txt`,
+        }
+      : null;
+  const externalResourceBytes = Array.isArray(manifest.resources)
+    ? manifest.resources.reduce(
+        (total, resource) => total + (resource?.byteLength ?? 0),
+        0,
+      )
+    : -1;
   if (
     manifest.schema !==
       "bim-explorer-public-gltf-resource-bundle-fixture/1" ||
-    manifest.fixtureId !==
-      "khronos-gltf-sample-assets-box-external-buffer" ||
+    fixture === null ||
     provenance.repository !==
       "https://github.com/KhronosGroup/glTF-Sample-Assets" ||
     !COMMIT.test(provenance.commit ?? "") ||
-    provenance.directory !== "Models/Box/glTF" ||
+    provenance.directory !== fixture.directory ||
     !Array.isArray(manifest.resources) ||
-    manifest.resources.length !== 1 ||
-    !RESOURCE_NAME.test(manifest.resources[0]?.name ?? "") ||
-    manifest.resources[0].name.includes("..") ||
-    license.spdx !== "CC-BY-4.0" ||
-    license.url !==
-      "https://creativecommons.org/licenses/by/4.0/legalcode" ||
+    manifest.resources.length !== fixture.resources.length ||
+    manifest.resources.some((resource) =>
+      !RESOURCE_NAME.test(resource?.name ?? "") ||
+      resource.name.includes("..")) ||
+    license.spdx !== fixture.licenseSpdx ||
+    license.url !== fixture.licenseUrl ||
     tracking.cacheRoot !== ".gltf-cache/public-gltf" ||
     tracking.artifactsTracked !== false ||
     tracking.releaseBundled !== false ||
     tracking.networkAtRuntime !== false ||
     expected.gltfVersion !== "2.0" ||
-    expected.externalResources !== 1 ||
-    expected.externalResourceBytes !== manifest.resources[0].byteLength ||
+    expected.externalResources !== manifest.resources.length ||
+    expected.externalResourceBytes !== externalResourceBytes ||
     expected.aggregateSourceBytes !==
-      document.byteLength + manifest.resources[0].byteLength ||
+      document.byteLength + externalResourceBytes ||
     !SHA256.test(expected.sourceFingerprint ?? "") ||
     !SHA256.test(expected.geometryRangeSha256 ?? "") ||
     !Number.isSafeInteger(expected.geometryRangeBytes) ||
@@ -95,14 +134,52 @@ function validateManifest(value) {
   ) {
     throw new Error("public glTF resource bundle manifest is invalid");
   }
-  validateEntry(document, "Box.gltf", "model/gltf+json", rawBase);
   validateEntry(
-    manifest.resources[0],
-    "Box0.bin",
-    "application/octet-stream",
+    document,
+    fixture.documentName,
+    "model/gltf+json",
     rawBase,
   );
+  for (let index = 0; index < fixture.resources.length; index += 1) {
+    validateEntry(
+      manifest.resources[index],
+      fixture.resources[index][0],
+      fixture.resources[index][1],
+      rawBase,
+    );
+  }
+  if (
+    manifest.fixtureId ===
+      "khronos-gltf-sample-assets-box-textured-external-png" &&
+    (
+      license.trademarkUrl !==
+        "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+        `blob/${provenance.commit}/LICENSES/LicenseRef-LegalMark-Cesium.txt` ||
+      expected.externalBufferResources !== 1 ||
+      expected.externalImageResources !== 1 ||
+      expected.geometryRangeMediaType !==
+        "application/vnd.bim-explorer.geometry-range.v2" ||
+      expected.imageMediaType !== "image/png" ||
+      expected.textureCoordinateSet !== 0 ||
+      expected.textures !== 1 ||
+      !Number.isSafeInteger(expected.textureSourceBytes) ||
+      !Number.isSafeInteger(expected.textureDecodedBytes) ||
+      expected.textureDecodedBytes <= expected.textureSourceBytes ||
+      !Number.isSafeInteger(expected.textureGpuBytes) ||
+      expected.textureGpuBytes < expected.textureDecodedBytes ||
+      expected.gpuUploadBytes !==
+        expected.geometryPayloadBytes + 80 + expected.textureGpuBytes
+    )
+  ) {
+    throw new Error("public textured glTF bundle manifest is invalid");
+  }
   return Object.freeze(structuredClone(manifest));
+}
+
+export async function loadPublicGltfTextureBundleManifest() {
+  return await loadPublicGltfResourceBundleManifest(
+    PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
+  );
 }
 
 export async function loadPublicGltfResourceBundleManifest(
@@ -228,4 +305,12 @@ export async function acquirePublicGltfResourceBundle({
     }
     throw error;
   }
+}
+
+export async function acquirePublicGltfTextureBundle(options = {}) {
+  return await acquirePublicGltfResourceBundle({
+    ...options,
+    manifestPath:
+      options.manifestPath ?? PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
+  });
 }

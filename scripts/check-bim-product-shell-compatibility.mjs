@@ -53,6 +53,10 @@ import {
   GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH,
   validateGltfMeshoptProductsQualification,
 } from "./qualify-gltf-meshopt-products.mjs";
+import {
+  GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfTextureProductsQualification,
+} from "./qualify-gltf-texture-products.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -91,6 +95,9 @@ const PASSED_GATES = [
   "browserExtMeshoptCompressionOpen",
   "vscodeExtMeshoptCompressionOpen",
   "cleanVsixExtMeshoptCompressionOpen",
+  "browserBoundedBaseColorTextureOpen",
+  "vscodeBoundedBaseColorTextureOpen",
+  "cleanVsixBoundedBaseColorTextureOpen",
   "browserReadonlyLasLazOpen",
   "vscodeReadonlyLasLazOpen",
   "cleanVsixLasLazOpen",
@@ -487,6 +494,7 @@ export function validateBimProductShellCompatibility(
   gltfExternalResourceProducts,
   gltfMeshQuantizationProducts,
   gltfMeshoptProducts,
+  gltfTextureProducts,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -567,6 +575,10 @@ export function validateBimProductShellCompatibility(
   const gltfMeshoptReport =
     validateGltfMeshoptProductsQualification(
       gltfMeshoptProducts,
+    );
+  const gltfTextureReport =
+    validateGltfTextureProductsQualification(
+      gltfTextureProducts,
     );
   if (
     manifest.schema !==
@@ -917,6 +929,47 @@ export function validateBimProductShellCompatibility(
       "external glTF resource product fixture policy is invalid",
     );
   }
+  const texturedReferenceFixture = manifest.texturedReferenceFixture;
+  const texturedEvidenceFixture = gltfTextureProducts.fixture;
+  if (
+    texturedReferenceFixture?.id !== texturedEvidenceFixture?.id ||
+    texturedReferenceFixture?.byteLength !== 8_285 ||
+    texturedReferenceFixture?.documentByteLength !== 3_695 ||
+    texturedReferenceFixture?.externalResourceBytes !== 4_590 ||
+    texturedReferenceFixture?.externalResources !== 2 ||
+    texturedReferenceFixture?.externalBufferResources !== 1 ||
+    texturedReferenceFixture?.externalImageResources !== 1 ||
+    texturedReferenceFixture?.textureSourceBytes !== 3_750 ||
+    texturedReferenceFixture?.textureDecodedBytes !== 262_144 ||
+    texturedReferenceFixture?.textureGpuBytes !== 349_524 ||
+    texturedReferenceFixture?.textures !== 1 ||
+    texturedReferenceFixture?.sourceFingerprint !==
+      texturedEvidenceFixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    texturedReferenceFixture?.format !== "gltf" ||
+    texturedReferenceFixture?.gltfVersion !== "2.0" ||
+    texturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    texturedReferenceFixture?.artifactCommitted !== false ||
+    texturedReferenceFixture?.thirdPartyContent !== true ||
+    texturedReferenceFixture?.bundled !== false ||
+    texturedReferenceFixture?.repository !==
+      texturedEvidenceFixture?.provenance?.repository ||
+    texturedReferenceFixture?.commit !==
+      texturedEvidenceFixture?.provenance?.commit ||
+    texturedReferenceFixture?.license !==
+      texturedEvidenceFixture?.provenance?.license ||
+    gltfTextureReport.status !==
+      "passed-darwin-arm64-apple-metal-texture" ||
+    gltfTextureReport.surfaces !== 3 ||
+    gltfTextureReport.sourceBytes !== 8_285 ||
+    gltfTextureReport.decodedTextureBytes !== 262_144 ||
+    gltfTextureReport.gpuTextureBytes !== 349_524 ||
+    gltfTextureReport.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error(
+      "textured glTF product fixture policy is invalid",
+    );
+  }
   const gates = plainRecord(
     manifest.gates,
     "product shell gates",
@@ -971,7 +1024,15 @@ export function validateBimProductShellCompatibility(
         maximumExternalResources: 16,
         maximumResourceNameBytes: 128,
         sameFolderOnly: true,
-        resourceExtension: ".bin",
+        resourceExtensions: [".bin", ".png"],
+        textureProfile: {
+          maximumTextures: 16,
+          maximumSourceBytes: 8_388_608,
+          maximumDecodedBytes: 16_777_216,
+          maximumDimension: 2_048,
+          maximumCompressionRatio: 256,
+          scope: "external-png-opaque-base-color-texcoord0",
+        },
       }) ||
     JSON.stringify(limits?.lasLazPointSource) !==
       JSON.stringify({
@@ -1020,6 +1081,7 @@ export function validateBimProductShellCompatibility(
         localExternalGltfBundleProductSurfaces: 3,
         khrMeshQuantizationProductSurfaces: 3,
         extMeshoptCompressionProductSurfaces: 3,
+        baseColorTextureProductSurfaces: 3,
         pointCloudProductSurfaces: 12,
         pointCloudFormatAdmission: false,
         simultaneousComposition: false,
@@ -1427,6 +1489,8 @@ export function validateBimProductShellCompatibility(
       GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
     manifest.evidence?.gltfMeshoptProducts !==
       GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfTextureProducts !==
+      GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -1443,6 +1507,9 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimExtMeshoptCompressionOpen !== true ||
     manifest.policy?.extMeshoptCompressionScope !==
       "required-buffer-view-filter-none" ||
+    manifest.policy?.claimBoundedBaseColorTextureOpen !== true ||
+    manifest.policy?.boundedBaseColorTextureScope !==
+      "external-png-opaque-texcoord0-webgl2-srgb" ||
     manifest.policy?.claimArbitraryGltfUri !== false ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
     manifest.policy?.claimVscodeLasLazOpen !== true ||
@@ -1507,6 +1574,7 @@ export function validateBimProductShellCompatibility(
         gltfExternalResourceProducts,
         gltfMeshQuantizationProducts,
         gltfMeshoptProducts,
+        gltfTextureProducts,
         installation,
         manifest,
         vscode,
@@ -1530,6 +1598,7 @@ export function validateBimProductShellCompatibility(
     khrMeshQuantizationSurfaces:
       gltfMeshQuantizationReport.surfaces,
     extMeshoptCompressionSurfaces: gltfMeshoptReport.surfaces,
+    baseColorTextureSurfaces: gltfTextureReport.surfaces,
     physicalGpu: physicalGpu.status,
     pointCloudPhysicalGpu: pointCloudPhysicalGpu.status,
     pointCloudPhysicalGpuSurfaces:
@@ -1576,6 +1645,7 @@ async function main() {
     gltfExternalResourceProducts,
     gltfMeshQuantizationProducts,
     gltfMeshoptProducts,
+    gltfTextureProducts,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1702,6 +1772,10 @@ async function main() {
       path.join(root, manifest.evidence.gltfMeshoptProducts),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.gltfTextureProducts),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1730,6 +1804,7 @@ async function main() {
     gltfExternalResourceProducts,
     gltfMeshQuantizationProducts,
     gltfMeshoptProducts,
+    gltfTextureProducts,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

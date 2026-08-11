@@ -138,6 +138,16 @@ clean-installed local VSIX가 동일한 3-source composition, 8,286 pixels,
 Linux/Windows physical GPU, 실제 고객 모델, OS-level peak GPU memory, Spatial
 VSIX BIM runtime과 production support는 계속 별도 Gate입니다.
 
+## Immutable v0.1 runtime after release
+
+`packages/bim-surface/runtime/index.mjs`는 공개 `bim-surface-v0.1.0` package가
+고정한 309,505 bytes, SHA-256 `0be0cef0…393e7`를 유지합니다. `--check`는 현재
+개발 source에서 runtime을 다시 만들지 않고 이 exact release digest를 검사합니다.
+일반 v0.1 build도 현재 source가 release tag와 byte-identical한 경우에만 출력하며,
+post-release renderer 변경이 있으면 기존 파일을 덮어쓰지 않고 새 package version을
+요구합니다. Browser/VS Code의 후속 single-source glTF 기능은 현재 renderer module을
+직접 소비하므로 공개 v0.1 tarball과 IFC composition을 변경하지 않습니다.
+
 ## Immutable v0.2 runtime after release
 
 `packages/federated-bim-surface/runtime/index.mjs`는 공개 tag와 Spatial Phase B가
@@ -147,7 +157,8 @@ VSIX BIM runtime과 production support는 계속 별도 Gate입니다.
 있으며, post-release source가 달라졌다면 기존 파일을 덮어쓰지 않고 새 package
 version을 시작하라는 오류로 종료합니다.
 
-따라서 single-source `.gltf + .bin`이나 `KHR_mesh_quantization` 같은 후속 기능은
+따라서 single-source `.gltf + .bin/.png`, PNG texture,
+`KHR_mesh_quantization`이나 `EXT_meshopt_compression` 같은 후속 기능은
 v0.2 package에 자동 backport하지 않습니다. federated runtime/API에 포함하려면 새 semver, `dev →
 prerelease` 승격, exact package evidence와 Spatial consumer admission을 다시
 통과해야 합니다.

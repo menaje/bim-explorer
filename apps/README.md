@@ -36,9 +36,12 @@ Apple M2 Metal Gate를 통과했습니다. 이어 cache-only Khronos
 `Box.gltf + Box0.bin`을 Browser의
 명시적 다중 선택, staged VS Code와 clean-installed local VSIX에서 같은 composite
 identity·projection·cleanup으로 열었습니다. 지원 범위는 최대 16개 same-folder
-`.bin`, 합산 64MiB입니다. exact Box-derived `KHR_mesh_quantization`도 공식
-Validator/headless와 세 Apple M2 Metal 제품 표면을 통과했습니다. 임의 URI·external
-image·Draco·meshopt·그 밖의 required extension은 거부합니다.
+`.bin`/`.png`, 합산 64MiB입니다. exact BoxTextured bundle의 OPAQUE PNG
+`baseColorTexture`는 geometry-range v2와 WebGL2 sRGB upload로 같은 세 Apple M2
+Metal 제품 표면을 통과했습니다. exact Box-derived `KHR_mesh_quantization`과
+`EXT_meshopt_compression` `FILTER_NONE`도 공식 Validator/headless와 세 제품 표면을
+통과했습니다. 임의 URI·JPEG·비-OPAQUE alpha material mode·다른 material texture role·Draco·다른 meshopt
+filter·그 밖의 required extension은 거부합니다.
 Linux/Windows hardware, OS-level peak GPU memory와 공개 IFC를
 포함한 동시 합성은 계속 보류합니다.
 

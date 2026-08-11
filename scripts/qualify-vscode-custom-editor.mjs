@@ -148,6 +148,7 @@ export async function qualifyVscodeCustomEditor({
   includePointFixtures = false,
   includeProductScaleFixture = false,
   includePublicFixture = false,
+  externalResourceManifestPath = undefined,
   rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
@@ -169,7 +170,9 @@ export async function qualifyVscodeCustomEditor({
         })
       : null;
   const externalReferenceFixture = includeExternalResourceFixture
-    ? await acquirePublicGltfResourceBundle()
+    ? await acquirePublicGltfResourceBundle({
+        manifestPath: externalResourceManifestPath,
+      })
     : null;
   externalReferenceFixture?.document.bytes.fill(0);
   for (const resource of externalReferenceFixture?.resources ?? []) {
@@ -284,6 +287,12 @@ export async function qualifyVscodeCustomEditor({
           : {
               BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE:
                 externalReferenceFixture.document.cachePath,
+              ...(externalResourceManifestPath === undefined
+                ? {}
+                : {
+                    BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST:
+                      externalResourceManifestPath,
+                  }),
             }),
         ...(quantizedReferenceFixture === null
           ? {}

@@ -233,6 +233,13 @@ const ROUTES = new Map([
     ),
   ],
   [
+    "/packages/bim-renderer-3d/src/textured-geometry.mjs",
+    route(
+      "packages/bim-renderer-3d/src/textured-geometry.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
     "/packages/bim-renderer-3d/src/webgl2-backend.mjs",
     route(
       "packages/bim-renderer-3d/src/webgl2-backend.mjs",

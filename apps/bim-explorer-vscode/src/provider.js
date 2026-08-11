@@ -34,7 +34,7 @@ const SOURCE_FORMATS = new Set([
 ]);
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const EXTERNAL_GLTF_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
 
 function pointMaximumSourceBytes(format) {
   return format === "e57"
@@ -350,26 +350,51 @@ function externalGltfResourceNames(bytes) {
     Array.isArray(document) ||
     !Array.isArray(document.buffers) ||
     document.buffers.length === 0 ||
-    document.buffers.length > 16
+    document.buffers.length > 16 ||
+    (
+      document.images !== undefined &&
+      (
+        !Array.isArray(document.images) ||
+        document.images.length > 16
+      )
+    )
   ) {
     throw stableError("SOURCE_GLTF_BUNDLE_INVALID", false);
   }
   const names = [];
   const observed = new Set();
-  for (const buffer of document.buffers) {
-    const uri = buffer?.uri;
+  const declared = [
+    ...document.buffers.map((buffer) => ({
+      kind: "buffer",
+      value: buffer,
+    })),
+    ...(document.images ?? []).map((image) => ({
+      kind: "image",
+      value: image,
+    })),
+  ];
+  for (const resource of declared) {
+    const uri = resource.value?.uri;
     if (
       typeof uri !== "string" ||
-      /^data:application\/(?:octet-stream|gltf-buffer);base64,/u
-        .test(uri)
+      uri.startsWith("data:")
     ) {
       continue;
     }
     if (
       uri.length > 128 ||
       !EXTERNAL_GLTF_RESOURCE_NAME.test(uri) ||
+      (
+        resource.kind === "buffer" &&
+        !uri.toLocaleLowerCase().endsWith(".bin")
+      ) ||
+      (
+        resource.kind === "image" &&
+        !uri.toLocaleLowerCase().endsWith(".png")
+      ) ||
       uri.includes("..") ||
-      observed.has(uri)
+      observed.has(uri) ||
+      names.length >= 16
     ) {
       throw stableError("SOURCE_GLTF_RESOURCE_URI_REJECTED", false);
     }
@@ -449,9 +474,35 @@ function sanitizeReport(value) {
                     "documentBytes",
                     "externalResourceBytes",
                     "externalResources",
+                    "externalBufferResources",
+                    "externalImageResources",
                   ],
                 ),
               },
+        ...(value.source?.appearance === undefined
+          ? {}
+          : {
+              appearance: {
+                profile: stringOrNull(
+                  value.source.appearance?.profile,
+                ),
+                textureCoordinateSet: numberOrNull(
+                  value.source.appearance?.textureCoordinateSet,
+                ),
+                imageMediaTypes: stringArray(
+                  value.source.appearance?.imageMediaTypes,
+                  8,
+                ),
+                colorSpace: stringOrNull(
+                  value.source.appearance?.colorSpace,
+                ),
+                ...numericRecord(value.source.appearance, [
+                  "textureSourceBytes",
+                  "textureDecodedBytes",
+                  "textures",
+                ]),
+              },
+            }),
         sourceRole: stringOrNull(
           value.source?.sourceRole,
         ),
@@ -625,6 +676,8 @@ function sanitizeReport(value) {
                 "documentBytes",
                 "externalResourceBytes",
                 "externalResources",
+                "externalBufferResources",
+                "externalImageResources",
                 "geometryBytes",
                 "metadataBytes",
                 "detailBytes",
@@ -633,6 +686,9 @@ function sanitizeReport(value) {
                 "ranges",
                 "products",
                 "referenceEntities",
+                "textureSourceBytes",
+                "textureDecodedBytes",
+                "textures",
                 "wasmHeapCapacityBytes",
               ]
             : [
@@ -655,6 +711,11 @@ function sanitizeReport(value) {
             "nonBackgroundPixels",
             "sourceReadBytes",
             "uploadedBytes",
+            "textureSourceBytes",
+            "textureDecodedBytes",
+            "textureGpuBytes",
+            "textures",
+            "gpuTextures",
           ]),
         },
     viewerCore: sanitizedViewerCore(value.viewerCore),
@@ -949,10 +1010,6 @@ class BimExplorerReadonlyEditorProvider {
       }
     }));
     if (format === "gltf") {
-      const resourceWatcher =
-        this.#vscode.workspace.createFileSystemWatcher(
-          new this.#vscode.RelativePattern(base, "*.bin"),
-        );
       const resourceChanged = async (changedUri) => {
         if (!document.hasResourceUri(changedUri)) {
           return;
@@ -961,16 +1018,22 @@ class BimExplorerReadonlyEditorProvider {
           await this.#sendSource(document, panel);
         }
       };
-      document.addDisposable(resourceWatcher);
-      document.addDisposable(
-        resourceWatcher.onDidChange(resourceChanged),
-      );
-      document.addDisposable(
-        resourceWatcher.onDidCreate(resourceChanged),
-      );
-      document.addDisposable(
-        resourceWatcher.onDidDelete(resourceChanged),
-      );
+      for (const pattern of ["*.bin", "*.png"]) {
+        const resourceWatcher =
+          this.#vscode.workspace.createFileSystemWatcher(
+            new this.#vscode.RelativePattern(base, pattern),
+          );
+        document.addDisposable(resourceWatcher);
+        document.addDisposable(
+          resourceWatcher.onDidChange(resourceChanged),
+        );
+        document.addDisposable(
+          resourceWatcher.onDidCreate(resourceChanged),
+        );
+        document.addDisposable(
+          resourceWatcher.onDidDelete(resourceChanged),
+        );
+      }
     }
     this.#documents.set(uriKey(uri), document);
     return document;

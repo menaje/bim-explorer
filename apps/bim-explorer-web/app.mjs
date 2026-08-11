@@ -1,9 +1,11 @@
 import {
-  createBimRenderer3dHost,
   createBimSurface,
+} from "../../packages/bim-surface/runtime/index.mjs";
+import {
+  createBimRenderer3dHost,
   createBounded3dRenderer,
   createWebGl2Backend,
-} from "../../packages/bim-surface/runtime/index.mjs";
+} from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
   createBoundedPointCloudRenderer,
 } from "../../packages/bim-renderer-3d/src/point-cloud.mjs";
@@ -32,7 +34,7 @@ const MAXIMUM_E57_SOURCE_BYTES = 32 * 1024 * 1024;
 const MAXIMUM_LAS_LAZ_SOURCE_BYTES = 8 * 1024 * 1024;
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const EXTERNAL_GLTF_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
 const MULTIPLE_SCAN_E57_RENDERER_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 32 * 1024 * 1024,
   maximumGpuBytes: 32 * 1024 * 1024,
@@ -1638,6 +1640,13 @@ async function openBytes(bytesValue, {
           resourceBundle: {
             ...opened.snapshot.referenceMetadata.resourceBundle,
           },
+          ...(opened.snapshot.referenceMetadata.appearance === null
+            ? {}
+            : {
+                appearance: {
+                  ...opened.snapshot.referenceMetadata.appearance,
+                },
+              }),
           sourceRole:
             opened.snapshot.source.sourceRole,
           semanticAuthority:
@@ -1679,6 +1688,19 @@ async function openBytes(bytesValue, {
           mount.renderer.backend.nonBackgroundPixels,
         sourceReadBytes: mount.renderer.metrics.sourceReadBytes,
         uploadedBytes: mount.renderer.backend.uploadedBytes,
+        ...(mount.renderer.metrics.textures === undefined
+          ? {}
+          : {
+              textures: mount.renderer.metrics.textures,
+              textureSourceBytes:
+                mount.renderer.metrics.textureSourceBytes,
+              textureDecodedBytes:
+                mount.renderer.metrics.textureDecodedBytes,
+              textureGpuBytes:
+                mount.renderer.metrics.textureGpuBytes,
+              gpuTextures:
+                mount.renderer.backend.gpuTextures ?? 0,
+            }),
       },
       viewerCore: viewerCore.state,
       ...(reference
@@ -1771,7 +1793,7 @@ function localExternalResourceName(file) {
     file.name.includes("..")
   ) {
     throw new TypeError(
-      "External glTF resources must be same-folder .bin files",
+      "External glTF resources must be same-folder .bin or .png files",
     );
   }
   return file.name;
@@ -1785,7 +1807,7 @@ async function readLocalFiles(fileList) {
     );
   }
   const sourceFiles = files.filter((file) =>
-    !file.name.toLocaleLowerCase().endsWith(".bin"));
+    !/\.(?:bin|png)$/u.test(file.name.toLocaleLowerCase()));
   if (sourceFiles.length !== 1) {
     throw new TypeError("Select exactly one BIM source file");
   }
@@ -1794,7 +1816,7 @@ async function readLocalFiles(fileList) {
   const format = localFileFormat(file);
   if (resourceFiles.length > 0 && format !== "gltf") {
     throw new TypeError(
-      "External .bin resources are only valid with glTF JSON",
+      "External .bin or .png resources are only valid with glTF JSON",
     );
   }
   const maximumBytes = POINT_SOURCE_FORMATS.has(format)

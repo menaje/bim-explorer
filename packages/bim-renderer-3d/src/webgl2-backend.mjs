@@ -8,7 +8,7 @@ import {
 const INSTANCE_FLOATS = 20;
 const INSTANCE_BYTES =
   INSTANCE_FLOATS * Float32Array.BYTES_PER_ELEMENT;
-const VERTEX_STRIDE_BYTES =
+const DEFAULT_VERTEX_STRIDE_BYTES =
   6 * Float32Array.BYTES_PER_ELEMENT;
 const DEFAULT_CLEAR_COLOR = Object.freeze([
   0.027,
@@ -25,6 +25,7 @@ layout(location = 3) in vec4 a_model_1;
 layout(location = 4) in vec4 a_model_2;
 layout(location = 5) in vec4 a_model_3;
 layout(location = 6) in vec4 a_color;
+layout(location = 7) in vec2 a_texcoord;
 
 uniform mat4 u_source_from_storage;
 uniform mat4 u_world_to_clip;
@@ -32,6 +33,7 @@ uniform mat4 u_world_to_clip;
 out vec4 v_color;
 out float v_light;
 out vec3 v_world_position;
+out vec2 v_texcoord;
 
 void main() {
   mat4 model = mat4(
@@ -48,6 +50,7 @@ void main() {
   v_light = 0.32 + 0.68 * abs(dot(normal, light_direction));
   v_color = a_color;
   v_world_position = world.xyz;
+  v_texcoord = a_texcoord;
   gl_Position = u_world_to_clip * world;
 }
 `;
@@ -58,10 +61,13 @@ precision highp float;
 in vec4 v_color;
 in float v_light;
 in vec3 v_world_position;
+in vec2 v_texcoord;
 
 uniform bool u_highlight;
 uniform int u_clip_count;
 uniform vec4 u_clip_planes[6];
+uniform bool u_has_texture;
+uniform sampler2D u_base_color_texture;
 
 out vec4 out_color;
 
@@ -81,8 +87,19 @@ void main() {
     out_color = vec4(1.0, 0.42, 0.04, 1.0);
     return;
   }
-  vec3 base = clamp(v_color.rgb, vec3(0.08), vec3(1.0));
-  out_color = vec4(base * v_light, max(v_color.a, 0.2));
+  vec4 texel = vec4(1.0);
+  if (u_has_texture) {
+    texel = texture(u_base_color_texture, v_texcoord);
+  }
+  vec3 base = clamp(
+    v_color.rgb * texel.rgb,
+    vec3(0.08),
+    vec3(1.0)
+  );
+  out_color = vec4(
+    base * v_light,
+    max(v_color.a * texel.a, 0.2)
+  );
 }
 `;
 
@@ -330,6 +347,9 @@ function deleteResources(gl, resources) {
   for (const value of resources.programs) {
     gl.deleteProgram(value);
   }
+  for (const value of resources.textures) {
+    gl.deleteTexture(value);
+  }
 }
 
 function packGeometry(plan) {
@@ -369,7 +389,10 @@ function packGeometry(plan) {
         Object.freeze({
           indexCount: record.indexCount,
           indexOffset,
+          textureIndex: record.textureIndex,
+          texcoordByteOffset: record.texcoordByteOffset,
           vertexOffset,
+          vertexStrideBytes: record.vertexStrideBytes,
         }),
       );
       vertexOffset += record.vertexPayload.byteLength;
@@ -385,6 +408,20 @@ function packGeometry(plan) {
   return {
     indices,
     records,
+    textures: new Map(
+      plan.ranges.flatMap((range) =>
+        range.decoded.textures.map((texture) => [
+          `${range.handleId}:${texture.index}`,
+          Object.freeze({
+            ...texture,
+            source: range.bytes.subarray(
+              texture.sourcePayload.offset,
+              texture.sourcePayload.offset +
+                texture.sourcePayload.byteLength,
+            ),
+          }),
+        ])),
+    ),
     vertices,
   };
 }
@@ -553,14 +590,129 @@ function packInstances(plan, worldOrigin) {
   return values;
 }
 
-function uploadBufferGroup(gl, plan, worldOrigin) {
+async function decodeBrowserImage(bytes, metadata) {
+  if (
+    typeof globalThis.Blob !== "function" ||
+    typeof globalThis.createImageBitmap !== "function"
+  ) {
+    throw new DOMException(
+      "browser image decode is unavailable",
+      "NotSupportedError",
+    );
+  }
+  const blob = new Blob([bytes], {
+    type: metadata.mediaType,
+  });
+  return await globalThis.createImageBitmap(blob, {
+    colorSpaceConversion: "none",
+    imageOrientation: "none",
+    premultiplyAlpha: "none",
+  });
+}
+
+async function uploadTextureGroup(gl, textures, imageDecoder) {
+  const values = [];
+  const byKey = new Map();
+  try {
+    for (const [key, metadata] of textures) {
+      const value = gl.createTexture();
+      if (value === null) {
+        throw new Error("WebGL2 could not allocate a base color texture");
+      }
+      values.push(value);
+      let image = null;
+      try {
+        image = await imageDecoder(metadata.source, metadata);
+        if (
+          image?.width !== metadata.width ||
+          image?.height !== metadata.height ||
+          typeof image.close !== "function"
+        ) {
+          throw new Error(
+            "decoded base color texture dimensions are invalid",
+          );
+        }
+        gl.bindTexture(gl.TEXTURE_2D, value);
+        gl.pixelStorei(
+          gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,
+          gl.NONE,
+        );
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_MAG_FILTER,
+          metadata.sampler.magFilter,
+        );
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_MIN_FILTER,
+          metadata.sampler.minFilter,
+        );
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_WRAP_S,
+          metadata.sampler.wrapS,
+        );
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_WRAP_T,
+          metadata.sampler.wrapT,
+        );
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.SRGB8_ALPHA8,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          image,
+        );
+        if (
+          [9984, 9985, 9986, 9987]
+            .includes(metadata.sampler.minFilter)
+        ) {
+          gl.generateMipmap(gl.TEXTURE_2D);
+        }
+        if (gl.getError() !== gl.NO_ERROR) {
+          throw new Error("WebGL2 texture upload failed");
+        }
+        byKey.set(key, value);
+      } finally {
+        image?.close?.();
+      }
+    }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return Object.freeze({
+      byKey,
+      values: Object.freeze(values),
+    });
+  } catch (error) {
+    for (const value of values) {
+      gl.deleteTexture(value);
+    }
+    throw error;
+  }
+}
+
+async function uploadBufferGroup(
+  gl,
+  plan,
+  worldOrigin,
+  imageDecoder,
+) {
   let geometry = null;
   let packedInstances = null;
   const buffers = [];
+  let uploadedTextures = null;
   const started = performance.now();
   try {
     geometry = packGeometry(plan);
     packedInstances = packInstances(plan, worldOrigin);
+    uploadedTextures = await uploadTextureGroup(
+      gl,
+      geometry.textures,
+      imageDecoder,
+    );
     buffers.push(
       buffer(gl, gl.ARRAY_BUFFER, geometry.vertices),
     );
@@ -583,32 +735,51 @@ function uploadBufferGroup(gl, plan, worldOrigin) {
       geometryRecords: sharedRecords,
       instances: Object.freeze(
         plan.instances.map(
-          (instance, localIndex) => Object.freeze({
-            buffers: sharedBuffers,
-            geometryExpressId: instance.geometryExpressId,
-            geometryRecords: sharedRecords,
-            expressId: instance.expressId,
-            externalIdentityToken:
-              instance.externalIdentityToken,
-            globalId: instance.globalId,
-            nativeId: instance.nativeId,
-            localIndex,
-            pickId: instance.pickId,
-            rangeId: instance.rangeId,
-            renderId: instance.renderId,
-          }),
+          (instance, localIndex) => {
+            const texture = instance.textureIndex === null
+              ? null
+              : uploadedTextures.byKey.get(
+                  `${instance.rangeId}:${instance.textureIndex}`,
+                );
+            if (texture === undefined) {
+              throw new Error(
+                "WebGL2 instance texture upload is missing",
+              );
+            }
+            return Object.freeze({
+              buffers: sharedBuffers,
+              geometryExpressId: instance.geometryExpressId,
+              geometryRecords: sharedRecords,
+              expressId: instance.expressId,
+              externalIdentityToken:
+                instance.externalIdentityToken,
+              globalId: instance.globalId,
+              nativeId: instance.nativeId,
+              localIndex,
+              pickId: instance.pickId,
+              rangeId: instance.rangeId,
+              renderId: instance.renderId,
+              texture,
+            });
+          },
         ),
       ),
       geometryBytes: plan.metrics.geometryPayloadBytes,
       instanceBytes: plan.metrics.instanceBytes,
+      textureBytes: plan.metrics.textureGpuBytes ?? 0,
+      textures: uploadedTextures.values,
       uploadedBytes:
         plan.metrics.geometryPayloadBytes +
-        plan.metrics.instanceBytes,
+        plan.metrics.instanceBytes +
+        (plan.metrics.textureGpuBytes ?? 0),
       uploadMs: performance.now() - started,
     });
   } catch (error) {
     for (const value of buffers) {
       gl.deleteBuffer(value);
+    }
+    for (const value of uploadedTextures?.values ?? []) {
+      gl.deleteTexture(value);
     }
     throw error;
   } finally {
@@ -619,12 +790,14 @@ function uploadBufferGroup(gl, plan, worldOrigin) {
 }
 
 function configureGeometryAttributes(gl, record) {
+  const stride = record.vertexStrideBytes ??
+    DEFAULT_VERTEX_STRIDE_BYTES;
   gl.vertexAttribPointer(
     0,
     3,
     gl.FLOAT,
     false,
-    VERTEX_STRIDE_BYTES,
+    stride,
     record.vertexOffset,
   );
   gl.vertexAttribPointer(
@@ -632,9 +805,23 @@ function configureGeometryAttributes(gl, record) {
     3,
     gl.FLOAT,
     false,
-    VERTEX_STRIDE_BYTES,
+    stride,
     record.vertexOffset + 3 * Float32Array.BYTES_PER_ELEMENT,
   );
+  if (record.texcoordByteOffset === null) {
+    gl.disableVertexAttribArray(7);
+    gl.vertexAttrib2f(7, 0, 0);
+  } else {
+    gl.enableVertexAttribArray(7);
+    gl.vertexAttribPointer(
+      7,
+      2,
+      gl.FLOAT,
+      false,
+      stride,
+      record.vertexOffset + record.texcoordByteOffset,
+    );
+  }
 }
 
 function configureInstanceAttributes(gl, instanceIndex) {
@@ -889,6 +1076,7 @@ export class WebGl2Backend {
   #disposed = false;
   #frameScheduler;
   #height;
+  #imageDecoder;
   #mounts = 0;
   #picks = 0;
   #releasedBytes = 0;
@@ -900,6 +1088,7 @@ export class WebGl2Backend {
     clearColor = DEFAULT_CLEAR_COLOR,
     frameScheduler = defaultFrameScheduler,
     height = 540,
+    imageDecoder = decodeBrowserImage,
     width = 960,
   } = {}) {
     if (typeof canvas?.getContext !== "function") {
@@ -922,6 +1111,10 @@ export class WebGl2Backend {
       throw new TypeError("WebGL2 frameScheduler must be a function");
     }
     this.#frameScheduler = frameScheduler;
+    if (typeof imageDecoder !== "function") {
+      throw new TypeError("WebGL2 imageDecoder must be a function");
+    }
+    this.#imageDecoder = imageDecoder;
     this.#height = positiveDimension(height, "WebGL2 height");
     this.#width = positiveDimension(width, "WebGL2 width");
   }
@@ -976,7 +1169,7 @@ export class WebGl2Backend {
     if (context === null) {
       throw new Error("WebGL2 is unavailable");
     }
-    if (context.getParameter(context.MAX_VERTEX_ATTRIBS) < 7) {
+    if (context.getParameter(context.MAX_VERTEX_ATTRIBS) < 8) {
       throw new Error(
         "WebGL2 does not expose enough vertex attributes",
       );
@@ -1131,6 +1324,18 @@ export class WebGl2Backend {
                 "WebGL2 instance geometry is unavailable",
               );
             }
+            const hasTexture = instance.texture !== null;
+            gl.uniform1i(
+              state.hasTextureLocation,
+              hasTexture ? 1 : 0,
+            );
+            if (hasTexture) {
+              gl.activeTexture(gl.TEXTURE0);
+              gl.bindTexture(gl.TEXTURE_2D, instance.texture);
+              gl.uniform1i(state.baseColorTextureLocation, 0);
+            } else {
+              gl.bindTexture(gl.TEXTURE_2D, null);
+            }
             gl.bindBuffer(
               gl.ELEMENT_ARRAY_BUFFER,
               instance.buffers[1],
@@ -1157,6 +1362,7 @@ export class WebGl2Backend {
             );
             drawCalls += 1;
           }
+          gl.bindTexture(gl.TEXTURE_2D, null);
           if (drawCalls === 0) {
             throw new Error(
               "WebGL2 view has no visible instances",
@@ -1276,6 +1482,7 @@ export class WebGl2Backend {
         frameProgram,
         pickProgram: null,
         programs: [frameProgram],
+        textures: [],
       };
       const pickProgram = program(gl, {
         fragmentSource: PICK_FRAGMENT_SHADER,
@@ -1293,12 +1500,14 @@ export class WebGl2Backend {
         ...bounds.max.map((value, axis) =>
           Math.abs(value - worldOrigin[axis])),
       );
-      const group = uploadBufferGroup(
+      const group = await uploadBufferGroup(
         gl,
         plan,
         worldOrigin,
+        this.#imageDecoder,
       );
       resources.buffers.push(...group.buffers);
+      resources.textures.push(...group.textures);
 
       const sourceMatrix = new Float32Array([
         1, 0, 0, 0,
@@ -1320,6 +1529,16 @@ export class WebGl2Backend {
         gl,
         frameProgram,
         "u_highlight",
+      );
+      const hasTextureLocation = requireUniform(
+        gl,
+        frameProgram,
+        "u_has_texture",
+      );
+      const baseColorTextureLocation = requireUniform(
+        gl,
+        frameProgram,
+        "u_base_color_texture",
       );
       const clipCountLocation = requireUniform(
         gl,
@@ -1366,6 +1585,8 @@ export class WebGl2Backend {
         groups: [group],
         instances: group.instances,
         resources,
+        baseColorTextureLocation,
+        hasTextureLocation,
         highlightLocation,
         pickIndexLocation,
         pickClipCountLocation,
@@ -1391,7 +1612,9 @@ export class WebGl2Backend {
         signal,
       );
       const uploadedBytes =
-        metrics.geometryPayloadBytes + metrics.instanceBytes;
+        metrics.geometryPayloadBytes +
+        metrics.instanceBytes +
+        (metrics.textureGpuBytes ?? 0);
       this.#mounts = mountNumber;
       const handleId = `webgl2-mount:${mountNumber}`;
       this.#active = {
@@ -1416,9 +1639,15 @@ export class WebGl2Backend {
           contextVersion: gl.getParameter(gl.VERSION),
           geometryBytes: metrics.geometryPayloadBytes,
           instanceBytes: metrics.instanceBytes,
+          ...(metrics.textureGpuBytes === undefined
+            ? {}
+            : { textureBytes: metrics.textureGpuBytes }),
           uploadedBytes,
           drawCalls: metrics.drawCalls,
           gpuBuffers: group.buffers.length,
+          ...(group.textures.length === 0
+            ? {}
+            : { gpuTextures: group.textures.length }),
           frameWidth: this.#width,
           frameHeight: this.#height,
           camera,
@@ -1492,13 +1721,15 @@ export class WebGl2Backend {
     if (gl.isContextLost()) {
       throw invalidState("WebGL2 context is lost");
     }
-    const group = uploadBufferGroup(
+    const group = await uploadBufferGroup(
       gl,
       plan,
       state.worldOrigin,
+      this.#imageDecoder,
     );
     state.groups.push(group);
     state.resources.buffers.push(...group.buffers);
+    state.resources.textures.push(...group.textures);
     state.instances = Object.freeze([
       ...state.instances,
       ...group.instances,
@@ -1531,6 +1762,7 @@ export class WebGl2Backend {
           addedInstances: metrics.instances,
           addedDrawCalls: metrics.drawCalls,
           gpuBuffers: state.resources.buffers.length,
+          gpuTextures: state.resources.textures.length,
           visibleInstances: frame.visibleInstances,
           hiddenInstances: frame.hiddenInstances,
           drawCalls: frame.drawCalls,
@@ -1556,6 +1788,14 @@ export class WebGl2Backend {
         );
       for (const value of group.buffers) {
         gl.deleteBuffer(value);
+      }
+      const groupTextures = new Set(group.textures);
+      state.resources.textures =
+        state.resources.textures.filter(
+          (value) => !groupTextures.has(value),
+        );
+      for (const value of group.textures) {
+        gl.deleteTexture(value);
       }
       throw error;
     }
@@ -1658,6 +1898,14 @@ export class WebGl2Backend {
       for (const value of group.buffers) {
         gl.deleteBuffer(value);
       }
+      const groupTextures = new Set(group.textures);
+      state.resources.textures =
+        state.resources.textures.filter(
+          (value) => !groupTextures.has(value),
+        );
+      for (const value of group.textures) {
+        gl.deleteTexture(value);
+      }
       this.#releasedBytes += group.uploadedBytes;
       return {
         receipt: {
@@ -1671,6 +1919,7 @@ export class WebGl2Backend {
           releasedBytes: group.uploadedBytes,
           activeBytes: state.uploadedBytes,
           gpuBuffers: state.resources.buffers.length,
+          gpuTextures: state.resources.textures.length,
           visibleInstances: frame.visibleInstances,
           hiddenInstances: frame.hiddenInstances,
           drawCalls: frame.drawCalls,

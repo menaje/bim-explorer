@@ -263,12 +263,12 @@ Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도
 generated source fingerprint, model/renderer projection과 WebGL2 frame을
 재현했습니다. bounded glTF/GLB는 같은 Host lifecycle에서 reference source와
 source-native explorer로 분기하며 IFC semantic authority를 사용하지
-않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder `.bin`
+않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder `.bin`/`.png`
 sidecar를 하나의 composite fingerprint로 묶고 모든 owned copy를 terminal
 cleanup에서 지웁니다.
 이 additive path는 single-source 제품 Worker에만 연결합니다. 이미 공개된
 federated BIM Surface v0.2 runtime은 exact release digest로 동결되며 resource
-bundle, mesh quantization 또는 meshopt 기능을 backport하지 않습니다.
+bundle, texture, mesh quantization 또는 meshopt 기능을 backport하지 않습니다.
 
 공개 `@menaje/viewer-core`와
 `@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
@@ -294,7 +294,7 @@ Browser Host와 VS Code Host는 같은 product lifecycle을 구현합니다.
 
 | Host 책임 | Browser | VS Code |
 | --- | --- | --- |
-| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin` |
+| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin`/`.png` |
 | adapter backend | module Worker + WASM | bundled module Worker + WASM |
 | binary range | Worker-owned immutable range | webview Worker-owned range |
 | resource reveal | explicit download/view | bounded editor/reveal intent |
@@ -325,8 +325,14 @@ model/render/selection/cleanup parity를 통과했습니다. 이는 두 파일�
 macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 합성이나
 cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
 같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
-M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 임의 URI,
-external image는 여전히 Worker admission 전에 거부합니다. ratified
+M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 외부 PNG
+`baseColorTexture`는 `TEXCOORD_0`, OPAQUE material과 표준 sampler만
+geometry-range v2로 투영합니다. renderer는 PNG를 독립 재검증하고 WebGL2
+`SRGB8_ALPHA8`로 upload하며, exact BoxTextured bundle의 세 Apple M2 Metal
+제품 표면에서 86,486 pixels·349,524-byte mipmap-aware GPU texture,
+350,516-byte total upload·terminal cleanup을 재현했습니다.
+임의 URI, JPEG·비-OPAQUE alpha material mode와 다른 material texture role은 Worker admission 전에
+거부합니다. ratified
 `KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
 4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.
 `EXT_meshopt_compression`은 exact meshoptimizer 1.2.0 single-thread WASM을 같은

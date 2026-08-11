@@ -4,6 +4,10 @@ import {
 import {
   createMeasurement3d,
 } from "./measurement.mjs";
+import {
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  decodeBimTexturedGeometryRange,
+} from "./textured-geometry.mjs";
 
 export const BIM_RENDERER_3D_CONTRACT =
   "bim-explorer-bim-renderer-3d/0.1";
@@ -32,6 +36,10 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumReadBytes: 1024 * 1024,
   maximumGeometryRecords: 100_000,
   maximumGeometryPayloadBytes: 8 * 1024 * 1024,
+  maximumTextureSourceBytes: 8 * 1024 * 1024,
+  maximumTextureDecodedBytes: 16 * 1024 * 1024,
+  maximumTextureCompressionRatio: 256,
+  maximumTextures: 16,
   maximumInstances: 100_000,
   maximumInstancedTriangles: 5_000_000,
   maximumDrawCalls: 100_000,
@@ -332,6 +340,10 @@ export function decodeBimGeometryRange(
       vertexCount,
       indexCount,
       triangles: recordTriangles,
+      textureIndex: null,
+      texcoordByteOffset: null,
+      vertexStrideBytes:
+        6 * Float32Array.BYTES_PER_ELEMENT,
       slice: Object.freeze({
         offset: recordOffset,
         byteLength: indexEnd - recordOffset,
@@ -356,13 +368,20 @@ export function decodeBimGeometryRange(
   }
   return Object.freeze({
     schema: "bim-explorer-decoded-geometry-range/1",
+    mediaType: BIM_GEOMETRY_MEDIA_TYPE,
     byteLength: bytes.byteLength,
     recordCount,
     payloadBytes,
+    geometryPayloadBytes: payloadBytes,
+    textureSourceBytes: 0,
+    textureDecodedBytes: 0,
+    textureGpuBytes: 0,
+    textureCount: 0,
     vertices,
     indices,
     triangles,
     records: Object.freeze(records),
+    textures: Object.freeze([]),
   });
 }
 
@@ -461,7 +480,10 @@ function validateMountInput(session, snapshot, limits) {
       "renderer range handle.maximumRequestBytes",
     );
     if (
-      handle.mediaType !== BIM_GEOMETRY_MEDIA_TYPE ||
+      ![
+        BIM_GEOMETRY_MEDIA_TYPE,
+        BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+      ].includes(handle.mediaType) ||
       !SHA256.test(handle.sha256 ?? "") ||
       handle.maximumRequestBytes > handle.byteLength ||
       handles.has(handle.handleId) ||
@@ -574,10 +596,24 @@ async function readRange(session, handle, limits, signal) {
       sha256,
       reads,
       bytes,
-      decoded: decodeBimGeometryRange(bytes, {
-        maximumRecords: limits.maximumGeometryRecords,
-        maximumPayloadBytes: limits.maximumGeometryPayloadBytes,
-      }),
+      decoded: handle.mediaType === BIM_TEXTURED_GEOMETRY_MEDIA_TYPE
+        ? decodeBimTexturedGeometryRange(bytes, {
+            maximumRecords: limits.maximumGeometryRecords,
+            maximumPayloadBytes:
+              limits.maximumGeometryPayloadBytes,
+            maximumTextureCompressionRatio:
+              limits.maximumTextureCompressionRatio,
+            maximumTextureDecodedBytes:
+              limits.maximumTextureDecodedBytes,
+            maximumTextureSourceBytes:
+              limits.maximumTextureSourceBytes,
+            maximumTextures: limits.maximumTextures,
+          })
+        : decodeBimGeometryRange(bytes, {
+            maximumRecords: limits.maximumGeometryRecords,
+            maximumPayloadBytes:
+              limits.maximumGeometryPayloadBytes,
+          }),
     };
   } catch (error) {
     bytes.fill(0);
@@ -772,13 +808,18 @@ function buildMountPlan(
       const key =
         `${primitive.slice.rangeId}:${primitive.geometryExpressId}`;
       const record = byGeometry.get(key);
+      const primitiveTextureIndex =
+        primitive.textureIndex === undefined
+          ? null
+          : primitive.textureIndex;
       if (
         record === undefined ||
         record.slice.offset !== primitive.slice.offset ||
         record.slice.byteLength !== primitive.slice.byteLength ||
         record.vertexCount !== primitive.vertexCount ||
         record.indexCount !== primitive.indexCount ||
-        record.triangles !== primitive.triangles
+        record.triangles !== primitive.triangles ||
+        record.textureIndex !== primitiveTextureIndex
       ) {
         throw new Error(
           "renderer primitive does not match its geometry record",
@@ -803,6 +844,7 @@ function buildMountPlan(
           4,
           "renderer primitive color",
         ),
+        textureIndex: record.textureIndex,
         triangles: primitive.triangles,
       }));
       referencedGeometry.add(key);
@@ -832,6 +874,22 @@ function buildMountPlan(
     (sum, range) => sum + range.decoded.payloadBytes,
     0,
   );
+  const textureSourceBytes = ranges.reduce(
+    (sum, range) => sum + range.decoded.textureSourceBytes,
+    0,
+  );
+  const textureDecodedBytes = ranges.reduce(
+    (sum, range) => sum + range.decoded.textureDecodedBytes,
+    0,
+  );
+  const textureGpuBytes = ranges.reduce(
+    (sum, range) => sum + range.decoded.textureGpuBytes,
+    0,
+  );
+  const textures = ranges.reduce(
+    (sum, range) => sum + range.decoded.textureCount,
+    0,
+  );
   const geometryRecords = ranges.reduce(
     (sum, range) => sum + range.decoded.recordCount,
     0,
@@ -854,6 +912,9 @@ function buildMountPlan(
   if (
     geometryRecords > limits.maximumGeometryRecords ||
     geometryPayloadBytes > limits.maximumGeometryPayloadBytes ||
+    textureSourceBytes > limits.maximumTextureSourceBytes ||
+    textureDecodedBytes > limits.maximumTextureDecodedBytes ||
+    textures > limits.maximumTextures ||
     cpuStagingBytes > limits.maximumCpuStagingBytes
   ) {
     throw new RangeError(
@@ -876,6 +937,14 @@ function buildMountPlan(
       sourceReads,
       geometryPayloadBytes,
       geometryRecords,
+      ...(textures === 0
+        ? {}
+        : {
+            textureSourceBytes,
+            textureDecodedBytes,
+            textureGpuBytes,
+            textures,
+          }),
       vertices,
       indices,
       uniqueTriangles,
@@ -892,6 +961,10 @@ function activeMetrics(rangePlans) {
   const fields = [
     "geometryPayloadBytes",
     "geometryRecords",
+    "textureSourceBytes",
+    "textureDecodedBytes",
+    "textureGpuBytes",
+    "textures",
     "vertices",
     "indices",
     "uniqueTriangles",
@@ -904,7 +977,7 @@ function activeMetrics(rangePlans) {
     fields.map((field) => [
       field,
       rangePlans.reduce(
-        (sum, plan) => sum + plan.metrics[field],
+        (sum, plan) => sum + (plan.metrics[field] ?? 0),
         0,
       ),
     ]),
@@ -912,13 +985,18 @@ function activeMetrics(rangePlans) {
   return Object.freeze({
     ...metrics,
     uploadedBytes:
-      metrics.geometryPayloadBytes + metrics.instanceBytes,
+      metrics.geometryPayloadBytes +
+      metrics.instanceBytes +
+      metrics.textureGpuBytes,
   });
 }
 
 function validateActiveMetrics(metrics, limits) {
   if (
     metrics.geometryRecords > limits.maximumGeometryRecords ||
+    metrics.textures > limits.maximumTextures ||
+    metrics.textureDecodedBytes >
+      limits.maximumTextureDecodedBytes ||
     metrics.instances > limits.maximumInstances ||
     metrics.instancedTriangles >
       limits.maximumInstancedTriangles ||
@@ -954,8 +1032,12 @@ function validateBackendMount(value, metrics) {
     typeof receipt.rendered !== "boolean" ||
     receipt.geometryBytes !== metrics.geometryPayloadBytes ||
     receipt.instanceBytes !== metrics.instanceBytes ||
+    (receipt.textureBytes ?? 0) !==
+      (metrics.textureGpuBytes ?? 0) ||
     receipt.uploadedBytes !==
-      metrics.geometryPayloadBytes + metrics.instanceBytes ||
+      metrics.geometryPayloadBytes +
+        metrics.instanceBytes +
+        (metrics.textureGpuBytes ?? 0) ||
     receipt.drawCalls !== metrics.drawCalls
   ) {
     throw new Error("renderer backend mount receipt is invalid");
@@ -984,7 +1066,9 @@ function validateBackendRangeLoad(
     "renderer backend range-load receipt.frameId",
   );
   const addedBytes =
-    metrics.geometryPayloadBytes + metrics.instanceBytes;
+    metrics.geometryPayloadBytes +
+    metrics.instanceBytes +
+    (metrics.textureGpuBytes ?? 0);
   if (
     typeof receipt.rendered !== "boolean" ||
     receipt.cacheHit !== false ||
@@ -1237,7 +1321,9 @@ export class Headless3dBackend {
     this.#mounts += 1;
     const handleId = `headless-3d-mount:${this.#mounts}`;
     const uploadedBytes =
-      metrics.geometryPayloadBytes + metrics.instanceBytes;
+      metrics.geometryPayloadBytes +
+      metrics.instanceBytes +
+      (metrics.textureGpuBytes ?? 0);
     this.#active = {
       handleId,
       ranges: new Map(
@@ -1256,6 +1342,9 @@ export class Headless3dBackend {
         rendered: false,
         geometryBytes: metrics.geometryPayloadBytes,
         instanceBytes: metrics.instanceBytes,
+        ...(metrics.textureGpuBytes === undefined
+          ? {}
+          : { textureBytes: metrics.textureGpuBytes }),
         uploadedBytes,
         drawCalls: metrics.drawCalls,
       },
@@ -1288,7 +1377,9 @@ export class Headless3dBackend {
       throw new Error("headless 3D range plan is invalid");
     }
     const addedBytes =
-      metrics.geometryPayloadBytes + metrics.instanceBytes;
+      metrics.geometryPayloadBytes +
+      metrics.instanceBytes +
+      (metrics.textureGpuBytes ?? 0);
     this.#active.ranges.set(
       plan.ranges[0].handleId,
       addedBytes,
@@ -1841,7 +1932,8 @@ export class Bounded3dRenderer {
     }
     const expectedBytes =
       plan.metrics.geometryPayloadBytes +
-      plan.metrics.instanceBytes;
+      plan.metrics.instanceBytes +
+      (plan.metrics.textureGpuBytes ?? 0);
     this.#updating = true;
     try {
       aborted(signal);
@@ -2477,6 +2569,11 @@ export {
   WebGl2Backend,
   createWebGl2Backend,
 } from "./webgl2-backend.mjs";
+
+export {
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  decodeBimTexturedGeometryRange,
+};
 
 export {
   BIM_POINT_IDENTITY_AUTHORITY,

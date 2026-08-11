@@ -4352,6 +4352,11 @@ function createBimModelSource(artifact, options) {
 
 // packages/gltf-reference-source/src/geometry.mjs
 var BIM_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v1";
+var BIM_TEXTURED_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v2";
+var TEXTURE_NONE = 4294967295;
+function align4(value) {
+  return value + 3 & ~3;
+}
 function encodeGltfGeometryRange(records) {
   if (!Array.isArray(records) || records.length === 0) {
     throw new TypeError("glTF geometry records must be non-empty");
@@ -4420,6 +4425,122 @@ function encodeGltfGeometryRange(records) {
   }
   return {
     bytes,
+    mediaType: BIM_GEOMETRY_MEDIA_TYPE,
+    metadata
+  };
+}
+function encodeGltfTexturedGeometryRange(records, textures) {
+  if (!Array.isArray(records) || records.length === 0 || !Array.isArray(textures) || textures.length === 0) {
+    throw new TypeError(
+      "textured glTF geometry records and textures must be non-empty"
+    );
+  }
+  const headerBytes = 24;
+  const recordHeaderBytes = 28;
+  const textureHeaderBytes = 40;
+  const byteLength = records.reduce((total, record) => {
+    const vertexCount = record.positions.length / 3;
+    return total + recordHeaderBytes + vertexCount * 8 * Float32Array.BYTES_PER_ELEMENT + record.indices.length * Uint32Array.BYTES_PER_ELEMENT;
+  }, headerBytes) + textures.reduce(
+    (total, texture) => total + textureHeaderBytes + align4(texture.bytes.byteLength),
+    0
+  );
+  const bytes = new Uint8Array(byteLength);
+  bytes.set(new TextEncoder().encode("BEXGEO02"), 0);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(8, 2, true);
+  view.setUint32(12, records.length, true);
+  view.setUint32(16, textures.length, true);
+  view.setUint32(20, 0, true);
+  const metadata = /* @__PURE__ */ new Map();
+  let offset = headerBytes;
+  for (const [index, record] of records.entries()) {
+    const geometryExpressId = index + 1;
+    const recordOffset = offset;
+    const vertexCount = record.positions.length / 3;
+    const textureIndex = record.textureIndex === null ? TEXTURE_NONE : record.textureIndex;
+    if (!Number.isSafeInteger(vertexCount) || vertexCount <= 0 || record.normals.length !== vertexCount * 3 || record.texcoords !== null && (!(record.texcoords instanceof Float32Array) || record.texcoords.length !== vertexCount * 2) || !(record.indices instanceof Uint32Array) || record.indices.length === 0 || record.indices.length % 3 !== 0 || !Number.isSafeInteger(textureIndex) || textureIndex !== TEXTURE_NONE && (textureIndex < 0 || textureIndex >= textures.length) || textureIndex === TEXTURE_NONE !== (record.texcoords === null)) {
+      throw new Error("textured glTF geometry record is invalid");
+    }
+    const vertexFloatCount = vertexCount * 8;
+    const vertexByteLength = vertexFloatCount * Float32Array.BYTES_PER_ELEMENT;
+    const indexByteLength = record.indices.length * Uint32Array.BYTES_PER_ELEMENT;
+    view.setUint32(offset, geometryExpressId, true);
+    view.setUint32(offset + 4, vertexFloatCount, true);
+    view.setUint32(offset + 8, record.indices.length, true);
+    view.setUint32(offset + 12, vertexByteLength, true);
+    view.setUint32(offset + 16, indexByteLength, true);
+    view.setUint32(offset + 20, textureIndex, true);
+    view.setUint32(offset + 24, 0, true);
+    offset += recordHeaderBytes;
+    for (let vertex = 0; vertex < vertexCount; vertex += 1) {
+      for (let axis = 0; axis < 3; axis += 1) {
+        view.setFloat32(
+          offset,
+          record.positions[vertex * 3 + axis],
+          true
+        );
+        offset += 4;
+      }
+      for (let axis = 0; axis < 3; axis += 1) {
+        view.setFloat32(
+          offset,
+          record.normals[vertex * 3 + axis],
+          true
+        );
+        offset += 4;
+      }
+      for (let axis = 0; axis < 2; axis += 1) {
+        view.setFloat32(
+          offset,
+          record.texcoords?.[vertex * 2 + axis] ?? 0,
+          true
+        );
+        offset += 4;
+      }
+    }
+    for (const value of record.indices) {
+      view.setUint32(offset, value, true);
+      offset += 4;
+    }
+    metadata.set(record.key, Object.freeze({
+      geometryExpressId,
+      vertexCount,
+      indexCount: record.indices.length,
+      triangles: record.indices.length / 3,
+      textureIndex: textureIndex === TEXTURE_NONE ? null : textureIndex,
+      slice: Object.freeze({
+        offset: recordOffset,
+        byteLength: offset - recordOffset
+      })
+    }));
+  }
+  for (const [index, texture] of textures.entries()) {
+    if (texture.index !== index || !(texture.bytes instanceof Uint8Array) || texture.bytes.byteLength === 0 || !Number.isSafeInteger(texture.width) || texture.width <= 0 || !Number.isSafeInteger(texture.height) || texture.height <= 0 || texture.decodedBytes !== texture.width * texture.height * 4) {
+      throw new Error("textured glTF texture record is invalid");
+    }
+    view.setUint32(offset, index, true);
+    view.setUint32(offset + 4, 1, true);
+    view.setUint32(offset + 8, texture.width, true);
+    view.setUint32(offset + 12, texture.height, true);
+    view.setUint32(offset + 16, texture.bytes.byteLength, true);
+    view.setUint32(offset + 20, texture.decodedBytes, true);
+    view.setUint32(offset + 24, texture.sampler.magFilter, true);
+    view.setUint32(offset + 28, texture.sampler.minFilter, true);
+    view.setUint32(offset + 32, texture.sampler.wrapS, true);
+    view.setUint32(offset + 36, texture.sampler.wrapT, true);
+    offset += textureHeaderBytes;
+    bytes.set(texture.bytes, offset);
+    offset += align4(texture.bytes.byteLength);
+  }
+  if (offset !== byteLength) {
+    throw new Error(
+      "textured glTF geometry encoder byte count is invalid"
+    );
+  }
+  return {
+    bytes,
+    mediaType: BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
     metadata
   };
 }
@@ -4558,6 +4679,184 @@ function unionBounds(target, addition) {
   return target;
 }
 
+// packages/gltf-reference-source/src/png.mjs
+var PNG_SIGNATURE = Object.freeze([
+  137,
+  80,
+  78,
+  71,
+  13,
+  10,
+  26,
+  10
+]);
+var CRC_TABLE = Object.freeze(
+  Array.from({ length: 256 }, (_, value) => {
+    let crc = value;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc & 1) === 1 ? 3988292384 ^ crc >>> 1 : crc >>> 1;
+    }
+    return crc >>> 0;
+  })
+);
+function crc32(bytes, start, end) {
+  let crc = 4294967295;
+  for (let offset = start; offset < end; offset += 1) {
+    crc = CRC_TABLE[(crc ^ bytes[offset]) & 255] ^ crc >>> 8;
+  }
+  return (crc ^ 4294967295) >>> 0;
+}
+function chunkName(bytes, offset) {
+  return String.fromCharCode(
+    bytes[offset],
+    bytes[offset + 1],
+    bytes[offset + 2],
+    bytes[offset + 3]
+  );
+}
+function inspectBoundedPng(input, {
+  maximumChunks = 256,
+  maximumCompressionRatio = 256,
+  maximumDecodedBytes = 16 * 1024 * 1024,
+  maximumDimension = 2048,
+  maximumSourceBytes = 8 * 1024 * 1024
+} = {}) {
+  if (!(input instanceof Uint8Array)) {
+    throw new TypeError("PNG input must be a Uint8Array");
+  }
+  for (const [label, value] of Object.entries({
+    maximumChunks,
+    maximumCompressionRatio,
+    maximumDecodedBytes,
+    maximumDimension,
+    maximumSourceBytes
+  })) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new TypeError(`PNG ${label} must be a positive integer`);
+    }
+  }
+  if (input.byteLength < 33 || input.byteLength > maximumSourceBytes || PNG_SIGNATURE.some((value, index) => input[index] !== value)) {
+    throw new RangeError("PNG source exceeds the bounded profile");
+  }
+  const view = new DataView(
+    input.buffer,
+    input.byteOffset,
+    input.byteLength
+  );
+  let chunks = 0;
+  let colorType = -1;
+  let height = 0;
+  let idatBytes = 0;
+  let offset = PNG_SIGNATURE.length;
+  let sawIdat = false;
+  let closedIdat = false;
+  let sawIend = false;
+  let sawIhdr = false;
+  let sawPlte = false;
+  let sawTrns = false;
+  let paletteEntries = 0;
+  let width = 0;
+  while (offset < input.byteLength) {
+    if (chunks >= maximumChunks || offset + 12 > input.byteLength) {
+      throw new RangeError("PNG chunk table exceeds the bounded profile");
+    }
+    const byteLength = view.getUint32(offset, false);
+    const typeOffset = offset + 4;
+    const dataOffset = typeOffset + 4;
+    const crcOffset = dataOffset + byteLength;
+    const end = crcOffset + 4;
+    if (end > input.byteLength) {
+      throw new RangeError("PNG chunk is truncated");
+    }
+    const type = chunkName(input, typeOffset);
+    if (!/^[A-Za-z]{4}$/u.test(type)) {
+      throw new Error("PNG chunk type is invalid");
+    }
+    if (crc32(input, typeOffset, crcOffset) !== view.getUint32(crcOffset, false)) {
+      throw new Error(`PNG ${type} chunk CRC is invalid`);
+    }
+    if (!sawIhdr) {
+      if (type !== "IHDR" || byteLength !== 13) {
+        throw new Error("PNG IHDR must be the first chunk");
+      }
+      width = view.getUint32(dataOffset, false);
+      height = view.getUint32(dataOffset + 4, false);
+      const bitDepth = input[dataOffset + 8];
+      colorType = input[dataOffset + 9];
+      const compression = input[dataOffset + 10];
+      const filter = input[dataOffset + 11];
+      const interlace = input[dataOffset + 12];
+      if (width === 0 || height === 0 || width > maximumDimension || height > maximumDimension || bitDepth !== 8 || ![2, 3, 6].includes(colorType) || compression !== 0 || filter !== 0 || interlace !== 0) {
+        throw new DOMException(
+          "PNG image profile is unsupported",
+          "NotSupportedError"
+        );
+      }
+      sawIhdr = true;
+    } else if (type === "IHDR") {
+      throw new Error("PNG contains more than one IHDR chunk");
+    }
+    if (type === "PLTE") {
+      if (sawPlte || sawTrns || sawIdat || byteLength < 3 || byteLength > 768 || byteLength % 3 !== 0) {
+        throw new Error("PNG PLTE chunk is invalid");
+      }
+      sawPlte = true;
+      paletteEntries = byteLength / 3;
+    }
+    if (type === "tRNS") {
+      if (sawTrns || sawIdat || colorType === 3 && (!sawPlte || byteLength === 0 || byteLength > paletteEntries) || colorType === 2 && byteLength !== 6 || colorType === 6) {
+        throw new Error("PNG tRNS chunk is invalid");
+      }
+      sawTrns = true;
+    }
+    if (["acTL", "fcTL", "fdAT"].includes(type)) {
+      throw new DOMException(
+        "animated PNG is unsupported",
+        "NotSupportedError"
+      );
+    }
+    if ((input[typeOffset] & 32) === 0 && !["IHDR", "PLTE", "IDAT", "IEND"].includes(type)) {
+      throw new DOMException(
+        `PNG critical chunk ${type} is unsupported`,
+        "NotSupportedError"
+      );
+    }
+    if (type === "IDAT") {
+      if (closedIdat || byteLength === 0) {
+        throw new Error("PNG IDAT sequence is invalid");
+      }
+      sawIdat = true;
+      idatBytes += byteLength;
+    } else if (sawIdat && type !== "IEND") {
+      closedIdat = true;
+    }
+    if (type === "IEND") {
+      if (byteLength !== 0 || !sawIdat || end !== input.byteLength) {
+        throw new Error("PNG IEND chunk is invalid");
+      }
+      sawIend = true;
+    }
+    chunks += 1;
+    offset = end;
+  }
+  if (!sawIhdr || !sawIdat || !sawIend || idatBytes === 0 || colorType === 3 && !sawPlte) {
+    throw new Error("PNG image structure is incomplete");
+  }
+  const decodedBytes = width * height * 4;
+  if (decodedBytes > maximumDecodedBytes || decodedBytes / input.byteLength > maximumCompressionRatio) {
+    throw new RangeError("PNG decoded bytes exceed the bounded profile");
+  }
+  return Object.freeze({
+    byteLength: input.byteLength,
+    chunks,
+    decodedBytes,
+    height,
+    idatBytes,
+    mediaType: "image/png",
+    width
+  });
+}
+
 // packages/gltf-reference-source/src/profile.mjs
 var GLB_MAGIC = 1179937895;
 var JSON_CHUNK = 1313821514;
@@ -4579,6 +4878,11 @@ var DEFAULT_LIMITS2 = Object.freeze({
   maximumBufferBytes: 64 * 1024 * 1024,
   maximumMeshoptDecodedBytes: 64 * 1024 * 1024,
   maximumMeshoptCompressionRatio: 256,
+  maximumTextures: 16,
+  maximumTextureSourceBytes: 8 * 1024 * 1024,
+  maximumTextureDecodedBytes: 16 * 1024 * 1024,
+  maximumTextureDimension: 2048,
+  maximumTextureCompressionRatio: 256,
   maximumExternalResources: 16,
   maximumExternalResourceNameBytes: 128,
   maximumNodes: 4096,
@@ -4719,9 +5023,9 @@ function decodeBase64(value, maximumBytes) {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 function externalResourceName(value, limits) {
-  if (typeof value !== "string" || value.length === 0 || new TextEncoder().encode(value).byteLength > limits.maximumExternalResourceNameBytes || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u.test(value) || value === ".bin" || value.includes("..")) {
+  if (typeof value !== "string" || value.length === 0 || new TextEncoder().encode(value).byteLength > limits.maximumExternalResourceNameBytes || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u.test(value) || [".bin", ".png"].includes(value) || value.includes("..")) {
     throw new DOMException(
-      "external glTF buffer URI is outside the local bundle profile",
+      "external glTF resource URI is outside the local bundle profile",
       "NotSupportedError"
     );
   }
@@ -4818,7 +5122,7 @@ function loadBuffers(document, binaryChunk, format, limits, externalResources, p
           bytes = decodeBase64(match[1], limits.maximumBufferBytes);
         } else {
           const uri = externalResourceName(buffer.uri, limits);
-          if (format !== "gltf" || !externalResources.has(uri)) {
+          if (format !== "gltf" || !uri.endsWith(".bin") || !externalResources.has(uri)) {
             throw new DOMException(
               "external glTF buffer URI is blocked",
               "NotSupportedError"
@@ -4843,9 +5147,6 @@ function loadBuffers(document, binaryChunk, format, limits, externalResources, p
       }
       loaded.push(bytes);
     }
-    if (usedExternalResources.size !== externalResources.size) {
-      throw new Error("glTF bundle contains an unused external resource");
-    }
   } catch (error) {
     for (const bytes of loaded) {
       bytes?.fill(0);
@@ -4858,7 +5159,7 @@ function loadBuffers(document, binaryChunk, format, limits, externalResources, p
       (total, bytes) => total + bytes.byteLength,
       0
     ),
-    externalResourceUris: [...usedExternalResources].sort()
+    usedExternalResources
   };
 }
 function meshoptDecoder(value) {
@@ -5168,7 +5469,7 @@ function accessorLayout(document, buffers, accessorIndex, {
   const byteOffset = bufferView.byteOffset ?? 0;
   const accessorOffset = accessor.byteOffset ?? 0;
   const componentBytes = COMPONENT_BYTES.get(componentType);
-  const components = type === "VEC3" ? 3 : 1;
+  const components = type === "VEC3" ? 3 : type === "VEC2" ? 2 : 1;
   const elementBytes = componentBytes * components;
   const stride = bufferView.byteStride ?? elementBytes;
   if (!Number.isSafeInteger(byteOffset) || byteOffset < 0 || !Number.isSafeInteger(accessorOffset) || accessorOffset < 0 || !Number.isSafeInteger(bufferView.byteLength) || bufferView.byteLength <= 0 || !Number.isSafeInteger(stride) || stride < elementBytes || stride > 252 || stride % componentBytes !== 0 || byteOffset % componentBytes !== 0 || accessorOffset % componentBytes !== 0 || vertexAttribute && (stride % 4 !== 0 || (byteOffset + accessorOffset) % 4 !== 0) || accessorOffset + stride * (accessor.count - 1) + elementBytes > bufferView.byteLength || byteOffset + bufferView.byteLength > buffers[bufferIndex].byteLength) {
@@ -5274,6 +5575,60 @@ function readVec3(document, buffers, index, label, {
   }
   return result;
 }
+function readTexcoords(document, buffers, index, label, meshoptViews = null) {
+  const accessors = collection(
+    document.accessors,
+    DEFAULT_LIMITS2.maximumAccessors,
+    "glTF accessors"
+  );
+  const accessor = plainRecord2(
+    accessors[arrayIndex(index, accessors.length, `${label} accessor`)],
+    `${label} accessor`
+  );
+  const normalizedIntegerProfile = accessor.normalized === true && [5121, 5123].includes(accessor.componentType);
+  const floatProfile = accessor.componentType === 5126 && accessor.normalized !== true;
+  if (accessor.type !== "VEC2" || !floatProfile && !normalizedIntegerProfile) {
+    throw new Error(`${label} accessor profile is unsupported`);
+  }
+  const layout = accessorLayout(
+    document,
+    buffers,
+    index,
+    {
+      allowNormalized: normalizedIntegerProfile,
+      componentType: accessor.componentType,
+      type: "VEC2",
+      label,
+      meshoptViews,
+      vertexAttribute: true
+    }
+  );
+  if (layout.meshopt !== null && layout.meshopt.mode !== "ATTRIBUTES") {
+    throw new Error(`${label} meshopt mode is not ATTRIBUTES`);
+  }
+  const result = new Float32Array(layout.accessor.count * 2);
+  const view = new DataView(
+    layout.buffer.buffer,
+    layout.buffer.byteOffset,
+    layout.buffer.byteLength
+  );
+  const componentBytes = COMPONENT_BYTES.get(
+    accessor.componentType
+  );
+  const read = accessor.componentType === 5121 ? (offset) => view.getUint8(offset) : accessor.componentType === 5123 ? (offset) => view.getUint16(offset, true) : (offset) => view.getFloat32(offset, true);
+  for (let item = 0; item < layout.accessor.count; item += 1) {
+    const offset = layout.offset + item * layout.stride;
+    for (let component = 0; component < 2; component += 1) {
+      const raw = read(offset + component * componentBytes);
+      const value = normalizedIntegerProfile ? normalizedInteger(raw, accessor.componentType) : raw;
+      if (!Number.isFinite(value)) {
+        throw new Error(`${label} contains a non-finite value`);
+      }
+      result[item * 2 + component] = value;
+    }
+  }
+  return result;
+}
 function readIndices(document, buffers, index, vertexCount, label, meshoptViews = null) {
   const accessors = collection(
     document.accessors,
@@ -5339,9 +5694,208 @@ function localBounds(positions) {
   }
   return bounds;
 }
-function materialColor(document, index) {
+function externalTextureResolver(document, format, limits, externalResources) {
+  const textures = collection(
+    document.textures ?? [],
+    limits.maximumTextures,
+    "glTF textures",
+    { nonEmpty: false }
+  );
+  const images = collection(
+    document.images ?? [],
+    limits.maximumTextures,
+    "glTF images",
+    { nonEmpty: false }
+  );
+  const samplers = collection(
+    document.samplers ?? [],
+    limits.maximumTextures,
+    "glTF samplers",
+    { nonEmpty: false }
+  );
+  const projected = [];
+  const projectedByTexture = /* @__PURE__ */ new Map();
+  const usedExternalImages = /* @__PURE__ */ new Set();
+  let decodedBytes = 0;
+  let sourceBytes = 0;
+  const resolveSampler = (index, label) => {
+    if (index === void 0) {
+      return Object.freeze({
+        magFilter: 9729,
+        minFilter: 9987,
+        wrapS: 10497,
+        wrapT: 10497
+      });
+    }
+    const sampler = plainRecord2(
+      samplers[arrayIndex(index, samplers.length, `${label} sampler`)],
+      `${label} sampler`
+    );
+    if (sampler.extensions !== void 0) {
+      throw new DOMException(
+        "glTF texture sampler extensions are unsupported",
+        "NotSupportedError"
+      );
+    }
+    const result = {
+      magFilter: sampler.magFilter ?? 9729,
+      minFilter: sampler.minFilter ?? 9987,
+      wrapS: sampler.wrapS ?? 10497,
+      wrapT: sampler.wrapT ?? 10497
+    };
+    if (![9728, 9729].includes(result.magFilter) || ![9728, 9729, 9984, 9985, 9986, 9987].includes(result.minFilter) || ![33071, 33648, 10497].includes(result.wrapS) || ![33071, 33648, 10497].includes(result.wrapT)) {
+      throw new RangeError("glTF texture sampler is invalid");
+    }
+    return Object.freeze(result);
+  };
+  const resolve = (value, label) => {
+    const info = plainRecord2(value, `${label} texture info`);
+    const texCoord = info.texCoord ?? 0;
+    if (info.extensions !== void 0 || !Number.isSafeInteger(texCoord) || texCoord < 0) {
+      throw new DOMException(
+        "glTF base color texture transform is unsupported",
+        "NotSupportedError"
+      );
+    }
+    const sourceTextureIndex = arrayIndex(
+      info.index,
+      textures.length,
+      `${label} texture`
+    );
+    const cached = projectedByTexture.get(sourceTextureIndex);
+    if (cached !== void 0) {
+      if (texCoord !== 0) {
+        throw new DOMException(
+          "only glTF TEXCOORD_0 is supported",
+          "NotSupportedError"
+        );
+      }
+      return cached;
+    }
+    const texture = plainRecord2(
+      textures[sourceTextureIndex],
+      `glTF textures[${sourceTextureIndex}]`
+    );
+    if (texture.extensions !== void 0) {
+      throw new DOMException(
+        "glTF texture extensions are unsupported",
+        "NotSupportedError"
+      );
+    }
+    const imageIndex = arrayIndex(
+      texture.source,
+      images.length,
+      `glTF textures[${sourceTextureIndex}].source`
+    );
+    const image = plainRecord2(
+      images[imageIndex],
+      `glTF images[${imageIndex}]`
+    );
+    if (typeof image.uri === "string" && /^data:image\/(?:png|jpeg);base64,/u.test(image.uri)) {
+      return null;
+    }
+    if (image.bufferView !== void 0) {
+      return null;
+    }
+    const uri = externalResourceName(image.uri, limits);
+    if (format !== "gltf" || !uri.endsWith(".png") || image.mimeType !== void 0 && image.mimeType !== "image/png" || !externalResources.has(uri)) {
+      throw new DOMException(
+        "external glTF base color image is outside the local PNG profile",
+        "NotSupportedError"
+      );
+    }
+    if (texCoord !== 0) {
+      throw new DOMException(
+        "only glTF TEXCOORD_0 is supported",
+        "NotSupportedError"
+      );
+    }
+    const bytes = externalResources.get(uri);
+    const png = inspectBoundedPng(bytes, {
+      maximumCompressionRatio: limits.maximumTextureCompressionRatio,
+      maximumDecodedBytes: limits.maximumTextureDecodedBytes,
+      maximumDimension: limits.maximumTextureDimension,
+      maximumSourceBytes: limits.maximumTextureSourceBytes
+    });
+    decodedBytes += png.decodedBytes;
+    sourceBytes += bytes.byteLength;
+    if (projected.length >= limits.maximumTextures || decodedBytes > limits.maximumTextureDecodedBytes || sourceBytes > limits.maximumTextureSourceBytes) {
+      throw new RangeError(
+        "glTF textures exceed the bounded profile"
+      );
+    }
+    const result = Object.freeze({
+      bytes: Uint8Array.from(bytes),
+      decodedBytes: png.decodedBytes,
+      height: png.height,
+      index: projected.length,
+      mediaType: png.mediaType,
+      sampler: resolveSampler(
+        texture.sampler,
+        `glTF textures[${sourceTextureIndex}]`
+      ),
+      sourceImageIndex: imageIndex,
+      sourceTextureIndex,
+      uri,
+      width: png.width
+    });
+    projected.push(result);
+    projectedByTexture.set(sourceTextureIndex, result);
+    usedExternalImages.add(uri);
+    return result;
+  };
+  const finalize = (usedExternalBuffers) => {
+    const declaredExternalImages = /* @__PURE__ */ new Set();
+    for (const [index, imageValue] of images.entries()) {
+      const image = plainRecord2(
+        imageValue,
+        `glTF images[${index}]`
+      );
+      if (typeof image.uri === "string" && !image.uri.startsWith("data:")) {
+        const uri = externalResourceName(image.uri, limits);
+        if (!uri.endsWith(".png")) {
+          throw new DOMException(
+            "external glTF image URI is unsupported",
+            "NotSupportedError"
+          );
+        }
+        declaredExternalImages.add(uri);
+      }
+    }
+    if (declaredExternalImages.size !== usedExternalImages.size || [...declaredExternalImages].some((uri) => !usedExternalImages.has(uri))) {
+      throw new DOMException(
+        "external glTF images require bounded base color projection",
+        "NotSupportedError"
+      );
+    }
+    const used = /* @__PURE__ */ new Set([
+      ...usedExternalBuffers,
+      ...usedExternalImages
+    ]);
+    if (used.size !== externalResources.size || [...externalResources.keys()].some((uri) => !used.has(uri))) {
+      throw new Error("glTF bundle contains an unused external resource");
+    }
+    return Object.freeze({
+      decodedBytes,
+      externalImageResources: usedExternalImages.size,
+      externalResourceUris: Object.freeze([...used].sort()),
+      sourceBytes,
+      textures: Object.freeze(projected)
+    });
+  };
+  const dispose = () => {
+    for (const texture of projected) {
+      texture.bytes.fill(0);
+    }
+  };
+  return Object.freeze({ dispose, finalize, resolve });
+}
+function materialProjection(document, index, textureResolver) {
   if (index === void 0) {
-    return [1, 1, 1, 1];
+    return Object.freeze({
+      color: Object.freeze([1, 1, 1, 1]),
+      texture: null
+    });
   }
   const materials = collection(
     document.materials,
@@ -5353,13 +5907,30 @@ function materialColor(document, index) {
     materials[arrayIndex(index, materials.length, "glTF material")],
     "glTF material"
   );
-  const color = material.pbrMetallicRoughness?.baseColorFactor ?? [1, 1, 1, 1];
+  const pbr = material.pbrMetallicRoughness === void 0 ? null : plainRecord2(
+    material.pbrMetallicRoughness,
+    "glTF material pbrMetallicRoughness"
+  );
+  const color = pbr?.baseColorFactor ?? [1, 1, 1, 1];
   if (!Array.isArray(color) || color.length !== 4 || color.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)) {
     throw new TypeError("glTF material baseColorFactor is invalid");
   }
-  return [...color];
+  const texture = pbr?.baseColorTexture === void 0 ? null : textureResolver.resolve(
+    pbr.baseColorTexture,
+    "glTF material baseColorTexture"
+  );
+  if (texture !== null && ((material.alphaMode ?? "OPAQUE") !== "OPAQUE" || color[3] !== 1 || material.alphaCutoff !== void 0 || material.extensions !== void 0 || pbr.extensions !== void 0 || pbr.metallicRoughnessTexture !== void 0 || material.normalTexture !== void 0 || material.occlusionTexture !== void 0 || material.emissiveTexture !== void 0)) {
+    throw new DOMException(
+      "glTF textured material profile is unsupported",
+      "NotSupportedError"
+    );
+  }
+  return Object.freeze({
+    color: Object.freeze([...color]),
+    texture
+  });
 }
-function primitiveRecord(document, buffers, meshIndex, primitiveIndex, limits, extensionsRequired, meshoptViews) {
+function primitiveRecord(document, buffers, meshIndex, primitiveIndex, limits, extensionsRequired, meshoptViews, textureResolver) {
   const mesh = plainRecord2(
     document.meshes[meshIndex],
     `glTF meshes[${meshIndex}]`
@@ -5421,6 +5992,26 @@ function primitiveRecord(document, buffers, meshIndex, primitiveIndex, limits, e
       throw new RangeError(`${label} contains a zero normal`);
     }
   }
+  const material = materialProjection(
+    document,
+    primitive.material,
+    textureResolver
+  );
+  if (material.texture !== null && attributes.TEXCOORD_0 === void 0) {
+    throw new Error(`${label} requires TEXCOORD_0`);
+  }
+  const texcoords = material.texture === null ? null : readTexcoords(
+    document,
+    buffers,
+    attributes.TEXCOORD_0,
+    `${label} TEXCOORD_0`,
+    meshoptViews
+  );
+  if (material.texture !== null && texcoords.length / 2 !== positions.length / 3) {
+    throw new Error(
+      `${label} texture coordinate counts do not match`
+    );
+  }
   const indices = readIndices(
     document,
     buffers,
@@ -5437,7 +6028,9 @@ function primitiveRecord(document, buffers, meshIndex, primitiveIndex, limits, e
     normals,
     indices,
     bounds: localBounds(positions),
-    color: materialColor(document, primitive.material)
+    color: material.color,
+    texcoords,
+    textureIndex: material.texture?.index ?? null
   };
 }
 function boundedName(value, fallback) {
@@ -5524,13 +6117,21 @@ function validateAsset(document, limits) {
         images[index],
         `glTF images[${index}]`
       );
-      if (image.uri !== void 0 && (typeof image.uri !== "string" || !/^data:image\/[A-Za-z0-9.+-]+;base64,/u.test(
-        image.uri
-      ) || image.bufferView !== void 0)) {
-        throw new DOMException(
-          "external glTF image URI is unsupported",
-          "NotSupportedError"
-        );
+      if (image.uri !== void 0) {
+        if (typeof image.uri !== "string" || image.bufferView !== void 0) {
+          throw new TypeError("glTF image URI is invalid");
+        }
+        if (!/^data:image\/[A-Za-z0-9.+-]+;base64,/u.test(
+          image.uri
+        )) {
+          const uri = externalResourceName(image.uri, limits);
+          if (!uri.endsWith(".png")) {
+            throw new DOMException(
+              "external glTF image URI is unsupported",
+              "NotSupportedError"
+            );
+          }
+        }
       }
     }
   }
@@ -5554,6 +6155,8 @@ function parseGltfReferenceProfile(input, {
   }
   const bytes = Uint8Array.from(input);
   const ownedBuffers = [];
+  let appearance = null;
+  let textureResolver = null;
   const externalResources = externalResourceMap(
     externalResourceValues,
     limits
@@ -5641,6 +6244,12 @@ function parseGltfReferenceProfile(input, {
       compression,
       ownedBuffers
     );
+    textureResolver = externalTextureResolver(
+      document,
+      format,
+      limits,
+      externalResources
+    );
     const records = /* @__PURE__ */ new Map();
     const occurrences = [];
     const parentByNode = /* @__PURE__ */ new Map();
@@ -5708,7 +6317,8 @@ function parseGltfReferenceProfile(input, {
               primitiveIndex,
               limits,
               extensionsRequired,
-              compression?.views ?? null
+              compression?.views ?? null,
+              textureResolver
             );
             vertices += record.positions.length / 3;
             triangles += record.indices.length / 3;
@@ -5763,6 +6373,9 @@ function parseGltfReferenceProfile(input, {
     if (occurrences.length === 0 || records.size === 0) {
       throw new Error("glTF default scene has no supported geometry");
     }
+    appearance = textureResolver.finalize(
+      loadedBuffers.usedExternalResources
+    );
     return {
       format,
       asset: {
@@ -5770,6 +6383,7 @@ function parseGltfReferenceProfile(input, {
         generator: typeof asset.generator === "string" && asset.generator.length <= 256 ? asset.generator : null
       },
       records: [...records.values()],
+      textures: [...appearance.textures],
       occurrences,
       bounds,
       statistics: {
@@ -5786,9 +6400,22 @@ function parseGltfReferenceProfile(input, {
       resourceBundle: {
         documentBytes: input.byteLength,
         externalResourceBytes: loadedBuffers.externalResourceBytes,
-        externalResources: loadedBuffers.externalResourceUris.length
+        externalResources: appearance.externalResourceUris.length,
+        ...appearance.externalImageResources === 0 ? {} : {
+          externalBufferResources: loadedBuffers.usedExternalResources.size,
+          externalImageResources: appearance.externalImageResources
+        }
       },
-      externalResourceUris: loadedBuffers.externalResourceUris,
+      externalResourceUris: appearance.externalResourceUris,
+      appearance: appearance.textures.length === 0 ? null : {
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet: 0,
+        textureSourceBytes: appearance.sourceBytes,
+        textureDecodedBytes: appearance.decodedBytes,
+        textures: appearance.textures.length,
+        imageMediaTypes: ["image/png"],
+        colorSpace: "srgb-to-linear-webgl2"
+      },
       compression: compression === null ? null : {
         extension: EXT_MESHOPT_COMPRESSION,
         bufferViews: compression.views.size,
@@ -5812,6 +6439,9 @@ function parseGltfReferenceProfile(input, {
       extensionsUsed
     };
   } finally {
+    if (appearance === null) {
+      textureResolver?.dispose();
+    }
     bytes.fill(0);
     for (const resource of externalResources.values()) {
       resource.fill(0);
@@ -5936,6 +6566,7 @@ var GltfReferenceSource = class {
     sourceDigest,
     geometryBytes,
     geometryDigest,
+    geometryMediaType,
     geometryMetadata,
     maximumRequestBytes = 1024 * 1024,
     sessionReadBudgetBytes = geometryBytes.byteLength
@@ -5990,7 +6621,8 @@ var GltfReferenceSource = class {
               byteLength: record.slice.byteLength
             },
             transform: occurrence.transform,
-            color: occurrence.color
+            color: occurrence.color,
+            ...geometryMediaType === BIM_TEXTURED_GEOMETRY_MEDIA_TYPE ? { textureIndex: record.textureIndex } : {}
           }],
           provenance: {
             format: profile.format,
@@ -6018,7 +6650,7 @@ var GltfReferenceSource = class {
     const handle2 = deepFreeze3({
       ...baseContext,
       handleId: rangeId,
-      mediaType: BIM_GEOMETRY_MEDIA_TYPE,
+      mediaType: geometryMediaType,
       byteLength: this.#geometryBytes.byteLength,
       maximumRequestBytes: this.maximumRequestBytes,
       sha256: geometryDigest,
@@ -6081,6 +6713,7 @@ var GltfReferenceSource = class {
         extensionsRequired: profile.extensionsRequired,
         extensionsUsed: profile.extensionsUsed,
         compression: profile.compression,
+        appearance: profile.appearance,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
         resourceBundle: {
@@ -6088,6 +6721,10 @@ var GltfReferenceSource = class {
           documentBytes: profile.resourceBundle.documentBytes,
           externalResourceBytes: profile.resourceBundle.externalResourceBytes,
           externalResources: profile.resourceBundle.externalResources,
+          ...profile.resourceBundle.externalImageResources === void 0 ? {} : {
+            externalBufferResources: profile.resourceBundle.externalBufferResources,
+            externalImageResources: profile.resourceBundle.externalImageResources
+          },
           networkAtRuntime: false
         },
         metadataQuery: "bounded-node-mesh-material-projection"
@@ -6150,7 +6787,8 @@ var GltfReferenceSource = class {
         "entity-resolve",
         "bounded-reference-metadata",
         "source-display-geometry-separation",
-        "pick-resolve"
+        "pick-resolve",
+        ...this.#snapshot.referenceMetadata.appearance === null ? [] : ["bounded-base-color-texture"]
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
       sourceRole: "derived-or-reference-mesh",
@@ -6303,7 +6941,10 @@ async function createGltfReferenceSource(bytes, {
       profile.externalResourceUris
     );
     aborted4(signal);
-    encoded = encodeGltfGeometryRange(profile.records);
+    encoded = profile.textures.length === 0 ? encodeGltfGeometryRange(profile.records) : encodeGltfTexturedGeometryRange(
+      profile.records,
+      profile.textures
+    );
     const geometryDigest = await sha2562(encoded.bytes);
     aborted4(signal);
     return new GltfReferenceSource({
@@ -6311,6 +6952,7 @@ async function createGltfReferenceSource(bytes, {
       sourceDigest,
       geometryBytes: encoded.bytes,
       geometryDigest,
+      geometryMediaType: encoded.mediaType,
       geometryMetadata: encoded.metadata,
       maximumRequestBytes,
       sessionReadBudgetBytes
@@ -6321,6 +6963,10 @@ async function createGltfReferenceSource(bytes, {
       record.positions.fill(0);
       record.normals.fill(0);
       record.indices.fill(0);
+      record.texcoords?.fill(0);
+    }
+    for (const texture of profile?.textures ?? []) {
+      texture.bytes.fill(0);
     }
     for (const resource of ownedResources) {
       resource.bytes?.fill?.(0);
@@ -6333,7 +6979,7 @@ var REQUEST_SCHEMA = "bim-explorer-product-source-worker-request/0.1";
 var RESPONSE_SCHEMA = "bim-explorer-product-source-worker-response/0.1";
 var MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 var SOURCE_FORMATS = /* @__PURE__ */ new Set(["ifc", "gltf", "glb"]);
-var EXTERNAL_RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
+var EXTERNAL_RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
 var OPERATIONS = /* @__PURE__ */ new Set([
   "getEntity",
   "getEntityDetails",
@@ -6431,6 +7077,15 @@ function referenceResources(snapshot) {
     documentBytes: snapshot.referenceMetadata.resourceBundle.documentBytes,
     externalResourceBytes: snapshot.referenceMetadata.resourceBundle.externalResourceBytes,
     externalResources: snapshot.referenceMetadata.resourceBundle.externalResources,
+    ...snapshot.referenceMetadata.resourceBundle.externalImageResources === void 0 ? {} : {
+      externalBufferResources: snapshot.referenceMetadata.resourceBundle.externalBufferResources,
+      externalImageResources: snapshot.referenceMetadata.resourceBundle.externalImageResources
+    },
+    ...snapshot.referenceMetadata.appearance === null ? {} : {
+      textureSourceBytes: snapshot.referenceMetadata.appearance.textureSourceBytes,
+      textureDecodedBytes: snapshot.referenceMetadata.appearance.textureDecodedBytes,
+      textures: snapshot.referenceMetadata.appearance.textures
+    },
     geometryBytes,
     metadataBytes,
     detailBytes: 0,

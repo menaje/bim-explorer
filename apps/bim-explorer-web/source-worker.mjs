@@ -16,7 +16,7 @@ const RESPONSE_SCHEMA =
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 const EXTERNAL_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
 const OPERATIONS = new Set([
   "getEntity",
   "getEntityDetails",
@@ -177,6 +177,29 @@ function referenceResources(snapshot) {
         .externalResourceBytes,
     externalResources:
       snapshot.referenceMetadata.resourceBundle.externalResources,
+    ...(snapshot.referenceMetadata.resourceBundle
+      .externalImageResources === undefined
+      ? {}
+      : {
+          externalBufferResources:
+            snapshot.referenceMetadata.resourceBundle
+              .externalBufferResources,
+          externalImageResources:
+            snapshot.referenceMetadata.resourceBundle
+              .externalImageResources,
+        }),
+    ...(snapshot.referenceMetadata.appearance === null
+      ? {}
+      : {
+          textureSourceBytes:
+            snapshot.referenceMetadata.appearance
+              .textureSourceBytes,
+          textureDecodedBytes:
+            snapshot.referenceMetadata.appearance
+              .textureDecodedBytes,
+          textures:
+            snapshot.referenceMetadata.appearance.textures,
+        }),
     geometryBytes,
     metadataBytes,
     detailBytes: 0,

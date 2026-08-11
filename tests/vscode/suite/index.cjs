@@ -240,14 +240,26 @@ async function qualifyReference({
     expectedUploadedBytes,
   );
   if (resourceBundle) {
-    assert.deepEqual(ready.source.resourceBundle, {
+    const expectedResourceBundle = {
       schema: "bim-explorer-gltf-local-resource-bundle/0.1",
       documentBytes: manifest.document.byteLength,
       externalResourceBytes:
         manifest.expected.externalResourceBytes,
       externalResources: manifest.expected.externalResources,
+      ...(manifest.expected.externalImageResources === undefined
+        ? {}
+        : {
+            externalBufferResources:
+              manifest.expected.externalBufferResources,
+            externalImageResources:
+              manifest.expected.externalImageResources,
+          }),
       networkAtRuntime: false,
-    });
+    };
+    assert.deepEqual(
+      ready.source.resourceBundle,
+      expectedResourceBundle,
+    );
     assert.equal(
       ready.resources.documentBytes,
       manifest.document.byteLength,
@@ -260,6 +272,40 @@ async function qualifyReference({
       ready.resources.externalResources,
       manifest.expected.externalResources,
     );
+    if (manifest.expected.externalImageResources !== undefined) {
+      assert.equal(
+        ready.resources.externalBufferResources,
+        manifest.expected.externalBufferResources,
+      );
+      assert.equal(
+        ready.resources.externalImageResources,
+        manifest.expected.externalImageResources,
+      );
+      assert.deepEqual(ready.source.appearance, {
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes:
+          manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        colorSpace: "srgb-to-linear-webgl2",
+      });
+      assert.equal(
+        ready.renderer.textureDecodedBytes,
+        manifest.expected.textureDecodedBytes,
+      );
+      assert.equal(
+        ready.renderer.textureGpuBytes,
+        manifest.expected.textureGpuBytes,
+      );
+      assert.equal(
+        ready.renderer.gpuTextures,
+        manifest.expected.textures,
+      );
+    }
   }
   const serialized = JSON.stringify(ready);
   assert.equal(serialized.includes(sourcePath), false);
@@ -287,7 +333,12 @@ async function qualifyReference({
       gltfVersion: ready.source.gltfVersion,
       nativeId,
       ...(resourceBundle
-        ? { resourceBundle: ready.source.resourceBundle }
+        ? {
+            resourceBundle: ready.source.resourceBundle,
+            ...(ready.source.appearance === undefined
+              ? {}
+              : { appearance: ready.source.appearance }),
+          }
         : {}),
       ...(quantized || meshopt
         ? {
@@ -1013,6 +1064,8 @@ async function run() {
       .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
   const externalReferenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
+  const externalReferenceManifestPath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST;
   const quantizedReferenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE;
   const meshoptReferenceSourcePath =
@@ -1335,6 +1388,7 @@ async function run() {
     ) {
       const qualified = await qualifyReference({
         api,
+        manifestPath: externalReferenceManifestPath,
         resourceBundle: true,
         root,
         sourcePath: externalReferenceSourcePath,

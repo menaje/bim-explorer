@@ -199,7 +199,7 @@ test("product Worker client sends an explicit glTF source format", async () => {
   );
 });
 
-test("product Worker client transfers one bounded local glTF resource bundle", async () => {
+test("product Worker client transfers bounded local glTF resources", async () => {
   const worker = new FakeWorker();
   const client = createBimProductSourceWorkerClient(
     options(() => worker),
@@ -212,12 +212,18 @@ test("product Worker client transfers one bounded local glTF resource bundle", a
       resources: [{
         uri: "geometry.bin",
         bytes: callerBytes,
+      }, {
+        uri: "base-color.png",
+        bytes: Uint8Array.from([0x89, 0x50, 0x4e, 0x47]),
       }],
     },
   );
   assert.deepEqual(worker.openResources, [{
     uri: "geometry.bin",
     bytes: [5, 6, 7, 8],
+  }, {
+    uri: "base-color.png",
+    bytes: [0x89, 0x50, 0x4e, 0x47],
   }]);
   assert.deepEqual([...callerBytes], [5, 6, 7, 8]);
   await opened.session.dispose();

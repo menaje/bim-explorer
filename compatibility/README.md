@@ -126,9 +126,11 @@ model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
 별도 cache-only Khronos `Box.gltf + Box0.bin`은 Browser의 명시적 다중 파일
 선택, staged VS Code의 JSON-declared sibling read와 clean-installed local VSIX에서
 같은 3,546-byte composite identity, 12 triangles, 86,486 pixels와 terminal
-cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII `.bin`과
-합산 64MiB만 허용하며 path/scheme, symlink, external image, runtime network와
+cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII `.bin`/`.png`와
+합산 64MiB만 허용하며 path/scheme, symlink, runtime network와
 현재 승인된 두 확장 이외 required extension은 계속 차단합니다.
+외부 `.png`는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 standard sampler만
+허용하고 JPEG·비-OPAQUE alpha material mode·다른 material texture role은 차단합니다.
 이 local bundle 증거는 single-source 제품 범위이고 immutable federated BIM
 Surface v0.2 runtime이나 `.bimfed.json` 지원을 승격하지 않습니다.
 paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
@@ -409,11 +411,21 @@ Metal에서 검증했습니다. 세 표면은 12 triangles·86,486 pixels·756-b
 exact meshoptimizer 1.2.0으로 파생한 1,696-byte cache-only Box GLB의 192 compressed
 bytes를 648 bytes로 bounded 복원하고, 공식 Validator error·warning·hint 0개와
 알려진 info 2개, headless 및 같은 세 Apple M2 Metal 제품 표면을 고정합니다.
-glTF manifest는 28 passed / 4 held, product shell은 57 passed / 1 held입니다.
+추가
+[`external PNG base-color texture evidence`](evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json)는
+exact Khronos BoxTextured bundle의 공식 Validator issue 0개, 3,750-byte PNG와
+262,144-byte decoded base RGBA와 349,524-byte mipmap-aware GPU texture를 담은
+4,756-byte geometry-range v2, headless
+accounting 및 actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX의
+Apple M2 Metal 3개 표면을 고정합니다. 각 표면은 86,486 pixels,
+350,516-byte total GPU upload와 terminal cleanup을 재현합니다. sample은 원 라이선스와
+Cesium 표장 조건을 manifest에 고정하고 cache-only로 사용합니다.
+glTF manifest는 29 passed / 4 held, product shell은 60 passed / 1 held이며
+renderer manifest는 28 passed / 0 held입니다.
 `KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`만 required
 extension으로 허용하며 Draco·다른 meshopt filter·그 밖의 required extension,
 write·round-trip과 BIM semantic authority는 held입니다.
-임의 URI·external image·Linux/Windows physical GPU와 OS-level peak memory도
+임의 URI·JPEG·비-OPAQUE alpha mode·다중 material texture·Linux/Windows physical GPU와 OS-level peak memory도
 승인하지 않습니다. 공개 sample은 ignored cache에서만 사용하고 release에는
 포함하지 않습니다.
 

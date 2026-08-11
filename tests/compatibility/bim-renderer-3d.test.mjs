@@ -84,6 +84,10 @@ async function fixtures() {
       manifest.evidence.pointPhysicalGpuQualification,
       "utf8",
     )),
+    baseColorTextureProducts: JSON.parse(await readFile(
+      manifest.evidence.baseColorTextureProducts,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -122,9 +126,20 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.passedGates, 27);
+  assert.equal(result.baseColorTextureSurfaces, 3);
+  assert.equal(result.passedGates, 28);
   assert.equal(result.heldGates, 0);
   assert.equal(result.pointPhysicalGpuSurfaces, 12);
+});
+
+test("BIM renderer requires exact base color texture evidence", async () => {
+  const { manifest, evidence } = await fixtures();
+  evidence.baseColorTextureProducts.assertions
+    .deterministicCleanup = false;
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, evidence),
+    /glTF texture product evidence is invalid/u,
+  );
 });
 
 test("BIM renderer Viewer Core claim requires release evidence", async () => {

@@ -37,6 +37,7 @@ async function fixtures() {
     gltfExternalResourceProducts,
     gltfMeshQuantizationProducts,
     gltfMeshoptProducts,
+    gltfTextureProducts,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -138,6 +139,10 @@ async function fixtures() {
       manifest.evidence.gltfMeshoptProducts,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -164,6 +169,7 @@ async function fixtures() {
     gltfExternalResourceProducts,
     gltfMeshQuantizationProducts,
     gltfMeshoptProducts,
+    gltfTextureProducts,
     manifest,
     vscode,
   };
@@ -197,6 +203,7 @@ function validate(values) {
     values.gltfExternalResourceProducts,
     values.gltfMeshQuantizationProducts,
     values.gltfMeshoptProducts,
+    values.gltfTextureProducts,
   );
 }
 
@@ -208,10 +215,11 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       externalGltfBundleSurfaces: 3,
       extMeshoptCompressionSurfaces: 3,
+      baseColorTextureSurfaces: 3,
       khrMeshQuantizationSurfaces: 3,
       heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 57,
+      passedGates: 60,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
       pointCloudPhysicalGpu:
@@ -248,6 +256,15 @@ test("product shells require exact EXT_meshopt_compression evidence", async () =
   assert.throws(
     () => validate(values),
     /EXT_meshopt_compression product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact base color texture evidence", async () => {
+  const values = await fixtures();
+  values.gltfTextureProducts.assertions.actualTextureProjection = false;
+  assert.throws(
+    () => validate(values),
+    /glTF texture product evidence is invalid/u,
   );
 });
 

@@ -14,16 +14,22 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 - required `EXT_meshopt_compression`의 `ATTRIBUTES`·`TRIANGLES`·`INDICES` mode와
   `FILTER_NONE`; exact meshoptimizer 1.2.0 decoder는 압축 source에서만 lazy load
 - material `baseColorFactor`
+- 명시적으로 공급된 동일 폴더 PNG의 OPAQUE `baseColorTexture`, bounded
+  `TEXCOORD_0`과 표준 sampler
 - source-local `nativeId`와 immutable range session
 
 local resource bundle은 최대 16개 sidecar와 document 합산 64MiB로 제한합니다.
 Browser는 source와 sidecar를 한 번에 명시적으로 고르고, VS Code는 JSON에 선언된
-동일 폴더 regular non-symlink `.bin`만 안정적으로 읽습니다. scheme, separator,
-`..`, query/fragment, percent-encoded name, 누락·중복·미사용 resource, 외부 image와
+동일 폴더 regular non-symlink `.bin`과 `.png`만 안정적으로 읽습니다. scheme,
+separator, `..`, query/fragment, percent-encoded name, 누락·중복·미사용 resource와
 network fetch, 두 승인 확장 이외 required extension, 다른 meshopt filter, animation, skin,
 morph target, sparse accessor,
-write와 round-trip은 거부합니다. 출력 geometry는
-`application/vnd.bim-explorer.geometry-range.v1` display cache이며 원본
+write와 round-trip은 거부합니다. 외부 PNG는 8MiB encoded·16MiB decoded RGBA,
+축당 2,048px·256:1 비율과 최대 16개 상한을 적용합니다. JPEG, 비-OPAQUE alpha material mode,
+normal/metallic-roughness/occlusion/emissive texture, `KHR_texture_transform`과
+embedded image의 material 투영은 지원하지 않습니다. 출력 geometry는 texture가
+없으면 `application/vnd.bim-explorer.geometry-range.v1`, 승인된 texture가 있으면
+`application/vnd.bim-explorer.geometry-range.v2` display cache이며 원본
 glTF/GLB의 source authority가 아닙니다.
 
 Khronos Box GLB는 공식 Validator의 issue 0개와 실제 headless Chrome
@@ -61,7 +67,16 @@ bytes를 648 bytes로 복원했고, headless와 같은 세 Apple M2 Metal 제품
 bundle되어 압축 source에서만 초기화됩니다. decoded aggregate 64MiB, ratio 256:1,
 payload 없는 fallback placeholder와 `FILTER_NONE`만 허용합니다. 공식 Validator의
 고정 info 2개는 extension schema 미지원과 placeholder buffer 진단으로 기록합니다.
-Linux/Windows hardware, arbitrary URI, external image, Draco·다른 meshopt filter·그 밖의
+외부 texture Gate는 exact Khronos `BoxTextured.gltf + BoxTextured0.bin +
+CesiumLogoFlat.png`를 cache-only로 고정합니다. 공식 Validator issue 0개와
+geometry-range v2의 3,750-byte PNG·262,144-byte decoded base RGBA,
+349,524-byte mipmap-aware GPU texture와 headless
+accounting 및 actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX의
+Apple M2 Metal에서 86,486 pixels·350,516-byte total upload·terminal cleanup을
+재현했습니다. sample은 Cesium 표장 조건을 포함한 원 라이선스를 manifest에
+기록하고 Git·package·release에 재배포하지 않습니다.
+Linux/Windows hardware, arbitrary URI, JPEG·투명/다중 material texture,
+Draco·다른 meshopt filter·그 밖의
 required extension,
 OS-level peak GPU memory와 production support는 별도 Gate입니다.
 
