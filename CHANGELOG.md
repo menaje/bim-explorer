@@ -15,6 +15,9 @@
 - publish that exact tgz as the immutable package-only `bim-surface-v0.2.0`
   GitHub prerelease with nine assets, macOS/Linux byte identity and release/build
   attestations while preserving Community `v0.1.0` as Latest;
+- admit Spatial's anonymous public-artifact exact-pin and actual GLB + IFC +
+  Spatial overlay consumer evidence while keeping VSIX BIM runtime, BIM UI/GPU,
+  cross-platform consumer coverage and production support held;
 - allow cache-only public test fixtures without requiring sample redistribution,
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing

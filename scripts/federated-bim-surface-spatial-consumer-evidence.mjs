@@ -5,6 +5,10 @@ export const SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH =
   "compatibility/evidence/" +
   "federated-bim-surface-spatial-release-ready-consumer-" +
   "2026-08-11.json";
+export const SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "federated-bim-surface-spatial-public-artifact-consumer-" +
+  "2026-08-11.json";
 
 const PACKAGE_NAME = "@bim-explorer/federated-bim-surface";
 const PACKAGE_VERSION = "0.2.0";
@@ -171,5 +175,119 @@ export function validateSpatialReleaseReadyConsumerAdmission(
     packageBytes: evidence.candidate.packageBytes,
     packageSha256: evidence.candidate.packageSha256,
     runtimeSha256: evidence.candidate.runtimeSha256,
+  });
+}
+
+export function validateSpatialPublicArtifactConsumerAdmission(
+  evidence,
+) {
+  if (
+    evidence?.schema !==
+      "bim-explorer-federated-bim-surface-spatial-" +
+        "public-artifact-consumer-admission/1" ||
+    evidence.status !== "passed-public-artifact-spatial-admission" ||
+    evidence.asOf !== "2026-08-11" ||
+    evidence.source?.repository !==
+      "https://github.com/menaje/coni-spatial" ||
+    evidence.source.commit !==
+      "55d96e86bcda274964f6ceb8540a1a93355a975e" ||
+    evidence.source.issue !==
+      "https://github.com/menaje/coni-spatial/issues/22" ||
+    evidence.source.issueComment !==
+      "https://github.com/menaje/coni-spatial/issues/22" +
+        "#issuecomment-5248220876" ||
+    evidence.source.ciComment !==
+      "https://github.com/menaje/coni-spatial/issues/22" +
+        "#issuecomment-5248238473" ||
+    evidence.source.evidencePath !==
+      "compatibility/evidence/" +
+        "spatial-federated-bim-surface-public-v0.2.0-consumer-" +
+        "darwin-arm64-2026-08-11.json" ||
+    evidence.source.evidenceUrl !==
+      "https://github.com/menaje/coni-spatial/blob/" +
+        "55d96e86bcda274964f6ceb8540a1a93355a975e/" +
+        "compatibility/evidence/" +
+        "spatial-federated-bim-surface-public-v0.2.0-consumer-" +
+        "darwin-arm64-2026-08-11.json" ||
+    evidence.source.evidenceBytes !== 8379 ||
+    evidence.source.evidenceSha256 !==
+      "a8db52a6907b6b76a242177aaeed6c8550a21f4e5ca77c663ebd322afc07c8a9" ||
+    evidence.publicArtifact?.packageName !== PACKAGE_NAME ||
+    evidence.publicArtifact.packageVersion !== PACKAGE_VERSION ||
+    evidence.publicArtifact.releaseTag !== "bim-surface-v0.2.0" ||
+    evidence.publicArtifact.annotatedTagObject !==
+      "111df108f964edbf5ba3621da0e9c3321c64d820" ||
+    evidence.publicArtifact.releaseCommit !==
+      "13f02b8b30a3aa236f8052b458462bc1d0f1bc09" ||
+    evidence.publicArtifact.packageBytes !== 97623 ||
+    evidence.publicArtifact.packageSha256 !==
+      "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb" ||
+    evidence.publicArtifact.runtimeSha256 !== RUNTIME_SHA256 ||
+    evidence.publicArtifact.packageManifestFingerprint !==
+      MANIFEST_FINGERPRINT ||
+    evidence.publicArtifact.explorerReleaseEvidence?.sourceCommit !==
+      "7f7ae13ed85046c2d14316f18fcba7a8ab48f88a" ||
+    evidence.publicArtifact.explorerReleaseEvidence.path !==
+      "compatibility/evidence/" +
+        "federated-bim-surface-release-v0.2.0-2026-08-11.json" ||
+    evidence.publicArtifact.explorerReleaseEvidence.byteLength !== 5247 ||
+    evidence.publicArtifact.explorerReleaseEvidence.sha256 !==
+      "1b6b321e4e395a35f7dc0cb492e0d792fd444a15b2d71c2aadf62e0d89ad113f" ||
+    !exactTrueRecord(evidence.result, [
+      "anonymousDownload",
+      "explorerCheckoutIndependent",
+      "offlineCleanInstall",
+      "annotatedTagAndAssetIntegrity",
+      "checksumLicenseNoticeSourceOfferSpdx",
+      "githubBuildProvenance",
+      "exactPackageBytes",
+      "exactRuntimeBytes",
+      "threeSourceComposition",
+      "bidirectionalCanonicalSelection",
+      "anchorExactThenStaleNoRemap",
+      "terminalCleanup",
+      "authorityFree",
+      "existingSpatialVsixRegression",
+    ]) ||
+    JSON.stringify(evidence.qualification) !== JSON.stringify({
+      platform: "darwin-arm64",
+      nodeTests: 362,
+      conformanceTests: 66,
+      vscodeVersion: "1.132",
+      publicArtifactEvidenceByteIdenticalRuns: 2,
+    }) ||
+    JSON.stringify(evidence.hostedCi) !== JSON.stringify({
+      runId: 31451635328,
+      attempts: 2,
+      runnerAssigned: false,
+      stepsStarted: false,
+      externalInfrastructureFailure: true,
+    }) ||
+    JSON.stringify(evidence.claims) !== JSON.stringify({
+      publicArtifactSpatialAdmission: true,
+      actualSpatialConsumer: true,
+      publicGithubReleaseArtifact: true,
+      npmRegistryPackage: false,
+      spatialVsixBundledRuntime: false,
+      actualBrowserOrVscodeBimPixels: false,
+      crossPlatformConsumer: false,
+      productionSupport: false,
+    }) ||
+    !Array.isArray(evidence.limitations) ||
+    evidence.limitations.length < 5
+  ) {
+    throw new Error(
+      "Spatial public-artifact consumer admission evidence is invalid",
+    );
+  }
+  return Object.freeze({
+    status: evidence.status,
+    sourceCommit: evidence.source.commit,
+    releaseCommit: evidence.publicArtifact.releaseCommit,
+    packageBytes: evidence.publicArtifact.packageBytes,
+    packageSha256: evidence.publicArtifact.packageSha256,
+    runtimeSha256: evidence.publicArtifact.runtimeSha256,
+    explorerReleaseEvidenceSha256:
+      evidence.publicArtifact.explorerReleaseEvidence.sha256,
   });
 }

@@ -66,8 +66,8 @@ headless consumer가 이전 exact tgz와 release-ready 97,623-byte tgz에서 ext
 base + authored overlay와 authority-free anchor lifecycle을 재현했습니다.
 repository/staged manifest는 `private: true`이고 동일 tgz는 package-only
 immutable GitHub prerelease로 공개됐습니다. public artifact의 Spatial Phase B
-exact-pin, Workspace authoring authority, 새 VSIX publication과 production
-support는 계속 별도 Gate입니다.
+exact-pin도 통과했습니다. Workspace authoring authority, Spatial VSIX BIM
+runtime, 새 VSIX publication과 production support는 계속 별도 Gate입니다.
 
 ## Community 공개 Gate
 

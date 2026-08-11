@@ -34,7 +34,7 @@
     "actualSpatialConsumer": true,
     "releaseReadyPackageConsumerRevalidation": true,
     "publicV02Package": true,
-    "publicArtifactSpatialAdmission": false,
+    "publicArtifactSpatialAdmission": true,
     "productionSupport": false
   },
   "evidence": {
@@ -44,10 +44,10 @@
     "packageCandidate": "compatibility/evidence/federated-bim-surface-package-release-ready-2026-08-11.json",
     "actualSpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-consumer-2026-08-11.json",
     "releaseReadySpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json",
-    "publicRelease": "compatibility/evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json"
+    "publicRelease": "compatibility/evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json",
+    "publicArtifactSpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-public-artifact-consumer-2026-08-11.json"
   },
   "blockers": [
-    "the immutable public v0.2 release asset requires a separate Spatial Phase B exact-pin admission",
     "stable production support requires public multi-source adoption and support-policy evidence"
   ],
   "limitations": [
@@ -56,7 +56,7 @@
     "alignment is explicit placement provenance and performs no qualified CRS or datum transformation",
     "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
     "the 0.2.0 zero-runtime-dependency package is an immutable public package-only prerelease and remains separate from the public bim-surface v0.1.0 artifact",
-    "Spatial revalidated the exact 97,623-byte private candidate; the identical immutable public artifact still requires Phase B exact-pin admission",
+    "Spatial anonymously downloaded and exact-pinned the immutable public 97,623-byte artifact on macOS arm64; hosted CI did not start and adds no cross-platform consumer evidence",
     "the actual VS Code Webview entrypoint uses a local path-free .bimfed.json host bridge and remains read-only without Spatial authority",
     "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
   ],
@@ -74,7 +74,7 @@
     "claimActualSpatialConsumer": true,
     "claimReleaseReadyPackageConsumerRevalidation": true,
     "claimPublicV02Package": true,
-    "claimPublicArtifactSpatialAdmission": false,
+    "claimPublicArtifactSpatialAdmission": true,
     "claimProductionSupport": false
   }
 }

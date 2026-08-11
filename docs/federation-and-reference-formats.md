@@ -106,8 +106,8 @@ lifecycle을 host-neutral surface로 합성하는 draft입니다. 개발 기준�
 Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate에 더해 actual
 Spatial headless consumer가 이전 candidate와 exact 97,623-byte release-ready
 tgz를 검증했습니다. 이는 package-only prerelease를 승인하지만 immutable public
-artifact의 Spatial exact-pin, Spatial VSIX BIM runtime 또는 production support를
-승인한다는 뜻은 아닙니다.
+artifact의 Spatial exact-pin도 별도로 통과했습니다. 다만 Spatial VSIX BIM
+runtime, 실제 BIM UI/GPU 또는 production support를 승인한다는 뜻은 아닙니다.
 
 ## Coordinate와 precision 경계
 
@@ -222,7 +222,8 @@ LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 
 actual Spatial headless consumer는 이전 exact private candidate와 release-ready
 tgz에서 통과했고 동일 tgz는 immutable public prerelease로 공개됐습니다. public
-artifact의 standalone Spatial Phase B exact-pin은 Explorer 저장소가 단독으로
-완료할 수 없는 consumer-owned Gate입니다. 관련
+artifact의 standalone Spatial Phase B exact-pin도 consumer-owned evidence로
+통과했습니다. hosted CI는 runner 배정 전에 종료돼 cross-platform consumer
+evidence를 추가하지 않습니다. 관련
 진행은 Explorer #9/#12와 Coni Spatial #22에 evidence URL과 exact digest로만
 게시합니다.

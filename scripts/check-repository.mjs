@@ -120,6 +120,7 @@ const REQUIRED_PATHS = [
   "compatibility/evidence/federated-bim-surface-package-release-ready-2026-08-11.json",
   "compatibility/evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json",
   "compatibility/evidence/federated-bim-surface-spatial-consumer-2026-08-11.json",
+  "compatibility/evidence/federated-bim-surface-spatial-public-artifact-consumer-2026-08-11.json",
   "compatibility/evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json",
   "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json",
   "compatibility/evidence/bim-federation-product-scale-2026-08-08.json",

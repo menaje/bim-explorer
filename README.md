@@ -158,8 +158,9 @@ SHA-256이 `3bdb747d…c63cb`가 됐고, Spatial commit `ef0c1ea…4e5`가 그 e
 97,623 bytes를 다시 검증했습니다. `dev` → `prerelease` 승격 뒤 package-only
 [`bim-surface-v0.2.0`](https://github.com/menaje/bim-explorer/releases/tag/bim-surface-v0.2.0)
 immutable GitHub prerelease와 9개 attested asset을 공개했습니다. 이 public asset의
-Spatial Phase B exact-pin은 별도 Gate이며, authoring authority나 새
-VSIX/Marketplace publication은 승인하지 않습니다.
+anonymous download와 offline clean install을 Spatial commit `55d96e8…975e`가
+다시 exact-pin해 Phase B도 통과했습니다. authoring authority, Spatial VSIX BIM
+runtime, 실제 BIM UI/GPU나 새 VSIX/Marketplace publication은 승인하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
@@ -167,9 +168,9 @@ bridge를 사용합니다. Explorer는 source-bound GlobalId와 viewpoint만
 제공하고 Spatial Service가 Canonical mapping, 2D/3D selection과 opaque
 Context Reference를 발급합니다. 현재 synthetic provider conformance는
 통과했습니다. federated Surface 0.2의 actual private-candidate consumer evidence는
-Spatial 저장소가 소유하며 release-ready tgz exact-byte 재검증도 통과했습니다.
-이후 immutable public artifact의 exact-pin admission은 같은 consumer-owned
-Gate로 유지합니다.
+Spatial 저장소가 소유하며 release-ready tgz와 immutable public artifact의
+exact-pin admission을 모두 통과했습니다. Spatial bundle product integration과
+production support는 별도 consumer-owned Gate로 유지합니다.
 
 post-v0.1 federation foundation은
 [`bim-explorer-federation/0.1`](specs/bim-federation-v0.1.md)로

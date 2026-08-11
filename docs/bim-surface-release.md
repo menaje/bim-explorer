@@ -109,11 +109,18 @@ contract를 exact-pin한 증거와 release-ready 97,623-byte tgz SHA-256
 `3bdb747d…c63cb`를 다시 검증한 증거를 가집니다. 이에 따라 package-only
 prerelease의 `publicationAuthorized`는 true입니다. 공개 범위는 tgz, SPDX,
 checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지 않습니다.
-발급된 immutable public asset에 대한 Spatial Phase B exact-pin은 별도
-post-release Gate입니다.
+발급된 immutable public asset에 대한 Spatial Phase B exact-pin도 anonymous
+download와 offline clean install을 통해 통과했습니다. 이는 Spatial VSIX BIM
+runtime, 실제 BIM UI/GPU 또는 production support를 승인하지 않습니다.
 
 `bim-surface-v0.2.0`은 `prerelease` exact HEAD의 annotated tag로 공개됐습니다.
 macOS/Linux 각각 380개 conformance, zero runtime vulnerability, 9개 asset의
 cross-platform byte identity와 release/build attestation을 통과했습니다. tgz는
 97,623 bytes, SHA-256 `3bdb747d…c63cb`이며 Community `v0.1.0`의 Latest 상태는
 유지합니다.
+
+Spatial commit `55d96e8…975e`의 public-artifact consumer evidence는 같은 tgz,
+runtime, tag commit과 Explorer release evidence를 고정하고 GLB+IFC+Spatial
+overlay, 양방향 selection, anchor exact→stale/no-remap과 cleanup을 재현합니다.
+macOS arm64 local 362/362와 conformance 66/66은 통과했지만 hosted CI 두 attempt는
+runner 배정 전에 종료됐으므로 cross-platform consumer claim은 없습니다.

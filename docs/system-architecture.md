@@ -210,7 +210,8 @@ Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부
 zero-runtime-dependency package candidate는 검증됐고, Spatial actual headless
 consumer는 이전 candidate와 exact 97,623-byte release-ready tgz에서 composition과
 anchor lifecycle을 통과했습니다. 동일 tgz는 immutable package-only v0.2
-prerelease로 공개됐고 public asset의 Spatial Phase B exact-pin은 별도 Gate입니다.
+prerelease로 공개됐고 public asset의 Spatial Phase B exact-pin도 통과했습니다.
+Spatial VSIX BIM runtime과 실제 UI/GPU, reconcile과 production은 별도 Gate입니다.
 
 ## Viewer Core와 3D presentation
 
@@ -423,7 +424,8 @@ macOS/Linux byte identity와 attestations까지 통과했습니다. federated Su
 0.2의 actual Spatial headless consumer는 이전 private candidate와 release-ready
 tgz를 exact-pin해 composition을 통과했습니다. 동일 tgz의 immutable public
 artifact가 발급됐으며 Phase B exact-pin과 standalone Spatial product admission은
-Spatial #22의 consumer-owned Gate가 소유합니다.
+Spatial #22에서 통과했습니다. standalone Spatial product integration과 production
+admission은 계속 consumer-owned Gate가 소유합니다.
 
 외부 3D 기반 설계의 차기 경계는
 [`bim-spatial-integration/0.2`](../specs/bim-spatial-integration-v0.2.md)가

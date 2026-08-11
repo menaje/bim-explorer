@@ -13,8 +13,10 @@ import {
 } from "./qualify-federated-bim-surface-package.mjs";
 import {
   SPATIAL_CONSUMER_EVIDENCE_PATH,
+  SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH,
   SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH,
   validateSpatialConsumerAdmission,
+  validateSpatialPublicArtifactConsumerAdmission,
   validateSpatialReleaseReadyConsumerAdmission,
 } from "./federated-bim-surface-spatial-consumer-evidence.mjs";
 import {
@@ -63,9 +65,9 @@ const TRUE_GATES = Object.freeze([
   "actualSpatialConsumer",
   "releaseReadyPackageConsumerRevalidation",
   "publicV02Package",
+  "publicArtifactSpatialAdmission",
 ]);
 const HELD_GATES = Object.freeze([
-  "publicArtifactSpatialAdmission",
   "productionSupport",
 ]);
 const HEADLESS_HELD_GATES = Object.freeze([
@@ -687,6 +689,7 @@ export function validateFederatedBimSurfaceCompatibility(
   releaseEvidence,
   spatialConsumerEvidence,
   spatialReleaseReadyConsumerEvidence,
+  spatialPublicArtifactConsumerEvidence,
 ) {
   plainRecord(manifest, "federated BIM Surface manifest");
   if (
@@ -731,7 +734,9 @@ export function validateFederatedBimSurfaceCompatibility(
       SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH ||
     manifest.evidence.publicRelease !==
       FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 7 ||
+    manifest.evidence.publicArtifactSpatialConsumer !==
+      SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence).length !== 8 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -759,7 +764,7 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.claimActualSpatialConsumer !== true ||
     policy.claimReleaseReadyPackageConsumerRevalidation !== true ||
     policy.claimPublicV02Package !== true ||
-    policy.claimPublicArtifactSpatialAdmission !== false ||
+    policy.claimPublicArtifactSpatialAdmission !== true ||
     policy.claimProductionSupport !== false
   ) {
     throw new Error(
@@ -780,6 +785,10 @@ export function validateFederatedBimSurfaceCompatibility(
   const spatialReleaseReadyConsumer =
     validateSpatialReleaseReadyConsumerAdmission(
       spatialReleaseReadyConsumerEvidence,
+    );
+  const spatialPublicArtifactConsumer =
+    validateSpatialPublicArtifactConsumerAdmission(
+      spatialPublicArtifactConsumerEvidence,
     );
   if (
     packageEvidence.spatialConsumer?.evidence !==
@@ -805,7 +814,15 @@ export function validateFederatedBimSurfaceCompatibility(
     packageEvidence.releaseGate.publicationAuthorized !== true ||
     publicRelease.version !== packageCandidate.version ||
     publicRelease.packageBytes !== packageCandidate.byteLength ||
-    publicRelease.packageSha256 !== packageCandidate.sha256
+    publicRelease.packageSha256 !== packageCandidate.sha256 ||
+    spatialPublicArtifactConsumer.releaseCommit !==
+      publicRelease.commit ||
+    spatialPublicArtifactConsumer.packageBytes !==
+      publicRelease.packageBytes ||
+    spatialPublicArtifactConsumer.packageSha256 !==
+      publicRelease.packageSha256 ||
+    spatialPublicArtifactConsumer.runtimeSha256 !==
+      packageCandidate.runtimeSha256
   ) {
     throw new Error(
       "release-ready package revalidation Gate is invalid",
@@ -825,6 +842,8 @@ export function validateFederatedBimSurfaceCompatibility(
     spatialConsumer: spatialConsumer.status,
     releaseReadySpatialConsumer: spatialReleaseReadyConsumer.status,
     publicRelease: publicRelease.status,
+    publicArtifactSpatialAdmission:
+      spatialPublicArtifactConsumer.status,
   });
 }
 
@@ -838,6 +857,7 @@ async function main() {
     releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
+    spatialPublicArtifactConsumerEvidence,
   ] = await Promise.all([
     readFile(
       "compatibility/federated-bim-surface.json",
@@ -853,6 +873,8 @@ async function main() {
       .then(JSON.parse),
     readFile(SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH, "utf8")
       .then(JSON.parse),
+    readFile(SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
   ]);
   const result = validateFederatedBimSurfaceCompatibility(
     manifest,
@@ -863,6 +885,7 @@ async function main() {
     releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
+    spatialPublicArtifactConsumerEvidence,
   );
   process.stdout.write(
     `Federated BIM Surface compatibility check passed: ` +

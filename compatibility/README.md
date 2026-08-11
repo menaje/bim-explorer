@@ -67,14 +67,18 @@ Canonical selection, durable point-only anchor, stale/no-remap과 terminal clean
 97,623 bytes, SHA-256 `3bdb747d…c63cb`도 다시 검증했습니다. 같은 bytes를
 `bim-surface-v0.2.0` immutable package-only GitHub prerelease로 공개했고 9개
 asset, macOS/Linux byte identity와 attestations를 확인했습니다. public asset의
-Spatial Phase B exact-pin admission은 아직 held입니다. exact 결과는
+Spatial Phase B도 anonymous download, offline clean install과 actual 3-source
+consumer composition으로 통과했습니다. Spatial hosted CI는 runner 배정 전에
+종료돼 cross-platform consumer evidence를 추가하지 않으며 production support는
+held입니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
 [`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
 [`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json),
 [`release-ready package evidence`](evidence/federated-bim-surface-package-release-ready-2026-08-11.json),
 [`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json),
 [`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json),
-[`public release evidence`](evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json)에
+[`public release evidence`](evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json),
+[`Spatial public-artifact admission`](evidence/federated-bim-surface-spatial-public-artifact-consumer-2026-08-11.json)에
 고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
 보존합니다.
 

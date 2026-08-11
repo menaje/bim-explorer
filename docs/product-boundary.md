@@ -91,7 +91,8 @@ selection이 authority가 되지 않습니다.
   offline clean install도 통과했습니다. Spatial actual headless consumer는 이전
   candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. 동일 tgz는
   immutable public v0.2 package prerelease로 공개됐고 그 asset의 Spatial Phase B
-  exact-pin admission은 별도 Gate입니다.
+  exact-pin admission도 통과했습니다. Spatial VSIX BIM runtime, 실제 BIM UI와
+  production support는 별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는

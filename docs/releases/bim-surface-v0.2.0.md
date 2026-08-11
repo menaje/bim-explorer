@@ -21,8 +21,9 @@ An actual Coni Spatial headless consumer admitted both the prior candidate and
 the exact 97,623-byte release-ready package. The latter preserves the runtime
 byte identity and has SHA-256
 `3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb`.
-This authorizes the package-only prerelease. Exact-pin admission of the
-immutable public asset remains a separate Spatial-owned post-release Gate.
+This authorizes the package-only prerelease. Spatial then anonymously
+downloaded and clean-installed the immutable public asset, exact-pinned its
+release identity and repeated the actual three-source consumer lifecycle.
 
 This package grants no Workspace, Canonical Entity, mutation, constraint,
 acceptance, publish or export authority. It does not include or publish a BIM

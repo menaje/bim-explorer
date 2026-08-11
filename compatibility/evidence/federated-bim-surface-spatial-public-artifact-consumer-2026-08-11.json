@@ -1,0 +1,80 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-spatial-public-artifact-consumer-admission/1",
+  "status": "passed-public-artifact-spatial-admission",
+  "asOf": "2026-08-11",
+  "source": {
+    "repository": "https://github.com/menaje/coni-spatial",
+    "commit": "55d96e86bcda274964f6ceb8540a1a93355a975e",
+    "issue": "https://github.com/menaje/coni-spatial/issues/22",
+    "issueComment": "https://github.com/menaje/coni-spatial/issues/22#issuecomment-5248220876",
+    "ciComment": "https://github.com/menaje/coni-spatial/issues/22#issuecomment-5248238473",
+    "evidencePath": "compatibility/evidence/spatial-federated-bim-surface-public-v0.2.0-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceUrl": "https://github.com/menaje/coni-spatial/blob/55d96e86bcda274964f6ceb8540a1a93355a975e/compatibility/evidence/spatial-federated-bim-surface-public-v0.2.0-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceBytes": 8379,
+    "evidenceSha256": "a8db52a6907b6b76a242177aaeed6c8550a21f4e5ca77c663ebd322afc07c8a9"
+  },
+  "publicArtifact": {
+    "packageName": "@bim-explorer/federated-bim-surface",
+    "packageVersion": "0.2.0",
+    "releaseTag": "bim-surface-v0.2.0",
+    "annotatedTagObject": "111df108f964edbf5ba3621da0e9c3321c64d820",
+    "releaseCommit": "13f02b8b30a3aa236f8052b458462bc1d0f1bc09",
+    "packageBytes": 97623,
+    "packageSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "packageManifestFingerprint": "ee1617ad2a19e9e2f9be75dfefb42632edad1b9b9529b413da7a9306addf6caf",
+    "explorerReleaseEvidence": {
+      "sourceCommit": "7f7ae13ed85046c2d14316f18fcba7a8ab48f88a",
+      "path": "compatibility/evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json",
+      "byteLength": 5247,
+      "sha256": "1b6b321e4e395a35f7dc0cb492e0d792fd444a15b2d71c2aadf62e0d89ad113f"
+    }
+  },
+  "result": {
+    "anonymousDownload": true,
+    "explorerCheckoutIndependent": true,
+    "offlineCleanInstall": true,
+    "annotatedTagAndAssetIntegrity": true,
+    "checksumLicenseNoticeSourceOfferSpdx": true,
+    "githubBuildProvenance": true,
+    "exactPackageBytes": true,
+    "exactRuntimeBytes": true,
+    "threeSourceComposition": true,
+    "bidirectionalCanonicalSelection": true,
+    "anchorExactThenStaleNoRemap": true,
+    "terminalCleanup": true,
+    "authorityFree": true,
+    "existingSpatialVsixRegression": true
+  },
+  "qualification": {
+    "platform": "darwin-arm64",
+    "nodeTests": 362,
+    "conformanceTests": 66,
+    "vscodeVersion": "1.132",
+    "publicArtifactEvidenceByteIdenticalRuns": 2
+  },
+  "hostedCi": {
+    "runId": 31451635328,
+    "attempts": 2,
+    "runnerAssigned": false,
+    "stepsStarted": false,
+    "externalInfrastructureFailure": true
+  },
+  "claims": {
+    "publicArtifactSpatialAdmission": true,
+    "actualSpatialConsumer": true,
+    "publicGithubReleaseArtifact": true,
+    "npmRegistryPackage": false,
+    "spatialVsixBundledRuntime": false,
+    "actualBrowserOrVscodeBimPixels": false,
+    "crossPlatformConsumer": false,
+    "productionSupport": false
+  },
+  "limitations": [
+    "Spatial consumed the immutable public GitHub prerelease asset, not an npm registry package or an Explorer checkout.",
+    "The actual consumer qualification is macOS arm64 Node/headless with generated IFC and GLB inputs.",
+    "VS Code 1.132 covers regression of the existing Spatial VSIX; the BIM runtime is not bundled and actual BIM UI/GPU pixels are not claimed.",
+    "Both hosted CI attempts failed before runner assignment with zero started steps, so they add no cross-platform consumer evidence.",
+    "Reconcile, source acceptance, Linux/Windows consumer coverage and production support remain outside this admission."
+  ]
+}
