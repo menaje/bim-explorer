@@ -19,6 +19,8 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
   maximumJsonBytes: 4 * 1024 * 1024,
   maximumBufferBytes: 64 * 1024 * 1024,
+  maximumExternalResources: 16,
+  maximumExternalResourceNameBytes: 128,
   maximumNodes: 4_096,
   maximumNodeDepth: 256,
   maximumMeshes: 4_096,
@@ -196,67 +198,165 @@ function decodeBase64(value, maximumBytes) {
     character.charCodeAt(0));
 }
 
-function loadBuffers(document, binaryChunk, format, limits) {
+function externalResourceName(value, limits) {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    new TextEncoder().encode(value).byteLength >
+      limits.maximumExternalResourceNameBytes ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u.test(value) ||
+    value === ".bin" ||
+    value.includes("..")
+  ) {
+    throw new DOMException(
+      "external glTF buffer URI is outside the local bundle profile",
+      "NotSupportedError",
+    );
+  }
+  return value;
+}
+
+function externalResourceMap(values, limits) {
+  if (!Array.isArray(values)) {
+    throw new TypeError("glTF external resources must be an array");
+  }
+  if (values.length > limits.maximumExternalResources) {
+    throw new RangeError(
+      "glTF external resource count exceeds the limit",
+    );
+  }
+  const resources = new Map();
+  try {
+    for (let index = 0; index < values.length; index += 1) {
+      const value = plainRecord(
+        values[index],
+        `glTF external resources[${index}]`,
+      );
+      const uri = externalResourceName(value.uri, limits);
+      if (
+        !(value.bytes instanceof Uint8Array) ||
+        value.bytes.byteLength === 0 ||
+        value.bytes.byteLength > limits.maximumBufferBytes
+      ) {
+        throw new RangeError(
+          `glTF external resource ${uri} exceeds its byte limit`,
+        );
+      }
+      if (resources.has(uri)) {
+        throw new Error("glTF external resource URI is duplicated");
+      }
+      resources.set(uri, Uint8Array.from(value.bytes));
+    }
+    return resources;
+  } catch (error) {
+    for (const bytes of resources.values()) {
+      bytes.fill(0);
+    }
+    throw error;
+  }
+}
+
+function loadBuffers(
+  document,
+  binaryChunk,
+  format,
+  limits,
+  externalResources,
+) {
   const buffers = collection(
     document.buffers,
     limits.maximumAccessors,
     "glTF buffers",
   );
   let totalBytes = 0;
-  return buffers.map((bufferValue, index) => {
-    const buffer = plainRecord(
-      bufferValue,
-      `glTF buffers[${index}]`,
-    );
-    positiveInteger(
-      buffer.byteLength,
-      `glTF buffers[${index}].byteLength`,
-    );
-    if (buffer.byteLength > limits.maximumBufferBytes) {
-      throw new RangeError("glTF buffer exceeds its byte limit");
-    }
-    let bytes;
-    if (buffer.uri === undefined) {
-      if (
-        format !== "glb" ||
-        index !== 0 ||
-        binaryChunk === null
-      ) {
-        throw new Error("glTF external buffer URI is required");
+  const usedExternalResources = new Set();
+  const loaded = [];
+  try {
+    for (let index = 0; index < buffers.length; index += 1) {
+      const bufferValue = buffers[index];
+      const buffer = plainRecord(
+        bufferValue,
+        `glTF buffers[${index}]`,
+      );
+      positiveInteger(
+        buffer.byteLength,
+        `glTF buffers[${index}].byteLength`,
+      );
+      if (buffer.byteLength > limits.maximumBufferBytes) {
+        throw new RangeError("glTF buffer exceeds its byte limit");
       }
-      if (
-        binaryChunk.byteLength < buffer.byteLength ||
-        binaryChunk.byteLength > buffer.byteLength + 3
-      ) {
-        throw new RangeError("GLB BIN chunk length is inconsistent");
+      let bytes;
+      if (buffer.uri === undefined) {
+        if (
+          format !== "glb" ||
+          index !== 0 ||
+          binaryChunk === null
+        ) {
+          throw new Error("glTF external buffer URI is required");
+        }
+        if (
+          binaryChunk.byteLength < buffer.byteLength ||
+          binaryChunk.byteLength > buffer.byteLength + 3
+        ) {
+          throw new RangeError("GLB BIN chunk length is inconsistent");
+        }
+        bytes = binaryChunk.slice(0, buffer.byteLength);
+      } else {
+        if (typeof buffer.uri !== "string") {
+          throw new TypeError("glTF buffer URI must be a string");
+        }
+        const match =
+          /^data:application\/(?:octet-stream|gltf-buffer);base64,([A-Za-z0-9+/=]+)$/u
+            .exec(buffer.uri);
+        if (match !== null) {
+          bytes = decodeBase64(match[1], limits.maximumBufferBytes);
+        } else {
+          const uri = externalResourceName(buffer.uri, limits);
+          if (
+            format !== "gltf" ||
+            !externalResources.has(uri)
+          ) {
+            throw new DOMException(
+              "external glTF buffer URI is blocked",
+              "NotSupportedError",
+            );
+          }
+          bytes = externalResources.get(uri).slice();
+          usedExternalResources.add(uri);
+        }
+        if (bytes.byteLength !== buffer.byteLength) {
+          bytes.fill(0);
+          throw new RangeError(
+            "glTF data URI length does not match buffer.byteLength",
+          );
+        }
       }
-      bytes = binaryChunk.slice(0, buffer.byteLength);
-    } else {
-      if (typeof buffer.uri !== "string") {
-        throw new TypeError("glTF buffer URI must be a string");
-      }
-      const match =
-        /^data:application\/(?:octet-stream|gltf-buffer);base64,([A-Za-z0-9+/=]+)$/u
-          .exec(buffer.uri);
-      if (match === null) {
-        throw new DOMException(
-          "external glTF buffer URI is blocked",
-          "NotSupportedError",
-        );
-      }
-      bytes = decodeBase64(match[1], limits.maximumBufferBytes);
-      if (bytes.byteLength !== buffer.byteLength) {
+      totalBytes += bytes.byteLength;
+      if (totalBytes > limits.maximumBufferBytes) {
+        bytes.fill(0);
         throw new RangeError(
-          "glTF data URI length does not match buffer.byteLength",
+          "glTF aggregate buffer bytes exceed the limit",
         );
       }
+      loaded.push(bytes);
     }
-    totalBytes += bytes.byteLength;
-    if (totalBytes > limits.maximumBufferBytes) {
-      throw new RangeError("glTF aggregate buffer bytes exceed the limit");
+    if (usedExternalResources.size !== externalResources.size) {
+      throw new Error("glTF bundle contains an unused external resource");
     }
-    return bytes;
-  });
+  } catch (error) {
+    for (const bytes of loaded) {
+      bytes.fill(0);
+    }
+    throw error;
+  }
+  return {
+    buffers: loaded,
+    externalResourceBytes: [...externalResources.values()].reduce(
+      (total, bytes) => total + bytes.byteLength,
+      0,
+    ),
+    externalResourceUris: [...usedExternalResources].sort(),
+  };
 }
 
 function accessorLayout(
@@ -570,7 +670,7 @@ function boundedName(value, fallback) {
   return value;
 }
 
-function validateAsset(document) {
+function validateAsset(document, limits) {
   const asset = plainRecord(document.asset, "glTF asset");
   if (asset.version !== "2.0") {
     throw new DOMException(
@@ -613,12 +713,44 @@ function validateAsset(document) {
       );
     }
   }
+  if (document.images !== undefined) {
+    const images = collection(
+      document.images,
+      limits.maximumPrimitives,
+      "glTF images",
+      { nonEmpty: false },
+    );
+    for (let index = 0; index < images.length; index += 1) {
+      const image = plainRecord(
+        images[index],
+        `glTF images[${index}]`,
+      );
+      if (
+        image.uri !== undefined &&
+        (
+          typeof image.uri !== "string" ||
+          !/^data:image\/[A-Za-z0-9.+-]+;base64,/u.test(
+            image.uri,
+          ) ||
+          image.bufferView !== undefined
+        )
+      ) {
+        throw new DOMException(
+          "external glTF image URI is unsupported",
+          "NotSupportedError",
+        );
+      }
+    }
+  }
   return asset;
 }
 
 export function parseGltfReferenceProfile(
   input,
-  { limits: limitOverrides = {} } = {},
+  {
+    limits: limitOverrides = {},
+    resources: externalResourceValues = [],
+  } = {},
 ) {
   if (!(input instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
@@ -632,13 +764,26 @@ export function parseGltfReferenceProfile(
   }
   const bytes = Uint8Array.from(input);
   const ownedBuffers = [];
+  const externalResources = externalResourceMap(
+    externalResourceValues,
+    limits,
+  );
   try {
+    const aggregateSourceBytes = [...externalResources.values()].reduce(
+      (total, resource) => total + resource.byteLength,
+      input.byteLength,
+    );
+    if (aggregateSourceBytes > limits.maximumSourceBytes) {
+      throw new RangeError(
+        "glTF source bundle exceeds the source byte limit",
+      );
+    }
     const {
       format,
       document,
       binaryChunk,
     } = parseContainer(bytes, limits);
-    const asset = validateAsset(document);
+    const asset = validateAsset(document, limits);
     const nodes = collection(
       document.nodes,
       limits.maximumNodes,
@@ -678,12 +823,14 @@ export function parseGltfReferenceProfile(
       limits.maximumNodes,
       "glTF scene roots",
     );
-    const buffers = loadBuffers(
+    const loadedBuffers = loadBuffers(
       document,
       binaryChunk,
       format,
       limits,
+      externalResources,
     );
+    const buffers = loadedBuffers.buffers;
     ownedBuffers.push(...buffers);
     const records = new Map();
     const occurrences = [];
@@ -847,14 +994,26 @@ export function parseGltfReferenceProfile(
         instances: occurrences.length,
         vertices,
         triangles,
-        sourceBytes: input.byteLength,
+        sourceBytes: aggregateSourceBytes,
       },
+      resourceBundle: {
+        documentBytes: input.byteLength,
+        externalResourceBytes:
+          loadedBuffers.externalResourceBytes,
+        externalResources:
+          loadedBuffers.externalResourceUris.length,
+      },
+      externalResourceUris:
+        loadedBuffers.externalResourceUris,
       extensionsUsed: Array.isArray(document.extensionsUsed)
         ? [...document.extensionsUsed]
         : [],
     };
   } finally {
     bytes.fill(0);
+    for (const resource of externalResources.values()) {
+      resource.fill(0);
+    }
     for (const buffer of ownedBuffers) {
       buffer.fill(0);
     }

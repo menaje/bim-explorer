@@ -106,6 +106,21 @@ export function syntheticGltfJsonBytes() {
   );
 }
 
+export function syntheticGltfExternalBundle({
+  uri = "geometry.bin",
+} = {}) {
+  const bytes = binaryPayload();
+  return {
+    bytes: new TextEncoder().encode(
+      JSON.stringify(documentFor(uri)),
+    ),
+    resources: [{
+      uri,
+      bytes,
+    }],
+  };
+}
+
 export function syntheticGlbBytes({
   secondNodeX = 3,
 } = {}) {

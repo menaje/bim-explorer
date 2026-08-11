@@ -6,6 +6,10 @@ import {
   REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH,
   validateRepresentativeModelsPhysicalGpuQualification,
 } from "./qualify-representative-models-physical-gpu.mjs";
+import {
+  GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfResourceBundleProductsQualification,
+} from "./qualify-gltf-resource-bundle-products.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
@@ -80,6 +84,15 @@ const representativePhysicalGpuEvidence = JSON.parse(
     "utf8",
   ),
 );
+const externalResourceProductsEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.externalResourceProducts,
+    ),
+    "utf8",
+  ),
+);
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -91,11 +104,18 @@ const productScaleFixture = JSON.parse(await readFile(
   ),
   "utf8",
 ));
+const externalResourceFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.externalResourceFixtureManifest,
+  ),
+  "utf8",
+));
 
 const trueGates = [
   "gltf2Container",
   "glb2Container",
-  "embeddedBufferOnly",
+  "embeddedBufferProfile",
   "boundedParser",
   "boundedRangeSession",
   "nodeHierarchyTransforms",
@@ -118,9 +138,9 @@ const trueGates = [
   "productScaleVscodeProductOpen",
   "productScaleCleanVsixProductOpen",
   "physicalGpu",
+  "externalResourceBundle",
 ];
 const heldGates = [
-  "externalResourceBundle",
   "requiredExtensions",
   "write",
   "roundTrip",
@@ -189,6 +209,61 @@ export function validateGltfPhysicalGpuAdmission(
     platform: glb.platform,
     surfaces: 3,
   });
+}
+
+export function validateGltfExternalResourceAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfResourceBundleProductsQualification(
+      evidenceValue,
+    );
+  if (
+    manifestValue?.evidence?.externalResourceProducts !==
+      GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.externalResourceFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-external/manifest.json" ||
+    manifestValue?.gates?.externalResourceBundle !== true ||
+    manifestValue?.policy?.allowLocalExternalResourceBundle !==
+      true ||
+    manifestValue?.policy?.externalResourceBundleScope !==
+      "single-source-browser-vscode" ||
+    manifestValue?.policy?.allowExternalUri !== false ||
+    manifestValue?.policy?.claimExternalResourceBundle !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-public-gltf-resource-bundle-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.document?.name !== "Box.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_898 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.resources?.length !== 1 ||
+    fixtureValue.resources[0]?.name !== "Box0.bin" ||
+    fixtureValue.resources[0]?.byteLength !== 648 ||
+    fixtureValue.resources[0]?.sha256 !==
+      evidenceValue?.fixture?.manifest?.resourceSha256 ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 3_546 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-local-bundle" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 3_546 ||
+    report.externalResources !== 1
+  ) {
+    throw new Error(
+      "glTF external resource admission evidence is invalid",
+    );
+  }
+  return report;
 }
 
 function exactReferenceFixture(value) {
@@ -319,6 +394,11 @@ validateGltfPhysicalGpuAdmission(
   manifest,
   representativePhysicalGpuEvidence,
 );
+validateGltfExternalResourceAdmission(
+  manifest,
+  externalResourceProductsEvidence,
+  externalResourceFixture,
+);
 
 if (
   manifest.schema !==
@@ -332,6 +412,9 @@ if (
   manifest.policy.readOnly !== true ||
   manifest.policy.networkAtRuntime !== false ||
   manifest.policy.allowExternalUri !== false ||
+  manifest.policy.allowLocalExternalResourceBundle !== true ||
+  manifest.policy.externalResourceBundleScope !==
+    "single-source-browser-vscode" ||
   manifest.policy.allowRequiredExtensions !== false ||
   manifest.policy.inventIfcGlobalId !== false ||
   manifest.policy.allowBimSemanticAuthority !== false ||
@@ -343,6 +426,7 @@ if (
   manifest.policy.claimProductScaleBrowserProductOpen !== true ||
   manifest.policy.claimProductScaleVscodeProductOpen !== true ||
   manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
+  manifest.policy.claimExternalResourceBundle !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -373,6 +457,10 @@ if (
       "gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json" ||
   manifest.evidence.representativePhysicalGpu !==
     REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH ||
+  manifest.evidence.externalResourceProducts !==
+    GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.externalResourceFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-external/manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -770,6 +858,7 @@ const serialized = JSON.stringify({
   productScaleCleanVsixProductEvidence,
   productScaleVscodeProductEvidence,
   representativePhysicalGpuEvidence,
+  externalResourceProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

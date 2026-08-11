@@ -5,15 +5,20 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 
 첫 profile은 다음만 허용합니다.
 
-- GLB의 JSON/BIN chunk 또는 `.gltf`의 base64 data URI buffer
+- GLB의 JSON/BIN chunk, `.gltf`의 base64 data URI buffer 또는 명시적으로
+  공급된 동일 폴더 ASCII leaf-name `.bin` buffer
 - default scene의 node hierarchy와 matrix 또는 TRS
 - indexed `TRIANGLES`
 - Float32 `POSITION`/`NORMAL`과 unsigned integer index
 - material `baseColorFactor`
 - source-local `nativeId`와 immutable range session
 
-외부 URI와 network fetch, required extension, animation, skin, morph target,
-sparse accessor, write와 round-trip은 거부합니다. 출력 geometry는
+local resource bundle은 최대 16개 sidecar와 document 합산 64MiB로 제한합니다.
+Browser는 source와 sidecar를 한 번에 명시적으로 고르고, VS Code는 JSON에 선언된
+동일 폴더 regular non-symlink `.bin`만 안정적으로 읽습니다. scheme, separator,
+`..`, query/fragment, percent-encoded name, 누락·중복·미사용 resource, 외부 image와
+network fetch, required extension, animation, skin, morph target, sparse accessor,
+write와 round-trip은 거부합니다. 출력 geometry는
 `application/vnd.bim-explorer.geometry-range.v1` display cache이며 원본
 glTF/GLB의 source authority가 아닙니다.
 
@@ -39,8 +44,11 @@ VSIX도 동일한 49개 source-native entity·573,952 unique triangles,
 Chrome 151, staged VS Code 1.132와 clean-installed local VSIX도 software
 fallback을 끈 Apple M2 Metal에서 48,762 pixels, 같은 range/upload bytes와
 terminal cleanup을 재현해 bounded GLB physical GPU Gate를 통과했습니다.
-Linux/Windows hardware, external resource, required extension, OS-level peak GPU
-memory와 production support는 별도 Gate입니다.
+별도 Khronos `Box.gltf + Box0.bin` cache-only fixture도 Browser, staged VS Code와
+clean-installed local VSIX에서 동일한 composite SHA-256, 756-byte geometry read,
+800-byte upload, 86,486 pixels와 terminal cleanup을 Apple M2 Metal로 재현했습니다.
+Linux/Windows hardware, arbitrary URI, external image, required extension,
+OS-level peak GPU memory와 production support는 별도 Gate입니다.
 
 qualified snapshot은 BIM federation에 `gltf`/`glb` reference slot으로
 등록할 수 있습니다. selection은 source slot, exact revision과

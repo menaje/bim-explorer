@@ -4,7 +4,8 @@ raw BIM 모델을 로컬에서 열어 3D 형상, 공간 구조, 속성과 관계
 독립 오픈소스 제품입니다.
 
 첫 semantic vertical slice는 read-only IFC이고, 첫 비 IFC format은
-bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
+bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 고른
+동일 폴더 `.bin` sidecar까지 bounded local bundle로 열 수 있습니다. 제품명과 저장소 이름은
 `bim-explorer`를 사용하며 Coni Spatial의 설치나 계정을 요구하지 않습니다.
 
 > 현재 상태: 공개·immutable v0.1.0 Community release와 read-only
@@ -55,6 +56,15 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > 이 재검증은 현재 exact public Viewer Core 0.1.2 제품 adapter를 거쳐 IFC
 > 4,193,868 bytes와 GLB 16,896,412 bytes의 range read, selection event와
 > source/session/Worker/Host terminal cleanup까지 확인했습니다.
+> 별도 cache-only Khronos `Box.gltf`와 `Box0.bin`은 Browser 다중 파일 선택,
+> staged VS Code의 선언된 sibling read와 clean-installed local VSIX에서 같은
+> 3,546-byte composite fingerprint, 12 triangles, 86,486 pixels와 cleanup을
+> Apple M2 Metal로 재현했습니다. 이 Gate는 최대 16개 same-folder ASCII `.bin`과
+> 합산 64MiB까지만 허용하며 임의 URI, path traversal, symlink, 외부 image,
+> runtime network와 required extension은 계속 거부합니다.
+> 이 기능은 single-source Browser/VS Code 제품 범위이며 이미 공개되고 Spatial이
+> exact-pin한 federated BIM Surface v0.2 runtime이나 `.bimfed.json` 경로에는
+> 소급 반영하지 않습니다.
 > 같은 fail-closed GPU 정책으로 cache-only LAS·LAZ·E57·다중 스캔 E57도
 > actual Chrome 151, staged VS Code 1.132와 clean-installed local VSIX에서
 > Apple M2 Metal을 통과했습니다. 12개 제품 표면은 최대 1,213,990 points,
@@ -101,7 +111,7 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 ## 첫 사용자 흐름
 
 ```text
-local IFC, bounded glTF/GLB 또는 bounded E57/LAS/LAZ 선택
+local IFC, bounded glTF/GLB(필요하면 명시적 same-folder .bin 포함) 또는 bounded E57/LAS/LAZ 선택
 -> isolated adapter가 immutable source snapshot 생성
 -> model tree와 3D overview 표시
 -> 객체 선택
@@ -135,7 +145,7 @@ BIM Explorer가 소유할 범위:
 - standalone Browser diagnostic surface와 VS Code Custom Editor
 - path-free `.bimfed.json` 기반 source-scoped federated VS Code Surface v0.2
 - IFC engine, format, license, 성능과 compatibility qualification
-- bounded glTF/GLB reference source와 source-native identity exploration
+- bounded glTF/GLB reference source, local `.gltf + .bin` bundle과 source-native identity exploration
 - bounded E57/LAS/LAZ point source와 source-neutral point rendering
 - BCF viewpoint, IDS result와 bSDD reference의 read-only exploration
 
@@ -242,8 +252,9 @@ render/highlight와 cleanup이 동일함을 별도
 profile에 clean-installed VSIX에서 검색·3D pick 또는 source-native selection,
 path-free bridge, 닫기와 전량 cleanup을 통과했습니다. 현재 public Viewer Core
 제품 entrypoint를 사용한 Apple M2 Metal 검증도 세 제품 경로에서 통과해 bounded
-GLB physical GPU Gate를 승인했습니다. Linux/Windows hardware, external resource,
-required extension 또는 BIM semantic authority는 승인하지 않습니다. 다음 held
+GLB physical GPU Gate를 승인했습니다. 별도 local `.gltf + .bin` bundle도 세 제품
+표면의 Apple M2 Metal Gate를 통과했습니다. Linux/Windows hardware, 임의 URI,
+external image, required extension 또는 BIM semantic authority는 승인하지 않습니다. 다음 held
 format 제안은
 [`reference format evidence intake`](docs/reference-format-intake.md)로 실제
 사용자 과업·public fixture·권리·좌표·lifecycle evidence를 접수하며, intake
@@ -393,6 +404,7 @@ npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode
 npm run qualify:gltf:product-scale:vscode-install
+npm run qualify:gltf:external-resource-products
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core

@@ -12,6 +12,7 @@ import {
   decodeBimGeometryRange,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
+  syntheticGltfExternalBundle,
   syntheticGlbBytes,
   syntheticGltfJsonBytes,
 } from "../../scripts/generate-synthetic-gltf.mjs";
@@ -107,6 +108,110 @@ test("GLB reference source mounts without inventing IFC identity", async () => {
   geometry.fill(0);
 });
 
+test("local external glTF buffer bundle is exact and source-bound", async () => {
+  const bundle = syntheticGltfExternalBundle({
+    uri: "Box0.bin",
+  });
+  const profile = parseGltfReferenceProfile(bundle.bytes, {
+    resources: bundle.resources,
+  });
+  assert.equal(profile.format, "gltf");
+  assert.deepEqual(profile.externalResourceUris, ["Box0.bin"]);
+  assert.deepEqual(profile.resourceBundle, {
+    documentBytes: bundle.bytes.byteLength,
+    externalResourceBytes: 80,
+    externalResources: 1,
+  });
+  assert.equal(
+    profile.statistics.sourceBytes,
+    bundle.bytes.byteLength + 80,
+  );
+
+  const originalResource = Uint8Array.from(
+    bundle.resources[0].bytes,
+  );
+  const source = await createGltfReferenceSource(bundle.bytes, {
+    resources: bundle.resources,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  assert.deepEqual(snapshot.referenceMetadata.resourceBundle, {
+    schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+    documentBytes: bundle.bytes.byteLength,
+    externalResourceBytes: 80,
+    externalResources: 1,
+    networkAtRuntime: false,
+  });
+  assert.equal(snapshot.source.byteLength, bundle.bytes.byteLength + 80);
+  assert.match(snapshot.source.fingerprint, /^sha256:[0-9a-f]{64}$/u);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  assert.deepEqual(bundle.resources[0].bytes, originalResource);
+  originalResource.fill(0);
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
+});
+
+test("external glTF bundle rejects paths, missing and unused resources", () => {
+  const missing = syntheticGltfExternalBundle({
+    uri: "geometry.bin",
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(missing.bytes),
+    { name: "NotSupportedError" },
+  );
+  assert.throws(
+    () => parseGltfReferenceProfile(missing.bytes, {
+      resources: [
+        ...missing.resources,
+        { uri: "unused.bin", bytes: Uint8Array.from([1]) },
+      ],
+    }),
+    /unused external resource/u,
+  );
+  for (const uri of [
+    "../geometry.bin",
+    "folder/geometry.bin",
+    "https://example.com/geometry.bin",
+    "geometry.bin?token=secret",
+    "geometry%2ebin",
+  ]) {
+    const rejected = syntheticGltfExternalBundle({ uri });
+    assert.throws(
+      () => parseGltfReferenceProfile(rejected.bytes, {
+        resources: rejected.resources,
+      }),
+      { name: "NotSupportedError" },
+    );
+    rejected.bytes.fill(0);
+    rejected.resources[0].bytes.fill(0);
+  }
+  missing.bytes.fill(0);
+  missing.resources[0].bytes.fill(0);
+});
+
+test("external glTF bundle applies one aggregate source byte limit", () => {
+  const bundle = syntheticGltfExternalBundle({
+    uri: "geometry.bin",
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(bundle.bytes, {
+      limits: {
+        maximumSourceBytes:
+          bundle.bytes.byteLength +
+          bundle.resources[0].bytes.byteLength -
+          1,
+      },
+      resources: bundle.resources,
+    }),
+    /source bundle exceeds the source byte limit/u,
+  );
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
+});
+
 test("glTF source identity, handle and disposal fail closed", async () => {
   const source = await createGltfReferenceSource(
     syntheticGltfJsonBytes(),
@@ -146,7 +251,7 @@ test("glTF source identity, handle and disposal fail closed", async () => {
   assert.equal(await source.dispose(), false);
 });
 
-test("bounded profile blocks external and unsupported content", () => {
+test("bounded profile blocks arbitrary URI and unsupported content", () => {
   const external = JSON.parse(
     new TextDecoder().decode(syntheticGltfJsonBytes()),
   );
@@ -167,6 +272,17 @@ test("bounded profile blocks external and unsupported content", () => {
   assert.throws(
     () => parseGltfReferenceProfile(
       new TextEncoder().encode(JSON.stringify(extended)),
+    ),
+    { name: "NotSupportedError" },
+  );
+
+  const externalImage = JSON.parse(
+    new TextDecoder().decode(syntheticGltfJsonBytes()),
+  );
+  externalImage.images = [{ uri: "texture.png" }];
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(externalImage)),
     ),
     { name: "NotSupportedError" },
   );

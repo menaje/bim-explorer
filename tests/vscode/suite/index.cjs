@@ -82,19 +82,33 @@ async function qualifyReference({
   api,
   manifestPath = undefined,
   productScale = false,
+  resourceBundle = false,
   root,
   sourcePath,
 }) {
   const fixtureModule = await import(
     pathToFileURL(
-      path.join(root, "scripts", "public-gltf-fixture.mjs"),
+      path.join(
+        root,
+        "scripts",
+        resourceBundle
+          ? "public-gltf-resource-bundle-fixture.mjs"
+          : "public-gltf-fixture.mjs",
+      ),
     ).href
   );
-  const manifest = await fixtureModule
-    .loadPublicGltfFixtureManifest(manifestPath);
+  const manifest = resourceBundle
+    ? await fixtureModule.loadPublicGltfResourceBundleManifest(
+        manifestPath,
+      )
+    : await fixtureModule.loadPublicGltfFixtureManifest(manifestPath);
+  const entry = resourceBundle ? manifest.document : manifest.entry;
+  const timeoutMs = resourceBundle
+    ? 30_000
+    : manifest.browserQualification.timeoutMs;
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
-  assert.equal(metadata.size, manifest.entry.byteLength);
+  assert.equal(metadata.size, entry.byteLength);
   if (productScale) {
     await vscode.workspace
       .getConfiguration("bimExplorer")
@@ -112,7 +126,9 @@ async function qualifyReference({
   );
   const label = productScale
     ? "product-scale reference"
-    : "reference";
+    : resourceBundle
+      ? "external-resource reference"
+      : "reference";
   let ready = await waitFor(
     () => {
       const report = api.qualificationReports().at(-1);
@@ -125,7 +141,7 @@ async function qualifyReference({
       return report?.status === "ready" ? report : null;
     },
     `${label} Custom Editor ready report`,
-    manifest.browserQualification.timeoutMs,
+    timeoutMs,
   );
   const nativeId = productScale
     ? "node:0/mesh:0/primitive:0"
@@ -147,21 +163,29 @@ async function qualifyReference({
       };
   const expectedReadBytes = productScale
     ? manifest.expected.geometryRangeBytes
-    : 756;
+    : resourceBundle
+      ? manifest.expected.geometryRangeBytes
+      : 756;
   const expectedUploadedBytes = productScale
     ? 16_900_016
-    : 800;
+    : resourceBundle
+      ? manifest.expected.gpuUploadBytes
+      : 800;
   assert.equal(ready.hostKind, "vscode-webview");
   assert.equal(ready.externalUpload, false);
   assert.equal(ready.telemetry, false);
-  assert.equal(ready.source.format, "glb");
+  assert.equal(ready.source.format, resourceBundle ? "gltf" : "glb");
   assert.equal(
     ready.source.fingerprint,
-    `sha256:${manifest.entry.sha256}`,
+    `sha256:${resourceBundle
+      ? manifest.expected.sourceFingerprint
+      : manifest.entry.sha256}`,
   );
   assert.equal(
     ready.source.byteLength,
-    manifest.entry.byteLength,
+    resourceBundle
+      ? manifest.expected.aggregateSourceBytes
+      : manifest.entry.byteLength,
   );
   assert.equal(
     ready.source.sourceRole,
@@ -181,6 +205,28 @@ async function qualifyReference({
     ready.renderer.uploadedBytes,
     expectedUploadedBytes,
   );
+  if (resourceBundle) {
+    assert.deepEqual(ready.source.resourceBundle, {
+      schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+      documentBytes: manifest.document.byteLength,
+      externalResourceBytes:
+        manifest.expected.externalResourceBytes,
+      externalResources: manifest.expected.externalResources,
+      networkAtRuntime: false,
+    });
+    assert.equal(
+      ready.resources.documentBytes,
+      manifest.document.byteLength,
+    );
+    assert.equal(
+      ready.resources.externalResourceBytes,
+      manifest.expected.externalResourceBytes,
+    );
+    assert.equal(
+      ready.resources.externalResources,
+      manifest.expected.externalResources,
+    );
+  }
   const serialized = JSON.stringify(ready);
   assert.equal(serialized.includes(sourcePath), false);
   assert.equal(
@@ -201,11 +247,14 @@ async function qualifyReference({
     fixture: {
       id: manifest.fixtureId,
       committed: false,
-      format: "glb",
+      format: resourceBundle ? "gltf" : "glb",
       sourceBytes: ready.source.byteLength,
       fingerprint: ready.source.fingerprint,
       gltfVersion: ready.source.gltfVersion,
       nativeId,
+      ...(resourceBundle
+        ? { resourceBundle: ready.source.resourceBundle }
+        : {}),
       ...(productScale
         ? {
             classification:
@@ -244,6 +293,17 @@ async function qualifyReference({
       localSourceOpened: true,
       sourceIdentityExact: true,
       noBimSemanticAuthority: true,
+      exactLocalResourceBundle:
+        !resourceBundle ||
+        (
+          ready.resources.documentBytes ===
+            manifest.document.byteLength &&
+          ready.resources.externalResourceBytes ===
+            manifest.expected.externalResourceBytes &&
+          ready.resources.externalResources ===
+            manifest.expected.externalResources &&
+          ready.source.resourceBundle?.networkAtRuntime === false
+        ),
       vscodeChromiumWebGl2: true,
       boundedRenderer:
         !productScale ||
@@ -902,6 +962,8 @@ async function run() {
   const productScaleReferenceSourcePath =
     process.env
       .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
+  const externalReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
   const lasSourcePath =
     process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
   const lazSourcePath =
@@ -1213,6 +1275,41 @@ async function run() {
         },
       };
     }
+    let externalReferenceQualification = null;
+    if (
+      typeof externalReferenceSourcePath === "string" &&
+      externalReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        resourceBundle: true,
+        root,
+        sourcePath: externalReferenceSourcePath,
+      });
+      externalReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localExternalReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          externalReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          externalReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          externalReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          externalReferenceBundleExact:
+            qualified.assertions.exactLocalResourceBundle,
+          externalReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          externalReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          externalReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
     const pointQualifications = {};
     if (
       typeof lasSourcePath === "string" &&
@@ -1313,6 +1410,7 @@ async function run() {
       publicQualification?.observation?.gpu,
       referenceQualification?.observation?.gpu,
       productScaleReferenceQualification?.observation?.gpu,
+      externalReferenceQualification?.observation?.gpu,
       ...Object.values(pointQualifications).map(
         (value) => value.observation.gpu,
       ),
@@ -1392,6 +1490,16 @@ async function run() {
               productScaleReferenceQualification.observation,
             productScaleReferenceAssertions:
               productScaleReferenceQualification.assertions,
+          }),
+      ...(externalReferenceQualification === null
+        ? {}
+        : {
+            externalReferenceFixture:
+              externalReferenceQualification.fixture,
+            externalReferenceObservation:
+              externalReferenceQualification.observation,
+            externalReferenceAssertions:
+              externalReferenceQualification.assertions,
           }),
       ...(!hasPointQualifications
         ? {}
@@ -1477,6 +1585,13 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.productScaleReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.externalReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.externalReferenceAssertions,
         ).every(Boolean),
       );
     }

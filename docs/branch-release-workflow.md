@@ -67,6 +67,10 @@ checksum, source offer, release manifest와 provenance만 공개합니다. 이 p
 prerelease는 standalone BIM Explorer extension release나 marketplace 지원을
 주장하지 않습니다.
 
+공개된 v0.2 runtime은 tag와 downstream exact-pin digest로 동결합니다. 이후
+`dev`의 공용 source가 달라져도 v0.2 generated runtime을 다시 쓰지 않으며,
+federated 기능 변경은 새 semver와 동일한 승격·consumer Gate로 진행합니다.
+
 ## Emergency fixes
 
 공개 기준선의 긴급 수정도 먼저 `dev`에 반영하고 같은 승격 순서를 거칩니다.

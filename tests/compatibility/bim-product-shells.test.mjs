@@ -34,6 +34,7 @@ async function fixtures() {
     representativePhysicalGpu,
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -123,6 +124,10 @@ async function fixtures() {
       manifest.evidence.viewerCoreProductEntrypoints,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfExternalResourceProducts,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -146,6 +151,7 @@ async function fixtures() {
     representativePhysicalGpu,
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
     manifest,
     vscode,
   };
@@ -176,6 +182,7 @@ function validate(values) {
     values.representativePhysicalGpu,
     values.representativePointCloudsPhysicalGpu,
     values.viewerCoreProductEntrypoints,
+    values.gltfExternalResourceProducts,
   );
 }
 
@@ -185,9 +192,10 @@ test("product shells pin the same source and render projection", async () => {
     validate(values),
     {
       fixture: "synthetic-semantic-ifc4",
+      externalGltfBundleSurfaces: 3,
       heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 48,
+      passedGates: 51,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
       pointCloudPhysicalGpu:
@@ -196,6 +204,15 @@ test("product shells pin the same source and render projection", async () => {
       publicProducts: 3_569,
       status: "experimental",
     },
+  );
+});
+
+test("product shells require exact local external glTF evidence", async () => {
+  const values = await fixtures();
+  values.gltfExternalResourceProducts.assertions.localOnly = false;
+  assert.throws(
+    () => validate(values),
+    /glTF resource bundle product evidence is invalid/u,
   );
 });
 

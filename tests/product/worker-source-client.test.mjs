@@ -12,6 +12,7 @@ class FakeWorker {
   #silent;
   terminated = false;
   openFormat = null;
+  openResources = null;
 
   constructor({ silent = false } = {}) {
     this.#silent = silent;
@@ -40,6 +41,10 @@ class FakeWorker {
     queueMicrotask(() => {
       if (request.type === "open") {
         this.openFormat = request.options.format;
+        this.openResources = request.resources.map((resource) => ({
+          uri: resource.uri,
+          bytes: [...new Uint8Array(resource.bytes)],
+        }));
         this.#emit("message", {
           schema: BIM_PRODUCT_SOURCE_WORKER_RESPONSE,
           requestId: request.requestId,
@@ -192,6 +197,50 @@ test("product Worker client sends an explicit glTF source format", async () => {
     }),
     /format is unsupported/u,
   );
+});
+
+test("product Worker client transfers one bounded local glTF resource bundle", async () => {
+  const worker = new FakeWorker();
+  const client = createBimProductSourceWorkerClient(
+    options(() => worker),
+  );
+  const callerBytes = Uint8Array.from([5, 6, 7, 8]);
+  const opened = await client.open(
+    Uint8Array.from([0x7b, 0x7d]),
+    {
+      format: "gltf",
+      resources: [{
+        uri: "geometry.bin",
+        bytes: callerBytes,
+      }],
+    },
+  );
+  assert.deepEqual(worker.openResources, [{
+    uri: "geometry.bin",
+    bytes: [5, 6, 7, 8],
+  }]);
+  assert.deepEqual([...callerBytes], [5, 6, 7, 8]);
+  await opened.session.dispose();
+  await opened.workerLease.dispose();
+  await client.dispose();
+
+  for (const uri of [
+    "../geometry.bin",
+    "nested/geometry.bin",
+    "https://example.com/geometry.bin",
+  ]) {
+    const rejected = createBimProductSourceWorkerClient(
+      options(() => new FakeWorker()),
+    );
+    await assert.rejects(
+      rejected.open(Uint8Array.from([1]), {
+        format: "gltf",
+        resources: [{ uri, bytes: Uint8Array.from([1]) }],
+      }),
+      /external resource is invalid/u,
+    );
+    await rejected.dispose();
+  }
 });
 
 test("source switch invalidates the prior Worker session", async () => {

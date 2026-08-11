@@ -21,6 +21,9 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicGltfResourceBundle,
+} from "./public-gltf-resource-bundle-fixture.mjs";
+import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
@@ -504,6 +507,24 @@ function assertions(
         opened.model.triangles === fixture.triangles
       ) &&
       opened.model.ranges === fixture.ranges,
+    ...(fixture.resourceBundle === null ||
+      fixture.resourceBundle === undefined
+      ? {}
+      : {
+          exactLocalResourceBundle:
+            JSON.stringify(opened.source.resourceBundle) ===
+              JSON.stringify(fixture.resourceBundle) &&
+            opened.resources.documentBytes ===
+              fixture.resourceBundle.documentBytes &&
+            opened.resources.externalResourceBytes ===
+              fixture.resourceBundle.externalResourceBytes &&
+            opened.resources.externalResources ===
+              fixture.resourceBundle.externalResources &&
+            opened.renderer.sourceReadBytes ===
+              fixture.geometryRangeBytes &&
+            opened.renderer.uploadedBytes ===
+              fixture.gpuUploadBytes,
+        }),
   });
 }
 
@@ -622,6 +643,56 @@ async function qualificationFixture(kind) {
         license: manifest.license.spdx,
         cacheHit: acquired.receipt.cacheHit,
         bundled: false,
+      }),
+    });
+  }
+  if (kind === "gltf-external-public") {
+    const acquired = await acquirePublicGltfResourceBundle();
+    const { manifest } = acquired;
+    acquired.document.bytes.fill(0);
+    for (const resource of acquired.resources) {
+      resource.bytes.fill(0);
+    }
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.document.cachePath,
+      inputs: [
+        acquired.document.cachePath,
+        ...acquired.resources.map((resource) => resource.cachePath),
+      ],
+      id: manifest.fixtureId,
+      committed: false,
+      format: "gltf",
+      sourceBytes: manifest.expected.aggregateSourceBytes,
+      fingerprint: `sha256:${manifest.expected.sourceFingerprint}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.document.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        networkAtRuntime: false,
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
       }),
     });
   }
@@ -774,7 +845,8 @@ async function qualificationFixture(kind) {
   }
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
-      "gltf-public, gltf-product-scale, e57-public, " +
+      "gltf-public, gltf-product-scale, gltf-external-public, " +
+      "e57-public, " +
       "e57-spherical-public, e57-multiple-scan-public, " +
       "las-public, or laz-public",
   );
@@ -859,7 +931,7 @@ export async function qualifyBimProductShell({
       }
       await client.send("DOM.setFileInputFiles", {
         nodeId: sourceInput.nodeId,
-        files: [fixture.input],
+        files: fixture.inputs ?? [fixture.input],
       });
     }
     let opened = await poll(
@@ -1069,6 +1141,9 @@ export async function qualifyBimProductShell({
           : {
               gltfVersion: opened.source.gltfVersion,
               nativeId: fixture.nativeId,
+              ...(fixture.resourceBundle === undefined
+                ? {}
+                : { resourceBundle: opened.source.resourceBundle }),
             }),
         ...(fixture.provenance === null
           ? {}
@@ -1196,6 +1271,7 @@ export async function qualifyBimProductShell({
 
 function parseArguments(values) {
   const allowedFixtures = new Set([
+    "gltf-external-public",
     "gltf-product-scale",
     "gltf-public",
     "e57-public",
@@ -1238,7 +1314,8 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
-        "gltf-product-scale|e57-public|e57-spherical-public|" +
+        "gltf-product-scale|gltf-external-public|e57-public|" +
+        "e57-spherical-public|" +
         "e57-multiple-scan-public|las-public|laz-public] " +
         "[--physical-gpu] " +
         "[--output path]",

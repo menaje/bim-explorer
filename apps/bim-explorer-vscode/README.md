@@ -7,6 +7,14 @@ IFC는 Browser와 같은 host-neutral `bim-surface/0.1` runtime으로
 `BimModelSource`, bounded 3D host와 semantic explorer를 합성하고, glTF/GLB는
 source-native reference mesh explorer를 사용합니다. 두 경로의 renderer range,
 selection과 lifecycle은 exact public Viewer Core product adapter를 통과합니다.
+단일-source `.gltf` Custom Editor는 JSON에 명시된 최대 16개의 동일 폴더 ASCII
+leaf-name `.bin`을 extension host에서만 해결합니다. document와 sidecar 합산
+64MiB, regular non-symlink, 읽기 전후 size/mtime을 검사하며 resource 변경도
+watch합니다. webview에는 경로가 아닌 resource name과 transferable bytes만 보내고
+누락·중복·미사용 sidecar, separator/`..`/scheme/query/fragment/percent URI와
+runtime network를 거부합니다. 외부 image와 required extension도 미지원입니다.
+이 bundle 경로는 single-source Custom Editor에만 적용되며 immutable federated
+Surface v0.2의 `*.bimfed.json` source admission에는 소급 적용하지 않습니다.
 LAS/LAZ는 8 MiB·
 500,000-point 한도, E57 multiple-scan은 최대 32 MiB·2,000,000-point의 명시적
 상한 안에서 source-neutral point range로 엽니다. `point:n` 선택은 exact source
@@ -76,7 +84,11 @@ bounded WebGL2 projection과 close cleanup을 재현합니다. 이 검증은
 `npm run qualify:gltf:product-scale:vscode`와
 `npm run qualify:gltf:product-scale:vscode-install`로 실행하며 원본 GLB를
 package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 bytes만
-보내며 local URI나 IFC GlobalId를 전달하거나 합성하지 않습니다. package
+보내며 local URI나 IFC GlobalId를 전달하거나 합성하지 않습니다. cache-only
+Khronos `Box.gltf + Box0.bin`은 `npm run
+qualify:gltf:external-resource-products`에서 staged Custom Editor와
+clean-installed local VSIX를 Browser와 함께 Apple M2 Metal로 검증하며 sample은
+package에 포함하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
 runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며

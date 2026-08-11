@@ -31,6 +31,8 @@ const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const MAXIMUM_E57_SOURCE_BYTES = 32 * 1024 * 1024;
 const MAXIMUM_LAS_LAZ_SOURCE_BYTES = 8 * 1024 * 1024;
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
+const EXTERNAL_GLTF_RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
 const MULTIPLE_SCAN_E57_RENDERER_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 32 * 1024 * 1024,
   maximumGpuBytes: 32 * 1024 * 1024,
@@ -154,6 +156,7 @@ const vscodeApi =
 let active = null;
 let lastFailedBytes = null;
 let lastFailedFormat = "ifc";
+let lastFailedResources = [];
 let openingClient = null;
 let openingSequence = 0;
 let hostGeneration = 0;
@@ -1214,6 +1217,10 @@ async function openPointBytes(bytesValue, {
     lastFailedBytes?.fill(0);
     lastFailedBytes = null;
     lastFailedFormat = "ifc";
+    for (const resource of lastFailedResources) {
+      resource.bytes.fill(0);
+    }
+    lastFailedResources = [];
     render();
     const artifact = opened.artifact;
     elements.diagHost.textContent = runtime.hostKind;
@@ -1380,6 +1387,7 @@ async function openBytes(bytesValue, {
   limits = {},
   origin,
   profile = runtime.profile,
+  resources = [],
 } = {}) {
   if (POINT_SOURCE_FORMATS.has(format)) {
     return openPointBytes(bytesValue, {
@@ -1422,6 +1430,7 @@ async function openBytes(bytesValue, {
     const opened = await sourceClient.open(bytesValue, {
       format,
       profile,
+      resources,
     });
     if (sequence !== openingSequence) {
       await opened.session.dispose();
@@ -1595,6 +1604,10 @@ async function openBytes(bytesValue, {
     lastFailedBytes?.fill(0);
     lastFailedBytes = null;
     lastFailedFormat = "ifc";
+    for (const resource of lastFailedResources) {
+      resource.bytes.fill(0);
+    }
+    lastFailedResources = [];
     render();
     updateDiagnostics(opened, mount);
     elements.sourceIdentity.textContent =
@@ -1615,6 +1628,9 @@ async function openBytes(bytesValue, {
           gltfVersion:
             opened.snapshot.source.gltfVersion,
           profile: opened.snapshot.source.profile,
+          resourceBundle: {
+            ...opened.snapshot.referenceMetadata.resourceBundle,
+          },
           sourceRole:
             opened.snapshot.source.sourceRole,
           semanticAuthority:
@@ -1740,51 +1756,131 @@ function localFileFormat(file) {
   return extension;
 }
 
-async function readLocalFile(file) {
+function localExternalResourceName(file) {
+  if (
+    typeof file?.name !== "string" ||
+    file.name.length > 128 ||
+    !EXTERNAL_GLTF_RESOURCE_NAME.test(file.name) ||
+    file.name.includes("..")
+  ) {
+    throw new TypeError(
+      "External glTF resources must be same-folder .bin files",
+    );
+  }
+  return file.name;
+}
+
+async function readLocalFiles(fileList) {
+  const files = [...fileList];
+  if (files.length === 0 || files.length > 17) {
+    throw new RangeError(
+      "Select one source and at most 16 local resources",
+    );
+  }
+  const sourceFiles = files.filter((file) =>
+    !file.name.toLocaleLowerCase().endsWith(".bin"));
+  if (sourceFiles.length !== 1) {
+    throw new TypeError("Select exactly one BIM source file");
+  }
+  const file = sourceFiles[0];
+  const resourceFiles = files.filter((item) => item !== file);
   const format = localFileFormat(file);
+  if (resourceFiles.length > 0 && format !== "gltf") {
+    throw new TypeError(
+      "External .bin resources are only valid with glTF JSON",
+    );
+  }
   const maximumBytes = POINT_SOURCE_FORMATS.has(format)
     ? pointSourceMaximumBytes(format)
     : MAXIMUM_SOURCE_BYTES;
+  const resourceNames = new Set();
+  let aggregateBytes = file.size;
+  for (const resource of resourceFiles) {
+    const name = localExternalResourceName(resource);
+    if (resourceNames.has(name)) {
+      throw new TypeError("External glTF resource name is duplicated");
+    }
+    resourceNames.add(name);
+    if (resource.size <= 0 || resource.size > maximumBytes) {
+      throw new RangeError(
+        "External glTF resource exceeds its local admission limit",
+      );
+    }
+    aggregateBytes += resource.size;
+  }
   if (
     file.size <= 0 ||
-    file.size > maximumBytes
+    file.size > maximumBytes ||
+    aggregateBytes > maximumBytes
   ) {
     throw new RangeError(
       "Selected source exceeds its local admission limit",
     );
   }
-  const buffer = await file.arrayBuffer();
+  const [buffer, ...resourceBuffers] = await Promise.all([
+    file.arrayBuffer(),
+    ...resourceFiles.map((resource) => resource.arrayBuffer()),
+  ]);
+  const bytes = new Uint8Array(buffer);
+  const resourceBytes = resourceBuffers.map((value) =>
+    new Uint8Array(value));
   if (
     buffer.byteLength !== file.size ||
-    buffer.byteLength > maximumBytes
+    buffer.byteLength > maximumBytes ||
+    resourceBuffers.some((resourceBuffer, index) =>
+      resourceBuffer.byteLength !== resourceFiles[index].size) ||
+    buffer.byteLength + resourceBuffers.reduce(
+      (total, resourceBuffer) =>
+        total + resourceBuffer.byteLength,
+      0,
+    ) > maximumBytes
   ) {
+    bytes.fill(0);
+    for (const value of resourceBytes) {
+      value.fill(0);
+    }
     throw new RangeError(
       "Selected source changed during local admission",
     );
   }
   return {
-    bytes: new Uint8Array(buffer),
+    bytes,
     format,
+    resources: resourceFiles.map((resource, index) => ({
+      uri: resource.name,
+      bytes: resourceBytes[index],
+    })),
   };
 }
 
 elements.file.addEventListener("change", async () => {
-  const file = elements.file.files?.[0] ?? null;
+  const files = elements.file.files === null
+    ? []
+    : [...elements.file.files];
   elements.file.value = "";
-  if (file === null) {
+  if (files.length === 0) {
     return;
   }
   lastFailedBytes?.fill(0);
   lastFailedBytes = null;
   lastFailedFormat = "ifc";
+  for (const resource of lastFailedResources) {
+    resource.bytes.fill(0);
+  }
+  lastFailedResources = [];
   let admitted = null;
   try {
-    admitted = await readLocalFile(file);
+    admitted = await readLocalFiles(files);
     lastFailedBytes = Uint8Array.from(admitted.bytes);
     lastFailedFormat = admitted.format;
+    lastFailedResources = admitted.resources.map((resource) => ({
+      uri: resource.uri,
+      bytes: Uint8Array.from(resource.bytes),
+    }));
     await openBytes(admitted.bytes, {
       format: admitted.format,
       origin: "local-file",
+      resources: admitted.resources,
     });
   } catch (error) {
     if (elements.status.dataset.state !== "failed") {
@@ -1796,6 +1892,9 @@ elements.file.addEventListener("change", async () => {
     }
   } finally {
     admitted?.bytes.fill(0);
+    for (const resource of admitted?.resources ?? []) {
+      resource.bytes.fill(0);
+    }
   }
 });
 
@@ -1803,6 +1902,10 @@ elements.fixture.addEventListener("click", async () => {
   lastFailedBytes?.fill(0);
   lastFailedBytes = null;
   lastFailedFormat = "ifc";
+  for (const resource of lastFailedResources) {
+    resource.bytes.fill(0);
+  }
+  lastFailedResources = [];
   try {
     const response = await fetch("/qualification-fixture.ifc", {
       cache: "no-store",
@@ -1856,6 +1959,7 @@ elements.retry.addEventListener("click", async () => {
       await openBytes(lastFailedBytes, {
         format: lastFailedFormat,
         origin: "retry",
+        resources: lastFailedResources,
       });
     } catch {
       // openBytes already published a stable path-free diagnostic.
@@ -2158,17 +2262,56 @@ globalThis.addEventListener("message", async (event) => {
       controls("failed");
       return;
     }
+    const resources = [];
+    if (message.resources !== undefined) {
+      if (!Array.isArray(message.resources)) {
+        bytes.fill(0);
+        setStatus("failed", "Open failed: HOST_RESOURCES_INVALID");
+        controls("failed");
+        return;
+      }
+      for (const resource of message.resources) {
+        let resourceBytes;
+        if (resource?.bytes instanceof ArrayBuffer) {
+          resourceBytes = new Uint8Array(resource.bytes);
+        } else if (ArrayBuffer.isView(resource?.bytes)) {
+          resourceBytes = new Uint8Array(
+            resource.bytes.buffer,
+            resource.bytes.byteOffset,
+            resource.bytes.byteLength,
+          );
+        } else if (Array.isArray(resource?.bytes)) {
+          resourceBytes = Uint8Array.from(resource.bytes);
+        } else {
+          bytes.fill(0);
+          for (const admitted of resources) {
+            admitted.bytes.fill(0);
+          }
+          setStatus("failed", "Open failed: HOST_RESOURCES_INVALID");
+          controls("failed");
+          return;
+        }
+        resources.push({
+          uri: resource.uri,
+          bytes: resourceBytes,
+        });
+      }
+    }
     try {
       await openBytes(bytes, {
         format: message.format ?? "ifc",
         limits: message.limits ?? {},
         origin: "vscode-custom-editor",
         profile: message.profile ?? runtime.profile,
+        resources,
       });
     } catch {
       // openBytes already published a stable path-free diagnostic.
     } finally {
       bytes.fill(0);
+      for (const resource of resources) {
+        resource.bytes.fill(0);
+      }
     }
   } else if (message.type === "cancel") {
     openingSequence += 1;

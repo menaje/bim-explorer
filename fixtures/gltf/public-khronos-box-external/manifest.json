@@ -1,0 +1,58 @@
+{
+  "schema": "bim-explorer-public-gltf-resource-bundle-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-box-external-buffer",
+  "purpose": "cache-only qualification of one bounded same-folder external glTF buffer bundle",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "directory": "Models/Box/glTF",
+    "modelOwner": "Cesium",
+    "modelYear": 2017
+  },
+  "document": {
+    "name": "Box.gltf",
+    "mediaType": "model/gltf+json",
+    "byteLength": 2898,
+    "sha256": "4a0d69eecfce0672a50b71dc218cbacec6c53fe2445040c235c6314b1b2c41b9",
+    "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/glTF/Box.gltf"
+  },
+  "resources": [
+    {
+      "name": "Box0.bin",
+      "mediaType": "application/octet-stream",
+      "byteLength": 648,
+      "sha256": "3266a8e39b9f425b3341cbe5eec7849f44310256bfa651e6b8b40c85ce0ccafb",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/Box/glTF/Box0.bin"
+    }
+  ],
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "attribution": "Box © 2017 Cesium, licensed under CC BY 4.0"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "COLLADA2GLTF",
+    "externalResources": 1,
+    "externalResourceBytes": 648,
+    "aggregateSourceBytes": 3546,
+    "sourceFingerprint": "9da0e06d14a1c601099f04c4756c50c628665b22fb14641c150f4ba72e487549",
+    "geometryRecords": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "ranges": 1,
+    "geometryRangeBytes": 756,
+    "geometryRangeSha256": "433cb93affb64cc753f0500d84eb73b1ddfb681aa283463dffb6d961ba08faec",
+    "gpuUploadBytes": 800,
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactsTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

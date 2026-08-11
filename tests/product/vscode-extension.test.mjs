@@ -10,6 +10,9 @@ import { fileURLToPath } from "node:url";
 import {
   prepareVscodeExtensionStage,
 } from "../../scripts/package-vscode-extension.mjs";
+import {
+  syntheticGltfExternalBundle,
+} from "../../scripts/generate-synthetic-gltf.mjs";
 
 const require = createRequire(import.meta.url);
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -71,6 +74,7 @@ function fakeWatcher() {
 }
 
 function fakeVscode({
+  resourceFiles = {},
   sourcePath = "/private/customer/acme-building.ifc",
   sourceBytes = new TextEncoder().encode(
     "ISO-10303-21;\nEND-ISO-10303-21;\n",
@@ -78,6 +82,24 @@ function fakeVscode({
   sourceType = 1,
 } = {}) {
   const sourceUri = new FakeUri(sourcePath);
+  const files = new Map([[sourceUri.fsPath, {
+    bytes: Uint8Array.from(sourceBytes),
+    mtime: 42,
+    type: sourceType,
+  }]]);
+  for (const [name, value] of Object.entries(resourceFiles)) {
+    const record = value instanceof Uint8Array
+      ? { bytes: value, mtime: 42, type: 1 }
+      : value;
+    files.set(
+      path.resolve(path.dirname(sourceUri.fsPath), name),
+      {
+        bytes: Uint8Array.from(record.bytes),
+        mtime: record.mtime ?? 42,
+        type: record.type ?? 1,
+      },
+    );
+  }
   const output = [];
   const configuration = {
     ifcProfile: "ReferenceView_V1.2",
@@ -126,15 +148,25 @@ function fakeVscode({
               await readFile(uri.fsPath),
             );
           }
-          assert.equal(uri.toString(), sourceUri.toString());
-          return Uint8Array.from(sourceBytes);
+          const record = files.get(uri.fsPath);
+          if (record === undefined) {
+            const error = new Error("missing fixture file");
+            error.code = "ENOENT";
+            throw error;
+          }
+          return Uint8Array.from(record.bytes);
         },
         async stat(uri) {
-          assert.equal(uri.toString(), sourceUri.toString());
+          const record = files.get(uri.fsPath);
+          if (record === undefined) {
+            const error = new Error("missing fixture file");
+            error.code = "ENOENT";
+            throw error;
+          }
           return {
-            type: sourceType,
-            size: sourceBytes.byteLength,
-            mtime: 42,
+            type: record.type,
+            size: record.bytes.byteLength,
+            mtime: record.mtime,
           };
         },
       },
@@ -648,6 +680,94 @@ test("Custom Editor sends only the normalized GLB format hint", async () => {
     JSON.stringify(sourceMessage).includes("acme-reference"),
     false,
   );
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends only declared same-folder glTF resources", async () => {
+  const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/Box.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: {
+      "Box0.bin": bundle.resources[0].bytes,
+    },
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.equal(sourceMessage.resources.length, 1);
+  assert.equal(sourceMessage.resources[0].uri, "Box0.bin");
+  assert.deepEqual(
+    [...new Uint8Array(sourceMessage.resources[0].bytes)],
+    [...bundle.resources[0].bytes],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor rejects a declared glTF resource symlink", async () => {
+  const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/Box.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: {
+      "Box0.bin": {
+        bytes: bundle.resources[0].bytes,
+        type: 1 | 64,
+      },
+    },
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  assert.deepEqual(host.posted.at(-1).diagnostic, {
+    code: "SOURCE_RESOURCE_SYMLINK_REJECTED",
+    retryable: false,
+  });
+  assert.equal(host.posted.at(-1).type, "source-error");
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
   document.dispose();
   provider.dispose();
 });

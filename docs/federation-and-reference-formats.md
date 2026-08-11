@@ -141,8 +141,10 @@ cache입니다.
 | 3D Tiles/GIS | site context reference | held |
 | RVT/DGN | native SDK reference | held |
 
-glTF/GLB admission은 embedded buffer, bounded node/mesh profile과
-source-native identity에 한정됩니다. 비 IFC reference source는 semantic
+glTF/GLB admission은 embedded buffer 또는 명시적으로 공급된 동일 폴더 `.bin`
+resource bundle, bounded node/mesh profile과 source-native identity에
+한정됩니다. local bundle은 최대 16개 ASCII leaf-name sidecar와 document 합산
+64MiB이며 임의 URI·external image·runtime network를 허용하지 않습니다. 비 IFC reference source는 semantic
 BIM authority가 아닙니다. 모든 후보의 write와 round-trip은 별도
 Gate입니다.
 
@@ -152,8 +154,8 @@ parser/SDK license와 배포 권리, coordinate profile, first-frame/memory/clea
 [`reference format evidence intake`](reference-format-intake.md)의 공개 issue
 form과 fail-closed triage receipt를 사용하며 고객 모델·credential·absolute
 path를 받지 않습니다. intake가 완전해도 별도 codec/SDK conformance 전에는
-format을 admission하지 않습니다. glTF external resource와 required extension,
-product-scale 제품 file-open은 호스트별 Gate입니다. bounded local Browser/VS
+format을 admission하지 않습니다. glTF local external buffer bundle과 required
+extension, product-scale 제품 file-open은 호스트별 Gate입니다. bounded local Browser/VS
 Code 제품 file-open은 Khronos Box로 macOS arm64와 Linux x64 product-shell
 evidence에서 통과했습니다. 42.98MB `A Beautiful Game`은 on-demand CC BY
 4.0 product-scale reference source와 실제 Chrome SwiftShader first-frame,
@@ -165,6 +167,13 @@ IFC는 software fallback을 끈 actual Browser, staged VS Code 및
 clean-installed local VSIX에서 Apple M2 Metal physical GPU를 각각
 통과했습니다. Linux/Windows, OS-level peak GPU memory와 두 대표 모델의 동시
 합성은 승인하지 않습니다.
+별도 Khronos `Box.gltf + Box0.bin`은 Browser의 명시적 다중 선택, staged VS Code와
+clean-installed local VSIX에서 같은 composite source identity와 Apple M2 Metal
+projection·cleanup을 통과했습니다. required extension, nested/arbitrary URI,
+external image와 Linux/Windows physical GPU는 계속 보류합니다.
+이 결과는 glTF source와 single-source 제품 Gate에 한정됩니다. immutable
+federated BIM Surface v0.2 package와 `.bimfed.json` host에는 backport하지 않으며,
+후속 federated bundle 지원은 새 version과 별도 Spatial consumer Gate가 필요합니다.
 cache-only LAS/LAZ pre-admission probe는 paired LAS 1.2/LAZ의 10,201개
 point-format 3 record와 압축 해제 parity를 통과했습니다. actual Chrome
 qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperative

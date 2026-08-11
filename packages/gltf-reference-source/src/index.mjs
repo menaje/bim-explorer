@@ -77,6 +77,40 @@ async function sha256(bytes) {
     .join("");
 }
 
+async function bundleSha256(bytes, resources, resourceUris) {
+  if (resourceUris.length === 0) {
+    return await sha256(bytes);
+  }
+  const resourcesByUri = new Map(
+    resources.map((resource) => [resource.uri, resource.bytes]),
+  );
+  const entries = [];
+  for (const uri of resourceUris) {
+    const resourceBytes = resourcesByUri.get(uri);
+    if (!(resourceBytes instanceof Uint8Array)) {
+      throw new Error("glTF external resource digest input is missing");
+    }
+    entries.push({
+      uri,
+      byteLength: resourceBytes.byteLength,
+      sha256: await sha256(resourceBytes),
+    });
+  }
+  const descriptor = new TextEncoder().encode(JSON.stringify({
+    schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+    document: {
+      byteLength: bytes.byteLength,
+      sha256: await sha256(bytes),
+    },
+    resources: entries,
+  }));
+  try {
+    return await sha256(descriptor);
+  } finally {
+    descriptor.fill(0);
+  }
+}
+
 export class GltfReferenceSource {
   #geometryBytes;
   #snapshot;
@@ -248,6 +282,15 @@ export class GltfReferenceSource {
         extensionsUsed: profile.extensionsUsed,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
+        resourceBundle: {
+          schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+          documentBytes: profile.resourceBundle.documentBytes,
+          externalResourceBytes:
+            profile.resourceBundle.externalResourceBytes,
+          externalResources:
+            profile.resourceBundle.externalResources,
+          networkAtRuntime: false,
+        },
         metadataQuery: "bounded-node-mesh-material-projection",
       },
     });
@@ -453,6 +496,7 @@ export async function createGltfReferenceSource(
   {
     limits,
     maximumRequestBytes,
+    resources = [],
     sessionReadBudgetBytes,
     signal,
   } = {},
@@ -461,14 +505,39 @@ export async function createGltfReferenceSource(
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
   }
-  const [sourceDigest, profile] = await Promise.all([
-    sha256(bytes),
-    Promise.resolve().then(() =>
-      parseGltfReferenceProfile(bytes, { limits })),
-  ]);
-  aborted(signal);
-  const encoded = encodeGltfGeometryRange(profile.records);
+  if (!Array.isArray(resources)) {
+    throw new TypeError("glTF external resources must be an array");
+  }
+  const ownedResources = [];
   try {
+    for (const resource of resources) {
+      ownedResources.push({
+        uri: resource?.uri,
+        bytes: resource?.bytes instanceof Uint8Array
+          ? Uint8Array.from(resource.bytes)
+          : resource?.bytes,
+      });
+    }
+  } catch (error) {
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
+    }
+    throw error;
+  }
+  let profile;
+  let encoded;
+  try {
+    profile = parseGltfReferenceProfile(bytes, {
+      limits,
+      resources: ownedResources,
+    });
+    const sourceDigest = await bundleSha256(
+      bytes,
+      ownedResources,
+      profile.externalResourceUris,
+    );
+    aborted(signal);
+    encoded = encodeGltfGeometryRange(profile.records);
     const geometryDigest = await sha256(encoded.bytes);
     aborted(signal);
     return new GltfReferenceSource({
@@ -481,11 +550,14 @@ export async function createGltfReferenceSource(
       sessionReadBudgetBytes,
     });
   } finally {
-    encoded.bytes.fill(0);
-    for (const record of profile.records) {
+    encoded?.bytes.fill(0);
+    for (const record of profile?.records ?? []) {
       record.positions.fill(0);
       record.normals.fill(0);
       record.indices.fill(0);
+    }
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
     }
   }
 }

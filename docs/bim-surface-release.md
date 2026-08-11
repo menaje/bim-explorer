@@ -137,3 +137,17 @@ clean-installed local VSIX가 동일한 3-source composition, 8,286 pixels,
 이 결과는 기존 `bim-surface-v0.2.0` asset이나 새 VSIX를 게시하지 않습니다.
 Linux/Windows physical GPU, 실제 고객 모델, OS-level peak GPU memory, Spatial
 VSIX BIM runtime과 production support는 계속 별도 Gate입니다.
+
+## Immutable v0.2 runtime after release
+
+`packages/federated-bim-surface/runtime/index.mjs`는 공개 tag와 Spatial Phase B가
+고정한 461,431 bytes, SHA-256 `22e243fa…1847`를 유지합니다. `--check`는 현재
+개발 source에서 runtime을 다시 만들지 않고 이 exact release digest를 검사합니다.
+일반 v0.2 build는 현재 source가 release tag와 같은 runtime을 만들 때만 쓸 수
+있으며, post-release source가 달라졌다면 기존 파일을 덮어쓰지 않고 새 package
+version을 시작하라는 오류로 종료합니다.
+
+따라서 single-source `.gltf + .bin` 같은 후속 기능은 v0.2 package에 자동
+backport하지 않습니다. federated runtime/API에 포함하려면 새 semver, `dev →
+prerelease` 승격, exact package evidence와 Spatial consumer admission을 다시
+통과해야 합니다.

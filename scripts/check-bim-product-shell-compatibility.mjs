@@ -41,6 +41,10 @@ import {
 import {
   validateRepresentativePointCloudsPhysicalGpuQualification,
 } from "./qualify-representative-point-clouds-physical-gpu.mjs";
+import {
+  GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfResourceBundleProductsQualification,
+} from "./qualify-gltf-resource-bundle-products.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -70,6 +74,9 @@ const PASSED_GATES = [
   "browserProductScaleGltfOpen",
   "vscodeProductScaleGltfOpen",
   "cleanVsixProductScaleGltfOpen",
+  "browserLocalExternalGltfBundleOpen",
+  "vscodeLocalExternalGltfBundleOpen",
+  "cleanVsixLocalExternalGltfBundleOpen",
   "browserReadonlyLasLazOpen",
   "vscodeReadonlyLasLazOpen",
   "cleanVsixLasLazOpen",
@@ -463,6 +470,7 @@ export function validateBimProductShellCompatibility(
   representativePhysicalGpu,
   representativePointCloudsPhysicalGpu,
   viewerCoreProductEntrypoints,
+  gltfExternalResourceProducts,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -532,6 +540,10 @@ export function validateBimProductShellCompatibility(
   validateViewerCoreProductEntrypoints(
     viewerCoreProductEntrypoints,
   );
+  const gltfExternalResourceReport =
+    validateGltfResourceBundleProductsQualification(
+      gltfExternalResourceProducts,
+    );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -741,6 +753,52 @@ export function validateBimProductShellCompatibility(
       "reference product fixture policy is invalid",
     );
   }
+  const externalResourceReferenceFixture =
+    manifest.externalResourceReferenceFixture;
+  const externalResourceEvidenceFixture =
+    gltfExternalResourceProducts.fixture;
+  if (
+    externalResourceReferenceFixture?.id !==
+      externalResourceEvidenceFixture?.id ||
+    externalResourceReferenceFixture?.byteLength !== 3_546 ||
+    externalResourceReferenceFixture?.documentByteLength !==
+      2_898 ||
+    externalResourceReferenceFixture?.externalResourceBytes !==
+      648 ||
+    externalResourceReferenceFixture?.externalResources !== 1 ||
+    externalResourceReferenceFixture?.sourceFingerprint !==
+      externalResourceEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    externalResourceReferenceFixture?.format !== "gltf" ||
+    externalResourceReferenceFixture?.gltfVersion !== "2.0" ||
+    externalResourceReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    externalResourceReferenceFixture?.artifactCommitted !== false ||
+    externalResourceReferenceFixture?.thirdPartyContent !== true ||
+    externalResourceReferenceFixture?.bundled !== false ||
+    externalResourceReferenceFixture?.repository !==
+      externalResourceEvidenceFixture?.provenance?.repository ||
+    externalResourceReferenceFixture?.commit !==
+      externalResourceEvidenceFixture?.provenance?.commit ||
+    externalResourceReferenceFixture?.license !==
+      externalResourceEvidenceFixture?.provenance?.license ||
+    externalResourceEvidenceFixture?.sourceBytes !== 3_546 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.documentBytes !== 2_898 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.externalResourceBytes !== 648 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.externalResources !== 1 ||
+    gltfExternalResourceReport.status !==
+      "passed-darwin-arm64-apple-metal-local-bundle" ||
+    gltfExternalResourceReport.surfaces !== 3
+  ) {
+    throw new Error(
+      "external glTF resource product fixture policy is invalid",
+    );
+  }
   const gates = plainRecord(
     manifest.gates,
     "product shell gates",
@@ -789,6 +847,14 @@ export function validateBimProductShellCompatibility(
         maximumCpuStagingBytes: 33_554_432,
         maximumGpuCacheBytes: 33_554_432,
       }) ||
+    JSON.stringify(limits?.gltfExternalResourceBundle) !==
+      JSON.stringify({
+        maximumAggregateSourceBytes: 67_108_864,
+        maximumExternalResources: 16,
+        maximumResourceNameBytes: 128,
+        sameFolderOnly: true,
+        resourceExtension: ".bin",
+      }) ||
     JSON.stringify(limits?.lasLazPointSource) !==
       JSON.stringify({
         maximumSourceBytes: 8_388_608,
@@ -826,12 +892,14 @@ export function validateBimProductShellCompatibility(
         renderer: "ANGLE Metal",
         representativeFormats: [
           "ifc",
+          "gltf",
           "glb",
           "e57",
           "las",
           "laz",
         ],
         publicViewerCoreProductEntrypoint: true,
+        localExternalGltfBundleProductSurfaces: 3,
         pointCloudProductSurfaces: 12,
         pointCloudFormatAdmission: false,
         simultaneousComposition: false,
@@ -1233,6 +1301,8 @@ export function validateBimProductShellCompatibility(
       "compatibility/evidence/" +
         "bim-product-shell-viewer-core-product-entrypoints-" +
         "2026-08-11.json" ||
+    manifest.evidence?.gltfExternalResourceProducts !==
+      GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -1242,6 +1312,10 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimProductScaleBrowserOpen !== true ||
     manifest.policy?.claimProductScaleVscodeOpen !== true ||
     manifest.policy?.claimProductScaleCleanVsixOpen !== true ||
+    manifest.policy?.claimLocalExternalGltfBundleOpen !== true ||
+    manifest.policy?.localExternalGltfBundleScope !==
+      "single-source-product-surface" ||
+    manifest.policy?.claimArbitraryGltfUri !== false ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
     manifest.policy?.claimVscodeLasLazOpen !== true ||
     manifest.policy?.claimCleanVsixLasLazOpen !== true ||
@@ -1302,6 +1376,7 @@ export function validateBimProductShellCompatibility(
         representativePhysicalGpu,
         representativePointCloudsPhysicalGpu,
         viewerCoreProductEntrypoints,
+        gltfExternalResourceProducts,
         installation,
         manifest,
         vscode,
@@ -1320,6 +1395,8 @@ export function validateBimProductShellCompatibility(
       vscode.observation.hostKind,
     ]),
     passedGates: PASSED_GATES.length,
+    externalGltfBundleSurfaces:
+      gltfExternalResourceReport.surfaces,
     physicalGpu: physicalGpu.status,
     pointCloudPhysicalGpu: pointCloudPhysicalGpu.status,
     pointCloudPhysicalGpuSurfaces:
@@ -1363,6 +1440,7 @@ async function main() {
     representativePhysicalGpu,
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1471,6 +1549,13 @@ async function main() {
       ),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.gltfExternalResourceProducts,
+      ),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1496,6 +1581,7 @@ async function main() {
     representativePhysicalGpu,
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

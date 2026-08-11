@@ -9,6 +9,9 @@ range와 `POINTS` renderer로 분기합니다.
 
 - IFC/glTF/GLB는 64 MiB, E57은 32 MiB, LAS/LAZ는 8 MiB admission limit 뒤
   Worker로 전달합니다.
+- `.gltf`가 local `.bin` buffer를 선언하면 source와 최대 16개 sidecar를 한
+  picker에서 함께 명시적으로 선택해야 합니다. ASCII leaf-name만 허용하고
+  document와 resource 합산 64MiB, 중복·누락·미사용 resource를 검사합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
@@ -44,6 +47,10 @@ bounded Worker/renderer, 검색·3D pick과 close cleanup을 확인합니다.
 `npm run qualify:gltf:product-scale:vscode-install`은 같은 파일을 staged
 Custom Editor와 빈 profile에 설치한 VSIX에서 열어 동일한 bounded reference
 projection과 editor cleanup을 확인합니다.
+`npm run qualify:gltf:external-resource-products`는 exact cache-only Khronos
+`Box.gltf + Box0.bin`을 Browser 다중 선택, staged VS Code와 clean-installed
+local VSIX에서 Apple M2 Metal로 열어 composite identity, local-only transport와
+cleanup을 검증합니다. sample은 Git, package 또는 release에 포함하지 않습니다.
 `npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
 공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
 Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact

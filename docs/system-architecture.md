@@ -263,7 +263,12 @@ Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도
 generated source fingerprint, model/renderer projection과 WebGL2 frame을
 재현했습니다. bounded glTF/GLB는 같은 Host lifecycle에서 reference source와
 source-native explorer로 분기하며 IFC semantic authority를 사용하지
-않습니다.
+않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder `.bin`
+sidecar를 하나의 composite fingerprint로 묶고 모든 owned copy를 terminal
+cleanup에서 지웁니다.
+이 additive path는 single-source 제품 Worker에만 연결합니다. 이미 공개된
+federated BIM Surface v0.2 runtime은 exact release digest로 동결되며 resource
+bundle 기능을 backport하지 않습니다.
 
 공개 `@menaje/viewer-core`와
 `@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
@@ -289,7 +294,7 @@ Browser Host와 VS Code Host는 같은 product lifecycle을 구현합니다.
 
 | Host 책임 | Browser | VS Code |
 | --- | --- | --- |
-| source capability | File/Blob picker | Custom Editor document |
+| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin` |
 | adapter backend | module Worker + WASM | bundled module Worker + WASM |
 | binary range | Worker-owned immutable range | webview Worker-owned range |
 | resource reveal | explicit download/view | bounded editor/reveal intent |
@@ -301,7 +306,9 @@ message나 Browser DOM event를 cross-product API로 안정화하지 않습니�
 VS Code extension host는 exact local `file:` URI를 regular non-symlink로
 검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
 `ArrayBuffer`, normalized `ifc`/`gltf`/`glb`/`e57`/`las`/`laz` format,
-generation과 bounded setting만 전달하며 report는
+generation과 bounded setting만 전달합니다. `.gltf` sidecar가 있으면 검증된
+ASCII leaf-name과 transferable buffer만 별도 resource descriptor로 전달하며
+extension-host URI는 보내지 않습니다. report는
 fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
 diagnostic에 넣지 않습니다.
 
@@ -317,6 +324,9 @@ same-origin module로 직접 실행합니다. 두 Host의 IFC와 reference 결�
 model/render/selection/cleanup parity를 통과했습니다. 이는 두 파일을 각각 연
 macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 합성이나
 cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
+같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
+M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 임의 URI,
+external image와 required extension은 여전히 Worker admission 전에 거부합니다.
 
 ## openBIM exploration
 

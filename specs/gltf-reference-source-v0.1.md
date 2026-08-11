@@ -5,7 +5,7 @@ authority:
   - internal-gltf-reference-source
   - mesh-reference-admission
   - bounded-source-lifecycle
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-11
 ---
 
 # glTF reference source v0.1
@@ -33,6 +33,8 @@ roundTripAuthority: false
 - 정확한 GLB 2.0 header와 JSON 뒤 optional BIN chunk
 - glTF 2.0 JSON의 base64 `application/octet-stream` 또는
   `application/gltf-buffer` data URI
+- glTF 2.0 JSON이 참조하고 caller가 명시적으로 공급한 동일 폴더 ASCII
+  leaf-name `.bin` buffer
 - 하나의 default scene과 bounded node hierarchy
 - node의 column-major matrix 또는 translation/rotation/scale
 - indexed `TRIANGLES`
@@ -40,8 +42,11 @@ roundTripAuthority: false
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
 
-외부 HTTP, file 및 path URI를 fetch하지 않고 `NotSupportedError`로
-거부합니다. required extension, primitive extension, animation, skin,
+local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$` 범위이고 `..`를
+포함할 수 없습니다. scheme, slash/backslash, query/fragment, percent-encoding을
+포함한 외부 HTTP, file 및 path URI는 fetch하지 않고 `NotSupportedError`로
+거부합니다. caller가 공급한 누락·중복·미사용 sidecar도 fail closed합니다.
+required extension, primitive extension, external image, animation, skin,
 morph target, sparse accessor와 collapsed transform도 first profile 밖입니다.
 optional texture/image metadata는 geometry 입출력이나 network authority를
 부여하지 않습니다.
@@ -52,9 +57,11 @@ optional texture/image metadata는 geometry 입출력이나 network authority를
 
 | 자원 | 상한 |
 | --- | ---: |
-| source bytes | 64 MiB |
+| document + external resource aggregate | 64 MiB |
 | JSON bytes | 4 MiB |
 | decoded aggregate buffer | 64 MiB |
+| external `.bin` resource | 16개 |
+| external resource leaf-name | UTF-8 128 bytes |
 | node | 4,096 |
 | node depth | 256 |
 | mesh | 4,096 |
@@ -100,7 +107,7 @@ source는 단일 immutable session만 엽니다. 모든 range handle은 protocol
 session, source, revision, snapshot과 layer context를 포함하며 stale
 context를 거부합니다.
 
-parser가 소유한 source/buffer 복사본과 intermediate accessor array는
+parser가 소유한 source/buffer/sidecar 복사본과 intermediate accessor array는
 projection 뒤 지웁니다. terminal source dispose는 retained geometry range를
 0으로 덮고 identity index를 비웁니다. caller-owned input bytes와 renderer
 GPU allocation은 source가 소유하지 않습니다.
@@ -108,12 +115,12 @@ GPU allocation은 source가 소유하지 않습니다.
 ## 보류
 
 - Draco, meshopt와 기타 required extension
-- external relative resource bundle
+- arbitrary URI, nested path와 external image
 - texture/image decode와 material fidelity
 - animation, skin과 morph target
 - source write, conversion과 round-trip
 - BIM property/classification authority
-- product-scale reference geometry와 physical/cross-platform GPU
+- cross-platform physical GPU와 OS-level peak GPU memory
 
 ## 현재 conformance evidence
 
@@ -137,12 +144,23 @@ source-native selection과 `globalId: null`을 재현하고 path-free bridge,
 Worker/session/GPU/editor cleanup을 통과했습니다. `.gltf` association과
 embedded data URI dispatch는 synthetic conformance가 보완합니다.
 
+고정된 Khronos `Box.gltf` 2,898 bytes와 `Box0.bin` 648 bytes는 원본 commit과
+각 SHA-256을 cache-only manifest로 고정했습니다. Browser는 두 파일을 한 번에
+명시적으로 선택하고 VS Code는 JSON-declared sibling만 읽습니다. actual Chrome
+151, staged VS Code 1.132와 clean-installed local VSIX는 Apple M2 Metal에서
+동일한 3,546-byte composite source fingerprint, 12 triangles, 756-byte range
+read, 800-byte upload, 86,486 pixels, source-native selection과 terminal cleanup을
+재현했습니다. sample binary는 Git, VSIX와 release에 포함하지 않습니다.
+이 제품 Gate는 single-source Browser/VS Code 경로이며 공개된 immutable
+federated BIM Surface v0.2 runtime과 `.bimfed.json` admission을 변경하지 않습니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
 upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 제품 bundle에
 포함하지 않습니다.
 
-이 제품 결과는 bounded local read-only profile만 승인합니다. external
-resource bundle, required extension, broader material/geometry fidelity,
-physical GPU, BIM semantic authority, write와 round-trip은 승인하지 않습니다.
+이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
+external image, required extension, broader material/geometry fidelity,
+Linux/Windows physical GPU, BIM semantic authority, write와 round-trip은
+승인하지 않습니다.

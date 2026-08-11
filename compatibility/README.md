@@ -107,6 +107,7 @@ path-free host bridge와 clean VSIX install 결과는
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
 [`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json),
+[`local glTF resource bundle evidence`](evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json),
 [`point-cloud physical GPU evidence`](evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json),
 [`LAS/LAZ VS Code evidence`](evidence/las-laz-vscode-product-2026-08-08.json),
 [`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
@@ -122,6 +123,14 @@ clean-installed VSIX에서 1 reference entity·12 triangles·86,486 pixels,
 source-native selection, `globalId: null`과 cleanup을 재현했습니다. 제품
 세 경로는 macOS arm64와 Linux x64 CI에서 고정 VS Code 1.131.0으로 같은
 model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
+별도 cache-only Khronos `Box.gltf + Box0.bin`은 Browser의 명시적 다중 파일
+선택, staged VS Code의 JSON-declared sibling read와 clean-installed local VSIX에서
+같은 3,546-byte composite identity, 12 triangles, 86,486 pixels와 terminal
+cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII `.bin`과
+합산 64MiB만 허용하며 path/scheme, symlink, external image, runtime network와
+required extension은 계속 차단합니다.
+이 local bundle 증거는 single-source 제품 범위이고 immutable federated BIM
+Surface v0.2 runtime이나 `.bimfed.json` 지원을 승격하지 않습니다.
 paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
 points·163,216-byte payload·36,934 pixels를 재현하고 path-free bridge,
 source/Worker/CPU/GPU/editor cleanup을 통과했습니다. VSIX는 strict-CSP용
@@ -387,9 +396,14 @@ allocation을 전량 회수했습니다. 같은 GLB는
 actual Chrome 151, staged VS Code 1.132와 clean-installed local VSIX에서 Apple
 M2 Metal, 48,762 pixels, 16,896,412-byte public Core read와 16,900,016-byte
 upload를 재현해 `physicalGpu=true`로 admission했습니다. 이는 macOS arm64 단일
-hardware 범위이며 external resource, required extension, Linux/Windows physical
-GPU, OS-level peak memory, write·round-trip과 BIM semantic authority는 held입니다.
-GLB는 ignored cache에서만 사용하고 release에는 포함하지 않습니다.
+hardware 범위입니다. 추가
+[`local resource bundle evidence`](evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json)는
+exact Khronos `Box.gltf + Box0.bin`을 세 제품 표면에서 Apple M2 Metal로 열어
+`externalResourceBundle=true`로 admission했습니다. glTF manifest는 26 passed / 4
+held이며 required extension, write·round-trip과 BIM semantic authority는 held입니다.
+임의 URI·external image·Linux/Windows physical GPU와 OS-level peak memory도
+승인하지 않습니다. 공개 sample은 ignored cache에서만 사용하고 release에는
+포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

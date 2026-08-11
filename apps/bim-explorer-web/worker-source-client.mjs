@@ -9,6 +9,8 @@ const DEFAULT_LIMITS = Object.freeze({
   operationTimeoutMs: 10_000,
 });
 const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
+const EXTERNAL_RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
 
 function invalidState(message) {
   return new DOMException(message, "InvalidStateError");
@@ -394,6 +396,7 @@ export class BimProductSourceWorkerClient {
   async open(bytesValue, {
     format = "ifc",
     profile = "ReferenceView_V1.2",
+    resources = [],
   } = {}) {
     this.#assertOpen();
     if (!(bytesValue instanceof Uint8Array)) {
@@ -415,6 +418,56 @@ export class BimProductSourceWorkerClient {
         "BIM product source format is unsupported",
       );
     }
+    if (
+      !Array.isArray(resources) ||
+      resources.length > 16 ||
+      (resources.length > 0 && format !== "gltf")
+    ) {
+      throw new TypeError(
+        "BIM product external resources are unsupported",
+      );
+    }
+    const resourceUris = new Set();
+    let aggregateBytes = bytesValue.byteLength;
+    const ownedResources = [];
+    try {
+      for (const resource of resources) {
+        if (
+          typeof resource?.uri !== "string" ||
+          resource.uri.length > 128 ||
+          !EXTERNAL_RESOURCE_NAME.test(resource.uri) ||
+          resource.uri.includes("..") ||
+          !(resource.bytes instanceof Uint8Array) ||
+          resource.bytes.byteLength === 0 ||
+          resource.bytes.byteLength >
+            this.#limits.maximumSourceBytes ||
+          resourceUris.has(resource.uri)
+        ) {
+          throw new TypeError(
+            "BIM product external resource is invalid",
+          );
+        }
+        resourceUris.add(resource.uri);
+        aggregateBytes += resource.bytes.byteLength;
+        ownedResources.push({
+          uri: resource.uri,
+          bytes: Uint8Array.from(resource.bytes),
+        });
+      }
+    } catch (error) {
+      for (const resource of ownedResources) {
+        resource.bytes.fill(0);
+      }
+      throw error;
+    }
+    if (aggregateBytes > this.#limits.maximumSourceBytes) {
+      for (const resource of ownedResources) {
+        resource.bytes.fill(0);
+      }
+      throw new RangeError(
+        "BIM product source bundle exceeds its byte limit",
+      );
+    }
     if (this.#worker !== null) {
       this.terminate(this.#generation);
     }
@@ -425,6 +478,10 @@ export class BimProductSourceWorkerClient {
     try {
       const result = await this.#request("open", {
         bytes: bytes.buffer,
+        resources: ownedResources.map((resource) => ({
+          uri: resource.uri,
+          bytes: resource.bytes.buffer,
+        })),
         options: {
           format,
           profile,
@@ -434,7 +491,11 @@ export class BimProductSourceWorkerClient {
         },
       }, {
         timeoutMs: this.#limits.openTimeoutMs,
-        transfer: [bytes.buffer],
+        transfer: [
+          bytes.buffer,
+          ...ownedResources.map((resource) =>
+            resource.bytes.buffer),
+        ],
       });
       this.#state = "ready";
       const generation = this.#generation;
@@ -461,6 +522,15 @@ export class BimProductSourceWorkerClient {
       this.terminate(this.#generation);
       this.#state = "failed";
       throw error;
+    } finally {
+      if (bytes.byteLength > 0) {
+        bytes.fill(0);
+      }
+      for (const resource of ownedResources) {
+        if (resource.bytes.byteLength > 0) {
+          resource.bytes.fill(0);
+        }
+      }
     }
   }
 

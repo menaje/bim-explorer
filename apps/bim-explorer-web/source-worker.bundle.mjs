@@ -4234,6 +4234,8 @@ var DEFAULT_LIMITS2 = Object.freeze({
   maximumSourceBytes: 64 * 1024 * 1024,
   maximumJsonBytes: 4 * 1024 * 1024,
   maximumBufferBytes: 64 * 1024 * 1024,
+  maximumExternalResources: 16,
+  maximumExternalResourceNameBytes: 128,
   maximumNodes: 4096,
   maximumNodeDepth: 256,
   maximumMeshes: 4096,
@@ -4371,58 +4373,133 @@ function decodeBase64(value, maximumBytes) {
   }
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
-function loadBuffers(document, binaryChunk, format, limits) {
+function externalResourceName(value, limits) {
+  if (typeof value !== "string" || value.length === 0 || new TextEncoder().encode(value).byteLength > limits.maximumExternalResourceNameBytes || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u.test(value) || value === ".bin" || value.includes("..")) {
+    throw new DOMException(
+      "external glTF buffer URI is outside the local bundle profile",
+      "NotSupportedError"
+    );
+  }
+  return value;
+}
+function externalResourceMap(values, limits) {
+  if (!Array.isArray(values)) {
+    throw new TypeError("glTF external resources must be an array");
+  }
+  if (values.length > limits.maximumExternalResources) {
+    throw new RangeError(
+      "glTF external resource count exceeds the limit"
+    );
+  }
+  const resources = /* @__PURE__ */ new Map();
+  try {
+    for (let index = 0; index < values.length; index += 1) {
+      const value = plainRecord2(
+        values[index],
+        `glTF external resources[${index}]`
+      );
+      const uri = externalResourceName(value.uri, limits);
+      if (!(value.bytes instanceof Uint8Array) || value.bytes.byteLength === 0 || value.bytes.byteLength > limits.maximumBufferBytes) {
+        throw new RangeError(
+          `glTF external resource ${uri} exceeds its byte limit`
+        );
+      }
+      if (resources.has(uri)) {
+        throw new Error("glTF external resource URI is duplicated");
+      }
+      resources.set(uri, Uint8Array.from(value.bytes));
+    }
+    return resources;
+  } catch (error) {
+    for (const bytes of resources.values()) {
+      bytes.fill(0);
+    }
+    throw error;
+  }
+}
+function loadBuffers(document, binaryChunk, format, limits, externalResources) {
   const buffers = collection(
     document.buffers,
     limits.maximumAccessors,
     "glTF buffers"
   );
   let totalBytes = 0;
-  return buffers.map((bufferValue, index) => {
-    const buffer = plainRecord2(
-      bufferValue,
-      `glTF buffers[${index}]`
-    );
-    positiveInteger3(
-      buffer.byteLength,
-      `glTF buffers[${index}].byteLength`
-    );
-    if (buffer.byteLength > limits.maximumBufferBytes) {
-      throw new RangeError("glTF buffer exceeds its byte limit");
-    }
-    let bytes;
-    if (buffer.uri === void 0) {
-      if (format !== "glb" || index !== 0 || binaryChunk === null) {
-        throw new Error("glTF external buffer URI is required");
+  const usedExternalResources = /* @__PURE__ */ new Set();
+  const loaded = [];
+  try {
+    for (let index = 0; index < buffers.length; index += 1) {
+      const bufferValue = buffers[index];
+      const buffer = plainRecord2(
+        bufferValue,
+        `glTF buffers[${index}]`
+      );
+      positiveInteger3(
+        buffer.byteLength,
+        `glTF buffers[${index}].byteLength`
+      );
+      if (buffer.byteLength > limits.maximumBufferBytes) {
+        throw new RangeError("glTF buffer exceeds its byte limit");
       }
-      if (binaryChunk.byteLength < buffer.byteLength || binaryChunk.byteLength > buffer.byteLength + 3) {
-        throw new RangeError("GLB BIN chunk length is inconsistent");
+      let bytes;
+      if (buffer.uri === void 0) {
+        if (format !== "glb" || index !== 0 || binaryChunk === null) {
+          throw new Error("glTF external buffer URI is required");
+        }
+        if (binaryChunk.byteLength < buffer.byteLength || binaryChunk.byteLength > buffer.byteLength + 3) {
+          throw new RangeError("GLB BIN chunk length is inconsistent");
+        }
+        bytes = binaryChunk.slice(0, buffer.byteLength);
+      } else {
+        if (typeof buffer.uri !== "string") {
+          throw new TypeError("glTF buffer URI must be a string");
+        }
+        const match = /^data:application\/(?:octet-stream|gltf-buffer);base64,([A-Za-z0-9+/=]+)$/u.exec(buffer.uri);
+        if (match !== null) {
+          bytes = decodeBase64(match[1], limits.maximumBufferBytes);
+        } else {
+          const uri = externalResourceName(buffer.uri, limits);
+          if (format !== "gltf" || !externalResources.has(uri)) {
+            throw new DOMException(
+              "external glTF buffer URI is blocked",
+              "NotSupportedError"
+            );
+          }
+          bytes = externalResources.get(uri).slice();
+          usedExternalResources.add(uri);
+        }
+        if (bytes.byteLength !== buffer.byteLength) {
+          bytes.fill(0);
+          throw new RangeError(
+            "glTF data URI length does not match buffer.byteLength"
+          );
+        }
       }
-      bytes = binaryChunk.slice(0, buffer.byteLength);
-    } else {
-      if (typeof buffer.uri !== "string") {
-        throw new TypeError("glTF buffer URI must be a string");
-      }
-      const match = /^data:application\/(?:octet-stream|gltf-buffer);base64,([A-Za-z0-9+/=]+)$/u.exec(buffer.uri);
-      if (match === null) {
-        throw new DOMException(
-          "external glTF buffer URI is blocked",
-          "NotSupportedError"
-        );
-      }
-      bytes = decodeBase64(match[1], limits.maximumBufferBytes);
-      if (bytes.byteLength !== buffer.byteLength) {
+      totalBytes += bytes.byteLength;
+      if (totalBytes > limits.maximumBufferBytes) {
+        bytes.fill(0);
         throw new RangeError(
-          "glTF data URI length does not match buffer.byteLength"
+          "glTF aggregate buffer bytes exceed the limit"
         );
       }
+      loaded.push(bytes);
     }
-    totalBytes += bytes.byteLength;
-    if (totalBytes > limits.maximumBufferBytes) {
-      throw new RangeError("glTF aggregate buffer bytes exceed the limit");
+    if (usedExternalResources.size !== externalResources.size) {
+      throw new Error("glTF bundle contains an unused external resource");
     }
-    return bytes;
-  });
+  } catch (error) {
+    for (const bytes of loaded) {
+      bytes.fill(0);
+    }
+    throw error;
+  }
+  return {
+    buffers: loaded,
+    externalResourceBytes: [...externalResources.values()].reduce(
+      (total, bytes) => total + bytes.byteLength,
+      0
+    ),
+    externalResourceUris: [...usedExternalResources].sort()
+  };
 }
 function accessorLayout(document, buffers, accessorIndex, {
   componentType,
@@ -4666,7 +4743,7 @@ function boundedName(value, fallback) {
   }
   return value;
 }
-function validateAsset(document) {
+function validateAsset(document, limits) {
   const asset = plainRecord2(document.asset, "glTF asset");
   if (asset.version !== "2.0") {
     throw new DOMException(
@@ -4694,9 +4771,34 @@ function validateAsset(document) {
       );
     }
   }
+  if (document.images !== void 0) {
+    const images = collection(
+      document.images,
+      limits.maximumPrimitives,
+      "glTF images",
+      { nonEmpty: false }
+    );
+    for (let index = 0; index < images.length; index += 1) {
+      const image = plainRecord2(
+        images[index],
+        `glTF images[${index}]`
+      );
+      if (image.uri !== void 0 && (typeof image.uri !== "string" || !/^data:image\/[A-Za-z0-9.+-]+;base64,/u.test(
+        image.uri
+      ) || image.bufferView !== void 0)) {
+        throw new DOMException(
+          "external glTF image URI is unsupported",
+          "NotSupportedError"
+        );
+      }
+    }
+  }
   return asset;
 }
-function parseGltfReferenceProfile(input, { limits: limitOverrides = {} } = {}) {
+function parseGltfReferenceProfile(input, {
+  limits: limitOverrides = {},
+  resources: externalResourceValues = []
+} = {}) {
   if (!(input instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
   }
@@ -4706,13 +4808,26 @@ function parseGltfReferenceProfile(input, { limits: limitOverrides = {} } = {}) 
   }
   const bytes = Uint8Array.from(input);
   const ownedBuffers = [];
+  const externalResources = externalResourceMap(
+    externalResourceValues,
+    limits
+  );
   try {
+    const aggregateSourceBytes = [...externalResources.values()].reduce(
+      (total, resource) => total + resource.byteLength,
+      input.byteLength
+    );
+    if (aggregateSourceBytes > limits.maximumSourceBytes) {
+      throw new RangeError(
+        "glTF source bundle exceeds the source byte limit"
+      );
+    }
     const {
       format,
       document,
       binaryChunk
     } = parseContainer(bytes, limits);
-    const asset = validateAsset(document);
+    const asset = validateAsset(document, limits);
     const nodes = collection(
       document.nodes,
       limits.maximumNodes,
@@ -4752,12 +4867,14 @@ function parseGltfReferenceProfile(input, { limits: limitOverrides = {} } = {}) 
       limits.maximumNodes,
       "glTF scene roots"
     );
-    const buffers = loadBuffers(
+    const loadedBuffers = loadBuffers(
       document,
       binaryChunk,
       format,
-      limits
+      limits,
+      externalResources
     );
+    const buffers = loadedBuffers.buffers;
     ownedBuffers.push(...buffers);
     const records = /* @__PURE__ */ new Map();
     const occurrences = [];
@@ -4897,12 +5014,21 @@ function parseGltfReferenceProfile(input, { limits: limitOverrides = {} } = {}) 
         instances: occurrences.length,
         vertices,
         triangles,
-        sourceBytes: input.byteLength
+        sourceBytes: aggregateSourceBytes
       },
+      resourceBundle: {
+        documentBytes: input.byteLength,
+        externalResourceBytes: loadedBuffers.externalResourceBytes,
+        externalResources: loadedBuffers.externalResourceUris.length
+      },
+      externalResourceUris: loadedBuffers.externalResourceUris,
       extensionsUsed: Array.isArray(document.extensionsUsed) ? [...document.extensionsUsed] : []
     };
   } finally {
     bytes.fill(0);
+    for (const resource of externalResources.values()) {
+      resource.fill(0);
+    }
     for (const buffer of ownedBuffers) {
       buffer.fill(0);
     }
@@ -4975,6 +5101,39 @@ async function sha2562(bytes) {
     bytes
   );
   return [...new Uint8Array(digest2)].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+async function bundleSha256(bytes, resources, resourceUris) {
+  if (resourceUris.length === 0) {
+    return await sha2562(bytes);
+  }
+  const resourcesByUri = new Map(
+    resources.map((resource) => [resource.uri, resource.bytes])
+  );
+  const entries = [];
+  for (const uri of resourceUris) {
+    const resourceBytes = resourcesByUri.get(uri);
+    if (!(resourceBytes instanceof Uint8Array)) {
+      throw new Error("glTF external resource digest input is missing");
+    }
+    entries.push({
+      uri,
+      byteLength: resourceBytes.byteLength,
+      sha256: await sha2562(resourceBytes)
+    });
+  }
+  const descriptor = new TextEncoder().encode(JSON.stringify({
+    schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+    document: {
+      byteLength: bytes.byteLength,
+      sha256: await sha2562(bytes)
+    },
+    resources: entries
+  }));
+  try {
+    return await sha2562(descriptor);
+  } finally {
+    descriptor.fill(0);
+  }
 }
 var GltfReferenceSource = class {
   #geometryBytes;
@@ -5135,6 +5294,13 @@ var GltfReferenceSource = class {
         extensionsUsed: profile.extensionsUsed,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
+        resourceBundle: {
+          schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+          documentBytes: profile.resourceBundle.documentBytes,
+          externalResourceBytes: profile.resourceBundle.externalResourceBytes,
+          externalResources: profile.resourceBundle.externalResources,
+          networkAtRuntime: false
+        },
         metadataQuery: "bounded-node-mesh-material-projection"
       }
     });
@@ -5297,6 +5463,7 @@ var GltfReferenceSource = class {
 async function createGltfReferenceSource(bytes, {
   limits,
   maximumRequestBytes,
+  resources = [],
   sessionReadBudgetBytes,
   signal
 } = {}) {
@@ -5304,13 +5471,37 @@ async function createGltfReferenceSource(bytes, {
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
   }
-  const [sourceDigest, profile] = await Promise.all([
-    sha2562(bytes),
-    Promise.resolve().then(() => parseGltfReferenceProfile(bytes, { limits }))
-  ]);
-  aborted3(signal);
-  const encoded = encodeGltfGeometryRange(profile.records);
+  if (!Array.isArray(resources)) {
+    throw new TypeError("glTF external resources must be an array");
+  }
+  const ownedResources = [];
   try {
+    for (const resource of resources) {
+      ownedResources.push({
+        uri: resource?.uri,
+        bytes: resource?.bytes instanceof Uint8Array ? Uint8Array.from(resource.bytes) : resource?.bytes
+      });
+    }
+  } catch (error) {
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
+    }
+    throw error;
+  }
+  let profile;
+  let encoded;
+  try {
+    profile = parseGltfReferenceProfile(bytes, {
+      limits,
+      resources: ownedResources
+    });
+    const sourceDigest = await bundleSha256(
+      bytes,
+      ownedResources,
+      profile.externalResourceUris
+    );
+    aborted3(signal);
+    encoded = encodeGltfGeometryRange(profile.records);
     const geometryDigest = await sha2562(encoded.bytes);
     aborted3(signal);
     return new GltfReferenceSource({
@@ -5323,11 +5514,14 @@ async function createGltfReferenceSource(bytes, {
       sessionReadBudgetBytes
     });
   } finally {
-    encoded.bytes.fill(0);
-    for (const record of profile.records) {
+    encoded?.bytes.fill(0);
+    for (const record of profile?.records ?? []) {
       record.positions.fill(0);
       record.normals.fill(0);
       record.indices.fill(0);
+    }
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
     }
   }
 }
@@ -5337,6 +5531,7 @@ var REQUEST_SCHEMA = "bim-explorer-product-source-worker-request/0.1";
 var RESPONSE_SCHEMA = "bim-explorer-product-source-worker-response/0.1";
 var MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 var SOURCE_FORMATS = /* @__PURE__ */ new Set(["ifc", "gltf", "glb"]);
+var EXTERNAL_RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
 var OPERATIONS = /* @__PURE__ */ new Set([
   "getEntity",
   "getEntityDetails",
@@ -5389,7 +5584,11 @@ async function releaseActive() {
 }
 function validOpen(request) {
   const options = request?.options;
-  return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES && SOURCE_FORMATS.has(options?.format) && typeof options?.webIfcModuleUrl === "string" && options.webIfcModuleUrl.length > 0 && typeof options?.wasmPath === "string" && options.wasmPath.length > 0 && (options.wasmUrl === null || typeof options.wasmUrl === "string" && options.wasmUrl.length > 0) && typeof options?.profile === "string" && options.profile.length > 0;
+  const resources = request?.resources;
+  return request?.schema === REQUEST_SCHEMA && request.type === "open" && typeof request.requestId === "string" && request.requestId.length > 0 && request.bytes instanceof ArrayBuffer && request.bytes.byteLength > 0 && request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES && Array.isArray(resources) && resources.length <= 16 && (resources.length === 0 || options?.format === "gltf") && new Set(resources.map((resource) => resource?.uri)).size === resources.length && resources.every((resource) => typeof resource?.uri === "string" && resource.uri.length <= 128 && EXTERNAL_RESOURCE_NAME.test(resource.uri) && !resource.uri.includes("..") && resource.bytes instanceof ArrayBuffer && resource.bytes.byteLength > 0 && resource.bytes.byteLength <= MAXIMUM_SOURCE_BYTES) && request.bytes.byteLength + resources.reduce(
+    (total, resource) => total + resource.bytes.byteLength,
+    0
+  ) <= MAXIMUM_SOURCE_BYTES && SOURCE_FORMATS.has(options?.format) && typeof options?.webIfcModuleUrl === "string" && options.webIfcModuleUrl.length > 0 && typeof options?.wasmPath === "string" && options.wasmPath.length > 0 && (options.wasmUrl === null || typeof options.wasmUrl === "string" && options.wasmUrl.length > 0) && typeof options?.profile === "string" && options.profile.length > 0;
 }
 function ifcResources(artifact) {
   return {
@@ -5427,6 +5626,9 @@ function referenceResources(snapshot) {
   ).byteLength;
   return {
     sourceBytes: snapshot.source.byteLength,
+    documentBytes: snapshot.referenceMetadata.resourceBundle.documentBytes,
+    externalResourceBytes: snapshot.referenceMetadata.resourceBundle.externalResourceBytes,
+    externalResources: snapshot.referenceMetadata.resourceBundle.externalResources,
     geometryBytes,
     metadataBytes,
     detailBytes: 0,
@@ -5447,11 +5649,16 @@ async function openSource(request) {
   await releaseActive();
   const started = performance.now();
   const bytes = new Uint8Array(request.bytes);
+  const externalResources = request.resources.map((resource) => ({
+    uri: resource.uri,
+    bytes: new Uint8Array(resource.bytes)
+  }));
   let artifact = null;
   let candidateSession = null;
   let candidateSource = null;
   progress(request.requestId, "source-admitted", {
     byteLength: bytes.byteLength,
+    externalResources: externalResources.length,
     format: request.options.format
   });
   try {
@@ -5482,7 +5689,8 @@ async function openSource(request) {
         format: request.options.format
       });
       candidateSource = await createGltfReferenceSource(bytes, {
-        maximumRequestBytes: 1024 * 1024
+        maximumRequestBytes: 1024 * 1024,
+        resources: externalResources
       });
       progress(request.requestId, "artifact-created", {
         format: request.options.format,
@@ -5540,6 +5748,9 @@ async function openSource(request) {
     throw error;
   } finally {
     bytes.fill(0);
+    for (const resource of externalResources) {
+      resource.bytes.fill(0);
+    }
     for (const range of artifact?.ranges ?? []) {
       range.bytes.fill(0);
     }

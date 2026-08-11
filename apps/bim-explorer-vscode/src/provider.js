@@ -33,6 +33,8 @@ const SOURCE_FORMATS = new Set([
   "laz",
 ]);
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
+const EXTERNAL_GLTF_RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$/u;
 
 function pointMaximumSourceBytes(format) {
   return format === "e57"
@@ -333,6 +335,50 @@ function sourceFormat(uri) {
   return extension;
 }
 
+function externalGltfResourceNames(bytes) {
+  let document;
+  try {
+    document = JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    );
+  } catch {
+    throw stableError("SOURCE_GLTF_JSON_INVALID", false);
+  }
+  if (
+    document === null ||
+    typeof document !== "object" ||
+    Array.isArray(document) ||
+    !Array.isArray(document.buffers) ||
+    document.buffers.length === 0 ||
+    document.buffers.length > 16
+  ) {
+    throw stableError("SOURCE_GLTF_BUNDLE_INVALID", false);
+  }
+  const names = [];
+  const observed = new Set();
+  for (const buffer of document.buffers) {
+    const uri = buffer?.uri;
+    if (
+      typeof uri !== "string" ||
+      /^data:application\/(?:octet-stream|gltf-buffer);base64,/u
+        .test(uri)
+    ) {
+      continue;
+    }
+    if (
+      uri.length > 128 ||
+      !EXTERNAL_GLTF_RESOURCE_NAME.test(uri) ||
+      uri.includes("..") ||
+      observed.has(uri)
+    ) {
+      throw stableError("SOURCE_GLTF_RESOURCE_URI_REJECTED", false);
+    }
+    observed.add(uri);
+    names.push(uri);
+  }
+  return names;
+}
+
 function sanitizeReport(value) {
   if (
     value?.schema !== REPORT_SCHEMA ||
@@ -369,6 +415,27 @@ function sanitizeReport(value) {
             ? numberOrNull(value.source.pointFormat)
             : stringOrNull(value.source?.pointFormat),
         profile: stringOrNull(value.source?.profile),
+        resourceBundle:
+          value.source?.resourceBundle === undefined
+            ? null
+            : {
+                schema: stringOrNull(
+                  value.source.resourceBundle?.schema,
+                ),
+                networkAtRuntime:
+                  value.source.resourceBundle?.networkAtRuntime ===
+                    false
+                    ? false
+                    : null,
+                ...numericRecord(
+                  value.source.resourceBundle,
+                  [
+                    "documentBytes",
+                    "externalResourceBytes",
+                    "externalResources",
+                  ],
+                ),
+              },
         sourceRole: stringOrNull(
           value.source?.sourceRole,
         ),
@@ -539,6 +606,9 @@ function sanitizeReport(value) {
           ["gltf", "glb"].includes(format)
             ? [
                 "sourceBytes",
+                "documentBytes",
+                "externalResourceBytes",
+                "externalResources",
                 "geometryBytes",
                 "metadataBytes",
                 "detailBytes",
@@ -738,6 +808,7 @@ class BimExplorerDocument {
   #disposables = [];
   #generation = 0;
   #panels = new Set();
+  #resourceUriKeys = new Set();
 
   constructor(uri) {
     this.uri = uri;
@@ -767,12 +838,21 @@ class BimExplorerDocument {
     return [...this.#panels];
   }
 
+  setResourceUris(uris) {
+    this.#resourceUriKeys = new Set(uris.map(uriKey));
+  }
+
+  hasResourceUri(uri) {
+    return this.#resourceUriKeys.has(uriKey(uri));
+  }
+
   dispose() {
     if (this.#disposed) {
       return;
     }
     this.#disposed = true;
     this.#panels.clear();
+    this.#resourceUriKeys.clear();
     for (const disposable of this.#disposables.splice(0)) {
       disposable.dispose();
     }
@@ -821,7 +901,7 @@ class BimExplorerReadonlyEditorProvider {
         "BIM Explorer only opens explicit local file URIs",
       );
     }
-    sourceFormat(uri);
+    const format = sourceFormat(uri);
     const document = new BimExplorerDocument(uri);
     const fileName = uri.path.split("/").at(-1);
     const base = this.#vscode.Uri.joinPath(uri, "..");
@@ -852,6 +932,30 @@ class BimExplorerReadonlyEditorProvider {
         }
       }
     }));
+    if (format === "gltf") {
+      const resourceWatcher =
+        this.#vscode.workspace.createFileSystemWatcher(
+          new this.#vscode.RelativePattern(base, "*.bin"),
+        );
+      const resourceChanged = async (changedUri) => {
+        if (!document.hasResourceUri(changedUri)) {
+          return;
+        }
+        for (const panel of document.panels) {
+          await this.#sendSource(document, panel);
+        }
+      };
+      document.addDisposable(resourceWatcher);
+      document.addDisposable(
+        resourceWatcher.onDidChange(resourceChanged),
+      );
+      document.addDisposable(
+        resourceWatcher.onDidCreate(resourceChanged),
+      );
+      document.addDisposable(
+        resourceWatcher.onDidDelete(resourceChanged),
+      );
+    }
     this.#documents.set(uriKey(uri), document);
     return document;
   }
@@ -865,46 +969,92 @@ class BimExplorerReadonlyEditorProvider {
           pointMaximumSourceBytes(format),
         )
       : configured.maximumSourceBytes;
-    const before = await this.#vscode.workspace.fs.stat(
-      document.uri,
-    );
-    if (
-      (before.type & this.#vscode.FileType.SymbolicLink) !== 0
-    ) {
-      throw stableError("SOURCE_SYMLINK_REJECTED", false);
-    }
-    if (
-      (before.type & this.#vscode.FileType.File) === 0 ||
-      before.size <= 0 ||
-      before.size > maximumSourceBytes
-    ) {
-      throw stableError(
-        "SOURCE_FILE_LIMIT_REJECTED",
-        false,
-      );
-    }
-    const bytes = await this.#vscode.workspace.fs.readFile(
-      document.uri,
-    );
-    const after = await this.#vscode.workspace.fs.stat(
-      document.uri,
-    );
-    if (
-      bytes.byteLength !== before.size ||
-      after.size !== before.size ||
-      after.mtime !== before.mtime
-    ) {
-      bytes.fill(0);
-      throw stableError("SOURCE_FILE_CHANGED", true);
-    }
-    return {
-      bytes,
-      configured: Object.freeze({
-        ...configured,
-        maximumSourceBytes,
-      }),
-      format,
+    const readStableFile = async (uri, resource = false) => {
+      const before = await this.#vscode.workspace.fs.stat(uri);
+      if (
+        (before.type & this.#vscode.FileType.SymbolicLink) !== 0
+      ) {
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_SYMLINK_REJECTED"
+            : "SOURCE_SYMLINK_REJECTED",
+          false,
+        );
+      }
+      if (
+        (before.type & this.#vscode.FileType.File) === 0 ||
+        before.size <= 0 ||
+        before.size > maximumSourceBytes
+      ) {
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_LIMIT_REJECTED"
+            : "SOURCE_FILE_LIMIT_REJECTED",
+          false,
+        );
+      }
+      const bytes = await this.#vscode.workspace.fs.readFile(uri);
+      const after = await this.#vscode.workspace.fs.stat(uri);
+      if (
+        bytes.byteLength !== before.size ||
+        after.size !== before.size ||
+        after.mtime !== before.mtime
+      ) {
+        bytes.fill(0);
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_CHANGED"
+            : "SOURCE_FILE_CHANGED",
+          true,
+        );
+      }
+      return bytes;
     };
+    const bytes = await readStableFile(document.uri);
+    const resources = [];
+    try {
+      const resourceNames = format === "gltf"
+        ? externalGltfResourceNames(bytes)
+        : [];
+      const base = this.#vscode.Uri.joinPath(document.uri, "..");
+      const resourceUris = resourceNames.map((name) =>
+        this.#vscode.Uri.joinPath(base, name));
+      document.setResourceUris(resourceUris);
+      let aggregateBytes = bytes.byteLength;
+      for (let index = 0; index < resourceUris.length; index += 1) {
+        const resourceBytes = await readStableFile(
+          resourceUris[index],
+          true,
+        );
+        aggregateBytes += resourceBytes.byteLength;
+        if (aggregateBytes > maximumSourceBytes) {
+          resourceBytes.fill(0);
+          throw stableError(
+            "SOURCE_BUNDLE_LIMIT_REJECTED",
+            false,
+          );
+        }
+        resources.push({
+          uri: resourceNames[index],
+          bytes: resourceBytes,
+        });
+      }
+      return {
+        bytes,
+        configured: Object.freeze({
+          ...configured,
+          maximumSourceBytes,
+        }),
+        format,
+        resources,
+      };
+    } catch (error) {
+      bytes.fill(0);
+      for (const resource of resources) {
+        resource.bytes.fill(0);
+      }
+      throw error;
+    }
   }
 
   async #post(panel, message) {
@@ -917,14 +1067,20 @@ class BimExplorerReadonlyEditorProvider {
   async #sendSource(document, panel) {
     let admitted = null;
     let messageBytes = null;
+    let messageResources = [];
     try {
       admitted = await this.#readBounded(document);
       const generation = document.nextGeneration();
       messageBytes = admitted.bytes.slice().buffer;
+      messageResources = admitted.resources.map((resource) => ({
+        uri: resource.uri,
+        bytes: resource.bytes.slice().buffer,
+      }));
       await this.#post(panel, {
         type: "source-bytes",
         generation,
         bytes: messageBytes,
+        resources: messageResources,
         format: admitted.format,
         profile: admitted.configured.profile,
         limits: {
@@ -945,8 +1101,14 @@ class BimExplorerReadonlyEditorProvider {
       });
     } finally {
       admitted?.bytes.fill(0);
+      for (const resource of admitted?.resources ?? []) {
+        resource.bytes.fill(0);
+      }
       if (messageBytes !== null) {
         new Uint8Array(messageBytes).fill(0);
+      }
+      for (const resource of messageResources) {
+        new Uint8Array(resource.bytes).fill(0);
       }
     }
   }

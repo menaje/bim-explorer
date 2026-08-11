@@ -29,6 +29,9 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicGltfResourceBundle,
+} from "./public-gltf-resource-bundle-fixture.mjs";
+import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
@@ -64,6 +67,7 @@ const EXTENSION_VERSION = JSON.parse(
 function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
+    includeExternalResourceFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
@@ -76,6 +80,10 @@ function parseArguments(values) {
     const name = values[index];
     if (name === "--federated-surface") {
       options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
+    if (name === "--external-gltf") {
+      options.includeExternalResourceFixture = true;
       continue;
     }
     if (name === "--product-scale") {
@@ -117,6 +125,7 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
+          "[--external-gltf] " +
           "[--e57-spherical] " +
           "[--e57-multiple-scan] " +
           "[--no-public] " +
@@ -161,6 +170,7 @@ async function sha256(file) {
 
 export async function qualifyVscodeVsixInstall({
   includeFederatedSurfaceFixture = false,
+  includeExternalResourceFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
@@ -189,6 +199,13 @@ export async function qualifyVscodeVsixInstall({
         })
       : null;
   productScaleReferenceFixture?.bytes.fill(0);
+  const externalReferenceFixture = includeExternalResourceFixture
+    ? await acquirePublicGltfResourceBundle()
+    : null;
+  externalReferenceFixture?.document.bytes.fill(0);
+  for (const resource of externalReferenceFixture?.resources ?? []) {
+    resource.bytes.fill(0);
+  }
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
     : null;
@@ -478,6 +495,12 @@ export async function qualifyVscodeVsixInstall({
               BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE:
                 productScaleReferenceFixture.cachePath,
             }),
+        ...(externalReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE:
+                externalReferenceFixture.document.cachePath,
+            }),
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -624,6 +647,27 @@ export async function qualifyVscodeVsixInstall({
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferenceViewerCoreProductEntrypoint ===
                   true,
+          }
+        : {}),
+      ...(includeExternalResourceFixture
+        ? {
+            installedPackageOpensExternalReference:
+              allTrue(runtime.externalReferenceAssertions),
+            installedExternalReferenceIdentityExact:
+              runtime.externalReferenceFixture?.fingerprint ===
+                "sha256:" +
+                  externalReferenceFixture.manifest.expected
+                    .sourceFingerprint,
+            installedExternalReferenceBundleExact:
+              runtime.externalReferenceObservation?.resources
+                ?.externalResources === 1 &&
+              runtime.externalReferenceObservation?.resources
+                ?.externalResourceBytes === 648 &&
+              runtime.externalReferenceObservation?.resources
+                ?.documentBytes === 2_898,
+            installedExternalReferenceUsesNoNetwork:
+              runtime.externalReferenceFixture?.resourceBundle
+                ?.networkAtRuntime === false,
           }
         : {}),
       ...(includePointFixtures
@@ -816,6 +860,34 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
+        ...(includeExternalResourceFixture
+          ? {
+              externalReferenceRuntime: {
+                fixture: runtime.externalReferenceFixture,
+                gpu: runtime.externalReferenceObservation?.gpu,
+                hostKind:
+                  runtime.externalReferenceObservation?.hostKind,
+                model:
+                  runtime.externalReferenceObservation?.model,
+                performance:
+                  runtime.externalReferenceObservation?.performance,
+                resources:
+                  runtime.externalReferenceObservation?.resources,
+                renderer:
+                  runtime.externalReferenceObservation?.renderer,
+                reference:
+                  runtime.externalReferenceObservation?.reference,
+                lifecycle:
+                  runtime.externalReferenceObservation?.lifecycle,
+                viewerCore:
+                  runtime.externalReferenceObservation?.viewerCore,
+                externalUpload:
+                  runtime.externalReferenceObservation?.externalUpload,
+                telemetry:
+                  runtime.externalReferenceObservation?.telemetry,
+              },
+            }
+          : {}),
         ...(includePointFixtures ||
         includeE57SphericalFixture ||
         includeE57MultipleScanFixture
@@ -849,6 +921,10 @@ export async function qualifyVscodeVsixInstall({
         productScaleReferenceFixtureOpen:
           includeProductScaleFixture
             ? "passed-bounded-read-only"
+            : "not-run",
+        externalReferenceFixtureOpen:
+          includeExternalResourceFixture
+            ? "passed-bounded-local-resource-bundle"
             : "not-run",
         pointFixtureOpen:
           includePointFixtures ||
