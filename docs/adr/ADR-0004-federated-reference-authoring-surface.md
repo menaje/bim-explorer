@@ -5,7 +5,7 @@ authority:
   - federated-reference-bim-surface
   - spatial-reference-anchor-boundary
   - external-design-base-consumer-contract
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 decision_id: ADR-0004
 ---
 
@@ -67,11 +67,12 @@ anchor를 등록하고 authored object와의 관계·offset·constraint를 소�
 
 내부 v0.2 entrypoint와 private 0.2.0 package candidate의 reproducible pack,
 offline clean install은 actual Browser와 VS Code Webview와 독립 검증할 수 있다.
-candidate qualification은 public tag, release asset 또는 Spatial compatibility를
-발급하지 않는다. public v0.2 release는 actual Spatial consumer가 exact pin, external
-base + authored overlay composition, anchor invalidation과 cleanup을 재현한
-뒤에만 qualification한다. Explorer 제품 evidence만으로 Spatial 지원·배포를
-주장하지 않는다.
+Spatial actual headless consumer는 이전 exact candidate를 pin해 external base +
+authored overlay composition, anchor invalidation과 cleanup을 재현했다. 그러나
+release-ready package의 tgz digest가 바뀌었으므로 새 exact bytes를 다시
+검증하기 전에는 public v0.2 tag/release를 발급하지 않는다. Explorer 제품
+evidence만으로 Spatial VSIX BIM runtime, public package admission 또는
+production support를 주장하지 않는다.
 
 ## 거부 이유
 

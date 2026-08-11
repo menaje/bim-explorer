@@ -28,6 +28,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify stable tag is current main branch HEAD
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+            echo "Community stable tags must point to the current main HEAD" >&2
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -76,6 +85,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify stable tag is current main branch HEAD
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+            echo "Community stable tags must point to the current main HEAD" >&2
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -103,6 +121,16 @@ jobs:
           cp -R
           dist/platforms/community-release-Linux
           dist/release
+
+      - name: Verify VS Code publication Gate
+        env:
+          VSCODE_PUBLICATION_AUTHORIZED: ${{ vars.VSCODE_PUBLICATION_AUTHORIZED }}
+        shell: bash
+        run: |
+          if [[ "$VSCODE_PUBLICATION_AUTHORIZED" != "true" ]]; then
+            echo "New VSIX publication is currently on hold" >&2
+            exit 1
+          fi
 
       - name: Attest release artifacts
         uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4

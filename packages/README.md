@@ -47,9 +47,11 @@ reference runtime은 이 entrypoint에 포함하지 않습니다.
 `reference-anchor/0.1`을 조합해 external base + consumer overlay context를
 제공합니다. private `@bim-explorer/federated-bim-surface@0.2.0` candidate는
 zero-runtime-dependency package export, byte-identical pack과 offline clean
-install evidence를 갖지만 public release asset과 actual Spatial consumer는
-없습니다. 따라서 현재 `@bim-explorer/bim-surface@0.1.0`의 기능이나 public
-v0.2 지원으로 표현하지 않습니다.
+install evidence를 가집니다. Spatial actual headless consumer도 이전 exact
+candidate를 검증했지만 release-ready tgz의 새 digest 재검증과 immutable public
+v0.2 artifact는 아직 없습니다. 따라서 현재
+`@bim-explorer/bim-surface@0.1.0`의 기능이나 public v0.2 지원으로 표현하지
+않습니다.
 
 [`bim-reference-anchor`](bim-reference-anchor/README.md)는 federated pick을
 exact source revision, source-native identity, occurrence path와 source-local
@@ -62,8 +64,9 @@ selection만 유지합니다.
 artifact와 분리된 private `bim-surface/0.2` package candidate입니다. 1–8개 aligned source,
 source-scoped semantics/selection/anchor, 한 source refresh invalidation과
 `transferred`·`borrowed` cleanup을 조합합니다. 실제 Browser/Webview 제품과
-clean-installed candidate tarball은 통과했지만 actual Spatial consumer,
-immutable public v0.2 artifact와 production support는 아직 주장하지 않습니다.
+clean-installed candidate tarball 및 이전 exact tgz의 actual Spatial headless
+consumer는 통과했습니다. release-ready tgz 재검증, immutable public v0.2
+artifact와 production support는 아직 주장하지 않습니다.
 
 [`bim-renderer-3d`](bim-renderer-3d/README.md)는 source-neutral geometry
 range decoder, bounded initial-range plan과 headless resource receipt를
@@ -135,7 +138,7 @@ Cartesian XYZ 또는 spherical range/azimuth/elevation default-BitPack record를
 표시합니다. 자체 JavaScript decoder는 격리 Worker 실행을 전제로 하며 CRS,
 scan-pose authority, semantics, write 또는 round-trip authority를 제공하지
 않습니다.
-현재 main은 Cartesian bounded profile뿐 아니라 spherical RAE/intensity/RGB
+개발 기준선은 Cartesian bounded profile뿐 아니라 spherical RAE/intensity/RGB
 profile도 Browser, staged VS Code와 clean-installed VSIX 제품 open을
 통과했습니다. intensity는 lossy omitted이고 E57 format family나 federation
 coordinate authority는 admission하지 않습니다. 별도 qualification-only

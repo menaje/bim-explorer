@@ -1,0 +1,46 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-spatial-consumer-admission/1",
+  "status": "passed-private-candidate-actual-consumer",
+  "asOf": "2026-08-11",
+  "source": {
+    "repository": "https://github.com/menaje/coni-spatial",
+    "commit": "ef9b92d6b054d1329856ecfdd0c6913d83d09538",
+    "issue": "https://github.com/menaje/coni-spatial/issues/22",
+    "evidencePath": "compatibility/evidence/spatial-federated-bim-surface-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceUrl": "https://github.com/menaje/coni-spatial/blob/ef9b92d6b054d1329856ecfdd0c6913d83d09538/compatibility/evidence/spatial-federated-bim-surface-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceSha256": "e05040bab052e19c1481042312acac9fc0fe59a1fbd26b52849232f783b489a7"
+  },
+  "candidate": {
+    "packageName": "@bim-explorer/federated-bim-surface",
+    "packageVersion": "0.2.0",
+    "sourceCommit": "b666c80fb147c49d4254d73e78d93baeeed56781",
+    "packageSha256": "c652a4cd1843e26f98c9ff5ecfa701ef94acd7229453a1a13ff70a86a2b052af",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "packageManifestFingerprint": "ee1617ad2a19e9e2f9be75dfefb42632edad1b9b9529b413da7a9306addf6caf",
+    "surfaceContract": "bim-explorer-bim-surface/0.2",
+    "referenceAnchorContract": "bim-explorer-reference-anchor/0.1"
+  },
+  "result": {
+    "cleanInstalledPackageImport": true,
+    "externalBaseAndSpatialOverlay": true,
+    "sourceScopedIfcQuery": true,
+    "bidirectionalCanonicalSelection": true,
+    "durableWorkspaceAnchor": true,
+    "staleWithoutAutomaticRemap": true,
+    "terminalCleanup": true,
+    "authorityFree": true
+  },
+  "claims": {
+    "actualSpatialConsumer": true,
+    "privateCandidateOnly": true,
+    "publicPackage": false,
+    "spatialVsixBundledRuntime": false,
+    "productionSupport": false
+  },
+  "limitations": [
+    "The admitted Spatial evidence consumed the exact 2026-08-09 private candidate bytes.",
+    "A release-ready package whose documentation changes its tarball digest requires a new exact-byte Spatial revalidation.",
+    "The Spatial consumer evidence is macOS arm64 Node/headless and does not claim a Browser GPU or bundled Spatial VSIX runtime.",
+    "Public package admission and production support remain separate Gates."
+  ]
+}

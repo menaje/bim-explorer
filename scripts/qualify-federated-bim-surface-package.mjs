@@ -25,6 +25,12 @@ import {
 import {
   checkFederatedBimSurfaceBundle,
 } from "./build-federated-bim-surface.mjs";
+import {
+  SPATIAL_CONSUMER_EVIDENCE_PATH,
+  SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH,
+  validateSpatialConsumerAdmission,
+  validateSpatialReleaseReadyConsumerAdmission,
+} from "./federated-bim-surface-spatial-consumer-evidence.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const PACKAGE_ROOT = path.join(
@@ -39,13 +45,13 @@ export const FEDERATED_BIM_SURFACE_PACKAGE = Object.freeze({
   name: PACKAGE_NAME,
   version: PACKAGE_VERSION,
   contract: PACKAGE_CONTRACT,
-  publicReleaseTag: null,
+  publicReleaseTag: "bim-surface-v0.2.0",
 });
 const DEFAULT_OUTPUT = path.join(
   ROOT,
   "compatibility",
   "evidence",
-  "federated-bim-surface-package-2026-08-09.json",
+  "federated-bim-surface-package-release-ready-2026-08-11.json",
 );
 const EXPECTED_FILES = Object.freeze([
   "LICENSE",
@@ -685,8 +691,9 @@ export function validateFederatedBimSurfacePackageQualification(
   if (
     evidence?.schema !==
       "bim-explorer-federated-bim-surface-package-qualification/1" ||
-    evidence.status !== "passed-private-release-candidate" ||
-    evidence.asOf !== "2026-08-09" ||
+    evidence.status !==
+      "passed-release-ready-candidate-consumer-revalidated" ||
+    evidence.asOf !== "2026-08-11" ||
     evidence.package?.name !== PACKAGE_NAME ||
     evidence.package.version !== PACKAGE_VERSION ||
     evidence.package.contract !== PACKAGE_CONTRACT ||
@@ -719,12 +726,35 @@ export function validateFederatedBimSurfacePackageQualification(
     evidence.productComposition.vscodeStagesCandidateRuntime !== true ||
     evidence.claims?.publicRegistryPublication !== false ||
     evidence.claims.immutablePublicReleaseAsset !== false ||
-    evidence.claims.actualSpatialConsumerConformance !== false ||
+    evidence.claims.actualSpatialConsumerConformance !== true ||
+    evidence.claims.releaseReadyPackageConsumerRevalidation !== true ||
+    evidence.claims.publicArtifactSpatialAdmission !== false ||
     evidence.claims.productionSupport !== false ||
-    evidence.releaseGate?.expectedTag !== null ||
-    evidence.releaseGate.actualSpatialConsumer !== false ||
+    evidence.releaseGate?.expectedTag !==
+      FEDERATED_BIM_SURFACE_PACKAGE.publicReleaseTag ||
+    evidence.releaseGate.branch !== "prerelease" ||
+    evidence.releaseGate.actualSpatialConsumer !== true ||
+    evidence.releaseGate.releaseReadyPackageConsumerRevalidation !==
+      true ||
     evidence.releaseGate.publicRelease !== false ||
-    evidence.releaseGate.publicationAuthorized !== false
+    evidence.releaseGate.publicationAuthorized !== true ||
+    evidence.spatialConsumer?.evidence !==
+      SPATIAL_CONSUMER_EVIDENCE_PATH ||
+    evidence.spatialConsumer.status !==
+      "passed-private-candidate-actual-consumer" ||
+    evidence.spatialConsumer.releaseReadyEvidence !==
+      SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH ||
+    evidence.spatialConsumer.releaseReadyStatus !==
+      "passed-release-ready-package-consumer-revalidation" ||
+    evidence.spatialConsumer.releaseReadySourceCommit !==
+      "ef0c1ea80dae3b5696274542a0e0ff9f263ae4e5" ||
+    evidence.spatialConsumer.releaseReadyPackageSourceCommit !==
+      "94c3c29927cec4539f7f77ad000dd6eb373f14cd" ||
+    evidence.spatialConsumer.releaseReadyPackageSha256 !==
+      evidence.package.sha256 ||
+    evidence.spatialConsumer.priorCandidatePackageSha256 ===
+      evidence.package.sha256 ||
+    evidence.spatialConsumer.runtimeUnchanged !== true
   ) {
     throw new Error(
       "federated BIM surface package qualification is invalid",
@@ -761,6 +791,23 @@ export async function qualifyFederatedBimSurfacePackage() {
       "federated BIM surface repository package boundary is invalid",
     );
   }
+  const spatialConsumerEvidence = JSON.parse(await readFile(
+    path.join(ROOT, SPATIAL_CONSUMER_EVIDENCE_PATH),
+    "utf8",
+  ));
+  const spatialConsumer = validateSpatialConsumerAdmission(
+    spatialConsumerEvidence,
+  );
+  const spatialReleaseReadyConsumerEvidence = JSON.parse(
+    await readFile(
+      path.join(ROOT, SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH),
+      "utf8",
+    ),
+  );
+  const spatialReleaseReadyConsumer =
+    validateSpatialReleaseReadyConsumerAdmission(
+      spatialReleaseReadyConsumerEvidence,
+    );
   const temporary = await mkdtemp(
     path.join(tmpdir(), "federated-bim-surface-package-"),
   );
@@ -788,6 +835,15 @@ export async function qualifyFederatedBimSurfacePackage() {
     ) {
       throw new Error(
         "Federated BIM surface package is not byte-reproducible",
+      );
+    }
+    if (
+      first.sha256 !== spatialReleaseReadyConsumer.packageSha256 ||
+      first.byteLength !== spatialReleaseReadyConsumer.packageBytes
+    ) {
+      throw new Error(
+        "Federated BIM surface package differs from the exact-byte " +
+          "Spatial release-ready admission",
       );
     }
     const ifcArtifact = await createWebIfcSourceArtifact(
@@ -844,8 +900,9 @@ export async function qualifyFederatedBimSurfacePackage() {
     const evidence = {
       schema:
         "bim-explorer-federated-bim-surface-package-qualification/1",
-      status: "passed-private-release-candidate",
-      asOf: "2026-08-09",
+      status:
+        "passed-release-ready-candidate-consumer-revalidated",
+      asOf: "2026-08-11",
       package: {
         name: PACKAGE_NAME,
         version: PACKAGE_VERSION,
@@ -886,14 +943,36 @@ export async function qualifyFederatedBimSurfacePackage() {
       claims: {
         publicRegistryPublication: false,
         immutablePublicReleaseAsset: false,
-        actualSpatialConsumerConformance: false,
+        actualSpatialConsumerConformance: true,
+        releaseReadyPackageConsumerRevalidation: true,
+        publicArtifactSpatialAdmission: false,
         productionSupport: false,
       },
+      spatialConsumer: {
+        evidence: SPATIAL_CONSUMER_EVIDENCE_PATH,
+        status: spatialConsumer.status,
+        sourceCommit: spatialConsumer.sourceCommit,
+        priorCandidatePackageSha256: spatialConsumer.packageSha256,
+        releaseReadyEvidence:
+          SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH,
+        releaseReadyStatus: spatialReleaseReadyConsumer.status,
+        releaseReadySourceCommit:
+          spatialReleaseReadyConsumer.sourceCommit,
+        releaseReadyPackageSourceCommit:
+          spatialReleaseReadyConsumer.packageSourceCommit,
+        releaseReadyPackageSha256: first.sha256,
+        runtimeSha256: spatialConsumer.runtimeSha256,
+        runtimeUnchanged:
+          spatialConsumer.runtimeSha256 === sha256(runtimeBytes),
+      },
       releaseGate: {
-        expectedTag: null,
-        actualSpatialConsumer: false,
+        expectedTag:
+          FEDERATED_BIM_SURFACE_PACKAGE.publicReleaseTag,
+        branch: "prerelease",
+        actualSpatialConsumer: true,
+        releaseReadyPackageConsumerRevalidation: true,
         publicRelease: false,
-        publicationAuthorized: false,
+        publicationAuthorized: true,
       },
     };
     validateFederatedBimSurfacePackageQualification(evidence);

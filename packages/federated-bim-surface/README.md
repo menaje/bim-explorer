@@ -1,8 +1,8 @@
 # Federated BIM Surface
 
 기존 공개 `@bim-explorer/bim-surface@0.1.0`을 변경하지 않고
-`bim-explorer-bim-surface/0.2` multi-source 계약을 구현하는 private
-`@bim-explorer/federated-bim-surface@0.2.0` release candidate입니다.
+`bim-explorer-bim-surface/0.2` multi-source 계약을 구현하는 release-ready
+private `@bim-explorer/federated-bim-surface@0.2.0` candidate입니다.
 
 - 1–8개의 aligned IFC 또는 qualified glTF/GLB source slot을 한 bounded
   renderer projection에 올립니다.
@@ -38,6 +38,12 @@ npm run qualify:bim-surface:v0.2:package
 qualification은 독립 stage 두 곳에서 byte-identical tarball을 만들고, 빈 offline
 consumer에 설치해 GLB–IFC–GLB composition, source-scoped search/selection,
 세 anchor와 terminal cleanup을 재현합니다. repository와 staged manifest는
-`private: true`이며 expected public tag도 발급하지 않습니다. 실제 Spatial
-consumer exact pin, immutable public release와 production support는 별도 held
-Gate입니다.
+`private: true`로 유지해 npm registry publication을 차단합니다.
+
+이전 exact candidate는 Coni Spatial의 actual headless consumer에서 external
+GLB/IFC base와 Spatial overlay, Canonical selection, durable point-only anchor,
+stale/no-remap과 cleanup을 통과했습니다. 공개 예정 tag는
+`bim-surface-v0.2.0`이며 package prerelease는 `prerelease` 브랜치에서만
+발급합니다. 이 release-ready 문서가 tarball digest를 바꾸므로 새 exact bytes를
+Spatial이 다시 검증하기 전에는 tag와 release를 발급하지 않습니다. 새 VSIX나
+Marketplace/Open VSX publication은 이 package release 범위가 아닙니다.

@@ -6,7 +6,7 @@ authority:
   - coordinate-alignment-boundary
   - reference-format-admission
   - federation-refresh-lifecycle
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # Federation과 reference format 경계
@@ -54,8 +54,9 @@ transform을 source slot별로 namespacing한 derived renderer projection을
 소유합니다. matrix의 portable projection은 geometry, range,
 render/highlight와 cleanup을 동일성 해시로 고정하고, runner별 memory/time은
 예산 내 개별 관측치로 남깁니다. 두 IFC는 generated qualification fixture이고
-GLB는 reference geometry이므로 실제 사용자 모델, Spatial consumer, 측량
-datum 또는 production federation을 증명하지 않습니다.
+GLB는 reference geometry이므로 실제 사용자 모델, 측량 datum 또는 production
+federation을 증명하지 않습니다. 실제 Spatial consumer 근거는 별도의 exact
+package admission evidence가 소유합니다.
 
 ## Identity와 Spatial 경계
 
@@ -101,10 +102,12 @@ alignment/projection fingerprint를 묶습니다. triangle/barycentric locator�
 stale이고 Spatial consumer가 다시 resolve/reconcile해야 합니다.
 
 차기 [`bim-surface/0.2`](../specs/bim-surface-v0.2.md)는 이 federation과 anchor
-lifecycle을 host-neutral surface로 합성하는 draft입니다. 현재 main의
-Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate evidence나
-공개 `bim-surface-v0.1.0`이 actual Spatial authoring consumer 또는 public v0.2
-release를 검증했다는 뜻은 아닙니다.
+lifecycle을 host-neutral surface로 합성하는 draft입니다. 개발 기준선의
+Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate에 더해 actual
+Spatial headless consumer가 이전 candidate와 exact 97,623-byte release-ready
+tgz를 검증했습니다. 이는 package-only prerelease를 승인하지만 immutable public
+artifact의 Spatial exact-pin, Spatial VSIX BIM runtime 또는 production support를
+승인한다는 뜻은 아닙니다.
 
 ## Coordinate와 precision 경계
 
@@ -202,7 +205,7 @@ RVT/DGN은 SDK 권리와 platform packaging, reopen qualification까지
 이 foundation과 glTF/GLB admission은 `v0.1.0` immutable Community asset
 이후 main에 추가된 experimental 계약입니다. 따라서 v0.1.0에서
 multi-model 또는 비 IFC format이 지원된다고 표현하지 않습니다. 현재
-main에서는 federation admission과 독립된 product Gate로 bounded glTF/GLB
+개발 기준선에서는 federation admission과 독립된 product Gate로 bounded glTF/GLB
 Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
 두 CI 플랫폼은 동일한 model/resource/render projection과 cleanup을
 재현했습니다. 별도 product-scale source/renderer probe와 Browser, staged
@@ -213,10 +216,12 @@ composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모
 승인하지 않습니다.
 
 LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
-current main에서만 통과했습니다. 이 변경은 immutable Community v0.1.0 asset에
-소급되지 않으며 다음 공개 VSIX나 marketplace 승격에는 runtime SBOM,
-checksum과 release reproducibility 검증이 다시 필요합니다.
+개발 evidence로 통과했습니다. 이 변경은 immutable Community v0.1.0 asset에
+소급되지 않으며 새 VSIX publication은 현재 보류합니다. 이후 별도 승격을
+결정하면 runtime SBOM, checksum과 release reproducibility를 다시 검증합니다.
 
-실제 Spatial consumer와 standalone Spatial bundle은 Explorer 저장소가
-완료로 만들 수 없는 consumer-owned Gate입니다. 관련 진행은 Explorer
-#9/#12와 Coni Spatial #13에 evidence URL과 exact contract로만 게시합니다.
+actual Spatial headless consumer는 이전 exact private candidate와 release-ready
+tgz에서 통과했습니다. immutable public artifact의 standalone Spatial exact-pin은
+Explorer 저장소가 단독으로 완료할 수 없는 consumer-owned Gate입니다. 관련
+진행은 Explorer #9/#12와 Coni Spatial #22에 evidence URL과 exact digest로만
+게시합니다.

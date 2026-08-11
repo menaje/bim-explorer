@@ -56,16 +56,25 @@ triangle-barycentric locator와 derived source-local anchor를 만들었습니�
 Webview v0.2 entrypoint를 staged 확장과 빈 profile의 clean-installed VSIX에서
 검증했습니다. source마다 독립 Worker/session을 사용하고 같은 세 source의
 exact hit·normal·triangle anchor, 1회 range read와 Surface/replay/GPU/Worker
-cleanup을 동일하게 재현했습니다. 실제 Spatial consumer와 public v0.2 package는
-held입니다. 추가로 private `@bim-explorer/federated-bim-surface@0.2.0`
-candidate의 461,431-byte runtime을 두 번 byte-identical tarball로 만들고 offline
-clean consumer에서 같은 3-source search/selection/anchor/cleanup을 재현했습니다.
-이는 public tag나 release asset을 승인하지 않습니다. exact 결과는
+cleanup을 동일하게 재현했습니다. public v0.2 package admission은 별도
+Gate입니다. 추가로 private
+`@bim-explorer/federated-bim-surface@0.2.0` candidate의 461,431-byte runtime을
+두 번 byte-identical tarball로 만들고 offline clean consumer에서 같은 3-source
+search/selection/anchor/cleanup을 재현했습니다. Spatial의 actual headless
+consumer가 이전 exact tgz를 고정해 external base + authored overlay,
+Canonical selection, durable point-only anchor, stale/no-remap과 terminal cleanup을
+통과했습니다. Spatial은 package 문서가 반영된 release-ready tgz의 exact
+97,623 bytes, SHA-256 `3bdb747d…c63cb`도 다시 검증했습니다. package-only
+prerelease publication은 승인됐지만 immutable public v0.2 asset과 그 asset의
+Spatial exact-pin admission은 아직 held입니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
 [`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
 [`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json),
-[`package candidate evidence`](evidence/federated-bim-surface-package-2026-08-09.json)에
-고정합니다.
+[`release-ready package evidence`](evidence/federated-bim-surface-package-release-ready-2026-08-11.json),
+[`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json),
+[`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json)에
+고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
+보존합니다.
 
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
 Custom Editor의

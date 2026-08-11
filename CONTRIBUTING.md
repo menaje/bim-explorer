@@ -8,6 +8,11 @@ release artifact.
 
 Node.js 24 and npm 11 are required.
 
+일상 개발은 `dev`에서 진행합니다. 공개 package prerelease는 `dev`를
+`prerelease`로 승격한 뒤 그 브랜치의 exact HEAD에서 발급하고, 정식 release는
+`prerelease`를 `main`으로 승격한 뒤 발급합니다. 자세한 Gate는
+[`Branch and release workflow`](docs/branch-release-workflow.md)를 따릅니다.
+
 ```bash
 npm ci
 npm run check
@@ -24,6 +29,10 @@ Pull requests should:
 - update compatibility evidence only from a documented qualification command;
 - preserve the read-only Community and Coni Spatial authority boundary;
 - state whether a change affects source format, cache, protocol, or migration.
+
+`prerelease` 대상 promotion PR의 source는 `dev`, `main` 대상 promotion PR의
+source는 `prerelease`여야 합니다. 별도 승인 전에는 새 VSIX를 Marketplace나
+Open VSX에 게시하지 않습니다.
 
 Unless explicitly stated otherwise, implementation contributions are submitted
 under MPL-2.0. Contributions under `specs/` are submitted under Apache-2.0.

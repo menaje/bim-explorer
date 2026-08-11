@@ -1,0 +1,203 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-package-qualification/1",
+  "status": "passed-release-ready-candidate-awaiting-consumer-revalidation",
+  "asOf": "2026-08-11",
+  "package": {
+    "name": "@bim-explorer/federated-bim-surface",
+    "version": "0.2.0",
+    "contract": "bim-explorer-bim-surface/0.2",
+    "private": true,
+    "filename": "bim-explorer-federated-bim-surface-0.2.0.tgz",
+    "byteLength": 97623,
+    "unpackedSize": 483298,
+    "sha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "integrity": "sha512-QoGdmKuP/VLva+WGHwGhfKO6e8yKrbJt1/iClIsM86aQbdFmKSbd6+oCc4mJEPo+3GMUpcgQnex6LKEYvs0d5w==",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "files": [
+      "LICENSE",
+      "NOTICE",
+      "README.md",
+      "SOURCE_OFFER.md",
+      "package.json",
+      "runtime/index.mjs"
+    ],
+    "runtimeDependencies": 0
+  },
+  "reproducibility": {
+    "independentPackRuns": 2,
+    "byteIdentical": true,
+    "firstSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "secondSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb"
+  },
+  "consumer": {
+    "install": "offline-local-tarball",
+    "cleanProject": true,
+    "lifecycle": {
+      "packageVersion": "0.2.0",
+      "contract": "bim-explorer-bim-surface/0.2",
+      "receipt": "bim-explorer-bim-surface-receipt/0.2",
+      "exports": {
+        "count": 85,
+        "required": {
+          "BIM_FEDERATED_SURFACE_PACKAGE_VERSION": true,
+          "BIM_SOURCE_PROTOCOL_VERSION": true,
+          "createBimModelSource": true,
+          "createBimSurfaceHitRenderer": true,
+          "createBounded3dRenderer": true,
+          "createExplicitAlignment": true,
+          "createFederatedBimSurface": true,
+          "createGltfReferenceSource": true,
+          "createWebGl2Backend": true
+        }
+      },
+      "composition": {
+        "federationId": "federation:package-candidate-v0.2",
+        "sourceCount": 3,
+        "formats": [
+          "glb",
+          "ifc",
+          "glb"
+        ],
+        "sourceRoles": [
+          "geometric-reference",
+          "semantic-base",
+          "consumer-overlay"
+        ],
+        "semanticAvailability": [
+          false,
+          true,
+          false
+        ],
+        "projectionFingerprint": "sha256:3c5ba694b37ef7028310afb2b4f78a500aa2f7d37cedc220c6cd693345266f97"
+      },
+      "semantics": {
+        "queriedSource": "source-slot:m-semantic",
+        "returned": 2,
+        "referenceSemanticsRejected": true
+      },
+      "selection": {
+        "items": 3,
+        "distinctKeys": 3,
+        "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+      },
+      "anchors": [
+        {
+          "schema": "bim-explorer-reference-anchor/0.1",
+          "sourceSlot": "source-slot:a-reference",
+          "stability": "point-only",
+          "authority": {
+            "workspace": false,
+            "canonicalEntityId": false,
+            "sourceMutation": false,
+            "geometryMutation": false,
+            "constraintMutation": false,
+            "acceptance": false,
+            "publish": false,
+            "export": false
+          }
+        },
+        {
+          "schema": "bim-explorer-reference-anchor/0.1",
+          "sourceSlot": "source-slot:m-semantic",
+          "stability": "point-only",
+          "authority": {
+            "workspace": false,
+            "canonicalEntityId": false,
+            "sourceMutation": false,
+            "geometryMutation": false,
+            "constraintMutation": false,
+            "acceptance": false,
+            "publish": false,
+            "export": false
+          }
+        },
+        {
+          "schema": "bim-explorer-reference-anchor/0.1",
+          "sourceSlot": "source-slot:z-overlay",
+          "stability": "point-only",
+          "authority": {
+            "workspace": false,
+            "canonicalEntityId": false,
+            "sourceMutation": false,
+            "geometryMutation": false,
+            "constraintMutation": false,
+            "acceptance": false,
+            "publish": false,
+            "export": false
+          }
+        }
+      ],
+      "renderer": {
+        "uploadedBytes": 1608,
+        "sourceReadBytes": 1236,
+        "mounts": 1,
+        "picks": 3
+      },
+      "authority": {
+        "workspace": false,
+        "canonicalEntityId": false,
+        "sourceMutation": false,
+        "revisionMutation": false,
+        "geometryMutation": false,
+        "constraintMutation": false,
+        "acceptance": false,
+        "publish": false,
+        "export": false
+      },
+      "cleanup": {
+        "status": "disposed",
+        "rendererDisposed": true,
+        "projectionsDisposed": true,
+        "sourceReceipts": 3,
+        "workersDisposed": true,
+        "sessionsDisposed": true,
+        "sourceObjectsDisposed": true,
+        "backendDisposed": true,
+        "backendActiveBytes": 0,
+        "repeatedDispose": false
+      }
+    }
+  },
+  "productComposition": {
+    "browserEntrypoint": "apps/federated-bim-surface-browser-probe/app.mjs",
+    "browserUsesCandidateRuntime": true,
+    "vscodeEntrypoint": "apps/federated-bim-surface-vscode/app.mjs",
+    "vscodeUsesCandidateRuntime": true,
+    "vscodeStagesCandidateRuntime": true
+  },
+  "authority": {
+    "workspace": false,
+    "canonicalEntityId": false,
+    "sourceMutation": false,
+    "revisionMutation": false,
+    "geometryMutation": false,
+    "constraintMutation": false,
+    "acceptance": false,
+    "publish": false,
+    "export": false
+  },
+  "claims": {
+    "publicRegistryPublication": false,
+    "immutablePublicReleaseAsset": false,
+    "actualSpatialConsumerConformance": true,
+    "releaseReadyPackageConsumerRevalidation": false,
+    "productionSupport": false
+  },
+  "spatialConsumer": {
+    "evidence": "compatibility/evidence/federated-bim-surface-spatial-consumer-2026-08-11.json",
+    "status": "passed-private-candidate-actual-consumer",
+    "sourceCommit": "ef9b92d6b054d1329856ecfdd0c6913d83d09538",
+    "priorCandidatePackageSha256": "c652a4cd1843e26f98c9ff5ecfa701ef94acd7229453a1a13ff70a86a2b052af",
+    "releaseReadyPackageSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "runtimeUnchanged": true
+  },
+  "releaseGate": {
+    "expectedTag": "bim-surface-v0.2.0",
+    "branch": "prerelease",
+    "actualSpatialConsumer": true,
+    "releaseReadyPackageConsumerRevalidation": false,
+    "publicRelease": false,
+    "publicationAuthorized": false
+  }
+}

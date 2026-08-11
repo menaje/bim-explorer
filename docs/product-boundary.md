@@ -6,7 +6,7 @@ authority:
   - product-responsibility
   - source-identity-boundary
   - standalone-product-invariants
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-11
 ---
 
 # 제품과 저장소 경계
@@ -88,8 +88,9 @@ selection이 authority가 되지 않습니다.
   합성하지만 authored object, constraint와 Workspace authority는 포함하지
   않습니다. 내부 Browser와 path-free `.bimfed.json` VS Code entrypoint는
   private 0.2.0 candidate runtime을 사용해 검증됐고 byte-identical pack과
-  offline clean install도 통과했지만 public v0.2 release와 Spatial consumer는
-  별도 Gate입니다.
+  offline clean install도 통과했습니다. Spatial actual headless consumer는 이전
+  candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. immutable
+  public v0.2 asset과 그 asset의 Spatial exact-pin admission은 별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는
@@ -146,7 +147,7 @@ partial/stale와 saved view는 Explorer read-only state지만 Workspace
 registration, identity reconcile과 Canonical mapping은 Spatial
 authority입니다.
 
-main의 product-scale federation qualification은 두 generated IFC source와
+개발 기준선의 product-scale federation qualification은 두 generated IFC source와
 제품 규모 GLB reference를 한 derived renderer projection으로 동시에
 검증하고, macOS arm64와 Linux x64 CI의 동일한 portable projection을 별도
 matrix로 비교합니다. 이는 Explorer의 bounded composition 성능 근거일 뿐

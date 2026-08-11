@@ -84,4 +84,6 @@ test("Community licenses and release workflow are explicit and pinned", async ()
   assert.match(releaseWorkflow, /attestations: write/u);
   assert.match(releaseWorkflow, /id-token: write/u);
   assert.match(releaseWorkflow, /compare-community-release/u);
+  assert.match(releaseWorkflow, /VSCODE_PUBLICATION_AUTHORIZED/u);
+  assert.match(releaseWorkflow, /New VSIX publication is currently on hold/u);
 });
