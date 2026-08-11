@@ -9,8 +9,9 @@
   Surface 0.2 private candidate, including external base + authored overlay,
   Canonical selection, durable anchor, stale/no-remap and terminal cleanup;
 - prepare a package-only federated BIM Surface v0.2 release candidate with
-  deterministic tgz/SPDX/checksum/source-offer assets, while holding publication
-  until Spatial revalidates the final release-ready tgz bytes;
+  deterministic tgz/SPDX/checksum/source-offer assets, admit Spatial's exact-byte
+  revalidation of the final 97,623-byte tgz and authorize prerelease publication
+  while keeping public-artifact exact-pin admission separate;
 - allow cache-only public test fixtures without requiring sample redistribution,
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing

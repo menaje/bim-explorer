@@ -62,11 +62,12 @@ workflow입니다. anchor receipt 자체를 유료 authority 또는 Spatial 설�
 
 현재 private `@bim-explorer/federated-bim-surface@0.2.0` candidate는
 zero-runtime-dependency pack과 offline clean install을 통과했고, Spatial actual
-headless consumer가 이전 exact tgz에서 external base + authored overlay와
-authority-free anchor lifecycle을 재현했습니다. repository/staged manifest는
-`private: true`이고 release-ready tgz의 exact-byte 재검증과 public tag/release는
-아직 held입니다. 이 준비 상태도 Workspace authoring authority, 새 VSIX
-publication 또는 production support를 발급하지 않습니다.
+headless consumer가 이전 exact tgz와 release-ready 97,623-byte tgz에서 external
+base + authored overlay와 authority-free anchor lifecycle을 재현했습니다.
+repository/staged manifest는 `private: true`이고 package-only prerelease
+publication은 승인됐습니다. immutable public artifact의 Spatial exact-pin,
+Workspace authoring authority, 새 VSIX publication과 production support는 계속
+별도 Gate입니다.
 
 ## Community 공개 Gate
 

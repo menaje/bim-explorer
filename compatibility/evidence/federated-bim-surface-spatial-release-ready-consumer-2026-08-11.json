@@ -1,0 +1,52 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-spatial-release-ready-consumer-admission/1",
+  "status": "passed-release-ready-package-consumer-revalidation",
+  "asOf": "2026-08-11",
+  "source": {
+    "repository": "https://github.com/menaje/coni-spatial",
+    "commit": "ef0c1ea80dae3b5696274542a0e0ff9f263ae4e5",
+    "issue": "https://github.com/menaje/coni-spatial/issues/22",
+    "issueComment": "https://github.com/menaje/coni-spatial/issues/22#issuecomment-5247541631",
+    "evidencePath": "compatibility/evidence/spatial-federated-bim-surface-release-ready-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceUrl": "https://github.com/menaje/coni-spatial/blob/ef0c1ea80dae3b5696274542a0e0ff9f263ae4e5/compatibility/evidence/spatial-federated-bim-surface-release-ready-consumer-darwin-arm64-2026-08-11.json",
+    "evidenceSha256": "b14d3844c271a9d6fd0de2c1b7c9b80b75ec554dc6f1c826f11bd771e8693d54"
+  },
+  "candidate": {
+    "packageName": "@bim-explorer/federated-bim-surface",
+    "packageVersion": "0.2.0",
+    "sourceCommit": "94c3c29927cec4539f7f77ad000dd6eb373f14cd",
+    "packageBytes": 97623,
+    "packageSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "packageManifestFingerprint": "ee1617ad2a19e9e2f9be75dfefb42632edad1b9b9529b413da7a9306addf6caf",
+    "surfaceContract": "bim-explorer-bim-surface/0.2",
+    "sourceContract": "bim-explorer-bim-source/0.2",
+    "referenceAnchorContract": "bim-explorer-reference-anchor/0.1"
+  },
+  "result": {
+    "exactGitObjectArchive": true,
+    "cleanInstalledPackageImport": true,
+    "exactPackageBytes": true,
+    "exactRuntimeBytes": true,
+    "threeSourceComposition": true,
+    "sourceScopedIfcQuery": true,
+    "bidirectionalCanonicalSelection": true,
+    "durableWorkspaceAnchor": true,
+    "staleWithoutAutomaticRemap": true,
+    "terminalCleanup": true,
+    "authorityFree": true
+  },
+  "claims": {
+    "releaseReadyPackageConsumerRevalidation": true,
+    "privateCandidateOnly": true,
+    "publicPackage": false,
+    "spatialVsixBundledRuntime": false,
+    "productionSupport": false
+  },
+  "limitations": [
+    "This admission binds Spatial's release-ready consumer result to the exact private 97,623-byte package candidate.",
+    "The qualification uses generated IFC and GLB inputs with a headless pick backend, not a customer model or physical Browser GPU.",
+    "The package is not yet an immutable public prerelease asset and is not bundled in the Spatial VSIX.",
+    "Public-artifact exact-pin admission and production support remain separate post-release Gates."
+  ]
+}

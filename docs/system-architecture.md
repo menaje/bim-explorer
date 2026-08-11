@@ -208,9 +208,9 @@ source role은 caller-provided display metadata이며 capability나 authority가
 Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부착하지
 않습니다. Browser/VS Code product entrypoint와 private 0.2.0
 zero-runtime-dependency package candidate는 검증됐고, Spatial actual headless
-consumer도 이전 exact candidate를 고정해 composition과 anchor lifecycle을
-통과했습니다. release-ready tgz의 새 digest 재검증과 immutable public v0.2
-release는 계속 held입니다.
+consumer는 이전 candidate와 exact 97,623-byte release-ready tgz에서 composition과
+anchor lifecycle을 통과했습니다. package-only prerelease publication은 승인됐고,
+immutable public v0.2 asset의 Spatial exact-pin은 별도 post-release Gate입니다.
 
 ## Viewer Core와 3D presentation
 
@@ -420,9 +420,10 @@ source/revision/owner를 합치지 않습니다.
 현재 generated IFC4와 synthetic bridge provider conformance, Explorer 소유
 `bim-surface-v0.1.0` public immutable package의 offline clean install,
 macOS/Linux byte identity와 attestations까지 통과했습니다. federated Surface
-0.2의 actual Spatial headless consumer는 이전 private candidate를 exact-pin해
-composition을 통과했고, release-ready/public artifact 재검증과 standalone
-Spatial product admission은 Spatial #22의 consumer-owned Gate가 소유합니다.
+0.2의 actual Spatial headless consumer는 이전 private candidate와 release-ready
+tgz를 exact-pin해 composition을 통과했습니다. 공개 artifact 발급 뒤 exact-pin과
+standalone Spatial product admission은 Spatial #22의 consumer-owned Gate가
+소유합니다.
 
 외부 3D 기반 설계의 차기 경계는
 [`bim-spatial-integration/0.2`](../specs/bim-spatial-integration-v0.2.md)가

@@ -105,8 +105,9 @@ npm run release:bim-surface:v0.2
 ```
 
 이 package는 actual Spatial consumer가 이전 private candidate의 runtime과
-contract를 exact-pin한 증거를 가집니다. release-ready README와 source offer가
-tarball digest를 변경하므로 최종 package bytes에 대한 downstream 재검증 전에는
-`publicationAuthorized`를 false로 유지합니다. 재검증 뒤에도 공개 범위는 tgz,
-SPDX, checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지
-않습니다.
+contract를 exact-pin한 증거와 release-ready 97,623-byte tgz SHA-256
+`3bdb747d…c63cb`를 다시 검증한 증거를 가집니다. 이에 따라 package-only
+prerelease의 `publicationAuthorized`는 true입니다. 공개 범위는 tgz, SPDX,
+checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지 않습니다.
+발급된 immutable public asset에 대한 Spatial Phase B exact-pin은 별도
+post-release Gate입니다.

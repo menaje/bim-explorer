@@ -153,10 +153,12 @@ bounded source만 참조하는 path-free `.bimfed.json`을 열며 staged 확장�
 clean-installed VSIX가 같은 결과를 재현합니다. exact 461,431-byte runtime을
 사용한 이전 private tgz는 actual Spatial headless consumer에서 external base와
 Spatial overlay, Canonical selection, durable anchor, stale/no-remap과 cleanup을
-통과했습니다. release-ready tgz는 runtime/API를 유지하지만 package 문서 변경으로
-SHA-256이 `3bdb747d…c63cb`가 됐으므로 Spatial의 새 exact-byte 재검증 전에는
-`bim-surface-v0.2.0` tag와 public release를 만들지 않습니다. 이 경로는
-authoring authority나 새 VSIX/Marketplace publication을 승인하지 않습니다.
+통과했습니다. release-ready tgz는 runtime/API를 유지하면서 package 문서 변경으로
+SHA-256이 `3bdb747d…c63cb`가 됐고, Spatial commit `ef0c1ea…4e5`가 그 exact
+97,623 bytes를 다시 검증했습니다. 따라서 `dev` → `prerelease` 승격과
+package-only `bim-surface-v0.2.0` prerelease publication은 승인됐습니다. 공개
+asset 발급 뒤 Spatial exact-pin admission은 별도 Gate이며, 이 경로는 authoring
+authority나 새 VSIX/Marketplace publication을 승인하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
@@ -164,8 +166,9 @@ bridge를 사용합니다. Explorer는 source-bound GlobalId와 viewpoint만
 제공하고 Spatial Service가 Canonical mapping, 2D/3D selection과 opaque
 Context Reference를 발급합니다. 현재 synthetic provider conformance는
 통과했습니다. federated Surface 0.2의 actual private-candidate consumer evidence는
-Spatial 저장소가 소유하며 release-ready tgz와 이후 immutable public artifact의
-재검증도 같은 consumer-owned Gate로 유지합니다.
+Spatial 저장소가 소유하며 release-ready tgz exact-byte 재검증도 통과했습니다.
+이후 immutable public artifact의 exact-pin admission은 같은 consumer-owned
+Gate로 유지합니다.
 
 post-v0.1 federation foundation은
 [`bim-explorer-federation/0.1`](specs/bim-federation-v0.1.md)로

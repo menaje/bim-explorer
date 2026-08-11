@@ -63,15 +63,16 @@ Gate입니다. 추가로 private
 search/selection/anchor/cleanup을 재현했습니다. Spatial의 actual headless
 consumer가 이전 exact tgz를 고정해 external base + authored overlay,
 Canonical selection, durable point-only anchor, stale/no-remap과 terminal cleanup을
-통과했습니다. release-ready tgz는 runtime을 그대로 유지하지만 package 문서가
-바뀌어 새 SHA-256 `3bdb747d…c63cb`가 되었으므로 새 exact-byte Spatial 재검증과
-immutable public v0.2 package는 held입니다. 이 상태는 public tag나 release
-asset을 승인하지 않습니다. exact 결과는
+통과했습니다. Spatial은 package 문서가 반영된 release-ready tgz의 exact
+97,623 bytes, SHA-256 `3bdb747d…c63cb`도 다시 검증했습니다. package-only
+prerelease publication은 승인됐지만 immutable public v0.2 asset과 그 asset의
+Spatial exact-pin admission은 아직 held입니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
 [`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
 [`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json),
-[`release-ready package evidence`](evidence/federated-bim-surface-package-2026-08-11.json),
-[`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json)에
+[`release-ready package evidence`](evidence/federated-bim-surface-package-release-ready-2026-08-11.json),
+[`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json),
+[`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json)에
 고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
 보존합니다.
 

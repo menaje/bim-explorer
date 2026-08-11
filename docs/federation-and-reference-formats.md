@@ -104,9 +104,10 @@ stale이고 Spatial consumer가 다시 resolve/reconcile해야 합니다.
 차기 [`bim-surface/0.2`](../specs/bim-surface-v0.2.md)는 이 federation과 anchor
 lifecycle을 host-neutral surface로 합성하는 draft입니다. 개발 기준선의
 Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate에 더해 actual
-Spatial headless consumer가 이전 exact candidate를 검증했습니다. 이는
-release-ready tgz, public v0.2 artifact, Spatial VSIX BIM runtime 또는 production
-support를 승인한다는 뜻은 아닙니다.
+Spatial headless consumer가 이전 candidate와 exact 97,623-byte release-ready
+tgz를 검증했습니다. 이는 package-only prerelease를 승인하지만 immutable public
+artifact의 Spatial exact-pin, Spatial VSIX BIM runtime 또는 production support를
+승인한다는 뜻은 아닙니다.
 
 ## Coordinate와 precision 경계
 
@@ -219,8 +220,8 @@ LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 소급되지 않으며 새 VSIX publication은 현재 보류합니다. 이후 별도 승격을
 결정하면 runtime SBOM, checksum과 release reproducibility를 다시 검증합니다.
 
-actual Spatial headless consumer는 이전 exact private candidate에서 통과했습니다.
-release-ready tgz와 immutable public artifact의 standalone Spatial 재검증은
+actual Spatial headless consumer는 이전 exact private candidate와 release-ready
+tgz에서 통과했습니다. immutable public artifact의 standalone Spatial exact-pin은
 Explorer 저장소가 단독으로 완료할 수 없는 consumer-owned Gate입니다. 관련
 진행은 Explorer #9/#12와 Coni Spatial #22에 evidence URL과 exact digest로만
 게시합니다.

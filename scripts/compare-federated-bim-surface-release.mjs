@@ -89,7 +89,7 @@ function validateManifest(manifest) {
     manifest.profile.vscodeExtensionIncluded !== false ||
     manifest.profile.marketplacePublication !== false ||
     manifest.qualification?.status !==
-      "passed-release-ready-candidate-awaiting-consumer-revalidation" ||
+      "passed-release-ready-candidate-consumer-revalidated" ||
     manifest.qualification.byteIdentical !== true ||
     manifest.qualification.offlineCleanInstall !== true ||
     !/^[0-9a-f]{64}$/u.test(
@@ -100,9 +100,11 @@ function validateManifest(manifest) {
     ) ||
     manifest.releaseGate?.actualSpatialConsumer !== true ||
     manifest.releaseGate.releaseReadyPackageConsumerRevalidation !==
-      false ||
+      true ||
     manifest.releaseGate.publicRelease !== false ||
-    manifest.releaseGate.publicationAuthorized !== false ||
+    manifest.releaseGate.publicationAuthorized !== true ||
+    manifest.postReleaseGate?.publicArtifactSpatialAdmission !== false ||
+    manifest.postReleaseGate.productionSupport !== false ||
     Object.values(manifest.authority ?? {}).some(Boolean)
   ) {
     throw new Error(

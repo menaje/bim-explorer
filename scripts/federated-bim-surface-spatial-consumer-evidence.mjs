@@ -1,6 +1,10 @@
 export const SPATIAL_CONSUMER_EVIDENCE_PATH =
   "compatibility/evidence/" +
   "federated-bim-surface-spatial-consumer-2026-08-11.json";
+export const SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH =
+  "compatibility/evidence/" +
+  "federated-bim-surface-spatial-release-ready-consumer-" +
+  "2026-08-11.json";
 
 const PACKAGE_NAME = "@bim-explorer/federated-bim-surface";
 const PACKAGE_VERSION = "0.2.0";
@@ -81,6 +85,90 @@ export function validateSpatialConsumerAdmission(evidence) {
   return Object.freeze({
     status: evidence.status,
     sourceCommit: evidence.source.commit,
+    packageSha256: evidence.candidate.packageSha256,
+    runtimeSha256: evidence.candidate.runtimeSha256,
+  });
+}
+
+export function validateSpatialReleaseReadyConsumerAdmission(
+  evidence,
+) {
+  if (
+    evidence?.schema !==
+      "bim-explorer-federated-bim-surface-spatial-" +
+        "release-ready-consumer-admission/1" ||
+    evidence.status !==
+      "passed-release-ready-package-consumer-revalidation" ||
+    evidence.asOf !== "2026-08-11" ||
+    evidence.source?.repository !==
+      "https://github.com/menaje/coni-spatial" ||
+    evidence.source.commit !==
+      "ef0c1ea80dae3b5696274542a0e0ff9f263ae4e5" ||
+    evidence.source.issue !==
+      "https://github.com/menaje/coni-spatial/issues/22" ||
+    evidence.source.issueComment !==
+      "https://github.com/menaje/coni-spatial/issues/22" +
+        "#issuecomment-5247541631" ||
+    evidence.source.evidencePath !==
+      "compatibility/evidence/" +
+        "spatial-federated-bim-surface-release-ready-consumer-" +
+        "darwin-arm64-2026-08-11.json" ||
+    evidence.source.evidenceUrl !==
+      "https://github.com/menaje/coni-spatial/blob/" +
+        "ef0c1ea80dae3b5696274542a0e0ff9f263ae4e5/" +
+        "compatibility/evidence/" +
+        "spatial-federated-bim-surface-release-ready-consumer-" +
+        "darwin-arm64-2026-08-11.json" ||
+    evidence.source.evidenceSha256 !==
+      "b14d3844c271a9d6fd0de2c1b7c9b80b75ec554dc6f1c826f11bd771e8693d54" ||
+    evidence.candidate?.packageName !== PACKAGE_NAME ||
+    evidence.candidate.packageVersion !== PACKAGE_VERSION ||
+    evidence.candidate.sourceCommit !==
+      "94c3c29927cec4539f7f77ad000dd6eb373f14cd" ||
+    evidence.candidate.packageBytes !== 97623 ||
+    evidence.candidate.packageSha256 !==
+      "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb" ||
+    evidence.candidate.runtimeSha256 !== RUNTIME_SHA256 ||
+    evidence.candidate.packageManifestFingerprint !==
+      MANIFEST_FINGERPRINT ||
+    evidence.candidate.surfaceContract !==
+      "bim-explorer-bim-surface/0.2" ||
+    evidence.candidate.sourceContract !==
+      "bim-explorer-bim-source/0.2" ||
+    evidence.candidate.referenceAnchorContract !==
+      "bim-explorer-reference-anchor/0.1" ||
+    !exactTrueRecord(evidence.result, [
+      "exactGitObjectArchive",
+      "cleanInstalledPackageImport",
+      "exactPackageBytes",
+      "exactRuntimeBytes",
+      "threeSourceComposition",
+      "sourceScopedIfcQuery",
+      "bidirectionalCanonicalSelection",
+      "durableWorkspaceAnchor",
+      "staleWithoutAutomaticRemap",
+      "terminalCleanup",
+      "authorityFree",
+    ]) ||
+    JSON.stringify(evidence.claims) !== JSON.stringify({
+      releaseReadyPackageConsumerRevalidation: true,
+      privateCandidateOnly: true,
+      publicPackage: false,
+      spatialVsixBundledRuntime: false,
+      productionSupport: false,
+    }) ||
+    !Array.isArray(evidence.limitations) ||
+    evidence.limitations.length < 4
+  ) {
+    throw new Error(
+      "Spatial release-ready consumer admission evidence is invalid",
+    );
+  }
+  return Object.freeze({
+    status: evidence.status,
+    sourceCommit: evidence.source.commit,
+    packageSourceCommit: evidence.candidate.sourceCommit,
+    packageBytes: evidence.candidate.packageBytes,
     packageSha256: evidence.candidate.packageSha256,
     runtimeSha256: evidence.candidate.runtimeSha256,
   });

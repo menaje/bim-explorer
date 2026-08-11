@@ -257,6 +257,10 @@ export async function buildFederatedBimSurfaceRelease(
         runtimeSha256: qualification.package.runtimeSha256,
         spatialConsumerEvidence:
           qualification.spatialConsumer.evidence,
+        releaseReadySpatialConsumerEvidence:
+          qualification.spatialConsumer.releaseReadyEvidence,
+        releaseReadySpatialConsumerSourceCommit:
+          qualification.spatialConsumer.releaseReadySourceCommit,
         priorCandidatePackageSha256:
           qualification.spatialConsumer
             .priorCandidatePackageSha256,
@@ -270,6 +274,10 @@ export async function buildFederatedBimSurfaceRelease(
         publicRelease: qualification.releaseGate.publicRelease,
         publicationAuthorized:
           qualification.releaseGate.publicationAuthorized,
+      },
+      postReleaseGate: {
+        publicArtifactSpatialAdmission: false,
+        productionSupport: false,
       },
       supplyChain: {
         spdxPackages: 1,

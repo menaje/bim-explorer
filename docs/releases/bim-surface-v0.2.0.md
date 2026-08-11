@@ -17,10 +17,12 @@ source slots, source-scoped semantics, cross-source selection, derived
 source-local reference anchors and deterministic transferred/borrowed resource
 lifecycle. It contains one zero-runtime-dependency ESM entrypoint.
 
-An actual Coni Spatial headless consumer admitted the prior exact candidate
-runtime and contract. The release-ready package keeps that runtime byte
-identity but changes packaged release documentation, so its final tarball
-digest must be revalidated before this draft can be tagged and published.
+An actual Coni Spatial headless consumer admitted both the prior candidate and
+the exact 97,623-byte release-ready package. The latter preserves the runtime
+byte identity and has SHA-256
+`3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb`.
+This authorizes the package-only prerelease. Exact-pin admission of the
+immutable public asset remains a separate Spatial-owned post-release Gate.
 
 This package grants no Workspace, Canonical Entity, mutation, constraint,
 acceptance, publish or export authority. It does not include or publish a BIM
