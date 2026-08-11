@@ -15,6 +15,8 @@ import {
   syntheticGltfExternalBundle,
   syntheticGlbBytes,
   syntheticGltfJsonBytes,
+  syntheticQuantizedGltfJsonBytes,
+  syntheticQuantizedGlbBytes,
 } from "../../scripts/generate-synthetic-gltf.mjs";
 
 for (const [format, fixture] of [
@@ -48,6 +50,114 @@ for (const [format, fixture] of [
     );
   });
 }
+
+test("KHR_mesh_quantization decodes bounded position and normal accessors", async () => {
+  const bytes = syntheticQuantizedGlbBytes();
+  const profile = parseGltfReferenceProfile(bytes);
+  assert.deepEqual(
+    profile.extensionsUsed,
+    ["KHR_mesh_quantization"],
+  );
+  assert.deepEqual(
+    profile.extensionsRequired,
+    ["KHR_mesh_quantization"],
+  );
+  assert.deepEqual(
+    [...profile.records[0].positions],
+    [-1, -1, 0, 1, -1, 0, 0, 1, 0],
+  );
+  assert.deepEqual(
+    [...profile.records[0].normals],
+    [0, 0, 1, 0, 0, 1, 0, 0, 1],
+  );
+  assert.deepEqual(profile.bounds, {
+    min: [-1, -1, 0],
+    max: [4, 1, 1],
+  });
+
+  const source = await createGltfReferenceSource(bytes);
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  assert.deepEqual(
+    snapshot.referenceMetadata.extensionsRequired,
+    ["KHR_mesh_quantization"],
+  );
+  assert.deepEqual(
+    snapshot.referenceMetadata.extensionsUsed,
+    ["KHR_mesh_quantization"],
+  );
+  assert.equal(snapshot.geometry.vertices, 3);
+  assert.equal(snapshot.geometry.triangles, 1);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  bytes.fill(0);
+});
+
+test("KHR_mesh_quantization declarations and layouts fail closed", () => {
+  const fixture = () => JSON.parse(
+    new TextDecoder().decode(
+      syntheticQuantizedGltfJsonBytes(),
+    ),
+  );
+
+  const optional = fixture();
+  optional.extensionsRequired = [];
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(optional)),
+    ),
+    /must be a required extension/u,
+  );
+
+  const undeclared = fixture();
+  delete undeclared.extensionsUsed;
+  delete undeclared.extensionsRequired;
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(undeclared)),
+    ),
+    /POSITION accessor profile is unsupported/u,
+  );
+
+  const invalidNormal = fixture();
+  invalidNormal.accessors[1].normalized = false;
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(invalidNormal)),
+    ),
+    /NORMAL accessor profile is unsupported/u,
+  );
+
+  const unsignedNormal = fixture();
+  unsignedNormal.accessors[1].componentType = 5121;
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(unsignedNormal)),
+    ),
+    /NORMAL accessor profile is unsupported/u,
+  );
+
+  const misaligned = fixture();
+  misaligned.bufferViews[1].byteStride = 3;
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(misaligned)),
+    ),
+    /accessor byte layout is invalid/u,
+  );
+
+  const unsupported = fixture();
+  unsupported.extensionsUsed.push("EXT_meshopt_compression");
+  unsupported.extensionsRequired.push("EXT_meshopt_compression");
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(unsupported)),
+    ),
+    { name: "NotSupportedError" },
+  );
+});
 
 test("GLB reference source mounts without inventing IFC identity", async () => {
   const source = await createGltfReferenceSource(

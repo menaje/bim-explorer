@@ -193,7 +193,8 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 실제 Coni Spatial consumer와 standalone Spatial bundle
 - 실제 사용자 과업의 두 format 이상 수요
 - 측량 control point와 datum transformation
-- glTF/GLB external resource bundle와 required extension; bounded 제품
+- glTF/GLB external resource bundle와 required extension의 immutable federated
+  v0.2 admission; local bundle과 `KHR_mesh_quantization` single-source 제품
   file-open은 별도 product-shell evidence에서 통과
 - point-cloud surveyed CRS/datum과 federation admission; 제품 로컬 파생
   point pick·octree/chunk LOD는 통과했지만 federation source identity 또는

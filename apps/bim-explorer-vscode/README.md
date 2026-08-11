@@ -12,7 +12,9 @@ leaf-name `.bin`을 extension host에서만 해결합니다. document와 sidecar
 64MiB, regular non-symlink, 읽기 전후 size/mtime을 검사하며 resource 변경도
 watch합니다. webview에는 경로가 아닌 resource name과 transferable bytes만 보내고
 누락·중복·미사용 sidecar, separator/`..`/scheme/query/fragment/percent URI와
-runtime network를 거부합니다. 외부 image와 required extension도 미지원입니다.
+runtime network를 거부합니다. 외부 image는 미지원이며 required extension은
+`KHR_mesh_quantization` 하나만 bounded decode합니다. Draco·meshopt와 그 밖의
+required extension은 fail-closed입니다.
 이 bundle 경로는 single-source Custom Editor에만 적용되며 immutable federated
 Surface v0.2의 `*.bimfed.json` source admission에는 소급 적용하지 않습니다.
 LAS/LAZ는 8 MiB·
@@ -88,7 +90,11 @@ package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 
 Khronos `Box.gltf + Box0.bin`은 `npm run
 qualify:gltf:external-resource-products`에서 staged Custom Editor와
 clean-installed local VSIX를 Browser와 함께 Apple M2 Metal로 검증하며 sample은
-package에 포함하지 않습니다. package
+package에 포함하지 않습니다. `npm run
+qualify:gltf:mesh-quantization-products`는 cache-only Box-derived
+`KHR_mesh_quantization` GLB를 같은 세 Apple M2 Metal 제품 표면과 공식
+Validator/headless renderer에서 검증합니다. 이 single-source 기능은 immutable
+federated Surface v0.2에 소급 반영하지 않습니다. package
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
 runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며

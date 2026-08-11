@@ -22,6 +22,13 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   CC BY 4.0 manifest
 - `gltf/public-khronos-box`: 1,664-byte embedded GLB parser·identity·제품
   surface smoke에 사용하는 Cesium CC BY 4.0 manifest
+- `gltf/public-khronos-box-external`: exact `Box.gltf` 2,898 bytes와 `Box0.bin`
+  648 bytes의 same-folder local resource bundle 제품 Gate에 사용하는 cache-only
+  Cesium CC BY 4.0 manifest
+- `gltf/derived-khronos-box-mesh-quantization`: exact Box GLB를 normalized BYTE
+  normal과 normalized SHORT position으로 결정적으로 파생한 1,632-byte
+  `KHR_mesh_quantization` qualification manifest. 원본과 파생 GLB는 모두
+  cache-only이며 재배포하지 않음
 - `gltf/public-khronos-a-beautiful-game`: 42,977,928-byte embedded GLB의
   417,028 vertices·573,952 unique triangles를 product-scale reference
   source, SwiftShader WebGL2, Browser/VS Code/clean VSIX 제품 file-open과
@@ -55,8 +62,9 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
 고정 commit의 8,873,221-byte IFCZIP과 내부 단일 IFC를 각각 SHA-256으로
 검증하고 `.ifc-cache/public-ifc`에만 추출합니다. archive는 보관하지 않으며
 fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
-두 glTF fixture도 `.gltf-cache/public-gltf`의 digest cache로만 내려받으며
-원본 GLB를 Git 또는 release bundle에 포함하지 않습니다.
+네 glTF fixture도 `.gltf-cache/public-gltf`의 digest cache로만 내려받거나
+결정적으로 파생하며 원본·파생 GLB와 `.bin`을 Git 또는 release bundle에 포함하지
+않습니다.
 E57 sample도 `.bim-explorer-cache/public-reference/e57`에만 내려받고 Git 또는
 release에 포함하지 않습니다. test-only 사용에는 샘플 재배포를 요구하지 않습니다.
 LAS/LAZ pair도 `.bim-explorer-cache/public-reference/las-laz`에만 내려받고 Git,
@@ -87,5 +95,7 @@ npm run qualify:gltf:product-scale
 npm run qualify:gltf:product-scale:web
 npm run qualify:gltf:product-scale:vscode
 npm run qualify:gltf:product-scale:vscode-install
+npm run qualify:gltf:external-resource-products
+npm run qualify:gltf:mesh-quantization-products
 npm run qualify:federation:product-scale
 ```

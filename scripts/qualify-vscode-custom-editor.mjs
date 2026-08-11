@@ -27,6 +27,9 @@ import {
   acquirePublicGltfResourceBundle,
 } from "./public-gltf-resource-bundle-fixture.mjs";
 import {
+  acquirePublicQuantizedGltfFixture,
+} from "./public-gltf-quantized-fixture.mjs";
+import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
 import {
@@ -52,6 +55,7 @@ function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
     includeExternalResourceFixture: false,
+    includeQuantizedFixture: false,
     includePublicFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
@@ -68,6 +72,10 @@ function parseArguments(values) {
     }
     if (name === "--external-gltf") {
       options.includeExternalResourceFixture = true;
+      continue;
+    }
+    if (name === "--quantized-gltf") {
+      options.includeQuantizedFixture = true;
       continue;
     }
     if (name === "--public") {
@@ -110,6 +118,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
         "[--external-gltf] " +
+        "[--quantized-gltf] " +
         "[--public] " +
         "[--e57-spherical] " +
         "[--e57-multiple-scan] " +
@@ -123,6 +132,7 @@ function parseArguments(values) {
 export async function qualifyVscodeCustomEditor({
   includeFederatedSurfaceFixture = false,
   includeExternalResourceFixture = false,
+  includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
@@ -155,6 +165,10 @@ export async function qualifyVscodeCustomEditor({
   for (const resource of externalReferenceFixture?.resources ?? []) {
     resource.bytes.fill(0);
   }
+  const quantizedReferenceFixture = includeQuantizedFixture
+    ? await acquirePublicQuantizedGltfFixture()
+    : null;
+  quantizedReferenceFixture?.bytes.fill(0);
   productScaleReferenceFixture?.bytes.fill(0);
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
@@ -256,6 +270,12 @@ export async function qualifyVscodeCustomEditor({
           : {
               BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE:
                 externalReferenceFixture.document.cachePath,
+            }),
+        ...(quantizedReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE:
+                quantizedReferenceFixture.cachePath,
             }),
         BIM_EXPLORER_VSCODE_EVIDENCE: evidencePath,
       },

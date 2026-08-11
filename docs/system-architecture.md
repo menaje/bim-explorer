@@ -326,7 +326,12 @@ macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 �
 cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
 같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
 M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 임의 URI,
-external image와 required extension은 여전히 Worker admission 전에 거부합니다.
+external image는 여전히 Worker admission 전에 거부합니다. ratified
+`KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
+4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.
+코덱은 추가하지 않으며 Draco·meshopt·그 밖의 required extension은 fail-closed입니다.
+Box-derived cache-only GLB는 headless와 Browser·staged VS Code·clean-installed
+local VSIX의 Apple M2 Metal에서 같은 projection과 cleanup을 통과했습니다.
 
 ## openBIM exploration
 

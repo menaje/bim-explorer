@@ -404,6 +404,22 @@ function sanitizeReport(value) {
         gltfVersion: stringOrNull(
           value.source?.gltfVersion,
         ),
+        ...(value.source?.extensionsRequired === undefined
+          ? {}
+          : {
+              extensionsRequired: stringArray(
+                value.source.extensionsRequired,
+                64,
+              ),
+            }),
+        ...(value.source?.extensionsUsed === undefined
+          ? {}
+          : {
+              extensionsUsed: stringArray(
+                value.source.extensionsUsed,
+                64,
+              ),
+            }),
         coordinateReferenceStatus: stringOrNull(
           value.source?.coordinateReferenceStatus,
         ),

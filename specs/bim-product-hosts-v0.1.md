@@ -102,9 +102,10 @@ VSIX에서 파생 hierarchy/LOD 전환과 exact cleanup을 비교합니다.
 
 ## 현재 보류
 
-- public Viewer Core artifact와 cross-repository conformance
-- physical GPU와 cross-platform GPU/memory qualification
-- external glTF resource bundle과 required extension
+- stable/production Viewer Core와 Marketplace conformance
+- Linux/Windows physical GPU와 cross-platform OS-level GPU/memory qualification
+- arbitrary glTF URI, external image와 `KHR_mesh_quantization` 이외 required
+  extension; bounded same-folder `.bin` bundle과 mesh quantization 제품 Gate는 통과
 - E57/LAS/LAZ CRS/surveyed datum, source-native hierarchy·point semantics와
   format admission; 파생 `point:n` pick과 제품 로컬 octree/chunk LOD는 exact
   revision/root range에만 유효

@@ -20,6 +20,9 @@ range와 `POINTS` renderer로 분기합니다.
   투영합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
+- required `KHR_mesh_quantization`은 bounded integer position/normal을 Worker에서
+  display range로 decode합니다. Draco·meshopt·그 밖의 required extension은
+  source admission 전에 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
@@ -51,6 +54,11 @@ projection과 editor cleanup을 확인합니다.
 `Box.gltf + Box0.bin`을 Browser 다중 선택, staged VS Code와 clean-installed
 local VSIX에서 Apple M2 Metal로 열어 composite identity, local-only transport와
 cleanup을 검증합니다. sample은 Git, package 또는 release에 포함하지 않습니다.
+`npm run qualify:gltf:mesh-quantization-products`는 exact Box-derived
+`KHR_mesh_quantization` GLB를 공식 Validator와 headless renderer에 이어 Browser,
+staged VS Code와 clean-installed local VSIX의 Apple M2 Metal로 검증합니다. 원본과
+파생 fixture는 cache-only이며 runtime codec이나 federated v0.2 지원을 추가하지
+않습니다.
 `npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
 공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
 Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact

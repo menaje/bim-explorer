@@ -39,6 +39,9 @@ roundTripAuthority: false
 - node의 column-major matrix 또는 translation/rotation/scale
 - indexed `TRIANGLES`
 - Float32 `POSITION`과 `NORMAL`
+- 또는 `extensionsUsed`와 `extensionsRequired` 양쪽에 선언된 ratified
+  `KHR_mesh_quantization`: BYTE/UNSIGNED_BYTE/SHORT/UNSIGNED_SHORT `POSITION`과
+  normalized BYTE/SHORT `NORMAL`
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
 
@@ -46,8 +49,10 @@ local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$` 범위이고 `..`를
 포함할 수 없습니다. scheme, slash/backslash, query/fragment, percent-encoding을
 포함한 외부 HTTP, file 및 path URI는 fetch하지 않고 `NotSupportedError`로
 거부합니다. caller가 공급한 누락·중복·미사용 sidecar도 fail closed합니다.
-required extension, primitive extension, external image, animation, skin,
-morph target, sparse accessor와 collapsed transform도 first profile 밖입니다.
+`KHR_mesh_quantization` 이외 required extension, primitive extension, external
+image, animation, skin, morph target, sparse accessor와 collapsed transform도
+first profile 밖입니다. 양자화 vertex accessor는 glTF extension의 4-byte alignment를
+따르며 signed normalized normal은 decode 뒤 단위 벡터로 다시 정규화합니다.
 optional texture/image metadata는 geometry 입출력이나 network authority를
 부여하지 않습니다.
 
@@ -114,7 +119,7 @@ GPU allocation은 source가 소유하지 않습니다.
 
 ## 보류
 
-- Draco, meshopt와 기타 required extension
+- Draco, meshopt와 `KHR_mesh_quantization` 이외 required extension
 - arbitrary URI, nested path와 external image
 - texture/image decode와 material fidelity
 - animation, skin과 morph target
@@ -154,6 +159,15 @@ read, 800-byte upload, 86,486 pixels, source-native selection과 terminal cleanu
 이 제품 Gate는 single-source Browser/VS Code 경로이며 공개된 immutable
 federated BIM Surface v0.2 runtime과 `.bimfed.json` admission을 변경하지 않습니다.
 
+Cesium Box GLB를 normalized BYTE normal과 normalized SHORT position으로
+결정적으로 파생한 1,632-byte `KHR_mesh_quantization` fixture도 원본·파생 SHA-256과
+Khronos extension spec commit을 고정했습니다. 공식 Validator는 error, warning,
+info와 hint 0개를 보고했고 headless renderer와 actual Chrome 151, staged VS Code
+1.132, clean-installed local VSIX는 Apple M2 Metal에서 같은 24 vertices·12
+triangles, 756-byte geometry read, 800-byte upload와 86,486 pixels를 재현했습니다.
+원본과 파생 GLB는 cache-only이며 Git·VSIX·release에 포함하지 않습니다. 이 승인은
+런타임 codec을 추가하지 않고 해당 required extension 하나만 허용합니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
@@ -161,6 +175,6 @@ upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 �
 포함하지 않습니다.
 
 이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
-external image, required extension, broader material/geometry fidelity,
+external image, Draco·meshopt·그 밖의 required extension, broader material/geometry fidelity,
 Linux/Windows physical GPU, BIM semantic authority, write와 round-trip은
 승인하지 않습니다.

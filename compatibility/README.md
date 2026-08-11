@@ -128,7 +128,7 @@ model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
 같은 3,546-byte composite identity, 12 triangles, 86,486 pixels와 terminal
 cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII `.bin`과
 합산 64MiB만 허용하며 path/scheme, symlink, external image, runtime network와
-required extension은 계속 차단합니다.
+`KHR_mesh_quantization` 이외 required extension은 계속 차단합니다.
 이 local bundle 증거는 single-source 제품 범위이고 immutable federated BIM
 Surface v0.2 runtime이나 `.bimfed.json` 지원을 승격하지 않습니다.
 paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
@@ -399,8 +399,15 @@ upload를 재현해 `physicalGpu=true`로 admission했습니다. 이는 macOS ar
 hardware 범위입니다. 추가
 [`local resource bundle evidence`](evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json)는
 exact Khronos `Box.gltf + Box0.bin`을 세 제품 표면에서 Apple M2 Metal로 열어
-`externalResourceBundle=true`로 admission했습니다. glTF manifest는 26 passed / 4
-held이며 required extension, write·round-trip과 BIM semantic authority는 held입니다.
+`externalResourceBundle=true`로 admission했습니다. 추가
+[`KHR_mesh_quantization` evidence](evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json)는
+exact Box-derived 1,632-byte GLB를 공식 Validator issue 0개, headless renderer와
+actual Chrome 151, staged VS Code 1.132, clean-installed local VSIX의 Apple M2
+Metal에서 검증했습니다. 세 표면은 12 triangles·86,486 pixels·756-byte read·
+800-byte upload와 terminal cleanup을 공유합니다. glTF manifest는 27 passed / 4
+held, product shell은 54 passed / 1 held입니다. `KHR_mesh_quantization`만 required
+extension으로 허용하며 Draco·meshopt·그 밖의 required extension, write·round-trip과
+BIM semantic authority는 held입니다.
 임의 URI·external image·Linux/Windows physical GPU와 OS-level peak memory도
 승인하지 않습니다. 공개 sample은 ignored cache에서만 사용하고 release에는
 포함하지 않습니다.

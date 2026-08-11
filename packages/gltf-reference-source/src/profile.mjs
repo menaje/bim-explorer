@@ -9,8 +9,11 @@ import {
 const GLB_MAGIC = 0x46546c67;
 const JSON_CHUNK = 0x4e4f534a;
 const BIN_CHUNK = 0x004e4942;
+const KHR_MESH_QUANTIZATION = "KHR_mesh_quantization";
 const COMPONENT_BYTES = new Map([
+  [5120, 1],
   [5121, 1],
+  [5122, 2],
   [5123, 2],
   [5125, 4],
   [5126, 4],
@@ -364,9 +367,11 @@ function accessorLayout(
   buffers,
   accessorIndex,
   {
+    allowNormalized = false,
     componentType,
     type,
     label,
+    vertexAttribute = false,
   },
 ) {
   const accessors = collection(
@@ -390,7 +395,11 @@ function accessorLayout(
   if (
     accessor.componentType !== componentType ||
     accessor.type !== type ||
-    accessor.normalized === true ||
+    (
+      accessor.normalized !== undefined &&
+      typeof accessor.normalized !== "boolean"
+    ) ||
+    (accessor.normalized === true && !allowNormalized) ||
     accessor.sparse !== undefined
   ) {
     throw new Error(`${label} accessor profile is unsupported`);
@@ -427,6 +436,15 @@ function accessorLayout(
     stride < elementBytes ||
     stride > 252 ||
     stride % componentBytes !== 0 ||
+    byteOffset % componentBytes !== 0 ||
+    accessorOffset % componentBytes !== 0 ||
+    (
+      vertexAttribute &&
+      (
+        stride % 4 !== 0 ||
+        (byteOffset + accessorOffset) % 4 !== 0
+      )
+    ) ||
     accessorOffset + stride * (accessor.count - 1) +
       elementBytes > bufferView.byteLength ||
     byteOffset + bufferView.byteLength > buffers[bufferIndex].byteLength
@@ -441,12 +459,72 @@ function accessorLayout(
   };
 }
 
-function readVec3(document, buffers, index, label) {
+function normalizedInteger(value, componentType) {
+  if (componentType === 5120) {
+    return Math.max(value / 127, -1);
+  }
+  if (componentType === 5121) {
+    return value / 255;
+  }
+  if (componentType === 5122) {
+    return Math.max(value / 32_767, -1);
+  }
+  if (componentType === 5123) {
+    return value / 65_535;
+  }
+  throw new TypeError("glTF normalized component type is unsupported");
+}
+
+function readVec3(
+  document,
+  buffers,
+  index,
+  label,
+  {
+    meshQuantization = false,
+    semantic,
+  },
+) {
+  const accessors = collection(
+    document.accessors,
+    DEFAULT_LIMITS.maximumAccessors,
+    "glTF accessors",
+  );
+  const accessor = plainRecord(
+    accessors[arrayIndex(index, accessors.length, `${label} accessor`)],
+    `${label} accessor`,
+  );
+  const normalized = accessor.normalized === true;
+  const floatProfile =
+    accessor.componentType === 5126 && !normalized;
+  const quantizedPosition =
+    semantic === "POSITION" &&
+    meshQuantization &&
+    [5120, 5121, 5122, 5123].includes(
+      accessor.componentType,
+    );
+  const quantizedNormal =
+    semantic === "NORMAL" &&
+    meshQuantization &&
+    normalized &&
+    [5120, 5122].includes(accessor.componentType);
+  if (
+    accessor.type !== "VEC3" ||
+    (!floatProfile && !quantizedPosition && !quantizedNormal)
+  ) {
+    throw new Error(`${label} accessor profile is unsupported`);
+  }
   const layout = accessorLayout(
     document,
     buffers,
     index,
-    { componentType: 5126, type: "VEC3", label },
+    {
+      allowNormalized: quantizedPosition || quantizedNormal,
+      componentType: accessor.componentType,
+      type: "VEC3",
+      label,
+      vertexAttribute: true,
+    },
   );
   const result = new Float32Array(layout.accessor.count * 3);
   const view = new DataView(
@@ -454,14 +532,43 @@ function readVec3(document, buffers, index, label) {
     layout.buffer.byteOffset,
     layout.buffer.byteLength,
   );
+  const componentBytes = COMPONENT_BYTES.get(
+    accessor.componentType,
+  );
+  const read = accessor.componentType === 5120
+    ? (offset) => view.getInt8(offset)
+    : accessor.componentType === 5121
+      ? (offset) => view.getUint8(offset)
+      : accessor.componentType === 5122
+        ? (offset) => view.getInt16(offset, true)
+        : accessor.componentType === 5123
+          ? (offset) => view.getUint16(offset, true)
+          : (offset) => view.getFloat32(offset, true);
   for (let item = 0; item < layout.accessor.count; item += 1) {
     const offset = layout.offset + item * layout.stride;
     for (let component = 0; component < 3; component += 1) {
-      const value = view.getFloat32(offset + component * 4, true);
+      const raw = read(offset + component * componentBytes);
+      const value = normalized
+        ? normalizedInteger(raw, accessor.componentType)
+        : raw;
       if (!Number.isFinite(value)) {
         throw new Error(`${label} contains a non-finite value`);
       }
       result[item * 3 + component] = value;
+    }
+    if (quantizedNormal) {
+      const resultOffset = item * 3;
+      const length = Math.hypot(
+        result[resultOffset],
+        result[resultOffset + 1],
+        result[resultOffset + 2],
+      );
+      if (length < Number.EPSILON) {
+        throw new RangeError(`${label} contains a zero normal`);
+      }
+      result[resultOffset] /= length;
+      result[resultOffset + 1] /= length;
+      result[resultOffset + 2] /= length;
     }
   }
   return result;
@@ -571,6 +678,7 @@ function primitiveRecord(
   meshIndex,
   primitiveIndex,
   limits,
+  extensionsRequired,
 ) {
   const mesh = plainRecord(
     document.meshes[meshIndex],
@@ -612,12 +720,22 @@ function primitiveRecord(
     buffers,
     attributes.POSITION,
     `${label} POSITION`,
+    {
+      meshQuantization:
+        extensionsRequired.includes(KHR_MESH_QUANTIZATION),
+      semantic: "POSITION",
+    },
   );
   const normals = readVec3(
     document,
     buffers,
     attributes.NORMAL,
     `${label} NORMAL`,
+    {
+      meshQuantization:
+        extensionsRequired.includes(KHR_MESH_QUANTIZATION),
+      semantic: "NORMAL",
+    },
   );
   if (
     positions.length !== normals.length ||
@@ -687,16 +805,55 @@ function validateAsset(document, limits) {
       "NotSupportedError",
     );
   }
+  const extensionList = (value, label) => {
+    if (value === undefined) {
+      return [];
+    }
+    if (
+      !Array.isArray(value) ||
+      value.length > 64 ||
+      value.some((name) =>
+        typeof name !== "string" ||
+        name.length === 0 ||
+        name.length > 128 ||
+        !/^[A-Z][A-Z0-9]*_[A-Za-z0-9_]+$/u.test(name)) ||
+      new Set(value).size !== value.length
+    ) {
+      throw new TypeError(`${label} is invalid`);
+    }
+    return [...value];
+  };
+  const extensionsUsed = extensionList(
+    document.extensionsUsed,
+    "glTF extensionsUsed",
+  );
+  const extensionsRequired = extensionList(
+    document.extensionsRequired,
+    "glTF extensionsRequired",
+  );
   if (
-    document.extensionsRequired !== undefined &&
-    (
-      !Array.isArray(document.extensionsRequired) ||
-      document.extensionsRequired.length > 0
-    )
+    extensionsRequired.some((name) =>
+      name !== KHR_MESH_QUANTIZATION)
   ) {
     throw new DOMException(
       "required glTF extensions are unsupported",
       "NotSupportedError",
+    );
+  }
+  if (
+    extensionsRequired.some((name) =>
+      !extensionsUsed.includes(name))
+  ) {
+    throw new Error(
+      "required glTF extension is not declared as used",
+    );
+  }
+  if (
+    extensionsUsed.includes(KHR_MESH_QUANTIZATION) &&
+    !extensionsRequired.includes(KHR_MESH_QUANTIZATION)
+  ) {
+    throw new Error(
+      "KHR_mesh_quantization must be a required extension",
     );
   }
   for (const field of ["animations", "skins"]) {
@@ -742,7 +899,11 @@ function validateAsset(document, limits) {
       }
     }
   }
-  return asset;
+  return {
+    asset,
+    extensionsRequired,
+    extensionsUsed,
+  };
 }
 
 export function parseGltfReferenceProfile(
@@ -783,7 +944,11 @@ export function parseGltfReferenceProfile(
       document,
       binaryChunk,
     } = parseContainer(bytes, limits);
-    const asset = validateAsset(document, limits);
+    const {
+      asset,
+      extensionsRequired,
+      extensionsUsed,
+    } = validateAsset(document, limits);
     const nodes = collection(
       document.nodes,
       limits.maximumNodes,
@@ -907,6 +1072,7 @@ export function parseGltfReferenceProfile(
               meshIndex,
               primitiveIndex,
               limits,
+              extensionsRequired,
             );
             vertices += record.positions.length / 3;
             triangles += record.indices.length / 3;
@@ -1005,9 +1171,8 @@ export function parseGltfReferenceProfile(
       },
       externalResourceUris:
         loadedBuffers.externalResourceUris,
-      extensionsUsed: Array.isArray(document.extensionsUsed)
-        ? [...document.extensionsUsed]
-        : [],
+      extensionsRequired,
+      extensionsUsed,
     };
   } finally {
     bytes.fill(0);

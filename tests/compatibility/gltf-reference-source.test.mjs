@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   validateGltfExternalResourceAdmission,
+  validateGltfMeshQuantizationAdmission,
   validateGltfPhysicalGpuAdmission,
 } from "../../scripts/check-gltf-reference-source-compatibility.mjs";
 
@@ -37,6 +38,26 @@ async function externalInputs() {
     ).then(JSON.parse),
     readFile(
       manifest.evidence.externalResourceFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+  ]);
+  return { evidence, fixture, manifest };
+}
+
+async function meshQuantizationInputs() {
+  const manifest = JSON.parse(
+    await readFile(
+      "compatibility/gltf-reference-source.json",
+      "utf8",
+    ),
+  );
+  const [evidence, fixture] = await Promise.all([
+    readFile(
+      manifest.evidence.meshQuantizationProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.meshQuantizationFixtureManifest,
       "utf8",
     ).then(JSON.parse),
   ]);
@@ -134,5 +155,67 @@ test("glTF resource bundle admission requires exact fixture provenance", async (
       fixture,
     ),
     /glTF external resource admission evidence is invalid/u,
+  );
+});
+
+test("glTF reference source admits exact KHR_mesh_quantization evidence", async () => {
+  const { evidence, fixture, manifest } =
+    await meshQuantizationInputs();
+  assert.deepEqual(
+    validateGltfMeshQuantizationAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    {
+      status:
+        "passed-darwin-arm64-apple-metal-khr-mesh-quantization",
+      surfaces: 3,
+      sourceBytes: 1_632,
+      extension: "KHR_mesh_quantization",
+    },
+  );
+});
+
+test("glTF mesh quantization admission rejects changed derived bytes", async () => {
+  const { evidence, fixture, manifest } =
+    await meshQuantizationInputs();
+  fixture.entry.sha256 = "0".repeat(64);
+  assert.throws(
+    () => validateGltfMeshQuantizationAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /KHR_mesh_quantization admission evidence is invalid/u,
+  );
+});
+
+test("glTF mesh quantization admission keeps other required extensions held", async () => {
+  const { evidence, fixture, manifest } =
+    await meshQuantizationInputs();
+  evidence.held.otherRequiredExtensions = true;
+  assert.throws(
+    () => validateGltfMeshQuantizationAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /KHR_mesh_quantization product evidence is invalid/u,
+  );
+});
+
+test("glTF mesh quantization admission requires the immutable v0.2 boundary", async () => {
+  const { evidence, fixture, manifest } =
+    await meshQuantizationInputs();
+  evidence.immutableFederatedSurfaceV02.meshQuantizationBackported =
+    true;
+  assert.throws(
+    () => validateGltfMeshQuantizationAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /KHR_mesh_quantization product evidence is invalid/u,
   );
 });

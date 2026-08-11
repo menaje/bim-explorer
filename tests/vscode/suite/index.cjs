@@ -82,6 +82,7 @@ async function qualifyReference({
   api,
   manifestPath = undefined,
   productScale = false,
+  quantized = false,
   resourceBundle = false,
   root,
   sourcePath,
@@ -93,6 +94,8 @@ async function qualifyReference({
         "scripts",
         resourceBundle
           ? "public-gltf-resource-bundle-fixture.mjs"
+          : quantized
+            ? "public-gltf-quantized-fixture.mjs"
           : "public-gltf-fixture.mjs",
       ),
     ).href
@@ -101,10 +104,16 @@ async function qualifyReference({
     ? await fixtureModule.loadPublicGltfResourceBundleManifest(
         manifestPath,
       )
+    : quantized
+      ? await fixtureModule.loadPublicQuantizedGltfManifest(
+          manifestPath,
+        )
     : await fixtureModule.loadPublicGltfFixtureManifest(manifestPath);
   const entry = resourceBundle ? manifest.document : manifest.entry;
   const timeoutMs = resourceBundle
     ? 30_000
+    : quantized
+      ? 30_000
     : manifest.browserQualification.timeoutMs;
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
@@ -128,6 +137,8 @@ async function qualifyReference({
     ? "product-scale reference"
     : resourceBundle
       ? "external-resource reference"
+      : quantized
+        ? "quantized reference"
       : "reference";
   let ready = await waitFor(
     () => {
@@ -165,11 +176,15 @@ async function qualifyReference({
     ? manifest.expected.geometryRangeBytes
     : resourceBundle
       ? manifest.expected.geometryRangeBytes
+      : quantized
+        ? manifest.expected.geometryRangeBytes
       : 756;
   const expectedUploadedBytes = productScale
     ? 16_900_016
     : resourceBundle
       ? manifest.expected.gpuUploadBytes
+      : quantized
+        ? manifest.expected.gpuUploadBytes
       : 800;
   assert.equal(ready.hostKind, "vscode-webview");
   assert.equal(ready.externalUpload, false);
@@ -187,6 +202,16 @@ async function qualifyReference({
       ? manifest.expected.aggregateSourceBytes
       : manifest.entry.byteLength,
   );
+  if (quantized) {
+    assert.deepEqual(
+      ready.source.extensionsRequired,
+      manifest.expected.extensionsRequired,
+    );
+    assert.deepEqual(
+      ready.source.extensionsUsed,
+      manifest.expected.extensionsUsed,
+    );
+  }
   assert.equal(
     ready.source.sourceRole,
     "derived-or-reference-mesh",
@@ -255,6 +280,13 @@ async function qualifyReference({
       ...(resourceBundle
         ? { resourceBundle: ready.source.resourceBundle }
         : {}),
+      ...(quantized
+        ? {
+            extensionsRequired:
+              ready.source.extensionsRequired,
+            extensionsUsed: ready.source.extensionsUsed,
+          }
+        : {}),
       ...(productScale
         ? {
             classification:
@@ -303,6 +335,14 @@ async function qualifyReference({
           ready.resources.externalResources ===
             manifest.expected.externalResources &&
           ready.source.resourceBundle?.networkAtRuntime === false
+        ),
+      exactRequiredExtensions:
+        !quantized ||
+        (
+          JSON.stringify(ready.source.extensionsRequired) ===
+            JSON.stringify(manifest.expected.extensionsRequired) &&
+          JSON.stringify(ready.source.extensionsUsed) ===
+            JSON.stringify(manifest.expected.extensionsUsed)
         ),
       vscodeChromiumWebGl2: true,
       boundedRenderer:
@@ -964,6 +1004,8 @@ async function run() {
       .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
   const externalReferenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
+  const quantizedReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE;
   const lasSourcePath =
     process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
   const lazSourcePath =
@@ -1310,6 +1352,41 @@ async function run() {
         },
       };
     }
+    let quantizedReferenceQualification = null;
+    if (
+      typeof quantizedReferenceSourcePath === "string" &&
+      quantizedReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        quantized: true,
+        root,
+        sourcePath: quantizedReferenceSourcePath,
+      });
+      quantizedReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localQuantizedReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          quantizedReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          quantizedReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          quantizedReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          quantizedRequiredExtensionExact:
+            qualified.assertions.exactRequiredExtensions,
+          quantizedReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          quantizedReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          quantizedReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
     const pointQualifications = {};
     if (
       typeof lasSourcePath === "string" &&
@@ -1501,6 +1578,16 @@ async function run() {
             externalReferenceAssertions:
               externalReferenceQualification.assertions,
           }),
+      ...(quantizedReferenceQualification === null
+        ? {}
+        : {
+            quantizedReferenceFixture:
+              quantizedReferenceQualification.fixture,
+            quantizedReferenceObservation:
+              quantizedReferenceQualification.observation,
+            quantizedReferenceAssertions:
+              quantizedReferenceQualification.assertions,
+          }),
       ...(!hasPointQualifications
         ? {}
         : {
@@ -1592,6 +1679,13 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.externalReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.quantizedReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.quantizedReferenceAssertions,
         ).every(Boolean),
       );
     }

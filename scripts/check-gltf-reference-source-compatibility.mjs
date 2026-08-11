@@ -10,6 +10,10 @@ import {
   GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
   validateGltfResourceBundleProductsQualification,
 } from "./qualify-gltf-resource-bundle-products.mjs";
+import {
+  GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshQuantizationProductsQualification,
+} from "./qualify-gltf-mesh-quantization-products.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
@@ -93,6 +97,15 @@ const externalResourceProductsEvidence = JSON.parse(
     "utf8",
   ),
 );
+const meshQuantizationProductsEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.meshQuantizationProducts,
+    ),
+    "utf8",
+  ),
+);
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -108,6 +121,13 @@ const externalResourceFixture = JSON.parse(await readFile(
   path.join(
     ROOT,
     manifest.evidence.externalResourceFixtureManifest,
+  ),
+  "utf8",
+));
+const meshQuantizationFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.meshQuantizationFixtureManifest,
   ),
   "utf8",
 ));
@@ -139,6 +159,7 @@ const trueGates = [
   "productScaleCleanVsixProductOpen",
   "physicalGpu",
   "externalResourceBundle",
+  "khrMeshQuantization",
 ];
 const heldGates = [
   "requiredExtensions",
@@ -261,6 +282,76 @@ export function validateGltfExternalResourceAdmission(
   ) {
     throw new Error(
       "glTF external resource admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
+export function validateGltfMeshQuantizationAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfMeshQuantizationProductsQualification(
+      evidenceValue,
+    );
+  const extension = ["KHR_mesh_quantization"];
+  if (
+    manifestValue?.evidence?.meshQuantizationProducts !==
+      GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.meshQuantizationFixtureManifest !==
+      "fixtures/gltf/derived-khronos-box-mesh-quantization/" +
+        "manifest.json" ||
+    manifestValue?.gates?.khrMeshQuantization !== true ||
+    manifestValue?.gates?.requiredExtensions !== false ||
+    JSON.stringify(
+      manifestValue?.policy?.allowedRequiredExtensions,
+    ) !== JSON.stringify(extension) ||
+    manifestValue?.policy?.allowGenericRequiredExtensions !==
+      false ||
+    manifestValue?.policy?.claimKhrMeshQuantization !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-derived-gltf-quantization-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.provenance?.repository !==
+      evidenceValue?.fixture?.provenance?.repository ||
+    fixtureValue?.provenance?.commit !==
+      evidenceValue?.fixture?.provenance?.commit ||
+    fixtureValue?.provenance?.sourceByteLength !== 1_664 ||
+    fixtureValue?.provenance?.sourceSha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.extension?.name !== extension[0] ||
+    fixtureValue?.extension?.status !== "ratified" ||
+    fixtureValue?.extension?.specificationCommit !==
+      evidenceValue?.fixture?.manifest?.specificationCommit ||
+    fixtureValue?.entry?.name !== "BoxQuantized.glb" ||
+    fixtureValue?.entry?.byteLength !== report.sourceBytes ||
+    fixtureValue?.entry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.derivedSha256 ||
+    fixtureValue?.license?.spdx !== "CC-BY-4.0" ||
+    JSON.stringify(fixtureValue?.expected?.extensionsUsed) !==
+      JSON.stringify(extension) ||
+    JSON.stringify(fixtureValue?.expected?.extensionsRequired) !==
+      JSON.stringify(extension) ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint ||
+    fixtureValue?.expected?.vertices !== 24 ||
+    fixtureValue?.expected?.triangles !== 12 ||
+    fixtureValue?.expected?.geometryRangeBytes !== 756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 800 ||
+    fixtureValue?.tracking?.sourceArtifactTracked !== false ||
+    fixtureValue?.tracking?.derivedArtifactTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.extension !== extension[0] ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 1_632
+  ) {
+    throw new Error(
+      "KHR_mesh_quantization admission evidence is invalid",
     );
   }
   return report;
@@ -399,6 +490,11 @@ validateGltfExternalResourceAdmission(
   externalResourceProductsEvidence,
   externalResourceFixture,
 );
+validateGltfMeshQuantizationAdmission(
+  manifest,
+  meshQuantizationProductsEvidence,
+  meshQuantizationFixture,
+);
 
 if (
   manifest.schema !==
@@ -415,7 +511,9 @@ if (
   manifest.policy.allowLocalExternalResourceBundle !== true ||
   manifest.policy.externalResourceBundleScope !==
     "single-source-browser-vscode" ||
-  manifest.policy.allowRequiredExtensions !== false ||
+  JSON.stringify(manifest.policy.allowedRequiredExtensions) !==
+    JSON.stringify(["KHR_mesh_quantization"]) ||
+  manifest.policy.allowGenericRequiredExtensions !== false ||
   manifest.policy.inventIfcGlobalId !== false ||
   manifest.policy.allowBimSemanticAuthority !== false ||
   manifest.policy.nativeWrite !== false ||
@@ -427,6 +525,7 @@ if (
   manifest.policy.claimProductScaleVscodeProductOpen !== true ||
   manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
   manifest.policy.claimExternalResourceBundle !== true ||
+  manifest.policy.claimKhrMeshQuantization !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -461,6 +560,11 @@ if (
     GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
   manifest.evidence.externalResourceFixtureManifest !==
     "fixtures/gltf/public-khronos-box-external/manifest.json" ||
+  manifest.evidence.meshQuantizationProducts !==
+    GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.meshQuantizationFixtureManifest !==
+    "fixtures/gltf/derived-khronos-box-mesh-quantization/" +
+      "manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -859,6 +963,7 @@ const serialized = JSON.stringify({
   productScaleVscodeProductEvidence,
   representativePhysicalGpuEvidence,
   externalResourceProductsEvidence,
+  meshQuantizationProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

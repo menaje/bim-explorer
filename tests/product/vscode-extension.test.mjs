@@ -1013,6 +1013,8 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       byteLength: 1664,
       format: "glb",
       gltfVersion: "2.0",
+      extensionsRequired: ["KHR_mesh_quantization"],
+      extensionsUsed: ["KHR_mesh_quantization"],
       profile: "gltf-2.0-bounded-reference-mesh-v0.1",
       sourceRole: "derived-or-reference-mesh",
       semanticAuthority: false,
@@ -1034,6 +1036,10 @@ test("extension diagnostics preserve bounded reference identity only", () => {
   });
   assert.equal(report.source.format, "glb");
   assert.equal(report.source.semanticAuthority, false);
+  assert.deepEqual(
+    report.source.extensionsRequired,
+    ["KHR_mesh_quantization"],
+  );
   assert.equal(report.reference.globalId, null);
   assert.equal(
     report.reference.selectedNativeId,

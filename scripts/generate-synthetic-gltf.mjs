@@ -28,6 +28,36 @@ function binaryPayload() {
   return bytes;
 }
 
+function quantizedBinaryPayload() {
+  const byteLength = 44;
+  const bytes = new Uint8Array(byteLength);
+  const view = new DataView(bytes.buffer);
+  const positions = [
+    [-32_767, -32_767, 0],
+    [32_767, -32_767, 0],
+    [0, 32_767, 0],
+  ];
+  let offset = 0;
+  for (const position of positions) {
+    for (const value of position) {
+      view.setInt16(offset, value, true);
+      offset += 2;
+    }
+    offset += 2;
+  }
+  for (let index = 0; index < 3; index += 1) {
+    view.setInt8(offset, 0);
+    view.setInt8(offset + 1, 0);
+    view.setInt8(offset + 2, 127);
+    offset += 4;
+  }
+  for (const value of [0, 1, 2]) {
+    view.setUint16(offset, value, true);
+    offset += 2;
+  }
+  return bytes;
+}
+
 function documentFor(uri, secondNodeX = 3) {
   const buffer = { byteLength: 80 };
   if (uri !== null) {
@@ -95,6 +125,66 @@ function documentFor(uri, secondNodeX = 3) {
   };
 }
 
+function quantizedDocumentFor(secondNodeX = 3, uri = null) {
+  return {
+    ...documentFor(null, secondNodeX),
+    asset: {
+      version: "2.0",
+      generator:
+        "BIM Explorer deterministic KHR_mesh_quantization fixture",
+    },
+    extensionsUsed: ["KHR_mesh_quantization"],
+    extensionsRequired: ["KHR_mesh_quantization"],
+    accessors: [
+      {
+        bufferView: 0,
+        componentType: 5122,
+        normalized: true,
+        count: 3,
+        type: "VEC3",
+        min: [-32_767, -32_767, 0],
+        max: [32_767, 32_767, 0],
+      },
+      {
+        bufferView: 1,
+        componentType: 5120,
+        normalized: true,
+        count: 3,
+        type: "VEC3",
+      },
+      {
+        bufferView: 2,
+        componentType: 5123,
+        count: 3,
+        type: "SCALAR",
+      },
+    ],
+    bufferViews: [
+      {
+        buffer: 0,
+        byteOffset: 0,
+        byteLength: 24,
+        byteStride: 8,
+      },
+      {
+        buffer: 0,
+        byteOffset: 24,
+        byteLength: 12,
+        byteStride: 4,
+      },
+      {
+        buffer: 0,
+        byteOffset: 36,
+        byteLength: 6,
+      },
+    ],
+    buffers: [{
+      byteLength: 44,
+      ...(uri === null ? {} : { uri }),
+    }],
+  };
+}
+
 export function syntheticGltfJsonBytes() {
   const binary = binaryPayload();
   const uri =
@@ -121,12 +211,51 @@ export function syntheticGltfExternalBundle({
   };
 }
 
+export function syntheticQuantizedGltfJsonBytes() {
+  const binary = quantizedBinaryPayload();
+  const uri =
+    "data:application/octet-stream;base64," +
+    Buffer.from(binary).toString("base64");
+  binary.fill(0);
+  return new TextEncoder().encode(
+    JSON.stringify(quantizedDocumentFor(3, uri)),
+  );
+}
+
 export function syntheticGlbBytes({
   secondNodeX = 3,
 } = {}) {
   const binary = binaryPayload();
   const json = new TextEncoder().encode(
     JSON.stringify(documentFor(null, secondNodeX)),
+  );
+  const jsonLength = aligned(json.byteLength);
+  const binaryLength = aligned(binary.byteLength);
+  const bytes = new Uint8Array(
+    12 + 8 + jsonLength + 8 + binaryLength,
+  );
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.byteLength, true);
+  view.setUint32(12, jsonLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  bytes.fill(0x20, 20, 20 + jsonLength);
+  bytes.set(json, 20);
+  const binHeader = 20 + jsonLength;
+  view.setUint32(binHeader, binaryLength, true);
+  view.setUint32(binHeader + 4, 0x004e4942, true);
+  bytes.set(binary, binHeader + 8);
+  binary.fill(0);
+  return bytes;
+}
+
+export function syntheticQuantizedGlbBytes({
+  secondNodeX = 3,
+} = {}) {
+  const binary = quantizedBinaryPayload();
+  const json = new TextEncoder().encode(
+    JSON.stringify(quantizedDocumentFor(secondNodeX)),
   );
   const jsonLength = aligned(json.byteLength);
   const binaryLength = aligned(binary.byteLength);

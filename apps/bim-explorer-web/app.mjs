@@ -1627,6 +1627,13 @@ async function openBytes(bytesValue, {
           format: opened.snapshot.source.format,
           gltfVersion:
             opened.snapshot.source.gltfVersion,
+          extensionsRequired: [
+            ...opened.snapshot.referenceMetadata
+              .extensionsRequired,
+          ],
+          extensionsUsed: [
+            ...opened.snapshot.referenceMetadata.extensionsUsed,
+          ],
           profile: opened.snapshot.source.profile,
           resourceBundle: {
             ...opened.snapshot.referenceMetadata.resourceBundle,

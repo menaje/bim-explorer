@@ -210,6 +210,12 @@ function referenceMetadata(entity, snapshot) {
         snapshot.referenceMetadata?.generator ??
         "not declared",
     },
+    {
+      label: "Required extensions",
+      value:
+        snapshot.referenceMetadata?.extensionsRequired
+          ?.join(", ") || "none",
+    },
   ];
 }
 

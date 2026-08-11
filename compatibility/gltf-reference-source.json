@@ -31,6 +31,7 @@
     "productScaleCleanVsixProductOpen": true,
     "physicalGpu": true,
     "externalResourceBundle": true,
+    "khrMeshQuantization": true,
     "requiredExtensions": false,
     "write": false,
     "roundTrip": false,
@@ -49,13 +50,15 @@
     "productScaleCleanVsixProduct": "compatibility/evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json",
     "representativePhysicalGpu": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
     "externalResourceProducts": "compatibility/evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json",
+    "meshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json",
     "productScaleFixtureManifest": "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json",
-    "externalResourceFixtureManifest": "fixtures/gltf/public-khronos-box-external/manifest.json"
+    "externalResourceFixtureManifest": "fixtures/gltf/public-khronos-box-external/manifest.json",
+    "meshQuantizationFixtureManifest": "fixtures/gltf/derived-khronos-box-mesh-quantization/manifest.json"
   },
   "blockers": [
-    "required extensions remain unsupported"
+    "required extensions other than KHR_mesh_quantization and compression extensions remain unsupported"
   ],
   "limitations": [
     "the 1664-byte Khronos Box remains the cross-platform product-surface smoke fixture",
@@ -64,6 +67,9 @@
     "external glTF support is limited to at most 16 explicitly supplied same-folder ASCII .bin files under one 64MiB aggregate source cap",
     "the external resource product Gate is single-source only and does not change the immutable federated BIM Surface v0.2 runtime or .bimfed.json admission",
     "arbitrary paths, schemes, query or fragment URIs, percent-encoded names, symlinks, unused sidecars, external images and runtime network fetch remain blocked",
+    "KHR_mesh_quantization is the only admitted required extension and is decoded without a runtime codec; Draco, meshopt and every other required extension remain blocked",
+    "the cache-only Box-derived quantized fixture passes the official Validator, headless projection and Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX",
+    "KHR_mesh_quantization is not backported to the immutable federated BIM Surface v0.2 runtime and requires a later semantic-versioned surface contract before federation use",
     "actual Browser and VS Code product qualification passes macOS arm64 and Linux x64 CI with SwiftShader",
     "the product-scale GLB and exact local Box.gltf plus Box0.bin bundle pass actual Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX but do not claim Linux or Windows physical GPU coverage",
     "the output is a lossy display cache and has no source write authority",
@@ -75,7 +81,10 @@
     "allowExternalUri": false,
     "allowLocalExternalResourceBundle": true,
     "externalResourceBundleScope": "single-source-browser-vscode",
-    "allowRequiredExtensions": false,
+    "allowedRequiredExtensions": [
+      "KHR_mesh_quantization"
+    ],
+    "allowGenericRequiredExtensions": false,
     "inventIfcGlobalId": false,
     "allowBimSemanticAuthority": false,
     "nativeWrite": false,
@@ -87,6 +96,7 @@
     "claimProductScaleVscodeProductOpen": true,
     "claimProductScaleCleanVsixProductOpen": true,
     "claimExternalResourceBundle": true,
+    "claimKhrMeshQuantization": true,
     "claimPhysicalGpu": true,
     "claimProduction": false
   }

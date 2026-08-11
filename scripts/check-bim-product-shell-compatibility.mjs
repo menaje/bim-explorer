@@ -45,6 +45,10 @@ import {
   GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
   validateGltfResourceBundleProductsQualification,
 } from "./qualify-gltf-resource-bundle-products.mjs";
+import {
+  GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshQuantizationProductsQualification,
+} from "./qualify-gltf-mesh-quantization-products.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -77,6 +81,9 @@ const PASSED_GATES = [
   "browserLocalExternalGltfBundleOpen",
   "vscodeLocalExternalGltfBundleOpen",
   "cleanVsixLocalExternalGltfBundleOpen",
+  "browserKhrMeshQuantizationOpen",
+  "vscodeKhrMeshQuantizationOpen",
+  "cleanVsixKhrMeshQuantizationOpen",
   "browserReadonlyLasLazOpen",
   "vscodeReadonlyLasLazOpen",
   "cleanVsixLasLazOpen",
@@ -471,6 +478,7 @@ export function validateBimProductShellCompatibility(
   representativePointCloudsPhysicalGpu,
   viewerCoreProductEntrypoints,
   gltfExternalResourceProducts,
+  gltfMeshQuantizationProducts,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -544,6 +552,10 @@ export function validateBimProductShellCompatibility(
     validateGltfResourceBundleProductsQualification(
       gltfExternalResourceProducts,
     );
+  const gltfMeshQuantizationReport =
+    validateGltfMeshQuantizationProductsQualification(
+      gltfMeshQuantizationProducts,
+    );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -568,6 +580,52 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell evidence identity is invalid",
+    );
+  }
+  const quantizedReferenceFixture =
+    manifest.quantizedReferenceFixture;
+  const quantizedEvidenceFixture =
+    gltfMeshQuantizationProducts.fixture;
+  if (
+    quantizedReferenceFixture?.id !==
+      quantizedEvidenceFixture?.id ||
+    quantizedReferenceFixture?.byteLength !== 1_632 ||
+    quantizedReferenceFixture?.sha256 !==
+      quantizedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    quantizedReferenceFixture?.sourceByteLength !== 1_664 ||
+    quantizedReferenceFixture?.sourceSha256 !==
+      quantizedEvidenceFixture?.manifest?.sourceSha256 ||
+    quantizedReferenceFixture?.format !== "glb" ||
+    quantizedReferenceFixture?.gltfVersion !== "2.0" ||
+    quantizedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    JSON.stringify(quantizedReferenceFixture?.extensionsUsed) !==
+      JSON.stringify(["KHR_mesh_quantization"]) ||
+    JSON.stringify(
+      quantizedReferenceFixture?.extensionsRequired,
+    ) !== JSON.stringify(["KHR_mesh_quantization"]) ||
+    quantizedReferenceFixture?.artifactCommitted !== false ||
+    quantizedReferenceFixture?.sourceArtifactCommitted !== false ||
+    quantizedReferenceFixture?.thirdPartyContent !== true ||
+    quantizedReferenceFixture?.bundled !== false ||
+    quantizedReferenceFixture?.repository !==
+      quantizedEvidenceFixture?.provenance?.repository ||
+    quantizedReferenceFixture?.commit !==
+      quantizedEvidenceFixture?.provenance?.commit ||
+    quantizedReferenceFixture?.license !==
+      quantizedEvidenceFixture?.provenance?.license ||
+    quantizedReferenceFixture?.extensionSpecificationCommit !==
+      quantizedEvidenceFixture?.manifest?.specificationCommit ||
+    gltfMeshQuantizationReport.status !==
+      "passed-darwin-arm64-apple-metal-khr-mesh-quantization" ||
+    gltfMeshQuantizationReport.surfaces !== 3 ||
+    gltfMeshQuantizationReport.sourceBytes !== 1_632
+  ) {
+    throw new Error(
+      "KHR_mesh_quantization product fixture policy is invalid",
     );
   }
   const contracts = manifest.contracts;
@@ -900,6 +958,7 @@ export function validateBimProductShellCompatibility(
         ],
         publicViewerCoreProductEntrypoint: true,
         localExternalGltfBundleProductSurfaces: 3,
+        khrMeshQuantizationProductSurfaces: 3,
         pointCloudProductSurfaces: 12,
         pointCloudFormatAdmission: false,
         simultaneousComposition: false,
@@ -1303,6 +1362,8 @@ export function validateBimProductShellCompatibility(
         "2026-08-11.json" ||
     manifest.evidence?.gltfExternalResourceProducts !==
       GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfMeshQuantizationProducts !==
+      GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -1315,6 +1376,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimLocalExternalGltfBundleOpen !== true ||
     manifest.policy?.localExternalGltfBundleScope !==
       "single-source-product-surface" ||
+    manifest.policy?.claimKhrMeshQuantizationOpen !== true ||
     manifest.policy?.claimArbitraryGltfUri !== false ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
     manifest.policy?.claimVscodeLasLazOpen !== true ||
@@ -1377,6 +1439,7 @@ export function validateBimProductShellCompatibility(
         representativePointCloudsPhysicalGpu,
         viewerCoreProductEntrypoints,
         gltfExternalResourceProducts,
+        gltfMeshQuantizationProducts,
         installation,
         manifest,
         vscode,
@@ -1397,6 +1460,8 @@ export function validateBimProductShellCompatibility(
     passedGates: PASSED_GATES.length,
     externalGltfBundleSurfaces:
       gltfExternalResourceReport.surfaces,
+    khrMeshQuantizationSurfaces:
+      gltfMeshQuantizationReport.surfaces,
     physicalGpu: physicalGpu.status,
     pointCloudPhysicalGpu: pointCloudPhysicalGpu.status,
     pointCloudPhysicalGpuSurfaces:
@@ -1441,6 +1506,7 @@ async function main() {
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
     gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1556,6 +1622,13 @@ async function main() {
       ),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.gltfMeshQuantizationProducts,
+      ),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1582,6 +1655,7 @@ async function main() {
     representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
     gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

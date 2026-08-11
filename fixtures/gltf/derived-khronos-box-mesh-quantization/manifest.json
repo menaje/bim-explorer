@@ -1,0 +1,66 @@
+{
+  "schema": "bim-explorer-derived-gltf-quantization-fixture/1",
+  "fixtureId": "khronos-box-derived-khr-mesh-quantization",
+  "purpose": "cache-only qualification of one ratified required glTF extension without adding a runtime codec",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "sourcePath": "Models/Box/glTF-Binary/Box.glb",
+    "sourceByteLength": 1664,
+    "sourceSha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+    "modelOwner": "Cesium",
+    "modelYear": 2017,
+    "derivation": "exact normals to normalized BYTE and exact positions to normalized SHORT with a 0.5 node scale; indices unchanged"
+  },
+  "extension": {
+    "name": "KHR_mesh_quantization",
+    "status": "ratified",
+    "specificationRepository": "https://github.com/KhronosGroup/glTF",
+    "specificationCommit": "2b29723d025a995971726f2989697cdc49b1222a",
+    "specificationPath": "extensions/2.0/Khronos/KHR_mesh_quantization/README.md",
+    "specificationUrl": "https://github.com/KhronosGroup/glTF/blob/2b29723d025a995971726f2989697cdc49b1222a/extensions/2.0/Khronos/KHR_mesh_quantization/README.md"
+  },
+  "entry": {
+    "name": "BoxQuantized.glb",
+    "mediaType": "model/gltf-binary",
+    "byteLength": 1632,
+    "sha256": "7a98046be5a8f6a07dd46035fd274190315e08a2afbedb0b2f7037ed6df34357"
+  },
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "attribution": "Box © 2017 Cesium, licensed under CC BY 4.0"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "extensionsUsed": [
+      "KHR_mesh_quantization"
+    ],
+    "extensionsRequired": [
+      "KHR_mesh_quantization"
+    ],
+    "sourceFingerprint": "sha256:7a98046be5a8f6a07dd46035fd274190315e08a2afbedb0b2f7037ed6df34357",
+    "geometryRecords": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "ranges": 1,
+    "geometryRangeBytes": 756,
+    "geometryRangeSha256": "fad09eb7fae2d5754aa2aeb6db6a8383f4086c6a082e2ec5530e66aee47c2694",
+    "gpuUploadBytes": 800,
+    "bounds": {
+      "min": [-0.5, -0.5, -0.5],
+      "max": [0.5, 0.5, 0.5]
+    },
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "sourceArtifactTracked": false,
+    "derivedArtifactTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

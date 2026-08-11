@@ -279,6 +279,7 @@ export class GltfReferenceSource {
       referenceMetadata: {
         schema: GLTF_REFERENCE_SOURCE_CONTRACT,
         generator: profile.asset.generator,
+        extensionsRequired: profile.extensionsRequired,
         extensionsUsed: profile.extensionsUsed,
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
