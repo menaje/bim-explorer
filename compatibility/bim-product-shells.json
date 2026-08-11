@@ -17,7 +17,9 @@
     "pointSourceWorkerResponse": "bim-explorer-point-source-worker-response/0.2",
     "pointPickReceipt": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
     "pointHierarchy": "bim-explorer-derived-point-hierarchy/0.1",
-    "pointLodRangeReceipt": "bim-explorer-derived-point-lod-range-receipt/0.1"
+    "pointLodRangeReceipt": "bim-explorer-derived-point-lod-range-receipt/0.1",
+    "productViewerCore": "bim-explorer-product-viewer-core/0.1",
+    "viewerRenderProtocol": "menaje-viewer-render-protocol/0.1.0"
   },
   "fixture": {
     "id": "synthetic-semantic-ifc4",
@@ -171,7 +173,7 @@
     "browserDerivedPointHierarchyLod": true,
     "vscodeDerivedPointHierarchyLod": true,
     "cleanVsixDerivedPointHierarchyLod": true,
-    "publicViewerCoreConformance": false,
+    "publicViewerCoreConformance": true,
     "physicalGpuQualification": true,
     "marketplaceRelease": false
   },
@@ -196,10 +198,10 @@
     "browserPointPicking": "compatibility/evidence/point-cloud-browser-picking-2026-08-09.json",
     "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json",
     "pointCloudLodProducts": "compatibility/evidence/point-cloud-lod-products-2026-08-09.json",
-    "representativePhysicalGpu": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json"
+    "representativePhysicalGpu": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
+    "viewerCoreProductEntrypoints": "compatibility/evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json"
   },
   "blockers": [
-    "product entrypoints have not adopted the qualified public Viewer Core consumer",
     "marketplace release remains behind license and release gates"
   ],
   "policy": {
@@ -235,7 +237,7 @@
     "pointIdentityAuthority": "derived-point-range-order",
     "pointIdentityScope": "source-revision-and-range-digest",
     "claimE57FormatAdmission": false,
-    "claimPublicViewerCore": false,
+    "claimPublicViewerCore": true,
     "claimPublicScale": true,
     "claimPhysicalGpu": true,
     "claimMarketplaceRelease": false

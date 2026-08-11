@@ -41,7 +41,8 @@ physical GPU를 식별하거나 보장하지 않습니다. Browser와
 `vscode-webview`는 동일한 내부 host contract를 실제 Chromium WebGL2에서
 검증했습니다. 공개 Viewer Core 0.1.2 prerelease에서는 실제 BIM source와
 headless renderer를 Browser/VS Code host lifecycle로 mount하고 전량
-회수했습니다. 실제 제품 entrypoint 채택과 stable/production 호환은 별도
+회수했습니다. IFC/glTF/GLB 실제 제품 entrypoint도 공개 session을 통해 range를
+읽고 terminal cleanup을 통과했습니다. stable/production 호환은 별도
 Gate입니다. measurement 단위는 source-coordinate-unit이며 IFC unit 해석을
 renderer authority로 만들지 않습니다.
 

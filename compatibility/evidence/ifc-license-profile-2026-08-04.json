@@ -82,8 +82,8 @@
     "exactNotices": [
       {
         "path": "THIRD_PARTY_NOTICES.md",
-        "bytes": 6844,
-        "sha256": "50f79df616fdf642b901bced10307228d277f37505d9189b4ba48cfd3eb223c0",
+        "bytes": 7346,
+        "sha256": "9e34fe6b7fa29b0405512b183d3dfdaa3dcd044508d410a93d9deb2688ecb7fa",
         "exactVersion": true,
         "exactSource": true,
         "legalApprovalDisclaimed": true

@@ -37,6 +37,32 @@ function waitFor(probe, label, timeoutMs = 60_000) {
   });
 }
 
+function viewerCoreQualified(ready, disposed) {
+  return (
+    ready.viewerCore?.adopted === true &&
+    ready.viewerCore?.api === "menaje-viewer-core/0.1" &&
+    ready.viewerCore?.version === "0.1.2" &&
+    ready.viewerCore?.protocolId ===
+      "menaje-viewer-render-protocol/0.1.0" &&
+    ready.viewerCore?.source?.rangeReads > 0 &&
+    ready.viewerCore?.source?.rangeBytesRead ===
+      ready.renderer?.sourceReadBytes &&
+    ready.viewerCore?.host?.eventCount >= 1 &&
+    disposed.viewerCore?.disposed === true &&
+    disposed.viewerCore?.host?.disposed === true &&
+    disposed.viewerCore?.host?.eventCount >=
+      ready.viewerCore.host.eventCount &&
+    disposed.viewerCore?.source?.disposed === true &&
+    disposed.viewerCore?.source?.sessionDisposed === true &&
+    disposed.viewerCore?.presentation
+      ?.borrowedSessionDisposed === true &&
+    disposed.viewerCore?.presentation
+      ?.borrowedWorkerDisposed === true &&
+    disposed.viewerCore?.presentation?.disposalStatus ===
+      "disposed"
+  );
+}
+
 async function qualifyReference({
   api,
   manifestPath = undefined,
@@ -147,12 +173,15 @@ async function qualifyReference({
     false,
   );
   await vscode.commands.executeCommand(
-    "workbench.action.closeActiveEditor",
+    "bimExplorer.closeModel",
   );
   const disposed = await waitFor(() => {
     const report = api.qualificationReports().at(-1);
     return report?.status === "disposed" ? report : null;
   }, `${label} Custom Editor disposal`);
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
   return {
     fixture: {
       id: manifest.fixtureId,
@@ -188,6 +217,10 @@ async function qualifyReference({
         opened: ready.status,
         closed: disposed.status,
       },
+      viewerCore: {
+        opened: ready.viewerCore,
+        disposed: disposed.viewerCore,
+      },
       externalUpload: ready.externalUpload,
       telemetry: ready.telemetry,
     },
@@ -208,6 +241,8 @@ async function qualifyReference({
         ),
       pathFreeHostBridge: true,
       editorCloseObserved: disposed.status === "disposed",
+      publicViewerCoreProductEntrypoint:
+        viewerCoreQualified(ready, disposed),
     },
   };
 }
@@ -477,12 +512,15 @@ async function qualifyPointSource({
     false,
   );
   await vscode.commands.executeCommand(
-    "workbench.action.closeActiveEditor",
+    "bimExplorer.closeModel",
   );
   const disposed = await waitFor(() => {
     const report = api.qualificationReports().at(-1);
     return report?.status === "disposed" ? report : null;
   }, `${format.toUpperCase()} Custom Editor disposal`);
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
   return {
     fixture: {
       id: e57
@@ -899,6 +937,7 @@ async function run() {
     for (const command of [
       "bimExplorer.openWith",
       "bimExplorer.cancel",
+      "bimExplorer.closeModel",
       "bimExplorer.retry",
       "bimExplorer.showDiagnostics",
       "bimExplorer.pickVisiblePoint",
@@ -939,12 +978,15 @@ async function run() {
     assert.equal(serialized.includes(sourcePath), false);
     assert.equal(serialized.includes("qualification-source"), false);
     await vscode.commands.executeCommand(
-      "workbench.action.closeActiveEditor",
+      "bimExplorer.closeModel",
     );
     const disposed = await waitFor(() => {
       const report = api.qualificationReports().at(-1);
       return report?.status === "disposed" ? report : null;
     }, "Custom Editor disposal");
+    await vscode.commands.executeCommand(
+      "workbench.action.closeActiveEditor",
+    );
     let publicQualification = null;
     if (
       typeof publicSourcePath === "string" &&
@@ -1019,12 +1061,15 @@ async function run() {
         false,
       );
       await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor",
+        "bimExplorer.closeModel",
       );
       const publicDisposed = await waitFor(() => {
         const report = api.qualificationReports().at(-1);
         return report?.status === "disposed" ? report : null;
       }, "public Custom Editor disposal");
+      await vscode.commands.executeCommand(
+        "workbench.action.closeActiveEditor",
+      );
       publicQualification = {
         fixture: {
           id: manifest.fixtureId,
@@ -1050,6 +1095,10 @@ async function run() {
             opened: publicReady.status,
             closed: publicDisposed.status,
           },
+          viewerCore: {
+            opened: publicReady.viewerCore,
+            disposed: publicDisposed.viewerCore,
+          },
           externalUpload: publicReady.externalUpload,
           telemetry: publicReady.telemetry,
         },
@@ -1060,6 +1109,11 @@ async function run() {
           publicPathFreeHostBridge: true,
           publicEditorCloseObserved:
             publicDisposed.status === "disposed",
+          publicViewerCoreProductEntrypoint:
+            viewerCoreQualified(
+              publicReady,
+              publicDisposed,
+            ),
         },
       };
     }
@@ -1089,6 +1143,9 @@ async function run() {
             qualified.assertions.pathFreeHostBridge,
           referenceEditorCloseObserved:
             qualified.assertions.editorCloseObserved,
+          referenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
         },
       };
     }
@@ -1128,6 +1185,9 @@ async function run() {
             qualified.assertions.pathFreeHostBridge,
           productScaleReferenceEditorCloseObserved:
             qualified.assertions.editorCloseObserved,
+          productScaleReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
         },
       };
     }
@@ -1264,6 +1324,10 @@ async function run() {
         resources: ready.resources,
         renderer: ready.renderer,
         semantic: ready.semantic,
+        viewerCore: {
+          opened: ready.viewerCore,
+          disposed: disposed.viewerCore,
+        },
         lifecycle: {
           opened: ready.status,
           closed: disposed.status,
@@ -1342,6 +1406,8 @@ async function run() {
           serialized.includes("qualification-source") === false,
         commandsRegistered: true,
         editorCloseObserved: disposed.status === "disposed",
+        publicViewerCoreProductEntrypoint:
+          viewerCoreQualified(ready, disposed),
         packagedRuntimeIndependent: packagedRuntime,
         spatialIndependent: true,
         ...(rendererMode === "physical"
@@ -1353,11 +1419,17 @@ async function run() {
         actualPhysicalGpu: rendererMode === "physical"
           ? "passed-observed-apple-metal"
           : "not-claimed",
-        publicViewerCoreConformance: "held",
+        publicViewerCoreConformance:
+          "passed-product-entrypoint",
       },
     };
     assert.ok(
       Object.values(evidence.assertions).every(Boolean),
+      `Custom Editor assertions failed: ${JSON.stringify({
+        assertions: evidence.assertions,
+        disposedViewerCore: disposed.viewerCore,
+        readyViewerCore: ready.viewerCore,
+      })}`,
     );
     if (evidence.publicAssertions !== undefined) {
       assert.ok(

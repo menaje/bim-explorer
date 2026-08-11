@@ -5,7 +5,9 @@ application, isolated source Worker와 WebGL2 renderer로 여는 read-only
 Custom Editor host입니다.
 IFC는 Browser와 같은 host-neutral `bim-surface/0.1` runtime으로
 `BimModelSource`, bounded 3D host와 semantic explorer를 합성하고, glTF/GLB는
-source-native reference mesh explorer를 사용합니다. LAS/LAZ는 8 MiB·
+source-native reference mesh explorer를 사용합니다. 두 경로의 renderer range,
+selection과 lifecycle은 exact public Viewer Core product adapter를 통과합니다.
+LAS/LAZ는 8 MiB·
 500,000-point 한도, E57 multiple-scan은 최대 32 MiB·2,000,000-point의 명시적
 상한 안에서 source-neutral point range로 엽니다. `point:n` 선택은 exact source
 revision과 root range digest 안의 파생 순서 identity입니다. 대형 point range는
@@ -56,7 +58,9 @@ public v0.2 tag나 Spatial consumer support를 승인하지 않습니다.
   검증하며 LAS/LAZ에는 8 MiB, E57에는 32 MiB cap을 적용합니다.
 - source 변경은 exact URI watcher가 새 generation을 보내 기존 Worker와
   fingerprint-scoped cache를 무효화합니다.
-- cancel, retry와 diagnostics command는 active editor에만 전달합니다.
+- cancel, retry, diagnostics와 `BIM Explorer: Close Model` command는 active
+  editor에만 전달합니다. Close Model은 webview source/session/Worker/Host를
+  먼저 정리해 terminal 영수증을 남기고 editor close와 분리합니다.
 - editor close는 webview Worker/GPU를 파기하고 extension-side watcher와
   path-free report를 정리합니다.
 - 계정, telemetry, upload와 Coni Spatial 설치가 필요하지 않습니다.
@@ -76,7 +80,14 @@ package에 포함하지 않습니다. glTF/GLB bridge는 정규화된 format과 
 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
 runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며
-두 stale bundle 검사를 먼저 통과해야 합니다.
+두 stale bundle 검사를 먼저 통과해야 합니다. 또한 generated Viewer Core
+product runtime과 exact upstream package manifest, MPL-2.0 LICENSE/NOTICE를
+stage하고 bundle/disclosure byte parity를 검사합니다.
+
+`npm run qualify:viewer-core:product`는 public IFC와 small/product-scale GLB를
+staged VS Code 및 빈 profile의 clean-installed local VSIX에서 열어 공개 range
+read, selection event와 source/session/Worker/Host cleanup을 검증합니다. 이
+로컬 VSIX는 Marketplace나 Open VSX에 게시하지 않습니다.
 
 `npm run qualify:product:representative:physical-gpu`는 cache-only 공개 IFC와
 product-scale GLB를 software fallback이 비활성화된 Apple M2 Metal에서 각각

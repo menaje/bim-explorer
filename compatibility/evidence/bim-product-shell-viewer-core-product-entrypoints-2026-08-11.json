@@ -1,0 +1,1670 @@
+{
+  "schema": "bim-explorer-viewer-core-product-entrypoints-evidence/1",
+  "capturedAt": "2026-08-11T04:32:16.541Z",
+  "environment": {
+    "platform": "darwin-arm64",
+    "browser": "Google Chrome 151.0.7922.108",
+    "vscode": "1.132.0",
+    "rendererMode": "swiftshader",
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "publicDependencies": {
+    "repository": "menaje/dwg-viewer",
+    "tag": "viewer-core-v0.1.2",
+    "viewerCore": {
+      "package": "@menaje/viewer-core",
+      "version": "0.1.2",
+      "license": "MPL-2.0",
+      "specifier": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.2/menaje-viewer-core-0.1.2.tgz",
+      "artifactSha256": "69bedf751ef718eb8e37bb06718d5a956f33f567225bf64468d25e42c5a82c4c"
+    },
+    "renderProtocol": {
+      "package": "@menaje/viewer-render-protocol",
+      "version": "0.1.2",
+      "license": "MPL-2.0",
+      "protocol": "menaje-viewer-render-protocol/0.1.0",
+      "specifier": "https://github.com/menaje/dwg-viewer/releases/download/viewer-core-v0.1.2/menaje-viewer-render-protocol-0.1.2.tgz",
+      "artifactSha256": "6534ec7d021e06d3ea616ae15fb995ece57a7c3292fc37e892a28db8e2a91d42"
+    }
+  },
+  "productBundle": {
+    "contract": "bim-explorer-product-viewer-core/0.1",
+    "byteLength": 102544,
+    "sha256": "b3e5e2ddcc32a7d442e7f2b6cdaa4533f03bc33e63684386f3ba996be26cd587",
+    "generated": true,
+    "bundledInLocalVsix": true,
+    "correspondingSourceAvailable": true
+  },
+  "browser": {
+    "publicIfc": {
+      "schema": "bim-explorer-product-shell-browser-evidence/1",
+      "capturedAt": "2026-08-11T04:31:41.824Z",
+      "environment": {
+        "browser": "Google Chrome 151.0.7922.108",
+        "headless": true,
+        "platform": "darwin-arm64",
+        "rendererMode": "swiftshader",
+        "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
+      },
+      "fixture": {
+        "id": "public-schependomlaan-complete-ifc2x3",
+        "committed": false,
+        "format": "ifc",
+        "sourceBytes": 46766968,
+        "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+        "ifcSchema": "IFC2X3",
+        "provenance": {
+          "repository": "buildingsmart-community/Community-Sample-Test-Files",
+          "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+          "license": "CC-BY-4.0",
+          "cacheHit": true,
+          "bundled": false
+        }
+      },
+      "observation": {
+        "hostKind": "browser",
+        "model": {
+          "products": 3569,
+          "treeNodes": 3578,
+          "triangles": 261424,
+          "ranges": 3
+        },
+        "performance": {
+          "artifactMs": 3999.464999973774,
+          "sourceMs": 1.1300000548362732,
+          "totalMs": 4000.660000026226
+        },
+        "resources": {
+          "sourceBytes": 46766968,
+          "geometryBytes": 9290696,
+          "metadataBytes": 9266930,
+          "detailBytes": 5490130,
+          "detailRanges": 6,
+          "largestDetailRangeBytes": 1047997,
+          "propertyDetailBytes": 26376072,
+          "propertyDetailRanges": 26,
+          "ranges": 3,
+          "products": 3569,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 39871,
+          "sourceReadBytes": 4193868,
+          "uploadedBytes": 4399252
+        },
+        "semantic": {
+          "selectedExpressId": 224,
+          "treeRows": 58,
+          "maximumDomRows": 64
+        },
+        "interaction": {
+          "searchResults": 25,
+          "selectedExpressId": 317690,
+          "selectedNativeId": null,
+          "pointIndex": null,
+          "selectionOrigin": "3d",
+          "pickDisabled": false,
+          "searchDisabled": false,
+          "treeRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed",
+          "backendDisposed": true,
+          "clientDisposed": true
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "browser",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "sessionId": "session:bim-source:5c73cdd02b3add09b30cf437",
+              "sourceId": "source:ifc:5c73cdd02b3add09b30cf437",
+              "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+              "snapshotId": "snapshot:bim-source:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4:0",
+              "sequence": 1,
+              "reason": "surface-open",
+              "selection": {
+                "expressId": 224,
+                "globalId": "1nOs6Hg0v9fR$sLR1LjIyX",
+                "kind": "product",
+                "renderId": "render:ifc:5c73cdd02b3add09:224"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 4193868,
+              "rangeReads": 4,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 2,
+              "kind": "browser",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "sessionId": "session:bim-source:5c73cdd02b3add09b30cf437",
+              "sourceId": "source:ifc:5c73cdd02b3add09b30cf437",
+              "revisionId": "source-snapshot:sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+              "snapshotId": "snapshot:bim-source:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4:0",
+              "sequence": 2,
+              "reason": "3d",
+              "selection": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 4193868,
+              "rangeReads": 4,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "network": {
+          "externalOrigins": [],
+          "localRequestCount": 17
+        },
+        "runtimeErrors": []
+      },
+      "assertions": {
+        "actualBrowserWebGl2": true,
+        "boundedLocalSource": true,
+        "localOnly": true,
+        "pathFree": true,
+        "semanticAnd3dSync": true,
+        "workerAndGpuCleanup": true,
+        "publicViewerCoreProductEntrypoint": true,
+        "noRuntimeErrors": true,
+        "fixtureIdentity": true
+      },
+      "decision": {
+        "browserProductShell": "passed",
+        "referenceProductOpen": "not-applicable",
+        "pointCloudProductOpen": "not-applicable",
+        "actualPhysicalGpu": "not-claimed",
+        "publicViewerCoreConformance": "passed-product-entrypoint",
+        "vscodeChromiumRuntime": "separate-gate"
+      }
+    },
+    "productScaleGlb": {
+      "schema": "bim-explorer-product-shell-browser-evidence/1",
+      "capturedAt": "2026-08-11T04:31:46.730Z",
+      "environment": {
+        "browser": "Google Chrome 151.0.7922.108",
+        "headless": true,
+        "platform": "darwin-arm64",
+        "rendererMode": "swiftshader",
+        "rendererQualification": "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed"
+      },
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 42977928,
+        "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+        "gltfVersion": "2.0",
+        "nativeId": "node:0/mesh:0/primitive:0",
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "CC-BY-4.0",
+          "cacheHit": true,
+          "bundled": false
+        }
+      },
+      "qualification": {
+        "classification": "product-scale-reference",
+        "rendererLimits": {
+          "maximumRangeBytes": 33554432,
+          "maximumSourceReadBytes": 33554432,
+          "maximumGeometryPayloadBytes": 25165824,
+          "maximumInstancedTriangles": 4000000,
+          "maximumCpuStagingBytes": 33554432,
+          "maximumGpuCacheBytes": 33554432
+        }
+      },
+      "observation": {
+        "hostKind": "browser",
+        "model": {
+          "entities": 49,
+          "geometryRecords": 15,
+          "instances": 49,
+          "triangles": 573952,
+          "ranges": 1
+        },
+        "performance": {
+          "artifactMs": 109.75499999523163,
+          "sourceMs": 0.11500000953674316,
+          "totalMs": 109.94499999284744
+        },
+        "resources": {
+          "sourceBytes": 42977928,
+          "geometryBytes": 16896412,
+          "metadataBytes": 8988,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "propertyDetailBytes": 0,
+          "propertyDetailRanges": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 49,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 48765,
+          "sourceReadBytes": 16896412,
+          "uploadedBytes": 16900016
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:0/mesh:0/primitive:0",
+          "treeRows": 49,
+          "maximumDomRows": 64
+        },
+        "interaction": {
+          "searchResults": 1,
+          "selectedExpressId": 5,
+          "selectedNativeId": "node:4/mesh:4/primitive:0",
+          "pointIndex": null,
+          "selectionOrigin": "3d",
+          "pickDisabled": false,
+          "searchDisabled": false,
+          "treeRows": 49
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed",
+          "backendDisposed": true,
+          "clientDisposed": true
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "browser",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "sessionId": "session:gltf-reference:bd7133b4b322aae97c589b88",
+              "sourceId": "source:glb:bd7133b4b322aae97c589b88",
+              "revisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+              "snapshotId": "snapshot:gltf-reference:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007:0",
+              "sequence": 1,
+              "reason": "surface-open",
+              "selection": {
+                "expressId": 1,
+                "kind": "reference",
+                "nativeId": "node:0/mesh:0/primitive:0",
+                "renderId": "render:glb:bd7133b4b322aae9:1"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 16896412,
+              "rangeReads": 17,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 2,
+              "kind": "browser",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "sessionId": "session:gltf-reference:bd7133b4b322aae97c589b88",
+              "sourceId": "source:glb:bd7133b4b322aae97c589b88",
+              "revisionId": "source-snapshot:sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+              "snapshotId": "snapshot:gltf-reference:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007:0",
+              "sequence": 2,
+              "reason": "3d",
+              "selection": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 16896412,
+              "rangeReads": 17,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "network": {
+          "externalOrigins": [],
+          "localRequestCount": 17
+        },
+        "runtimeErrors": []
+      },
+      "assertions": {
+        "actualBrowserWebGl2": true,
+        "boundedLocalSource": true,
+        "boundedReferenceRenderer": true,
+        "localOnly": true,
+        "pathFree": true,
+        "referenceAnd3dSync": true,
+        "workerAndGpuCleanup": true,
+        "publicViewerCoreProductEntrypoint": true,
+        "noRuntimeErrors": true,
+        "fixtureIdentity": true
+      },
+      "decision": {
+        "browserProductShell": "passed",
+        "referenceProductOpen": "passed-bounded-read-only",
+        "pointCloudProductOpen": "not-applicable",
+        "actualPhysicalGpu": "not-claimed",
+        "publicViewerCoreConformance": "passed-product-entrypoint",
+        "vscodeChromiumRuntime": "separate-gate"
+      }
+    }
+  },
+  "vscode": {
+    "staged": {
+      "schema": "bim-explorer-vscode-custom-editor-evidence/1",
+      "capturedAt": "2026-08-11T04:32:00.041Z",
+      "environment": {
+        "vscode": "1.132.0",
+        "platform": "darwin-arm64",
+        "rendererMode": "swiftshader",
+        "runtimeLayout": "staged"
+      },
+      "fixture": {
+        "id": "synthetic-semantic-ifc4",
+        "committed": false,
+        "sourceBytes": 4030,
+        "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+        "ifcSchema": "IFC4"
+      },
+      "observation": {
+        "hostKind": "vscode-webview",
+        "model": {
+          "products": 2,
+          "treeNodes": 7,
+          "triangles": 24,
+          "ranges": 1
+        },
+        "performance": {
+          "artifactMs": 115.59999996423721,
+          "sourceMs": 0.20000004768371582,
+          "totalMs": 115.80000001192093
+        },
+        "resources": {
+          "sourceBytes": 4030,
+          "geometryBytes": 996,
+          "metadataBytes": 2899,
+          "detailBytes": 440,
+          "detailRanges": 1,
+          "largestDetailRangeBytes": 440,
+          "ranges": 1,
+          "products": 2,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 57585,
+          "sourceReadBytes": 996,
+          "uploadedBytes": 1120
+        },
+        "semantic": {
+          "selectedExpressId": 40,
+          "treeRows": 7,
+          "maximumDomRows": 64
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": {
+                "expressId": 40,
+                "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                "kind": "product",
+                "nativeId": null,
+                "renderId": "render:ifc:4a07468afbed86fa:40"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 996,
+              "rangeReads": 1,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 996,
+              "rangeReads": 1,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "commandCount": 4,
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "publicFixture": {
+        "id": "public-schependomlaan-complete-ifc2x3",
+        "committed": false,
+        "sourceBytes": 46766968,
+        "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+        "ifcSchema": "IFC2X3",
+        "provenance": {
+          "repository": "buildingsmart-community/Community-Sample-Test-Files",
+          "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "publicObservation": {
+        "hostKind": "vscode-webview",
+        "model": {
+          "products": 3569,
+          "treeNodes": 3578,
+          "triangles": 261424,
+          "ranges": 3
+        },
+        "performance": {
+          "artifactMs": 3948.7000000476837,
+          "sourceMs": 0.699999988079071,
+          "totalMs": 3949.400000035763
+        },
+        "resources": {
+          "sourceBytes": 46766968,
+          "geometryBytes": 9290696,
+          "metadataBytes": 9266930,
+          "detailBytes": 5490130,
+          "detailRanges": 6,
+          "largestDetailRangeBytes": 1047997,
+          "ranges": 3,
+          "products": 3569,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 39871,
+          "sourceReadBytes": 4193868,
+          "uploadedBytes": 4399252
+        },
+        "semantic": {
+          "selectedExpressId": 224,
+          "treeRows": 58,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": {
+                "expressId": 224,
+                "globalId": "1nOs6Hg0v9fR$sLR1LjIyX",
+                "kind": "product",
+                "nativeId": null,
+                "renderId": "render:ifc:5c73cdd02b3add09:224"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 4193868,
+              "rangeReads": 4,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 4193868,
+              "rangeReads": 4,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "publicAssertions": {
+        "localPublicSourceOpened": true,
+        "publicSourceIdentityExact": true,
+        "publicVscodeChromiumWebGl2": true,
+        "publicPathFreeHostBridge": true,
+        "publicEditorCloseObserved": true,
+        "publicViewerCoreProductEntrypoint": true
+      },
+      "referenceFixture": {
+        "id": "khronos-gltf-sample-assets-box-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 1664,
+        "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "referenceObservation": {
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 1,
+          "geometryRecords": 1,
+          "instances": 1,
+          "triangles": 12,
+          "ranges": 1
+        },
+        "performance": {
+          "artifactMs": 1.300000011920929,
+          "sourceMs": 0.09999996423721313,
+          "totalMs": 1.399999976158142
+        },
+        "resources": {
+          "sourceBytes": 1664,
+          "geometryBytes": 756,
+          "metadataBytes": 1093,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 1,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 86486,
+          "sourceReadBytes": 756,
+          "uploadedBytes": 800
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:1/mesh:0/primitive:0",
+          "treeRows": 1,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": {
+                "expressId": 1,
+                "globalId": null,
+                "kind": "reference",
+                "nativeId": "node:1/mesh:0/primitive:0",
+                "renderId": "render:glb:ed52f7192b8311d7:1"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 756,
+              "rangeReads": 1,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 756,
+              "rangeReads": 1,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "referenceAssertions": {
+        "localReferenceSourceOpened": true,
+        "referenceSourceIdentityExact": true,
+        "referenceHasNoBimSemanticAuthority": true,
+        "referenceVscodeChromiumWebGl2": true,
+        "referencePathFreeHostBridge": true,
+        "referenceEditorCloseObserved": true,
+        "referenceViewerCoreProductEntrypoint": true
+      },
+      "productScaleReferenceFixture": {
+        "id": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 42977928,
+        "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+        "gltfVersion": "2.0",
+        "nativeId": "node:0/mesh:0/primitive:0",
+        "classification": "product-scale-reference",
+        "rendererLimits": {
+          "maximumRangeBytes": 33554432,
+          "maximumSourceReadBytes": 33554432,
+          "maximumGeometryPayloadBytes": 25165824,
+          "maximumInstancedTriangles": 4000000,
+          "maximumCpuStagingBytes": 33554432,
+          "maximumGpuCacheBytes": 33554432
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "CC-BY-4.0",
+          "bundled": false
+        }
+      },
+      "productScaleReferenceObservation": {
+        "hostKind": "vscode-webview",
+        "model": {
+          "entities": 49,
+          "geometryRecords": 15,
+          "instances": 49,
+          "triangles": 573952,
+          "ranges": 1
+        },
+        "performance": {
+          "artifactMs": 123.80000001192093,
+          "sourceMs": 0,
+          "totalMs": 123.90000003576279
+        },
+        "resources": {
+          "sourceBytes": 42977928,
+          "geometryBytes": 16896412,
+          "metadataBytes": 8988,
+          "detailBytes": 0,
+          "detailRanges": 0,
+          "largestDetailRangeBytes": 0,
+          "ranges": 1,
+          "products": 0,
+          "referenceEntities": 49,
+          "wasmHeapCapacityBytes": null
+        },
+        "renderer": {
+          "actualGpu": true,
+          "nonBackgroundPixels": 48765,
+          "sourceReadBytes": 16896412,
+          "uploadedBytes": 16900016
+        },
+        "reference": {
+          "globalId": null,
+          "selectedNativeId": "node:0/mesh:0/primitive:0",
+          "treeRows": 49,
+          "maximumDomRows": 64
+        },
+        "lifecycle": {
+          "opened": "ready",
+          "closed": "disposed"
+        },
+        "viewerCore": {
+          "opened": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": false,
+            "host": {
+              "disposed": false,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": false,
+              "borrowedWorkerDisposed": false,
+              "disposalStatus": "active",
+              "disposed": false
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": {
+                "expressId": 1,
+                "globalId": null,
+                "kind": "reference",
+                "nativeId": "node:0/mesh:0/primitive:0",
+                "renderId": "render:glb:bd7133b4b322aae9:1"
+              }
+            },
+            "source": {
+              "disposed": false,
+              "rangeBytesRead": 16896412,
+              "rangeReads": 17,
+              "sessionDisposed": false,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          },
+          "disposed": {
+            "adopted": true,
+            "api": "menaje-viewer-core/0.1",
+            "contract": "bim-explorer-product-viewer-core/0.1",
+            "descriptorProtocolVersion": "0.1.0",
+            "disposed": true,
+            "host": {
+              "disposed": true,
+              "eventCount": 1,
+              "kind": "vscode-webview",
+              "lastEventType": "selection.changed"
+            },
+            "presentation": {
+              "borrowedSessionDisposed": true,
+              "borrowedWorkerDisposed": true,
+              "disposalStatus": "disposed",
+              "disposed": true
+            },
+            "protocolId": "menaje-viewer-render-protocol/0.1.0",
+            "protocolVersion": "0.1.0",
+            "selection": {
+              "reason": "surface-open",
+              "sequence": 1,
+              "identity": null
+            },
+            "source": {
+              "disposed": true,
+              "rangeBytesRead": 16896412,
+              "rangeReads": 17,
+              "sessionDisposed": true,
+              "sessionOpened": true
+            },
+            "version": "0.1.2"
+          }
+        },
+        "externalUpload": false,
+        "telemetry": false
+      },
+      "productScaleReferenceAssertions": {
+        "localProductScaleReferenceSourceOpened": true,
+        "productScaleReferenceIdentityExact": true,
+        "productScaleReferenceHasNoBimAuthority": true,
+        "productScaleReferenceVscodeWebGl2": true,
+        "productScaleReferenceRendererBounded": true,
+        "productScaleReferencePathFreeBridge": true,
+        "productScaleReferenceEditorCloseObserved": true,
+        "productScaleReferenceViewerCoreProductEntrypoint": true
+      },
+      "assertions": {
+        "actualVscodeChromiumWebGl2": true,
+        "localSourceOpened": true,
+        "pathFreeHostBridge": true,
+        "commandsRegistered": true,
+        "editorCloseObserved": true,
+        "publicViewerCoreProductEntrypoint": true,
+        "packagedRuntimeIndependent": true,
+        "spatialIndependent": true
+      },
+      "decision": {
+        "vscodeCustomEditor": "passed",
+        "actualPhysicalGpu": "not-claimed",
+        "publicViewerCoreConformance": "passed-product-entrypoint"
+      }
+    },
+    "cleanInstalledVsix": {
+      "schema": "bim-explorer-vscode-vsix-install-evidence/1",
+      "capturedAt": "2026-08-11T04:32:16.526Z",
+      "environment": {
+        "platform": "darwin-arm64",
+        "cleanUserData": true,
+        "cleanExtensionsDirectory": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1603198,
+        "installedRuntimeFiles": 31,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "3d9d64d03801a40ec493596822b38affda1e0d51ae5ebd2e7362797192e7e977",
+        "viewerCoreProductBundleSha256": "b3e5e2ddcc32a7d442e7f2b6cdaa4533f03bc33e63684386f3ba996be26cd587",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      },
+      "observation": {
+        "installedExtensions": [
+          "menaje.bim-explorer@0.1.0"
+        ],
+        "association": {
+          "viewType": "bimExplorer.ifcEditor",
+          "displayName": "BIM Explorer",
+          "selector": [
+            {
+              "filenamePattern": "*.ifc"
+            },
+            {
+              "filenamePattern": "*.gltf"
+            },
+            {
+              "filenamePattern": "*.glb"
+            },
+            {
+              "filenamePattern": "*.e57"
+            },
+            {
+              "filenamePattern": "*.las"
+            },
+            {
+              "filenamePattern": "*.laz"
+            }
+          ],
+          "priority": "default"
+        },
+        "dependencies": {
+          "laz-perf": "0.0.6",
+          "web-ifc": "0.0.77"
+        },
+        "runtime": {
+          "environment": {
+            "vscode": "1.132.0",
+            "platform": "darwin-arm64",
+            "rendererMode": "swiftshader",
+            "runtimeLayout": "installed-vsix"
+          },
+          "fixture": {
+            "id": "synthetic-semantic-ifc4",
+            "committed": false,
+            "sourceBytes": 4030,
+            "fingerprint": "sha256:4a07468afbed86fad1bc107b59b73a5cebbf041bc8a31785fe9d92ab25873999",
+            "ifcSchema": "IFC4"
+          },
+          "hostKind": "vscode-webview",
+          "model": {
+            "products": 2,
+            "treeNodes": 7,
+            "triangles": 24,
+            "ranges": 1
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 57585,
+            "sourceReadBytes": 996,
+            "uploadedBytes": 1120
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "viewerCore": {
+            "opened": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": false,
+              "host": {
+                "disposed": false,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": false,
+                "borrowedWorkerDisposed": false,
+                "disposalStatus": "active",
+                "disposed": false
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": {
+                  "expressId": 40,
+                  "globalId": "0AAAAAAAAAAAAAAAAAAA16",
+                  "kind": "product",
+                  "nativeId": null,
+                  "renderId": "render:ifc:4a07468afbed86fa:40"
+                }
+              },
+              "source": {
+                "disposed": false,
+                "rangeBytesRead": 996,
+                "rangeReads": 1,
+                "sessionDisposed": false,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            },
+            "disposed": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": true,
+              "host": {
+                "disposed": true,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": true,
+                "borrowedWorkerDisposed": true,
+                "disposalStatus": "disposed",
+                "disposed": true
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": null
+              },
+              "source": {
+                "disposed": true,
+                "rangeBytesRead": 996,
+                "rangeReads": 1,
+                "sessionDisposed": true,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            }
+          }
+        },
+        "publicRuntime": {
+          "fixture": {
+            "id": "public-schependomlaan-complete-ifc2x3",
+            "committed": false,
+            "sourceBytes": 46766968,
+            "fingerprint": "sha256:5c73cdd02b3add09b30cf437eb3fe01bc4631e5a60dbaf30c0b8a7b817585bb4",
+            "ifcSchema": "IFC2X3",
+            "provenance": {
+              "repository": "buildingsmart-community/Community-Sample-Test-Files",
+              "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+              "license": "CC-BY-4.0",
+              "bundled": false
+            }
+          },
+          "hostKind": "vscode-webview",
+          "model": {
+            "products": 3569,
+            "treeNodes": 3578,
+            "triangles": 261424,
+            "ranges": 3
+          },
+          "performance": {
+            "artifactMs": 3916.300000011921,
+            "sourceMs": 0.5999999642372131,
+            "totalMs": 3916.899999976158
+          },
+          "resources": {
+            "sourceBytes": 46766968,
+            "geometryBytes": 9290696,
+            "metadataBytes": 9266930,
+            "detailBytes": 5490130,
+            "detailRanges": 6,
+            "largestDetailRangeBytes": 1047997,
+            "ranges": 3,
+            "products": 3569,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 39871,
+            "sourceReadBytes": 4193868,
+            "uploadedBytes": 4399252
+          },
+          "semantic": {
+            "selectedExpressId": 224,
+            "treeRows": 58,
+            "maximumDomRows": 64
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "viewerCore": {
+            "opened": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": false,
+              "host": {
+                "disposed": false,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": false,
+                "borrowedWorkerDisposed": false,
+                "disposalStatus": "active",
+                "disposed": false
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": {
+                  "expressId": 224,
+                  "globalId": "1nOs6Hg0v9fR$sLR1LjIyX",
+                  "kind": "product",
+                  "nativeId": null,
+                  "renderId": "render:ifc:5c73cdd02b3add09:224"
+                }
+              },
+              "source": {
+                "disposed": false,
+                "rangeBytesRead": 4193868,
+                "rangeReads": 4,
+                "sessionDisposed": false,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            },
+            "disposed": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": true,
+              "host": {
+                "disposed": true,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": true,
+                "borrowedWorkerDisposed": true,
+                "disposalStatus": "disposed",
+                "disposed": true
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": null
+              },
+              "source": {
+                "disposed": true,
+                "rangeBytesRead": 4193868,
+                "rangeReads": 4,
+                "sessionDisposed": true,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            }
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "referenceRuntime": {
+          "fixture": {
+            "id": "khronos-gltf-sample-assets-box-glb",
+            "committed": false,
+            "format": "glb",
+            "sourceBytes": 1664,
+            "fingerprint": "sha256:ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+            "gltfVersion": "2.0",
+            "nativeId": "node:1/mesh:0/primitive:0",
+            "provenance": {
+              "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+              "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+              "license": "CC-BY-4.0",
+              "bundled": false
+            }
+          },
+          "hostKind": "vscode-webview",
+          "model": {
+            "entities": 1,
+            "geometryRecords": 1,
+            "instances": 1,
+            "triangles": 12,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 1.300000011920929,
+            "sourceMs": 0.19999998807907104,
+            "totalMs": 1.600000023841858
+          },
+          "resources": {
+            "sourceBytes": 1664,
+            "geometryBytes": 756,
+            "metadataBytes": 1093,
+            "detailBytes": 0,
+            "detailRanges": 0,
+            "largestDetailRangeBytes": 0,
+            "ranges": 1,
+            "products": 0,
+            "referenceEntities": 1,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 86486,
+            "sourceReadBytes": 756,
+            "uploadedBytes": 800
+          },
+          "reference": {
+            "globalId": null,
+            "selectedNativeId": "node:1/mesh:0/primitive:0",
+            "treeRows": 1,
+            "maximumDomRows": 64
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "viewerCore": {
+            "opened": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": false,
+              "host": {
+                "disposed": false,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": false,
+                "borrowedWorkerDisposed": false,
+                "disposalStatus": "active",
+                "disposed": false
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": {
+                  "expressId": 1,
+                  "globalId": null,
+                  "kind": "reference",
+                  "nativeId": "node:1/mesh:0/primitive:0",
+                  "renderId": "render:glb:ed52f7192b8311d7:1"
+                }
+              },
+              "source": {
+                "disposed": false,
+                "rangeBytesRead": 756,
+                "rangeReads": 1,
+                "sessionDisposed": false,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            },
+            "disposed": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": true,
+              "host": {
+                "disposed": true,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": true,
+                "borrowedWorkerDisposed": true,
+                "disposalStatus": "disposed",
+                "disposed": true
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": null
+              },
+              "source": {
+                "disposed": true,
+                "rangeBytesRead": 756,
+                "rangeReads": 1,
+                "sessionDisposed": true,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            }
+          },
+          "externalUpload": false,
+          "telemetry": false
+        },
+        "productScaleReferenceRuntime": {
+          "fixture": {
+            "id": "khronos-gltf-sample-assets-a-beautiful-game-glb",
+            "committed": false,
+            "format": "glb",
+            "sourceBytes": 42977928,
+            "fingerprint": "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007",
+            "gltfVersion": "2.0",
+            "nativeId": "node:0/mesh:0/primitive:0",
+            "classification": "product-scale-reference",
+            "rendererLimits": {
+              "maximumRangeBytes": 33554432,
+              "maximumSourceReadBytes": 33554432,
+              "maximumGeometryPayloadBytes": 25165824,
+              "maximumInstancedTriangles": 4000000,
+              "maximumCpuStagingBytes": 33554432,
+              "maximumGpuCacheBytes": 33554432
+            },
+            "provenance": {
+              "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+              "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+              "license": "CC-BY-4.0",
+              "bundled": false
+            }
+          },
+          "hostKind": "vscode-webview",
+          "model": {
+            "entities": 49,
+            "geometryRecords": 15,
+            "instances": 49,
+            "triangles": 573952,
+            "ranges": 1
+          },
+          "performance": {
+            "artifactMs": 120.80000001192093,
+            "sourceMs": 0.09999996423721313,
+            "totalMs": 120.89999997615814
+          },
+          "resources": {
+            "sourceBytes": 42977928,
+            "geometryBytes": 16896412,
+            "metadataBytes": 8988,
+            "detailBytes": 0,
+            "detailRanges": 0,
+            "largestDetailRangeBytes": 0,
+            "ranges": 1,
+            "products": 0,
+            "referenceEntities": 49,
+            "wasmHeapCapacityBytes": null
+          },
+          "renderer": {
+            "actualGpu": true,
+            "nonBackgroundPixels": 48765,
+            "sourceReadBytes": 16896412,
+            "uploadedBytes": 16900016
+          },
+          "reference": {
+            "globalId": null,
+            "selectedNativeId": "node:0/mesh:0/primitive:0",
+            "treeRows": 49,
+            "maximumDomRows": 64
+          },
+          "lifecycle": {
+            "opened": "ready",
+            "closed": "disposed"
+          },
+          "viewerCore": {
+            "opened": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": false,
+              "host": {
+                "disposed": false,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": false,
+                "borrowedWorkerDisposed": false,
+                "disposalStatus": "active",
+                "disposed": false
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": {
+                  "expressId": 1,
+                  "globalId": null,
+                  "kind": "reference",
+                  "nativeId": "node:0/mesh:0/primitive:0",
+                  "renderId": "render:glb:bd7133b4b322aae9:1"
+                }
+              },
+              "source": {
+                "disposed": false,
+                "rangeBytesRead": 16896412,
+                "rangeReads": 17,
+                "sessionDisposed": false,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            },
+            "disposed": {
+              "adopted": true,
+              "api": "menaje-viewer-core/0.1",
+              "contract": "bim-explorer-product-viewer-core/0.1",
+              "descriptorProtocolVersion": "0.1.0",
+              "disposed": true,
+              "host": {
+                "disposed": true,
+                "eventCount": 1,
+                "kind": "vscode-webview",
+                "lastEventType": "selection.changed"
+              },
+              "presentation": {
+                "borrowedSessionDisposed": true,
+                "borrowedWorkerDisposed": true,
+                "disposalStatus": "disposed",
+                "disposed": true
+              },
+              "protocolId": "menaje-viewer-render-protocol/0.1.0",
+              "protocolVersion": "0.1.0",
+              "selection": {
+                "reason": "surface-open",
+                "sequence": 1,
+                "identity": null
+              },
+              "source": {
+                "disposed": true,
+                "rangeBytesRead": 16896412,
+                "rangeReads": 17,
+                "sessionDisposed": true,
+                "sessionOpened": true
+              },
+              "version": "0.1.2"
+            }
+          },
+          "externalUpload": false,
+          "telemetry": false
+        }
+      },
+      "assertions": {
+        "cliAcceptedPackage": true,
+        "extensionRegistered": true,
+        "requiredRuntimeComplete": true,
+        "workerBundleExact": true,
+        "pointWorkerBundleExact": true,
+        "lazPerfRuntimeExact": true,
+        "viewerCoreProductBundleExact": true,
+        "viewerCoreDisclosuresExact": true,
+        "noSpatialDependency": true,
+        "readOnlyIfcAssociation": true,
+        "readOnlyGltfGlbAssociation": true,
+        "readOnlyLasLazAssociation": true,
+        "readOnlyFederationAssociation": true,
+        "installedPackageOpensFixture": true,
+        "installedPackageUsesWebGl2": true,
+        "installedPackageBridgeIsPathFree": true,
+        "installedPackageClosesCleanly": true,
+        "installedViewerCoreProductEntrypoint": true,
+        "installedPackageOpensPublicFixture": true,
+        "installedPublicFixtureIdentityExact": true,
+        "installedPublicFixtureUsesWebGl2": true,
+        "installedPublicBridgeIsPathFree": true,
+        "installedPublicFixtureClosesCleanly": true,
+        "installedPublicViewerCoreProductEntrypoint": true,
+        "installedPackageOpensReferenceFixture": true,
+        "installedReferenceIdentityExact": true,
+        "installedReferenceHasNoBimAuthority": true,
+        "installedReferenceUsesWebGl2": true,
+        "installedReferenceBridgeIsPathFree": true,
+        "installedReferenceClosesCleanly": true,
+        "installedReferenceViewerCoreProductEntrypoint": true,
+        "installedPackageOpensProductScaleReference": true,
+        "installedProductScaleReferenceIdentityExact": true,
+        "installedProductScaleReferenceHasNoBimAuthority": true,
+        "installedProductScaleReferenceUsesWebGl2": true,
+        "installedProductScaleReferenceRendererBounded": true,
+        "installedProductScaleReferenceBridgeIsPathFree": true,
+        "installedProductScaleReferenceClosesCleanly": true,
+        "installedProductScaleViewerCoreProductEntrypoint": true
+      },
+      "decision": {
+        "cleanInstall": "passed",
+        "publicFixtureOpen": "passed",
+        "referenceFixtureOpen": "passed-bounded-read-only",
+        "productScaleReferenceFixtureOpen": "passed-bounded-read-only",
+        "pointFixtureOpen": "not-run",
+        "federatedSurface": "not-run",
+        "publicViewerCoreConformance": "passed-product-entrypoint",
+        "marketplaceRelease": "held"
+      }
+    }
+  },
+  "assertions": {
+    "exactPublicPackages": true,
+    "browserPublicIfcEntrypoint": true,
+    "browserProductScaleGlbEntrypoint": true,
+    "stagedVscodeSyntheticIfcEntrypoint": true,
+    "stagedVscodePublicIfcEntrypoint": true,
+    "stagedVscodeReferenceGlbEntrypoint": true,
+    "stagedVscodeProductScaleGlbEntrypoint": true,
+    "cleanVsixSyntheticIfcEntrypoint": true,
+    "cleanVsixPublicIfcEntrypoint": true,
+    "cleanVsixReferenceGlbEntrypoint": true,
+    "cleanVsixProductScaleGlbEntrypoint": true,
+    "cleanVsixPackageAndDisclosures": true,
+    "marketplaceStillHeld": true
+  },
+  "decision": {
+    "publicViewerCoreConformance": true,
+    "productEntrypoints": "passed-browser-vscode-ifc-glb",
+    "marketplaceRelease": false,
+    "productionSupport": false,
+    "vscodeExtensionPublished": false
+  }
+}

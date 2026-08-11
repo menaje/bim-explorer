@@ -51,5 +51,6 @@ ID의 독립 bounded slice를 읽고 같은 session의 반복 선택은 immutabl
 
 공개 `@menaje/viewer-core` 0.1.2 prerelease의 conformance runner에서 이
 source의 3D projection, bounded range, identity, stale 거부와 disposal을
-통과했습니다. stable/production compatibility와 제품 entrypoint 채택은
-별도 Gate입니다.
+통과했습니다. IFC 제품 entrypoint도 public RenderSource adapter를 통해 같은
+range와 lifecycle을 검증했습니다. stable/production compatibility는 별도
+Gate입니다.

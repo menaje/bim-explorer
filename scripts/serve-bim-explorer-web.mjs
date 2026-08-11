@@ -176,6 +176,13 @@ const ROUTES = new Map([
     route("packages/bim-surface/runtime/index.mjs", JAVASCRIPT),
   ],
   [
+    "/packages/viewer-core-consumer/runtime/product.mjs",
+    route(
+      "packages/viewer-core-consumer/runtime/product.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
     "/packages/bim-renderer-3d/src/camera-controls.mjs",
     route(
       "packages/bim-renderer-3d/src/camera-controls.mjs",

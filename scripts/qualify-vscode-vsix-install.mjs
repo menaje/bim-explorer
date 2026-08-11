@@ -288,7 +288,14 @@ export async function qualifyVscodeVsixInstall({
       "packages/bim-surface-hit/src/index.mjs",
       "packages/federated-bim-surface/src/index.mjs",
       "packages/federated-bim-surface/runtime/index.mjs",
+      "packages/viewer-core-consumer/runtime/product.mjs",
       "LICENSES/e57-rs-MIT.txt",
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-core/package.json",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/package.json",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
@@ -315,6 +322,8 @@ export async function qualifyVscodeVsixInstall({
       sourceLazPerfJsSha256,
       installedLazPerfWasmSha256,
       sourceLazPerfWasmSha256,
+      installedViewerCoreProductSha256,
+      sourceViewerCoreProductSha256,
     ] =
       await Promise.all([
         sha256(path.join(
@@ -369,7 +378,40 @@ export async function qualifyVscodeVsixInstall({
           "worker",
           "laz-perf.wasm",
         )),
+        sha256(path.join(
+          installedRoot,
+          "packages",
+          "viewer-core-consumer",
+          "runtime",
+          "product.mjs",
+        )),
+        sha256(path.join(
+          ROOT,
+          "packages",
+          "viewer-core-consumer",
+          "runtime",
+          "product.mjs",
+        )),
       ]);
+    const viewerDisclosureFiles = [
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-core/package.json",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/package.json",
+    ];
+    const viewerDisclosuresExact = (
+      await Promise.all(viewerDisclosureFiles.map(
+        async (relative) => {
+          const [installed, source] = await Promise.all([
+            readFile(path.join(installedRoot, relative)),
+            readFile(path.join(ROOT, relative)),
+          ]);
+          return installed.equals(source);
+        },
+      ))
+    ).every(Boolean);
     await runTests({
       vscodeExecutablePath: runtimeHost.executable,
       extensionDevelopmentPath: path.join(
@@ -459,6 +501,10 @@ export async function qualifyVscodeVsixInstall({
       lazPerfRuntimeExact:
         installedLazPerfJsSha256 === sourceLazPerfJsSha256 &&
         installedLazPerfWasmSha256 === sourceLazPerfWasmSha256,
+      viewerCoreProductBundleExact:
+        installedViewerCoreProductSha256 ===
+          sourceViewerCoreProductSha256,
+      viewerCoreDisclosuresExact: viewerDisclosuresExact,
       noSpatialDependency:
         !Object.keys(manifest.dependencies ?? {}).some((name) =>
           /spatial/iu.test(name)),
@@ -499,6 +545,9 @@ export async function qualifyVscodeVsixInstall({
         runtime.assertions?.pathFreeHostBridge === true,
       installedPackageClosesCleanly:
         runtime.assertions?.editorCloseObserved === true,
+      installedViewerCoreProductEntrypoint:
+        runtime.assertions
+          ?.publicViewerCoreProductEntrypoint === true,
       ...(includeFederatedSurfaceFixture
         ? {
             installedFederatedSurfaceQualified:
@@ -522,6 +571,9 @@ export async function qualifyVscodeVsixInstall({
             installedPublicFixtureClosesCleanly:
               runtime.publicAssertions
                 ?.publicEditorCloseObserved === true,
+            installedPublicViewerCoreProductEntrypoint:
+              runtime.publicAssertions
+                ?.publicViewerCoreProductEntrypoint === true,
           }
         : {}),
       installedPackageOpensReferenceFixture:
@@ -542,6 +594,9 @@ export async function qualifyVscodeVsixInstall({
       installedReferenceClosesCleanly:
         runtime.referenceAssertions
           ?.referenceEditorCloseObserved === true,
+      installedReferenceViewerCoreProductEntrypoint:
+        runtime.referenceAssertions
+          ?.referenceViewerCoreProductEntrypoint === true,
       ...(includeProductScaleFixture
         ? {
             installedPackageOpensProductScaleReference:
@@ -565,6 +620,10 @@ export async function qualifyVscodeVsixInstall({
             installedProductScaleReferenceClosesCleanly:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferenceEditorCloseObserved === true,
+            installedProductScaleViewerCoreProductEntrypoint:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceViewerCoreProductEntrypoint ===
+                  true,
           }
         : {}),
       ...(includePointFixtures
@@ -652,6 +711,8 @@ export async function qualifyVscodeVsixInstall({
         workerBundleSha256: installedWorkerSha256,
         pointWorkerBundleSha256:
           installedPointWorkerSha256,
+        viewerCoreProductBundleSha256:
+          installedViewerCoreProductSha256,
         lazPerfJsSha256: installedLazPerfJsSha256,
         lazPerfWasmSha256: installedLazPerfWasmSha256,
       },
@@ -667,6 +728,7 @@ export async function qualifyVscodeVsixInstall({
           model: runtime.observation?.model,
           renderer: runtime.observation?.renderer,
           lifecycle: runtime.observation?.lifecycle,
+          viewerCore: runtime.observation?.viewerCore,
         },
         ...(includePublicFixture
           ? {
@@ -685,6 +747,8 @@ export async function qualifyVscodeVsixInstall({
                   runtime.publicObservation?.semantic,
                 lifecycle:
                   runtime.publicObservation?.lifecycle,
+                viewerCore:
+                  runtime.publicObservation?.viewerCore,
                 externalUpload:
                   runtime.publicObservation?.externalUpload,
                 telemetry:
@@ -707,6 +771,8 @@ export async function qualifyVscodeVsixInstall({
             runtime.referenceObservation?.reference,
           lifecycle:
             runtime.referenceObservation?.lifecycle,
+          viewerCore:
+            runtime.referenceObservation?.viewerCore,
           externalUpload:
             runtime.referenceObservation?.externalUpload,
           telemetry:
@@ -738,6 +804,9 @@ export async function qualifyVscodeVsixInstall({
                 lifecycle:
                   runtime.productScaleReferenceObservation
                     ?.lifecycle,
+                viewerCore:
+                  runtime.productScaleReferenceObservation
+                    ?.viewerCore,
                 externalUpload:
                   runtime.productScaleReferenceObservation
                     ?.externalUpload,
@@ -791,6 +860,8 @@ export async function qualifyVscodeVsixInstall({
           includeFederatedSurfaceFixture
             ? "passed-actual-vscode-surface-anchor"
             : "not-run",
+        publicViewerCoreConformance:
+          "passed-product-entrypoint",
         marketplaceRelease: "held",
       },
     });

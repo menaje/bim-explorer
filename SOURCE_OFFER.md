@@ -29,3 +29,22 @@ SBOM, source archive, checksums, and build provenance together.
 For a copy of the corresponding source without network access, open a GitHub
 issue requesting the `v0.1.0` source archive. Only reasonable media and delivery
 costs, if any, will be charged.
+
+## Unpublished development VSIX candidate
+
+The current development candidate incorporates the following exact MPL-2.0
+package sources, without repository-side edits to their upstream source files,
+into a generated BIM Explorer product adapter runtime:
+
+- `@menaje/viewer-core@0.1.2`
+- `@menaje/viewer-render-protocol@0.1.2`
+- immutable source and release assets:
+  <https://github.com/menaje/dwg-viewer/releases/tag/viewer-core-v0.1.2>
+
+The BIM Explorer adapter source is in
+[`packages/viewer-core-consumer`](packages/viewer-core-consumer). Run
+`npm run build:viewer-core-product` from the exact BIM Explorer source revision
+to reproduce the generated executable transformation. The locally qualified
+VSIX includes the exact upstream package manifests, LICENSE and NOTICE files.
+It has not been published to the VS Code Marketplace or Open VSX, and this
+section does not alter the immutable v0.1.0 release.

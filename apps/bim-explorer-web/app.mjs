@@ -14,6 +14,9 @@ import {
   createReferenceMeshExplorer,
 } from "./reference-mesh-explorer.mjs";
 import {
+  openBimProductViewerCore,
+} from "../../packages/viewer-core-consumer/runtime/product.mjs";
+import {
   createBimProductSourceWorkerClient,
 } from "./worker-source-client.mjs";
 import {
@@ -671,6 +674,10 @@ async function selectExpressId(expressId, origin) {
   await active.explorer.selectExpressId(expressId, {
     origin,
   });
+  active.viewerCore.publishSelection(
+    active.explorer.state.selection,
+    { reason: origin },
+  );
   await applySelectionView();
   render();
 }
@@ -740,32 +747,13 @@ async function disposeActive(reason) {
   let explorerDisposed = false;
   let hostReceipt = null;
   let clientDisposed = false;
-  if (current.surface !== null) {
-    let surfaceReceipt = null;
-    try {
-      surfaceReceipt = await current.surface.dispose({ reason });
-      explorerDisposed = surfaceReceipt.explorerDisposed;
-      hostReceipt = surfaceReceipt.hostReceipt;
-    } finally {
-      clientDisposed = await current.client.dispose();
-    }
-    elements.diagLife.textContent = "disposed";
-    return {
-      clientDisposed,
-      explorerDisposed,
-      hostReceipt,
-      backend: current.backend.state,
-      client: current.client.state,
-    };
-  }
   try {
-    explorerDisposed = await current.explorer.dispose();
+    await current.viewerCore.dispose();
+    explorerDisposed =
+      current.product.disposal?.explorerDisposed === true;
+    hostReceipt = current.product.disposal?.hostReceipt ?? null;
   } finally {
-    try {
-      hostReceipt = await current.host.dispose({ reason });
-    } finally {
-      clientDisposed = await current.client.dispose();
-    }
+    clientDisposed = await current.client.dispose();
   }
   elements.diagLife.textContent = "disposed";
   return {
@@ -774,6 +762,8 @@ async function disposeActive(reason) {
     hostReceipt,
     backend: current.backend.state,
     client: current.client.state,
+    reason,
+    viewerCore: current.viewerCore.state,
   };
 }
 
@@ -1416,64 +1406,141 @@ async function openBytes(bytesValue, {
     const reference =
       opened.snapshot.source.sourceRole ===
         "derived-or-reference-mesh";
-    let explorer;
-    let host;
-    let mount;
-    let surface = null;
-    if (reference) {
-      host = createBimRenderer3dHost({
-        kind: runtime.hostKind,
-        renderer,
-      });
-      phase = "renderer-mount";
-      mount = await host.mount({
-        session: opened.session,
-        snapshot: opened.snapshot,
-        workerLease: opened.workerLease,
-      });
-      phase = "semantic-initialize";
-      explorer = createReferenceMeshExplorer({
-        session: opened.session,
-        snapshot: opened.snapshot,
-        limits: {
-          maximumDomRows: 64,
-          maximumSearchResults: 500,
-          searchPageSize: 25,
-        },
-      });
-      await explorer.initialize();
-      const entity = firstRenderable(opened.snapshot);
-      if (entity !== null) {
-        await revealFirstProduct(
-          explorer,
-          opened.snapshot,
-          entity,
-        );
-      }
-    } else {
-      phase = "surface-open";
-      surface = createBimSurface({
-        kind: runtime.hostKind,
-        renderer,
-        storage: localStorageAdapter(),
-        semanticLimits: {
-          maximumDomRows: 64,
-          maximumLoadedTreeItems: 2_000,
-          maximumRelations: 100,
-          maximumSearchResults: 500,
-          searchPageSize: 25,
-          treePageSize: 25,
-        },
-      });
-      const receipt = await surface.open({
-        session: opened.session,
-        snapshot: opened.snapshot,
-        workerLease: opened.workerLease,
-      });
-      mount = receipt.mount;
-      host = surface.host;
-      explorer = surface.explorer;
-    }
+    phase = "viewer-core-open";
+    const viewerCore = await openBimProductViewerCore({
+      kind: runtime.hostKind,
+      opened,
+      mountProduct: async ({
+        publishSelection,
+        session,
+        signal,
+        snapshot,
+        workerLease,
+      }) => {
+        if (!reference) {
+          phase = "surface-open";
+          const surface = createBimSurface({
+            kind: runtime.hostKind,
+            renderer,
+            storage: localStorageAdapter(),
+            semanticLimits: {
+              maximumDomRows: 64,
+              maximumLoadedTreeItems: 2_000,
+              maximumRelations: 100,
+              maximumSearchResults: 500,
+              searchPageSize: 25,
+              treePageSize: 25,
+            },
+          });
+          const receipt = await surface.open({
+            session,
+            signal,
+            snapshot,
+            workerLease,
+          });
+          publishSelection(surface.explorer.state.selection, {
+            reason: "surface-open",
+          });
+          let disposal = null;
+          return {
+            explorer: surface.explorer,
+            get disposal() {
+              return disposal;
+            },
+            host: surface.host,
+            mount: receipt.mount,
+            surface,
+            async dispose() {
+              const surfaceReceipt = await surface.dispose({
+                reason: "viewer-core-runtime-dispose",
+              });
+              disposal = Object.freeze({
+                explorerDisposed:
+                  surfaceReceipt.explorerDisposed,
+                hostReceipt: surfaceReceipt.hostReceipt,
+              });
+              return disposal;
+            },
+          };
+        }
+
+        const host = createBimRenderer3dHost({
+          kind: runtime.hostKind,
+          renderer,
+        });
+        let explorer = null;
+        try {
+          phase = "renderer-mount";
+          const mount = await host.mount({
+            session,
+            signal,
+            snapshot,
+            workerLease,
+          });
+          phase = "semantic-initialize";
+          explorer = createReferenceMeshExplorer({
+            session,
+            snapshot,
+            limits: {
+              maximumDomRows: 64,
+              maximumSearchResults: 500,
+              searchPageSize: 25,
+            },
+          });
+          await explorer.initialize();
+          const entity = firstRenderable(snapshot);
+          if (entity !== null) {
+            await revealFirstProduct(
+              explorer,
+              snapshot,
+              entity,
+            );
+          }
+          publishSelection(explorer.state.selection, {
+            reason: "surface-open",
+          });
+          let disposal = null;
+          return {
+            explorer,
+            get disposal() {
+              return disposal;
+            },
+            host,
+            mount,
+            surface: null,
+            async dispose() {
+              let explorerDisposed = false;
+              let hostReceipt = null;
+              try {
+                explorerDisposed = await explorer.dispose();
+              } finally {
+                hostReceipt = await host.dispose({
+                  reason: "viewer-core-runtime-dispose",
+                });
+              }
+              disposal = Object.freeze({
+                explorerDisposed,
+                hostReceipt,
+              });
+              return disposal;
+            },
+          };
+        } catch (error) {
+          await Promise.allSettled([
+            explorer?.dispose(),
+            host.dispose({ reason: "viewer-core-mount-failed" }),
+          ]);
+          throw error;
+        }
+      },
+    });
+    const product = viewerCore.product;
+    const {
+      explorer,
+      host,
+      mount,
+      surface,
+    } = product;
     active = {
       backend,
       camera: mount.renderer.backend.camera,
@@ -1484,7 +1551,9 @@ async function openBytes(bytesValue, {
       mount,
       opened,
       origin,
+      product,
       surface,
+      viewerCore,
     };
     openingClient = null;
     lastFailedBytes?.fill(0);
@@ -1552,6 +1621,7 @@ async function openBytes(bytesValue, {
         sourceReadBytes: mount.renderer.metrics.sourceReadBytes,
         uploadedBytes: mount.renderer.backend.uploadedBytes,
       },
+      viewerCore: viewerCore.state,
       ...(reference
         ? {
             reference: {
@@ -1589,6 +1659,8 @@ async function openBytes(bytesValue, {
         ? "SOURCE_OPEN_FAILED"
         : phase === "renderer-create"
           ? "RENDERER_CREATE_FAILED"
+          : phase === "viewer-core-open"
+            ? "VIEWER_CORE_OPEN_FAILED"
           : phase === "renderer-mount"
             ? "RENDERER_MOUNT_FAILED"
             : phase === "surface-open"
@@ -1762,6 +1834,7 @@ elements.close.addEventListener("click", async () => {
   controls("idle");
   publishReport("disposed", {
     cleanup,
+    viewerCore: cleanup?.viewerCore ?? null,
   });
 });
 
@@ -1967,6 +2040,10 @@ async function selectVisible() {
     return pick;
   }
   await active.explorer.selectPick(pick);
+  active.viewerCore.publishSelection(
+    active.explorer.state.selection,
+    { reason: "3d" },
+  );
   await applySelectionView();
   render();
   return pick;
@@ -2101,7 +2178,10 @@ globalThis.addEventListener("message", async (event) => {
     await refinePointLod();
   } else if (message.type === "dispose") {
     const cleanup = await disposeActive("editor-close");
-    publishReport("disposed", { cleanup });
+    publishReport("disposed", {
+      cleanup,
+      viewerCore: cleanup?.viewerCore ?? null,
+    });
   }
 });
 

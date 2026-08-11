@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- route actual Browser and VS Code IFC/glTF/GLB product entrypoints through the
+  exact public Viewer Core 0.1.2 runtime, bundle its generated adapter and exact
+  MPL disclosures in the locally qualified VSIX, and keep extension publication,
+  upstream stable promotion and production support held;
 - adopt ordered `dev` → `prerelease` → `main` promotion, require package tags
   from the exact `prerelease` HEAD and stable tags from the exact `main` HEAD,
   and keep new VSIX Marketplace/Open VSX publication on hold;

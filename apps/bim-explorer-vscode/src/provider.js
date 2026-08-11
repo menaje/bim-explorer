@@ -213,6 +213,67 @@ function sanitizedHierarchyCleanup(value) {
   };
 }
 
+function sanitizedViewerCore(value) {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  const selection = value.selection?.selection;
+  return {
+    adopted: value.adopted === true,
+    api: stringOrNull(value.api),
+    contract: stringOrNull(value.contract),
+    descriptorProtocolVersion: stringOrNull(
+      value.descriptorProtocolVersion,
+    ),
+    disposed: value.disposed === true,
+    host: {
+      disposed: value.host?.disposed === true,
+      eventCount: numberOrNull(value.host?.eventCount),
+      kind: stringOrNull(value.host?.kind),
+      lastEventType: stringOrNull(
+        value.host?.lastEventType,
+      ),
+    },
+    presentation: {
+      borrowedSessionDisposed:
+        value.presentation?.borrowedSessionDisposed === true,
+      borrowedWorkerDisposed:
+        value.presentation?.borrowedWorkerDisposed === true,
+      disposalStatus: stringOrNull(
+        value.presentation?.disposalStatus,
+      ),
+      disposed: value.presentation?.disposed === true,
+    },
+    protocolId: stringOrNull(value.protocolId),
+    protocolVersion: stringOrNull(value.protocolVersion),
+    selection: {
+      reason: stringOrNull(value.selection?.reason),
+      sequence: numberOrNull(value.selection?.sequence),
+      identity: selection === null ||
+        typeof selection !== "object"
+          ? null
+          : {
+              expressId: numberOrNull(selection.expressId),
+              globalId: stringOrNull(selection.globalId),
+              kind: stringOrNull(selection.kind),
+              nativeId: stringOrNull(selection.nativeId),
+              renderId: stringOrNull(selection.renderId),
+            },
+    },
+    source: {
+      disposed: value.source?.disposed === true,
+      rangeBytesRead: numberOrNull(
+        value.source?.rangeBytesRead,
+      ),
+      rangeReads: numberOrNull(value.source?.rangeReads),
+      sessionDisposed:
+        value.source?.sessionDisposed === true,
+      sessionOpened: value.source?.sessionOpened === true,
+    },
+    version: stringOrNull(value.version),
+  };
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
@@ -462,6 +523,7 @@ function sanitizeReport(value) {
             "uploadedBytes",
           ]),
         },
+    viewerCore: sanitizedViewerCore(value.viewerCore),
     semantic: numericRecord(value.semantic, [
       "selectedExpressId",
       "treeRows",
@@ -1033,6 +1095,10 @@ function activateBimExplorerExtension(vscode, context) {
     vscode.commands.registerCommand(
       "bimExplorer.cancel",
       () => provider.postActive("cancel"),
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.closeModel",
+      () => provider.postActive("dispose"),
     ),
     vscode.commands.registerCommand(
       "bimExplorer.retry",

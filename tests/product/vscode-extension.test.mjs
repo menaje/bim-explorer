@@ -796,6 +796,45 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
       triangles: 12,
       ranges: 1,
     },
+    viewerCore: {
+      adopted: true,
+      api: "menaje-viewer-core/0.1",
+      contract: "bim-explorer-product-viewer-core/0.1",
+      descriptorProtocolVersion: "0.1.0",
+      disposed: false,
+      host: {
+        disposed: false,
+        eventCount: 1,
+        kind: "vscode-webview",
+        lastEventType: "selection.changed",
+      },
+      presentation: {
+        borrowedSessionDisposed: false,
+        borrowedWorkerDisposed: false,
+        disposalStatus: "active",
+        disposed: false,
+      },
+      protocolId: "menaje-viewer-render-protocol/0.1.0",
+      protocolVersion: "0.1.0",
+      selection: {
+        reason: "surface-open",
+        sequence: 1,
+        selection: {
+          expressId: 40,
+          globalId: "3vYxProduct",
+          renderId: "render:40",
+          path: "/private/customer/acme.ifc",
+        },
+      },
+      source: {
+        disposed: false,
+        rangeBytesRead: 256,
+        rangeReads: 1,
+        sessionDisposed: false,
+        sessionOpened: true,
+      },
+      version: "0.1.2",
+    },
   });
   const serialized = JSON.stringify(report);
   assert.equal(serialized.includes("/private"), false);
@@ -804,6 +843,10 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
     report.source.fingerprint,
     `sha256:${"a".repeat(64)}`,
   );
+  assert.equal(report.viewerCore.adopted, true);
+  assert.equal(report.viewerCore.version, "0.1.2");
+  assert.equal(report.viewerCore.source.rangeBytesRead, 256);
+  assert.equal(report.viewerCore.selection.identity.expressId, 40);
 });
 
 test("extension diagnostics preserve bounded reference identity only", () => {
@@ -990,6 +1033,7 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/las-laz-point-source/src/header.mjs",
       "packages/las-laz-point-source/src/index.mjs",
       "packages/bim-surface/runtime/index.mjs",
+      "packages/viewer-core-consumer/runtime/product.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
       "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
       "packages/bim-renderer-3d/src/point-cloud.mjs",
@@ -1006,6 +1050,10 @@ test("extension staging is complete and independently path-safe", async () => {
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/laz-perf/package.json",
       "LICENSES/e57-rs-MIT.txt",

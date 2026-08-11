@@ -85,10 +85,10 @@ const PASSED_GATES = [
   "browserDerivedPointHierarchyLod",
   "vscodeDerivedPointHierarchyLod",
   "cleanVsixDerivedPointHierarchyLod",
+  "publicViewerCoreConformance",
   "physicalGpuQualification",
 ];
 const HELD_GATES = [
-  "publicViewerCoreConformance",
   "marketplaceRelease",
 ];
 
@@ -268,6 +268,173 @@ function exactProductScaleReferenceObservation(value) {
   );
 }
 
+function exactViewerCoreLifecycle(
+  value,
+  expectedBytes,
+  expectedHost,
+) {
+  const opened = value?.opened;
+  const disposed = value?.disposed;
+  return (
+    opened?.adopted === true &&
+    opened?.api === "menaje-viewer-core/0.1" &&
+    opened?.version === "0.1.2" &&
+    opened?.contract ===
+      "bim-explorer-product-viewer-core/0.1" &&
+    opened?.protocolId ===
+      "menaje-viewer-render-protocol/0.1.0" &&
+    opened?.descriptorProtocolVersion === "0.1.0" &&
+    opened?.source?.rangeReads > 0 &&
+    opened?.source?.rangeBytesRead === expectedBytes &&
+    opened?.host?.eventCount >= 1 &&
+    opened?.host?.kind === expectedHost &&
+    opened?.host?.lastEventType === "selection.changed" &&
+    disposed?.disposed === true &&
+    disposed?.host?.disposed === true &&
+    disposed?.host?.kind === expectedHost &&
+    disposed?.source?.disposed === true &&
+    disposed?.source?.sessionDisposed === true &&
+    disposed?.presentation?.borrowedSessionDisposed === true &&
+    disposed?.presentation?.borrowedWorkerDisposed === true &&
+    disposed?.presentation?.disposalStatus === "disposed"
+  );
+}
+
+export function validateViewerCoreProductEntrypoints(value) {
+  const evidence = plainRecord(
+    value,
+    "Viewer Core product entrypoint evidence",
+  );
+  const dependencies = evidence.publicDependencies;
+  const bundle = evidence.productBundle;
+  const staged = evidence.vscode?.staged;
+  const installed = evidence.vscode?.cleanInstalledVsix;
+  const lifecycles = [
+    [
+      evidence.browser?.publicIfc?.observation,
+      evidence.browser?.publicIfc?.observation?.renderer,
+      "browser",
+    ],
+    [
+      evidence.browser?.productScaleGlb?.observation,
+      evidence.browser?.productScaleGlb?.observation?.renderer,
+      "browser",
+    ],
+    [staged?.observation, staged?.observation?.renderer, "vscode-webview"],
+    [
+      staged?.publicObservation,
+      staged?.publicObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      staged?.referenceObservation,
+      staged?.referenceObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      staged?.productScaleReferenceObservation,
+      staged?.productScaleReferenceObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.runtime,
+      installed?.observation?.runtime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.publicRuntime,
+      installed?.observation?.publicRuntime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.referenceRuntime,
+      installed?.observation?.referenceRuntime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.productScaleReferenceRuntime,
+      installed?.observation?.productScaleReferenceRuntime
+        ?.renderer,
+      "vscode-webview",
+    ],
+  ];
+  if (
+    evidence.schema !==
+      "bim-explorer-viewer-core-product-entrypoints-evidence/1" ||
+    !everyTrue(evidence.assertions) ||
+    !everyTrue(evidence.browser?.publicIfc?.assertions) ||
+    !everyTrue(evidence.browser?.productScaleGlb?.assertions) ||
+    !everyTrue(staged?.assertions) ||
+    !everyTrue(installed?.assertions) ||
+    dependencies?.repository !== "menaje/dwg-viewer" ||
+    dependencies?.tag !== "viewer-core-v0.1.2" ||
+    dependencies?.viewerCore?.package !==
+      "@menaje/viewer-core" ||
+    dependencies?.viewerCore?.version !== "0.1.2" ||
+    dependencies?.viewerCore?.license !== "MPL-2.0" ||
+    dependencies?.viewerCore?.specifier !==
+      "https://github.com/menaje/dwg-viewer/releases/download/" +
+        "viewer-core-v0.1.2/menaje-viewer-core-0.1.2.tgz" ||
+    dependencies?.viewerCore?.artifactSha256 !==
+      "69bedf751ef718eb8e37bb06718d5a956f33f567225bf64468d25e42c5a82c4c" ||
+    dependencies?.renderProtocol?.package !==
+      "@menaje/viewer-render-protocol" ||
+    dependencies?.renderProtocol?.version !== "0.1.2" ||
+    dependencies?.renderProtocol?.license !== "MPL-2.0" ||
+    dependencies?.renderProtocol?.specifier !==
+      "https://github.com/menaje/dwg-viewer/releases/download/" +
+        "viewer-core-v0.1.2/" +
+        "menaje-viewer-render-protocol-0.1.2.tgz" ||
+    dependencies?.renderProtocol?.artifactSha256 !==
+      "6534ec7d021e06d3ea616ae15fb995ece57a7c3292fc37e892a28db8e2a91d42" ||
+    dependencies?.renderProtocol?.protocol !==
+      "menaje-viewer-render-protocol/0.1.0" ||
+    bundle?.contract !==
+      "bim-explorer-product-viewer-core/0.1" ||
+    !(bundle?.byteLength > 0) ||
+    !/^[0-9a-f]{64}$/u.test(bundle?.sha256 ?? "") ||
+    bundle?.generated !== true ||
+    bundle?.bundledInLocalVsix !== true ||
+    bundle?.correspondingSourceAvailable !== true ||
+    evidence.decision?.publicViewerCoreConformance !== true ||
+    evidence.decision?.productEntrypoints !==
+      "passed-browser-vscode-ifc-glb" ||
+    evidence.decision?.marketplaceRelease !== false ||
+    evidence.decision?.productionSupport !== false ||
+    evidence.decision?.vscodeExtensionPublished !== false ||
+    evidence.browser?.publicIfc?.decision
+      ?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    evidence.browser?.productScaleGlb?.decision
+      ?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    staged?.decision?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    installed?.decision?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    installed?.decision?.marketplaceRelease !== "held" ||
+    installed?.package?.installedRuntimeFiles !== 31 ||
+    installed?.package?.viewerCoreProductBundleSha256 !==
+      bundle?.sha256 ||
+    installed?.assertions?.viewerCoreProductBundleExact !==
+      true ||
+    installed?.assertions?.viewerCoreDisclosuresExact !== true ||
+    lifecycles.some(
+      ([observation, renderer, expectedHost]) =>
+        !exactViewerCoreLifecycle(
+          observation?.viewerCore,
+          renderer?.sourceReadBytes,
+          expectedHost,
+        ),
+    )
+  ) {
+    throw new Error(
+      "Viewer Core product entrypoint evidence is incomplete",
+    );
+  }
+  return evidence;
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
@@ -290,6 +457,7 @@ export function validateBimProductShellCompatibility(
   pointCloudVscodePicking,
   pointCloudLodProducts,
   representativePhysicalGpu,
+  viewerCoreProductEntrypoints,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -352,6 +520,9 @@ export function validateBimProductShellCompatibility(
     validateRepresentativeModelsPhysicalGpuQualification(
       representativePhysicalGpu,
     );
+  validateViewerCoreProductEntrypoints(
+    viewerCoreProductEntrypoints,
+  );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
@@ -409,7 +580,11 @@ export function validateBimProductShellCompatibility(
     contracts?.pointHierarchy !==
       "bim-explorer-derived-point-hierarchy/0.1" ||
     contracts?.pointLodRangeReceipt !==
-      "bim-explorer-derived-point-lod-range-receipt/0.1"
+      "bim-explorer-derived-point-lod-range-receipt/0.1" ||
+    contracts?.productViewerCore !==
+      "bim-explorer-product-viewer-core/0.1" ||
+    contracts?.viewerRenderProtocol !==
+      "menaje-viewer-render-protocol/0.1.0"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -1032,6 +1207,10 @@ export function validateBimProductShellCompatibility(
       "compatibility/evidence/" +
         "bim-product-shell-representative-physical-gpu-" +
         "darwin-arm64-2026-08-11.json" ||
+    manifest.evidence?.viewerCoreProductEntrypoints !==
+      "compatibility/evidence/" +
+        "bim-product-shell-viewer-core-product-entrypoints-" +
+        "2026-08-11.json" ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -1066,7 +1245,7 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.pointIdentityScope !==
       "source-revision-and-range-digest" ||
     manifest.policy?.claimE57FormatAdmission !== false ||
-    manifest.policy?.claimPublicViewerCore !== false ||
+    manifest.policy?.claimPublicViewerCore !== true ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== true ||
     manifest.policy?.claimMarketplaceRelease !== false
@@ -1096,6 +1275,7 @@ export function validateBimProductShellCompatibility(
         pointCloudVscodePicking,
         pointCloudLodProducts,
         representativePhysicalGpu,
+        viewerCoreProductEntrypoints,
         installation,
         manifest,
         vscode,
@@ -1152,6 +1332,7 @@ async function main() {
     vscode,
     installation,
     representativePhysicalGpu,
+    viewerCoreProductEntrypoints,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1246,6 +1427,13 @@ async function main() {
       ),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.viewerCoreProductEntrypoints,
+      ),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1269,6 +1457,7 @@ async function main() {
     pointCloudVscodePicking,
     pointCloudLodProducts,
     representativePhysicalGpu,
+    viewerCoreProductEntrypoints,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

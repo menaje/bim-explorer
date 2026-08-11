@@ -16,18 +16,25 @@ async function inputs() {
       "utf8",
     ),
   );
-  return { evidence, manifest };
+  const productEvidence = JSON.parse(
+    await readFile(
+      manifest.observations.productEntrypointProbe.evidence,
+      "utf8",
+    ),
+  );
+  return { evidence, manifest, productEvidence };
 }
 
 test("public Viewer Core release is admitted as experimental", async () => {
-  const { evidence, manifest } = await inputs();
+  const { evidence, manifest, productEvidence } = await inputs();
   const report = validateViewerCoreManifest(
     manifest,
     evidence,
+    productEvidence,
   );
   assert.equal(report.status, "experimental");
-  assert.equal(report.passedGates, 8);
-  assert.equal(report.blockerCount, 3);
+  assert.equal(report.passedGates, 9);
+  assert.equal(report.blockerCount, 2);
   assert.equal(
     report.localProbe,
     "passed-local-workspace-only",
@@ -35,39 +42,55 @@ test("public Viewer Core release is admitted as experimental", async () => {
 });
 
 test("local workspace evidence cannot become admission evidence", async () => {
-  const { evidence, manifest } = await inputs();
+  const { evidence, manifest, productEvidence } = await inputs();
   manifest.observations.localWorkspaceProbe.admissionEvidence =
     true;
   assert.throws(
-    () => validateViewerCoreManifest(manifest, evidence),
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+    ),
     /must remain non-admission evidence/u,
   );
 });
 
 test("Viewer Core release evidence rejects a changed artifact", async () => {
-  const { evidence, manifest } = await inputs();
+  const { evidence, manifest, productEvidence } = await inputs();
   evidence.packages.viewerCore.installedContent.sha256 =
     "0".repeat(64);
   assert.throws(
-    () => validateViewerCoreManifest(manifest, evidence),
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+    ),
     /release identity is invalid/u,
   );
 });
 
 test("Viewer Core compatibility rejects a changed package pin", async () => {
-  const { evidence, manifest } = await inputs();
+  const { evidence, manifest, productEvidence } = await inputs();
   manifest.pin.renderProtocol.sha256 = "0".repeat(64);
   assert.throws(
-    () => validateViewerCoreManifest(manifest, evidence),
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+    ),
     /compatibility pin is invalid/u,
   );
 });
 
 test("public preview cannot claim production compatibility", async () => {
-  const { evidence, manifest } = await inputs();
+  const { evidence, manifest, productEvidence } = await inputs();
   manifest.policy.productionClaims = true;
   assert.throws(
-    () => validateViewerCoreManifest(manifest, evidence),
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+    ),
     /must remain preview-only/u,
   );
 
@@ -77,7 +100,21 @@ test("public preview cannot claim production compatibility", async () => {
     () => validateViewerCoreManifest(
       second.manifest,
       second.evidence,
+      second.productEvidence,
     ),
     /upstream identity is invalid/u,
+  );
+});
+
+test("Viewer Core product entrypoint evidence must remain exact", async () => {
+  const { evidence, manifest, productEvidence } = await inputs();
+  productEvidence.decision.vscodeExtensionPublished = true;
+  assert.throws(
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+    ),
+    /Viewer Core product entrypoint evidence is incomplete/u,
   );
 });

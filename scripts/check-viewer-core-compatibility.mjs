@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  validateViewerCoreProductEntrypoints,
+} from "./check-bim-product-shell-compatibility.mjs";
+
 const ALLOWED_STATUSES = new Set([
   "unresolved",
   "experimental",
@@ -17,6 +21,7 @@ const REQUIRED_GATES = [
   "browserHostLifecycle",
   "vscodeHostLifecycle",
   "crossRepositoryCI",
+  "productEntrypointAdoption",
 ];
 const RELEASE_COMMIT =
   "e225c2c8531e1f5e9677238d85adf6f686203026";
@@ -298,6 +303,7 @@ export function validateViewerCoreEvidence(value) {
 export function validateViewerCoreManifest(
   value,
   evidence,
+  productEvidence,
 ) {
   const manifest = plainRecord(
     value,
@@ -409,14 +415,19 @@ export function validateViewerCoreManifest(
     }
   } else {
     const evidenceReport = validateViewerCoreEvidence(evidence);
+    validateViewerCoreProductEntrypoints(productEvidence);
     const pin = plainRecord(manifest.pin, "Viewer Core pin");
     const releaseProbe = plainRecord(
       observations.releaseArtifactProbe,
       "release artifact probe",
     );
+    const productProbe = plainRecord(
+      observations.productEntrypointProbe,
+      "product entrypoint probe",
+    );
     if (
       manifest.status !== "experimental" ||
-      manifest.asOf !== "2026-08-04" ||
+      manifest.asOf !== "2026-08-11" ||
       upstream.repository !== "menaje/dwg-viewer" ||
       upstream.observedCommit !== RELEASE_COMMIT ||
       viewerCore.package !== PACKAGES.viewerCore.package ||
@@ -485,6 +496,30 @@ export function validateViewerCoreManifest(
       );
     }
     if (
+      productProbe.status !==
+        "passed-browser-vscode-ifc-glb" ||
+      productProbe.evidence !==
+        "compatibility/evidence/" +
+          "bim-product-shell-viewer-core-product-entrypoints-" +
+          "2026-08-11.json" ||
+      productProbe.admissionEvidence !== true ||
+      ![
+        "browserIfc",
+        "browserGltfGlb",
+        "stagedVscodeIfc",
+        "stagedVscodeGltfGlb",
+        "cleanVsixIfc",
+        "cleanVsixGltfGlb",
+        "rangeReadThroughPublicSession",
+        "selectionHostLifecycle",
+        "terminalCleanup",
+      ].every((key) => productProbe[key] === true)
+    ) {
+      throw new Error(
+        "Viewer Core product entrypoint observation is invalid",
+      );
+    }
+    if (
       policy.allowRelativeCheckoutDependency ||
       policy.allowCopiedViewerCore ||
       policy.claimCompatibility !== true ||
@@ -522,9 +557,19 @@ async function main() {
   const evidence = JSON.parse(
     await readFile(evidencePath, "utf8"),
   );
+  const productEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        process.cwd(),
+        manifest.observations.productEntrypointProbe.evidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateViewerCoreManifest(
     manifest,
     evidence,
+    productEvidence,
   );
   console.log(
     `Viewer Core compatibility check passed: ${report.status}, ` +

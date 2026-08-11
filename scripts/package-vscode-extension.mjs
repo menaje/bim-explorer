@@ -22,6 +22,9 @@ import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
 import {
+  checkViewerCoreProductBundle,
+} from "./build-viewer-core-product.mjs";
+import {
   unzipSync,
   zipSync,
 } from "fflate";
@@ -63,6 +66,7 @@ const COPY_FILES = Object.freeze([
   ["packages/las-laz-point-source/src/header.mjs"],
   ["packages/las-laz-point-source/src/index.mjs"],
   ["packages/bim-surface/runtime/index.mjs"],
+  ["packages/viewer-core-consumer/runtime/product.mjs"],
   ["packages/bim-renderer-3d/src/camera-controls.mjs"],
   ["packages/bim-renderer-3d/src/camera.mjs"],
   ["packages/bim-renderer-3d/src/host-adapter.mjs"],
@@ -86,6 +90,12 @@ const COPY_FILES = Object.freeze([
   ["node_modules/web-ifc/package.json"],
   ["node_modules/web-ifc/web-ifc-api.js"],
   ["node_modules/web-ifc/web-ifc.wasm"],
+  ["node_modules/@menaje/viewer-core/LICENSE"],
+  ["node_modules/@menaje/viewer-core/NOTICE"],
+  ["node_modules/@menaje/viewer-core/package.json"],
+  ["node_modules/@menaje/viewer-render-protocol/LICENSE"],
+  ["node_modules/@menaje/viewer-render-protocol/NOTICE"],
+  ["node_modules/@menaje/viewer-render-protocol/package.json"],
   ["LICENSES/e57-rs-MIT.txt"],
   ["specs/LICENSE"],
 ]);
@@ -128,6 +138,7 @@ export async function prepareVscodeExtensionStage(destination) {
   await checkVscodeWorkerBundle();
   await checkBimSurfaceBundle();
   await checkFederatedBimSurfaceBundle();
+  await checkViewerCoreProductBundle();
   await mkdir(destination, {
     recursive: true,
   });

@@ -50,7 +50,9 @@ admission은 아직 보류합니다.
 Viewer Core와 render protocol은 공개 `@menaje/*` 0.1 contract를 exact
 artifact로 공유합니다. 상대 제품의 설치된 extension, process 또는 private
 message를 기본 integration으로 사용하지 않습니다. prerelease 소비와 각
-제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다.
+제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다. Explorer의
+IFC/glTF/GLB Browser·VS Code entrypoint Gate는 통과했지만 Spatial consumer,
+stable/production과 Marketplace Gate를 대신하지 않습니다.
 
 ## Identity 경계
 

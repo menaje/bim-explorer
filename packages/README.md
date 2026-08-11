@@ -25,7 +25,9 @@ BIM Explorer가 소유할 source와 product-neutral integration package를
 GitHub Release asset을 exact URL, SHA-256과 lock integrity로 소비합니다.
 실제 `BimModelSource`와 3D renderer를 upstream conformance/runtime에 연결한
 결과는 `compatibility/viewer-core.json`의 `experimental` admission이
-소유합니다.
+소유합니다. generated `runtime/product.mjs`는 Browser와 VS Code의
+IFC/glTF/GLB 제품 entrypoint를 공개 RenderSource와 selection/Host lifecycle에
+연결하며 local VSIX에도 exact license/NOTICE와 함께 stage합니다.
 
 [`bim-model-source`](bim-model-source/README.md)는 web-ifc adapter artifact를
 raw source fingerprint, immutable tree/entity identity와 bounded binary
@@ -74,7 +76,8 @@ range decoder, bounded initial-range plan과 headless resource receipt를
 upload·rasterized first frame·dispose를 통과했습니다. visibility 기반
 range loading, pointer/picking/section, Browser/VS Code Webview host와
 Viewer Core 3D mount도 검증했습니다. physical GPU qualification과 실제
-제품 entrypoint의 Viewer Core 채택은 별도 Gate입니다.
+제품 entrypoint의 Viewer Core 채택도 각각의 증거를 통과했습니다. stable
+upstream, Marketplace publication과 production support는 별도 Gate입니다.
 point range에는 exact revision/root range에 묶인 파생 octree leaf chunk,
 coarse-to-full LOD와 rendered-index→root-index identity map을 제공하며 Browser,
 staged VS Code와 clean-installed VSIX의 대형 E57에서 검증했습니다.

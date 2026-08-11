@@ -270,9 +270,15 @@ source-native explorer로 분기하며 IFC semantic authority를 사용하지
 asset으로 고정했습니다. 실제 `BimModelSource` 3D projection과 bounded
 renderer를 upstream runtime에 연결해 Browser/VS Code host lifecycle,
 wire protocol 0.1.0 identity, stale 거부와 disposal을 통과했습니다.
-compatibility 상태는
-[`experimental`](../compatibility/viewer-core.json)이며 제품 entrypoint
-채택, stable upstream release와 production 주장은 별도 Gate입니다.
+이어 IFC와 glTF/GLB의 실제 Browser 및 VS Code 제품 entrypoint를 generated
+public RenderSource adapter로 연결했습니다. renderer range read는 공개
+session을 통과하고, initial/3D selection은 public selection controller와
+ViewerHost event로 투영됩니다. public runtime이 원본 source session과 Worker를
+소유하고 기존 BIM Surface에는 borrowed no-op lease를 전달해 close 시 정확히
+한 번 정리합니다. point-cloud entrypoint는 별도 source/renderer 경로입니다.
+compatibility 상태는 [`experimental`](../compatibility/viewer-core.json)이며
+stable upstream release, Marketplace publication과 production 주장은 별도
+Gate입니다.
 
 ## Browser와 VS Code Host
 

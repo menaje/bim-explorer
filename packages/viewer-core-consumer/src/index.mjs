@@ -18,3 +18,7 @@ export {
   createViewerCoreBimRendererMount,
   createViewerCoreBimRenderSource,
 } from "./bim-model-render-source.mjs";
+export {
+  BIM_PRODUCT_VIEWER_CORE_CONTRACT,
+  openBimProductViewerCore,
+} from "./product-entrypoint.mjs";

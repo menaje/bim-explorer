@@ -62,7 +62,10 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > protocol package 0.1.2 prerelease는 exact release asset으로 고정했고,
 > wire protocol 0.1.0에서 실제 BIM
 > source·3D renderer의 Browser/VS Code 호스트 conformance를 통과했습니다.
-> 제품 entrypoint 적용과 stable/production 주장은 별도 Gate입니다. 공개 IFC call-start
+> IFC와 glTF/GLB의 실제 Browser, staged VS Code 및 clean-installed local VSIX
+> entrypoint도 공개 Viewer Core의 range read, selection event와 terminal
+> cleanup을 통과했습니다. stable/production과 Marketplace publication은 별도
+> Gate입니다. 공개 IFC call-start
 > 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.
 > 같은 공개 IFC의 256MiB process RSS 상한 감지·강제 종료·새 process
 > 복구도 통과했지만 Browser heap과 native allocator/parser memory safety는
@@ -376,6 +379,7 @@ npm run qualify:gltf:product-scale:vscode-install
 npm run qualify:ifc:platform-package
 npm run qualify:ifc:license-profile
 npm run qualify:viewer-core
+npm run qualify:viewer-core:product
 npm run qualify:openbim
 npm run qualify:federation
 npm run qualify:federation:product-scale
@@ -407,6 +411,9 @@ Viewer Core admission 상태는
 Browser/VS Code 제품 Host 계약의 상태는
 [compatibility/bim-product-shells.json](compatibility/bim-product-shells.json)을
 따릅니다.
+제품 entrypoint의 공개 Viewer Core 검증은
+[product entrypoint evidence](compatibility/evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json)에
+고정합니다.
 대표 공개 IFC·GLB의 Apple M2 Metal 제품 검증은
 [physical GPU evidence](compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)에
 고정합니다.

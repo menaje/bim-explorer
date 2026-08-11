@@ -12,6 +12,9 @@ range와 `POINTS` renderer로 분기합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
+- IFC와 glTF/GLB renderer range는 exact public Viewer Core session을 통과하고,
+  initial/3D selection과 close cleanup은 public selection/Host lifecycle로
+  투영합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
@@ -46,6 +49,11 @@ projection과 editor cleanup을 확인합니다.
 Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 합산 source
 bytes가 64MiB 제품 상한을 넘으므로 두 모델의 동시 합성, Linux/Windows,
 OS-level peak GPU memory와 production support는 승인하지 않습니다.
+`npm run qualify:viewer-core:product`는 public IFC와 product-scale GLB를 실제
+Browser에서 열고 같은 entrypoint를 staged VS Code와 clean-installed local
+VSIX에서도 검증합니다. 이 명령은 exact public package, generated bundle,
+range byte accounting, 양방향 selection과 terminal cleanup을 한 증거에 묶으며
+Marketplace publication이나 production support를 수행하지 않습니다.
 `npm run qualify:las-laz:product:web`은 cache-only 공개 LAS/LAZ pair를 각각
 실제 Browser local file input으로 열어 exact point-range/visual parity,
 `laz-perf@0.0.6` Worker isolation과 source/Worker/CPU/GPU cleanup을 확인합니다.

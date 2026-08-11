@@ -431,6 +431,31 @@ function assertions(
           cleanup.cleanup.workerTerminatedAfterTransfer === true
         )
       ),
+    ...(
+      pointCloud
+        ? {}
+        : {
+            publicViewerCoreProductEntrypoint:
+              opened.viewerCore?.adopted === true &&
+              opened.viewerCore?.version === "0.1.2" &&
+              opened.viewerCore?.protocolId ===
+                "menaje-viewer-render-protocol/0.1.0" &&
+              opened.viewerCore?.source?.rangeReads > 0 &&
+              opened.viewerCore?.source?.rangeBytesRead ===
+                opened.renderer.sourceReadBytes &&
+              opened.viewerCore?.host?.eventCount >= 1 &&
+              cleanup.viewerCore?.disposed === true &&
+              cleanup.viewerCore?.host?.disposed === true &&
+              cleanup.viewerCore?.source?.disposed === true &&
+              cleanup.viewerCore?.source?.sessionDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.borrowedSessionDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.borrowedWorkerDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.disposalStatus === "disposed",
+          }
+    ),
     noRuntimeErrors: errors.length === 0,
     fixtureIdentity:
       opened.source.byteLength === fixture.sourceBytes &&
@@ -1103,6 +1128,16 @@ export async function qualifyBimProductShell({
               }
             : {}),
         },
+        ...(
+          pointCloud
+            ? {}
+            : {
+                viewerCore: {
+                  opened: opened.viewerCore,
+                  disposed: cleanup.viewerCore,
+                },
+              }
+        ),
         network: {
           externalOrigins: interaction.externalOrigins,
           localRequestCount: localRequests.length,
@@ -1122,7 +1157,9 @@ export async function qualifyBimProductShell({
         actualPhysicalGpu: rendererMode === "physical"
           ? "passed-observed-apple-metal"
           : "not-claimed",
-        publicViewerCoreConformance: "held",
+        publicViewerCoreConformance: pointCloud
+          ? "not-applicable"
+          : "passed-product-entrypoint",
         vscodeChromiumRuntime: "separate-gate",
       },
     });

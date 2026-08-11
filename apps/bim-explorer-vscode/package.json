@@ -25,6 +25,7 @@
     "onCustomEditor:bimExplorer.ifcEditor",
     "onCommand:bimExplorer.openWith",
     "onCommand:bimExplorer.cancel",
+    "onCommand:bimExplorer.closeModel",
     "onCommand:bimExplorer.retry",
     "onCommand:bimExplorer.showDiagnostics",
     "onCommand:bimExplorer.pickVisiblePoint",
@@ -81,6 +82,10 @@
       {
         "command": "bimExplorer.cancel",
         "title": "BIM Explorer: Cancel Model Open"
+      },
+      {
+        "command": "bimExplorer.closeModel",
+        "title": "BIM Explorer: Close Model"
       },
       {
         "command": "bimExplorer.retry",

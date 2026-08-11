@@ -32,6 +32,7 @@ async function fixtures() {
     vscode,
     installation,
     representativePhysicalGpu,
+    viewerCoreProductEntrypoints,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -113,6 +114,10 @@ async function fixtures() {
       manifest.evidence.representativePhysicalGpu,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.viewerCoreProductEntrypoints,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -134,6 +139,7 @@ async function fixtures() {
     pointCloudVscodePicking,
     pointCloudLodProducts,
     representativePhysicalGpu,
+    viewerCoreProductEntrypoints,
     manifest,
     vscode,
   };
@@ -162,6 +168,7 @@ function validate(values) {
     values.pointCloudVscodePicking,
     values.pointCloudLodProducts,
     values.representativePhysicalGpu,
+    values.viewerCoreProductEntrypoints,
   );
 }
 
@@ -171,9 +178,9 @@ test("product shells pin the same source and render projection", async () => {
     validate(values),
     {
       fixture: "synthetic-semantic-ifc4",
-      heldGates: 2,
+      heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 46,
+      passedGates: 47,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
       publicProducts: 3_569,
@@ -182,12 +189,13 @@ test("product shells pin the same source and render projection", async () => {
   );
 });
 
-test("product shells cannot claim unintegrated Viewer Core", async () => {
+test("product shells require exact Viewer Core product evidence", async () => {
   const values = await fixtures();
-  values.manifest.gates.publicViewerCoreConformance = true;
+  values.viewerCoreProductEntrypoints.productBundle.sha256 =
+    "0".repeat(64);
   assert.throws(
     () => validate(values),
-    /publicViewerCoreConformance must remain held/u,
+    /Viewer Core product entrypoint evidence is incomplete/u,
   );
 });
 
