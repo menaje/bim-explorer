@@ -111,3 +111,9 @@ prerelease의 `publicationAuthorized`는 true입니다. 공개 범위는 tgz, SP
 checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지 않습니다.
 발급된 immutable public asset에 대한 Spatial Phase B exact-pin은 별도
 post-release Gate입니다.
+
+`bim-surface-v0.2.0`은 `prerelease` exact HEAD의 annotated tag로 공개됐습니다.
+macOS/Linux 각각 380개 conformance, zero runtime vulnerability, 9개 asset의
+cross-platform byte identity와 release/build attestation을 통과했습니다. tgz는
+97,623 bytes, SHA-256 `3bdb747d…c63cb`이며 Community `v0.1.0`의 Latest 상태는
+유지합니다.

@@ -1,8 +1,8 @@
 ---
 type: release-notes
-status: draft
+status: published-prerelease
 authority:
-  - bim-surface-v0.2.0-release-candidate
+  - bim-surface-v0.2.0-release
 last_reviewed: 2026-08-11
 ---
 

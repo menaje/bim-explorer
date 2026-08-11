@@ -1,0 +1,154 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-release-evidence/1",
+  "status": "passed-immutable-public-package-prerelease",
+  "capturedAt": "2026-08-11T00:56:41Z",
+  "source": {
+    "repository": "menaje/bim-explorer",
+    "commit": "13f02b8b30a3aa236f8052b458462bc1d0f1bc09",
+    "branch": "prerelease",
+    "tag": "bim-surface-v0.2.0",
+    "annotatedTagObject": "111df108f964edbf5ba3621da0e9c3321c64d820",
+    "tagSignature": "unsigned-annotated",
+    "tagExactPrereleaseHead": true
+  },
+  "repository": {
+    "visibility": "public",
+    "license": "MPL-2.0",
+    "anonymousRepositoryAccess": true,
+    "immutableReleases": true
+  },
+  "workflow": {
+    "name": "BIM Surface Release",
+    "runId": 31447505218,
+    "attempt": 1,
+    "runUrl": "https://github.com/menaje/bim-explorer/actions/runs/31447505218",
+    "conclusion": "success",
+    "event": "push",
+    "sourceRef": "refs/tags/bim-surface-v0.2.0",
+    "linuxJob": {
+      "id": 93644766822,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/31447505218/job/93644766822",
+      "conclusion": "success"
+    },
+    "macosJob": {
+      "id": 93644766878,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/31447505218/job/93644766878",
+      "conclusion": "success"
+    },
+    "publishJob": {
+      "id": 93644961158,
+      "url": "https://github.com/menaje/bim-explorer/actions/runs/31447505218/job/93644961158",
+      "conclusion": "success"
+    },
+    "node": "24",
+    "fullConformanceTestsPerPlatform": 380,
+    "runtimeAuditVulnerabilities": 0,
+    "crossPlatformByteIdentity": true,
+    "publicationAuthorized": true
+  },
+  "release": {
+    "databaseId": 368275424,
+    "url": "https://github.com/menaje/bim-explorer/releases/tag/bim-surface-v0.2.0",
+    "name": "BIM Surface v0.2.0",
+    "version": "0.2.0",
+    "draft": false,
+    "prerelease": true,
+    "immutable": true,
+    "publishedAt": "2026-08-11T00:54:09Z",
+    "assets": 9,
+    "anonymousPageAccess": true,
+    "anonymousPackageDownload": true,
+    "releaseIntegrityVerified": true,
+    "packageAssetVerified": true,
+    "downloadedChecksumsVerified": true,
+    "communityLatestPreserved": true
+  },
+  "supplyChain": {
+    "spdxPackages": 1,
+    "unknownRuntimeLicenses": 0,
+    "runtimeDependencies": 0,
+    "packageSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb",
+    "packageIntegrity": "sha512-QoGdmKuP/VLva+WGHwGhfKO6e8yKrbJt1/iClIsM86aQbdFmKSbd6+oCc4mJEPo+3GMUpcgQnex6LKEYvs0d5w==",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "buildProvenanceAttested": true,
+    "buildProvenanceSubjects": 3,
+    "releaseAttestationVerified": true,
+    "packageBuildAttestationVerified": true,
+    "packageReleaseAttestationVerified": true,
+    "releaseSigner": "https://dotcom.releases.github.com",
+    "buildSignerWorkflow": "menaje/bim-explorer/.github/workflows/bim-surface-release.yml"
+  },
+  "artifacts": [
+    {
+      "name": "LICENSE",
+      "byteLength": 16725,
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+    },
+    {
+      "name": "NOTICE",
+      "byteLength": 489,
+      "sha256": "e14dfca45b0329948c16a3fdcc1f9cd6f9777f17825a359a14729b1d05735cf5"
+    },
+    {
+      "name": "RELEASE_NOTES.md",
+      "byteLength": 1383,
+      "sha256": "1b25d4d9e587dc27b9021171a65637dd91fbb2e71d43b7f7bcea8176cb1b9a47"
+    },
+    {
+      "name": "SHA256SUMS",
+      "byteLength": 708,
+      "sha256": "fc60b067c5e8c401f108ae161eb75aef189ac397b1dbe13e68cb0fbba1a246a8"
+    },
+    {
+      "name": "SOURCE_OFFER.md",
+      "byteLength": 1042,
+      "sha256": "13b2a8e34147e2f0e47018712f63cc95e6c5752331b65efe2de7bc1c7d624980"
+    },
+    {
+      "name": "TRADEMARKS.md",
+      "byteLength": 878,
+      "sha256": "10907d65e6bdf5e8e69c9d484c3e0ff24451f9dc62bd5d05329028670746531d"
+    },
+    {
+      "name": "bim-explorer-federated-bim-surface-0.2.0.spdx.json",
+      "byteLength": 1290,
+      "sha256": "f6befdf5ca7393e9b3c600a17c2f79aafa6bd494a02874856d117db6bcd091db"
+    },
+    {
+      "name": "bim-explorer-federated-bim-surface-0.2.0.tgz",
+      "byteLength": 97623,
+      "sha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb"
+    },
+    {
+      "name": "release-manifest.json",
+      "byteLength": 3875,
+      "sha256": "63c59f2cb7c6825a81ec918451744c9fde73f867c9b3785cd8ac59184ddb67e8"
+    }
+  ],
+  "assertions": {
+    "repositoryPublic": true,
+    "anonymousRepositoryAccessible": true,
+    "anonymousPackageDownloadVerified": true,
+    "releaseImmutable": true,
+    "annotatedTagExact": true,
+    "prereleaseHeadExact": true,
+    "macosBuildPassed": true,
+    "linuxBuildPassed": true,
+    "fullConformancePassed": true,
+    "runtimeAuditClean": true,
+    "crossPlatformByteIdentical": true,
+    "downloadedAssetsMatchChecksums": true,
+    "releaseAttestationVerified": true,
+    "packageAssetVerified": true,
+    "buildProvenanceAttested": true,
+    "sourceAndNoticesPublished": true,
+    "communityLatestPreserved": true,
+    "authorityFreeBoundaryPreserved": true
+  },
+  "held": {
+    "publicRegistryPublication": false,
+    "publicArtifactSpatialAdmission": false,
+    "spatialVsixBundledRuntime": false,
+    "stableProductionSupport": false
+  }
+}

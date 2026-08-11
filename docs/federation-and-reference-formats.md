@@ -221,7 +221,8 @@ LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 결정하면 runtime SBOM, checksum과 release reproducibility를 다시 검증합니다.
 
 actual Spatial headless consumer는 이전 exact private candidate와 release-ready
-tgz에서 통과했습니다. immutable public artifact의 standalone Spatial exact-pin은
-Explorer 저장소가 단독으로 완료할 수 없는 consumer-owned Gate입니다. 관련
+tgz에서 통과했고 동일 tgz는 immutable public prerelease로 공개됐습니다. public
+artifact의 standalone Spatial Phase B exact-pin은 Explorer 저장소가 단독으로
+완료할 수 없는 consumer-owned Gate입니다. 관련
 진행은 Explorer #9/#12와 Coni Spatial #22에 evidence URL과 exact digest로만
 게시합니다.

@@ -12,6 +12,7 @@ const [
   browserEvidence,
   vscodeEvidence,
   packageEvidence,
+  releaseEvidence,
   spatialConsumerEvidence,
   spatialReleaseReadyConsumerEvidence,
 ] = await Promise.all([
@@ -41,6 +42,11 @@ const [
   ).then(JSON.parse),
   readFile(
     "compatibility/evidence/" +
+      "federated-bim-surface-release-v0.2.0-2026-08-11.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
       "federated-bim-surface-spatial-consumer-2026-08-11.json",
     "utf8",
   ).then(JSON.parse),
@@ -60,13 +66,14 @@ test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
     {
       status: "experimental",
-      passedGates: 19,
-      heldGates: 3,
+      passedGates: 20,
+      heldGates: 2,
       sourceCount: 3,
       anchors: 3,
       surfaceHits: 3,
@@ -76,6 +83,7 @@ test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
       spatialConsumer: "passed-private-candidate-actual-consumer",
       releaseReadySpatialConsumer:
         "passed-release-ready-package-consumer-revalidation",
+      publicRelease: "passed-immutable-public-package-prerelease",
     },
   );
 });
@@ -90,6 +98,7 @@ test("federated BIM Surface cannot demote its qualified VS Code surface", () => 
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -107,6 +116,7 @@ test("federated BIM Surface requires unchanged-source range replay", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -124,6 +134,7 @@ test("federated BIM Surface evidence cannot gain authority", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -141,6 +152,7 @@ test("federated BIM Surface rejects an altered Browser normal", () => {
       invalid,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -158,6 +170,7 @@ test("federated BIM Surface rejects an altered Browser locator", () => {
       invalid,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -175,6 +188,7 @@ test("federated BIM Surface Browser hit cannot gain authority", () => {
       overclaim,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -193,6 +207,7 @@ test("federated BIM Surface rejects incomplete VS Code Worker cleanup", () => {
       browserEvidence,
       invalid,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -210,6 +225,7 @@ test("federated BIM Surface package candidate cannot become public", () => {
       browserEvidence,
       vscodeEvidence,
       invalid,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -227,6 +243,7 @@ test("release-ready consumer Gate cannot be demoted", () => {
       browserEvidence,
       vscodeEvidence,
       invalid,
+      releaseEvidence,
       spatialConsumerEvidence,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -244,6 +261,7 @@ test("Spatial actual-consumer admission is digest-bound", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       invalid,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -262,6 +280,7 @@ test("Spatial consumer admission cannot redirect its evidence URL", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       invalid,
       spatialReleaseReadyConsumerEvidence,
     ),
@@ -279,6 +298,7 @@ test("Spatial release-ready admission is digest-bound", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       invalid,
     ),
@@ -297,9 +317,46 @@ test("Spatial release-ready admission cannot redirect evidence", () => {
       browserEvidence,
       vscodeEvidence,
       packageEvidence,
+      releaseEvidence,
       spatialConsumerEvidence,
       invalid,
     ),
     /Spatial release-ready consumer admission evidence is invalid/u,
+  );
+});
+
+test("federated BIM Surface public release is digest-bound", () => {
+  const invalid = structuredClone(releaseEvidence);
+  invalid.artifacts[7].sha256 = "0".repeat(64);
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      invalid,
+      spatialConsumerEvidence,
+      spatialReleaseReadyConsumerEvidence,
+    ),
+    /public release evidence is invalid/u,
+  );
+});
+
+test("federated BIM Surface public release stays prerelease", () => {
+  const invalid = structuredClone(releaseEvidence);
+  invalid.release.prerelease = false;
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      invalid,
+      spatialConsumerEvidence,
+      spatialReleaseReadyConsumerEvidence,
+    ),
+    /public release evidence is invalid/u,
   );
 });

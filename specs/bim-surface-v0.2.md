@@ -18,9 +18,9 @@ anchor를 제공하는 host-neutral draft다.
 
 v0.2는 단일 source인 [`bim-surface/0.1`](bim-surface-v0.1.md)의 의미를
 바꾸지 않는다. private 0.2.0 package candidate, 실제 Spatial headless consumer
-composition과 release-ready tgz의 exact-byte 재검증은 통과했다. immutable
-public artifact, 그 artifact의 Spatial exact-pin admission과 production support는
-별도 Gate로 유지한다.
+composition과 release-ready tgz의 exact-byte 재검증은 통과했다. 동일 tgz는
+immutable public package prerelease로 공개됐다. 그 artifact의 Spatial Phase B
+exact-pin admission과 production support는 별도 Gate로 유지한다.
 
 ## Contract pin
 
@@ -139,8 +139,8 @@ headless consumer는 이전 exact candidate에서 다음 consumer 범위를 재�
 
 release-ready package는 같은 461,431-byte runtime과 contract를 유지하고
 README·source offer가 포함된 97,623-byte tgz가 됐다. Spatial은 SHA-256
-`3bdb747d…c63cb`의 최종 private candidate bytes를 다시 검증했으므로
-`prerelease` 승격과 package-only `bim-surface-v0.2.0` prerelease를 진행할 수
-있다. 공개 asset 발급 뒤에는 Spatial이 그 immutable bytes를 다시 exact-pin해야
-한다. npm registry와 새 VSIX Marketplace/Open VSX publication, stable production
-support는 승인하지 않는다.
+`3bdb747d…c63cb`의 최종 private candidate bytes를 다시 검증했다. 이 bytes는
+`prerelease` branch의 exact annotated tag와 package-only
+`bim-surface-v0.2.0` immutable GitHub prerelease로 공개됐다. Spatial은 그 public
+asset을 Phase B에서 다시 exact-pin해야 한다. npm registry와 새 VSIX
+Marketplace/Open VSX publication, stable production support는 승인하지 않는다.

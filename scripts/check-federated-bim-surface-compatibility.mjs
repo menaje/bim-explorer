@@ -17,6 +17,10 @@ import {
   validateSpatialConsumerAdmission,
   validateSpatialReleaseReadyConsumerAdmission,
 } from "./federated-bim-surface-spatial-consumer-evidence.mjs";
+import {
+  FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH,
+  validateFederatedBimSurfaceReleaseEvidence,
+} from "./federated-bim-surface-release-evidence.mjs";
 
 const CONTRACT = Object.freeze({
   package: "@bim-explorer/federated-bim-surface",
@@ -58,9 +62,9 @@ const TRUE_GATES = Object.freeze([
   "reproduciblePackageCandidate",
   "actualSpatialConsumer",
   "releaseReadyPackageConsumerRevalidation",
+  "publicV02Package",
 ]);
 const HELD_GATES = Object.freeze([
-  "publicV02Package",
   "publicArtifactSpatialAdmission",
   "productionSupport",
 ]);
@@ -680,6 +684,7 @@ export function validateFederatedBimSurfaceCompatibility(
   browserEvidence,
   vscodeEvidence,
   packageEvidence,
+  releaseEvidence,
   spatialConsumerEvidence,
   spatialReleaseReadyConsumerEvidence,
 ) {
@@ -724,7 +729,9 @@ export function validateFederatedBimSurfaceCompatibility(
       SPATIAL_CONSUMER_EVIDENCE_PATH ||
     manifest.evidence.releaseReadySpatialConsumer !==
       SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 6 ||
+    manifest.evidence.publicRelease !==
+      FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence).length !== 7 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -751,7 +758,7 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.claimReproduciblePackageCandidate !== true ||
     policy.claimActualSpatialConsumer !== true ||
     policy.claimReleaseReadyPackageConsumerRevalidation !== true ||
-    policy.claimPublicV02Package !== false ||
+    policy.claimPublicV02Package !== true ||
     policy.claimPublicArtifactSpatialAdmission !== false ||
     policy.claimProductionSupport !== false
   ) {
@@ -766,6 +773,8 @@ export function validateFederatedBimSurfaceCompatibility(
     validateFederatedBimSurfaceVscodeQualification(vscodeEvidence);
   const packageCandidate =
     validateFederatedBimSurfacePackageQualification(packageEvidence);
+  const publicRelease =
+    validateFederatedBimSurfaceReleaseEvidence(releaseEvidence);
   const spatialConsumer =
     validateSpatialConsumerAdmission(spatialConsumerEvidence);
   const spatialReleaseReadyConsumer =
@@ -793,7 +802,10 @@ export function validateFederatedBimSurfaceCompatibility(
       spatialReleaseReadyConsumer.packageSha256 ||
     packageEvidence.releaseGate
       ?.releaseReadyPackageConsumerRevalidation !== true ||
-    packageEvidence.releaseGate.publicationAuthorized !== true
+    packageEvidence.releaseGate.publicationAuthorized !== true ||
+    publicRelease.version !== packageCandidate.version ||
+    publicRelease.packageBytes !== packageCandidate.byteLength ||
+    publicRelease.packageSha256 !== packageCandidate.sha256
   ) {
     throw new Error(
       "release-ready package revalidation Gate is invalid",
@@ -812,6 +824,7 @@ export function validateFederatedBimSurfaceCompatibility(
     packageBytes: packageCandidate.byteLength,
     spatialConsumer: spatialConsumer.status,
     releaseReadySpatialConsumer: spatialReleaseReadyConsumer.status,
+    publicRelease: publicRelease.status,
   });
 }
 
@@ -822,6 +835,7 @@ async function main() {
     browserEvidence,
     vscodeEvidence,
     packageEvidence,
+    releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
   ] = await Promise.all([
@@ -833,6 +847,8 @@ async function main() {
     readFile(BROWSER_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(VSCODE_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(PACKAGE_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
     readFile(SPATIAL_CONSUMER_EVIDENCE_PATH, "utf8")
       .then(JSON.parse),
     readFile(SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH, "utf8")
@@ -844,6 +860,7 @@ async function main() {
     browserEvidence,
     vscodeEvidence,
     packageEvidence,
+    releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
   );
@@ -852,7 +869,7 @@ async function main() {
       `${result.status}, ${result.passedGates} passed, ` +
       `${result.heldGates} held, ${result.sourceCount} sources and ` +
       `${result.anchors} Browser / ${result.vscodeAnchors} VS Code ` +
-      `anchors, ${result.packageBytes}-byte package candidate\n`,
+      `anchors, ${result.packageBytes}-byte public package\n`,
   );
 }
 

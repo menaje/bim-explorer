@@ -155,10 +155,11 @@ clean-installed VSIX가 같은 결과를 재현합니다. exact 461,431-byte run
 Spatial overlay, Canonical selection, durable anchor, stale/no-remap과 cleanup을
 통과했습니다. release-ready tgz는 runtime/API를 유지하면서 package 문서 변경으로
 SHA-256이 `3bdb747d…c63cb`가 됐고, Spatial commit `ef0c1ea…4e5`가 그 exact
-97,623 bytes를 다시 검증했습니다. 따라서 `dev` → `prerelease` 승격과
-package-only `bim-surface-v0.2.0` prerelease publication은 승인됐습니다. 공개
-asset 발급 뒤 Spatial exact-pin admission은 별도 Gate이며, 이 경로는 authoring
-authority나 새 VSIX/Marketplace publication을 승인하지 않습니다.
+97,623 bytes를 다시 검증했습니다. `dev` → `prerelease` 승격 뒤 package-only
+[`bim-surface-v0.2.0`](https://github.com/menaje/bim-explorer/releases/tag/bim-surface-v0.2.0)
+immutable GitHub prerelease와 9개 attested asset을 공개했습니다. 이 public asset의
+Spatial Phase B exact-pin은 별도 Gate이며, authoring authority나 새
+VSIX/Marketplace publication은 승인하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)

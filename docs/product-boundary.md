@@ -89,8 +89,9 @@ selection이 authority가 되지 않습니다.
   않습니다. 내부 Browser와 path-free `.bimfed.json` VS Code entrypoint는
   private 0.2.0 candidate runtime을 사용해 검증됐고 byte-identical pack과
   offline clean install도 통과했습니다. Spatial actual headless consumer는 이전
-  candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. immutable
-  public v0.2 asset과 그 asset의 Spatial exact-pin admission은 별도 Gate입니다.
+  candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. 동일 tgz는
+  immutable public v0.2 package prerelease로 공개됐고 그 asset의 Spatial Phase B
+  exact-pin admission은 별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는
