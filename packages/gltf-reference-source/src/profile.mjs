@@ -8,6 +8,9 @@ import {
 import {
   inspectBoundedPng,
 } from "./png.mjs";
+import {
+  inspectBoundedJpeg,
+} from "./jpeg.mjs";
 
 const GLB_MAGIC = 0x46546c67;
 const JSON_CHUNK = 0x4e4f534a;
@@ -224,8 +227,8 @@ function externalResourceName(value, limits) {
     value.length === 0 ||
     new TextEncoder().encode(value).byteLength >
       limits.maximumExternalResourceNameBytes ||
-    !/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u.test(value) ||
-    [".bin", ".png"].includes(value) ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u.test(value) ||
+    [".bin", ".jpg", ".jpeg", ".png"].includes(value) ||
     value.includes("..")
   ) {
     throw new DOMException(
@@ -1136,18 +1139,23 @@ function createTextureResolver(
   let embeddedImageBytes = 0;
   let sourceBytes = 0;
 
-  const embeddedPng = (image, imageIndex) => {
+  const embeddedImage = (image, imageIndex) => {
     if (typeof image.uri === "string") {
-      const prefix = "data:image/png;base64,";
-      if (!image.uri.startsWith(prefix)) {
+      const mediaType = image.uri.startsWith("data:image/png;base64,")
+        ? "image/png"
+        : image.uri.startsWith("data:image/jpeg;base64,")
+          ? "image/jpeg"
+          : null;
+      if (mediaType === null) {
         return null;
       }
+      const prefix = `data:${mediaType};base64,`;
       if (
         image.mimeType !== undefined &&
-        image.mimeType !== "image/png"
+        image.mimeType !== mediaType
       ) {
         throw new DOMException(
-          "glTF embedded PNG MIME type is inconsistent",
+          "glTF embedded image MIME type is inconsistent",
           "NotSupportedError",
         );
       }
@@ -1155,8 +1163,11 @@ function createTextureResolver(
         bytes: decodeBase64(
           image.uri.slice(prefix.length),
           limits.maximumTextureSourceBytes,
-          `glTF images[${imageIndex}] PNG data URI`,
+          `glTF images[${imageIndex}] ${
+            mediaType === "image/png" ? "PNG" : "JPEG"
+          } data URI`,
         ),
+        mediaType,
         owned: true,
         storage: "data-uri",
       };
@@ -1164,12 +1175,13 @@ function createTextureResolver(
     if (image.bufferView === undefined) {
       return null;
     }
-    if (image.mimeType !== "image/png") {
+    if (!["image/png", "image/jpeg"].includes(image.mimeType)) {
       return null;
     }
+    const mediaLabel = image.mimeType === "image/png" ? "PNG" : "JPEG";
     if (format !== "glb") {
       throw new DOMException(
-        "PNG image bufferView projection is limited to GLB",
+        `${mediaLabel} image bufferView projection is limited to GLB`,
         "NotSupportedError",
       );
     }
@@ -1188,7 +1200,7 @@ function createTextureResolver(
       bufferView.extensions !== undefined
     ) {
       throw new DOMException(
-        "glTF embedded PNG bufferView profile is unsupported",
+        `glTF embedded ${mediaLabel} bufferView profile is unsupported`,
         "NotSupportedError",
       );
     }
@@ -1210,7 +1222,7 @@ function createTextureResolver(
       byteOffset + byteLength > buffer.byteLength
     ) {
       throw new RangeError(
-        "glTF embedded PNG bufferView range is invalid",
+        `glTF embedded ${mediaLabel} bufferView range is invalid`,
       );
     }
     for (const [accessorIndex, accessorValue] of
@@ -1230,7 +1242,7 @@ function createTextureResolver(
       );
       if (accessorViewIndex === viewIndex) {
         throw new Error(
-          "glTF embedded PNG bufferView is also used by an accessor",
+          `glTF embedded ${mediaLabel} bufferView is also used by an accessor`,
         );
       }
       const accessorOffset = accessorView.byteOffset ?? 0;
@@ -1243,12 +1255,13 @@ function createTextureResolver(
         byteOffset + byteLength > accessorOffset
       ) {
         throw new Error(
-          "glTF embedded PNG bufferView overlaps accessor bytes",
+          `glTF embedded ${mediaLabel} bufferView overlaps accessor bytes`,
         );
       }
     }
     return {
       bytes: buffer.slice(byteOffset, byteOffset + byteLength),
+      mediaType: image.mimeType,
       owned: true,
       storage: "glb-buffer-view",
     };
@@ -1338,51 +1351,53 @@ function createTextureResolver(
       images[imageIndex],
       `glTF images[${imageIndex}]`,
     );
-    if (
-      (typeof image.uri === "string" &&
-        /^data:image\/jpeg;base64,/u.test(image.uri)) ||
-      (image.bufferView !== undefined &&
-        image.mimeType === "image/jpeg")
-    ) {
-      return null;
-    }
     if (texCoord !== 0) {
       throw new DOMException(
         "only glTF TEXCOORD_0 is supported",
         "NotSupportedError",
       );
     }
-    const embedded = embeddedPng(image, imageIndex);
+    const embedded = embeddedImage(image, imageIndex);
     let bytes = embedded?.bytes ?? null;
+    let mediaType = embedded?.mediaType ?? null;
     let sourceKind = embedded?.storage ?? "external-resource";
     let uri = null;
     if (bytes === null) {
       uri = externalResourceName(image.uri, limits);
+      mediaType = uri.endsWith(".png")
+        ? "image/png"
+        : uri.endsWith(".jpg") || uri.endsWith(".jpeg")
+          ? "image/jpeg"
+          : null;
       if (
         format !== "gltf" ||
-        !uri.endsWith(".png") ||
+        mediaType === null ||
         (
           image.mimeType !== undefined &&
-          image.mimeType !== "image/png"
+          image.mimeType !== mediaType
         ) ||
         !externalResources.has(uri)
       ) {
         throw new DOMException(
-          "glTF base color image is outside the bounded PNG profile",
+          "glTF base color image is outside the bounded image profile",
           "NotSupportedError",
         );
       }
       bytes = externalResources.get(uri);
     }
     try {
-      const png = inspectBoundedPng(bytes, {
+      const imageProfile = (
+        mediaType === "image/png"
+          ? inspectBoundedPng
+          : inspectBoundedJpeg
+      )(bytes, {
         maximumCompressionRatio:
           limits.maximumTextureCompressionRatio,
         maximumDecodedBytes: limits.maximumTextureDecodedBytes,
         maximumDimension: limits.maximumTextureDimension,
         maximumSourceBytes: limits.maximumTextureSourceBytes,
       });
-      decodedBytes += png.decodedBytes;
+      decodedBytes += imageProfile.decodedBytes;
       sourceBytes += bytes.byteLength;
       if (
         projected.length >= limits.maximumTextures ||
@@ -1395,10 +1410,10 @@ function createTextureResolver(
       }
       const result = Object.freeze({
         bytes: Uint8Array.from(bytes),
-        decodedBytes: png.decodedBytes,
-        height: png.height,
+        decodedBytes: imageProfile.decodedBytes,
+        height: imageProfile.height,
         index: projected.length,
-        mediaType: png.mediaType,
+        mediaType: imageProfile.mediaType,
         sampler: resolveSampler(
           texture.sampler,
           `glTF textures[${sourceTextureIndex}]`,
@@ -1407,7 +1422,7 @@ function createTextureResolver(
         sourceKind,
         sourceTextureIndex,
         ...(uri === null ? {} : { uri }),
-        width: png.width,
+        width: imageProfile.width,
       });
       projected.push(result);
       projectedByTexture.set(sourceTextureIndex, result);
@@ -1431,6 +1446,7 @@ function createTextureResolver(
   const finalize = (usedExternalBuffers) => {
     const declaredExternalImages = new Set();
     const declaredEmbeddedImages = new Set();
+    const declaredEmbeddedMediaTypes = new Set();
     for (const [index, imageValue] of images.entries()) {
       const image = plainRecord(
         imageValue,
@@ -1441,7 +1457,7 @@ function createTextureResolver(
         !image.uri.startsWith("data:")
       ) {
         const uri = externalResourceName(image.uri, limits);
-        if (!uri.endsWith(".png")) {
+        if (!/\.(?:jpe?g|png)$/u.test(uri)) {
           throw new DOMException(
             "external glTF image URI is unsupported",
             "NotSupportedError",
@@ -1450,12 +1466,19 @@ function createTextureResolver(
         declaredExternalImages.add(uri);
       } else if (
         (typeof image.uri === "string" &&
-          image.uri.startsWith("data:image/png;base64,")) ||
+          /^(?:data:image\/(?:jpeg|png);base64,)/u.test(image.uri)) ||
         (image.bufferView !== undefined &&
-          image.mimeType === "image/png" &&
+          ["image/png", "image/jpeg"].includes(image.mimeType) &&
           format === "glb")
       ) {
         declaredEmbeddedImages.add(index);
+        declaredEmbeddedMediaTypes.add(
+          image.mimeType ?? (
+            image.uri.startsWith("data:image/png;")
+              ? "image/png"
+              : "image/jpeg"
+          ),
+        );
       }
     }
     if (
@@ -1473,8 +1496,15 @@ function createTextureResolver(
       [...declaredEmbeddedImages].some((index) =>
         !usedEmbeddedImages.has(index))
     ) {
+      const label = declaredEmbeddedMediaTypes.size === 1 &&
+          declaredEmbeddedMediaTypes.has("image/png")
+        ? "embedded PNG images"
+        : declaredEmbeddedMediaTypes.size === 1 &&
+            declaredEmbeddedMediaTypes.has("image/jpeg")
+          ? "embedded JPEG images"
+          : "embedded PNG/JPEG images";
       throw new DOMException(
-        "embedded PNG images require bounded base color projection",
+        `${label} require bounded base color projection`,
         "NotSupportedError",
       );
     }
@@ -1872,7 +1902,7 @@ function validateAsset(document, limits) {
           dataImage === null
         ) {
           const uri = externalResourceName(image.uri, limits);
-          if (!uri.endsWith(".png")) {
+          if (!/\.(?:jpe?g|png)$/u.test(uri)) {
             throw new DOMException(
               "external glTF image URI is unsupported",
               "NotSupportedError",
@@ -2219,12 +2249,20 @@ export function parseGltfReferenceProfile(
       appearance: appearance.textures.length === 0
         ? null
         : {
-            profile: "base-color-texture-png-opaque-v0.1",
+            profile: appearance.textures.every(
+              (texture) => texture.mediaType === "image/png",
+            )
+              ? "base-color-texture-png-opaque-v0.1"
+              : "base-color-texture-opaque-v0.2",
             textureCoordinateSet: 0,
             textureSourceBytes: appearance.sourceBytes,
             textureDecodedBytes: appearance.decodedBytes,
             textures: appearance.textures.length,
-            imageMediaTypes: ["image/png"],
+            imageMediaTypes: [...new Set(
+              appearance.textures.map(
+                (texture) => texture.mediaType,
+              ),
+            )].sort(),
             ...(appearance.embeddedImageResources === 0
               ? {}
               : {

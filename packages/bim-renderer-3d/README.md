@@ -8,6 +8,8 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
 - `application/vnd.bim-explorer.geometry-range.v1`의 독립 consumer-side decode
 - `application/vnd.bim-explorer.geometry-range.v2`의 interleaved UV와 bounded
   PNG texture table 독립 재검증
+- `application/vnd.bim-explorer.geometry-range.v3`의 MIME-aware PNG/JPEG
+  texture table과 bounded baseline JPEG 독립 재검증
 - snapshot의 `firstFrameRangeIds`만 bounded chunk read
 - camera target과 entity bounds 기반 visibility-first range 선택
 - geometry record와 primitive slice/count의 교차 검증
@@ -53,8 +55,9 @@ renderer authority로 만들지 않습니다.
 reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-local
 identity를 유지합니다.
 
-textured v2 range는 OPAQUE PNG `baseColorTexture`와 `TEXCOORD_0`만 소비합니다.
-renderer는 source와 별도로 PNG signature/chunk/CRC, dimensions, decoded ratio,
+textured v2/v3 range는 OPAQUE PNG/JPEG `baseColorTexture`와 `TEXCOORD_0`만
+소비합니다. renderer는 source와 별도로 PNG signature/chunk/CRC 또는 JPEG
+marker/frame/scan/table 구조, dimensions, decoded ratio,
 geometry-to-texture reference와 trailing/unused payload를 검증합니다. external
 bundle과 embedded GLB의 actual BoxTextured Gate는 같은 3,750-byte PNG를
 262,144-byte decoded base RGBA와 349,524-byte mipmap-aware sRGB GPU texture로
@@ -63,6 +66,13 @@ bundle과 embedded GLB의 actual BoxTextured Gate는 같은 3,750-byte PNG를
 allocation을 만들고 texture/image bitmap을 포함한 모든 resource를
 회수했습니다. material semantics, image storage/fetch와 BIM authority는
 renderer가 소유하지 않습니다.
+
+v3 JPEG Gate는 749-byte baseline sequential JPEG를 16,384-byte decoded base
+RGBA와 21,844-byte mipmap-aware sRGB GPU texture로 산정한 1,756-byte range를
+사용합니다. Browser, staged VS Code와 clean-installed local VSIX의 Apple M2
+Metal 3개 표면은 각각 86,486 pixels·22,836-byte total upload와 terminal
+cleanup을 재현했습니다. PNG-only v2 bytes는 변경하지 않으며 progressive,
+arithmetic, lossless, DNL과 multi-scan JPEG는 backend 호출 전에 거부합니다.
 
 point range는 source semantic identity를 만들지 않습니다. renderer는 exact
 source revision과 root range SHA-256 안의 배열 순서에서만 `point:n`을 파생하고,

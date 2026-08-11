@@ -14,6 +14,7 @@
     "hostReceipt": "bim-explorer-bim-renderer-3d-host-receipt/0.1",
     "geometryMediaType": "application/vnd.bim-explorer.geometry-range.v1",
     "texturedGeometryMediaType": "application/vnd.bim-explorer.geometry-range.v2",
+    "texturedGeometryMediaTypeV3": "application/vnd.bim-explorer.geometry-range.v3",
     "pointRenderer": "bim-explorer-bounded-point-renderer/0.1",
     "pointReceipt": "bim-explorer-bounded-point-renderer-receipt/0.1",
     "pointPickReceipt": "bim-explorer-bounded-point-renderer-pick-receipt/0.1",
@@ -219,7 +220,8 @@
     "pointHierarchyChunkLod": true,
     "pointPhysicalGpuQualification": true,
     "boundedBaseColorTexture": true,
-    "boundedEmbeddedBaseColorTexture": true
+    "boundedEmbeddedBaseColorTexture": true,
+    "boundedJpegBaseColorTexture": true
   },
   "evidence": {
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
@@ -241,7 +243,8 @@
     "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json",
     "pointHierarchyChunkLod": "compatibility/evidence/point-cloud-lod-products-2026-08-09.json",
     "pointPhysicalGpuQualification": "compatibility/evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json",
-    "baseColorTextureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json"
+    "baseColorTextureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json",
+    "jpegBaseColorTextureProducts": "compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json"
   },
   "blockers": [],
   "policy": {
@@ -259,6 +262,7 @@
     "claimSourceNativePointLod": false,
     "claimBoundedBaseColorTexture": true,
     "claimBoundedEmbeddedBaseColorTexture": true,
+    "claimBoundedJpegBaseColorTexture": true,
     "pointIdentityAuthority": "derived-point-range-order",
     "pointIdentityScope": "source-revision-and-range-digest"
   }

@@ -2,6 +2,8 @@ export const BIM_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v1";
 export const BIM_TEXTURED_GEOMETRY_MEDIA_TYPE =
   "application/vnd.bim-explorer.geometry-range.v2";
+export const BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3 =
+  "application/vnd.bim-explorer.geometry-range.v3";
 
 const TEXTURE_NONE = 0xffff_ffff;
 
@@ -106,6 +108,9 @@ export function encodeGltfTexturedGeometryRange(
   const headerBytes = 24;
   const recordHeaderBytes = 28;
   const textureHeaderBytes = 40;
+  const version = textures.some(
+    (texture) => texture.mediaType === "image/jpeg",
+  ) ? 3 : 2;
   const byteLength = records.reduce((total, record) => {
     const vertexCount = record.positions.length / 3;
     return total +
@@ -118,9 +123,14 @@ export function encodeGltfTexturedGeometryRange(
     0,
   );
   const bytes = new Uint8Array(byteLength);
-  bytes.set(new TextEncoder().encode("BEXGEO02"), 0);
+  bytes.set(
+    new TextEncoder().encode(
+      version === 2 ? "BEXGEO02" : "BEXGEO03",
+    ),
+    0,
+  );
   const view = new DataView(bytes.buffer);
-  view.setUint32(8, 2, true);
+  view.setUint32(8, version, true);
   view.setUint32(12, records.length, true);
   view.setUint32(16, textures.length, true);
   view.setUint32(20, 0, true);
@@ -222,12 +232,18 @@ export function encodeGltfTexturedGeometryRange(
       texture.width <= 0 ||
       !Number.isSafeInteger(texture.height) ||
       texture.height <= 0 ||
+      !["image/png", "image/jpeg"].includes(texture.mediaType) ||
+      (version === 2 && texture.mediaType !== "image/png") ||
       texture.decodedBytes !== texture.width * texture.height * 4
     ) {
       throw new Error("textured glTF texture record is invalid");
     }
     view.setUint32(offset, index, true);
-    view.setUint32(offset + 4, 1, true);
+    view.setUint32(
+      offset + 4,
+      texture.mediaType === "image/png" ? 1 : 2,
+      true,
+    );
     view.setUint32(offset + 8, texture.width, true);
     view.setUint32(offset + 12, texture.height, true);
     view.setUint32(offset + 16, texture.bytes.byteLength, true);
@@ -247,7 +263,9 @@ export function encodeGltfTexturedGeometryRange(
   }
   return {
     bytes,
-    mediaType: BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+    mediaType: version === 2
+      ? BIM_TEXTURED_GEOMETRY_MEDIA_TYPE
+      : BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
     metadata,
   };
 }

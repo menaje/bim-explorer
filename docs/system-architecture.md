@@ -263,7 +263,8 @@ Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도
 generated source fingerprint, model/renderer projection과 WebGL2 frame을
 재현했습니다. bounded glTF/GLB는 같은 Host lifecycle에서 reference source와
 source-native explorer로 분기하며 IFC semantic authority를 사용하지
-않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder `.bin`/`.png`
+않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder
+`.bin`/`.png`/`.jpg`/`.jpeg`
 sidecar를 하나의 composite fingerprint로 묶고 모든 owned copy를 terminal
 cleanup에서 지웁니다.
 이 additive path는 single-source 제품 Worker에만 연결합니다. 이미 공개된
@@ -294,7 +295,7 @@ Browser Host와 VS Code Host는 같은 product lifecycle을 구현합니다.
 
 | Host 책임 | Browser | VS Code |
 | --- | --- | --- |
-| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin`/`.png` |
+| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin`/`.png`/`.jpg`/`.jpeg` |
 | adapter backend | module Worker + WASM | bundled module Worker + WASM |
 | binary range | Worker-owned immutable range | webview Worker-owned range |
 | resource reveal | explicit download/view | bounded editor/reveal intent |
@@ -332,9 +333,14 @@ exact glTF PNG data URI와 GLB PNG bufferView의 `baseColorTexture`는
 `SRGB8_ALPHA8`로 upload합니다. exact BoxTextured 외부 bundle과 embedded GLB의
 Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
 표면은 각각 86,486 pixels·349,524-byte mipmap-aware GPU texture,
-350,516-byte total upload·terminal cleanup을 재현했습니다. 임의 URI, glTF
-bufferView image, JPEG·비-OPAQUE alpha material mode와 다른 material texture role은 Worker admission 전에
-거부합니다. ratified
+350,516-byte total upload·terminal cleanup을 재현했습니다. 임의 URI와 glTF
+bufferView image는 거부합니다. bounded baseline sequential JPEG는 외부 JPEG,
+exact glTF JPEG data URI와 GLB JPEG bufferView를 MIME-aware geometry-range v3로
+투영합니다. exact cache-only Khronos derivation의 Browser·staged VS Code·
+clean-installed local VSIX Apple M2 Metal 3개 표면은 각각 86,486 pixels·
+21,844-byte mipmap-aware GPU texture·22,836-byte total upload·terminal cleanup을
+재현했습니다. progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
+mode와 다른 material texture role은 Worker admission 전에 거부합니다. ratified
 `KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
 4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.
 `EXT_meshopt_compression`은 exact meshoptimizer 1.2.0 single-thread WASM을 같은

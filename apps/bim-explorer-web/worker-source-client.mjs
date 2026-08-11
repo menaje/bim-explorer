@@ -10,7 +10,7 @@ const DEFAULT_LIMITS = Object.freeze({
 });
 const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 const EXTERNAL_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 
 function invalidState(message) {
   return new DOMException(message, "InvalidStateError");

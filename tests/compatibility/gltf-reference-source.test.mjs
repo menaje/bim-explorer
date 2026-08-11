@@ -7,6 +7,8 @@ import {
   validateGltfMeshoptAdmission,
   validateGltfMeshQuantizationAdmission,
   validateGltfPhysicalGpuAdmission,
+  validateGltfTextureAdmission,
+  validateGltfJpegTextureAdmission,
 } from "../../scripts/check-gltf-reference-source-compatibility.mjs";
 
 async function inputs() {
@@ -79,6 +81,50 @@ async function meshoptInputs() {
     ).then(JSON.parse),
     readFile(
       manifest.evidence.meshoptFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+  ]);
+  return { evidence, fixture, manifest };
+}
+
+async function textureInputs() {
+  const manifest = JSON.parse(
+    await readFile(
+      "compatibility/gltf-reference-source.json",
+      "utf8",
+    ),
+  );
+  const [evidence, fixture, embeddedFixture] = await Promise.all([
+    readFile(
+      manifest.evidence.textureProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.textureFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.embeddedTextureFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+  ]);
+  return { embeddedFixture, evidence, fixture, manifest };
+}
+
+async function jpegTextureInputs() {
+  const manifest = JSON.parse(
+    await readFile(
+      "compatibility/gltf-reference-source.json",
+      "utf8",
+    ),
+  );
+  const [evidence, fixture] = await Promise.all([
+    readFile(
+      manifest.evidence.jpegTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.jpegTextureFixtureManifest,
       "utf8",
     ).then(JSON.parse),
   ]);
@@ -290,5 +336,46 @@ test("glTF meshopt admission requires the immutable v0.2 boundary", async () => 
       fixture,
     ),
     /EXT_meshopt_compression product evidence is invalid/u,
+  );
+});
+
+test("glTF reference source admits exact PNG texture evidence", async () => {
+  const { embeddedFixture, evidence, fixture, manifest } =
+    await textureInputs();
+  const report = validateGltfTextureAdmission(
+    manifest,
+    evidence,
+    fixture,
+    embeddedFixture,
+  );
+  assert.equal(report.surfaces, 6);
+  assert.equal(report.sourceBytes, 8_285);
+  assert.equal(report.gpuUploadBytes, 350_516);
+});
+
+test("glTF reference source admits exact JPEG texture evidence", async () => {
+  const { evidence, fixture, manifest } =
+    await jpegTextureInputs();
+  const report = validateGltfJpegTextureAdmission(
+    manifest,
+    evidence,
+    fixture,
+  );
+  assert.equal(report.surfaces, 3);
+  assert.equal(report.sourceBytes, 4_274);
+  assert.equal(report.gpuUploadBytes, 22_836);
+});
+
+test("glTF JPEG admission rejects progressive-profile overclaim", async () => {
+  const { evidence, fixture, manifest } =
+    await jpegTextureInputs();
+  evidence.held.progressiveJpeg = true;
+  assert.throws(
+    () => validateGltfJpegTextureAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /glTF JPEG texture product evidence is invalid/u,
   );
 });

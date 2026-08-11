@@ -41,9 +41,10 @@ multiple-scan E57은 32 MiB·2,000,000-point cap을 적용합니다. 단일 BIM 
 read는 최대 1 MiB입니다. tree/search
 aggregate와 DOM projection도 생성 시 고정한 상한을 넘지 않습니다.
 `.gltf` local resource bundle은 source와 최대 16개 same-folder ASCII leaf-name
-`.bin`/`.png`를 합산 64MiB 안에서 받습니다. 외부 PNG, exact glTF PNG data URI
-또는 GLB PNG bufferView texture는 저장 방식 전체에 encoded 8MiB, decoded RGBA
-16MiB, 축당 2,048px와 256:1 ratio를 추가 적용합니다.
+`.bin`/`.png`/`.jpg`/`.jpeg`를 합산 64MiB 안에서 받습니다. 외부 PNG/JPEG,
+exact glTF PNG/JPEG data URI 또는 GLB PNG/JPEG bufferView texture는 저장 방식
+전체에 encoded 8MiB, decoded RGBA 16MiB, 축당 2,048px와 256:1 ratio를 추가
+적용합니다. JPEG는 bounded baseline sequential profile만 허용합니다.
 
 ## Browser Host
 
@@ -108,9 +109,10 @@ VSIX에서 파생 hierarchy/LOD 전환과 exact cleanup을 비교합니다.
 
 - stable/production Viewer Core와 Marketplace conformance
 - Linux/Windows physical GPU와 cross-platform OS-level GPU/memory qualification
-- arbitrary glTF URI, glTF bufferView image, JPEG·투명/다중 material texture,
-  Draco와 승인되지 않은 required extension; bounded same-folder `.bin`/`.png`,
-  외부/data-URI/GLB-bufferView OPAQUE PNG `baseColorTexture`,
+- arbitrary glTF URI, glTF bufferView image, progressive/arithmetic/lossless
+  JPEG·투명/다중 material texture, Draco와 승인되지 않은 required extension;
+  bounded same-folder `.bin`/`.png`/`.jpg`/`.jpeg`, 외부/data-URI/GLB-bufferView
+  OPAQUE PNG/baseline JPEG `baseColorTexture`,
   `KHR_mesh_quantization`, `EXT_meshopt_compression` `FILTER_NONE` 제품 Gate는
   통과
 - E57/LAS/LAZ CRS/surveyed datum, source-native hierarchy·point semantics와

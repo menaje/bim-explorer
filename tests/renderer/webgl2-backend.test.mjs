@@ -343,6 +343,58 @@ test("WebGL2 backend decodes and uploads bounded base color textures", async () 
   }
 });
 
+test("WebGL2 backend decodes and uploads bounded JPEG base color textures", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle({
+    imageUri: "base-color.jpeg",
+  });
+  const source = await createGltfReferenceSource(bundle.bytes, {
+    resources: bundle.resources,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = new FakeWebGl2Context();
+  let closedImages = 0;
+  const backend = createWebGl2Backend({
+    canvas: fakeCanvas(context),
+    frameScheduler(callback) {
+      callback(0);
+    },
+    height: 90,
+    imageDecoder(bytes, metadata) {
+      assert.deepEqual([...bytes.slice(0, 2)], [0xff, 0xd8]);
+      assert.equal(metadata.mediaType, "image/jpeg");
+      return {
+        width: metadata.width,
+        height: metadata.height,
+        close() {
+          closedImages += 1;
+        },
+      };
+    },
+    width: 160,
+  });
+  const renderer = createBounded3dRenderer({ backend });
+  const receipt = await renderer.mount({ session, snapshot });
+
+  assert.equal(receipt.metrics.textures, 1);
+  assert.equal(receipt.metrics.textureSourceBytes, 711);
+  assert.equal(receipt.metrics.textureDecodedBytes, 16);
+  assert.equal(receipt.metrics.textureGpuBytes, 20);
+  assert.equal(receipt.backend.textureBytes, 20);
+  assert.equal(context.textureUploads.length, 1);
+  assert.equal(context.generatedMipmaps, 1);
+  assert.equal(closedImages, 1);
+  assert.equal(await renderer.dispose(), true);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+});
+
 test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   const bytes = new TextEncoder().encode(syntheticMappedIfc());
   const artifact = await createWebIfcSourceArtifact(bytes);

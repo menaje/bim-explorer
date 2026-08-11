@@ -24,10 +24,17 @@ export const PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST = path.join(
   "public-khronos-box-textured",
   "manifest.json",
 );
+export const PUBLIC_GLTF_JPEG_TEXTURE_BUNDLE_MANIFEST = path.join(
+  ROOT,
+  "fixtures",
+  "gltf",
+  "public-khronos-box-textured-jpeg",
+  "manifest.json",
+);
 const SHA256 = /^[0-9a-f]{64}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -44,7 +51,13 @@ function record(value, label) {
   return value;
 }
 
-function validateEntry(entry, expectedName, expectedMediaType, rawBase) {
+function validateEntry(
+  entry,
+  expectedName,
+  expectedMediaType,
+  rawBase,
+  rawUrl = `${rawBase}/${expectedName}`,
+) {
   if (
     entry.name !== expectedName ||
     entry.mediaType !== expectedMediaType ||
@@ -52,7 +65,7 @@ function validateEntry(entry, expectedName, expectedMediaType, rawBase) {
     entry.byteLength <= 0 ||
     entry.byteLength > 64 * 1024 * 1024 ||
     !SHA256.test(entry.sha256 ?? "") ||
-    entry.rawUrl !== `${rawBase}/${expectedName}`
+    entry.rawUrl !== rawUrl
   ) {
     throw new Error("public glTF resource bundle entry is invalid");
   }
@@ -93,6 +106,33 @@ function validateManifest(value) {
             "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
             `blob/${provenance.commit}/LICENSES/LicenseRef-CC-BY-TM.txt`,
         }
+      : manifest.fixtureId ===
+          "khronos-gltf-sample-assets-box-textured-derived-external-jpeg"
+        ? {
+            derived: true,
+            directory:
+              "Models/BoxTextured/glTF + " +
+              "Models/CompareDispersion/glTF",
+            documentName: "BoxTexturedJpeg.gltf",
+            resources: [
+              [
+                "BoxTextured0.bin",
+                "application/octet-stream",
+                "Models/BoxTextured/glTF/BoxTextured0.bin",
+              ],
+              [
+                "Compare_Dispersion_img1.jpg",
+                "image/jpeg",
+                "Models/CompareDispersion/glTF/" +
+                  "Compare_Dispersion_img1.jpg",
+              ],
+            ],
+            licenseSpdx:
+              "(LicenseRef-CC-BY-TM AND " +
+              "LicenseRef-LegalMark-Cesium) AND " +
+              "(CC0-1.0 AND LicenseRef-LegalMark-Khronos)",
+            licenseUrl: null,
+          }
       : null;
   const externalResourceBytes = Array.isArray(manifest.resources)
     ? manifest.resources.reduce(
@@ -114,7 +154,18 @@ function validateManifest(value) {
       !RESOURCE_NAME.test(resource?.name ?? "") ||
       resource.name.includes("..")) ||
     license.spdx !== fixture.licenseSpdx ||
-    license.url !== fixture.licenseUrl ||
+    (
+      fixture.licenseUrl === null
+        ? (
+            license.boxUrl !==
+              "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+              `blob/${provenance.commit}/Models/BoxTextured/LICENSE.md` ||
+            license.jpegUrl !==
+              "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+              `blob/${provenance.commit}/Models/CompareDispersion/LICENSE.md`
+          )
+        : license.url !== fixture.licenseUrl
+    ) ||
     tracking.cacheRoot !== ".gltf-cache/public-gltf" ||
     tracking.artifactsTracked !== false ||
     tracking.releaseBundled !== false ||
@@ -134,32 +185,74 @@ function validateManifest(value) {
   ) {
     throw new Error("public glTF resource bundle manifest is invalid");
   }
-  validateEntry(
-    document,
-    fixture.documentName,
-    "model/gltf+json",
-    rawBase,
-  );
+  if (fixture.derived === true) {
+    const sourceDocument = manifest.derivation?.sourceDocument;
+    if (
+      document.name !== fixture.documentName ||
+      document.mediaType !== "model/gltf+json" ||
+      document.derived !== true ||
+      !Number.isSafeInteger(document.byteLength) ||
+      document.byteLength <= 0 ||
+      !SHA256.test(document.sha256 ?? "") ||
+      manifest.derivation?.profile !==
+        "bim-explorer-cache-only-box-textured-jpeg/1" ||
+      sourceDocument?.name !== "BoxTextured.gltf" ||
+      sourceDocument?.mediaType !== "model/gltf+json" ||
+      sourceDocument?.byteLength !== 3_695 ||
+      sourceDocument?.sha256 !==
+        "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef" ||
+      sourceDocument?.rawUrl !==
+        "https://raw.githubusercontent.com/KhronosGroup/" +
+        `glTF-Sample-Assets/${provenance.commit}/` +
+        "Models/BoxTextured/glTF/BoxTextured.gltf"
+    ) {
+      throw new Error("derived public glTF document manifest is invalid");
+    }
+  } else {
+    validateEntry(
+      document,
+      fixture.documentName,
+      "model/gltf+json",
+      rawBase,
+    );
+  }
   for (let index = 0; index < fixture.resources.length; index += 1) {
     validateEntry(
       manifest.resources[index],
       fixture.resources[index][0],
       fixture.resources[index][1],
       rawBase,
+      fixture.resources[index][2] === undefined
+        ? `${rawBase}/${fixture.resources[index][0]}`
+        : "https://raw.githubusercontent.com/KhronosGroup/" +
+          `glTF-Sample-Assets/${provenance.commit}/` +
+          fixture.resources[index][2],
     );
   }
   if (
-    manifest.fixtureId ===
-      "khronos-gltf-sample-assets-box-textured-external-png" &&
+    [
+      "khronos-gltf-sample-assets-box-textured-external-png",
+      "khronos-gltf-sample-assets-box-textured-derived-external-jpeg",
+    ].includes(manifest.fixtureId) &&
     (
-      license.trademarkUrl !==
-        "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
-        `blob/${provenance.commit}/LICENSES/LicenseRef-LegalMark-Cesium.txt` ||
+      (
+        fixture.derived !== true &&
+        license.trademarkUrl !==
+          "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+          `blob/${provenance.commit}/LICENSES/LicenseRef-LegalMark-Cesium.txt`
+      ) ||
       expected.externalBufferResources !== 1 ||
       expected.externalImageResources !== 1 ||
       expected.geometryRangeMediaType !==
-        "application/vnd.bim-explorer.geometry-range.v2" ||
-      expected.imageMediaType !== "image/png" ||
+        (fixture.derived === true
+          ? "application/vnd.bim-explorer.geometry-range.v3"
+          : "application/vnd.bim-explorer.geometry-range.v2") ||
+      expected.imageMediaType !==
+        (fixture.derived === true ? "image/jpeg" : "image/png") ||
+      expected.appearanceProfile !==
+        (fixture.derived === true
+          ? "base-color-texture-opaque-v0.2"
+          : undefined) ||
       expected.textureCoordinateSet !== 0 ||
       expected.textures !== 1 ||
       !Number.isSafeInteger(expected.textureSourceBytes) ||
@@ -252,6 +345,56 @@ async function acquireEntry(entry, root, fetchImpl) {
   return { bytes, cacheHit: false, cachePath };
 }
 
+async function deriveJpegDocument(manifest, root, source) {
+  const cachePath = path.join(root, manifest.document.name);
+  const cached = await verifiedCache(cachePath, manifest.document);
+  if (cached !== null) {
+    return { bytes: cached, cacheHit: true, cachePath };
+  }
+  let document;
+  try {
+    document = JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(source),
+    );
+  } catch {
+    throw new Error("public glTF JPEG source document is invalid");
+  }
+  if (
+    document?.asset?.generator !== "COLLADA2GLTF" ||
+    document?.asset?.version !== "2.0" ||
+    document?.buffers?.[0]?.uri !== "BoxTextured0.bin" ||
+    document?.images?.length !== 1 ||
+    document.images[0]?.uri !== "CesiumLogoFlat.png"
+  ) {
+    throw new Error("public glTF JPEG derivation input is unexpected");
+  }
+  document.asset.generator =
+    "COLLADA2GLTF; BIM Explorer cache-only JPEG derivation";
+  document.images = [{
+    uri: "Compare_Dispersion_img1.jpg",
+    mimeType: "image/jpeg",
+  }];
+  const bytes = new TextEncoder().encode(
+    `${JSON.stringify(document, null, 2)}\n`,
+  );
+  if (
+    bytes.byteLength !== manifest.document.byteLength ||
+    sha256(bytes) !== manifest.document.sha256
+  ) {
+    bytes.fill(0);
+    throw new Error("public glTF JPEG derivation is not reproducible");
+  }
+  await mkdir(root, { recursive: true });
+  const temporary = `${cachePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    await writeFile(temporary, bytes, { flag: "wx", mode: 0o600 });
+    await rename(temporary, cachePath);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+  return { bytes, cacheHit: false, cachePath };
+}
+
 export async function acquirePublicGltfResourceBundle({
   cacheRoot,
   fetchImpl = globalThis.fetch,
@@ -263,11 +406,29 @@ export async function acquirePublicGltfResourceBundle({
   const manifest = await loadPublicGltfResourceBundleManifest(manifestPath);
   const root = cacheRoot ?? path.join(ROOT, manifest.tracking.cacheRoot);
   const bundleRoot = path.join(root, manifest.fixtureId);
-  const document = await acquireEntry(
-    manifest.document,
-    bundleRoot,
-    fetchImpl,
-  );
+  let document;
+  if (manifest.derivation === undefined) {
+    document = await acquireEntry(
+      manifest.document,
+      bundleRoot,
+      fetchImpl,
+    );
+  } else {
+    const source = await acquireEntry(
+      manifest.derivation.sourceDocument,
+      bundleRoot,
+      fetchImpl,
+    );
+    try {
+      document = await deriveJpegDocument(
+        manifest,
+        bundleRoot,
+        source.bytes,
+      );
+    } finally {
+      source.bytes.fill(0);
+    }
+  }
   const resources = [];
   try {
     for (const entry of manifest.resources) {
@@ -312,5 +473,20 @@ export async function acquirePublicGltfTextureBundle(options = {}) {
     ...options,
     manifestPath:
       options.manifestPath ?? PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
+  });
+}
+
+export async function loadPublicGltfJpegTextureBundleManifest() {
+  return await loadPublicGltfResourceBundleManifest(
+    PUBLIC_GLTF_JPEG_TEXTURE_BUNDLE_MANIFEST,
+  );
+}
+
+export async function acquirePublicGltfJpegTextureBundle(options = {}) {
+  return await acquirePublicGltfResourceBundle({
+    ...options,
+    manifestPath:
+      options.manifestPath ??
+      PUBLIC_GLTF_JPEG_TEXTURE_BUNDLE_MANIFEST,
   });
 }

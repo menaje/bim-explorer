@@ -17,6 +17,7 @@ import {
   syntheticGlbBytes,
   syntheticGltfJsonBytes,
   syntheticMeshoptGlbBytes,
+  syntheticJpegBytes,
   syntheticPngChunk,
   syntheticQuantizedGltfJsonBytes,
   syntheticQuantizedGlbBytes,
@@ -628,7 +629,195 @@ for (const [label, fixture, storage] of [
   });
 }
 
-test("embedded PNG admission fails closed at MIME, range and budget boundaries", () => {
+for (const [label, fixture, resources, storage] of [
+  [
+    "external .jpg",
+    () => {
+      const bundle = syntheticTexturedGltfExternalBundle({
+        imageUri: "base-color.jpg",
+      });
+      return bundle.bytes;
+    },
+    () => syntheticTexturedGltfExternalBundle({
+      imageUri: "base-color.jpg",
+    }).resources,
+    null,
+  ],
+  [
+    "glTF data URI",
+    () => syntheticTexturedGltfDataUriBytes({
+      imageMediaType: "image/jpeg",
+    }),
+    () => [],
+    "data-uri",
+  ],
+  [
+    "GLB bufferView",
+    () => syntheticTexturedGlbBytes({
+      imageMimeType: "image/jpeg",
+    }),
+    () => [],
+    "glb-buffer-view",
+  ],
+]) {
+  test(`bounded JPEG ${label} projects the same exact v3 range`, async () => {
+    let bytes;
+    let ownedResources;
+    if (label === "external .jpg") {
+      const bundle = syntheticTexturedGltfExternalBundle({
+        imageUri: "base-color.jpg",
+      });
+      bytes = bundle.bytes;
+      ownedResources = bundle.resources;
+    } else {
+      bytes = fixture();
+      ownedResources = resources();
+    }
+    const profile = parseGltfReferenceProfile(bytes, {
+      resources: ownedResources,
+    });
+    assert.deepEqual(profile.appearance, {
+      profile: "base-color-texture-opaque-v0.2",
+      textureCoordinateSet: 0,
+      textureSourceBytes: 711,
+      textureDecodedBytes: 16,
+      textures: 1,
+      imageMediaTypes: ["image/jpeg"],
+      ...(storage === null
+        ? {}
+        : { imageStorageProfiles: [storage] }),
+      colorSpace: "srgb-to-linear-webgl2",
+    });
+    const source = await createGltfReferenceSource(bytes, {
+      resources: ownedResources,
+      sessionReadBudgetBytes: 1024 * 1024,
+    });
+    const session = await source.open({
+      protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+    });
+    const snapshot = await session.getSnapshot();
+    const handle = snapshot.layers[0].rangeHandles[0];
+    assert.equal(
+      handle.mediaType,
+      "application/vnd.bim-explorer.geometry-range.v3",
+    );
+    assert.equal(handle.byteLength, 912);
+    assert.equal(
+      handle.sha256,
+      "17797490083f0965058074d47f16a5d308614a3e3c33f2a439175cf81a1ab5cb",
+    );
+    const range = await session.readRange(
+      handle,
+      0,
+      handle.byteLength,
+    );
+    const decoded = decodeBimTexturedGeometryRange(range);
+    assert.equal(
+      decoded.schema,
+      "bim-explorer-decoded-geometry-range/3",
+    );
+    assert.equal(decoded.textures[0].mediaType, "image/jpeg");
+    assert.equal(decoded.textureSourceBytes, 711);
+    assert.equal(decoded.textureDecodedBytes, 16);
+    assert.equal(decoded.textureGpuBytes, 20);
+    assert.equal(await session.dispose(), true);
+    assert.equal(await source.dispose(), true);
+    range.fill(0);
+    bytes.fill(0);
+    for (const resource of ownedResources) {
+      resource.bytes.fill(0);
+    }
+  });
+}
+
+test("bounded JPEG profiles fail closed independently", async () => {
+  const progressive = syntheticJpegBytes();
+  const frameMarker = progressive.findIndex(
+    (value, index) => value === 0xff && progressive[index + 1] === 0xc0,
+  );
+  progressive[frameMarker + 1] = 0xc2;
+  const rejected = syntheticTexturedGltfExternalBundle({
+    imageMediaType: "image/jpeg",
+    imagePayload: progressive,
+    imageUri: "base-color.jpeg",
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(rejected.bytes, {
+      resources: rejected.resources,
+    }),
+    /only baseline sequential JPEG is supported/u,
+  );
+
+  const unsupportedMarker = syntheticJpegBytes();
+  const quantizationMarker = unsupportedMarker.findIndex(
+    (value, index) =>
+      value === 0xff && unsupportedMarker[index + 1] === 0xdb,
+  );
+  unsupportedMarker[quantizationMarker + 1] = 0xde;
+  const unsupported = syntheticTexturedGltfExternalBundle({
+    imageMediaType: "image/jpeg",
+    imagePayload: unsupportedMarker,
+    imageUri: "base-color.jpg",
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(unsupported.bytes, {
+      resources: unsupported.resources,
+    }),
+    /JPEG marker profile is unsupported/u,
+  );
+
+  const accepted = syntheticTexturedGltfExternalBundle({
+    imageUri: "base-color.jpeg",
+  });
+  const source = await createGltfReferenceSource(accepted.bytes, {
+    resources: accepted.resources,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const handle = snapshot.layers[0].rangeHandles[0];
+  const range = await session.readRange(handle, 0, handle.byteLength);
+  const decoded = decodeBimTexturedGeometryRange(range);
+  const rendererQuantizationMarker = range.findIndex(
+    (value, index) =>
+      index >= decoded.textures[0].sourcePayload.offset &&
+      value === 0xff &&
+      range[index + 1] === 0xdb,
+  );
+  range[rendererQuantizationMarker + 1] = 0xde;
+  assert.throws(
+    () => decodeBimTexturedGeometryRange(range),
+    /JPEG marker profile is unsupported/u,
+  );
+  range[rendererQuantizationMarker + 1] = 0xdb;
+  const rendererFrameMarker = range.findIndex(
+    (value, index) =>
+      index >= decoded.textures[0].sourcePayload.offset &&
+      value === 0xff &&
+      range[index + 1] === 0xc0,
+  );
+  range[rendererFrameMarker + 1] = 0xc2;
+  assert.throws(
+    () => decodeBimTexturedGeometryRange(range),
+    /JPEG frame is unsupported/u,
+  );
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+  range.fill(0);
+  progressive.fill(0);
+  unsupportedMarker.fill(0);
+  rejected.bytes.fill(0);
+  unsupported.bytes.fill(0);
+  accepted.bytes.fill(0);
+  for (const bundle of [rejected, unsupported, accepted]) {
+    for (const resource of bundle.resources) {
+      resource.bytes.fill(0);
+    }
+  }
+});
+
+test("embedded image admission fails closed at MIME, range and budget boundaries", () => {
   const invalidBase64 = JSON.parse(new TextDecoder().decode(
     syntheticTexturedGltfDataUriBytes(),
   ));
@@ -686,13 +875,6 @@ test("embedded PNG admission fails closed at MIME, range and budget boundaries",
     /decoded byte limit/u,
   );
 
-  const heldJpeg = syntheticTexturedGlbBytes({
-    imageMimeType: "image/jpeg",
-  });
-  const jpegProfile = parseGltfReferenceProfile(heldJpeg);
-  assert.equal(jpegProfile.appearance, null);
-  assert.equal(jpegProfile.textures.length, 0);
-
   const heldGltfBufferView = syntheticTexturedGltfBufferViewBytes();
   assert.throws(
     () => parseGltfReferenceProfile(heldGltfBufferView),
@@ -702,7 +884,6 @@ test("embedded PNG admission fails closed at MIME, range and budget boundaries",
   outOfRange.fill(0);
   accessorAliased.fill(0);
   overBudget.fill(0);
-  heldJpeg.fill(0);
   heldGltfBufferView.fill(0);
 });
 

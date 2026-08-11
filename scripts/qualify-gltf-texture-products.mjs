@@ -327,7 +327,7 @@ export function validateGltfTextureProductsQualification(value) {
   });
 }
 
-async function qualifyCore(acquired, manifest) {
+export async function qualifyGltfTextureCore(acquired, manifest) {
   const singleFile = acquired.bytes instanceof Uint8Array;
   const input = singleFile
     ? acquired.bytes
@@ -463,8 +463,8 @@ export async function qualifyGltfTextureProducts({
   let core;
   let embeddedCore;
   try {
-    core = await qualifyCore(acquired, manifest);
-    embeddedCore = await qualifyCore(
+    core = await qualifyGltfTextureCore(acquired, manifest);
+    embeddedCore = await qualifyGltfTextureCore(
       embeddedAcquired,
       embeddedManifest,
     );

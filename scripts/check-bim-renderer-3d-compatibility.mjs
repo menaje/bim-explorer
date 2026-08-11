@@ -22,6 +22,10 @@ import {
   GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH,
   validateGltfTextureProductsQualification,
 } from "./qualify-gltf-texture-products.mjs";
+import {
+  GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfJpegTextureProductsQualification,
+} from "./qualify-gltf-jpeg-texture-products.mjs";
 
 const BASELINE_AS_OF = "2026-08-04";
 
@@ -55,6 +59,7 @@ const TRUE_GATES = [
   "pointPhysicalGpuQualification",
   "boundedBaseColorTexture",
   "boundedEmbeddedBaseColorTexture",
+  "boundedJpegBaseColorTexture",
 ];
 const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
@@ -2603,6 +2608,10 @@ export function validateBimRenderer3dCompatibility(
     evidenceBundle.baseColorTextureProducts,
     "base color texture renderer evidence",
   );
+  const jpegTextureEvidence = plainRecord(
+    evidenceBundle.jpegBaseColorTextureProducts,
+    "JPEG base color texture renderer evidence",
+  );
   validateLasLazPointRendererQualification(
     browserPointPrimitiveEvidence,
   );
@@ -2620,6 +2629,10 @@ export function validateBimRenderer3dCompatibility(
   const textureReport = validateGltfTextureProductsQualification(
     textureEvidence,
   );
+  const jpegTextureReport =
+    validateGltfJpegTextureProductsQualification(
+      jpegTextureEvidence,
+    );
   if (
     manifest.schema !==
       "bim-explorer-bim-renderer-3d-compatibility/1" ||
@@ -2648,6 +2661,8 @@ export function validateBimRenderer3dCompatibility(
       "application/vnd.bim-explorer.geometry-range.v1" ||
     manifest.contract?.texturedGeometryMediaType !==
       "application/vnd.bim-explorer.geometry-range.v2" ||
+    manifest.contract?.texturedGeometryMediaTypeV3 !==
+      "application/vnd.bim-explorer.geometry-range.v3" ||
     manifest.contract?.pointRenderer !==
       "bim-explorer-bounded-point-renderer/0.1" ||
     manifest.contract?.pointReceipt !==
@@ -2764,7 +2779,9 @@ export function validateBimRenderer3dCompatibility(
         "physical-gpu-darwin-arm64-2026-08-11.json" ||
     manifest.evidence?.baseColorTextureProducts !==
       GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence ?? {}).length !== 20 ||
+    manifest.evidence?.jpegBaseColorTextureProducts !==
+      GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence ?? {}).length !== 21 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !manifest.blockers.every((value) =>
@@ -2787,6 +2804,7 @@ export function validateBimRenderer3dCompatibility(
     manifest.policy?.claimSourceNativePointLod !== false ||
     manifest.policy?.claimBoundedBaseColorTexture !== true ||
     manifest.policy?.claimBoundedEmbeddedBaseColorTexture !== true ||
+    manifest.policy?.claimBoundedJpegBaseColorTexture !== true ||
     manifest.policy?.pointIdentityAuthority !==
       "derived-point-range-order" ||
     manifest.policy?.pointIdentityScope !==
@@ -3183,6 +3201,7 @@ export function validateBimRenderer3dCompatibility(
       browserPointPrimitiveEvidence.renderer.points,
     pointPhysicalGpuSurfaces: pointPhysicalGpu.surfaces,
     baseColorTextureSurfaces: textureReport.surfaces,
+    jpegBaseColorTextureSurfaces: jpegTextureReport.surfaces,
     passedGates: TRUE_GATES.length,
     heldGates: HELD_GATES.length,
   });
@@ -3313,6 +3332,13 @@ async function main() {
       path.join(
         root,
         manifest.evidence.baseColorTextureProducts,
+      ),
+      "utf8",
+    )),
+    jpegBaseColorTextureProducts: JSON.parse(await readFile(
+      path.join(
+        root,
+        manifest.evidence.jpegBaseColorTextureProducts,
       ),
       "utf8",
     )),

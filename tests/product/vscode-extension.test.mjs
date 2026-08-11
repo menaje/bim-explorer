@@ -785,6 +785,59 @@ test("Custom Editor sends declared glTF buffer and PNG image resources", async (
   provider.dispose();
 });
 
+test("Custom Editor sends declared glTF buffer and JPEG image resources", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle({
+    binaryUri: "BoxTextured0.bin",
+    imageUri: "BaseColor.jpeg",
+  });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/BoxTextured.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: Object.fromEntries(
+      bundle.resources.map((resource) => [
+        resource.uri,
+        resource.bytes,
+      ]),
+    ),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.deepEqual(
+    sourceMessage.resources.map((resource) => resource.uri),
+    ["BoxTextured0.bin", "BaseColor.jpeg"],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+  document.dispose();
+  provider.dispose();
+});
+
 test("Custom Editor rejects a declared glTF resource symlink", async () => {
   const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
   const { sourceUri, vscode } = fakeVscode({

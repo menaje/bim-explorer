@@ -78,6 +78,35 @@ export function syntheticPngBytes() {
   return bytes;
 }
 
+export function syntheticJpegBytes() {
+  const base64 = [
+    "/9j/wAARCAACAAIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEA",
+    "AAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA",
+    "AAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAk",
+    "M2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVW",
+    "V1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZ",
+    "mqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ",
+    "2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEB",
+    "AQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQA",
+    "AQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAV",
+    "YnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RV",
+    "VldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaX",
+    "mJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX",
+    "2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9sAQwABAQEBAQECAQEC",
+    "AwICAgMEAwMDAwQFBAQEBAQFBgUFBQUFBQYGBgYGBgYGBwcH",
+    "BwcHCAgICAgJCQkJCQkJCQkJ/9sAQwEBAQECAgIEAgIECQYF",
+    "BgkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJ",
+    "CQkJCQkJCQkJCQkJCQkJ/90ABAAB/9oADAMBAAIRAxEAPwD+",
+    "sD/gnB8CPgf4l/4J4/AXxF4i8GaFf6hf/Drwtc3V1c6dbSzT",
+    "zS6TavJJJI8ZZ3diWZmJJJJJzX2f/wAM2/s7f9CD4c/8FVp/",
+    "8arwb/gmL/yjY/Z6/wCyaeE//TPa19xUAf/Z",
+  ].join("");
+  return Uint8Array.from(Buffer.from(
+    base64,
+    "base64",
+  ));
+}
+
 function binaryPayload() {
   const byteLength = 80;
   const bytes = new Uint8Array(byteLength);
@@ -293,12 +322,14 @@ function quantizedDocumentFor(secondNodeX = 3, uri = null) {
 
 function texturedDocumentFor({
   binaryUri,
+  imageMimeType = "image/png",
   imageUri,
   secondNodeX = 3,
 }) {
   const document = documentFor(binaryUri, secondNodeX);
-  document.asset.generator =
-    "BIM Explorer deterministic external PNG texture fixture";
+  document.asset.generator = imageMimeType === "image/png"
+    ? "BIM Explorer deterministic external PNG texture fixture"
+    : "BIM Explorer deterministic JPEG texture fixture";
   document.buffers[0].byteLength = 104;
   document.bufferViews = [
     { buffer: 0, byteOffset: 0, byteLength: 36 },
@@ -337,7 +368,7 @@ function texturedDocumentFor({
     wrapT: 10497,
   }];
   document.textures = [{ sampler: 0, source: 0 }];
-  document.images = [{ uri: imageUri, mimeType: "image/png" }];
+  document.images = [{ uri: imageUri, mimeType: imageMimeType }];
   return document;
 }
 
@@ -370,11 +401,20 @@ export function syntheticGltfExternalBundle({
 export function syntheticTexturedGltfExternalBundle({
   binaryUri = "geometry.bin",
   forbiddenTransparencyChunk = false,
+  imageMediaType = null,
+  imagePayload = null,
   imageUri = "base-color.png",
   secondNodeX = 3,
 } = {}) {
   const binary = texturedBinaryPayload();
-  let image = syntheticPngBytes();
+  const mediaType = imageMediaType ?? (
+    /\.jpe?g$/u.test(imageUri) ? "image/jpeg" : "image/png"
+  );
+  let image = imagePayload === null
+    ? mediaType === "image/png"
+      ? syntheticPngBytes()
+      : syntheticJpegBytes()
+    : Uint8Array.from(imagePayload);
   if (forbiddenTransparencyChunk) {
     const transparency = syntheticPngChunk(
       "tRNS",
@@ -397,6 +437,7 @@ export function syntheticTexturedGltfExternalBundle({
     bytes: new TextEncoder().encode(JSON.stringify(
       texturedDocumentFor({
         binaryUri,
+        imageMimeType: mediaType,
         imageUri,
         secondNodeX,
       }),
@@ -415,7 +456,9 @@ export function syntheticTexturedGltfDataUriBytes({
 } = {}) {
   const binary = texturedBinaryPayload();
   const image = imagePayload === null
-    ? syntheticPngBytes()
+    ? imageMediaType === "image/png"
+      ? syntheticPngBytes()
+      : syntheticJpegBytes()
     : Uint8Array.from(imagePayload);
   const binaryUri =
     "data:application/octet-stream;base64," +
@@ -425,11 +468,13 @@ export function syntheticTexturedGltfDataUriBytes({
     Buffer.from(image).toString("base64");
   const document = texturedDocumentFor({
     binaryUri,
+    imageMimeType: imageMediaType,
     imageUri,
     secondNodeX,
   });
-  document.asset.generator =
-    "BIM Explorer deterministic embedded PNG data URI fixture";
+  document.asset.generator = imageMediaType === "image/png"
+    ? "BIM Explorer deterministic embedded PNG data URI fixture"
+    : "BIM Explorer deterministic embedded JPEG data URI fixture";
   document.images[0].mimeType = imageMediaType;
   const bytes = new TextEncoder().encode(JSON.stringify(document));
   binary.fill(0);
@@ -442,10 +487,15 @@ export function syntheticTexturedGlbBytes({
   imageByteLength = null,
   imageByteOffset = 104,
   imageMimeType = "image/png",
+  imagePayload = null,
   secondNodeX = 3,
 } = {}) {
   const geometry = texturedBinaryPayload();
-  const image = syntheticPngBytes();
+  const image = imagePayload === null
+    ? imageMimeType === "image/png"
+      ? syntheticPngBytes()
+      : syntheticJpegBytes()
+    : Uint8Array.from(imagePayload);
   const declaredImageBytes = imageByteLength ?? image.byteLength;
   const binaryByteLength = aligned(
     Math.max(
@@ -458,11 +508,13 @@ export function syntheticTexturedGlbBytes({
   binary.set(image, imageByteOffset);
   const document = texturedDocumentFor({
     binaryUri: null,
+    imageMimeType,
     imageUri: null,
     secondNodeX,
   });
-  document.asset.generator =
-    "BIM Explorer deterministic embedded PNG GLB fixture";
+  document.asset.generator = imageMimeType === "image/png"
+    ? "BIM Explorer deterministic embedded PNG GLB fixture"
+    : "BIM Explorer deterministic embedded JPEG GLB fixture";
   document.buffers[0] = { byteLength: binary.byteLength };
   document.bufferViews.push({
     buffer: 0,

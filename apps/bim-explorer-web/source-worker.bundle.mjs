@@ -4353,6 +4353,7 @@ function createBimModelSource(artifact, options) {
 // packages/gltf-reference-source/src/geometry.mjs
 var BIM_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v1";
 var BIM_TEXTURED_GEOMETRY_MEDIA_TYPE = "application/vnd.bim-explorer.geometry-range.v2";
+var BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3 = "application/vnd.bim-explorer.geometry-range.v3";
 var TEXTURE_NONE = 4294967295;
 function align4(value) {
   return value + 3 & ~3;
@@ -4438,6 +4439,9 @@ function encodeGltfTexturedGeometryRange(records, textures) {
   const headerBytes = 24;
   const recordHeaderBytes = 28;
   const textureHeaderBytes = 40;
+  const version = textures.some(
+    (texture) => texture.mediaType === "image/jpeg"
+  ) ? 3 : 2;
   const byteLength = records.reduce((total, record) => {
     const vertexCount = record.positions.length / 3;
     return total + recordHeaderBytes + vertexCount * 8 * Float32Array.BYTES_PER_ELEMENT + record.indices.length * Uint32Array.BYTES_PER_ELEMENT;
@@ -4446,9 +4450,14 @@ function encodeGltfTexturedGeometryRange(records, textures) {
     0
   );
   const bytes = new Uint8Array(byteLength);
-  bytes.set(new TextEncoder().encode("BEXGEO02"), 0);
+  bytes.set(
+    new TextEncoder().encode(
+      version === 2 ? "BEXGEO02" : "BEXGEO03"
+    ),
+    0
+  );
   const view = new DataView(bytes.buffer);
-  view.setUint32(8, 2, true);
+  view.setUint32(8, version, true);
   view.setUint32(12, records.length, true);
   view.setUint32(16, textures.length, true);
   view.setUint32(20, 0, true);
@@ -4516,11 +4525,15 @@ function encodeGltfTexturedGeometryRange(records, textures) {
     }));
   }
   for (const [index, texture] of textures.entries()) {
-    if (texture.index !== index || !(texture.bytes instanceof Uint8Array) || texture.bytes.byteLength === 0 || !Number.isSafeInteger(texture.width) || texture.width <= 0 || !Number.isSafeInteger(texture.height) || texture.height <= 0 || texture.decodedBytes !== texture.width * texture.height * 4) {
+    if (texture.index !== index || !(texture.bytes instanceof Uint8Array) || texture.bytes.byteLength === 0 || !Number.isSafeInteger(texture.width) || texture.width <= 0 || !Number.isSafeInteger(texture.height) || texture.height <= 0 || !["image/png", "image/jpeg"].includes(texture.mediaType) || version === 2 && texture.mediaType !== "image/png" || texture.decodedBytes !== texture.width * texture.height * 4) {
       throw new Error("textured glTF texture record is invalid");
     }
     view.setUint32(offset, index, true);
-    view.setUint32(offset + 4, 1, true);
+    view.setUint32(
+      offset + 4,
+      texture.mediaType === "image/png" ? 1 : 2,
+      true
+    );
     view.setUint32(offset + 8, texture.width, true);
     view.setUint32(offset + 12, texture.height, true);
     view.setUint32(offset + 16, texture.bytes.byteLength, true);
@@ -4540,7 +4553,7 @@ function encodeGltfTexturedGeometryRange(records, textures) {
   }
   return {
     bytes,
-    mediaType: BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+    mediaType: version === 2 ? BIM_TEXTURED_GEOMETRY_MEDIA_TYPE : BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
     metadata
   };
 }
@@ -4857,6 +4870,323 @@ function inspectBoundedPng(input, {
   });
 }
 
+// packages/gltf-reference-source/src/jpeg.mjs
+var SOF_MARKERS = /* @__PURE__ */ new Set([
+  192,
+  193,
+  194,
+  195,
+  197,
+  198,
+  199,
+  201,
+  202,
+  203,
+  205,
+  206,
+  207
+]);
+function positiveInteger3(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new TypeError(`JPEG ${label} must be a positive integer`);
+  }
+}
+function markerSegment(input, view, offset, label) {
+  if (offset + 2 > input.byteLength) {
+    throw new RangeError(`JPEG ${label} segment is truncated`);
+  }
+  const byteLength = view.getUint16(offset, false);
+  const end = offset + byteLength;
+  if (byteLength < 2 || end > input.byteLength) {
+    throw new RangeError(`JPEG ${label} segment is invalid`);
+  }
+  return { byteLength, dataOffset: offset + 2, end };
+}
+function inspectQuantizationTables(input, segment, tables) {
+  let offset = segment.dataOffset;
+  while (offset < segment.end) {
+    const descriptor = input[offset];
+    const precision = descriptor >>> 4;
+    const table = descriptor & 15;
+    const bytes = precision === 0 ? 64 : 128;
+    if (precision !== 0 || table > 3 || offset + 1 + bytes > segment.end || tables.has(table)) {
+      throw new DOMException(
+        "JPEG quantization table profile is unsupported",
+        "NotSupportedError"
+      );
+    }
+    tables.add(table);
+    offset += 1 + bytes;
+  }
+  if (offset !== segment.end) {
+    throw new Error("JPEG quantization tables are malformed");
+  }
+}
+function inspectHuffmanTables(input, segment, tables) {
+  let offset = segment.dataOffset;
+  while (offset < segment.end) {
+    if (offset + 17 > segment.end) {
+      throw new RangeError("JPEG Huffman table is truncated");
+    }
+    const descriptor = input[offset];
+    const tableClass = descriptor >>> 4;
+    const table = descriptor & 15;
+    const key = `${tableClass}:${table}`;
+    if (tableClass > 1 || table > 3 || tables.has(key)) {
+      throw new DOMException(
+        "JPEG Huffman table profile is unsupported",
+        "NotSupportedError"
+      );
+    }
+    let symbols = 0;
+    for (let index = 1; index <= 16; index += 1) {
+      symbols += input[offset + index];
+    }
+    if (symbols === 0 || symbols > 256 || offset + 17 + symbols > segment.end) {
+      throw new Error("JPEG Huffman table is malformed");
+    }
+    tables.add(key);
+    offset += 17 + symbols;
+  }
+  if (offset !== segment.end) {
+    throw new Error("JPEG Huffman tables are malformed");
+  }
+}
+function inspectBoundedJpeg(input, {
+  maximumCompressionRatio = 256,
+  maximumDecodedBytes = 16 * 1024 * 1024,
+  maximumDimension = 2048,
+  maximumSegments = 256,
+  maximumSourceBytes = 8 * 1024 * 1024
+} = {}) {
+  if (!(input instanceof Uint8Array)) {
+    throw new TypeError("JPEG input must be a Uint8Array");
+  }
+  for (const [label, value] of Object.entries({
+    maximumCompressionRatio,
+    maximumDecodedBytes,
+    maximumDimension,
+    maximumSegments,
+    maximumSourceBytes
+  })) {
+    positiveInteger3(value, label);
+  }
+  if (input.byteLength < 16 || input.byteLength > maximumSourceBytes || input[0] !== 255 || input[1] !== 216 || input.at(-2) !== 255 || input.at(-1) !== 217) {
+    throw new RangeError("JPEG source exceeds the bounded profile");
+  }
+  const view = new DataView(
+    input.buffer,
+    input.byteOffset,
+    input.byteLength
+  );
+  const quantizationTables = /* @__PURE__ */ new Set();
+  const huffmanTables = /* @__PURE__ */ new Set();
+  const frameComponents = /* @__PURE__ */ new Map();
+  let components = 0;
+  let entropyBytes = 0;
+  let height = 0;
+  let offset = 2;
+  let restartInterval = 0;
+  let nextRestartMarker = 208;
+  let segments = 0;
+  let sawFrame = false;
+  let sawScan = false;
+  let width = 0;
+  while (offset < input.byteLength) {
+    if (segments >= maximumSegments || input[offset] !== 255) {
+      throw new RangeError(
+        "JPEG marker table exceeds the bounded profile"
+      );
+    }
+    while (offset < input.byteLength && input[offset] === 255) {
+      offset += 1;
+    }
+    if (offset >= input.byteLength) {
+      throw new RangeError("JPEG marker is truncated");
+    }
+    const marker = input[offset];
+    offset += 1;
+    segments += 1;
+    if (marker === 0 || marker === 1 || marker === 216 || marker >= 208 && marker <= 215) {
+      throw new Error("JPEG marker sequence is invalid");
+    }
+    if (marker === 217) {
+      throw new Error("JPEG ended before its image scan");
+    }
+    if (SOF_MARKERS.has(marker) && marker !== 192) {
+      throw new DOMException(
+        "only baseline sequential JPEG is supported",
+        "NotSupportedError"
+      );
+    }
+    if ([200, 204, 220].includes(marker)) {
+      throw new DOMException(
+        "JPEG arithmetic and dynamic-height profiles are unsupported",
+        "NotSupportedError"
+      );
+    }
+    if (![192, 196, 218, 219, 221].includes(marker) && !(marker >= 224 && marker <= 239) && marker !== 254) {
+      throw new DOMException(
+        "JPEG marker profile is unsupported",
+        "NotSupportedError"
+      );
+    }
+    const segment = markerSegment(
+      input,
+      view,
+      offset,
+      `0x${marker.toString(16).padStart(2, "0")}`
+    );
+    if (marker === 192) {
+      if (sawFrame || segment.byteLength < 11) {
+        throw new Error("JPEG baseline frame is invalid");
+      }
+      height = view.getUint16(segment.dataOffset + 1, false);
+      width = view.getUint16(segment.dataOffset + 3, false);
+      components = input[segment.dataOffset + 5];
+      if (input[segment.dataOffset] !== 8 || ![1, 3].includes(components) || segment.byteLength !== 8 + components * 3 || width === 0 || height === 0 || width > maximumDimension || height > maximumDimension) {
+        throw new DOMException(
+          "JPEG baseline frame profile is unsupported",
+          "NotSupportedError"
+        );
+      }
+      let samplingUnits = 0;
+      for (let index = 0; index < components; index += 1) {
+        const componentOffset = segment.dataOffset + 6 + index * 3;
+        const identifier = input[componentOffset];
+        const sampling = input[componentOffset + 1];
+        const horizontal = sampling >>> 4;
+        const vertical = sampling & 15;
+        const quantizationTable = input[componentOffset + 2];
+        if (identifier === 0 || frameComponents.has(identifier) || horizontal === 0 || horizontal > 4 || vertical === 0 || vertical > 4 || quantizationTable > 3) {
+          throw new Error("JPEG frame component is invalid");
+        }
+        samplingUnits += horizontal * vertical;
+        frameComponents.set(identifier, quantizationTable);
+      }
+      if (samplingUnits > 10) {
+        throw new DOMException(
+          "JPEG sampling profile is unsupported",
+          "NotSupportedError"
+        );
+      }
+      sawFrame = true;
+    } else if (marker === 219) {
+      inspectQuantizationTables(
+        input,
+        segment,
+        quantizationTables
+      );
+    } else if (marker === 196) {
+      inspectHuffmanTables(input, segment, huffmanTables);
+    } else if (marker === 221) {
+      if (segment.byteLength !== 4 || restartInterval !== 0) {
+        throw new Error("JPEG restart interval is invalid");
+      }
+      restartInterval = view.getUint16(segment.dataOffset, false);
+      if (restartInterval === 0) {
+        throw new Error("JPEG restart interval is empty");
+      }
+    } else if (marker === 218) {
+      if (!sawFrame || sawScan) {
+        throw new Error("JPEG scan sequence is invalid");
+      }
+      const scanComponents = input[segment.dataOffset];
+      if (scanComponents !== components || segment.byteLength !== 6 + scanComponents * 2) {
+        throw new DOMException(
+          "JPEG single-scan profile is unsupported",
+          "NotSupportedError"
+        );
+      }
+      const observed = /* @__PURE__ */ new Set();
+      for (let index = 0; index < scanComponents; index += 1) {
+        const componentOffset = segment.dataOffset + 1 + index * 2;
+        const identifier = input[componentOffset];
+        const selectors = input[componentOffset + 1];
+        const dcTable = selectors >>> 4;
+        const acTable = selectors & 15;
+        if (!frameComponents.has(identifier) || observed.has(identifier) || dcTable > 3 || acTable > 3 || !huffmanTables.has(`0:${dcTable}`) || !huffmanTables.has(`1:${acTable}`)) {
+          throw new Error("JPEG scan component is invalid");
+        }
+        observed.add(identifier);
+      }
+      const parameters = segment.dataOffset + 1 + scanComponents * 2;
+      if (input[parameters] !== 0 || input[parameters + 1] !== 63 || input[parameters + 2] !== 0) {
+        throw new DOMException(
+          "JPEG spectral scan profile is unsupported",
+          "NotSupportedError"
+        );
+      }
+      for (const table of frameComponents.values()) {
+        if (!quantizationTables.has(table)) {
+          throw new Error("JPEG frame quantization table is missing");
+        }
+      }
+      sawScan = true;
+      offset = segment.end;
+      const entropyStart = offset;
+      while (offset < input.byteLength) {
+        if (input[offset] !== 255) {
+          offset += 1;
+          continue;
+        }
+        const markerStart = offset;
+        while (offset < input.byteLength && input[offset] === 255) {
+          offset += 1;
+        }
+        if (offset >= input.byteLength) {
+          throw new RangeError("JPEG entropy marker is truncated");
+        }
+        const entropyMarker = input[offset];
+        offset += 1;
+        if (entropyMarker === 0) {
+          continue;
+        }
+        if (entropyMarker >= 208 && entropyMarker <= 215) {
+          if (restartInterval === 0 || entropyMarker !== nextRestartMarker) {
+            throw new Error(
+              "JPEG restart marker sequence is invalid"
+            );
+          }
+          nextRestartMarker = 208 + (nextRestartMarker - 208 + 1) % 8;
+          continue;
+        }
+        if (entropyMarker !== 217 || offset !== input.byteLength) {
+          throw new DOMException(
+            "JPEG multiple scans or trailing data are unsupported",
+            "NotSupportedError"
+          );
+        }
+        entropyBytes = markerStart - entropyStart;
+        if (entropyBytes === 0) {
+          throw new Error("JPEG entropy payload is empty");
+        }
+        offset = input.byteLength;
+        break;
+      }
+      break;
+    }
+    offset = segment.end;
+  }
+  if (!sawFrame || !sawScan || quantizationTables.size === 0 || huffmanTables.size === 0 || entropyBytes === 0) {
+    throw new Error("JPEG image structure is incomplete");
+  }
+  const decodedBytes = width * height * 4;
+  if (decodedBytes > maximumDecodedBytes || decodedBytes / input.byteLength > maximumCompressionRatio) {
+    throw new RangeError("JPEG decoded bytes exceed the bounded profile");
+  }
+  return Object.freeze({
+    byteLength: input.byteLength,
+    components,
+    decodedBytes,
+    entropyBytes,
+    height,
+    mediaType: "image/jpeg",
+    segments,
+    width
+  });
+}
+
 // packages/gltf-reference-source/src/profile.mjs
 var GLB_MAGIC = 1179937895;
 var JSON_CHUNK = 1313821514;
@@ -4901,7 +5231,7 @@ function plainRecord2(value, label) {
   }
   return value;
 }
-function positiveInteger3(value, label) {
+function positiveInteger4(value, label) {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new TypeError(`${label} must be a positive safe integer`);
   }
@@ -4927,7 +5257,7 @@ function validatedLimits(overrides = {}) {
   }
   const limits = { ...DEFAULT_LIMITS2, ...value };
   for (const [key, limit] of Object.entries(limits)) {
-    positiveInteger3(limit, `glTF limits.${key}`);
+    positiveInteger4(limit, `glTF limits.${key}`);
   }
   return limits;
 }
@@ -5023,7 +5353,7 @@ function decodeBase64(value, maximumBytes, label = "glTF buffer data URI") {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 function externalResourceName(value, limits) {
-  if (typeof value !== "string" || value.length === 0 || new TextEncoder().encode(value).byteLength > limits.maximumExternalResourceNameBytes || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u.test(value) || [".bin", ".png"].includes(value) || value.includes("..")) {
+  if (typeof value !== "string" || value.length === 0 || new TextEncoder().encode(value).byteLength > limits.maximumExternalResourceNameBytes || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u.test(value) || [".bin", ".jpg", ".jpeg", ".png"].includes(value) || value.includes("..")) {
     throw new DOMException(
       "external glTF resource URI is outside the local bundle profile",
       "NotSupportedError"
@@ -5082,7 +5412,7 @@ function loadBuffers(document, binaryChunk, format, limits, externalResources, p
         bufferValue,
         `glTF buffers[${index}]`
       );
-      positiveInteger3(
+      positiveInteger4(
         buffer.byteLength,
         `glTF buffers[${index}].byteLength`
       );
@@ -5311,11 +5641,11 @@ function meshoptCompressionProfile(document, limits, extensionsRequired, decoder
       buffers[compressedBuffer],
       `glTF buffers[${compressedBuffer}]`
     );
-    positiveInteger3(
+    positiveInteger4(
       parent.byteLength,
       `glTF buffers[${parentBuffer}].byteLength`
     );
-    positiveInteger3(
+    positiveInteger4(
       compressed.byteLength,
       `glTF buffers[${compressedBuffer}].byteLength`
     );
@@ -5451,7 +5781,7 @@ function accessorLayout(document, buffers, accessorIndex, {
   if (accessor.componentType !== componentType || accessor.type !== type || accessor.normalized !== void 0 && typeof accessor.normalized !== "boolean" || accessor.normalized === true && !allowNormalized || accessor.sparse !== void 0) {
     throw new Error(`${label} accessor profile is unsupported`);
   }
-  positiveInteger3(accessor.count, `${label} accessor.count`);
+  positiveInteger4(accessor.count, `${label} accessor.count`);
   const viewIndex = arrayIndex(
     accessor.bufferView,
     bufferViews.length,
@@ -5727,15 +6057,16 @@ function createTextureResolver(document, format, limits, externalResources, buff
   let decodedBytes = 0;
   let embeddedImageBytes = 0;
   let sourceBytes = 0;
-  const embeddedPng = (image, imageIndex) => {
+  const embeddedImage = (image, imageIndex) => {
     if (typeof image.uri === "string") {
-      const prefix = "data:image/png;base64,";
-      if (!image.uri.startsWith(prefix)) {
+      const mediaType = image.uri.startsWith("data:image/png;base64,") ? "image/png" : image.uri.startsWith("data:image/jpeg;base64,") ? "image/jpeg" : null;
+      if (mediaType === null) {
         return null;
       }
-      if (image.mimeType !== void 0 && image.mimeType !== "image/png") {
+      const prefix = `data:${mediaType};base64,`;
+      if (image.mimeType !== void 0 && image.mimeType !== mediaType) {
         throw new DOMException(
-          "glTF embedded PNG MIME type is inconsistent",
+          "glTF embedded image MIME type is inconsistent",
           "NotSupportedError"
         );
       }
@@ -5743,8 +6074,9 @@ function createTextureResolver(document, format, limits, externalResources, buff
         bytes: decodeBase64(
           image.uri.slice(prefix.length),
           limits.maximumTextureSourceBytes,
-          `glTF images[${imageIndex}] PNG data URI`
+          `glTF images[${imageIndex}] ${mediaType === "image/png" ? "PNG" : "JPEG"} data URI`
         ),
+        mediaType,
         owned: true,
         storage: "data-uri"
       };
@@ -5752,12 +6084,13 @@ function createTextureResolver(document, format, limits, externalResources, buff
     if (image.bufferView === void 0) {
       return null;
     }
-    if (image.mimeType !== "image/png") {
+    if (!["image/png", "image/jpeg"].includes(image.mimeType)) {
       return null;
     }
+    const mediaLabel = image.mimeType === "image/png" ? "PNG" : "JPEG";
     if (format !== "glb") {
       throw new DOMException(
-        "PNG image bufferView projection is limited to GLB",
+        `${mediaLabel} image bufferView projection is limited to GLB`,
         "NotSupportedError"
       );
     }
@@ -5772,7 +6105,7 @@ function createTextureResolver(document, format, limits, externalResources, buff
     );
     if (bufferView.byteStride !== void 0 || bufferView.target !== void 0 || bufferView.extensions !== void 0) {
       throw new DOMException(
-        "glTF embedded PNG bufferView profile is unsupported",
+        `glTF embedded ${mediaLabel} bufferView profile is unsupported`,
         "NotSupportedError"
       );
     }
@@ -5786,7 +6119,7 @@ function createTextureResolver(document, format, limits, externalResources, buff
     const byteLength = bufferView.byteLength;
     if (!(buffer instanceof Uint8Array) || !Number.isSafeInteger(byteOffset) || byteOffset < 0 || !Number.isSafeInteger(byteLength) || byteLength <= 0 || byteLength > limits.maximumTextureSourceBytes || byteOffset + byteLength > buffer.byteLength) {
       throw new RangeError(
-        "glTF embedded PNG bufferView range is invalid"
+        `glTF embedded ${mediaLabel} bufferView range is invalid`
       );
     }
     for (const [accessorIndex, accessorValue] of (document.accessors ?? []).entries()) {
@@ -5805,19 +6138,20 @@ function createTextureResolver(document, format, limits, externalResources, buff
       );
       if (accessorViewIndex === viewIndex) {
         throw new Error(
-          "glTF embedded PNG bufferView is also used by an accessor"
+          `glTF embedded ${mediaLabel} bufferView is also used by an accessor`
         );
       }
       const accessorOffset = accessorView.byteOffset ?? 0;
       const accessorLength = accessorView.byteLength;
       if (accessorView.buffer === bufferIndex && Number.isSafeInteger(accessorOffset) && Number.isSafeInteger(accessorLength) && byteOffset < accessorOffset + accessorLength && byteOffset + byteLength > accessorOffset) {
         throw new Error(
-          "glTF embedded PNG bufferView overlaps accessor bytes"
+          `glTF embedded ${mediaLabel} bufferView overlaps accessor bytes`
         );
       }
     }
     return {
       bytes: buffer.slice(byteOffset, byteOffset + byteLength),
+      mediaType: image.mimeType,
       owned: true,
       storage: "glb-buffer-view"
     };
@@ -5895,37 +6229,36 @@ function createTextureResolver(document, format, limits, externalResources, buff
       images[imageIndex],
       `glTF images[${imageIndex}]`
     );
-    if (typeof image.uri === "string" && /^data:image\/jpeg;base64,/u.test(image.uri) || image.bufferView !== void 0 && image.mimeType === "image/jpeg") {
-      return null;
-    }
     if (texCoord !== 0) {
       throw new DOMException(
         "only glTF TEXCOORD_0 is supported",
         "NotSupportedError"
       );
     }
-    const embedded = embeddedPng(image, imageIndex);
+    const embedded = embeddedImage(image, imageIndex);
     let bytes = embedded?.bytes ?? null;
+    let mediaType = embedded?.mediaType ?? null;
     let sourceKind = embedded?.storage ?? "external-resource";
     let uri = null;
     if (bytes === null) {
       uri = externalResourceName(image.uri, limits);
-      if (format !== "gltf" || !uri.endsWith(".png") || image.mimeType !== void 0 && image.mimeType !== "image/png" || !externalResources.has(uri)) {
+      mediaType = uri.endsWith(".png") ? "image/png" : uri.endsWith(".jpg") || uri.endsWith(".jpeg") ? "image/jpeg" : null;
+      if (format !== "gltf" || mediaType === null || image.mimeType !== void 0 && image.mimeType !== mediaType || !externalResources.has(uri)) {
         throw new DOMException(
-          "glTF base color image is outside the bounded PNG profile",
+          "glTF base color image is outside the bounded image profile",
           "NotSupportedError"
         );
       }
       bytes = externalResources.get(uri);
     }
     try {
-      const png = inspectBoundedPng(bytes, {
+      const imageProfile = (mediaType === "image/png" ? inspectBoundedPng : inspectBoundedJpeg)(bytes, {
         maximumCompressionRatio: limits.maximumTextureCompressionRatio,
         maximumDecodedBytes: limits.maximumTextureDecodedBytes,
         maximumDimension: limits.maximumTextureDimension,
         maximumSourceBytes: limits.maximumTextureSourceBytes
       });
-      decodedBytes += png.decodedBytes;
+      decodedBytes += imageProfile.decodedBytes;
       sourceBytes += bytes.byteLength;
       if (projected.length >= limits.maximumTextures || decodedBytes > limits.maximumTextureDecodedBytes || sourceBytes > limits.maximumTextureSourceBytes) {
         throw new RangeError(
@@ -5934,10 +6267,10 @@ function createTextureResolver(document, format, limits, externalResources, buff
       }
       const result = Object.freeze({
         bytes: Uint8Array.from(bytes),
-        decodedBytes: png.decodedBytes,
-        height: png.height,
+        decodedBytes: imageProfile.decodedBytes,
+        height: imageProfile.height,
         index: projected.length,
-        mediaType: png.mediaType,
+        mediaType: imageProfile.mediaType,
         sampler: resolveSampler(
           texture.sampler,
           `glTF textures[${sourceTextureIndex}]`
@@ -5946,7 +6279,7 @@ function createTextureResolver(document, format, limits, externalResources, buff
         sourceKind,
         sourceTextureIndex,
         ...uri === null ? {} : { uri },
-        width: png.width
+        width: imageProfile.width
       });
       projected.push(result);
       projectedByTexture.set(sourceTextureIndex, result);
@@ -5969,6 +6302,7 @@ function createTextureResolver(document, format, limits, externalResources, buff
   const finalize = (usedExternalBuffers) => {
     const declaredExternalImages = /* @__PURE__ */ new Set();
     const declaredEmbeddedImages = /* @__PURE__ */ new Set();
+    const declaredEmbeddedMediaTypes = /* @__PURE__ */ new Set();
     for (const [index, imageValue] of images.entries()) {
       const image = plainRecord2(
         imageValue,
@@ -5976,15 +6310,18 @@ function createTextureResolver(document, format, limits, externalResources, buff
       );
       if (typeof image.uri === "string" && !image.uri.startsWith("data:")) {
         const uri = externalResourceName(image.uri, limits);
-        if (!uri.endsWith(".png")) {
+        if (!/\.(?:jpe?g|png)$/u.test(uri)) {
           throw new DOMException(
             "external glTF image URI is unsupported",
             "NotSupportedError"
           );
         }
         declaredExternalImages.add(uri);
-      } else if (typeof image.uri === "string" && image.uri.startsWith("data:image/png;base64,") || image.bufferView !== void 0 && image.mimeType === "image/png" && format === "glb") {
+      } else if (typeof image.uri === "string" && /^(?:data:image\/(?:jpeg|png);base64,)/u.test(image.uri) || image.bufferView !== void 0 && ["image/png", "image/jpeg"].includes(image.mimeType) && format === "glb") {
         declaredEmbeddedImages.add(index);
+        declaredEmbeddedMediaTypes.add(
+          image.mimeType ?? (image.uri.startsWith("data:image/png;") ? "image/png" : "image/jpeg")
+        );
       }
     }
     if (declaredExternalImages.size !== usedExternalImages.size || [...declaredExternalImages].some((uri) => !usedExternalImages.has(uri))) {
@@ -5994,8 +6331,9 @@ function createTextureResolver(document, format, limits, externalResources, buff
       );
     }
     if (declaredEmbeddedImages.size !== usedEmbeddedImages.size || [...declaredEmbeddedImages].some((index) => !usedEmbeddedImages.has(index))) {
+      const label = declaredEmbeddedMediaTypes.size === 1 && declaredEmbeddedMediaTypes.has("image/png") ? "embedded PNG images" : declaredEmbeddedMediaTypes.size === 1 && declaredEmbeddedMediaTypes.has("image/jpeg") ? "embedded JPEG images" : "embedded PNG/JPEG images";
       throw new DOMException(
-        "embedded PNG images require bounded base color projection",
+        `${label} require bounded base color projection`,
         "NotSupportedError"
       );
     }
@@ -6278,7 +6616,7 @@ function validateAsset(document, limits) {
         }
         if (dataImage === null) {
           const uri = externalResourceName(image.uri, limits);
-          if (!uri.endsWith(".png")) {
+          if (!/\.(?:jpe?g|png)$/u.test(uri)) {
             throw new DOMException(
               "external glTF image URI is unsupported",
               "NotSupportedError"
@@ -6581,12 +6919,18 @@ function parseGltfReferenceProfile(input, {
       },
       externalResourceUris: appearance.externalResourceUris,
       appearance: appearance.textures.length === 0 ? null : {
-        profile: "base-color-texture-png-opaque-v0.1",
+        profile: appearance.textures.every(
+          (texture) => texture.mediaType === "image/png"
+        ) ? "base-color-texture-png-opaque-v0.1" : "base-color-texture-opaque-v0.2",
         textureCoordinateSet: 0,
         textureSourceBytes: appearance.sourceBytes,
         textureDecodedBytes: appearance.decodedBytes,
         textures: appearance.textures.length,
-        imageMediaTypes: ["image/png"],
+        imageMediaTypes: [...new Set(
+          appearance.textures.map(
+            (texture) => texture.mediaType
+          )
+        )].sort(),
         ...appearance.embeddedImageResources === 0 ? {} : {
           imageStorageProfiles: appearance.embeddedStorageProfiles
         },
@@ -6658,7 +7002,7 @@ function deepFreeze3(value) {
   }
   return value;
 }
-function positiveInteger4(value, label) {
+function positiveInteger5(value, label) {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new TypeError(`${label} must be a positive safe integer`);
   }
@@ -6747,8 +7091,8 @@ var GltfReferenceSource = class {
     maximumRequestBytes = 1024 * 1024,
     sessionReadBudgetBytes = geometryBytes.byteLength
   }) {
-    positiveInteger4(maximumRequestBytes, "maximumRequestBytes");
-    positiveInteger4(
+    positiveInteger5(maximumRequestBytes, "maximumRequestBytes");
+    positiveInteger5(
       sessionReadBudgetBytes,
       "sessionReadBudgetBytes"
     );
@@ -6798,7 +7142,10 @@ var GltfReferenceSource = class {
             },
             transform: occurrence.transform,
             color: occurrence.color,
-            ...geometryMediaType === BIM_TEXTURED_GEOMETRY_MEDIA_TYPE ? { textureIndex: record.textureIndex } : {}
+            ...[
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3
+            ].includes(geometryMediaType) ? { textureIndex: record.textureIndex } : {}
           }],
           provenance: {
             format: profile.format,
@@ -7159,7 +7506,7 @@ var REQUEST_SCHEMA = "bim-explorer-product-source-worker-request/0.1";
 var RESPONSE_SCHEMA = "bim-explorer-product-source-worker-response/0.1";
 var MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 var SOURCE_FORMATS = /* @__PURE__ */ new Set(["ifc", "gltf", "glb"]);
-var EXTERNAL_RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+var EXTERNAL_RESOURCE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 var OPERATIONS = /* @__PURE__ */ new Set([
   "getEntity",
   "getEntityDetails",

@@ -1,0 +1,91 @@
+{
+  "schema": "bim-explorer-public-gltf-resource-bundle-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-box-textured-derived-external-jpeg",
+  "purpose": "cache-only qualification of bounded baseline JPEG base color projection using exact Khronos inputs and a deterministic local glTF derivation",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "directory": "Models/BoxTextured/glTF + Models/CompareDispersion/glTF",
+    "modelOwners": [
+      "Cesium",
+      "Khronos Group"
+    ]
+  },
+  "derivation": {
+    "profile": "bim-explorer-cache-only-box-textured-jpeg/1",
+    "sourceDocument": {
+      "name": "BoxTextured.gltf",
+      "mediaType": "model/gltf+json",
+      "byteLength": 3695,
+      "sha256": "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF/BoxTextured.gltf"
+    },
+    "operation": "replace the single external PNG image declaration with the pinned baseline JPEG declaration; preserve geometry, material, sampler, scene, and binary bytes"
+  },
+  "document": {
+    "name": "BoxTexturedJpeg.gltf",
+    "mediaType": "model/gltf+json",
+    "byteLength": 2685,
+    "sha256": "2abddfe7399b2ee9c8b911c1f6b2ba82a2af0c7df31b256fa2082333a6b41155",
+    "derived": true
+  },
+  "resources": [
+    {
+      "name": "BoxTextured0.bin",
+      "mediaType": "application/octet-stream",
+      "byteLength": 840,
+      "sha256": "2e8c0483fa6665c686ec345f89dcbb2a694a587442584d09f8a83a59633327bc",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF/BoxTextured0.bin"
+    },
+    {
+      "name": "Compare_Dispersion_img1.jpg",
+      "mediaType": "image/jpeg",
+      "byteLength": 749,
+      "sha256": "6074b0780e45a9c32a727e29aed7d45413cdd807d3157ea9413fd828ac0676b1",
+      "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/CompareDispersion/glTF/Compare_Dispersion_img1.jpg"
+    }
+  ],
+  "license": {
+    "spdx": "(LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium) AND (CC0-1.0 AND LicenseRef-LegalMark-Khronos)",
+    "name": "Box Textured CC BY 4.0/trademark terms plus Compare Dispersion CC0/Khronos legal mark terms",
+    "boxUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/LICENSE.md",
+    "jpegUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/CompareDispersion/LICENSE.md",
+    "attribution": "Box Textured © 2017 Cesium; JPEG checker input from Khronos Compare Dispersion",
+    "redistribution": "upstream and derived artifacts remain cache-only test inputs; none are tracked or release-bundled"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "COLLADA2GLTF; BIM Explorer cache-only JPEG derivation",
+    "externalResources": 2,
+    "externalBufferResources": 1,
+    "externalImageResources": 1,
+    "externalResourceBytes": 1589,
+    "aggregateSourceBytes": 4274,
+    "sourceFingerprint": "d5c12ec788905483237e59b380c4c974888930390fce44d150958c861a770340",
+    "geometryRecords": 1,
+    "instances": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "ranges": 1,
+    "geometryRangeMediaType": "application/vnd.bim-explorer.geometry-range.v3",
+    "geometryRangeBytes": 1756,
+    "geometryRangeSha256": "19193a36e4f5773d6d8dc6fa0729669ec25b983877b163f1f7b65ee89cec8dc5",
+    "geometryPayloadBytes": 912,
+    "textureSourceBytes": 749,
+    "textureDecodedBytes": 16384,
+    "textureGpuBytes": 21844,
+    "textures": 1,
+    "appearanceProfile": "base-color-texture-opaque-v0.2",
+    "imageMediaType": "image/jpeg",
+    "textureCoordinateSet": 0,
+    "gpuUploadBytes": 22836,
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactsTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  }
+}

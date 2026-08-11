@@ -1,6 +1,7 @@
 import {
   BIM_GEOMETRY_MEDIA_TYPE,
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   encodeGltfGeometryRange,
   encodeGltfTexturedGeometryRange,
 } from "./geometry.mjs";
@@ -193,8 +194,10 @@ export class GltfReferenceSource {
             },
             transform: occurrence.transform,
             color: occurrence.color,
-            ...(geometryMediaType ===
-              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE
+            ...([
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
+            ].includes(geometryMediaType)
               ? { textureIndex: record.textureIndex }
               : {}),
           }],
@@ -625,5 +628,6 @@ export async function createGltfReferenceSource(
 export {
   BIM_GEOMETRY_MEDIA_TYPE,
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   parseGltfReferenceProfile,
 };

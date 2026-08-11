@@ -132,6 +132,29 @@
     "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
     "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium"
   },
+  "jpegTexturedReferenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-textured-derived-external-jpeg",
+    "byteLength": 4274,
+    "documentByteLength": 2685,
+    "externalResourceBytes": 1589,
+    "externalResources": 2,
+    "externalBufferResources": 1,
+    "externalImageResources": 1,
+    "textureSourceBytes": 749,
+    "textureDecodedBytes": 16384,
+    "textureGpuBytes": 21844,
+    "textures": 1,
+    "sourceFingerprint": "d5c12ec788905483237e59b380c4c974888930390fce44d150958c861a770340",
+    "format": "gltf",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "(LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium) AND (CC0-1.0 AND LicenseRef-LegalMark-Khronos)"
+  },
   "quantizedReferenceFixture": {
     "id": "khronos-box-derived-khr-mesh-quantization",
     "byteLength": 1632,
@@ -217,6 +240,8 @@
       "sameFolderOnly": true,
       "resourceExtensions": [
         ".bin",
+        ".jpg",
+        ".jpeg",
         ".png"
       ],
       "textureProfile": {
@@ -225,7 +250,7 @@
         "maximumDecodedBytes": 16777216,
         "maximumDimension": 2048,
         "maximumCompressionRatio": 256,
-        "scope": "external-or-embedded-png-opaque-base-color-texcoord0"
+        "scope": "external-or-embedded-png-or-baseline-jpeg-opaque-base-color-texcoord0"
       }
     },
     "lasLazPointSource": {
@@ -269,6 +294,7 @@
     "khrMeshQuantizationProductSurfaces": 3,
     "extMeshoptCompressionProductSurfaces": 3,
     "baseColorTextureProductSurfaces": 6,
+    "jpegBaseColorTextureProductSurfaces": 3,
     "pointCloudProductSurfaces": 12,
     "pointCloudFormatAdmission": false,
     "simultaneousComposition": false,
@@ -319,6 +345,9 @@
     "browserEmbeddedBaseColorTextureOpen": true,
     "vscodeEmbeddedBaseColorTextureOpen": true,
     "cleanVsixEmbeddedBaseColorTextureOpen": true,
+    "browserBoundedJpegBaseColorTextureOpen": true,
+    "vscodeBoundedJpegBaseColorTextureOpen": true,
+    "cleanVsixBoundedJpegBaseColorTextureOpen": true,
     "browserReadonlyLasLazOpen": true,
     "vscodeReadonlyLasLazOpen": true,
     "cleanVsixLasLazOpen": true,
@@ -369,7 +398,8 @@
     "gltfExternalResourceProducts": "compatibility/evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json",
     "gltfMeshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json",
     "gltfMeshoptProducts": "compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json",
-    "gltfTextureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json"
+    "gltfTextureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json",
+    "gltfJpegTextureProducts": "compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json"
   },
   "blockers": [
     "marketplace release remains behind license and release gates"
@@ -391,7 +421,8 @@
     "extMeshoptCompressionScope": "required-buffer-view-filter-none",
     "claimBoundedBaseColorTextureOpen": true,
     "claimEmbeddedBaseColorTextureOpen": true,
-    "boundedBaseColorTextureScope": "external-or-embedded-png-opaque-texcoord0-webgl2-srgb",
+    "claimBoundedJpegBaseColorTextureOpen": true,
+    "boundedBaseColorTextureScope": "external-or-embedded-png-or-baseline-jpeg-opaque-texcoord0-webgl2-srgb",
     "claimArbitraryGltfUri": false,
     "claimBrowserLasLazOpen": true,
     "claimVscodeLasLazOpen": true,

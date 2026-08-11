@@ -16,7 +16,7 @@ const RESPONSE_SCHEMA =
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
 const EXTERNAL_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 const OPERATIONS = new Set([
   "getEntity",
   "getEntityDetails",

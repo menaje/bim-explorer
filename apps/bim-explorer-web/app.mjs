@@ -34,7 +34,7 @@ const MAXIMUM_E57_SOURCE_BYTES = 32 * 1024 * 1024;
 const MAXIMUM_LAS_LAZ_SOURCE_BYTES = 8 * 1024 * 1024;
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const EXTERNAL_GLTF_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 const MULTIPLE_SCAN_E57_RENDERER_LIMITS = Object.freeze({
   maximumCpuStagingBytes: 32 * 1024 * 1024,
   maximumGpuBytes: 32 * 1024 * 1024,
@@ -1793,7 +1793,7 @@ function localExternalResourceName(file) {
     file.name.includes("..")
   ) {
     throw new TypeError(
-      "External glTF resources must be same-folder .bin or .png files",
+      "External glTF resources must be same-folder .bin, .jpg, .jpeg, or .png files",
     );
   }
   return file.name;
@@ -1807,7 +1807,7 @@ async function readLocalFiles(fileList) {
     );
   }
   const sourceFiles = files.filter((file) =>
-    !/\.(?:bin|png)$/u.test(file.name.toLocaleLowerCase()));
+    !/\.(?:bin|jpe?g|png)$/u.test(file.name.toLocaleLowerCase()));
   if (sourceFiles.length !== 1) {
     throw new TypeError("Select exactly one BIM source file");
   }
@@ -1816,7 +1816,7 @@ async function readLocalFiles(fileList) {
   const format = localFileFormat(file);
   if (resourceFiles.length > 0 && format !== "gltf") {
     throw new TypeError(
-      "External .bin or .png resources are only valid with glTF JSON",
+      "External .bin, .jpg, .jpeg, or .png resources are only valid with glTF JSON",
     );
   }
   const maximumBytes = POINT_SOURCE_FORMATS.has(format)

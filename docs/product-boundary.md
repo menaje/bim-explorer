@@ -16,12 +16,13 @@ last_reviewed: 2026-08-11
 BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조,
 속성과 관계를 탐색하는 독립 제품입니다. 첫 semantic vertical slice는
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
-추가했습니다. `.gltf`의 JSON-declared 동일 폴더 `.bin`과 `.png`도 명시적 local
+추가했습니다. `.gltf`의 JSON-declared 동일 폴더 `.bin`, `.png`, `.jpg`, `.jpeg`도 명시적 local
 bundle로 열 수 있지만 최대 16개·합산 64MiB이고 임의 URI·network fetch는
-허용하지 않습니다. 외부 PNG, exact glTF PNG data URI와 GLB PNG bufferView는
-OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler만 허용하며 glTF
-bufferView image, JPEG·비-OPAQUE alpha material mode·다른 material texture
-role은 거부합니다.
+허용하지 않습니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI와 GLB PNG/JPEG
+bufferView는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler만
+허용합니다. JPEG는 bounded baseline sequential profile만 허용하고 glTF
+bufferView image, progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
+mode·다른 material texture role은 거부합니다.
 required extension은 코덱 없는 `KHR_mesh_quantization`과
 exact meshoptimizer 1.2.0을 쓰는 `EXT_meshopt_compression` `FILTER_NONE`만 bounded
 display decode하고 Draco·다른 meshopt filter·그 밖의 extension은 거부합니다. bounded
@@ -63,12 +64,12 @@ message를 기본 integration으로 사용하지 않습니다. prerelease 소비
 IFC/glTF/GLB Browser·VS Code entrypoint Gate는 통과했지만 Spatial consumer,
 stable/production과 Marketplace Gate를 대신하지 않습니다.
 
-local `.gltf + .bin/.png` bundle의 source fingerprint는 document SHA-256과 정렬된
+local `.gltf + .bin/.png/.jpg/.jpeg` bundle의 source fingerprint는 document SHA-256과 정렬된
 sidecar name·byte length·SHA-256 descriptor를 함께 묶습니다. Browser의 명시적
 다중 파일 선택과 VS Code의 sibling resolution은 같은 fingerprint를 만들지만,
 경로나 파일 이름을 public Viewer/Spatial identity로 승격하지 않습니다.
 공개된 federated BIM Surface v0.2와 `.bimfed.json`은 exact runtime/API를
-유지하므로 이 single-source bundle, 외부/내장 PNG texture,
+유지하므로 이 single-source bundle, 외부/내장 PNG/JPEG texture,
 `KHR_mesh_quantization` 또는 meshopt 기능을
 포함한다고 주장하지 않습니다. federation에 포함하려면 새 semver contract와 Explorer package
 qualification, Spatial consumer admission이 필요합니다.

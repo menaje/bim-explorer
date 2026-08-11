@@ -157,7 +157,7 @@ post-release renderer 변경이 있으면 기존 파일을 덮어쓰지 않고 �
 있으며, post-release source가 달라졌다면 기존 파일을 덮어쓰지 않고 새 package
 version을 시작하라는 오류로 종료합니다.
 
-따라서 single-source `.gltf + .bin/.png`, PNG texture,
+따라서 single-source `.gltf + .bin/.png/.jpg/.jpeg`, PNG/JPEG texture,
 `KHR_mesh_quantization`이나 `EXT_meshopt_compression` 같은 후속 기능은
 v0.2 package에 자동 backport하지 않습니다. federated runtime/API에 포함하려면 새 semver, `dev →
 prerelease` 승격, exact package evidence와 Spatial consumer admission을 다시

@@ -311,7 +311,8 @@ async function qualifyReference({
         );
       }
       assert.deepEqual(ready.source.appearance, {
-        profile: "base-color-texture-png-opaque-v0.1",
+        profile: manifest.expected.appearanceProfile ??
+          "base-color-texture-png-opaque-v0.1",
         textureCoordinateSet:
           manifest.expected.textureCoordinateSet,
         textureSourceBytes:

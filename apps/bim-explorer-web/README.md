@@ -9,7 +9,7 @@ range와 `POINTS` renderer로 분기합니다.
 
 - IFC/glTF/GLB는 64 MiB, E57은 32 MiB, LAS/LAZ는 8 MiB admission limit 뒤
   Worker로 전달합니다.
-- `.gltf`가 local `.bin` buffer 또는 승인된 `.png` image를 선언하면 source와
+- `.gltf`가 local `.bin` buffer 또는 승인된 `.png`/`.jpg`/`.jpeg` image를 선언하면 source와
   최대 16개 sidecar를 한
   picker에서 함께 명시적으로 선택해야 합니다. ASCII leaf-name만 허용하고
   document와 resource 합산 64MiB, 중복·누락·미사용 resource를 검사합니다.
@@ -26,11 +26,12 @@ range와 `POINTS` renderer로 분기합니다.
   meshoptimizer 1.2.0을 압축 source에서만 lazy load하고 `FILTER_NONE` bufferView를
   bounded decode합니다. Draco·다른 meshopt filter·그 밖의 required extension은
   source admission 전에 거부합니다.
-- 외부 PNG, exact glTF PNG data URI 또는 GLB PNG bufferView의
+- 외부 PNG/JPEG, exact glTF PNG/JPEG data URI 또는 GLB PNG/JPEG bufferView의
   `baseColorTexture`는 OPAQUE material, `TEXCOORD_0`과 표준 sampler만
-  geometry-range v2로 투영해 WebGL2 sRGB texture로 표시합니다. glTF
-  bufferView image, JPEG, 비-OPAQUE alpha material mode와 다른 material texture
-  role은 거부합니다.
+  geometry-range v2/v3로 투영해 WebGL2 sRGB texture로 표시합니다. JPEG는
+  bounded baseline sequential profile만 허용합니다. glTF bufferView image,
+  progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha material mode와 다른
+  material texture role은 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
@@ -77,6 +78,12 @@ Browser·staged VS Code·clean-installed local VSIX의 Apple M2 Metal로 검증�
 Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
 표면에서 검증합니다. sample은 라이선스·표장 조건만 manifest에 기록하고
 재배포하지 않으며 immutable federated v0.2를 변경하지 않습니다.
+`npm run qualify:gltf:jpeg-texture-products`는 exact BoxTextured geometry와
+CompareDispersion의 749-byte baseline JPEG를 cache-only로 결합한 결정적 glTF를
+공식 Validator, headless renderer, Browser·staged VS Code·clean-installed local
+VSIX의 Apple M2 Metal 3개 표면에서 검증합니다. 1,756-byte geometry-range v3,
+22,836-byte total upload와 terminal cleanup을 고정하며 원본·파생 sample과
+immutable federated v0.2는 변경하거나 재배포하지 않습니다.
 `npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
 공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
 Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact

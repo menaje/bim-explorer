@@ -34,7 +34,7 @@ const SOURCE_FORMATS = new Set([
 ]);
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
 const EXTERNAL_GLTF_RESOURCE_NAME =
-  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|png)$/u;
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 
 function pointMaximumSourceBytes(format) {
   return format === "e57"
@@ -390,7 +390,7 @@ function externalGltfResourceNames(bytes) {
       ) ||
       (
         resource.kind === "image" &&
-        !uri.toLocaleLowerCase().endsWith(".png")
+        !/\.(?:jpe?g|png)$/u.test(uri.toLocaleLowerCase())
       ) ||
       uri.includes("..") ||
       observed.has(uri) ||
@@ -1058,7 +1058,12 @@ class BimExplorerReadonlyEditorProvider {
           await this.#sendSource(document, panel);
         }
       };
-      for (const pattern of ["*.bin", "*.png"]) {
+      for (const pattern of [
+        "*.bin",
+        "*.jpg",
+        "*.jpeg",
+        "*.png",
+      ]) {
         const resourceWatcher =
           this.#vscode.workspace.createFileSystemWatcher(
             new this.#vscode.RelativePattern(base, pattern),

@@ -34,6 +34,10 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   Gate에 사용하는 cache-only manifest. 외부 변형과 byte-identical한
   geometry-range v2를 검증하며 원 라이선스·Cesium 표장 조건을 기록하고
   sample은 재배포하지 않음
+- `gltf/public-khronos-box-textured-jpeg`: exact BoxTextured geometry와
+  CompareDispersion의 749-byte baseline JPEG를 결합한 2,685-byte glTF를
+  결정적으로 파생하는 cache-only manifest. 1,756-byte geometry-range v3와
+  결합된 원 라이선스·표장 조건을 고정하며 원본·파생 sample은 재배포하지 않음
 - `gltf/derived-khronos-box-mesh-quantization`: exact Box GLB를 normalized BYTE
   normal과 normalized SHORT position으로 결정적으로 파생한 1,632-byte
   `KHR_mesh_quantization` qualification manifest. 원본과 파생 GLB는 모두
@@ -76,7 +80,7 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
 검증하고 `.ifc-cache/public-ifc`에만 추출합니다. archive는 보관하지 않으며
 fixture bundling과 draft IFC4 profile admission은 승인하지 않습니다.
 glTF fixture도 `.gltf-cache/public-gltf`의 digest cache로만 내려받거나
-결정적으로 파생하며 원본·파생 GLB, `.bin`과 `.png`를 Git 또는 release bundle에 포함하지
+결정적으로 파생하며 원본·파생 glTF/GLB, `.bin`, `.png`, `.jpg`를 Git 또는 release bundle에 포함하지
 않습니다.
 E57 sample도 `.bim-explorer-cache/public-reference/e57`에만 내려받고 Git 또는
 release에 포함하지 않습니다. test-only 사용에는 샘플 재배포를 요구하지 않습니다.
@@ -112,5 +116,6 @@ npm run qualify:gltf:external-resource-products
 npm run qualify:gltf:mesh-quantization-products
 npm run qualify:gltf:meshopt-products
 npm run qualify:gltf:texture-products
+npm run qualify:gltf:jpeg-texture-products
 npm run qualify:federation:product-scale
 ```

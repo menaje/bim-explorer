@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  loadPublicGltfJpegTextureBundleManifest,
   acquirePublicGltfTextureBundle,
   loadPublicGltfTextureBundleManifest,
 } from "../../scripts/public-gltf-resource-bundle-fixture.mjs";
@@ -113,4 +114,59 @@ test("public textured glTF acquisition verifies all bundle entries", async () =>
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
+});
+
+test("public JPEG textured glTF manifest pins the exact derivation", async () => {
+  const manifest = await loadPublicGltfJpegTextureBundleManifest();
+  assert.equal(manifest.document.derived, true);
+  assert.equal(manifest.document.byteLength, 2_685);
+  assert.equal(
+    manifest.document.sha256,
+    "2abddfe7399b2ee9c8b911c1f6b2ba82a2af0c7df31b256fa2082333a6b41155",
+  );
+  assert.equal(manifest.derivation.sourceDocument.byteLength, 3_695);
+  assert.equal(
+    manifest.derivation.sourceDocument.sha256,
+    "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef",
+  );
+  assert.deepEqual(
+    manifest.resources.map((resource) => ({
+      name: resource.name,
+      mediaType: resource.mediaType,
+      byteLength: resource.byteLength,
+      sha256: resource.sha256,
+    })),
+    [{
+      name: "BoxTextured0.bin",
+      mediaType: "application/octet-stream",
+      byteLength: 840,
+      sha256:
+        "2e8c0483fa6665c686ec345f89dcbb2a694a587442584d09f8a83a59633327bc",
+    }, {
+      name: "Compare_Dispersion_img1.jpg",
+      mediaType: "image/jpeg",
+      byteLength: 749,
+      sha256:
+        "6074b0780e45a9c32a727e29aed7d45413cdd807d3157ea9413fd828ac0676b1",
+    }],
+  );
+  assert.equal(manifest.expected.aggregateSourceBytes, 4_274);
+  assert.equal(
+    manifest.expected.geometryRangeMediaType,
+    "application/vnd.bim-explorer.geometry-range.v3",
+  );
+  assert.equal(manifest.expected.geometryRangeBytes, 1_756);
+  assert.equal(
+    manifest.expected.geometryRangeSha256,
+    "19193a36e4f5773d6d8dc6fa0729669ec25b983877b163f1f7b65ee89cec8dc5",
+  );
+  assert.equal(manifest.expected.textureDecodedBytes, 16_384);
+  assert.equal(manifest.expected.textureGpuBytes, 21_844);
+  assert.equal(
+    manifest.expected.appearanceProfile,
+    "base-color-texture-opaque-v0.2",
+  );
+  assert.equal(manifest.expected.imageMediaType, "image/jpeg");
+  assert.equal(manifest.tracking.artifactsTracked, false);
+  assert.equal(manifest.tracking.releaseBundled, false);
 });

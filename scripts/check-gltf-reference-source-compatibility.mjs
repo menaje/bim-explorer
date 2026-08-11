@@ -22,6 +22,10 @@ import {
   GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH,
   validateGltfTextureProductsQualification,
 } from "./qualify-gltf-texture-products.mjs";
+import {
+  GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfJpegTextureProductsQualification,
+} from "./qualify-gltf-jpeg-texture-products.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
@@ -122,6 +126,10 @@ const textureProductsEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.textureProducts),
   "utf8",
 ));
+const jpegTextureProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.jpegTextureProducts),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -162,6 +170,10 @@ const embeddedTextureFixture = JSON.parse(await readFile(
   ),
   "utf8",
 ));
+const jpegTextureFixture = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.jpegTextureFixtureManifest),
+  "utf8",
+));
 
 const trueGates = [
   "gltf2Container",
@@ -194,6 +206,7 @@ const trueGates = [
   "extMeshoptCompression",
   "boundedBaseColorTexture",
   "boundedEmbeddedBaseColorTexture",
+  "boundedJpegBaseColorTexture",
 ];
 const heldGates = [
   "requiredExtensions",
@@ -506,12 +519,14 @@ export function validateGltfTextureAdmission(
     manifestValue?.gates?.boundedBaseColorTexture !== true ||
     manifestValue?.gates?.boundedEmbeddedBaseColorTexture !== true ||
     manifestValue?.policy?.claimBoundedBaseColorTexture !== true ||
+    manifestValue?.policy?.claimBoundedEmbeddedBaseColorTexture !== true ||
     manifestValue?.policy?.baseColorTextureScope !==
-      "external-or-embedded-png-opaque-texcoord0-webgl2-srgb" ||
+      "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+        "texcoord0-webgl2-srgb" ||
     manifestValue?.policy?.allowPngDataUri !== true ||
     manifestValue?.policy?.allowGlbPngBufferView !== true ||
     JSON.stringify(manifestValue?.policy?.externalResourceExtensions) !==
-      JSON.stringify([".bin", ".png"]) ||
+      JSON.stringify([".bin", ".jpg", ".jpeg", ".png"]) ||
     manifestValue?.policy?.maximumTextures !== 16 ||
     manifestValue?.policy?.maximumTextureSourceBytes !== 8 * 1024 * 1024 ||
     manifestValue?.policy?.maximumTextureDecodedBytes !==
@@ -568,6 +583,67 @@ export function validateGltfTextureAdmission(
     report.gpuUploadBytes !== 350_516
   ) {
     throw new Error("glTF texture admission evidence is invalid");
+  }
+  return report;
+}
+
+export function validateGltfJpegTextureAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report = validateGltfJpegTextureProductsQualification(
+    evidenceValue,
+  );
+  if (
+    manifestValue?.evidence?.jpegTextureProducts !==
+      GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.jpegTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json" ||
+    manifestValue?.gates?.boundedJpegBaseColorTexture !== true ||
+    manifestValue?.policy?.claimBoundedJpegBaseColorTexture !== true ||
+    manifestValue?.policy?.allowJpegDataUri !== true ||
+    manifestValue?.policy?.allowGlbJpegBufferView !== true ||
+    manifestValue?.policy?.jpegProfile !==
+      "baseline-sequential-8bit-single-scan-1-or-3-components" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.document?.name !== "BoxTexturedJpeg.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_685 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.document?.derived !== true ||
+    JSON.stringify(
+      fixtureValue?.resources?.map((item) => item.sha256),
+    ) !== JSON.stringify(
+      evidenceValue?.fixture?.manifest?.resourceSha256,
+    ) ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 4_274 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    fixtureValue?.expected?.geometryRangeMediaType !==
+      "application/vnd.bim-explorer.geometry-range.v3" ||
+    fixtureValue?.expected?.geometryRangeBytes !== 1_756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.textureSourceBytes !== 749 ||
+    fixtureValue?.expected?.textureDecodedBytes !== 16_384 ||
+    fixtureValue?.expected?.textureGpuBytes !== 21_844 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 22_836 ||
+    fixtureValue?.expected?.appearanceProfile !==
+      "base-color-texture-opaque-v0.2" ||
+    fixtureValue?.expected?.imageMediaType !== "image/jpeg" ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-jpeg-texture" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 4_274 ||
+    report.decodedTextureBytes !== 16_384 ||
+    report.gpuTextureBytes !== 21_844 ||
+    report.gpuUploadBytes !== 22_836
+  ) {
+    throw new Error("glTF JPEG texture admission evidence is invalid");
   }
   return report;
 }
@@ -721,6 +797,11 @@ validateGltfTextureAdmission(
   textureFixture,
   embeddedTextureFixture,
 );
+validateGltfJpegTextureAdmission(
+  manifest,
+  jpegTextureProductsEvidence,
+  jpegTextureFixture,
+);
 
 if (
   manifest.schema !==
@@ -738,11 +819,16 @@ if (
   manifest.policy.externalResourceBundleScope !==
     "single-source-browser-vscode" ||
   JSON.stringify(manifest.policy.externalResourceExtensions) !==
-    JSON.stringify([".bin", ".png"]) ||
+    JSON.stringify([".bin", ".jpg", ".jpeg", ".png"]) ||
   manifest.policy.baseColorTextureScope !==
-    "external-or-embedded-png-opaque-texcoord0-webgl2-srgb" ||
+    "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+      "texcoord0-webgl2-srgb" ||
   manifest.policy.allowPngDataUri !== true ||
   manifest.policy.allowGlbPngBufferView !== true ||
+  manifest.policy.allowJpegDataUri !== true ||
+  manifest.policy.allowGlbJpegBufferView !== true ||
+  manifest.policy.jpegProfile !==
+    "baseline-sequential-8bit-single-scan-1-or-3-components" ||
   JSON.stringify(manifest.policy.allowedRequiredExtensions) !==
     JSON.stringify([
       "KHR_mesh_quantization",
@@ -764,6 +850,7 @@ if (
   manifest.policy.claimExtMeshoptCompression !== true ||
   manifest.policy.claimBoundedBaseColorTexture !== true ||
   manifest.policy.claimBoundedEmbeddedBaseColorTexture !== true ||
+  manifest.policy.claimBoundedJpegBaseColorTexture !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -813,6 +900,10 @@ if (
     "fixtures/gltf/public-khronos-box-textured/manifest.json" ||
   manifest.evidence.embeddedTextureFixtureManifest !==
     "fixtures/gltf/public-khronos-box-textured-embedded/manifest.json" ||
+  manifest.evidence.jpegTextureProducts !==
+    GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.jpegTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -1214,6 +1305,7 @@ const serialized = JSON.stringify({
   meshQuantizationProductsEvidence,
   meshoptProductsEvidence,
   textureProductsEvidence,
+  jpegTextureProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

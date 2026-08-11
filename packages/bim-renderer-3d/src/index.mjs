@@ -6,6 +6,7 @@ import {
 } from "./measurement.mjs";
 import {
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   decodeBimTexturedGeometryRange,
 } from "./textured-geometry.mjs";
 
@@ -483,6 +484,7 @@ function validateMountInput(session, snapshot, limits) {
       ![
         BIM_GEOMETRY_MEDIA_TYPE,
         BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+        BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
       ].includes(handle.mediaType) ||
       !SHA256.test(handle.sha256 ?? "") ||
       handle.maximumRequestBytes > handle.byteLength ||
@@ -596,7 +598,10 @@ async function readRange(session, handle, limits, signal) {
       sha256,
       reads,
       bytes,
-      decoded: handle.mediaType === BIM_TEXTURED_GEOMETRY_MEDIA_TYPE
+      decoded: [
+        BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+        BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
+      ].includes(handle.mediaType)
         ? decodeBimTexturedGeometryRange(bytes, {
             maximumRecords: limits.maximumGeometryRecords,
             maximumPayloadBytes:
@@ -2572,6 +2577,7 @@ export {
 
 export {
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   decodeBimTexturedGeometryRange,
 };
 
