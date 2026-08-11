@@ -36,12 +36,16 @@ export function validateGltfProductPlatformCompatibility(
     productManifest?.physicalGpuScope?.platform !==
       "darwin-arm64" ||
     productManifest?.physicalGpuScope?.crossPlatform !== false ||
-    sourceManifest?.asOf !== "2026-08-08" ||
+    sourceManifest?.asOf !== "2026-08-11" ||
     sourceManifest?.gates?.crossPlatformProductOpen !== true ||
     sourceManifest?.evidence?.productPlatformMatrix !==
       EVIDENCE_PATH ||
     sourceManifest?.policy?.claimCrossPlatformProductOpen !== true ||
-    sourceManifest?.policy?.claimPhysicalGpu !== false
+    sourceManifest?.policy?.claimPhysicalGpu !== true ||
+    sourceManifest?.evidence?.representativePhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-physical-gpu-" +
+        "darwin-arm64-2026-08-11.json"
   ) {
     throw new Error(
       "glTF product platform manifests do not admit the evidence",

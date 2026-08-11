@@ -2,6 +2,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH,
+  validateRepresentativeModelsPhysicalGpuQualification,
+} from "./qualify-representative-models-physical-gpu.mjs";
+
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
   path.join(
@@ -66,6 +71,15 @@ const productScaleCleanVsixProductEvidence = JSON.parse(
     "utf8",
   ),
 );
+const representativePhysicalGpuEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.representativePhysicalGpu,
+    ),
+    "utf8",
+  ),
+);
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -103,9 +117,9 @@ const trueGates = [
   "productScaleBrowserProductOpen",
   "productScaleVscodeProductOpen",
   "productScaleCleanVsixProductOpen",
+  "physicalGpu",
 ];
 const heldGates = [
-  "physicalGpu",
   "externalResourceBundle",
   "requiredExtensions",
   "write",
@@ -135,6 +149,46 @@ function everyTrue(value) {
     Object.keys(value).length > 0 &&
     Object.values(value).every((item) => item === true)
   );
+}
+
+export function validateGltfPhysicalGpuAdmission(
+  manifestValue,
+  physicalEvidenceValue,
+) {
+  const report =
+    validateRepresentativeModelsPhysicalGpuQualification(
+      physicalEvidenceValue,
+    );
+  const glb = physicalEvidenceValue?.browser?.glb;
+  if (
+    manifestValue?.evidence?.representativePhysicalGpu !==
+      REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH ||
+    manifestValue?.gates?.physicalGpu !== true ||
+    manifestValue?.policy?.claimPhysicalGpu !== true ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-representative-products" ||
+    glb?.platform !== "darwin-arm64" ||
+    glb?.fixture?.format !== "glb" ||
+    glb?.fixture?.fingerprint !==
+      "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007" ||
+    glb?.product?.model?.entities !== 49 ||
+    glb?.product?.model?.triangles !== 573_952 ||
+    glb?.product?.renderer?.sourceReadBytes !== 16_896_412 ||
+    glb?.product?.renderer?.uploadedBytes !== 16_900_016 ||
+    physicalEvidenceValue?.held?.crossPlatformPhysicalGpu !==
+      false ||
+    physicalEvidenceValue?.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "glTF physical GPU admission evidence is invalid",
+    );
+  }
+  return Object.freeze({
+    status: report.status,
+    format: "glb",
+    platform: glb.platform,
+    surfaces: 3,
+  });
 }
 
 function exactReferenceFixture(value) {
@@ -261,11 +315,16 @@ function equalProductScaleProjection(left, right) {
   });
 }
 
+validateGltfPhysicalGpuAdmission(
+  manifest,
+  representativePhysicalGpuEvidence,
+);
+
 if (
   manifest.schema !==
     "bim-explorer-gltf-reference-source-compatibility/1" ||
   manifest.status !== "experimental" ||
-  manifest.asOf !== "2026-08-08" ||
+  manifest.asOf !== "2026-08-11" ||
   manifest.contract !==
     "bim-explorer-gltf-reference-source/0.1" ||
   trueGates.some((name) => manifest.gates[name] !== true) ||
@@ -273,6 +332,7 @@ if (
   manifest.policy.readOnly !== true ||
   manifest.policy.networkAtRuntime !== false ||
   manifest.policy.allowExternalUri !== false ||
+  manifest.policy.allowRequiredExtensions !== false ||
   manifest.policy.inventIfcGlobalId !== false ||
   manifest.policy.allowBimSemanticAuthority !== false ||
   manifest.policy.nativeWrite !== false ||
@@ -283,10 +343,10 @@ if (
   manifest.policy.claimProductScaleBrowserProductOpen !== true ||
   manifest.policy.claimProductScaleVscodeProductOpen !== true ||
   manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
-  manifest.policy.claimPhysicalGpu !== false ||
+  manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
-  manifest.blockers.length !== 2 ||
+  manifest.blockers.length !== 1 ||
   manifest.evidence.browserProduct !==
     "compatibility/evidence/" +
       "gltf-reference-source-khronos-box-browser-product-2026-08-04.json" ||
@@ -311,6 +371,8 @@ if (
   manifest.evidence.productScaleCleanVsixProduct !==
     "compatibility/evidence/" +
       "gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json" ||
+  manifest.evidence.representativePhysicalGpu !==
+    REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -707,6 +769,7 @@ const serialized = JSON.stringify({
   productScaleBrowserProductEvidence,
   productScaleCleanVsixProductEvidence,
   productScaleVscodeProductEvidence,
+  representativePhysicalGpuEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

@@ -371,9 +371,14 @@ allocation을 전량 회수했습니다. 같은 GLB는
 [`staged VS Code`](evidence/gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json),
 [`clean-installed VSIX`](evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json)에서
 49개 source-native entity, 동일한 bounded render projection과 close cleanup을
-통과했습니다. external resource, required extension과 physical GPU는 독립
-Gate로 남습니다. GLB는 ignored cache에서만 사용하고 release에는 포함하지
-않습니다.
+통과했습니다. 같은 product-scale GLB는
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)의
+actual Chrome 151, staged VS Code 1.132와 clean-installed local VSIX에서 Apple
+M2 Metal, 48,762 pixels, 16,896,412-byte public Core read와 16,900,016-byte
+upload를 재현해 `physicalGpu=true`로 admission했습니다. 이는 macOS arm64 단일
+hardware 범위이며 external resource, required extension, Linux/Windows physical
+GPU, OS-level peak memory, write·round-trip과 BIM semantic authority는 held입니다.
+GLB는 ignored cache에서만 사용하고 release에는 포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

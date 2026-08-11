@@ -35,7 +35,12 @@ instanced triangles를 headless 및 실제 Chrome SwiftShader WebGL2에서
 같은 파일의 Browser 제품 local file-open, staged VS Code와 clean-installed
 VSIX도 동일한 49개 source-native entity·573,952 unique triangles,
 16,896,412-byte read·16,900,016-byte upload와 cleanup을 별도 evidence로
-통과했습니다. physical GPU는 계속 별도 Gate입니다.
+통과했습니다. 현재 public Viewer Core 0.1.2 제품 entrypoint를 사용한 actual
+Chrome 151, staged VS Code 1.132와 clean-installed local VSIX도 software
+fallback을 끈 Apple M2 Metal에서 48,762 pixels, 같은 range/upload bytes와
+terminal cleanup을 재현해 bounded GLB physical GPU Gate를 통과했습니다.
+Linux/Windows hardware, external resource, required extension, OS-level peak GPU
+memory와 production support는 별도 Gate입니다.
 
 qualified snapshot은 BIM federation에 `gltf`/`glb` reference slot으로
 등록할 수 있습니다. selection은 source slot, exact revision과
