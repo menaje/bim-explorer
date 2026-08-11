@@ -275,7 +275,10 @@ public RenderSource adapter로 연결했습니다. renderer range read는 공개
 session을 통과하고, initial/3D selection은 public selection controller와
 ViewerHost event로 투영됩니다. public runtime이 원본 source session과 Worker를
 소유하고 기존 BIM Surface에는 borrowed no-op lease를 전달해 close 시 정확히
-한 번 정리합니다. point-cloud entrypoint는 별도 source/renderer 경로입니다.
+한 번 정리합니다. 같은 현재 제품 entrypoint는 software fallback을 끈 실제
+Apple M2 Metal에서 공개 IFC와 product-scale GLB의 exact range read, selection
+event 및 terminal cleanup까지 Browser, staged VS Code와 clean-installed local
+VSIX에서 재검증했습니다. point-cloud entrypoint는 별도 source/renderer 경로입니다.
 compatibility 상태는 [`experimental`](../compatibility/viewer-core.json)이며
 stable upstream release, Marketplace publication과 production 주장은 별도
 Gate입니다.

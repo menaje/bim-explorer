@@ -122,6 +122,7 @@
       "ifc",
       "glb"
     ],
+    "publicViewerCoreProductEntrypoint": true,
     "simultaneousComposition": false,
     "crossPlatform": false,
     "osLevelPeakGpuMemory": false,

@@ -5,6 +5,9 @@ import { pathToFileURL } from "node:url";
 import {
   validateViewerCoreProductEntrypoints,
 } from "./check-bim-product-shell-compatibility.mjs";
+import {
+  validateRepresentativeModelsPhysicalGpuQualification,
+} from "./qualify-representative-models-physical-gpu.mjs";
 
 const ALLOWED_STATUSES = new Set([
   "unresolved",
@@ -304,6 +307,7 @@ export function validateViewerCoreManifest(
   value,
   evidence,
   productEvidence,
+  physicalEvidence,
 ) {
   const manifest = plainRecord(
     value,
@@ -416,6 +420,10 @@ export function validateViewerCoreManifest(
   } else {
     const evidenceReport = validateViewerCoreEvidence(evidence);
     validateViewerCoreProductEntrypoints(productEvidence);
+    const physicalReport =
+      validateRepresentativeModelsPhysicalGpuQualification(
+        physicalEvidence,
+      );
     const pin = plainRecord(manifest.pin, "Viewer Core pin");
     const releaseProbe = plainRecord(
       observations.releaseArtifactProbe,
@@ -424,6 +432,10 @@ export function validateViewerCoreManifest(
     const productProbe = plainRecord(
       observations.productEntrypointProbe,
       "product entrypoint probe",
+    );
+    const physicalProbe = plainRecord(
+      observations.physicalGpuProductEntrypointProbe,
+      "physical GPU product entrypoint probe",
     );
     if (
       manifest.status !== "experimental" ||
@@ -451,6 +463,27 @@ export function validateViewerCoreManifest(
     ) {
       throw new Error(
         "experimental Viewer Core upstream identity is invalid",
+      );
+    }
+    if (
+      physicalProbe.status !== physicalReport.status ||
+      physicalProbe.evidence !==
+        "compatibility/evidence/" +
+          "bim-product-shell-representative-physical-gpu-" +
+          "darwin-arm64-2026-08-11.json" ||
+      physicalProbe.admissionEvidence !== true ||
+      ![
+        "browserIfc",
+        "browserGltfGlb",
+        "stagedVscodeIfcGltfGlb",
+        "cleanVsixIfcGltfGlb",
+        "softwareFallbackDisabled",
+        "appleMetal",
+        "terminalCleanup",
+      ].every((key) => physicalProbe[key] === true)
+    ) {
+      throw new Error(
+        "Viewer Core physical GPU product observation is invalid",
       );
     }
     for (const [key, expected] of Object.entries(PACKAGES)) {
@@ -566,10 +599,21 @@ async function main() {
       "utf8",
     ),
   );
+  const physicalEvidence = JSON.parse(
+    await readFile(
+      path.join(
+        process.cwd(),
+        manifest.observations.physicalGpuProductEntrypointProbe
+          .evidence,
+      ),
+      "utf8",
+    ),
+  );
   const report = validateViewerCoreManifest(
     manifest,
     evidence,
     productEvidence,
+    physicalEvidence,
   );
   console.log(
     `Viewer Core compatibility check passed: ${report.status}, ` +

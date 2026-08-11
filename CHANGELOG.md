@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- requalify the newly adopted public Viewer Core 0.1.2 IFC/glTF/GLB product
+  entrypoints on Apple M2 Metal in actual Chrome 151, staged VS Code 1.132 and
+  a clean-installed local VSIX, including exact range reads, selection events
+  and terminal source/session/Worker/Host cleanup;
 - route actual Browser and VS Code IFC/glTF/GLB product entrypoints through the
   exact public Viewer Core 0.1.2 runtime, bundle its generated adapter and exact
   MPL disclosures in the locally qualified VSIX, and keep extension publication,

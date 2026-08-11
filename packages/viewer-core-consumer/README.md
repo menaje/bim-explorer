@@ -38,6 +38,13 @@ source/session/Worker/Host cleanup을 확인합니다. 제품 shell은 public ru
 전달하므로 자원을 정확히 한 번 정리합니다. point-cloud entrypoint는 이
 계약의 대상이 아닙니다.
 
+`npm run qualify:product:representative:physical-gpu`는 같은 현재 제품
+entrypoint를 software fallback이 비활성화된 Apple M2 Metal에서 실제 Browser,
+staged VS Code와 clean-installed local VSIX로 다시 검증합니다. 공개 IFC와
+product-scale GLB의 exact range bytes, selection event와 terminal cleanup을
+포함하며 Linux/Windows hardware, 동시 합성, OS-level peak GPU memory나 VSIX
+publication을 승인하지 않습니다.
+
 상태는 public preview입니다. 제품 entrypoint adoption Gate는 통과했지만
 upstream stable release, Marketplace publication과 production support는
 주장하지 않습니다.

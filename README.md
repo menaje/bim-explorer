@@ -51,7 +51,10 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > 46.77MB 공개 IFC 및 42.98MB product-scale GLB 제품 경로도 software
 > rasterizer를 끈 actual Browser, staged VS Code와 clean-installed local
 > VSIX에서 Apple M2 Metal physical GPU를 통과했습니다. 두 대표 모델은 합산
-> source bytes가 64MiB 제품 상한을 넘으므로 각각의 세션에서 검증했으며,
+> source bytes가 64MiB 제품 상한을 넘으므로 각각의 세션에서 검증했습니다.
+> 이 재검증은 현재 exact public Viewer Core 0.1.2 제품 adapter를 거쳐 IFC
+> 4,193,868 bytes와 GLB 16,896,412 bytes의 range read, selection event와
+> source/session/Worker/Host terminal cleanup까지 확인했습니다.
 > Linux/Windows physical GPU, 동시 합성, 다른 포맷과 OS-level peak GPU
 > memory는 아직 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
 > cleanup과 Browser/native resource exhaustion도 보류합니다. 첫 engine은
@@ -64,8 +67,8 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > source·3D renderer의 Browser/VS Code 호스트 conformance를 통과했습니다.
 > IFC와 glTF/GLB의 실제 Browser, staged VS Code 및 clean-installed local VSIX
 > entrypoint도 공개 Viewer Core의 range read, selection event와 terminal
-> cleanup을 통과했습니다. stable/production과 Marketplace publication은 별도
-> Gate입니다. 공개 IFC call-start
+> cleanup을 software와 위 Apple Metal 제품 경로에서 통과했습니다.
+> stable/production과 Marketplace publication은 별도 Gate입니다. 공개 IFC call-start
 > 뒤 process/Worker 강제 격리 취소와 새 runtime 복구는 통과했습니다.
 > 같은 공개 IFC의 256MiB process RSS 상한 감지·강제 종료·새 process
 > 복구도 통과했지만 Browser heap과 native allocator/parser memory safety는

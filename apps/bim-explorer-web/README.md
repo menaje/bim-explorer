@@ -46,9 +46,12 @@ Custom Editor와 빈 profile에 설치한 VSIX에서 열어 동일한 bounded re
 projection과 editor cleanup을 확인합니다.
 `npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
 공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
-Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 합산 source
-bytes가 64MiB 제품 상한을 넘으므로 두 모델의 동시 합성, Linux/Windows,
-OS-level peak GPU memory와 production support는 승인하지 않습니다.
+Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact
+public Viewer Core 0.1.2 adapter의 range read, selection event와 terminal
+source/session/Worker/Host cleanup도 같은 hardware run에 포함합니다. 합산
+source bytes가 64MiB 제품 상한을 넘으므로 두 모델의 동시 합성,
+Linux/Windows, OS-level peak GPU memory와 production support는 승인하지
+않습니다.
 `npm run qualify:viewer-core:product`는 public IFC와 product-scale GLB를 실제
 Browser에서 열고 같은 entrypoint를 staged VS Code와 clean-installed local
 VSIX에서도 검증합니다. 이 명령은 exact public package, generated bundle,

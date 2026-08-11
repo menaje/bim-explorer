@@ -816,6 +816,7 @@ export function validateBimProductShellCompatibility(
         hardware: "Apple M2",
         renderer: "ANGLE Metal",
         representativeFormats: ["ifc", "glb"],
+        publicViewerCoreProductEntrypoint: true,
         simultaneousComposition: false,
         crossPlatform: false,
         osLevelPeakGpuMemory: false,

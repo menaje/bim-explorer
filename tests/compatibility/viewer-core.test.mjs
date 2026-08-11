@@ -22,15 +22,33 @@ async function inputs() {
       "utf8",
     ),
   );
-  return { evidence, manifest, productEvidence };
+  const physicalEvidence = JSON.parse(
+    await readFile(
+      manifest.observations.physicalGpuProductEntrypointProbe
+        .evidence,
+      "utf8",
+    ),
+  );
+  return {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  };
 }
 
 test("public Viewer Core release is admitted as experimental", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   const report = validateViewerCoreManifest(
     manifest,
     evidence,
     productEvidence,
+    physicalEvidence,
   );
   assert.equal(report.status, "experimental");
   assert.equal(report.passedGates, 9);
@@ -42,7 +60,12 @@ test("public Viewer Core release is admitted as experimental", async () => {
 });
 
 test("local workspace evidence cannot become admission evidence", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   manifest.observations.localWorkspaceProbe.admissionEvidence =
     true;
   assert.throws(
@@ -50,13 +73,19 @@ test("local workspace evidence cannot become admission evidence", async () => {
       manifest,
       evidence,
       productEvidence,
+      physicalEvidence,
     ),
     /must remain non-admission evidence/u,
   );
 });
 
 test("Viewer Core release evidence rejects a changed artifact", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   evidence.packages.viewerCore.installedContent.sha256 =
     "0".repeat(64);
   assert.throws(
@@ -64,32 +93,45 @@ test("Viewer Core release evidence rejects a changed artifact", async () => {
       manifest,
       evidence,
       productEvidence,
+      physicalEvidence,
     ),
     /release identity is invalid/u,
   );
 });
 
 test("Viewer Core compatibility rejects a changed package pin", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   manifest.pin.renderProtocol.sha256 = "0".repeat(64);
   assert.throws(
     () => validateViewerCoreManifest(
       manifest,
       evidence,
       productEvidence,
+      physicalEvidence,
     ),
     /compatibility pin is invalid/u,
   );
 });
 
 test("public preview cannot claim production compatibility", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   manifest.policy.productionClaims = true;
   assert.throws(
     () => validateViewerCoreManifest(
       manifest,
       evidence,
       productEvidence,
+      physicalEvidence,
     ),
     /must remain preview-only/u,
   );
@@ -101,20 +143,47 @@ test("public preview cannot claim production compatibility", async () => {
       second.manifest,
       second.evidence,
       second.productEvidence,
+      second.physicalEvidence,
     ),
     /upstream identity is invalid/u,
   );
 });
 
 test("Viewer Core product entrypoint evidence must remain exact", async () => {
-  const { evidence, manifest, productEvidence } = await inputs();
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
   productEvidence.decision.vscodeExtensionPublished = true;
   assert.throws(
     () => validateViewerCoreManifest(
       manifest,
       evidence,
       productEvidence,
+      physicalEvidence,
     ),
     /Viewer Core product entrypoint evidence is incomplete/u,
+  );
+});
+
+test("Viewer Core physical GPU product evidence must remain exact", async () => {
+  const {
+    evidence,
+    manifest,
+    physicalEvidence,
+    productEvidence,
+  } = await inputs();
+  physicalEvidence.browser.ifc.product.viewerCore.opened.source
+    .rangeBytesRead += 1;
+  assert.throws(
+    () => validateViewerCoreManifest(
+      manifest,
+      evidence,
+      productEvidence,
+      physicalEvidence,
+    ),
+    /representative model physical GPU evidence is invalid/u,
   );
 });

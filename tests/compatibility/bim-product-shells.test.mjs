@@ -324,3 +324,13 @@ test("product shells keep cross-platform physical GPU held", async () => {
     /representative model physical GPU evidence is invalid/u,
   );
 });
+
+test("representative physical GPU evidence requires Viewer Core", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.browser.ifc.product
+    .viewerCore.opened.source.rangeBytesRead += 1;
+  assert.throws(
+    () => validate(values),
+    /representative model physical GPU evidence is invalid/u,
+  );
+});

@@ -24,9 +24,16 @@ release URL·SHA-256·lock integrity·installed content digest, 실제 BIM
 source/renderer와 Browser/VS Code host conformance는
 [`release evidence`](evidence/viewer-core-release-2026-08-04.json)에
 기록합니다. wire protocol ID는 `menaje-viewer-render-protocol/0.1.0`으로
-유지됩니다. 상태는 `experimental`이며 stable/production을 주장하지
-않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
-고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
+유지됩니다. 실제 IFC/glTF/GLB Browser·staged VS Code·clean-installed VSIX
+entrypoint 채택은
+[`product entrypoint evidence`](evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json)가
+소유합니다. 같은 현재 entrypoint의 공개 IFC와 product-scale GLB도 software
+fallback을 끈 Apple M2 Metal에서 exact public range read, selection lifecycle과
+terminal cleanup을 통과했고
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)에
+고정합니다. 상태는 `experimental`이며 stable/production을 주장하지 않습니다.
+Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로 고정했으며 실제 BIM
+layer composition은 integration Gate가 소유합니다.
 
 외부 product shell이 재사용할 BIM lifecycle은
 [`bim-surface.json`](bim-surface.json)이 별도로 소유합니다.
@@ -122,11 +129,12 @@ generated `laz-perf@0.0.6` glue와 exact WASM을 포함하되 sample은 포함�
 staged/clean-installed local VSIX는 공개 IFC와 product-scale GLB를 각각 Apple
 M2 Metal로 열어 동일한 3,569 products·261,424 triangles 및 49 entities·573,952
 unique triangles, visible frame, read-only selection과 terminal cleanup을
-재현했습니다. 두 sample은 합산 source bytes가 64MiB 상한을 넘으므로 동시
-합성하지 않았고 Git·VSIX·release에 포함하지 않습니다.
-entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
-glTF profile, Linux/Windows physical GPU, OS-level peak GPU memory와
-marketplace release는 계속 보류합니다.
+재현했습니다. 이 physical evidence는 현재 public Viewer Core 0.1.2 제품
+entrypoint의 exact range read, selection event와 source/session/Worker/Host
+cleanup까지 포함합니다. 두 sample은 합산 source bytes가 64MiB 상한을 넘으므로
+동시 합성하지 않았고 Git·VSIX·release에 포함하지 않습니다. IFC2X3 profile
+admission, broader glTF profile, Linux/Windows physical GPU, OS-level peak GPU
+memory, upstream stable, marketplace release와 production은 계속 보류합니다.
 
 IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture

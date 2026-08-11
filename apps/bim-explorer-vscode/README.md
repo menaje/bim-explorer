@@ -91,9 +91,11 @@ read, selection event와 source/session/Worker/Host cleanup을 검증합니다. 
 
 `npm run qualify:product:representative:physical-gpu`는 cache-only 공개 IFC와
 product-scale GLB를 software fallback이 비활성화된 Apple M2 Metal에서 각각
-actual Browser, staged VS Code와 clean-installed local VSIX로 엽니다. 두 모델은
-합산 source bytes가 64MiB 제품 상한을 넘으므로 같은 federation 세션에 넣지
-않습니다. 검증 결과는 macOS arm64 대표 제품 범위이며 VSIX publication,
+actual Browser, staged VS Code와 clean-installed local VSIX로 엽니다. 현재 exact
+public Viewer Core 0.1.2 adapter의 range read, selection event와 terminal
+source/session/Worker/Host cleanup도 같은 hardware run에서 검증합니다. 두
+모델은 합산 source bytes가 64MiB 제품 상한을 넘으므로 같은 federation 세션에
+넣지 않습니다. 검증 결과는 macOS arm64 대표 제품 범위이며 VSIX publication,
 Linux/Windows, OS-level peak GPU memory와 production support를 승인하지
 않습니다.
 

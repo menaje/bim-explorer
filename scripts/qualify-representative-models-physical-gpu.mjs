@@ -98,6 +98,7 @@ const ASSERTION_KEYS = Object.freeze([
   "stagedVscodeAppleMetal",
   "cleanInstalledVsixAppleMetal",
   "vscodeRepresentativeParity",
+  "publicViewerCoreProductEntrypoints",
   "softwareFallbackDisabled",
   "cacheOnlySamplesNotBundled",
   "localOnlyNoTelemetry",
@@ -115,6 +116,32 @@ function allTrue(value) {
     !Array.isArray(value) &&
     Object.keys(value).length > 0 &&
     Object.values(value).every((item) => item === true);
+}
+
+function viewerCoreQualified(value, expectedBytes, expectedHost) {
+  const opened = value?.opened;
+  const disposed = value?.disposed;
+  return (
+    opened?.adopted === true &&
+    opened?.api === "menaje-viewer-core/0.1" &&
+    opened?.version === "0.1.2" &&
+    opened?.contract ===
+      "bim-explorer-product-viewer-core/0.1" &&
+    opened?.protocolId ===
+      "menaje-viewer-render-protocol/0.1.0" &&
+    opened?.host?.kind === expectedHost &&
+    opened?.host?.eventCount >= 1 &&
+    opened?.source?.rangeReads > 0 &&
+    opened?.source?.rangeBytesRead === expectedBytes &&
+    disposed?.disposed === true &&
+    disposed?.host?.disposed === true &&
+    disposed?.host?.kind === expectedHost &&
+    disposed?.source?.disposed === true &&
+    disposed?.source?.sessionDisposed === true &&
+    disposed?.presentation?.borrowedSessionDisposed === true &&
+    disposed?.presentation?.borrowedWorkerDisposed === true &&
+    disposed?.presentation?.disposalStatus === "disposed"
+  );
 }
 
 async function hardwareProfile() {
@@ -198,6 +225,11 @@ function normalizedProduct(observation, format) {
     observation?.hostKind === undefined ||
     !same(observation.model, expectedModel) ||
     !same(observation.renderer, expectedRenderer) ||
+    !viewerCoreQualified(
+      observation.viewerCore,
+      expectedRenderer.sourceReadBytes,
+      observation.hostKind,
+    ) ||
     lifecycle?.opened !== "ready" ||
     lifecycle.closed !== "disposed" ||
     (
@@ -218,6 +250,7 @@ function normalizedProduct(observation, format) {
     model: observation.model,
     resources: observation.resources,
     renderer: observation.renderer,
+    viewerCore: observation.viewerCore,
     ...(format === "ifc"
       ? { semantic: observation.semantic }
       : { reference: observation.reference }),
@@ -357,11 +390,13 @@ function normalizedVscode(evidence, layout) {
       packageEvidence.version !== "0.1.0" ||
       !Number.isSafeInteger(packageEvidence.byteLength) ||
       packageEvidence.byteLength <= 0 ||
-      packageEvidence.installedRuntimeFiles !== 24 ||
+      packageEvidence.installedRuntimeFiles !== 31 ||
       packageEvidence.workerBundleSha256 !==
         "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f" ||
       packageEvidence.pointWorkerBundleSha256 !==
         "3d9d64d03801a40ec493596822b38affda1e0d51ae5ebd2e7362797192e7e977" ||
+      packageEvidence.viewerCoreProductBundleSha256 !==
+        "b3e5e2ddcc32a7d442e7f2b6cdaa4533f03bc33e63684386f3ba996be26cd587" ||
       packageEvidence.lazPerfJsSha256 !==
         "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104" ||
       packageEvidence.lazPerfWasmSha256 !==
@@ -434,6 +469,16 @@ export function validateRepresentativeModelsPhysicalGpuQualification(
     !same(browserGlb?.product?.model, GLB_MODEL) ||
     !same(browserIfc?.product?.renderer, IFC_RENDERER) ||
     !same(browserGlb?.product?.renderer, GLB_RENDERER) ||
+    !viewerCoreQualified(
+      browserIfc?.product?.viewerCore,
+      IFC_RENDERER.sourceReadBytes,
+      browserIfc?.product?.hostKind,
+    ) ||
+    !viewerCoreQualified(
+      browserGlb?.product?.viewerCore,
+      GLB_RENDERER.sourceReadBytes,
+      browserGlb?.product?.hostKind,
+    ) ||
     browserIfc.browser !== "Google Chrome 151.0.7922.108" ||
     browserGlb.browser !== "Google Chrome 151.0.7922.108" ||
     browserIfc.rendererMode !== "physical" ||
@@ -445,6 +490,26 @@ export function validateRepresentativeModelsPhysicalGpuQualification(
     !same(staged.glb.product.model, GLB_MODEL) ||
     !same(staged.ifc.product.renderer, IFC_RENDERER) ||
     !same(staged.glb.product.renderer, GLB_RENDERER) ||
+    !viewerCoreQualified(
+      staged.ifc.product.viewerCore,
+      IFC_RENDERER.sourceReadBytes,
+      staged.ifc.product.hostKind,
+    ) ||
+    !viewerCoreQualified(
+      staged.glb.product.viewerCore,
+      GLB_RENDERER.sourceReadBytes,
+      staged.glb.product.hostKind,
+    ) ||
+    !viewerCoreQualified(
+      installed.ifc.product.viewerCore,
+      IFC_RENDERER.sourceReadBytes,
+      installed.ifc.product.hostKind,
+    ) ||
+    !viewerCoreQualified(
+      installed.glb.product.viewerCore,
+      GLB_RENDERER.sourceReadBytes,
+      installed.glb.product.hostKind,
+    ) ||
     !same(Object.keys(evidence.assertions ?? {}), ASSERTION_KEYS) ||
     Object.values(evidence.assertions).some((value) => value !== true) ||
     !same(evidence.held, {
@@ -455,6 +520,8 @@ export function validateRepresentativeModelsPhysicalGpuQualification(
     }) ||
     evidence.decision?.physicalGpuQualification !==
       "passed-representative-ifc-and-glb-apple-metal" ||
+    evidence.decision?.publicViewerCoreConformance !==
+      "passed-apple-metal-product-entrypoints" ||
     evidence.decision.newVsixPublication !== false ||
     evidence.decision.productionClaims !== false ||
     !Array.isArray(evidence.limitations) ||
@@ -569,6 +636,8 @@ export async function qualifyRepresentativeModelsPhysicalGpu() {
     decision: {
       physicalGpuQualification:
         "passed-representative-ifc-and-glb-apple-metal",
+      publicViewerCoreConformance:
+        "passed-apple-metal-product-entrypoints",
       newVsixPublication: false,
       productionClaims: false,
     },
@@ -580,6 +649,7 @@ export async function qualifyRepresentativeModelsPhysicalGpu() {
       "GPU receipts are bounded renderer accounting and do not claim OS-level peak GPU memory telemetry",
       "the cached samples are not tracked, redistributed or bundled in the VSIX or release",
       "the clean-installed VSIX is local qualification output only and was not uploaded or published",
+      "the public Viewer Core packages remain prerelease and this hardware result does not promote stable compatibility",
       "Spatial integration and production support remain separate Gates"
     ],
   };

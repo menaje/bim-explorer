@@ -27,7 +27,9 @@ GitHub Release asset을 exact URL, SHA-256과 lock integrity로 소비합니다.
 결과는 `compatibility/viewer-core.json`의 `experimental` admission이
 소유합니다. generated `runtime/product.mjs`는 Browser와 VS Code의
 IFC/glTF/GLB 제품 entrypoint를 공개 RenderSource와 selection/Host lifecycle에
-연결하며 local VSIX에도 exact license/NOTICE와 함께 stage합니다.
+연결하며 local VSIX에도 exact license/NOTICE와 함께 stage합니다. 같은 현재
+entrypoint는 공개 IFC와 product-scale GLB를 actual Apple M2 Metal로 여는
+Browser·staged VS Code·clean-installed VSIX qualification도 통과했습니다.
 
 [`bim-model-source`](bim-model-source/README.md)는 web-ifc adapter artifact를
 raw source fingerprint, immutable tree/entity identity와 bounded binary
@@ -76,7 +78,8 @@ range decoder, bounded initial-range plan과 headless resource receipt를
 upload·rasterized first frame·dispose를 통과했습니다. visibility 기반
 range loading, pointer/picking/section, Browser/VS Code Webview host와
 Viewer Core 3D mount도 검증했습니다. physical GPU qualification과 실제
-제품 entrypoint의 Viewer Core 채택도 각각의 증거를 통과했습니다. stable
+제품 entrypoint의 Viewer Core 채택을 각각 통과했고, 현재 두 경로의 결합도
+Apple M2 Metal 대표 모델 증거로 다시 통과했습니다. stable
 upstream, Marketplace publication과 production support는 별도 Gate입니다.
 point range에는 exact revision/root range에 묶인 파생 octree leaf chunk,
 coarse-to-full LOD와 rendered-index→root-index identity map을 제공하며 Browser,

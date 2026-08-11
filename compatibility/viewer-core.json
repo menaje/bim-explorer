@@ -100,6 +100,18 @@
       "selectionHostLifecycle": true,
       "terminalCleanup": true,
       "admissionEvidence": true
+    },
+    "physicalGpuProductEntrypointProbe": {
+      "status": "passed-darwin-arm64-apple-metal-representative-products",
+      "evidence": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
+      "browserIfc": true,
+      "browserGltfGlb": true,
+      "stagedVscodeIfcGltfGlb": true,
+      "cleanVsixIfcGltfGlb": true,
+      "softwareFallbackDisabled": true,
+      "appleMetal": true,
+      "terminalCleanup": true,
+      "admissionEvidence": true
     }
   },
   "blockers": [
