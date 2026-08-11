@@ -218,7 +218,8 @@
     "pointIdentityPicking": true,
     "pointHierarchyChunkLod": true,
     "pointPhysicalGpuQualification": true,
-    "boundedBaseColorTexture": true
+    "boundedBaseColorTexture": true,
+    "boundedEmbeddedBaseColorTexture": true
   },
   "evidence": {
     "headless": "compatibility/evidence/bim-renderer-3d-public-headless-2026-08-04.json",
@@ -257,6 +258,7 @@
     "claimDerivedPointLod": true,
     "claimSourceNativePointLod": false,
     "claimBoundedBaseColorTexture": true,
+    "claimBoundedEmbeddedBaseColorTexture": true,
     "pointIdentityAuthority": "derived-point-range-order",
     "pointIdentityScope": "source-revision-and-range-digest"
   }

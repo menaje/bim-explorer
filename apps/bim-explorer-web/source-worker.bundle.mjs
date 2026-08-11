@@ -5007,18 +5007,18 @@ function parseContainer(bytes, limits) {
     binaryChunk: null
   };
 }
-function decodeBase64(value, maximumBytes) {
+function decodeBase64(value, maximumBytes, label = "glTF buffer data URI") {
   if (value.length === 0 || value.length > Math.ceil(maximumBytes / 3) * 4 + 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(value)) {
-    throw new Error("glTF buffer data URI has invalid base64");
+    throw new Error(`${label} has invalid base64`);
   }
   let binary;
   try {
     binary = globalThis.atob(value);
   } catch {
-    throw new Error("glTF buffer data URI has invalid base64");
+    throw new Error(`${label} has invalid base64`);
   }
   if (binary.length > maximumBytes) {
-    throw new RangeError("glTF decoded buffer exceeds its byte limit");
+    throw new RangeError(`${label} exceeds its decoded byte limit`);
   }
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
@@ -5694,7 +5694,7 @@ function localBounds(positions) {
   }
   return bounds;
 }
-function externalTextureResolver(document, format, limits, externalResources) {
+function createTextureResolver(document, format, limits, externalResources, buffers) {
   const textures = collection(
     document.textures ?? [],
     limits.maximumTextures,
@@ -5713,11 +5713,115 @@ function externalTextureResolver(document, format, limits, externalResources) {
     "glTF samplers",
     { nonEmpty: false }
   );
+  const bufferViews = collection(
+    document.bufferViews ?? [],
+    limits.maximumBufferViews,
+    "glTF bufferViews",
+    { nonEmpty: false }
+  );
   const projected = [];
   const projectedByTexture = /* @__PURE__ */ new Map();
   const usedExternalImages = /* @__PURE__ */ new Set();
+  const usedEmbeddedImages = /* @__PURE__ */ new Set();
+  const embeddedStorageProfiles = /* @__PURE__ */ new Set();
   let decodedBytes = 0;
+  let embeddedImageBytes = 0;
   let sourceBytes = 0;
+  const embeddedPng = (image, imageIndex) => {
+    if (typeof image.uri === "string") {
+      const prefix = "data:image/png;base64,";
+      if (!image.uri.startsWith(prefix)) {
+        return null;
+      }
+      if (image.mimeType !== void 0 && image.mimeType !== "image/png") {
+        throw new DOMException(
+          "glTF embedded PNG MIME type is inconsistent",
+          "NotSupportedError"
+        );
+      }
+      return {
+        bytes: decodeBase64(
+          image.uri.slice(prefix.length),
+          limits.maximumTextureSourceBytes,
+          `glTF images[${imageIndex}] PNG data URI`
+        ),
+        owned: true,
+        storage: "data-uri"
+      };
+    }
+    if (image.bufferView === void 0) {
+      return null;
+    }
+    if (image.mimeType !== "image/png") {
+      return null;
+    }
+    if (format !== "glb") {
+      throw new DOMException(
+        "PNG image bufferView projection is limited to GLB",
+        "NotSupportedError"
+      );
+    }
+    const viewIndex = arrayIndex(
+      image.bufferView,
+      bufferViews.length,
+      `glTF images[${imageIndex}].bufferView`
+    );
+    const bufferView = plainRecord2(
+      bufferViews[viewIndex],
+      `glTF bufferViews[${viewIndex}]`
+    );
+    if (bufferView.byteStride !== void 0 || bufferView.target !== void 0 || bufferView.extensions !== void 0) {
+      throw new DOMException(
+        "glTF embedded PNG bufferView profile is unsupported",
+        "NotSupportedError"
+      );
+    }
+    const bufferIndex = arrayIndex(
+      bufferView.buffer,
+      buffers.length,
+      `glTF bufferViews[${viewIndex}].buffer`
+    );
+    const buffer = buffers[bufferIndex];
+    const byteOffset = bufferView.byteOffset ?? 0;
+    const byteLength = bufferView.byteLength;
+    if (!(buffer instanceof Uint8Array) || !Number.isSafeInteger(byteOffset) || byteOffset < 0 || !Number.isSafeInteger(byteLength) || byteLength <= 0 || byteLength > limits.maximumTextureSourceBytes || byteOffset + byteLength > buffer.byteLength) {
+      throw new RangeError(
+        "glTF embedded PNG bufferView range is invalid"
+      );
+    }
+    for (const [accessorIndex, accessorValue] of (document.accessors ?? []).entries()) {
+      const accessor = plainRecord2(
+        accessorValue,
+        `glTF accessors[${accessorIndex}]`
+      );
+      const accessorViewIndex = arrayIndex(
+        accessor.bufferView,
+        bufferViews.length,
+        `glTF accessors[${accessorIndex}].bufferView`
+      );
+      const accessorView = plainRecord2(
+        bufferViews[accessorViewIndex],
+        `glTF bufferViews[${accessorViewIndex}]`
+      );
+      if (accessorViewIndex === viewIndex) {
+        throw new Error(
+          "glTF embedded PNG bufferView is also used by an accessor"
+        );
+      }
+      const accessorOffset = accessorView.byteOffset ?? 0;
+      const accessorLength = accessorView.byteLength;
+      if (accessorView.buffer === bufferIndex && Number.isSafeInteger(accessorOffset) && Number.isSafeInteger(accessorLength) && byteOffset < accessorOffset + accessorLength && byteOffset + byteLength > accessorOffset) {
+        throw new Error(
+          "glTF embedded PNG bufferView overlaps accessor bytes"
+        );
+      }
+    }
+    return {
+      bytes: buffer.slice(byteOffset, byteOffset + byteLength),
+      owned: true,
+      storage: "glb-buffer-view"
+    };
+  };
   const resolveSampler = (index, label) => {
     if (index === void 0) {
       return Object.freeze({
@@ -5791,18 +5895,8 @@ function externalTextureResolver(document, format, limits, externalResources) {
       images[imageIndex],
       `glTF images[${imageIndex}]`
     );
-    if (typeof image.uri === "string" && /^data:image\/(?:png|jpeg);base64,/u.test(image.uri)) {
+    if (typeof image.uri === "string" && /^data:image\/jpeg;base64,/u.test(image.uri) || image.bufferView !== void 0 && image.mimeType === "image/jpeg") {
       return null;
-    }
-    if (image.bufferView !== void 0) {
-      return null;
-    }
-    const uri = externalResourceName(image.uri, limits);
-    if (format !== "gltf" || !uri.endsWith(".png") || image.mimeType !== void 0 && image.mimeType !== "image/png" || !externalResources.has(uri)) {
-      throw new DOMException(
-        "external glTF base color image is outside the local PNG profile",
-        "NotSupportedError"
-      );
     }
     if (texCoord !== 0) {
       throw new DOMException(
@@ -5810,42 +5904,71 @@ function externalTextureResolver(document, format, limits, externalResources) {
         "NotSupportedError"
       );
     }
-    const bytes = externalResources.get(uri);
-    const png = inspectBoundedPng(bytes, {
-      maximumCompressionRatio: limits.maximumTextureCompressionRatio,
-      maximumDecodedBytes: limits.maximumTextureDecodedBytes,
-      maximumDimension: limits.maximumTextureDimension,
-      maximumSourceBytes: limits.maximumTextureSourceBytes
-    });
-    decodedBytes += png.decodedBytes;
-    sourceBytes += bytes.byteLength;
-    if (projected.length >= limits.maximumTextures || decodedBytes > limits.maximumTextureDecodedBytes || sourceBytes > limits.maximumTextureSourceBytes) {
-      throw new RangeError(
-        "glTF textures exceed the bounded profile"
-      );
+    const embedded = embeddedPng(image, imageIndex);
+    let bytes = embedded?.bytes ?? null;
+    let sourceKind = embedded?.storage ?? "external-resource";
+    let uri = null;
+    if (bytes === null) {
+      uri = externalResourceName(image.uri, limits);
+      if (format !== "gltf" || !uri.endsWith(".png") || image.mimeType !== void 0 && image.mimeType !== "image/png" || !externalResources.has(uri)) {
+        throw new DOMException(
+          "glTF base color image is outside the bounded PNG profile",
+          "NotSupportedError"
+        );
+      }
+      bytes = externalResources.get(uri);
     }
-    const result = Object.freeze({
-      bytes: Uint8Array.from(bytes),
-      decodedBytes: png.decodedBytes,
-      height: png.height,
-      index: projected.length,
-      mediaType: png.mediaType,
-      sampler: resolveSampler(
-        texture.sampler,
-        `glTF textures[${sourceTextureIndex}]`
-      ),
-      sourceImageIndex: imageIndex,
-      sourceTextureIndex,
-      uri,
-      width: png.width
-    });
-    projected.push(result);
-    projectedByTexture.set(sourceTextureIndex, result);
-    usedExternalImages.add(uri);
-    return result;
+    try {
+      const png = inspectBoundedPng(bytes, {
+        maximumCompressionRatio: limits.maximumTextureCompressionRatio,
+        maximumDecodedBytes: limits.maximumTextureDecodedBytes,
+        maximumDimension: limits.maximumTextureDimension,
+        maximumSourceBytes: limits.maximumTextureSourceBytes
+      });
+      decodedBytes += png.decodedBytes;
+      sourceBytes += bytes.byteLength;
+      if (projected.length >= limits.maximumTextures || decodedBytes > limits.maximumTextureDecodedBytes || sourceBytes > limits.maximumTextureSourceBytes) {
+        throw new RangeError(
+          "glTF textures exceed the bounded profile"
+        );
+      }
+      const result = Object.freeze({
+        bytes: Uint8Array.from(bytes),
+        decodedBytes: png.decodedBytes,
+        height: png.height,
+        index: projected.length,
+        mediaType: png.mediaType,
+        sampler: resolveSampler(
+          texture.sampler,
+          `glTF textures[${sourceTextureIndex}]`
+        ),
+        sourceImageIndex: imageIndex,
+        sourceKind,
+        sourceTextureIndex,
+        ...uri === null ? {} : { uri },
+        width: png.width
+      });
+      projected.push(result);
+      projectedByTexture.set(sourceTextureIndex, result);
+      if (uri === null) {
+        if (!usedEmbeddedImages.has(imageIndex)) {
+          embeddedImageBytes += bytes.byteLength;
+        }
+        usedEmbeddedImages.add(imageIndex);
+        embeddedStorageProfiles.add(sourceKind);
+      } else {
+        usedExternalImages.add(uri);
+      }
+      return result;
+    } finally {
+      if (embedded?.owned === true) {
+        bytes.fill(0);
+      }
+    }
   };
   const finalize = (usedExternalBuffers) => {
     const declaredExternalImages = /* @__PURE__ */ new Set();
+    const declaredEmbeddedImages = /* @__PURE__ */ new Set();
     for (const [index, imageValue] of images.entries()) {
       const image = plainRecord2(
         imageValue,
@@ -5860,11 +5983,19 @@ function externalTextureResolver(document, format, limits, externalResources) {
           );
         }
         declaredExternalImages.add(uri);
+      } else if (typeof image.uri === "string" && image.uri.startsWith("data:image/png;base64,") || image.bufferView !== void 0 && image.mimeType === "image/png" && format === "glb") {
+        declaredEmbeddedImages.add(index);
       }
     }
     if (declaredExternalImages.size !== usedExternalImages.size || [...declaredExternalImages].some((uri) => !usedExternalImages.has(uri))) {
       throw new DOMException(
         "external glTF images require bounded base color projection",
+        "NotSupportedError"
+      );
+    }
+    if (declaredEmbeddedImages.size !== usedEmbeddedImages.size || [...declaredEmbeddedImages].some((index) => !usedEmbeddedImages.has(index))) {
+      throw new DOMException(
+        "embedded PNG images require bounded base color projection",
         "NotSupportedError"
       );
     }
@@ -5877,6 +6008,11 @@ function externalTextureResolver(document, format, limits, externalResources) {
     }
     return Object.freeze({
       decodedBytes,
+      embeddedImageBytes,
+      embeddedImageResources: usedEmbeddedImages.size,
+      embeddedStorageProfiles: Object.freeze(
+        [...embeddedStorageProfiles].sort()
+      ),
       externalImageResources: usedExternalImages.size,
       externalResourceUris: Object.freeze([...used].sort()),
       sourceBytes,
@@ -6112,18 +6248,35 @@ function validateAsset(document, limits) {
       "glTF images",
       { nonEmpty: false }
     );
+    const imageBufferViews = collection(
+      document.bufferViews ?? [],
+      limits.maximumBufferViews,
+      "glTF bufferViews",
+      { nonEmpty: false }
+    );
     for (let index = 0; index < images.length; index += 1) {
       const image = plainRecord2(
         images[index],
         `glTF images[${index}]`
       );
-      if (image.uri !== void 0) {
-        if (typeof image.uri !== "string" || image.bufferView !== void 0) {
+      const hasUri = image.uri !== void 0;
+      const hasBufferView = image.bufferView !== void 0;
+      if (hasUri === hasBufferView) {
+        throw new TypeError(
+          "glTF image requires exactly one URI or bufferView"
+        );
+      }
+      if (hasUri) {
+        if (typeof image.uri !== "string" || image.uri.length === 0) {
           throw new TypeError("glTF image URI is invalid");
         }
-        if (!/^data:image\/[A-Za-z0-9.+-]+;base64,/u.test(
+        const dataImage = /^data:(image\/[A-Za-z0-9.+-]+);base64,/u.exec(
           image.uri
-        )) {
+        );
+        if (dataImage !== null && image.mimeType !== void 0 && image.mimeType !== dataImage[1]) {
+          throw new Error("glTF image MIME type is inconsistent");
+        }
+        if (dataImage === null) {
           const uri = externalResourceName(image.uri, limits);
           if (!uri.endsWith(".png")) {
             throw new DOMException(
@@ -6131,6 +6284,21 @@ function validateAsset(document, limits) {
               "NotSupportedError"
             );
           }
+        }
+      } else {
+        arrayIndex(
+          image.bufferView,
+          imageBufferViews.length,
+          `glTF images[${index}].bufferView`
+        );
+        if (![
+          "image/png",
+          "image/jpeg"
+        ].includes(image.mimeType)) {
+          throw new DOMException(
+            "glTF embedded image MIME or bufferView is unsupported",
+            "NotSupportedError"
+          );
         }
       }
     }
@@ -6244,11 +6412,12 @@ function parseGltfReferenceProfile(input, {
       compression,
       ownedBuffers
     );
-    textureResolver = externalTextureResolver(
+    textureResolver = createTextureResolver(
       document,
       format,
       limits,
-      externalResources
+      externalResources,
+      buffers
     );
     const records = /* @__PURE__ */ new Map();
     const occurrences = [];
@@ -6404,6 +6573,10 @@ function parseGltfReferenceProfile(input, {
         ...appearance.externalImageResources === 0 ? {} : {
           externalBufferResources: loadedBuffers.usedExternalResources.size,
           externalImageResources: appearance.externalImageResources
+        },
+        ...appearance.embeddedImageResources === 0 ? {} : {
+          embeddedImageBytes: appearance.embeddedImageBytes,
+          embeddedImageResources: appearance.embeddedImageResources
         }
       },
       externalResourceUris: appearance.externalResourceUris,
@@ -6414,6 +6587,9 @@ function parseGltfReferenceProfile(input, {
         textureDecodedBytes: appearance.decodedBytes,
         textures: appearance.textures.length,
         imageMediaTypes: ["image/png"],
+        ...appearance.embeddedImageResources === 0 ? {} : {
+          imageStorageProfiles: appearance.embeddedStorageProfiles
+        },
         colorSpace: "srgb-to-linear-webgl2"
       },
       compression: compression === null ? null : {
@@ -6724,6 +6900,10 @@ var GltfReferenceSource = class {
           ...profile.resourceBundle.externalImageResources === void 0 ? {} : {
             externalBufferResources: profile.resourceBundle.externalBufferResources,
             externalImageResources: profile.resourceBundle.externalImageResources
+          },
+          ...profile.resourceBundle.embeddedImageResources === void 0 ? {} : {
+            embeddedImageBytes: profile.resourceBundle.embeddedImageBytes,
+            embeddedImageResources: profile.resourceBundle.embeddedImageResources
           },
           networkAtRuntime: false
         },
@@ -7080,6 +7260,10 @@ function referenceResources(snapshot) {
     ...snapshot.referenceMetadata.resourceBundle.externalImageResources === void 0 ? {} : {
       externalBufferResources: snapshot.referenceMetadata.resourceBundle.externalBufferResources,
       externalImageResources: snapshot.referenceMetadata.resourceBundle.externalImageResources
+    },
+    ...snapshot.referenceMetadata.resourceBundle.embeddedImageResources === void 0 ? {} : {
+      embeddedImageBytes: snapshot.referenceMetadata.resourceBundle.embeddedImageBytes,
+      embeddedImageResources: snapshot.referenceMetadata.resourceBundle.embeddedImageResources
     },
     ...snapshot.referenceMetadata.appearance === null ? {} : {
       textureSourceBytes: snapshot.referenceMetadata.appearance.textureSourceBytes,

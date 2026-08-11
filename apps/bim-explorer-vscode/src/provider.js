@@ -474,10 +474,28 @@ function sanitizeReport(value) {
                     "documentBytes",
                     "externalResourceBytes",
                     "externalResources",
-                    "externalBufferResources",
-                    "externalImageResources",
                   ],
                 ),
+                ...(value.source.resourceBundle
+                  ?.externalImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "externalBufferResources",
+                        "externalImageResources",
+                      ],
+                    )),
+                ...(value.source.resourceBundle
+                  ?.embeddedImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "embeddedImageBytes",
+                        "embeddedImageResources",
+                      ],
+                    )),
               },
         ...(value.source?.appearance === undefined
           ? {}
@@ -493,6 +511,16 @@ function sanitizeReport(value) {
                   value.source.appearance?.imageMediaTypes,
                   8,
                 ),
+                ...(value.source.appearance
+                  ?.imageStorageProfiles === undefined
+                  ? {}
+                  : {
+                      imageStorageProfiles: stringArray(
+                        value.source.appearance
+                          .imageStorageProfiles,
+                        8,
+                      ),
+                    }),
                 colorSpace: stringOrNull(
                   value.source.appearance?.colorSpace,
                 ),
@@ -668,16 +696,13 @@ function sanitizeReport(value) {
                   ],
                 ),
         }
-      : numericRecord(
-          value.resources,
-          ["gltf", "glb"].includes(format)
-            ? [
+      : ["gltf", "glb"].includes(format)
+        ? {
+            ...numericRecord(value.resources, [
                 "sourceBytes",
                 "documentBytes",
                 "externalResourceBytes",
                 "externalResources",
-                "externalBufferResources",
-                "externalImageResources",
                 "geometryBytes",
                 "metadataBytes",
                 "detailBytes",
@@ -690,8 +715,23 @@ function sanitizeReport(value) {
                 "textureDecodedBytes",
                 "textures",
                 "wasmHeapCapacityBytes",
-              ]
-            : [
+              ]),
+            ...(value.resources?.externalImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "externalBufferResources",
+                  "externalImageResources",
+                ])),
+            ...(value.resources?.embeddedImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "embeddedImageBytes",
+                  "embeddedImageResources",
+                ])),
+          }
+        : numericRecord(
+            value.resources,
+            [
                 "sourceBytes",
                 "geometryBytes",
                 "metadataBytes",
@@ -702,7 +742,7 @@ function sanitizeReport(value) {
                 "products",
                 "wasmHeapCapacityBytes",
               ],
-        ),
+          ),
     renderer: value.renderer === undefined
       ? null
       : {

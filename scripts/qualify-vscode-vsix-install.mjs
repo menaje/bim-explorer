@@ -26,6 +26,7 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
@@ -74,6 +75,7 @@ function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
     includeExternalResourceFixture: false,
+    includeEmbeddedTextureFixture: false,
     includeMeshoptFixture: false,
     includeQuantizedFixture: false,
     includeProductScaleFixture: false,
@@ -92,6 +94,10 @@ function parseArguments(values) {
     }
     if (name === "--external-gltf") {
       options.includeExternalResourceFixture = true;
+      continue;
+    }
+    if (name === "--embedded-texture-gltf") {
+      options.includeEmbeddedTextureFixture = true;
       continue;
     }
     if (name === "--quantized-gltf") {
@@ -142,6 +148,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
           "[--external-gltf] " +
+          "[--embedded-texture-gltf] " +
           "[--meshopt-gltf] " +
           "[--quantized-gltf] " +
           "[--e57-spherical] " +
@@ -189,6 +196,7 @@ async function sha256(file) {
 export async function qualifyVscodeVsixInstall({
   includeFederatedSurfaceFixture = false,
   includeExternalResourceFixture = false,
+  includeEmbeddedTextureFixture = false,
   includeMeshoptFixture = false,
   includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
@@ -229,6 +237,13 @@ export async function qualifyVscodeVsixInstall({
   for (const resource of externalReferenceFixture?.resources ?? []) {
     resource.bytes.fill(0);
   }
+  const embeddedTextureReferenceFixture =
+    includeEmbeddedTextureFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+        })
+      : null;
+  embeddedTextureReferenceFixture?.bytes.fill(0);
   const quantizedReferenceFixture = includeQuantizedFixture
     ? await acquirePublicQuantizedGltfFixture()
     : null;
@@ -538,6 +553,14 @@ export async function qualifyVscodeVsixInstall({
                       externalResourceManifestPath,
                   }),
             }),
+        ...(embeddedTextureReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE:
+                embeddedTextureReferenceFixture.cachePath,
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST:
+                PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+            }),
         ...(quantizedReferenceFixture === null
           ? {}
           : {
@@ -721,6 +744,34 @@ export async function qualifyVscodeVsixInstall({
                   externalReferenceFixture.manifest.document.byteLength,
             installedExternalReferenceUsesNoNetwork:
               runtime.externalReferenceFixture?.resourceBundle
+                ?.networkAtRuntime === false,
+          }
+        : {}),
+      ...(includeEmbeddedTextureFixture
+        ? {
+            installedPackageOpensEmbeddedTextureReference:
+              allTrue(
+                runtime.embeddedTextureReferenceAssertions,
+              ),
+            installedEmbeddedTextureIdentityExact:
+              runtime.embeddedTextureReferenceFixture?.fingerprint ===
+                `sha256:${embeddedTextureReferenceFixture.manifest
+                  .entry.sha256}`,
+            installedEmbeddedTextureBundleExact:
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.embeddedImageBytes ===
+                  embeddedTextureReferenceFixture.manifest.expected
+                    .embeddedImageBytes &&
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.embeddedImageResources ===
+                  embeddedTextureReferenceFixture.manifest.expected
+                    .embeddedImageResources &&
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.documentBytes ===
+                  embeddedTextureReferenceFixture.manifest.entry
+                    .byteLength,
+            installedEmbeddedTextureUsesNoNetwork:
+              runtime.embeddedTextureReferenceFixture?.resourceBundle
                 ?.networkAtRuntime === false,
           }
         : {}),
@@ -991,6 +1042,45 @@ export async function qualifyVscodeVsixInstall({
               },
             }
           : {}),
+        ...(includeEmbeddedTextureFixture
+          ? {
+              embeddedTextureReferenceRuntime: {
+                fixture:
+                  runtime.embeddedTextureReferenceFixture,
+                gpu:
+                  runtime.embeddedTextureReferenceObservation?.gpu,
+                hostKind:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.hostKind,
+                model:
+                  runtime.embeddedTextureReferenceObservation?.model,
+                performance:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.performance,
+                resources:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.resources,
+                renderer:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.renderer,
+                reference:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.reference,
+                lifecycle:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.lifecycle,
+                viewerCore:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.viewerCore,
+                externalUpload:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.externalUpload,
+                telemetry:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.telemetry,
+              },
+            }
+          : {}),
         ...(includeQuantizedFixture
           ? {
               quantizedReferenceRuntime: {
@@ -1085,6 +1175,10 @@ export async function qualifyVscodeVsixInstall({
         externalReferenceFixtureOpen:
           includeExternalResourceFixture
             ? "passed-bounded-local-resource-bundle"
+            : "not-run",
+        embeddedTextureReferenceFixtureOpen:
+          includeEmbeddedTextureFixture
+            ? "passed-bounded-embedded-png"
             : "not-run",
         quantizedReferenceFixtureOpen:
           includeQuantizedFixture

@@ -98,6 +98,9 @@ const PASSED_GATES = [
   "browserBoundedBaseColorTextureOpen",
   "vscodeBoundedBaseColorTextureOpen",
   "cleanVsixBoundedBaseColorTextureOpen",
+  "browserEmbeddedBaseColorTextureOpen",
+  "vscodeEmbeddedBaseColorTextureOpen",
+  "cleanVsixEmbeddedBaseColorTextureOpen",
   "browserReadonlyLasLazOpen",
   "vscodeReadonlyLasLazOpen",
   "cleanVsixLasLazOpen",
@@ -931,6 +934,10 @@ export function validateBimProductShellCompatibility(
   }
   const texturedReferenceFixture = manifest.texturedReferenceFixture;
   const texturedEvidenceFixture = gltfTextureProducts.fixture;
+  const embeddedTexturedReferenceFixture =
+    manifest.embeddedTexturedReferenceFixture;
+  const embeddedTexturedEvidenceFixture =
+    gltfTextureProducts.embeddedFixture;
   if (
     texturedReferenceFixture?.id !== texturedEvidenceFixture?.id ||
     texturedReferenceFixture?.byteLength !== 8_285 ||
@@ -960,7 +967,34 @@ export function validateBimProductShellCompatibility(
       texturedEvidenceFixture?.provenance?.license ||
     gltfTextureReport.status !==
       "passed-darwin-arm64-apple-metal-texture" ||
-    gltfTextureReport.surfaces !== 3 ||
+    embeddedTexturedReferenceFixture?.id !==
+      embeddedTexturedEvidenceFixture?.id ||
+    embeddedTexturedReferenceFixture?.byteLength !== 5_956 ||
+    embeddedTexturedReferenceFixture?.embeddedImageBytes !== 3_750 ||
+    embeddedTexturedReferenceFixture?.embeddedImageResources !== 1 ||
+    embeddedTexturedReferenceFixture?.textureSourceBytes !== 3_750 ||
+    embeddedTexturedReferenceFixture?.textureDecodedBytes !== 262_144 ||
+    embeddedTexturedReferenceFixture?.textureGpuBytes !== 349_524 ||
+    embeddedTexturedReferenceFixture?.textures !== 1 ||
+    embeddedTexturedReferenceFixture?.sourceFingerprint !==
+      embeddedTexturedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    embeddedTexturedReferenceFixture?.format !== "glb" ||
+    embeddedTexturedReferenceFixture?.gltfVersion !== "2.0" ||
+    embeddedTexturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    embeddedTexturedReferenceFixture?.artifactCommitted !== false ||
+    embeddedTexturedReferenceFixture?.thirdPartyContent !== true ||
+    embeddedTexturedReferenceFixture?.bundled !== false ||
+    embeddedTexturedReferenceFixture?.repository !==
+      embeddedTexturedEvidenceFixture?.provenance?.repository ||
+    embeddedTexturedReferenceFixture?.commit !==
+      embeddedTexturedEvidenceFixture?.provenance?.commit ||
+    embeddedTexturedReferenceFixture?.license !==
+      embeddedTexturedEvidenceFixture?.provenance?.license ||
+    gltfTextureReport.surfaces !== 6 ||
     gltfTextureReport.sourceBytes !== 8_285 ||
     gltfTextureReport.decodedTextureBytes !== 262_144 ||
     gltfTextureReport.gpuTextureBytes !== 349_524 ||
@@ -1031,7 +1065,8 @@ export function validateBimProductShellCompatibility(
           maximumDecodedBytes: 16_777_216,
           maximumDimension: 2_048,
           maximumCompressionRatio: 256,
-          scope: "external-png-opaque-base-color-texcoord0",
+          scope:
+            "external-or-embedded-png-opaque-base-color-texcoord0",
         },
       }) ||
     JSON.stringify(limits?.lasLazPointSource) !==
@@ -1081,7 +1116,7 @@ export function validateBimProductShellCompatibility(
         localExternalGltfBundleProductSurfaces: 3,
         khrMeshQuantizationProductSurfaces: 3,
         extMeshoptCompressionProductSurfaces: 3,
-        baseColorTextureProductSurfaces: 3,
+        baseColorTextureProductSurfaces: 6,
         pointCloudProductSurfaces: 12,
         pointCloudFormatAdmission: false,
         simultaneousComposition: false,
@@ -1508,8 +1543,9 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.extMeshoptCompressionScope !==
       "required-buffer-view-filter-none" ||
     manifest.policy?.claimBoundedBaseColorTextureOpen !== true ||
+    manifest.policy?.claimEmbeddedBaseColorTextureOpen !== true ||
     manifest.policy?.boundedBaseColorTextureScope !==
-      "external-png-opaque-texcoord0-webgl2-srgb" ||
+      "external-or-embedded-png-opaque-texcoord0-webgl2-srgb" ||
     manifest.policy?.claimArbitraryGltfUri !== false ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
     manifest.policy?.claimVscodeLasLazOpen !== true ||

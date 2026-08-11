@@ -18,6 +18,7 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
@@ -795,6 +796,69 @@ async function qualificationFixture(kind) {
       }),
     });
   }
+  if (kind === "gltf-embedded-texture-public") {
+    const acquired = await acquirePublicGltfFixture({
+      manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+    });
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.entry.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        embeddedImageBytes: manifest.expected.embeddedImageBytes,
+        embeddedImageResources:
+          manifest.expected.embeddedImageResources,
+        networkAtRuntime: false,
+      }),
+      appearance: Object.freeze({
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes: manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        imageStorageProfiles: [
+          manifest.expected.imageStorageProfile,
+        ],
+        colorSpace: "srgb-to-linear-webgl2",
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      textureGpuBytes: manifest.expected.textureGpuBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
   if (kind === "gltf-quantized-public") {
     const acquired = await acquirePublicQuantizedGltfFixture();
     const { manifest } = acquired;
@@ -1029,7 +1093,7 @@ async function qualificationFixture(kind) {
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
       "gltf-public, gltf-product-scale, gltf-external-public, " +
-      "gltf-texture-public, " +
+      "gltf-texture-public, gltf-embedded-texture-public, " +
       "gltf-quantized-public, gltf-meshopt-public, " +
       "e57-public, " +
       "e57-spherical-public, e57-multiple-scan-public, " +
@@ -1465,6 +1529,7 @@ export async function qualifyBimProductShell({
 function parseArguments(values) {
   const allowedFixtures = new Set([
     "gltf-external-public",
+    "gltf-embedded-texture-public",
     "gltf-texture-public",
     "gltf-meshopt-public",
     "gltf-quantized-public",
@@ -1511,7 +1576,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
         "gltf-product-scale|gltf-external-public|e57-public|" +
-        "gltf-texture-public|" +
+        "gltf-texture-public|gltf-embedded-texture-public|" +
         "gltf-quantized-public|gltf-meshopt-public|" +
         "e57-spherical-public|" +
         "e57-multiple-scan-public|las-public|laz-public] " +

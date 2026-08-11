@@ -155,6 +155,13 @@ const textureFixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.textureFixtureManifest),
   "utf8",
 ));
+const embeddedTextureFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.embeddedTextureFixtureManifest,
+  ),
+  "utf8",
+));
 
 const trueGates = [
   "gltf2Container",
@@ -186,6 +193,7 @@ const trueGates = [
   "khrMeshQuantization",
   "extMeshoptCompression",
   "boundedBaseColorTexture",
+  "boundedEmbeddedBaseColorTexture",
 ];
 const heldGates = [
   "requiredExtensions",
@@ -482,6 +490,7 @@ export function validateGltfTextureAdmission(
   manifestValue,
   evidenceValue,
   fixtureValue,
+  embeddedFixtureValue,
 ) {
   const report = validateGltfTextureProductsQualification(
     evidenceValue,
@@ -491,10 +500,16 @@ export function validateGltfTextureAdmission(
       GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
     manifestValue?.evidence?.textureFixtureManifest !==
       "fixtures/gltf/public-khronos-box-textured/manifest.json" ||
+    manifestValue?.evidence?.embeddedTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-embedded/" +
+        "manifest.json" ||
     manifestValue?.gates?.boundedBaseColorTexture !== true ||
+    manifestValue?.gates?.boundedEmbeddedBaseColorTexture !== true ||
     manifestValue?.policy?.claimBoundedBaseColorTexture !== true ||
     manifestValue?.policy?.baseColorTextureScope !==
-      "external-png-opaque-texcoord0-webgl2-srgb" ||
+      "external-or-embedded-png-opaque-texcoord0-webgl2-srgb" ||
+    manifestValue?.policy?.allowPngDataUri !== true ||
+    manifestValue?.policy?.allowGlbPngBufferView !== true ||
     JSON.stringify(manifestValue?.policy?.externalResourceExtensions) !==
       JSON.stringify([".bin", ".png"]) ||
     manifestValue?.policy?.maximumTextures !== 16 ||
@@ -526,8 +541,27 @@ export function validateGltfTextureAdmission(
     fixtureValue?.tracking?.artifactsTracked !== false ||
     fixtureValue?.tracking?.releaseBundled !== false ||
     fixtureValue?.tracking?.networkAtRuntime !== false ||
+    embeddedFixtureValue?.fixtureId !==
+      evidenceValue?.embeddedFixture?.id ||
+    embeddedFixtureValue?.entry?.name !== "BoxTextured.glb" ||
+    embeddedFixtureValue?.entry?.byteLength !== 5_956 ||
+    `sha256:${embeddedFixtureValue?.entry?.sha256}` !==
+      evidenceValue?.embeddedFixture?.fingerprint ||
+    embeddedFixtureValue?.expected?.geometryRangeBytes !== 4_756 ||
+    embeddedFixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.embeddedCore?.geometry?.rangeSha256 ||
+    embeddedFixtureValue?.expected?.embeddedImageBytes !== 3_750 ||
+    embeddedFixtureValue?.expected?.embeddedImageResources !== 1 ||
+    embeddedFixtureValue?.expected?.imageStorageProfile !==
+      "glb-buffer-view" ||
+    embeddedFixtureValue?.expected?.textureDecodedBytes !== 262_144 ||
+    embeddedFixtureValue?.expected?.textureGpuBytes !== 349_524 ||
+    embeddedFixtureValue?.expected?.gpuUploadBytes !== 350_516 ||
+    embeddedFixtureValue?.tracking?.artifactTracked !== false ||
+    embeddedFixtureValue?.tracking?.releaseBundled !== false ||
+    embeddedFixtureValue?.tracking?.networkAtRuntime !== false ||
     report.status !== "passed-darwin-arm64-apple-metal-texture" ||
-    report.surfaces !== 3 ||
+    report.surfaces !== 6 ||
     report.sourceBytes !== 8_285 ||
     report.decodedTextureBytes !== 262_144 ||
     report.gpuTextureBytes !== 349_524 ||
@@ -685,6 +719,7 @@ validateGltfTextureAdmission(
   manifest,
   textureProductsEvidence,
   textureFixture,
+  embeddedTextureFixture,
 );
 
 if (
@@ -705,7 +740,9 @@ if (
   JSON.stringify(manifest.policy.externalResourceExtensions) !==
     JSON.stringify([".bin", ".png"]) ||
   manifest.policy.baseColorTextureScope !==
-    "external-png-opaque-texcoord0-webgl2-srgb" ||
+    "external-or-embedded-png-opaque-texcoord0-webgl2-srgb" ||
+  manifest.policy.allowPngDataUri !== true ||
+  manifest.policy.allowGlbPngBufferView !== true ||
   JSON.stringify(manifest.policy.allowedRequiredExtensions) !==
     JSON.stringify([
       "KHR_mesh_quantization",
@@ -726,6 +763,7 @@ if (
   manifest.policy.claimKhrMeshQuantization !== true ||
   manifest.policy.claimExtMeshoptCompression !== true ||
   manifest.policy.claimBoundedBaseColorTexture !== true ||
+  manifest.policy.claimBoundedEmbeddedBaseColorTexture !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -773,6 +811,8 @@ if (
     GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
   manifest.evidence.textureFixtureManifest !==
     "fixtures/gltf/public-khronos-box-textured/manifest.json" ||
+  manifest.evidence.embeddedTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-embedded/manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||

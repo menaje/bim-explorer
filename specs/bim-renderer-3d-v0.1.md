@@ -24,7 +24,8 @@ WebGL2 backend는 experimental qualification surface에서만 검증했습니다
 - digest와 byte/request limit이 있는 geometry range handle
 - 초기 range와 deferred range의 명시적 목록
 - geometry slice/count, occurrence transform와 color
-- optional interleaved `TEXCOORD_0`와 bounded external PNG base-color texture
+- optional interleaved `TEXCOORD_0`와 storage-neutral bounded PNG base-color
+  texture payload
 - source revision에 묶인 Render/Pick ID
 
 IFC class, property와 Spatial authority는 renderer plan에 포함하지 않습니다.

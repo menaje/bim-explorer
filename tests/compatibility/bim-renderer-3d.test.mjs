@@ -126,8 +126,8 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.baseColorTextureSurfaces, 3);
-  assert.equal(result.passedGates, 28);
+  assert.equal(result.baseColorTextureSurfaces, 6);
+  assert.equal(result.passedGates, 29);
   assert.equal(result.heldGates, 0);
   assert.equal(result.pointPhysicalGpuSurfaces, 12);
 });

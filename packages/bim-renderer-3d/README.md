@@ -55,12 +55,13 @@ identity를 유지합니다.
 
 textured v2 range는 OPAQUE PNG `baseColorTexture`와 `TEXCOORD_0`만 소비합니다.
 renderer는 source와 별도로 PNG signature/chunk/CRC, dimensions, decoded ratio,
-geometry-to-texture reference와 trailing/unused payload를 검증합니다. actual
-BoxTextured Gate는 3,750-byte PNG를 262,144-byte decoded base RGBA와
-349,524-byte mipmap-aware sRGB GPU texture로 산정해 Browser, staged VS Code와
-clean-installed local VSIX에서 각각 86,486 pixels와 350,516-byte total GPU
-allocation을 만들고 texture/image bitmap을 포함한 모든
-resource를 회수했습니다. material semantics, image fetch와 BIM authority는
+geometry-to-texture reference와 trailing/unused payload를 검증합니다. external
+bundle과 embedded GLB의 actual BoxTextured Gate는 같은 3,750-byte PNG를
+262,144-byte decoded base RGBA와 349,524-byte mipmap-aware sRGB GPU texture로
+산정합니다. 두 fixture의 Browser, staged VS Code와 clean-installed local VSIX,
+합계 6개 Apple M2 Metal 표면은 각각 86,486 pixels와 350,516-byte total GPU
+allocation을 만들고 texture/image bitmap을 포함한 모든 resource를
+회수했습니다. material semantics, image storage/fetch와 BIM authority는
 renderer가 소유하지 않습니다.
 
 point range는 source semantic identity를 만들지 않습니다. renderer는 exact

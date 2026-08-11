@@ -309,6 +309,15 @@ export class GltfReferenceSource {
                 externalImageResources:
                   profile.resourceBundle.externalImageResources,
               }),
+          ...(profile.resourceBundle.embeddedImageResources ===
+            undefined
+            ? {}
+            : {
+                embeddedImageBytes:
+                  profile.resourceBundle.embeddedImageBytes,
+                embeddedImageResources:
+                  profile.resourceBundle.embeddedImageResources,
+              }),
           networkAtRuntime: false,
         },
         metadataQuery: "bounded-node-mesh-material-projection",

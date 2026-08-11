@@ -325,13 +325,15 @@ model/render/selection/cleanup parity를 통과했습니다. 이는 두 파일�
 macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 합성이나
 cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
 같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
-M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 외부 PNG
-`baseColorTexture`는 `TEXCOORD_0`, OPAQUE material과 표준 sampler만
-geometry-range v2로 투영합니다. renderer는 PNG를 독립 재검증하고 WebGL2
-`SRGB8_ALPHA8`로 upload하며, exact BoxTextured bundle의 세 Apple M2 Metal
-제품 표면에서 86,486 pixels·349,524-byte mipmap-aware GPU texture,
-350,516-byte total upload·terminal cleanup을 재현했습니다.
-임의 URI, JPEG·비-OPAQUE alpha material mode와 다른 material texture role은 Worker admission 전에
+M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 외부 PNG,
+exact glTF PNG data URI와 GLB PNG bufferView의 `baseColorTexture`는
+`TEXCOORD_0`, OPAQUE material과 표준 sampler만 geometry-range v2로
+투영합니다. renderer는 storage와 독립적으로 PNG를 재검증하고 WebGL2
+`SRGB8_ALPHA8`로 upload합니다. exact BoxTextured 외부 bundle과 embedded GLB의
+Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
+표면은 각각 86,486 pixels·349,524-byte mipmap-aware GPU texture,
+350,516-byte total upload·terminal cleanup을 재현했습니다. 임의 URI, glTF
+bufferView image, JPEG·비-OPAQUE alpha material mode와 다른 material texture role은 Worker admission 전에
 거부합니다. ratified
 `KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
 4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.

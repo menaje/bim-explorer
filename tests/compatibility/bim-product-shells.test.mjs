@@ -215,11 +215,11 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       externalGltfBundleSurfaces: 3,
       extMeshoptCompressionSurfaces: 3,
-      baseColorTextureSurfaces: 3,
+      baseColorTextureSurfaces: 6,
       khrMeshQuantizationSurfaces: 3,
       heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 60,
+      passedGates: 63,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
       pointCloudPhysicalGpu:

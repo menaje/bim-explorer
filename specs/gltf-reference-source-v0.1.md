@@ -37,6 +37,8 @@ roundTripAuthority: false
   leaf-name `.bin` buffer
 - glTF 2.0 JSON이 참조하고 caller가 명시적으로 공급한 동일 폴더 ASCII
   leaf-name `.png` image
+- exact `data:image/png;base64,...` image URI
+- GLB BIN chunk 안의 `mimeType: image/png` image bufferView
 - 하나의 default scene과 bounded node hierarchy
 - node의 column-major matrix 또는 translation/rotation/scale
 - indexed `TRIANGLES`
@@ -49,7 +51,7 @@ roundTripAuthority: false
   `FILTER_NONE` bufferView. fallback buffer는 payload 없는 placeholder만 허용
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
-- OPAQUE material의 외부 PNG `baseColorTexture`, bounded `TEXCOORD_0`과
+- OPAQUE material의 승인된 PNG `baseColorTexture`, bounded `TEXCOORD_0`과
   glTF core 범위의 standard sampler
 
 local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.(bin|png)$` 범위이고 `..`를
@@ -60,8 +62,9 @@ local sidecar 이름은 `^[A-Za-z0-9][A-Za-z0-9._-]*\.(bin|png)$` 범위이고 `
 animation, skin, morph target, sparse accessor와 collapsed transform도 first
 profile 밖입니다. 양자화 vertex accessor는 glTF extension의 4-byte alignment를
 따르며 signed normalized normal은 decode 뒤 단위 벡터로 다시 정규화합니다.
-embedded texture/image metadata는 geometry 입출력이나 network authority를
-부여하지 않습니다. 외부 PNG texture는 `baseColorTexture.texCoord = 0`,
+승인 범위 밖 texture/image metadata는 geometry 입출력이나 network authority를
+부여하지 않습니다. PNG texture는 저장 방식과 무관하게
+`baseColorTexture.texCoord = 0`,
 primitive의 `TEXCOORD_0`, OPAQUE alpha mode와 한 개의 image source를 정확히
 참조해야 합니다. normal, metallic-roughness, occlusion, emissive texture,
 `KHR_texture_transform`, alpha mask/blend와 unused image/resource는 거부합니다.
@@ -78,7 +81,7 @@ primitive의 `TEXCOORD_0`, OPAQUE alpha mode와 한 개의 image source를 정�
 | meshopt decoded bufferView aggregate | 64 MiB |
 | meshopt decoded/compressed ratio | 256:1 |
 | external `.bin` + `.png` resource | 16개 |
-| external PNG texture | 16개 |
+| projected PNG texture | 16개 |
 | encoded PNG texture aggregate | 8 MiB |
 | decoded PNG RGBA aggregate | 16 MiB |
 | PNG width 또는 height | 2,048 px |
@@ -145,7 +148,7 @@ GPU allocation은 source가 소유하지 않습니다.
 
 - Draco, meshopt의 OCTAHEDRAL/QUATERNION/EXPONENTIAL filter와 두 승인 확장 이외
   required extension
-- arbitrary URI, nested path, JPEG와 embedded image material projection
+- arbitrary URI, nested path, JPEG와 glTF bufferView image material projection
 - alpha mode, normal/metallic-roughness/occlusion/emissive texture,
   `KHR_texture_transform`과 broader material fidelity
 - animation, skin과 morph target
@@ -173,7 +176,7 @@ Editor와 빈 profile에 설치한 VSIX에서도 열었습니다. 세 제품 경
 non-background pixels, 756-byte source read, 800-byte GPU upload,
 source-native selection과 `globalId: null`을 재현하고 path-free bridge,
 Worker/session/GPU/editor cleanup을 통과했습니다. `.gltf` association과
-embedded data URI dispatch는 synthetic conformance가 보완합니다.
+embedded buffer 및 PNG data URI dispatch는 synthetic conformance가 보완합니다.
 
 고정된 Khronos `Box.gltf` 2,898 bytes와 `Box0.bin` 648 bytes는 원본 commit과
 각 SHA-256을 cache-only manifest로 고정했습니다. Browser는 두 파일을 한 번에
@@ -217,6 +220,15 @@ terminal cleanup을 재현했습니다. sample의
 재배포하지 않습니다. 이 승인은 single-source 제품 범위이고 immutable federated
 BIM Surface v0.2 runtime과 `.bimfed.json`에는 backport하지 않습니다.
 
+같은 commit의 exact 5,956-byte `BoxTextured.glb`는 3,750-byte PNG를 GLB BIN
+chunk의 image bufferView로 보관합니다. 공식 Validator issue 0개이며 외부
+bundle과 byte-identical한 4,756-byte geometry-range v2와 SHA-256
+`ce04af8c…a3cd`를 만듭니다. actual Chrome 151, staged VS Code 1.132와
+clean-installed local VSIX도 Apple M2 Metal에서 각각 86,486 pixels,
+349,524-byte mipmap-aware GPU texture, 350,516-byte total upload와 terminal
+cleanup을 재현했습니다. 두 fixture 합계 6개 physical-GPU 제품 표면입니다.
+원본은 cache-only이고 Git·VSIX·release에 재배포하지 않습니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
@@ -224,7 +236,8 @@ upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 �
 포함하지 않습니다.
 
 이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
-JPEG·투명/다중 material texture, Draco·다른 meshopt filter·그 밖의 required extension,
+glTF bufferView image, JPEG·투명/다중 material texture, Draco·다른 meshopt
+filter·그 밖의 required extension,
 broader material/geometry fidelity,
 Linux/Windows physical GPU, BIM semantic authority, write와 round-trip은
 승인하지 않습니다.

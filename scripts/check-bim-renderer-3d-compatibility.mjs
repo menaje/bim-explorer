@@ -54,6 +54,7 @@ const TRUE_GATES = [
   "pointHierarchyChunkLod",
   "pointPhysicalGpuQualification",
   "boundedBaseColorTexture",
+  "boundedEmbeddedBaseColorTexture",
 ];
 const HELD_GATES = [];
 const CONFORMANCE_ASSERTIONS = [
@@ -2785,6 +2786,7 @@ export function validateBimRenderer3dCompatibility(
     manifest.policy?.claimDerivedPointLod !== true ||
     manifest.policy?.claimSourceNativePointLod !== false ||
     manifest.policy?.claimBoundedBaseColorTexture !== true ||
+    manifest.policy?.claimBoundedEmbeddedBaseColorTexture !== true ||
     manifest.policy?.pointIdentityAuthority !==
       "derived-point-range-order" ||
     manifest.policy?.pointIdentityScope !==

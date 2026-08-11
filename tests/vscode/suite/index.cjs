@@ -80,6 +80,7 @@ function physicalAppleMetalGpu(value) {
 
 async function qualifyReference({
   api,
+  embeddedTexture = false,
   manifestPath = undefined,
   meshopt = false,
   productScale = false,
@@ -142,6 +143,8 @@ async function qualifyReference({
   );
   const label = productScale
     ? "product-scale reference"
+    : embeddedTexture
+      ? "embedded-texture reference"
     : resourceBundle
       ? "external-resource reference"
       : meshopt
@@ -183,14 +186,14 @@ async function qualifyReference({
       };
   const expectedReadBytes = productScale
     ? manifest.expected.geometryRangeBytes
-    : resourceBundle
+    : resourceBundle || embeddedTexture
       ? manifest.expected.geometryRangeBytes
       : quantized || meshopt
         ? manifest.expected.geometryRangeBytes
       : 756;
   const expectedUploadedBytes = productScale
     ? 16_900_016
-    : resourceBundle
+    : resourceBundle || embeddedTexture
       ? manifest.expected.gpuUploadBytes
       : quantized || meshopt
         ? manifest.expected.gpuUploadBytes
@@ -239,10 +242,13 @@ async function qualifyReference({
     ready.renderer.uploadedBytes,
     expectedUploadedBytes,
   );
-  if (resourceBundle) {
+  if (resourceBundle || embeddedTexture) {
+    const documentBytes = resourceBundle
+      ? manifest.document.byteLength
+      : manifest.entry.byteLength;
     const expectedResourceBundle = {
       schema: "bim-explorer-gltf-local-resource-bundle/0.1",
-      documentBytes: manifest.document.byteLength,
+      documentBytes,
       externalResourceBytes:
         manifest.expected.externalResourceBytes,
       externalResources: manifest.expected.externalResources,
@@ -254,6 +260,14 @@ async function qualifyReference({
             externalImageResources:
               manifest.expected.externalImageResources,
           }),
+      ...(manifest.expected.embeddedImageResources === undefined
+        ? {}
+        : {
+            embeddedImageBytes:
+              manifest.expected.embeddedImageBytes,
+            embeddedImageResources:
+              manifest.expected.embeddedImageResources,
+          }),
       networkAtRuntime: false,
     };
     assert.deepEqual(
@@ -262,7 +276,7 @@ async function qualifyReference({
     );
     assert.equal(
       ready.resources.documentBytes,
-      manifest.document.byteLength,
+      documentBytes,
     );
     assert.equal(
       ready.resources.externalResourceBytes,
@@ -272,15 +286,30 @@ async function qualifyReference({
       ready.resources.externalResources,
       manifest.expected.externalResources,
     );
-    if (manifest.expected.externalImageResources !== undefined) {
-      assert.equal(
-        ready.resources.externalBufferResources,
-        manifest.expected.externalBufferResources,
-      );
-      assert.equal(
-        ready.resources.externalImageResources,
-        manifest.expected.externalImageResources,
-      );
+    if (
+      manifest.expected.externalImageResources !== undefined ||
+      manifest.expected.embeddedImageResources !== undefined
+    ) {
+      if (manifest.expected.externalImageResources !== undefined) {
+        assert.equal(
+          ready.resources.externalBufferResources,
+          manifest.expected.externalBufferResources,
+        );
+        assert.equal(
+          ready.resources.externalImageResources,
+          manifest.expected.externalImageResources,
+        );
+      }
+      if (manifest.expected.embeddedImageResources !== undefined) {
+        assert.equal(
+          ready.resources.embeddedImageBytes,
+          manifest.expected.embeddedImageBytes,
+        );
+        assert.equal(
+          ready.resources.embeddedImageResources,
+          manifest.expected.embeddedImageResources,
+        );
+      }
       assert.deepEqual(ready.source.appearance, {
         profile: "base-color-texture-png-opaque-v0.1",
         textureCoordinateSet:
@@ -291,6 +320,13 @@ async function qualifyReference({
           manifest.expected.textureDecodedBytes,
         textures: manifest.expected.textures,
         imageMediaTypes: [manifest.expected.imageMediaType],
+        ...(manifest.expected.imageStorageProfile === undefined
+          ? {}
+          : {
+              imageStorageProfiles: [
+                manifest.expected.imageStorageProfile,
+              ],
+            }),
         colorSpace: "srgb-to-linear-webgl2",
       });
       assert.equal(
@@ -332,7 +368,7 @@ async function qualifyReference({
       fingerprint: ready.source.fingerprint,
       gltfVersion: ready.source.gltfVersion,
       nativeId,
-      ...(resourceBundle
+      ...(resourceBundle || embeddedTexture
         ? {
             resourceBundle: ready.source.resourceBundle,
             ...(ready.source.appearance === undefined
@@ -386,10 +422,12 @@ async function qualifyReference({
       sourceIdentityExact: true,
       noBimSemanticAuthority: true,
       exactLocalResourceBundle:
-        !resourceBundle ||
+        !(resourceBundle || embeddedTexture) ||
         (
           ready.resources.documentBytes ===
-            manifest.document.byteLength &&
+            (resourceBundle
+              ? manifest.document.byteLength
+              : manifest.entry.byteLength) &&
           ready.resources.externalResourceBytes ===
             manifest.expected.externalResourceBytes &&
           ready.resources.externalResources ===
@@ -1066,6 +1104,12 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
   const externalReferenceManifestPath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST;
+  const embeddedTextureReferenceSourcePath =
+    process.env
+      .BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE;
+  const embeddedTextureReferenceManifestPath =
+    process.env
+      .BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST;
   const quantizedReferenceSourcePath =
     process.env.BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE;
   const meshoptReferenceSourcePath =
@@ -1417,6 +1461,42 @@ async function run() {
         },
       };
     }
+    let embeddedTextureReferenceQualification = null;
+    if (
+      typeof embeddedTextureReferenceSourcePath === "string" &&
+      embeddedTextureReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        embeddedTexture: true,
+        manifestPath: embeddedTextureReferenceManifestPath,
+        root,
+        sourcePath: embeddedTextureReferenceSourcePath,
+      });
+      embeddedTextureReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localEmbeddedTextureReferenceOpened:
+            qualified.assertions.localSourceOpened,
+          embeddedTextureReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          embeddedTextureReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          embeddedTextureReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          embeddedTextureReferenceBundleExact:
+            qualified.assertions.exactLocalResourceBundle,
+          embeddedTextureReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          embeddedTextureReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          embeddedTextureReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
     let quantizedReferenceQualification = null;
     if (
       typeof quantizedReferenceSourcePath === "string" &&
@@ -1588,6 +1668,7 @@ async function run() {
       referenceQualification?.observation?.gpu,
       productScaleReferenceQualification?.observation?.gpu,
       externalReferenceQualification?.observation?.gpu,
+      embeddedTextureReferenceQualification?.observation?.gpu,
       ...Object.values(pointQualifications).map(
         (value) => value.observation.gpu,
       ),
@@ -1677,6 +1758,16 @@ async function run() {
               externalReferenceQualification.observation,
             externalReferenceAssertions:
               externalReferenceQualification.assertions,
+          }),
+      ...(embeddedTextureReferenceQualification === null
+        ? {}
+        : {
+            embeddedTextureReferenceFixture:
+              embeddedTextureReferenceQualification.fixture,
+            embeddedTextureReferenceObservation:
+              embeddedTextureReferenceQualification.observation,
+            embeddedTextureReferenceAssertions:
+              embeddedTextureReferenceQualification.assertions,
           }),
       ...(quantizedReferenceQualification === null
         ? {}
@@ -1789,6 +1880,15 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.externalReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (
+      evidence.embeddedTextureReferenceAssertions !== undefined
+    ) {
+      assert.ok(
+        Object.values(
+          evidence.embeddedTextureReferenceAssertions,
         ).every(Boolean),
       );
     }

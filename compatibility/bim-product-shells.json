@@ -112,6 +112,26 @@
     "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
     "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium"
   },
+  "embeddedTexturedReferenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+    "byteLength": 5956,
+    "embeddedImageBytes": 3750,
+    "embeddedImageResources": 1,
+    "textureSourceBytes": 3750,
+    "textureDecodedBytes": 262144,
+    "textureGpuBytes": 349524,
+    "textures": 1,
+    "sourceFingerprint": "b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+    "format": "glb",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium"
+  },
   "quantizedReferenceFixture": {
     "id": "khronos-box-derived-khr-mesh-quantization",
     "byteLength": 1632,
@@ -205,7 +225,7 @@
         "maximumDecodedBytes": 16777216,
         "maximumDimension": 2048,
         "maximumCompressionRatio": 256,
-        "scope": "external-png-opaque-base-color-texcoord0"
+        "scope": "external-or-embedded-png-opaque-base-color-texcoord0"
       }
     },
     "lasLazPointSource": {
@@ -248,7 +268,7 @@
     "localExternalGltfBundleProductSurfaces": 3,
     "khrMeshQuantizationProductSurfaces": 3,
     "extMeshoptCompressionProductSurfaces": 3,
-    "baseColorTextureProductSurfaces": 3,
+    "baseColorTextureProductSurfaces": 6,
     "pointCloudProductSurfaces": 12,
     "pointCloudFormatAdmission": false,
     "simultaneousComposition": false,
@@ -296,6 +316,9 @@
     "browserBoundedBaseColorTextureOpen": true,
     "vscodeBoundedBaseColorTextureOpen": true,
     "cleanVsixBoundedBaseColorTextureOpen": true,
+    "browserEmbeddedBaseColorTextureOpen": true,
+    "vscodeEmbeddedBaseColorTextureOpen": true,
+    "cleanVsixEmbeddedBaseColorTextureOpen": true,
     "browserReadonlyLasLazOpen": true,
     "vscodeReadonlyLasLazOpen": true,
     "cleanVsixLasLazOpen": true,
@@ -367,7 +390,8 @@
     "claimExtMeshoptCompressionOpen": true,
     "extMeshoptCompressionScope": "required-buffer-view-filter-none",
     "claimBoundedBaseColorTextureOpen": true,
-    "boundedBaseColorTextureScope": "external-png-opaque-texcoord0-webgl2-srgb",
+    "claimEmbeddedBaseColorTextureOpen": true,
+    "boundedBaseColorTextureScope": "external-or-embedded-png-opaque-texcoord0-webgl2-srgb",
     "claimArbitraryGltfUri": false,
     "claimBrowserLasLazOpen": true,
     "claimVscodeLasLazOpen": true,

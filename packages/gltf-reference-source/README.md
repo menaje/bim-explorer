@@ -14,7 +14,8 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 - required `EXT_meshopt_compression`의 `ATTRIBUTES`·`TRIANGLES`·`INDICES` mode와
   `FILTER_NONE`; exact meshoptimizer 1.2.0 decoder는 압축 source에서만 lazy load
 - material `baseColorFactor`
-- 명시적으로 공급된 동일 폴더 PNG의 OPAQUE `baseColorTexture`, bounded
+- 명시적으로 공급된 동일 폴더 PNG, exact glTF PNG data URI 또는 GLB의
+  `mimeType: image/png` bufferView에 든 OPAQUE `baseColorTexture`, bounded
   `TEXCOORD_0`과 표준 sampler
 - source-local `nativeId`와 immutable range session
 
@@ -24,10 +25,11 @@ Browser는 source와 sidecar를 한 번에 명시적으로 고르고, VS Code는
 separator, `..`, query/fragment, percent-encoded name, 누락·중복·미사용 resource와
 network fetch, 두 승인 확장 이외 required extension, 다른 meshopt filter, animation, skin,
 morph target, sparse accessor,
-write와 round-trip은 거부합니다. 외부 PNG는 8MiB encoded·16MiB decoded RGBA,
-축당 2,048px·256:1 비율과 최대 16개 상한을 적용합니다. JPEG, 비-OPAQUE alpha material mode,
-normal/metallic-roughness/occlusion/emissive texture, `KHR_texture_transform`과
-embedded image의 material 투영은 지원하지 않습니다. 출력 geometry는 texture가
+write와 round-trip은 거부합니다. 승인된 PNG는 저장 방식과 무관하게 합계 8MiB
+encoded·16MiB decoded RGBA, 축당 2,048px·256:1 비율과 최대 16개 상한을
+적용합니다. JPEG, glTF bufferView image, 비-OPAQUE alpha material mode,
+normal/metallic-roughness/occlusion/emissive texture와 `KHR_texture_transform`은
+material projection으로 지원하지 않습니다. 출력 geometry는 texture가
 없으면 `application/vnd.bim-explorer.geometry-range.v1`, 승인된 texture가 있으면
 `application/vnd.bim-explorer.geometry-range.v2` display cache이며 원본
 glTF/GLB의 source authority가 아닙니다.
@@ -44,7 +46,8 @@ evidence이며 physical GPU나 broader glTF profile을 뜻하지 않습니다.
 `A Beautiful Game` GLB를 사용합니다. 공식 Validator issue 0개,
 417,028 vertices, 573,952 unique triangles, 49 instances와 1,499,072
 instanced triangles를 headless 및 실제 Chrome SwiftShader WebGL2에서
-검증했고 16,900,016-byte allocation을 전량 회수했습니다. embedded texture와
+검증했고 16,900,016-byte allocation을 전량 회수했습니다. 이 sample의
+out-of-profile embedded texture와
 `KHR_materials_transmission`/`KHR_materials_volume`은 source에 존재하지만
 이 bounded geometry projection의 material authority로 승격하지 않습니다.
 같은 파일의 Browser 제품 local file-open, staged VS Code와 clean-installed
@@ -67,14 +70,16 @@ bytes를 648 bytes로 복원했고, headless와 같은 세 Apple M2 Metal 제품
 bundle되어 압축 source에서만 초기화됩니다. decoded aggregate 64MiB, ratio 256:1,
 payload 없는 fallback placeholder와 `FILTER_NONE`만 허용합니다. 공식 Validator의
 고정 info 2개는 extension schema 미지원과 placeholder buffer 진단으로 기록합니다.
-외부 texture Gate는 exact Khronos `BoxTextured.gltf + BoxTextured0.bin +
-CesiumLogoFlat.png`를 cache-only로 고정합니다. 공식 Validator issue 0개와
-geometry-range v2의 3,750-byte PNG·262,144-byte decoded base RGBA,
-349,524-byte mipmap-aware GPU texture와 headless
-accounting 및 actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX의
-Apple M2 Metal에서 86,486 pixels·350,516-byte total upload·terminal cleanup을
-재현했습니다. sample은 Cesium 표장 조건을 포함한 원 라이선스를 manifest에
-기록하고 Git·package·release에 재배포하지 않습니다.
+texture Gate는 exact Khronos `BoxTextured.gltf + BoxTextured0.bin +
+CesiumLogoFlat.png`와 `BoxTextured.glb`를 cache-only로 고정합니다. 두 sample은
+공식 Validator issue 0개와 byte-identical한 4,756-byte geometry-range v2,
+3,750-byte PNG·262,144-byte decoded base RGBA·349,524-byte mipmap-aware GPU
+texture를 재현합니다. 외부 bundle과 GLB bufferView 변형은 각각 actual Chrome
+151·staged VS Code 1.132·clean-installed local VSIX의 Apple M2 Metal에서 86,486
+pixels·350,516-byte total upload·terminal cleanup을 통과했습니다. glTF PNG data
+URI는 synthetic conformance로 같은 projection을 검증합니다. sample은 Cesium
+표장 조건을 포함한 원 라이선스를 manifest에 기록하고 Git·package·release에
+재배포하지 않습니다.
 Linux/Windows hardware, arbitrary URI, JPEG·투명/다중 material texture,
 Draco·다른 meshopt filter·그 밖의
 required extension,

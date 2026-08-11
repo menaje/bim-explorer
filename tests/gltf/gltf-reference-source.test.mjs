@@ -21,6 +21,9 @@ import {
   syntheticQuantizedGltfJsonBytes,
   syntheticQuantizedGlbBytes,
   syntheticTexturedGltfExternalBundle,
+  syntheticTexturedGltfBufferViewBytes,
+  syntheticTexturedGltfDataUriBytes,
+  syntheticTexturedGlbBytes,
 } from "../../scripts/generate-synthetic-gltf.mjs";
 
 for (const [format, fixture] of [
@@ -553,6 +556,154 @@ test("external PNG base color texture projects an exact v2 range", async () => {
   for (const resource of bundle.resources) {
     resource.bytes.fill(0);
   }
+});
+
+for (const [label, fixture, storage] of [
+  ["GLB bufferView", syntheticTexturedGlbBytes, "glb-buffer-view"],
+  ["glTF data URI", syntheticTexturedGltfDataUriBytes, "data-uri"],
+]) {
+  test(`embedded PNG ${label} projects the same exact v2 range`, async () => {
+    const bytes = fixture();
+    const profile = parseGltfReferenceProfile(bytes);
+    assert.deepEqual(profile.externalResourceUris, []);
+    assert.deepEqual(profile.appearance, {
+      profile: "base-color-texture-png-opaque-v0.1",
+      textureCoordinateSet: 0,
+      textureSourceBytes: 76,
+      textureDecodedBytes: 16,
+      textures: 1,
+      imageMediaTypes: ["image/png"],
+      imageStorageProfiles: [storage],
+      colorSpace: "srgb-to-linear-webgl2",
+    });
+    assert.deepEqual(profile.resourceBundle, {
+      documentBytes: bytes.byteLength,
+      externalResourceBytes: 0,
+      externalResources: 0,
+      embeddedImageBytes: 76,
+      embeddedImageResources: 1,
+    });
+    assert.equal(profile.textures[0].sourceKind, storage);
+
+    const source = await createGltfReferenceSource(bytes, {
+      sessionReadBudgetBytes: 1024 * 1024,
+    });
+    const session = await source.open({
+      protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+    });
+    const snapshot = await session.getSnapshot();
+    assert.deepEqual(snapshot.referenceMetadata.resourceBundle, {
+      schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+      documentBytes: bytes.byteLength,
+      externalResourceBytes: 0,
+      externalResources: 0,
+      embeddedImageBytes: 76,
+      embeddedImageResources: 1,
+      networkAtRuntime: false,
+    });
+    const handle = snapshot.layers[0].rangeHandles[0];
+    assert.equal(
+      handle.mediaType,
+      "application/vnd.bim-explorer.geometry-range.v2",
+    );
+    assert.equal(handle.byteLength, 276);
+    assert.equal(
+      handle.sha256,
+      "c404d58b4b4d431723fd273efd2d0979316c14041480db225fd9f9b74c336e32",
+    );
+    const range = await session.readRange(
+      handle,
+      0,
+      handle.byteLength,
+    );
+    const decoded = decodeBimTexturedGeometryRange(range);
+    assert.equal(decoded.textureCount, 1);
+    assert.equal(decoded.textureSourceBytes, 76);
+    assert.equal(decoded.textureDecodedBytes, 16);
+    assert.equal(decoded.textureGpuBytes, 20);
+    assert.equal(await session.dispose(), true);
+    assert.equal(await source.dispose(), true);
+    range.fill(0);
+    bytes.fill(0);
+  });
+}
+
+test("embedded PNG admission fails closed at MIME, range and budget boundaries", () => {
+  const invalidBase64 = JSON.parse(new TextDecoder().decode(
+    syntheticTexturedGltfDataUriBytes(),
+  ));
+  invalidBase64.images[0].uri = "data:image/png;base64,***";
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(invalidBase64)),
+    ),
+    /PNG data URI has invalid base64/u,
+  );
+
+  const inconsistentMime = JSON.parse(new TextDecoder().decode(
+    syntheticTexturedGltfDataUriBytes(),
+  ));
+  inconsistentMime.images[0].mimeType = "image/jpeg";
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(inconsistentMime)),
+    ),
+    /MIME type is inconsistent/u,
+  );
+
+  const unusedImage = JSON.parse(new TextDecoder().decode(
+    syntheticTexturedGltfDataUriBytes(),
+  ));
+  unusedImage.images.push(structuredClone(unusedImage.images[0]));
+  assert.throws(
+    () => parseGltfReferenceProfile(
+      new TextEncoder().encode(JSON.stringify(unusedImage)),
+    ),
+    /embedded PNG images require bounded base color projection/u,
+  );
+
+  const outOfRange = syntheticTexturedGlbBytes({
+    imageByteLength: 77,
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(outOfRange),
+    /bufferView range is invalid/u,
+  );
+
+  const accessorAliased = syntheticTexturedGlbBytes({
+    imageBufferView: 0,
+  });
+  assert.throws(
+    () => parseGltfReferenceProfile(accessorAliased),
+    /also used by an accessor/u,
+  );
+
+  const overBudget = syntheticTexturedGltfDataUriBytes();
+  assert.throws(
+    () => parseGltfReferenceProfile(overBudget, {
+      limits: { maximumTextureSourceBytes: 75 },
+    }),
+    /decoded byte limit/u,
+  );
+
+  const heldJpeg = syntheticTexturedGlbBytes({
+    imageMimeType: "image/jpeg",
+  });
+  const jpegProfile = parseGltfReferenceProfile(heldJpeg);
+  assert.equal(jpegProfile.appearance, null);
+  assert.equal(jpegProfile.textures.length, 0);
+
+  const heldGltfBufferView = syntheticTexturedGltfBufferViewBytes();
+  assert.throws(
+    () => parseGltfReferenceProfile(heldGltfBufferView),
+    /bufferView projection is limited to GLB/u,
+  );
+
+  outOfRange.fill(0);
+  accessorAliased.fill(0);
+  overBudget.fill(0);
+  heldJpeg.fill(0);
+  heldGltfBufferView.fill(0);
 });
 
 test("external texture admission fails closed at image and material boundaries", () => {

@@ -144,8 +144,9 @@ cache입니다.
 glTF/GLB admission은 embedded buffer 또는 명시적으로 공급된 동일 폴더 `.bin`/
 `.png` resource bundle, bounded node/mesh profile과 source-native identity에
 한정됩니다. local bundle은 최대 16개 ASCII leaf-name sidecar와 document 합산
-64MiB이며 임의 URI·runtime network를 허용하지 않습니다. 외부 PNG는 OPAQUE
-`baseColorTexture`, `TEXCOORD_0`과 표준 sampler만 geometry-range v2로 투영하고
+64MiB이며 임의 URI·runtime network를 허용하지 않습니다. 외부 PNG, exact glTF
+PNG data URI와 GLB PNG bufferView는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과
+표준 sampler만 geometry-range v2로 투영하고 glTF bufferView image,
 JPEG·비-OPAQUE alpha material mode·다른 material texture role은 거부합니다. 비 IFC reference source는 semantic
 BIM authority가 아닙니다. 모든 후보의 write와 round-trip은 별도
 Gate입니다.
@@ -177,13 +178,15 @@ cache-only GLB의 공식 Validator, headless와 같은 세 Apple M2 Metal 제품
 meshoptimizer 1.2.0, 192 compressed/648 decoded bytes, `FILTER_NONE` headless decode와
 같은 세 Apple M2 Metal 제품 표면을 통과했습니다. 두 required extension만
 single-source glTF profile에 허용하며 Draco·다른 meshopt filter·그 밖의 required extension, nested/arbitrary URI,
-JPEG·비-OPAQUE alpha mode·다중 material texture와 Linux/Windows physical GPU는 계속 보류합니다.
-별도 exact Khronos BoxTextured cache-only bundle은 공식 Validator issue 0개,
-geometry-range v2의 PNG/UV projection과 Browser·staged VS Code·clean-installed
-local VSIX의 Apple M2 Metal에서 86,486 pixels·349,524-byte mipmap-aware GPU
-texture·350,516-byte total upload·terminal
-cleanup을 통과했습니다. sample은 원 라이선스와 Cesium 표장 조건을 manifest에
-고정하고 재배포하지 않습니다.
+glTF bufferView image, JPEG·비-OPAQUE alpha mode·다중 material texture와
+Linux/Windows physical GPU는 계속 보류합니다. 별도 exact Khronos
+BoxTextured cache-only 외부 bundle과 embedded GLB는 공식 Validator issue 0개,
+byte-identical geometry-range v2의 PNG/UV projection과 각각의
+Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
+표면에서 86,486 pixels·349,524-byte mipmap-aware GPU texture·350,516-byte
+total upload·terminal cleanup을 통과했습니다. exact glTF PNG data URI는
+synthetic conformance로 보완합니다. sample은 원 라이선스와 Cesium 표장 조건을
+manifest에 고정하고 재배포하지 않습니다.
 이 결과는 glTF source와 single-source 제품 Gate에 한정됩니다. immutable
 federated BIM Surface v0.2 package와 `.bimfed.json` host에는 backport하지 않으며,
 후속 federated bundle, texture, mesh quantization 또는 meshopt 지원은 새 version과 별도 Spatial

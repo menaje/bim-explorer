@@ -40,7 +40,7 @@ export function syntheticPngChunk(type, data) {
   return bytes;
 }
 
-function syntheticPngBytes() {
+export function syntheticPngBytes() {
   const signature = Uint8Array.from([
     0x89, 0x50, 0x4e, 0x47,
     0x0d, 0x0a, 0x1a, 0x0a,
@@ -406,6 +406,136 @@ export function syntheticTexturedGltfExternalBundle({
       { uri: imageUri, bytes: image },
     ],
   };
+}
+
+export function syntheticTexturedGltfDataUriBytes({
+  imageMediaType = "image/png",
+  imagePayload = null,
+  secondNodeX = 3,
+} = {}) {
+  const binary = texturedBinaryPayload();
+  const image = imagePayload === null
+    ? syntheticPngBytes()
+    : Uint8Array.from(imagePayload);
+  const binaryUri =
+    "data:application/octet-stream;base64," +
+    Buffer.from(binary).toString("base64");
+  const imageUri =
+    `data:${imageMediaType};base64,` +
+    Buffer.from(image).toString("base64");
+  const document = texturedDocumentFor({
+    binaryUri,
+    imageUri,
+    secondNodeX,
+  });
+  document.asset.generator =
+    "BIM Explorer deterministic embedded PNG data URI fixture";
+  document.images[0].mimeType = imageMediaType;
+  const bytes = new TextEncoder().encode(JSON.stringify(document));
+  binary.fill(0);
+  image.fill(0);
+  return bytes;
+}
+
+export function syntheticTexturedGlbBytes({
+  imageBufferView = 4,
+  imageByteLength = null,
+  imageByteOffset = 104,
+  imageMimeType = "image/png",
+  secondNodeX = 3,
+} = {}) {
+  const geometry = texturedBinaryPayload();
+  const image = syntheticPngBytes();
+  const declaredImageBytes = imageByteLength ?? image.byteLength;
+  const binaryByteLength = aligned(
+    Math.max(
+      geometry.byteLength,
+      imageByteOffset + image.byteLength,
+    ),
+  );
+  const binary = new Uint8Array(binaryByteLength);
+  binary.set(geometry, 0);
+  binary.set(image, imageByteOffset);
+  const document = texturedDocumentFor({
+    binaryUri: null,
+    imageUri: null,
+    secondNodeX,
+  });
+  document.asset.generator =
+    "BIM Explorer deterministic embedded PNG GLB fixture";
+  document.buffers[0] = { byteLength: binary.byteLength };
+  document.bufferViews.push({
+    buffer: 0,
+    byteOffset: imageByteOffset,
+    byteLength: declaredImageBytes,
+  });
+  document.images = [{
+    bufferView: imageBufferView,
+    mimeType: imageMimeType,
+  }];
+  const json = new TextEncoder().encode(JSON.stringify(document));
+  const jsonLength = aligned(json.byteLength);
+  const bytes = new Uint8Array(
+    12 + 8 + jsonLength + 8 + binary.byteLength,
+  );
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.byteLength, true);
+  view.setUint32(12, jsonLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  bytes.fill(0x20, 20, 20 + jsonLength);
+  bytes.set(json, 20);
+  const binaryHeader = 20 + jsonLength;
+  view.setUint32(binaryHeader, binary.byteLength, true);
+  view.setUint32(binaryHeader + 4, 0x004e4942, true);
+  bytes.set(binary, binaryHeader + 8);
+  binary.fill(0);
+  geometry.fill(0);
+  image.fill(0);
+  return bytes;
+}
+
+export function syntheticTexturedGltfBufferViewBytes({
+  imageByteOffset = 104,
+  secondNodeX = 3,
+} = {}) {
+  const geometry = texturedBinaryPayload();
+  const image = syntheticPngBytes();
+  const binary = new Uint8Array(aligned(
+    Math.max(
+      geometry.byteLength,
+      imageByteOffset + image.byteLength,
+    ),
+  ));
+  binary.set(geometry, 0);
+  binary.set(image, imageByteOffset);
+  const document = texturedDocumentFor({
+    binaryUri: null,
+    imageUri: null,
+    secondNodeX,
+  });
+  document.asset.generator =
+    "BIM Explorer held glTF image bufferView fixture";
+  document.buffers[0] = {
+    byteLength: binary.byteLength,
+    uri: "data:application/octet-stream;base64," +
+      Buffer.from(binary).toString("base64"),
+  };
+  document.bufferViews.push({
+    buffer: 0,
+    byteOffset: imageByteOffset,
+    byteLength: image.byteLength,
+  });
+  document.images = [{
+    bufferView: 4,
+    mimeType: "image/png",
+  }];
+  const bytes = new TextEncoder().encode(JSON.stringify(document));
+  binary.fill(0);
+  geometry.fill(0);
+  image.fill(0);
+  return bytes;
 }
 
 export function syntheticQuantizedGltfJsonBytes() {

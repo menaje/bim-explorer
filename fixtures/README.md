@@ -29,6 +29,11 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   `BoxTextured0.bin` 840 bytes와 `CesiumLogoFlat.png` 3,750 bytes의 외부
   OPAQUE base-color texture 제품 Gate에 사용하는 cache-only manifest.
   원 라이선스와 Cesium 표장 조건을 함께 고정하며 sample은 재배포하지 않음
+- `gltf/public-khronos-box-textured-embedded`: exact 5,956-byte
+  `BoxTextured.glb`의 3,750-byte PNG bufferView OPAQUE base-color texture 제품
+  Gate에 사용하는 cache-only manifest. 외부 변형과 byte-identical한
+  geometry-range v2를 검증하며 원 라이선스·Cesium 표장 조건을 기록하고
+  sample은 재배포하지 않음
 - `gltf/derived-khronos-box-mesh-quantization`: exact Box GLB를 normalized BYTE
   normal과 normalized SHORT position으로 결정적으로 파생한 1,632-byte
   `KHR_mesh_quantization` qualification manifest. 원본과 파생 GLB는 모두

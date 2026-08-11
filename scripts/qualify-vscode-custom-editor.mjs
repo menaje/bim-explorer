@@ -21,6 +21,7 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
@@ -58,6 +59,7 @@ function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
     includeExternalResourceFixture: false,
+    includeEmbeddedTextureFixture: false,
     includeMeshoptFixture: false,
     includeQuantizedFixture: false,
     includePublicFixture: false,
@@ -76,6 +78,10 @@ function parseArguments(values) {
     }
     if (name === "--external-gltf") {
       options.includeExternalResourceFixture = true;
+      continue;
+    }
+    if (name === "--embedded-texture-gltf") {
+      options.includeEmbeddedTextureFixture = true;
       continue;
     }
     if (name === "--quantized-gltf") {
@@ -126,6 +132,7 @@ function parseArguments(values) {
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
         "[--external-gltf] " +
+        "[--embedded-texture-gltf] " +
         "[--meshopt-gltf] " +
         "[--quantized-gltf] " +
         "[--public] " +
@@ -141,6 +148,7 @@ function parseArguments(values) {
 export async function qualifyVscodeCustomEditor({
   includeFederatedSurfaceFixture = false,
   includeExternalResourceFixture = false,
+  includeEmbeddedTextureFixture = false,
   includeMeshoptFixture = false,
   includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
@@ -178,6 +186,13 @@ export async function qualifyVscodeCustomEditor({
   for (const resource of externalReferenceFixture?.resources ?? []) {
     resource.bytes.fill(0);
   }
+  const embeddedTextureReferenceFixture =
+    includeEmbeddedTextureFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+        })
+      : null;
+  embeddedTextureReferenceFixture?.bytes.fill(0);
   const quantizedReferenceFixture = includeQuantizedFixture
     ? await acquirePublicQuantizedGltfFixture()
     : null;
@@ -293,6 +308,14 @@ export async function qualifyVscodeCustomEditor({
                     BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST:
                       externalResourceManifestPath,
                   }),
+            }),
+        ...(embeddedTextureReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE:
+                embeddedTextureReferenceFixture.cachePath,
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST:
+                PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
             }),
         ...(quantizedReferenceFixture === null
           ? {}

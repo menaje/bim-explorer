@@ -12,9 +12,10 @@ leaf-name `.bin`과 `.png`를 extension host에서만 해결합니다. document�
 64MiB, regular non-symlink, 읽기 전후 size/mtime을 검사하며 resource 변경도
 watch합니다. webview에는 경로가 아닌 resource name과 transferable bytes만 보내고
 누락·중복·미사용 sidecar, separator/`..`/scheme/query/fragment/percent URI와
-runtime network를 거부합니다. 외부 PNG image는 OPAQUE `baseColorTexture`,
-`TEXCOORD_0`과 표준 sampler에만 허용하고 JPEG, 비-OPAQUE alpha material mode와 다른 material texture
-role은 fail-closed입니다. required extension은 `KHR_mesh_quantization`과
+runtime network를 거부합니다. 외부 PNG, exact glTF PNG data URI 또는 GLB PNG
+bufferView image는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler에만
+허용하고 glTF bufferView image, JPEG, 비-OPAQUE alpha material mode와 다른
+material texture role은 fail-closed입니다. required extension은 `KHR_mesh_quantization`과
 `EXT_meshopt_compression` `FILTER_NONE`만 bounded decode하며 Draco·다른 meshopt
 filter와 그 밖의 required extension은 거부합니다.
 이 bundle 경로는 single-source Custom Editor에만 적용되며 immutable federated
@@ -98,8 +99,9 @@ qualify:gltf:mesh-quantization-products`는 cache-only Box-derived
 Validator/headless renderer에서 검증합니다. 이 single-source 기능은 immutable
 federated Surface v0.2에 소급 반영하지 않습니다.
 `npm run qualify:gltf:texture-products`는 cache-only Khronos BoxTextured의 외부
-PNG를 staged Custom Editor와 clean-installed local VSIX에서도 actual WebGL2
-sRGB texture로 검증합니다. sample은 package에 포함하지 않습니다.
+PNG bundle과 embedded PNG GLB를 staged Custom Editor와 clean-installed local
+VSIX에서도 actual WebGL2 sRGB texture로 검증합니다. 각 Browser 경로를 포함한
+6개 Apple M2 Metal 제품 표면이며 sample은 package에 포함하지 않습니다.
 package 안에는 MPL-2.0, third-party notice, exact source 제공 경로와 release
 검증 정책이 포함됩니다. VSIX stage는 generated single-source `bim-surface`
 runtime과 private federated 0.2.0 candidate runtime을 모두 명시적으로 포함하며

@@ -29,6 +29,11 @@ import {
   PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
 } from "./public-gltf-resource-bundle-fixture.mjs";
 import {
+  acquirePublicGltfFixture,
+  loadPublicGltfFixtureManifest,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+} from "./public-gltf-fixture.mjs";
+import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
 
@@ -44,6 +49,8 @@ const VALIDATOR_INTEGRITY =
   "FE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==";
 const FINGERPRINT =
   "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8";
+const EMBEDDED_FINGERPRINT =
+  "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4";
 const RANGE_SHA256 =
   "ce04af8c146d03daf9e08e5b26f54e2f44fbe5a5203df50f0d642e459509a3cd";
 const IMMUTABLE_V02_SHA256 =
@@ -138,6 +145,39 @@ function exactSurface(value, hostKind) {
   );
 }
 
+function exactEmbeddedSurface(value, hostKind) {
+  return (
+    value?.hostKind === hostKind &&
+    physicalAppleMetal(value.gpu) &&
+    same(value.model, MODEL) &&
+    value.resources?.sourceBytes === 5_956 &&
+    value.resources?.documentBytes === 5_956 &&
+    value.resources?.externalResourceBytes === 0 &&
+    value.resources?.externalResources === 0 &&
+    value.resources?.embeddedImageBytes === 3_750 &&
+    value.resources?.embeddedImageResources === 1 &&
+    value.resources?.geometryBytes === 4_756 &&
+    value.resources?.textureSourceBytes === 3_750 &&
+    value.resources?.textureDecodedBytes === DECODED_TEXTURE_BYTES &&
+    value.resources?.textures === 1 &&
+    value.renderer?.actualGpu === true &&
+    value.renderer?.nonBackgroundPixels > 0 &&
+    value.renderer?.sourceReadBytes === 4_756 &&
+    value.renderer?.uploadedBytes === GPU_UPLOAD_BYTES &&
+    value.renderer?.textureSourceBytes === 3_750 &&
+    value.renderer?.textureDecodedBytes === DECODED_TEXTURE_BYTES &&
+    value.renderer?.textureGpuBytes === GPU_TEXTURE_BYTES &&
+    value.renderer?.textures === 1 &&
+    value.renderer?.gpuTextures === 1 &&
+    value.reference?.globalId === null &&
+    value.reference?.selectedNativeId ===
+      "node:1/mesh:0/primitive:0" &&
+    value.lifecycle?.opened === "ready" &&
+    value.lifecycle?.closed === "disposed" &&
+    viewerCoreDisposed(value.viewerCore)
+  );
+}
+
 function surface(value, fixture, { externalOrigins = null } = {}) {
   return {
     hostKind: value.hostKind,
@@ -158,7 +198,7 @@ function surface(value, fixture, { externalOrigins = null } = {}) {
 export function validateGltfTextureProductsQualification(value) {
   if (
     value?.schema !==
-      "bim-explorer-gltf-texture-products-qualification/1" ||
+      "bim-explorer-gltf-texture-products-qualification/2" ||
     value.environment?.platform !== "darwin-arm64" ||
     value.environment?.rendererMode !== "physical" ||
     value.environment?.softwareFallback !== false ||
@@ -168,6 +208,12 @@ export function validateGltfTextureProductsQualification(value) {
     value.fixture?.committed !== false ||
     value.fixture?.releaseBundled !== false ||
     value.fixture?.sampleRedistributed !== false ||
+    value.embeddedFixture?.id !==
+      "khronos-gltf-sample-assets-box-textured-embedded-png-glb" ||
+    value.embeddedFixture?.fingerprint !== EMBEDDED_FINGERPRINT ||
+    value.embeddedFixture?.committed !== false ||
+    value.embeddedFixture?.releaseBundled !== false ||
+    value.embeddedFixture?.sampleRedistributed !== false ||
     value.core?.validator?.version !== VALIDATOR_VERSION ||
     value.core?.validator?.integrity !== VALIDATOR_INTEGRITY ||
     value.core?.validator?.issues?.errors !== 0 ||
@@ -189,14 +235,61 @@ export function validateGltfTextureProductsQualification(value) {
     value.core?.cleanup?.rendererDisposed !== true ||
     value.core?.cleanup?.sessionDisposed !== true ||
     value.core?.cleanup?.sourceDisposed !== true ||
+    value.embeddedCore?.validator?.version !== VALIDATOR_VERSION ||
+    value.embeddedCore?.validator?.integrity !== VALIDATOR_INTEGRITY ||
+    value.embeddedCore?.validator?.issues?.errors !== 0 ||
+    value.embeddedCore?.validator?.issues?.warnings !== 0 ||
+    value.embeddedCore?.validator?.issues?.infos !== 0 ||
+    value.embeddedCore?.validator?.issues?.hints !== 0 ||
+    value.embeddedCore?.source?.fingerprint !== EMBEDDED_FINGERPRINT ||
+    value.embeddedCore?.source?.resourceBundle
+      ?.embeddedImageBytes !== 3_750 ||
+    value.embeddedCore?.source?.resourceBundle
+      ?.embeddedImageResources !== 1 ||
+    !same(
+      value.embeddedCore?.source?.appearance?.imageStorageProfiles,
+      ["glb-buffer-view"],
+    ) ||
+    value.embeddedCore?.geometry?.mediaType !==
+      "application/vnd.bim-explorer.geometry-range.v2" ||
+    value.embeddedCore?.geometry?.rangeBytes !== 4_756 ||
+    value.embeddedCore?.geometry?.rangeSha256 !== RANGE_SHA256 ||
+    value.embeddedCore?.geometry?.textureDecodedBytes !==
+      DECODED_TEXTURE_BYTES ||
+    value.embeddedCore?.geometry?.textureGpuBytes !==
+      GPU_TEXTURE_BYTES ||
+    value.embeddedCore?.renderer?.textureGpuBytes !==
+      GPU_TEXTURE_BYTES ||
+    value.embeddedCore?.renderer?.uploadedBytes !== GPU_UPLOAD_BYTES ||
+    value.embeddedCore?.cleanup?.activeBackendBytes !== 0 ||
+    value.embeddedCore?.cleanup?.rendererDisposed !== true ||
+    value.embeddedCore?.cleanup?.sessionDisposed !== true ||
+    value.embeddedCore?.cleanup?.sourceDisposed !== true ||
     !exactSurface(value.surfaces?.browser, "browser") ||
     !exactSurface(value.surfaces?.stagedVscode, "vscode-webview") ||
     !exactSurface(value.surfaces?.installedVsix, "vscode-webview") ||
+    !exactEmbeddedSurface(
+      value.embeddedSurfaces?.browser,
+      "browser",
+    ) ||
+    !exactEmbeddedSurface(
+      value.embeddedSurfaces?.stagedVscode,
+      "vscode-webview",
+    ) ||
+    !exactEmbeddedSurface(
+      value.embeddedSurfaces?.installedVsix,
+      "vscode-webview",
+    ) ||
     value.surfaces.browser.externalOrigins?.length !== 0 ||
     value.surfaces.stagedVscode.externalUpload !== false ||
     value.surfaces.stagedVscode.telemetry !== false ||
     value.surfaces.installedVsix.externalUpload !== false ||
     value.surfaces.installedVsix.telemetry !== false ||
+    value.embeddedSurfaces.browser.externalOrigins?.length !== 0 ||
+    value.embeddedSurfaces.stagedVscode.externalUpload !== false ||
+    value.embeddedSurfaces.stagedVscode.telemetry !== false ||
+    value.embeddedSurfaces.installedVsix.externalUpload !== false ||
+    value.embeddedSurfaces.installedVsix.telemetry !== false ||
     value.package?.id !== "menaje.bim-explorer" ||
     value.package?.version !== "0.1.0" ||
     !Number.isSafeInteger(value.package?.byteLength) ||
@@ -208,6 +301,8 @@ export function validateGltfTextureProductsQualification(value) {
     !everyTrue(value.assertions) ||
     Object.values(value.held ?? {}).some((item) => item !== false) ||
     value.decision?.boundedExternalPngBaseColorTexture !==
+      "passed-experimental" ||
+    value.decision?.boundedEmbeddedPngBaseColorTexture !==
       "passed-experimental" ||
     value.decision?.federatedSurfaceV02 !== "not-backported" ||
     value.decision?.productionClaims !== false
@@ -224,7 +319,7 @@ export function validateGltfTextureProductsQualification(value) {
   }
   return Object.freeze({
     status: "passed-darwin-arm64-apple-metal-texture",
-    surfaces: 3,
+    surfaces: 6,
     sourceBytes: 8_285,
     decodedTextureBytes: DECODED_TEXTURE_BYTES,
     gpuTextureBytes: GPU_TEXTURE_BYTES,
@@ -233,7 +328,11 @@ export function validateGltfTextureProductsQualification(value) {
 }
 
 async function qualifyCore(acquired, manifest) {
-  const resources = acquired.resources.map((resource) => ({
+  const singleFile = acquired.bytes instanceof Uint8Array;
+  const input = singleFile
+    ? acquired.bytes
+    : acquired.document.bytes;
+  const resources = (acquired.resources ?? []).map((resource) => ({
     uri: resource.uri,
     bytes: resource.bytes,
   }));
@@ -241,7 +340,7 @@ async function qualifyCore(acquired, manifest) {
     resources.map((resource) => [resource.uri, resource.bytes]),
   );
   const validation = await validator.validateBytes(
-    acquired.document.bytes,
+    input,
     {
       externalResourceFunction: async (uri) => {
         const bytes = resourceByUri.get(uri);
@@ -250,15 +349,15 @@ async function qualifyCore(acquired, manifest) {
         }
         return Uint8Array.from(bytes);
       },
-      format: "gltf",
+      format: singleFile ? "glb" : "gltf",
       maxIssues: 100,
-      uri: manifest.document.name,
+      uri: singleFile ? manifest.entry.name : manifest.document.name,
       writeTimestamp: false,
     },
   );
   const backend = createHeadless3dBackend();
   const source = await createGltfReferenceSource(
-    acquired.document.bytes,
+    input,
     {
       resources,
       sessionReadBudgetBytes: 16 * 1024 * 1024,
@@ -355,28 +454,46 @@ export async function qualifyGltfTextureProducts({
   }
   const manifest = await loadPublicGltfTextureBundleManifest();
   const acquired = await acquirePublicGltfTextureBundle();
+  const embeddedManifest = await loadPublicGltfFixtureManifest(
+    PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+  );
+  const embeddedAcquired = await acquirePublicGltfFixture({
+    manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+  });
   let core;
+  let embeddedCore;
   try {
     core = await qualifyCore(acquired, manifest);
+    embeddedCore = await qualifyCore(
+      embeddedAcquired,
+      embeddedManifest,
+    );
   } finally {
     acquired.document.bytes.fill(0);
     for (const resource of acquired.resources) {
       resource.bytes.fill(0);
     }
+    embeddedAcquired.bytes.fill(0);
   }
   const vscodeRuntime = await resolveVscodeQualificationRuntime();
   const browser = await qualifyBimProductShell({
     fixture: "gltf-texture-public",
     rendererMode: "physical",
   });
+  const embeddedBrowser = await qualifyBimProductShell({
+    fixture: "gltf-embedded-texture-public",
+    rendererMode: "physical",
+  });
   const staged = await qualifyVscodeCustomEditor({
     externalResourceManifestPath: PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
+    includeEmbeddedTextureFixture: true,
     includeExternalResourceFixture: true,
     rendererMode: "physical",
     vscodeRuntime,
   });
   const installed = await qualifyVscodeVsixInstall({
     externalResourceManifestPath: PUBLIC_GLTF_TEXTURE_BUNDLE_MANIFEST,
+    includeEmbeddedTextureFixture: true,
     includeExternalResourceFixture: true,
     includePublicFixture: false,
     rendererMode: "physical",
@@ -399,8 +516,20 @@ export async function qualifyGltfTextureProducts({
       releaseBundled: false,
     },
   };
+  const embeddedFixture = {
+    ...embeddedBrowser.fixture,
+    fingerprint: EMBEDDED_FINGERPRINT,
+    releaseBundled: false,
+    sampleRedistributed: false,
+    manifest: {
+      entrySha256: embeddedManifest.entry.sha256,
+      license: embeddedManifest.license.spdx,
+      artifactTracked: false,
+      releaseBundled: false,
+    },
+  };
   const evidence = {
-    schema: "bim-explorer-gltf-texture-products-qualification/1",
+    schema: "bim-explorer-gltf-texture-products-qualification/2",
     capturedAt: new Date().toISOString(),
     environment: {
       platform: `${process.platform}-${process.arch}`,
@@ -411,7 +540,9 @@ export async function qualifyGltfTextureProducts({
       softwareFallback: false,
     },
     fixture,
+    embeddedFixture,
     core,
+    embeddedCore,
     surfaces: {
       browser: surface(browser.observation, browser.fixture, {
         externalOrigins: browser.observation.network.externalOrigins,
@@ -423,6 +554,24 @@ export async function qualifyGltfTextureProducts({
       installedVsix: surface(
         installed.observation.externalReferenceRuntime,
         installed.observation.externalReferenceRuntime.fixture,
+      ),
+    },
+    embeddedSurfaces: {
+      browser: surface(
+        embeddedBrowser.observation,
+        embeddedBrowser.fixture,
+        {
+          externalOrigins:
+            embeddedBrowser.observation.network.externalOrigins,
+        },
+      ),
+      stagedVscode: surface(
+        staged.embeddedTextureReferenceObservation,
+        staged.embeddedTextureReferenceFixture,
+      ),
+      installedVsix: surface(
+        installed.observation.embeddedTextureReferenceRuntime,
+        installed.observation.embeddedTextureReferenceRuntime.fixture,
       ),
     },
     package: installed.package,
@@ -437,11 +586,18 @@ export async function qualifyGltfTextureProducts({
         core.validator.issues.warnings === 0 &&
         core.validator.issues.infos === 0 &&
         core.validator.issues.hints === 0,
+      embeddedOfficialValidatorZeroIssues:
+        embeddedCore.validator.issues.errors === 0 &&
+        embeddedCore.validator.issues.warnings === 0 &&
+        embeddedCore.validator.issues.infos === 0 &&
+        embeddedCore.validator.issues.hints === 0,
       exactPublicInputs:
         manifest.document.sha256 ===
           "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef" &&
         manifest.resources[1].sha256 ===
-          "9c22b05c5b136d03c5621a8765e50a8322be6c35b9de53e9fe22685840d7f469",
+          "9c22b05c5b136d03c5621a8765e50a8322be6c35b9de53e9fe22685840d7f469" &&
+        embeddedManifest.entry.sha256 ===
+          EMBEDDED_FINGERPRINT.slice("sha256:".length),
       exactCoreProjection:
         core.source.fingerprint === FINGERPRINT &&
         core.geometry.rangeSha256 === RANGE_SHA256 &&
@@ -451,27 +607,56 @@ export async function qualifyGltfTextureProducts({
         core.source.appearance.textures === 1 &&
         core.geometry.textureDecodedBytes === DECODED_TEXTURE_BYTES &&
         core.geometry.textureGpuBytes === GPU_TEXTURE_BYTES,
+      exactEmbeddedCoreProjection:
+        embeddedCore.source.fingerprint === EMBEDDED_FINGERPRINT &&
+        embeddedCore.geometry.rangeSha256 === RANGE_SHA256 &&
+        embeddedCore.renderer.uploadedBytes === GPU_UPLOAD_BYTES &&
+        embeddedCore.renderer.textureGpuBytes === GPU_TEXTURE_BYTES &&
+        embeddedCore.source.resourceBundle.embeddedImageBytes ===
+          3_750 &&
+        same(
+          embeddedCore.source.appearance.imageStorageProfiles,
+          ["glb-buffer-view"],
+        ),
       exactThreeSurfaceProjection: [
         browser.observation,
         staged.externalReferenceObservation,
         installed.observation.externalReferenceRuntime,
       ].every((value) => exactSurface(value, value.hostKind)),
+      exactThreeEmbeddedSurfaceProjection: [
+        embeddedBrowser.observation,
+        staged.embeddedTextureReferenceObservation,
+        installed.observation.embeddedTextureReferenceRuntime,
+      ].every((value) =>
+        exactEmbeddedSurface(value, value.hostKind)),
       physicalAppleMetal: [
         browser.observation.gpu,
         staged.externalReferenceObservation.gpu,
         installed.observation.externalReferenceRuntime.gpu,
+        embeddedBrowser.observation.gpu,
+        staged.embeddedTextureReferenceObservation.gpu,
+        installed.observation.embeddedTextureReferenceRuntime.gpu,
       ].every(physicalAppleMetal),
       localOnly:
         browser.observation.network.externalOrigins.length === 0 &&
         staged.externalReferenceObservation.externalUpload === false &&
         installed.observation.externalReferenceRuntime.externalUpload ===
-          false,
+          false &&
+        embeddedBrowser.observation.network.externalOrigins.length === 0 &&
+        staged.embeddedTextureReferenceObservation.externalUpload ===
+          false &&
+        installed.observation.embeddedTextureReferenceRuntime
+          .externalUpload === false,
       deterministicCleanup:
         core.cleanup.activeBackendBytes === 0 &&
+        embeddedCore.cleanup.activeBackendBytes === 0 &&
         [
           browser.observation,
           staged.externalReferenceObservation,
           installed.observation.externalReferenceRuntime,
+          embeddedBrowser.observation,
+          staged.embeddedTextureReferenceObservation,
+          installed.observation.embeddedTextureReferenceRuntime,
         ].every((value) => viewerCoreDisposed(value.viewerCore)),
       cleanVsix:
         installed.assertions.installedPackageOpensExternalReference ===
@@ -479,20 +664,36 @@ export async function qualifyGltfTextureProducts({
         installed.assertions.installedExternalReferenceBundleExact ===
           true &&
         installed.assertions.installedExternalReferenceUsesNoNetwork ===
+          true &&
+        installed.assertions
+          .installedPackageOpensEmbeddedTextureReference === true &&
+        installed.assertions.installedEmbeddedTextureBundleExact ===
+          true &&
+        installed.assertions.installedEmbeddedTextureUsesNoNetwork ===
           true,
       noBimAuthority:
         core.source.semanticAuthority === false &&
         core.source.writeAuthority === false &&
         core.source.roundTripAuthority === false &&
+        embeddedCore.source.semanticAuthority === false &&
+        embeddedCore.source.writeAuthority === false &&
+        embeddedCore.source.roundTripAuthority === false &&
         [
           browser.observation,
           staged.externalReferenceObservation,
           installed.observation.externalReferenceRuntime,
+          embeddedBrowser.observation,
+          staged.embeddedTextureReferenceObservation,
+          installed.observation.embeddedTextureReferenceRuntime,
         ].every((value) => value.reference.globalId === null),
       sampleCacheOnly:
         manifest.tracking.artifactsTracked === false &&
         manifest.tracking.releaseBundled === false &&
         manifest.tracking.networkAtRuntime === false,
+      embeddedSampleCacheOnly:
+        embeddedManifest.tracking.artifactTracked === false &&
+        embeddedManifest.tracking.releaseBundled === false &&
+        embeddedManifest.tracking.networkAtRuntime === false,
       immutableFederatedV02Unchanged:
         immutableBytes.byteLength === 461_431 &&
         sha256(immutableBytes) === IMMUTABLE_V02_SHA256,
@@ -500,7 +701,7 @@ export async function qualifyGltfTextureProducts({
     held: {
       jpegImages: false,
       alphaModes: false,
-      embeddedImageProjection: false,
+      gltfBufferViewImageProjection: false,
       otherMaterialTextures: false,
       textureTransform: false,
       federatedSurfaceV02: false,
@@ -509,6 +710,7 @@ export async function qualifyGltfTextureProducts({
     },
     decision: {
       boundedExternalPngBaseColorTexture: "passed-experimental",
+      boundedEmbeddedPngBaseColorTexture: "passed-experimental",
       federatedSurfaceV02: "not-backported",
       productionClaims: false,
     },
@@ -539,7 +741,9 @@ if (
     schema: evidence.schema,
     capturedAt: evidence.capturedAt,
     fixture: evidence.fixture.id,
+    embeddedFixture: evidence.embeddedFixture.id,
     surfaces: Object.keys(evidence.surfaces),
+    embeddedSurfaces: Object.keys(evidence.embeddedSurfaces),
     assertions: evidence.assertions,
     decision: evidence.decision,
   }, null, 2)}\n`);
