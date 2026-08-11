@@ -211,7 +211,10 @@ zero-runtime-dependency package candidate는 검증됐고, Spatial actual headle
 consumer는 이전 candidate와 exact 97,623-byte release-ready tgz에서 composition과
 anchor lifecycle을 통과했습니다. 동일 tgz는 immutable package-only v0.2
 prerelease로 공개됐고 public asset의 Spatial Phase B exact-pin도 통과했습니다.
-Spatial VSIX BIM runtime과 실제 UI/GPU, reconcile과 production은 별도 Gate입니다.
+Explorer의 generated 3-source Browser와 VS Code staged/clean-installed local VSIX는
+별도 post-release Gate에서 Apple M2 Metal physical GPU를 통과했습니다. Spatial
+VSIX BIM runtime과 Spatial 실제 UI/GPU, reconcile, Linux/Windows hardware와
+production은 별도 Gate입니다.
 
 ## Viewer Core와 3D presentation
 

@@ -677,6 +677,13 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
   assert.equal(ready.renderer.context, "webgl2");
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
   assert.equal(
+    ready.gpu.schema,
+    "bim-explorer-webgl2-gpu-identity/1",
+  );
+  assert.equal(ready.gpu.webgl2, true);
+  assert.equal(typeof ready.gpu.renderer, "string");
+  assert.equal(typeof ready.gpu.vendor, "string");
+  assert.equal(
     await vscode.commands.executeCommand(
       "bimExplorer.verifyFederatedAnchors",
     ),
@@ -786,6 +793,7 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
       telemetry: ready.telemetry,
       ready: {
         composition: ready.composition,
+        gpu: ready.gpu,
         semantics: ready.semantics,
         renderer: ready.renderer,
       },
@@ -846,6 +854,9 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE;
   const includeFederatedSurface =
     process.env.BIM_EXPLORER_VSCODE_FEDERATED_SURFACE === "true";
+  const rendererMode =
+    process.env.BIM_EXPLORER_VSCODE_RENDERER_MODE ?? "swiftshader";
+  assert.ok(["physical", "swiftshader"].includes(rendererMode));
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -1215,6 +1226,19 @@ async function run() {
     const federatedSurfaceQualification = includeFederatedSurface
       ? await qualifyFederatedSurface({ api, root, temporary })
       : null;
+    const physicalGpu =
+      federatedSurfaceQualification?.observation?.ready?.gpu ?? null;
+    const physicalGpuObserved = rendererMode !== "physical" || (
+      physicalGpu?.debugRendererInfo === true &&
+      /\bApple\b/u.test(physicalGpu.unmaskedVendor ?? "") &&
+      /ANGLE Metal Renderer: Apple/u.test(
+        physicalGpu.unmaskedRenderer ?? "",
+      ) &&
+      !/(?:swiftshader|subzero|llvmpipe|lavapipe|software)/iu.test(
+        JSON.stringify(physicalGpu),
+      )
+    );
+    assert.equal(physicalGpuObserved, true);
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -1223,6 +1247,7 @@ async function run() {
         vscode: vscode.version,
         platform: `${process.platform}-${process.arch}`,
         extensionMode: extension.extensionMode,
+        rendererMode,
         runtimeLayout,
       },
       fixture: {
@@ -1319,10 +1344,15 @@ async function run() {
         editorCloseObserved: disposed.status === "disposed",
         packagedRuntimeIndependent: packagedRuntime,
         spatialIndependent: true,
+        ...(rendererMode === "physical"
+          ? { physicalGpuObserved }
+          : {}),
       },
       decision: {
         vscodeCustomEditor: "passed",
-        actualPhysicalGpu: "not-claimed",
+        actualPhysicalGpu: rendererMode === "physical"
+          ? "passed-observed-apple-metal"
+          : "not-claimed",
         publicViewerCoreConformance: "held",
       },
     };

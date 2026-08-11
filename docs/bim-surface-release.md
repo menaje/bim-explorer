@@ -111,7 +111,8 @@ prerelease의 `publicationAuthorized`는 true입니다. 공개 범위는 tgz, SP
 checksum, source offer, manifest와 provenance이며 새 VSIX는 포함하지 않습니다.
 발급된 immutable public asset에 대한 Spatial Phase B exact-pin도 anonymous
 download와 offline clean install을 통해 통과했습니다. 이는 Spatial VSIX BIM
-runtime, 실제 BIM UI/GPU 또는 production support를 승인하지 않습니다.
+runtime, Spatial 제품의 실제 BIM UI/GPU 또는 production support를 승인하지
+않습니다.
 
 `bim-surface-v0.2.0`은 `prerelease` exact HEAD의 annotated tag로 공개됐습니다.
 macOS/Linux 각각 380개 conformance, zero runtime vulnerability, 9개 asset의
@@ -124,3 +125,15 @@ runtime, tag commit과 Explorer release evidence를 고정하고 GLB+IFC+Spatial
 overlay, 양방향 selection, anchor exact→stale/no-remap과 cleanup을 재현합니다.
 macOS arm64 local 362/362와 conformance 66/66은 통과했지만 hosted CI 두 attempt는
 runner 배정 전에 종료됐으므로 cross-platform consumer claim은 없습니다.
+
+## Post-release physical GPU qualification
+
+후속 `dev` 기준선은 package/runtime bytes를 바꾸지 않고 generated
+GLB–IFC–GLB Surface를 software fallback이 비활성화된 Apple M2 Metal에서
+검증했습니다. actual Chrome 151 Browser 2회와 VS Code 1.132 staged 확장 및
+clean-installed local VSIX가 동일한 3-source composition, 8,286 pixels,
+1,608-byte upload, surface hit/anchor 3개와 terminal cleanup을 재현했습니다.
+
+이 결과는 기존 `bim-surface-v0.2.0` asset이나 새 VSIX를 게시하지 않습니다.
+Linux/Windows physical GPU, 실제 고객 모델, OS-level peak GPU memory, Spatial
+VSIX BIM runtime과 production support는 계속 별도 Gate입니다.

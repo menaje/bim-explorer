@@ -34,6 +34,10 @@ import {
 import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+} from "./gpu-qualification-profile.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
@@ -44,6 +48,7 @@ function parseArguments(values) {
     includePointFixtures: false,
     includeE57SphericalFixture: false,
     includeE57MultipleScanFixture: false,
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
@@ -68,6 +73,10 @@ function parseArguments(values) {
       options.includeE57MultipleScanFixture = true;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     if (name === "--output") {
       const value = values[index + 1];
       if (
@@ -85,6 +94,7 @@ function parseArguments(values) {
         "[--federated-surface] [--product-scale] [--point-cloud] " +
         "[--e57-spherical] " +
         "[--e57-multiple-scan] " +
+        "[--physical-gpu] " +
         "[--output path]",
     );
   }
@@ -97,8 +107,10 @@ export async function qualifyVscodeCustomEditor({
   includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
+  rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
   const runtime = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
   const referenceFixture = await acquirePublicGltfFixture();
@@ -158,12 +170,12 @@ export async function qualifyVscodeCustomEditor({
         `--extensions-dir=${path.join(temporary, "extensions")}`,
         "--disable-extensions",
         "--disable-telemetry",
-        "--enable-unsafe-swiftshader",
-        "--use-angle=swiftshader",
+        ...gpuQualificationLaunchArguments(rendererMode),
       ],
       extensionTestsEnv: {
         BIM_EXPLORER_ROOT: ROOT,
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
+        BIM_EXPLORER_VSCODE_RENDERER_MODE: rendererMode,
         ...(includeFederatedSurfaceFixture
           ? {
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",

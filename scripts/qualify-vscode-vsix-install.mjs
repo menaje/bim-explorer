@@ -43,6 +43,10 @@ import {
 import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+} from "./gpu-qualification-profile.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EXTENSION_VERSION = JSON.parse(
@@ -65,6 +69,7 @@ function parseArguments(values) {
     includeE57SphericalFixture: false,
     includeE57MultipleScanFixture: false,
     includePublicFixture: true,
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
@@ -93,6 +98,10 @@ function parseArguments(values) {
       options.includePublicFixture = false;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     if (name === "--output") {
       const value = values[index + 1];
       if (
@@ -111,6 +120,7 @@ function parseArguments(values) {
           "[--e57-spherical] " +
           "[--e57-multiple-scan] " +
           "[--no-public] " +
+          "[--physical-gpu] " +
           "[--output path]",
     );
   }
@@ -156,8 +166,10 @@ export async function qualifyVscodeVsixInstall({
   includePointFixtures = false,
   includeProductScaleFixture = false,
   includePublicFixture = true,
+  rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
   const runtimeHost = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
   const publicManifest = includePublicFixture
@@ -377,12 +389,12 @@ export async function qualifyVscodeVsixInstall({
         `--user-data-dir=${userData}`,
         `--extensions-dir=${extensions}`,
         "--disable-telemetry",
-        "--enable-unsafe-swiftshader",
-        "--use-angle=swiftshader",
+        ...gpuQualificationLaunchArguments(rendererMode),
       ],
       extensionTestsEnv: {
         BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
         BIM_EXPLORER_ROOT: ROOT,
+        BIM_EXPLORER_VSCODE_RENDERER_MODE: rendererMode,
         ...(includeFederatedSurfaceFixture
           ? {
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",

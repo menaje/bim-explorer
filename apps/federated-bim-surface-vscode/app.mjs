@@ -75,6 +75,39 @@ function controls(state) {
   elements.dispose.disabled = active === null || busy;
 }
 
+function webGl2GpuIdentity(canvas) {
+  const gl = canvas.getContext("webgl2");
+  if (gl === null) {
+    throw new Error("federated surface WebGL2 identity is unavailable");
+  }
+  const debug = gl.getExtension("WEBGL_debug_renderer_info");
+  const parameter = (name) => {
+    const value = gl.getParameter(name);
+    if (typeof value !== "string" || value.length === 0) {
+      throw new Error("federated surface GPU identity is invalid");
+    }
+    return value;
+  };
+  return Object.freeze({
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: true,
+    debugRendererInfo: debug !== null,
+    vendor: parameter(gl.VENDOR),
+    renderer: parameter(gl.RENDERER),
+    unmaskedVendor: debug === null
+      ? null
+      : parameter(debug.UNMASKED_VENDOR_WEBGL),
+    unmaskedRenderer: debug === null
+      ? null
+      : parameter(debug.UNMASKED_RENDERER_WEBGL),
+    version: parameter(gl.VERSION),
+    shadingLanguageVersion: parameter(
+      gl.SHADING_LANGUAGE_VERSION,
+    ),
+    contextAttributes: gl.getContextAttributes(),
+  });
+}
+
 function publish(status, additions = {}) {
   const report = Object.freeze({
     ...additions,
@@ -615,6 +648,7 @@ async function openFederation(message) {
       contract: opened.contract,
       composition,
       semantics: active.semantics,
+      gpu: webGl2GpuIdentity(elements.canvas),
       renderer: {
         backend: opened.mount.backend.backendId,
         actualGpu: opened.mount.backend.actualGpu,

@@ -47,9 +47,12 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > IFC4 projected CRS/MapConversion과 fingerprinted source
 > precision·lossy Float32 display tessellation 경계도 통과했습니다. complex
 > property, 실제 측량 좌표/datum 변환과 source-precision geometry export는
-> 제한합니다. physical GPU qualification, engine-cooperative cancellation,
-> forced-exit 내부 cleanup과 Browser/native resource exhaustion은 아직
-> 확정되지 않았습니다. 첫 engine은 exact `web-ifc@0.0.77`, 첫 profile은 IFC4
+> 제한합니다. federated Surface v0.2의 generated GLB–IFC–GLB 제품 경로는
+> Apple M2 Metal physical GPU를 actual Browser와 VS Code에서 통과했지만,
+> Linux/Windows physical GPU와 다른 포맷의 hardware coverage는 아직
+> 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
+> cleanup과 Browser/native resource exhaustion도 보류합니다. 첫 engine은
+> exact `web-ifc@0.0.77`, 첫 profile은 IFC4
 > `ReferenceView_V1.2`의 local read-only exploration으로 experimental
 > admission했습니다. IfcOpenShell은 bundle하지 않는 qualification
 > reference oracle로 유지합니다. 공개 `@menaje/viewer-core`와 render
@@ -160,7 +163,12 @@ SHA-256이 `3bdb747d…c63cb`가 됐고, Spatial commit `ef0c1ea…4e5`가 그 e
 immutable GitHub prerelease와 9개 attested asset을 공개했습니다. 이 public asset의
 anonymous download와 offline clean install을 Spatial commit `55d96e8…975e`가
 다시 exact-pin해 Phase B도 통과했습니다. authoring authority, Spatial VSIX BIM
-runtime, 실제 BIM UI/GPU나 새 VSIX/Marketplace publication은 승인하지 않습니다.
+runtime, Spatial 제품의 실제 BIM UI/GPU나 새 VSIX/Marketplace publication은
+승인하지 않습니다. 별도 post-release 개발 검증에서는 software fallback을 끈
+Chrome 151 Browser 2회와 VS Code 1.132 staged/clean-installed local VSIX가 모두
+Apple M2 Metal에서 같은 3-source composition, 8,286 pixels, surface hit 3개와
+cleanup을 재현했습니다. 이는 기존 package/VSIX를 다시 게시하거나 Linux/Windows,
+실제 고객 모델 또는 production support를 승인하지 않습니다.
 
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)

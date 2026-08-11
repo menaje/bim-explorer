@@ -18,6 +18,9 @@
 - admit Spatial's anonymous public-artifact exact-pin and actual GLB + IFC +
   Spatial overlay consumer evidence while keeping VSIX BIM runtime, BIM UI/GPU,
   cross-platform consumer coverage and production support held;
+- qualify the generated federated GLB–IFC–GLB Surface on an Apple M2 Metal GPU
+  through two actual Chrome 151 runs plus staged and locally clean-installed
+  VS Code 1.132 paths, with software fallback disabled and no new VSIX publish;
 - allow cache-only public test fixtures without requiring sample redistribution,
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing

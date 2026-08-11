@@ -70,10 +70,17 @@ asset, macOS/Linux byte identity와 attestations를 확인했습니다. public a
 Spatial Phase B도 anonymous download, offline clean install과 actual 3-source
 consumer composition으로 통과했습니다. Spatial hosted CI는 runner 배정 전에
 종료돼 cross-platform consumer evidence를 추가하지 않으며 production support는
-held입니다. exact 결과는
+held입니다. 별도 제품 physical GPU Gate는 software rasterizer를 끈 actual Chrome
+151 Browser 2회와 VS Code 1.132 staged/clean-installed local VSIX에서 generated
+GLB–IFC–GLB를 Apple M2 Metal로 동일하게 합성해 8,286 non-background pixels,
+1,608-byte upload, source-local surface hit/anchor 3개와 terminal cleanup을
+재현했습니다. 이는 macOS arm64 단일 hardware profile이며 Linux/Windows,
+실제 고객 모델, OS-level peak GPU memory, Spatial VSIX 통합과 production을
+승인하지 않습니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
 [`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
 [`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json),
+[`physical GPU evidence`](evidence/federated-bim-surface-physical-gpu-darwin-arm64-2026-08-11.json),
 [`release-ready package evidence`](evidence/federated-bim-surface-package-release-ready-2026-08-11.json),
 [`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json),
 [`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json),

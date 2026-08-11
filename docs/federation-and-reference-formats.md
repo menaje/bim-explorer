@@ -107,7 +107,12 @@ Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate에 더해 act
 Spatial headless consumer가 이전 candidate와 exact 97,623-byte release-ready
 tgz를 검증했습니다. 이는 package-only prerelease를 승인하지만 immutable public
 artifact의 Spatial exact-pin도 별도로 통과했습니다. 다만 Spatial VSIX BIM
-runtime, 실제 BIM UI/GPU 또는 production support를 승인한다는 뜻은 아닙니다.
+runtime, Spatial 제품의 실제 BIM UI/GPU 또는 production support를 승인한다는
+뜻은 아닙니다. Explorer 제품 경로 자체는 별도 post-release Gate에서 software
+fallback을 끈 Apple M2 Metal actual Chrome 151 Browser 2회와 VS Code 1.132
+staged/clean-installed local VSIX로 같은 generated GLB–IFC–GLB composition,
+surface hit/anchor와 cleanup을 재현했습니다. 이 결과는 macOS arm64 단일
+hardware와 generated fixture에 한정합니다.
 
 ## Coordinate와 precision 경계
 
@@ -211,9 +216,10 @@ Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
 재현했습니다. 별도 product-scale source/renderer probe와 Browser, staged
 VS Code, clean-installed VSIX 제품 file-open도 통과했습니다. multi-source
 composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모 GLB
-조합으로 통과했습니다. physical GPU와 실제 사용자/Spatial/survey evidence는
-계속 held입니다. 이 결과는 v0.1.0 asset이나 broader glTF profile을 소급
-승인하지 않습니다.
+조합으로 통과했습니다. federated Surface v0.2의 generated 3-source 경로만
+Apple M2 Metal physical GPU를 통과했으며, 다른 포맷·Linux/Windows hardware와
+실제 사용자/Spatial/survey evidence는 계속 held입니다. 이 결과는 v0.1.0
+asset이나 broader glTF profile을 소급 승인하지 않습니다.
 
 LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 개발 evidence로 통과했습니다. 이 변경은 immutable Community v0.1.0 asset에

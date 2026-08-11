@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
-  validateFederatedBimSurfaceCompatibility,
+  validateFederatedBimSurfaceCompatibility as validateCompatibilityEvidence,
 } from "../../scripts/check-federated-bim-surface-compatibility.mjs";
 
 const [
@@ -11,6 +11,7 @@ const [
   evidence,
   browserEvidence,
   vscodeEvidence,
+  physicalGpuEvidence,
   packageEvidence,
   releaseEvidence,
   spatialConsumerEvidence,
@@ -34,6 +35,12 @@ const [
   readFile(
     "compatibility/evidence/" +
       "federated-bim-surface-vscode-2026-08-09.json",
+    "utf8",
+  ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "federated-bim-surface-physical-gpu-darwin-arm64-" +
+      "2026-08-11.json",
     "utf8",
   ).then(JSON.parse),
   readFile(
@@ -65,6 +72,32 @@ const [
   ).then(JSON.parse),
 ]);
 
+function validateFederatedBimSurfaceCompatibility(
+  manifestValue,
+  evidenceValue,
+  browserEvidenceValue,
+  vscodeEvidenceValue,
+  packageEvidenceValue,
+  releaseEvidenceValue,
+  spatialConsumerEvidenceValue,
+  spatialReleaseReadyConsumerEvidenceValue,
+  spatialPublicArtifactConsumerEvidenceValue,
+  physicalGpuEvidenceValue = physicalGpuEvidence,
+) {
+  return validateCompatibilityEvidence(
+    manifestValue,
+    evidenceValue,
+    browserEvidenceValue,
+    vscodeEvidenceValue,
+    physicalGpuEvidenceValue,
+    packageEvidenceValue,
+    releaseEvidenceValue,
+    spatialConsumerEvidenceValue,
+    spatialReleaseReadyConsumerEvidenceValue,
+    spatialPublicArtifactConsumerEvidenceValue,
+  );
+}
+
 test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
   assert.deepEqual(
     validateFederatedBimSurfaceCompatibility(
@@ -80,7 +113,7 @@ test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
     ),
     {
       status: "experimental",
-      passedGates: 21,
+      passedGates: 22,
       heldGates: 1,
       sourceCount: 3,
       anchors: 3,
@@ -94,6 +127,7 @@ test("federated BIM Surface admits actual Browser and VS Code anchors", () => {
       publicRelease: "passed-immutable-public-package-prerelease",
       publicArtifactSpatialAdmission:
         "passed-public-artifact-spatial-admission",
+      physicalGpu: "passed-darwin-arm64-apple-metal-products",
     },
   );
 });
@@ -440,5 +474,67 @@ test("Spatial public-artifact admission records unstarted hosted CI", () => {
       invalid,
     ),
     /Spatial public-artifact consumer admission evidence is invalid/u,
+  );
+});
+
+test("physical GPU qualification rejects a software renderer", () => {
+  const invalid = structuredClone(physicalGpuEvidence);
+  invalid.browser.runs[0].gpu.unmaskedRenderer =
+    "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)))";
+  invalid.browser.runs[1] = structuredClone(invalid.browser.runs[0]);
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      releaseEvidence,
+      spatialConsumerEvidence,
+      spatialReleaseReadyConsumerEvidence,
+      spatialPublicArtifactConsumerEvidence,
+      invalid,
+    ),
+    /physical GPU (?:evidence|identity) is invalid/u,
+  );
+});
+
+test("physical GPU qualification requires software fallback disabled", () => {
+  const invalid = structuredClone(physicalGpuEvidence);
+  invalid.launchPolicy.softwareRasterizerDisabled = false;
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      releaseEvidence,
+      spatialConsumerEvidence,
+      spatialReleaseReadyConsumerEvidence,
+      spatialPublicArtifactConsumerEvidence,
+      invalid,
+    ),
+    /physical GPU evidence is invalid/u,
+  );
+});
+
+test("physical GPU qualification cannot claim cross-platform coverage", () => {
+  const invalid = structuredClone(physicalGpuEvidence);
+  invalid.held.crossPlatformPhysicalGpu = true;
+  assert.throws(
+    () => validateFederatedBimSurfaceCompatibility(
+      manifest,
+      evidence,
+      browserEvidence,
+      vscodeEvidence,
+      packageEvidence,
+      releaseEvidence,
+      spatialConsumerEvidence,
+      spatialReleaseReadyConsumerEvidence,
+      spatialPublicArtifactConsumerEvidence,
+      invalid,
+    ),
+    /physical GPU evidence is invalid/u,
   );
 });

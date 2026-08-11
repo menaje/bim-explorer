@@ -214,6 +214,53 @@ function booleanAuthority(value) {
   );
 }
 
+function sanitizeGpuIdentity(value) {
+  if (
+    value?.schema !== "bim-explorer-webgl2-gpu-identity/1" ||
+    value.webgl2 !== true
+  ) {
+    return null;
+  }
+  const attributes = value.contextAttributes;
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: true,
+    debugRendererInfo: value.debugRendererInfo === true,
+    vendor: stringOrNull(value.vendor),
+    renderer: stringOrNull(value.renderer),
+    unmaskedVendor: value.unmaskedVendor === null
+      ? null
+      : stringOrNull(value.unmaskedVendor),
+    unmaskedRenderer: value.unmaskedRenderer === null
+      ? null
+      : stringOrNull(value.unmaskedRenderer),
+    version: stringOrNull(value.version),
+    shadingLanguageVersion: stringOrNull(
+      value.shadingLanguageVersion,
+    ),
+    contextAttributes: attributes === null ||
+      typeof attributes !== "object"
+      ? null
+      : {
+          alpha: attributes.alpha === true,
+          antialias: attributes.antialias === true,
+          depth: attributes.depth === true,
+          desynchronized: attributes.desynchronized === true,
+          failIfMajorPerformanceCaveat:
+            attributes.failIfMajorPerformanceCaveat === true,
+          powerPreference: stringOrNull(
+            attributes.powerPreference,
+          ),
+          premultipliedAlpha:
+            attributes.premultipliedAlpha === true,
+          preserveDrawingBuffer:
+            attributes.preserveDrawingBuffer === true,
+          stencil: attributes.stencil === true,
+          xrCompatible: attributes.xrCompatible === true,
+        },
+  };
+}
+
 function sanitizePick(value) {
   if (value === null || typeof value !== "object") {
     return null;
@@ -424,6 +471,7 @@ function sanitizeFederationReport(value) {
     composition,
     semantics,
     selection,
+    gpu: sanitizeGpuIdentity(value.gpu),
     renderer,
     picks: Array.isArray(value.picks)
       ? value.picks.slice(0, MAXIMUM_SOURCES)

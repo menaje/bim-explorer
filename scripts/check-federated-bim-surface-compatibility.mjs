@@ -12,6 +12,10 @@ import {
   validateFederatedBimSurfacePackageQualification,
 } from "./qualify-federated-bim-surface-package.mjs";
 import {
+  FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH,
+  validateFederatedBimSurfacePhysicalGpuQualification,
+} from "./qualify-federated-bim-surface-physical-gpu.mjs";
+import {
   SPATIAL_CONSUMER_EVIDENCE_PATH,
   SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH,
   SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH,
@@ -61,6 +65,7 @@ const TRUE_GATES = Object.freeze([
   "actualBrowserSurfaceNormal",
   "actualBrowserAnchor",
   "actualVscodeSurface",
+  "physicalGpuProductQualification",
   "reproduciblePackageCandidate",
   "actualSpatialConsumer",
   "releaseReadyPackageConsumerRevalidation",
@@ -685,6 +690,7 @@ export function validateFederatedBimSurfaceCompatibility(
   evidence,
   browserEvidence,
   vscodeEvidence,
+  physicalGpuEvidence,
   packageEvidence,
   releaseEvidence,
   spatialConsumerEvidence,
@@ -726,6 +732,8 @@ export function validateFederatedBimSurfaceCompatibility(
       BROWSER_EVIDENCE_PATH ||
     manifest.evidence.actualVscode !==
       VSCODE_EVIDENCE_PATH ||
+    manifest.evidence.physicalGpu !==
+      FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH ||
     manifest.evidence.packageCandidate !==
       PACKAGE_EVIDENCE_PATH ||
     manifest.evidence.actualSpatialConsumer !==
@@ -736,7 +744,7 @@ export function validateFederatedBimSurfaceCompatibility(
       FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH ||
     manifest.evidence.publicArtifactSpatialConsumer !==
       SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 8 ||
+    Object.keys(manifest.evidence).length !== 9 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -760,6 +768,7 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.claimHeadlessFoundation !== true ||
     policy.claimBrowserAnchor !== true ||
     policy.claimVscodeSurface !== true ||
+    policy.claimPhysicalGpuProductQualification !== true ||
     policy.claimReproduciblePackageCandidate !== true ||
     policy.claimActualSpatialConsumer !== true ||
     policy.claimReleaseReadyPackageConsumerRevalidation !== true ||
@@ -776,6 +785,10 @@ export function validateFederatedBimSurfaceCompatibility(
     validateFederatedBimSurfaceBrowserEvidence(browserEvidence);
   const vscode =
     validateFederatedBimSurfaceVscodeQualification(vscodeEvidence);
+  const physicalGpu =
+    validateFederatedBimSurfacePhysicalGpuQualification(
+      physicalGpuEvidence,
+    );
   const packageCandidate =
     validateFederatedBimSurfacePackageQualification(packageEvidence);
   const publicRelease =
@@ -815,6 +828,12 @@ export function validateFederatedBimSurfaceCompatibility(
     publicRelease.version !== packageCandidate.version ||
     publicRelease.packageBytes !== packageCandidate.byteLength ||
     publicRelease.packageSha256 !== packageCandidate.sha256 ||
+    physicalGpuEvidence.contract.runtimeSha256 !==
+      packageCandidate.runtimeSha256 ||
+    physicalGpuEvidence.contract.publicPackageBytes !==
+      publicRelease.packageBytes ||
+    physicalGpuEvidence.contract.publicPackageSha256 !==
+      publicRelease.packageSha256 ||
     spatialPublicArtifactConsumer.releaseCommit !==
       publicRelease.commit ||
     spatialPublicArtifactConsumer.packageBytes !==
@@ -844,6 +863,7 @@ export function validateFederatedBimSurfaceCompatibility(
     publicRelease: publicRelease.status,
     publicArtifactSpatialAdmission:
       spatialPublicArtifactConsumer.status,
+    physicalGpu: physicalGpu.status,
   });
 }
 
@@ -853,6 +873,7 @@ async function main() {
     evidence,
     browserEvidence,
     vscodeEvidence,
+    physicalGpuEvidence,
     packageEvidence,
     releaseEvidence,
     spatialConsumerEvidence,
@@ -866,6 +887,8 @@ async function main() {
     readFile(HEADLESS_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(BROWSER_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(VSCODE_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
     readFile(PACKAGE_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH, "utf8")
       .then(JSON.parse),
@@ -881,6 +904,7 @@ async function main() {
     evidence,
     browserEvidence,
     vscodeEvidence,
+    physicalGpuEvidence,
     packageEvidence,
     releaseEvidence,
     spatialConsumerEvidence,

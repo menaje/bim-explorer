@@ -28,5 +28,12 @@ release identity and repeated the actual three-source consumer lifecycle.
 This package grants no Workspace, Canonical Entity, mutation, constraint,
 acceptance, publish or export authority. It does not include or publish a BIM
 Explorer VSIX, Visual Studio Marketplace entry or Open VSX entry. Production
-support, physical GPU support, qualified CRS/datum transformation and native
-IFC/RVT write remain unavailable.
+support, cross-platform physical GPU support, qualified CRS/datum transformation
+and native IFC/RVT write remain unavailable.
+
+After publication, the unchanged package/runtime was exercised through the
+generated GLB–IFC–GLB product surface on an Apple M2 Metal GPU. Chrome 151 ran
+twice with software rasterization disabled, and VS Code 1.132 reproduced the
+same result from staged sources and a locally clean-installed VSIX. This is a
+macOS arm64 qualification record, not a new package or VSIX publication, and it
+does not extend support to customer models, Linux, Windows or production use.

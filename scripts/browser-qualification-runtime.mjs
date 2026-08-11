@@ -6,6 +6,10 @@ import path from "node:path";
 import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+} from "./gpu-qualification-profile.mjs";
 
 function timeoutError(label) {
   return new DOMException(
@@ -46,7 +50,7 @@ async function closeServer(server) {
   });
 }
 
-async function launchChrome(userDataDirectory) {
+async function launchChrome(userDataDirectory, gpuMode) {
   const chromeExecutable =
     await resolveChromeQualificationExecutable();
   const child = spawn(
@@ -63,13 +67,10 @@ async function launchChrome(userDataDirectory) {
       "--disable-domain-reliability",
       "--disable-features=MediaRouter,OptimizationHints",
       "--disable-sync",
-      "--enable-unsafe-swiftshader",
-      "--enable-webgl",
-      "--ignore-gpu-blocklist",
       "--metrics-recording-only",
       "--no-first-run",
       "--no-pings",
-      "--use-angle=swiftshader",
+      ...gpuQualificationLaunchArguments(gpuMode),
       "about:blank",
     ],
     {
@@ -234,6 +235,7 @@ export async function runBrowserQualification({
   reportExpression,
   timeoutMs,
   userDataPrefix = "bim-explorer-browser-",
+  gpuMode = "swiftshader",
 } = {}) {
   if (
     typeof server?.listen !== "function" ||
@@ -249,6 +251,7 @@ export async function runBrowserQualification({
       "Browser qualification runtime options are invalid",
     );
   }
+  validateGpuQualificationMode(gpuMode);
   const origin = await listen(server);
   let userDataDirectory = null;
   let chrome = null;
@@ -257,7 +260,7 @@ export async function runBrowserQualification({
     userDataDirectory = await mkdtemp(
       path.join(tmpdir(), userDataPrefix),
     );
-    chrome = await launchChrome(userDataDirectory);
+    chrome = await launchChrome(userDataDirectory, gpuMode);
     const endpoint = new URL(chrome.browserWebSocket);
     const newTarget = new URL(
       `http://${endpoint.host}/json/new`,
@@ -300,6 +303,7 @@ export async function runBrowserQualification({
       report,
       browserVersion: chrome.browserVersion,
       platform: `${process.platform}-${process.arch}`,
+      gpuMode,
       externalOrigins: Object.freeze(externalOrigins),
       requestedUrls: Object.freeze(requestedUrls),
       runtimeErrors: Object.freeze(runtimeErrors),

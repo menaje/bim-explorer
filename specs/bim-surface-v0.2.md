@@ -145,3 +145,11 @@ README·source offer가 포함된 97,623-byte tgz가 됐다. Spatial은 SHA-256
 asset을 Explorer checkout 없이 anonymous download해 offline clean install하고
 Phase B exact-pin도 통과했다. npm registry와 새 VSIX Marketplace/Open VSX
 publication, stable production support는 승인하지 않는다.
+
+post-release 개발 기준선은 software rasterizer를 끄고 ANGLE Metal을 강제한
+actual Chrome 151 Browser 2회와 VS Code 1.132 staged/clean-installed local VSIX에서
+같은 generated GLB–IFC–GLB composition을 Apple M2 physical GPU로 재현했다.
+세 경로는 8,286 non-background pixels, 1,608-byte upload, surface hit/anchor
+3개와 exact cleanup을 공유한다. 이 Gate는 `darwin-arm64` 단일 hardware와
+generated fixture에 한정하며 Linux/Windows, 실제 고객 모델, OS-level peak GPU
+memory, Spatial VSIX BIM runtime이나 production support를 승인하지 않는다.
