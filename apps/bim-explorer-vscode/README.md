@@ -130,3 +130,9 @@ staged VS Code 1.131.0과 빈 profile에 clean-installed VSIX에서 동일하게
 `npm run qualify:point-cloud:lod`는 five-scan E57의 51개 파생 chunk와
 31,971→242,821→1,213,990-point 전환, root identity 보존 및 Worker/GPU cleanup을
 staged와 clean-installed runtime에서 검증합니다.
+
+`npm run qualify:product:point-cloud:physical-gpu`는 LAS·LAZ·E57·다중 스캔
+E57을 software fallback이 비활성화된 Apple M2 Metal에서 actual Chrome,
+staged VS Code와 clean-installed local VSIX로 검증합니다. 이 Gate는
+point format admission, CRS·surveyed datum, Linux/Windows hardware 또는 VSIX
+publication을 승인하지 않습니다.

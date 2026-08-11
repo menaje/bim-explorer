@@ -63,6 +63,21 @@ function viewerCoreQualified(ready, disposed) {
   );
 }
 
+function physicalAppleMetalGpu(value) {
+  return (
+    value?.schema === "bim-explorer-webgl2-gpu-identity/1" &&
+    value.webgl2 === true &&
+    value.debugRendererInfo === true &&
+    /\bApple\b/u.test(value.unmaskedVendor ?? "") &&
+    /ANGLE Metal Renderer: Apple/u.test(
+      value.unmaskedRenderer ?? "",
+    ) &&
+    !/(?:swiftshader|subzero|llvmpipe|lavapipe|software)/iu.test(
+      JSON.stringify(value),
+    )
+  );
+}
+
 async function qualifyReference({
   api,
   manifestPath = undefined,
@@ -208,6 +223,7 @@ async function qualifyReference({
     },
     observation: {
       hostKind: ready.hostKind,
+      gpu: ready.gpu,
       model: ready.model,
       performance: ready.performance,
       resources: ready.resources,
@@ -421,6 +437,11 @@ async function qualifyPointSource({
   }
   assert.equal(ready.renderer.actualGpu, true);
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(
+    ready.gpu?.schema,
+    "bim-explorer-webgl2-gpu-identity/1",
+  );
+  assert.equal(ready.gpu.webgl2, true);
   assert.equal(ready.renderer.sourceReadBytes, pointRangeBytes);
   assert.equal(
     ready.renderer.uploadedBytes,
@@ -553,6 +574,7 @@ async function qualifyPointSource({
     },
     observation: {
       hostKind: ready.hostKind,
+      gpu: ready.gpu,
       source: ready.source,
       model: ready.model,
       performance: ready.performance,
@@ -1286,17 +1308,19 @@ async function run() {
     const federatedSurfaceQualification = includeFederatedSurface
       ? await qualifyFederatedSurface({ api, root, temporary })
       : null;
-    const physicalGpu =
-      federatedSurfaceQualification?.observation?.ready?.gpu ?? null;
+    const physicalGpuCandidates = [
+      ready.gpu,
+      publicQualification?.observation?.gpu,
+      referenceQualification?.observation?.gpu,
+      productScaleReferenceQualification?.observation?.gpu,
+      ...Object.values(pointQualifications).map(
+        (value) => value.observation.gpu,
+      ),
+      federatedSurfaceQualification?.observation?.ready?.gpu,
+    ].filter((value) => value !== null && value !== undefined);
     const physicalGpuObserved = rendererMode !== "physical" || (
-      physicalGpu?.debugRendererInfo === true &&
-      /\bApple\b/u.test(physicalGpu.unmaskedVendor ?? "") &&
-      /ANGLE Metal Renderer: Apple/u.test(
-        physicalGpu.unmaskedRenderer ?? "",
-      ) &&
-      !/(?:swiftshader|subzero|llvmpipe|lavapipe|software)/iu.test(
-        JSON.stringify(physicalGpu),
-      )
+      physicalGpuCandidates.length > 0 &&
+      physicalGpuCandidates.every(physicalAppleMetalGpu)
     );
     assert.equal(physicalGpuObserved, true);
     const evidence = {
@@ -1309,6 +1333,9 @@ async function run() {
         extensionMode: extension.extensionMode,
         rendererMode,
         runtimeLayout,
+        ...(rendererMode === "physical"
+          ? { gpu: ready.gpu }
+          : {}),
       },
       fixture: {
         id: "synthetic-semantic-ifc4",
@@ -1319,6 +1346,7 @@ async function run() {
       },
       observation: {
         hostKind: ready.hostKind,
+        gpu: ready.gpu,
         model: ready.model,
         performance: ready.performance,
         resources: ready.resources,

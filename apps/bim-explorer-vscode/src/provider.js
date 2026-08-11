@@ -274,6 +274,53 @@ function sanitizedViewerCore(value) {
   };
 }
 
+function sanitizeGpuIdentity(value) {
+  if (
+    value?.schema !== "bim-explorer-webgl2-gpu-identity/1" ||
+    value.webgl2 !== true
+  ) {
+    return null;
+  }
+  const attributes = value.contextAttributes;
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: true,
+    debugRendererInfo: value.debugRendererInfo === true,
+    vendor: stringOrNull(value.vendor),
+    renderer: stringOrNull(value.renderer),
+    unmaskedVendor: value.unmaskedVendor === null
+      ? null
+      : stringOrNull(value.unmaskedVendor),
+    unmaskedRenderer: value.unmaskedRenderer === null
+      ? null
+      : stringOrNull(value.unmaskedRenderer),
+    version: stringOrNull(value.version),
+    shadingLanguageVersion: stringOrNull(
+      value.shadingLanguageVersion,
+    ),
+    contextAttributes: attributes === null ||
+      typeof attributes !== "object"
+      ? null
+      : {
+          alpha: attributes.alpha === true,
+          antialias: attributes.antialias === true,
+          depth: attributes.depth === true,
+          desynchronized: attributes.desynchronized === true,
+          failIfMajorPerformanceCaveat:
+            attributes.failIfMajorPerformanceCaveat === true,
+          powerPreference: stringOrNull(
+            attributes.powerPreference,
+          ),
+          premultipliedAlpha:
+            attributes.premultipliedAlpha === true,
+          preserveDrawingBuffer:
+            attributes.preserveDrawingBuffer === true,
+          stencil: attributes.stencil === true,
+          xrCompatible: attributes.xrCompatible === true,
+        },
+  };
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
@@ -432,6 +479,7 @@ function sanitizeReport(value) {
     hostKind: "vscode-webview",
     externalUpload: value.externalUpload === true,
     telemetry: value.telemetry === true,
+    gpu: sanitizeGpuIdentity(value.gpu),
     source,
     model: numericRecord(
       value.model,

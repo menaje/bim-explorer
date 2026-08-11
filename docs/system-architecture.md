@@ -388,7 +388,14 @@ pick과 선택 좌표 readback을 통과했습니다. 대형 E57은 같은 root 
 각 단계의 prior GPU range/map과 full-detail 이후 Worker hierarchy를 exact
 회수합니다. 이 파생 display 구조는 source-native hierarchy가 아닙니다. CRS,
 source-declared semantics와 format admission은 없으므로 federation source
-admission에는 영향을 주지 않습니다. E57도
+admission에는 영향을 주지 않습니다.
+별도 fail-closed physical GPU Gate는 LAS·LAZ·E57·다중 스캔 E57의 Browser,
+staged VS Code와 clean-installed local VSIX 12개 표면을 Apple M2 Metal에서
+통과했습니다. point canvas가 GPU identity를 직접 보고하며
+`failIfMajorPerformanceCaveat=true`와 `high-performance` preference를
+사용합니다. 이 단일 macOS hardware 결과는 CRS, format admission,
+source-native semantics, Linux/Windows 또는 production authority가 아닙니다.
+E57도
 single-scan Cartesian XYZ/optional RGB default-BitPack profile을 같은 bounded
 point Worker와 renderer로 열며, Browser·staged VS Code·clean-installed VSIX에서
 7,680-point projection과 cleanup을 통과했습니다. 같은 Worker decoder는 별도

@@ -38,6 +38,9 @@ import {
 import {
   validateRepresentativeModelsPhysicalGpuQualification,
 } from "./qualify-representative-models-physical-gpu.mjs";
+import {
+  validateRepresentativePointCloudsPhysicalGpuQualification,
+} from "./qualify-representative-point-clouds-physical-gpu.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -87,6 +90,7 @@ const PASSED_GATES = [
   "cleanVsixDerivedPointHierarchyLod",
   "publicViewerCoreConformance",
   "physicalGpuQualification",
+  "pointCloudPhysicalGpuQualification",
 ];
 const HELD_GATES = [
   "marketplaceRelease",
@@ -457,6 +461,7 @@ export function validateBimProductShellCompatibility(
   pointCloudVscodePicking,
   pointCloudLodProducts,
   representativePhysicalGpu,
+  representativePointCloudsPhysicalGpu,
   viewerCoreProductEntrypoints,
 ) {
   plainRecord(manifest, "product shell manifest");
@@ -519,6 +524,10 @@ export function validateBimProductShellCompatibility(
   const physicalGpu =
     validateRepresentativeModelsPhysicalGpuQualification(
       representativePhysicalGpu,
+    );
+  const pointCloudPhysicalGpu =
+    validateRepresentativePointCloudsPhysicalGpuQualification(
+      representativePointCloudsPhysicalGpu,
     );
   validateViewerCoreProductEntrypoints(
     viewerCoreProductEntrypoints,
@@ -815,8 +824,16 @@ export function validateBimProductShellCompatibility(
         platform: "darwin-arm64",
         hardware: "Apple M2",
         renderer: "ANGLE Metal",
-        representativeFormats: ["ifc", "glb"],
+        representativeFormats: [
+          "ifc",
+          "glb",
+          "e57",
+          "las",
+          "laz",
+        ],
         publicViewerCoreProductEntrypoint: true,
+        pointCloudProductSurfaces: 12,
+        pointCloudFormatAdmission: false,
         simultaneousComposition: false,
         crossPlatform: false,
         osLevelPeakGpuMemory: false,
@@ -1208,6 +1225,10 @@ export function validateBimProductShellCompatibility(
       "compatibility/evidence/" +
         "bim-product-shell-representative-physical-gpu-" +
         "darwin-arm64-2026-08-11.json" ||
+    manifest.evidence?.representativePointCloudsPhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-point-clouds-" +
+        "physical-gpu-darwin-arm64-2026-08-11.json" ||
     manifest.evidence?.viewerCoreProductEntrypoints !==
       "compatibility/evidence/" +
         "bim-product-shell-viewer-core-product-entrypoints-" +
@@ -1249,6 +1270,9 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimPublicViewerCore !== true ||
     manifest.policy?.claimPublicScale !== true ||
     manifest.policy?.claimPhysicalGpu !== true ||
+    manifest.policy?.claimPointCloudPhysicalGpu !== true ||
+    manifest.policy?.claimCrossPlatformPointCloudPhysicalGpu !==
+      false ||
     manifest.policy?.claimMarketplaceRelease !== false
   ) {
     throw new Error(
@@ -1276,6 +1300,7 @@ export function validateBimProductShellCompatibility(
         pointCloudVscodePicking,
         pointCloudLodProducts,
         representativePhysicalGpu,
+        representativePointCloudsPhysicalGpu,
         viewerCoreProductEntrypoints,
         installation,
         manifest,
@@ -1296,6 +1321,9 @@ export function validateBimProductShellCompatibility(
     ]),
     passedGates: PASSED_GATES.length,
     physicalGpu: physicalGpu.status,
+    pointCloudPhysicalGpu: pointCloudPhysicalGpu.status,
+    pointCloudPhysicalGpuSurfaces:
+      pointCloudPhysicalGpu.surfaces,
     publicProducts:
       browserPublic.observation.model.products,
     status: manifest.status,
@@ -1333,6 +1361,7 @@ async function main() {
     vscode,
     installation,
     representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
   ] = await Promise.all([
     readFile(
@@ -1431,6 +1460,13 @@ async function main() {
     readFile(
       path.join(
         root,
+        manifest.evidence.representativePointCloudsPhysicalGpu,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
         manifest.evidence.viewerCoreProductEntrypoints,
       ),
       "utf8",
@@ -1458,6 +1494,7 @@ async function main() {
     pointCloudVscodePicking,
     pointCloudLodProducts,
     representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
   );
   console.log(

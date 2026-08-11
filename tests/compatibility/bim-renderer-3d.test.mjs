@@ -80,6 +80,10 @@ async function fixtures() {
       manifest.evidence.pointHierarchyChunkLod,
       "utf8",
     )),
+    pointPhysicalGpuQualification: JSON.parse(await readFile(
+      manifest.evidence.pointPhysicalGpuQualification,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -118,8 +122,9 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.passedGates, 26);
+  assert.equal(result.passedGates, 27);
   assert.equal(result.heldGates, 0);
+  assert.equal(result.pointPhysicalGpuSurfaces, 12);
 });
 
 test("BIM renderer Viewer Core claim requires release evidence", async () => {
@@ -263,6 +268,18 @@ test("Browser point evidence pins one bounded primitive draw", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /point renderer qualification evidence is invalid/u,
+  );
+});
+
+test("point physical GPU evidence rejects software fallback", async () => {
+  const { manifest, evidence } = await fixtures();
+  evidence.pointPhysicalGpuQualification.browser.e57
+    .environment.gpu.unmaskedRenderer =
+      "ANGLE (Google, SwiftShader)";
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, evidence),
+    /physical Browser evidence is invalid/u,
   );
 });
 

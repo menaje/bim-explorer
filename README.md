@@ -55,8 +55,13 @@ bounded glTF 2.0/GLB reference mesh입니다. 제품명과 저장소 이름은
 > 이 재검증은 현재 exact public Viewer Core 0.1.2 제품 adapter를 거쳐 IFC
 > 4,193,868 bytes와 GLB 16,896,412 bytes의 range read, selection event와
 > source/session/Worker/Host terminal cleanup까지 확인했습니다.
-> Linux/Windows physical GPU, 동시 합성, 다른 포맷과 OS-level peak GPU
-> memory는 아직 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
+> 같은 fail-closed GPU 정책으로 cache-only LAS·LAZ·E57·다중 스캔 E57도
+> actual Chrome 151, staged VS Code 1.132와 clean-installed local VSIX에서
+> Apple M2 Metal을 통과했습니다. 12개 제품 표면은 최대 1,213,990 points,
+> exact range/pick identity, 3단계 LOD와 Worker/CPU/GPU terminal cleanup을
+> 재현했습니다. 이는 point format admission이나 CRS authority를 승인하지 않습니다.
+> Linux/Windows physical GPU, 동시 합성, OS-level peak GPU memory는 아직
+> 확정되지 않았습니다. engine-cooperative cancellation, forced-exit 내부
 > cleanup과 Browser/native resource exhaustion도 보류합니다. 첫 engine은
 > exact `web-ifc@0.0.77`, 첫 profile은 IFC4
 > `ReferenceView_V1.2`의 local read-only exploration으로 experimental
@@ -286,6 +291,12 @@ leaf chunk와 31,971→242,821→1,213,990-point LOD로 점진 전환하고 단�
 identity map·GPU range·Worker hierarchy를 전량 회수했습니다. CRS/surveyed datum,
 E57 extension, source-native hierarchy·point semantics와 format/federation
 admission은 계속 held입니다.
+software rasterizer를 끈 별도 제품 Gate에서는 동일한 LAS·LAZ·E57·다중 스캔
+E57을 Apple M2 Metal의 actual Chrome, staged VS Code와 clean-installed local
+VSIX에서 다시 열어 12개 표면의 exact payload, point selection, LOD와 terminal
+cleanup을 재현했습니다. 이는 macOS arm64 단일 hardware qualification이며
+Linux/Windows, CRS, format admission, OS-level peak GPU memory와 production은
+계속 held입니다.
 
 ## 비목표
 
@@ -422,6 +433,9 @@ Browser/VS Code 제품 Host 계약의 상태는
 고정합니다.
 대표 공개 IFC·GLB의 Apple M2 Metal 제품 검증은
 [physical GPU evidence](compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)에
+고정합니다.
+대표 LAS·LAZ·E57 제품 경로의 Apple M2 Metal 검증은
+[point-cloud physical GPU evidence](compatibility/evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json)에
 고정합니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을

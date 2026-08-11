@@ -32,6 +32,7 @@ async function fixtures() {
     vscode,
     installation,
     representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
   ] = await Promise.all([
     readFile(
@@ -115,6 +116,10 @@ async function fixtures() {
       "utf8",
     ).then(JSON.parse),
     readFile(
+      manifest.evidence.representativePointCloudsPhysicalGpu,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
       manifest.evidence.viewerCoreProductEntrypoints,
       "utf8",
     ).then(JSON.parse),
@@ -139,6 +144,7 @@ async function fixtures() {
     pointCloudVscodePicking,
     pointCloudLodProducts,
     representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
     viewerCoreProductEntrypoints,
     manifest,
     vscode,
@@ -168,6 +174,7 @@ function validate(values) {
     values.pointCloudVscodePicking,
     values.pointCloudLodProducts,
     values.representativePhysicalGpu,
+    values.representativePointCloudsPhysicalGpu,
     values.viewerCoreProductEntrypoints,
   );
 }
@@ -180,9 +187,12 @@ test("product shells pin the same source and render projection", async () => {
       fixture: "synthetic-semantic-ifc4",
       heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 47,
+      passedGates: 48,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
+      pointCloudPhysicalGpu:
+        "passed-darwin-arm64-apple-metal-representative-point-clouds",
+      pointCloudPhysicalGpuSurfaces: 12,
       publicProducts: 3_569,
       status: "experimental",
     },
@@ -322,6 +332,27 @@ test("product shells keep cross-platform physical GPU held", async () => {
   assert.throws(
     () => validate(values),
     /representative model physical GPU evidence is invalid/u,
+  );
+});
+
+test("product shells reject a software point renderer", async () => {
+  const values = await fixtures();
+  values.representativePointCloudsPhysicalGpu.browser.las
+    .environment.gpu.unmaskedRenderer =
+      "ANGLE (Google, SwiftShader)";
+  assert.throws(
+    () => validate(values),
+    /physical (?:Browser|GPU) (?:evidence|identity) is invalid/u,
+  );
+});
+
+test("point-cloud physical GPU cannot admit a format", async () => {
+  const values = await fixtures();
+  values.representativePointCloudsPhysicalGpu.held.formatAdmission =
+    true;
+  assert.throws(
+    () => validate(values),
+    /point-cloud physical GPU evidence is invalid/u,
   );
 });
 

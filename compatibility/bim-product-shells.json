@@ -120,9 +120,14 @@
     "renderer": "ANGLE Metal",
     "representativeFormats": [
       "ifc",
-      "glb"
+      "glb",
+      "e57",
+      "las",
+      "laz"
     ],
     "publicViewerCoreProductEntrypoint": true,
+    "pointCloudProductSurfaces": 12,
+    "pointCloudFormatAdmission": false,
     "simultaneousComposition": false,
     "crossPlatform": false,
     "osLevelPeakGpuMemory": false,
@@ -176,6 +181,7 @@
     "cleanVsixDerivedPointHierarchyLod": true,
     "publicViewerCoreConformance": true,
     "physicalGpuQualification": true,
+    "pointCloudPhysicalGpuQualification": true,
     "marketplaceRelease": false
   },
   "evidence": {
@@ -200,6 +206,7 @@
     "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json",
     "pointCloudLodProducts": "compatibility/evidence/point-cloud-lod-products-2026-08-09.json",
     "representativePhysicalGpu": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
+    "representativePointCloudsPhysicalGpu": "compatibility/evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json",
     "viewerCoreProductEntrypoints": "compatibility/evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json"
   },
   "blockers": [
@@ -241,6 +248,8 @@
     "claimPublicViewerCore": true,
     "claimPublicScale": true,
     "claimPhysicalGpu": true,
+    "claimPointCloudPhysicalGpu": true,
+    "claimCrossPlatformPointCloudPhysicalGpu": false,
     "claimMarketplaceRelease": false
   }
 }

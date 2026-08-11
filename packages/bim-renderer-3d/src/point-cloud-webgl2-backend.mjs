@@ -391,7 +391,8 @@ export class PointCloudWebGl2Backend {
       alpha: true,
       antialias: false,
       depth: true,
-      failIfMajorPerformanceCaveat: false,
+      failIfMajorPerformanceCaveat: true,
+      powerPreference: "high-performance",
       preserveDrawingBuffer: true,
       premultipliedAlpha: false,
     });

@@ -191,8 +191,10 @@ function sha256(bytes) {
 test("point WebGL2 backend performs one POINTS draw and exact cleanup", async () => {
   const gl = new FakePointWebGl2Context();
   const canvas = {
-    getContext(name) {
+    getContext(name, options) {
       assert.equal(name, "webgl2");
+      assert.equal(options.failIfMajorPerformanceCaveat, true);
+      assert.equal(options.powerPreference, "high-performance");
       return gl;
     },
   };

@@ -885,6 +885,11 @@ export async function qualifyBimProductShell({
       },
     );
     const gpu = await client.evaluate(GPU_IDENTITY_EXPRESSION);
+    if (JSON.stringify(opened.gpu) !== JSON.stringify(gpu)) {
+      throw new Error(
+        "BIM product report GPU identity differs from the active canvas",
+      );
+    }
     if (rendererMode === "physical") {
       validatePhysicalGpuIdentity(gpu, {
         platform: `${process.platform}-${process.arch}`,
@@ -1079,6 +1084,7 @@ export async function qualifyBimProductShell({
           }),
       observation: {
         hostKind: opened.hostKind,
+        gpu: opened.gpu,
         model: opened.model,
         performance: opened.performance,
         resources: opened.resources,

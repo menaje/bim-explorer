@@ -96,7 +96,7 @@ GLB–IFC–GLB를 Apple M2 Metal로 동일하게 합성해 8,286 non-background
 고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
 보존합니다.
 
-Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
+Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental E57/LAS/LAZ read-only
 Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,
 path-free host bridge와 clean VSIX install 결과는
@@ -107,6 +107,7 @@ path-free host bridge와 clean VSIX install 결과는
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
 [`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json),
+[`point-cloud physical GPU evidence`](evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json),
 [`LAS/LAZ VS Code evidence`](evidence/las-laz-vscode-product-2026-08-08.json),
 [`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
@@ -135,6 +136,11 @@ cleanup까지 포함합니다. 두 sample은 합산 source bytes가 64MiB 상한
 동시 합성하지 않았고 Git·VSIX·release에 포함하지 않습니다. IFC2X3 profile
 admission, broader glTF profile, Linux/Windows physical GPU, OS-level peak GPU
 memory, upstream stable, marketplace release와 production은 계속 보류합니다.
+같은 fail-closed WebGL2 정책으로 LAS·LAZ·7,680-point E57과 1,213,990-point
+다중 스캔 E57도 actual Chrome, staged VS Code와 clean-installed local VSIX의
+12개 제품 표면에서 Apple M2 Metal을 통과했습니다. exact point range·pick,
+3단계 LOD와 terminal cleanup을 재현했지만 CRS, format admission,
+source-native hierarchy·semantics와 production은 계속 held입니다.
 
 IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
@@ -199,7 +205,8 @@ non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
 hide와 orthographic show-all fit을 4 frames로 검증했습니다. 이후
 visibility 기반 first range, DOM pointer input, progressive cache와
 Browser/VS Code Webview 내부 host lifecycle도 별도 evidence로 통과했습니다.
-physical GPU qualification은 보류합니다.
+mesh backend의 범용 physical GPU claim은 보류하지만, point backend는 별도
+제품 evidence 범위의 macOS arm64 Apple M2 Metal qualification을 통과했습니다.
 별도 offscreen WebGL2 pass의 화면 중앙 pick은 active revision의 Pick ID로
 해결됐고, 선택 frame은 7,507 highlight pixels를 만들었습니다. context
 loss를 관찰·복원한 뒤 같은 revision을 다시 upload하고 별도 IFC4 source로
@@ -212,7 +219,8 @@ contract host conformance는 각각 별도 evidence에서 통과했습니다.
 payload를 사용합니다. cache-only LAS/LAZ parity sample의 10,201 points를
 actual Chrome WebGL2 단일 `POINTS` draw로 그려 40,471 pixels를 확인하고
 163,216-byte upload를 전량 회수했습니다. renderer manifest는 이 세 point
-Gate를 포함해 24 passed / 0 held입니다. 별도 Browser와 VS Code 제품
+Gate와 12-surface physical GPU Gate를 포함해 27 passed / 0 held입니다. 별도
+Browser와 VS Code 제품
 source/open은 reference-format과 product-shell manifest가 소유하며, format
 admission·CRS는 계속 분리해 held합니다.
 
@@ -349,8 +357,11 @@ point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록�
 별도
 [`point hierarchy/LOD product evidence`](evidence/point-cloud-lod-products-2026-08-09.json)는
 five-scan E57의 51개 파생 chunk와 3단계 coarse-to-full 전환, root-range identity
-mapping 및 Browser/staged VS Code/clean VSIX cleanup을 기록합니다. 전체 36개
-Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
+mapping 및 Browser/staged VS Code/clean VSIX cleanup을 기록합니다. 기존 36개
+Gate에 더해 별도
+[`point-cloud physical GPU evidence`](evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json)가
+Apple M2 Metal 12개 제품 표면을 고정해 전체 37개 Gate가 통과했습니다.
+E57·LAS/LAZ의 coordinate reference와 format
 admission 4개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.

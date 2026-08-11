@@ -781,6 +781,31 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
     hostKind: "vscode-webview",
     externalUpload: false,
     telemetry: false,
+    gpu: {
+      schema: "bim-explorer-webgl2-gpu-identity/1",
+      webgl2: true,
+      debugRendererInfo: true,
+      vendor: "WebKit",
+      renderer: "WebKit WebGL",
+      unmaskedVendor: "Apple Inc.",
+      unmaskedRenderer: "ANGLE Metal Renderer: Apple M2",
+      version: "WebGL 2.0",
+      shadingLanguageVersion: "WebGL GLSL ES 3.00",
+      contextAttributes: {
+        alpha: true,
+        antialias: true,
+        depth: true,
+        desynchronized: false,
+        failIfMajorPerformanceCaveat: false,
+        powerPreference: "default",
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: false,
+        stencil: false,
+        xrCompatible: false,
+        path: "/private/customer/acme.ifc",
+      },
+      path: "/private/customer/acme.ifc",
+    },
     source: {
       fingerprint: `sha256:${"a".repeat(64)}`,
       revisionId: "revision:test",
@@ -847,6 +872,11 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
   assert.equal(report.viewerCore.version, "0.1.2");
   assert.equal(report.viewerCore.source.rangeBytesRead, 256);
   assert.equal(report.viewerCore.selection.identity.expressId, 40);
+  assert.equal(report.gpu.webgl2, true);
+  assert.equal(
+    report.gpu.unmaskedRenderer,
+    "ANGLE Metal Renderer: Apple M2",
+  );
 });
 
 test("extension diagnostics preserve bounded reference identity only", () => {
