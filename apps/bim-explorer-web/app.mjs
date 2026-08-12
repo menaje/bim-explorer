@@ -594,7 +594,7 @@ function render() {
   const state = active.explorer.state;
   elements.pick.textContent = "Pick center";
   elements.cameraHelp.textContent =
-    "Drag to orbit · right or middle drag to pan · scroll to zoom";
+    "Click an object to select · drag to orbit · right or middle drag to pan · scroll to zoom";
   const reference = active.format !== "ifc";
   elements.showAll.textContent = "Show all";
   elements.treeTitle.textContent =
@@ -813,7 +813,123 @@ function updateLiveCameraReport(current) {
   globalThis.__bimExplorerProductReport = Object.freeze({
     ...report,
     cameraInteraction: cameraInteractionReport(current),
+    meshPicking: Object.freeze({
+      attempts: current.meshPickAttempts,
+      lastStatus: current.lastMeshPickStatus,
+      misses: current.meshPickMisses,
+    }),
+    meshSelection: current.lastMeshPick,
   });
+}
+
+function canvasPickCoordinates({ clientX, clientY } = {}) {
+  const bounds = elements.canvas.getBoundingClientRect();
+  if (
+    typeof clientX !== "number" ||
+    !Number.isFinite(clientX) ||
+    typeof clientY !== "number" ||
+    !Number.isFinite(clientY) ||
+    bounds.width <= 0 ||
+    bounds.height <= 0 ||
+    clientX < bounds.left ||
+    clientX > bounds.right ||
+    clientY < bounds.top ||
+    clientY > bounds.bottom
+  ) {
+    return null;
+  }
+  return Object.freeze({
+    x: Math.min(
+      elements.canvas.width - 1,
+      Math.max(
+        0,
+        Math.floor(
+          (clientX - bounds.left) /
+            bounds.width * elements.canvas.width,
+        ),
+      ),
+    ),
+    y: Math.min(
+      elements.canvas.height - 1,
+      Math.max(
+        0,
+        Math.floor(
+          (clientY - bounds.top) /
+            bounds.height * elements.canvas.height,
+        ),
+      ),
+    ),
+  });
+}
+
+async function selectionViewCommand(current) {
+  const selection = current.explorer.state.selection;
+  if (selection === null) {
+    return { selectedPickIds: [] };
+  }
+  if (typeof selection.pickId !== "string") {
+    return { selectedPickIds: [] };
+  }
+  const hidden = current.view.hiddenRenderIds.includes(
+    selection.renderId,
+  );
+  const outsideIsolation =
+    current.view.isolateRenderIds !== null &&
+    !current.view.isolateRenderIds.includes(selection.renderId);
+  if (hidden || outsideIsolation) {
+    return current.explorer.setVisibility("show-all");
+  }
+  return {
+    selectedPickIds: [selection.pickId],
+  };
+}
+
+async function selectCanvasPointer(current, pointer) {
+  if (active !== current) {
+    return null;
+  }
+  const coordinates = canvasPickCoordinates(pointer);
+  if (coordinates === null) {
+    return null;
+  }
+  current.meshPickAttempts += 1;
+  const pick = await current.host.pick(coordinates);
+  if (active !== current) {
+    return null;
+  }
+  if (pick.status !== "hit") {
+    current.lastMeshPickStatus = "miss";
+    current.meshPickMisses += 1;
+    updateLiveCameraReport(current);
+    setStatus(
+      "ready",
+      "No visible object at that point; selection is unchanged.",
+    );
+    return pick;
+  }
+  await current.explorer.selectPick(pick);
+  await revealExplorerItem(
+    current.explorer,
+    current.opened.snapshot,
+    current.explorer.state.selection.expressId,
+  );
+  current.lastMeshPick = pick;
+  current.lastMeshPickStatus = "hit";
+  const command = await selectionViewCommand(current);
+  await renderMeshView(current, { command });
+  if (active !== current) {
+    return null;
+  }
+  current.viewerCore.publishSelection(
+    current.explorer.state.selection,
+    { reason: "3d" },
+  );
+  render();
+  setStatus(
+    "ready",
+    "Selected the clicked object in the active source revision.",
+  );
+  return pick;
 }
 
 function attachActiveCameraControls(current) {
@@ -843,6 +959,20 @@ function attachActiveCameraControls(current) {
         updateLiveCameraReport(current);
       }
     },
+    async onPrimaryClick(pointer) {
+      try {
+        await selectCanvasPointer(current, pointer);
+      } catch (error) {
+        current.cameraInteractionError = error;
+        updateLiveCameraReport(current);
+        if (active === current) {
+          setStatus(
+            "ready",
+            "Object selection failed closed; the model remains open.",
+          );
+        }
+      }
+    },
   });
   return current.cameraControls;
 }
@@ -857,16 +987,22 @@ async function applySelectionView() {
   }
   const current = active;
   await settleCameraControls(current);
-  const command = await current.explorer.setVisibility("show-all");
+  const command = await selectionViewCommand(current);
   return renderMeshView(current, { command });
 }
 
 async function selectExpressId(expressId, origin) {
-  await active.explorer.selectExpressId(expressId, {
+  const current = active;
+  await current.explorer.selectExpressId(expressId, {
     origin,
   });
-  active.viewerCore.publishSelection(
-    active.explorer.state.selection,
+  await revealExplorerItem(
+    current.explorer,
+    current.opened.snapshot,
+    expressId,
+  );
+  current.viewerCore.publishSelection(
+    current.explorer.state.selection,
     { reason: origin },
   );
   await applySelectionView();
@@ -879,10 +1015,22 @@ function firstRenderable(snapshot) {
 }
 
 async function revealFirstProduct(explorer, snapshot, entity) {
+  await revealExplorerItem(
+    explorer,
+    snapshot,
+    entity.expressId,
+  );
+  await explorer.selectExpressId(entity.expressId, {
+    origin: "tree",
+  });
+}
+
+async function revealExplorerItem(
+  explorer,
+  snapshot,
+  expressId,
+) {
   if (!Array.isArray(snapshot.tree?.nodes)) {
-    await explorer.selectExpressId(entity.expressId, {
-      origin: "tree",
-    });
     return;
   }
   const nodeById = new Map(
@@ -892,7 +1040,7 @@ async function revealFirstProduct(explorer, snapshot, entity) {
     ]),
   );
   const lineage = [];
-  let node = nodeById.get(entity.expressId);
+  let node = nodeById.get(expressId);
   while (node?.parentExpressId !== null) {
     node = nodeById.get(node.parentExpressId);
     if (node !== undefined) {
@@ -902,9 +1050,6 @@ async function revealFirstProduct(explorer, snapshot, entity) {
   for (const expressId of lineage) {
     await explorer.expand(expressId);
   }
-  await explorer.selectExpressId(entity.expressId, {
-    origin: "tree",
-  });
 }
 
 async function disposeActive(reason) {
@@ -1754,6 +1899,10 @@ async function openBytes(bytesValue, {
       explorer,
       format,
       host,
+      lastMeshPick: null,
+      lastMeshPickStatus: null,
+      meshPickAttempts: 0,
+      meshPickMisses: 0,
       mount,
       opened,
       origin,
@@ -1865,6 +2014,12 @@ async function openBytes(bytesValue, {
       },
       viewerCore: viewerCore.state,
       cameraInteraction: cameraInteractionReport(active),
+      meshSelection: null,
+      meshPicking: {
+        attempts: 0,
+        lastStatus: null,
+        misses: 0,
+      },
       ...(reference
         ? {
             reference: {
@@ -2370,6 +2525,12 @@ async function selectVisible() {
     return pick;
   }
   await active.explorer.selectPick(pick);
+  await revealExplorerItem(
+    active.explorer,
+    active.opened.snapshot,
+    active.explorer.state.selection.expressId,
+  );
+  active.lastMeshPick = pick;
   active.viewerCore.publishSelection(
     active.explorer.state.selection,
     { reason: "3d" },

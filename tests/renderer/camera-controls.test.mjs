@@ -131,3 +131,85 @@ test("DOM camera controls serialize rendered camera updates", async () => {
   assert.equal(listeners.get("pointerdown").size, 0);
   assert.equal(listeners.get("wheel").size, 0);
 });
+
+test("DOM camera controls distinguish a primary click from orbit drag", async () => {
+  const listeners = new Map();
+  const element = {
+    addEventListener(type, listener) {
+      const values = listeners.get(type) ?? new Set();
+      values.add(listener);
+      listeners.set(type, values);
+    },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
+    emit(type, event) {
+      for (const listener of listeners.get(type) ?? []) {
+        listener({
+          preventDefault() {},
+          ...event,
+        });
+      }
+    },
+    setPointerCapture() {},
+    releasePointerCapture() {},
+  };
+  const clicks = [];
+  const updates = [];
+  const controls = attachCameraControls3d({
+    camera,
+    element,
+    height: 540,
+    width: 960,
+    async onCamera(nextCamera) {
+      updates.push(nextCamera);
+    },
+    async onPrimaryClick(value) {
+      clicks.push(value);
+    },
+  });
+
+  element.emit("pointerdown", {
+    button: 0,
+    pointerId: 3,
+    clientX: 200,
+    clientY: 120,
+  });
+  element.emit("pointermove", {
+    pointerId: 3,
+    clientX: 203,
+    clientY: 122,
+  });
+  element.emit("pointerup", {
+    pointerId: 3,
+    clientX: 203,
+    clientY: 122,
+  });
+  element.emit("pointerdown", {
+    button: 0,
+    pointerId: 4,
+    clientX: 300,
+    clientY: 220,
+  });
+  element.emit("pointermove", {
+    pointerId: 4,
+    clientX: 340,
+    clientY: 250,
+  });
+  element.emit("pointerup", {
+    pointerId: 4,
+    clientX: 340,
+    clientY: 250,
+  });
+  await controls.whenIdle();
+
+  assert.equal(updates.length, 1);
+  assert.deepEqual(clicks, [{
+    clientX: 203,
+    clientY: 122,
+    pointerId: 3,
+  }]);
+  controls.dispose();
+  assert.equal(listeners.get("pointercancel").size, 0);
+  assert.equal(listeners.get("contextmenu").size, 0);
+});

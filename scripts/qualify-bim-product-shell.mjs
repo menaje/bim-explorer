@@ -329,6 +329,27 @@ async function poll(client, expression, {
   throw timeoutError(expression);
 }
 
+async function dispatchPrimaryClick(client, x, y) {
+  await client.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x,
+    y,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+  await client.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x,
+    y,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+}
+
 function assertions(
   opened,
   interaction,
@@ -463,6 +484,31 @@ function assertions(
               opened.cameraInteraction.camera,
             ) &&
             interaction.cameraHelp.includes("Drag to orbit"),
+          directCanvasPick:
+            interaction.meshSelection?.status === "hit" &&
+            interaction.meshPicking?.attempts >= 1 &&
+            interaction.meshSelection?.coordinates?.origin ===
+              "canvas-top-left" &&
+            Number.isSafeInteger(
+              interaction.meshSelection.coordinates.x,
+            ) &&
+            Number.isSafeInteger(
+              interaction.meshSelection.coordinates.y,
+            ) &&
+            (
+              reference
+                ? interaction.meshSelection.identity?.nativeId ===
+                    interaction.selectedNativeId
+                : interaction.meshSelection.identity?.expressId ===
+                    interaction.selectedExpressId
+            ) &&
+            (
+              fixture.kind !== "synthetic" ||
+              (
+                interaction.meshPicking?.misses >= 1 &&
+                interaction.meshPicking?.lastStatus === "miss"
+              )
+            ),
         }),
     ...(
       pointCloud
@@ -1395,6 +1441,14 @@ export async function qualifyBimProductShell({
             camera?.renderedUpdates >= 2;
         })()`,
       );
+      const dragPick = await client.evaluate(
+        `globalThis.__bimExplorerProductReport?.meshSelection ?? null`,
+      );
+      if (dragPick !== null) {
+        throw new Error(
+          "BIM product camera drag was misclassified as a canvas pick",
+        );
+      }
     }
     const initialPointLod = pointCloud &&
       opened.pointCloud?.hierarchy?.levels?.length > 1
@@ -1453,13 +1507,88 @@ export async function qualifyBimProductShell({
         client,
         `document.querySelectorAll("#search-results [role=option]").length`,
       );
-      await client.evaluate(
-        `document.querySelector("#pick-model").click(); true`,
-      );
-      await poll(
-        client,
-        `document.querySelector("#selection-origin").textContent === "3d"`,
-      );
+      const canvas = await client.evaluate(`(() => {
+        const bounds = document.querySelector("#model-canvas")
+          .getBoundingClientRect();
+        return {
+          left: bounds.left,
+          top: bounds.top,
+          width: bounds.width,
+          height: bounds.height
+        };
+      })()`);
+      const candidates = [
+        [0.5, 0.5],
+        [0.5, 1 / 3],
+        [0.5, 2 / 3],
+        [0.35, 0.5],
+        [0.65, 0.5],
+      ];
+      let directPick = false;
+      for (const [xRatio, yRatio] of candidates) {
+        await dispatchPrimaryClick(
+          client,
+          canvas.left + canvas.width * xRatio,
+          canvas.top + canvas.height * yRatio,
+        );
+        directPick = await poll(
+          client,
+          `(() => {
+            const report = globalThis.__bimExplorerProductReport;
+            return report?.meshSelection?.status === "hit" &&
+              document.querySelector("#selection-origin")
+                .textContent === "3d";
+          })()`,
+          { timeoutMs: 2_000 },
+        ).catch(() => false);
+        if (directPick) {
+          break;
+        }
+      }
+      if (!directPick) {
+        throw new Error(
+          "BIM product direct canvas pick did not resolve",
+        );
+      }
+      if (fixture.kind === "synthetic") {
+        const beforeMiss = await client.evaluate(`(() => ({
+          attempts: globalThis.__bimExplorerProductReport
+            .meshPicking.attempts,
+          expressId: Number(document.querySelector(
+            "#model-tree [aria-selected=true]"
+          )?.dataset.expressId) || null
+        }))()`);
+        await dispatchPrimaryClick(
+          client,
+          canvas.left + 1,
+          canvas.top + 1,
+        );
+        const miss = await poll(
+          client,
+          `(() => {
+            const report = globalThis.__bimExplorerProductReport;
+            const expressId = Number(document.querySelector(
+              "#model-tree [aria-selected=true]"
+            )?.dataset.expressId) || null;
+            return report?.meshPicking?.attempts >
+                ${beforeMiss.attempts} &&
+              report.meshPicking.lastStatus === "miss"
+                ? {
+                    expressId,
+                    misses: report.meshPicking.misses
+                  }
+                : null;
+          })()`,
+        );
+        if (
+          miss.expressId !== beforeMiss.expressId ||
+          miss.misses < 1
+        ) {
+          throw new Error(
+            "BIM product background pick changed the active selection",
+          );
+        }
+      }
     } else {
       await client.evaluate(
         `document.querySelector("#pick-model").click(); true`,
@@ -1510,6 +1639,20 @@ export async function qualifyBimProductShell({
             ? null
             : JSON.parse(JSON.stringify(
                 report.cameraInteraction
+              )),
+        meshSelection:
+          report?.meshSelection === null ||
+          report?.meshSelection === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.meshSelection
+              )),
+        meshPicking:
+          report?.meshPicking === null ||
+          report?.meshPicking === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.meshPicking
               )),
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
@@ -1630,6 +1773,12 @@ export async function qualifyBimProductShell({
                 cameraInteraction:
                   interaction.cameraInteraction,
               }),
+          ...(interaction.meshSelection === null
+            ? {}
+            : { meshSelection: interaction.meshSelection }),
+          ...(interaction.meshPicking === null
+            ? {}
+            : { meshPicking: interaction.meshPicking }),
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,
