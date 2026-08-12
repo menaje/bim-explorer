@@ -308,6 +308,23 @@ canvas {
   background: #06111a;
 }
 
+canvas[data-camera-controls="active"] {
+  cursor: grab;
+  touch-action: none;
+}
+
+canvas[data-camera-controls="active"]:active {
+  cursor: grabbing;
+}
+
+.camera-help {
+  margin: 0;
+  padding: 7px 11px 9px;
+  border-top: 1px solid #1c3344;
+  color: #8fa9bd;
+  font-size: 0.68rem;
+}
+
 .results-panel {
   min-height: 170px;
 }

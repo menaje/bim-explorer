@@ -437,13 +437,33 @@ function assertions(
       cleanup.cleanup?.backend?.disposed === true &&
       cleanup.cleanup?.client?.disposed === true &&
       (
-        !pointCloud ||
-        (
+        pointCloud
+          ? (
           cleanup.cleanup.rendererDisposed === true &&
           cleanup.cleanup.pointRangeCleared === true &&
           cleanup.cleanup.workerTerminatedAfterTransfer === true
-        )
+          )
+          : (
+              cleanup.cleanup.cameraControlsDisposed === true &&
+              cleanup.cleanup.cameraControls?.disposed === true
+            )
       ),
+    ...(pointCloud
+      ? {}
+      : {
+          interactiveCamera:
+            opened.cameraInteraction?.enabled === true &&
+            opened.cameraInteraction?.disposed === false &&
+            interaction.cameraInteraction?.orbitUpdates >= 1 &&
+            interaction.cameraInteraction?.zoomUpdates >= 1 &&
+            interaction.cameraInteraction?.renderedUpdates >= 2 &&
+            JSON.stringify(
+              interaction.cameraInteraction.camera,
+            ) !== JSON.stringify(
+              opened.cameraInteraction.camera,
+            ) &&
+            interaction.cameraHelp.includes("Drag to orbit"),
+        }),
     ...(
       pointCloud
         ? {}
@@ -1322,6 +1342,60 @@ export async function qualifyBimProductShell({
         platform: `${process.platform}-${process.arch}`,
       });
     }
+    if (!pointCloud) {
+      const canvas = await client.evaluate(`(() => {
+        const bounds = document.querySelector("#model-canvas")
+          .getBoundingClientRect();
+        return {
+          x: bounds.left + bounds.width / 2,
+          y: bounds.top + bounds.height / 2
+        };
+      })()`);
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        x: canvas.x,
+        y: canvas.y,
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x: canvas.x + 48,
+        y: canvas.y - 24,
+        button: "left",
+        buttons: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        x: canvas.x + 48,
+        y: canvas.y - 24,
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseWheel",
+        x: canvas.x,
+        y: canvas.y,
+        deltaX: 0,
+        deltaY: -120,
+        pointerType: "mouse",
+      });
+      await poll(
+        client,
+        `(() => {
+          const camera = globalThis.__bimExplorerProductReport
+            ?.cameraInteraction;
+          return camera?.orbitUpdates >= 1 &&
+            camera?.zoomUpdates >= 1 &&
+            camera?.renderedUpdates >= 2;
+        })()`,
+      );
+    }
     const initialPointLod = pointCloud &&
       opened.pointCloud?.hierarchy?.levels?.length > 1
         ? {
@@ -1428,6 +1502,15 @@ export async function qualifyBimProductShell({
           report?.pointSelection === undefined
             ? null
             : JSON.parse(JSON.stringify(report.pointSelection)),
+        cameraHelp:
+          document.querySelector("#camera-help").textContent,
+        cameraInteraction:
+          report?.cameraInteraction === null ||
+          report?.cameraInteraction === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.cameraInteraction
+              )),
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
         pickDisabled:
@@ -1541,6 +1624,12 @@ export async function qualifyBimProductShell({
               }
             : { reference: opened.reference }),
         interaction: {
+          ...(interaction.cameraInteraction === null
+            ? {}
+            : {
+                cameraInteraction:
+                  interaction.cameraInteraction,
+              }),
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,

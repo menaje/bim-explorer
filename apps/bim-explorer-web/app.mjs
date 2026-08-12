@@ -2,6 +2,7 @@ import {
   createBimSurface,
 } from "../../packages/bim-surface/runtime/index.mjs";
 import {
+  attachCameraControls3d,
   createBimRenderer3dHost,
   createBounded3dRenderer,
   createWebGl2Backend,
@@ -73,6 +74,7 @@ function pointSourceMaximumBytes(format) {
 const elements = {
   cancel: document.querySelector("#cancel-open"),
   canvas: document.querySelector("#model-canvas"),
+  cameraHelp: document.querySelector("#camera-help"),
   close: document.querySelector("#close-model"),
   diagBytes: document.querySelector("#diag-bytes"),
   diagGpu: document.querySelector("#diag-gpu"),
@@ -526,6 +528,8 @@ function renderPointCloud() {
   elements.subtitle.textContent =
     "Open bounded E57, LAS, or LAZ point observations locally.";
   elements.pick.textContent = "Pick visible point";
+  elements.cameraHelp.textContent =
+    "Point navigation controls are not available in this bounded profile.";
   elements.showAll.textContent = nextPointLodLevel() === null
     ? "Full point detail"
     : "Refine point detail";
@@ -589,6 +593,8 @@ function render() {
   }
   const state = active.explorer.state;
   elements.pick.textContent = "Pick center";
+  elements.cameraHelp.textContent =
+    "Drag to orbit · right or middle drag to pan · scroll to zoom";
   const reference = active.format !== "ifc";
   elements.showAll.textContent = "Show all";
   elements.treeTitle.textContent =
@@ -700,15 +706,159 @@ function publishReport(status, additions = {}) {
   return report;
 }
 
+function initialRendererView(explorer) {
+  const pickId = explorer.state.selection?.pickId;
+  return {
+    clippingPlanes: [],
+    hiddenRenderIds: [],
+    isolateRenderIds: null,
+    sectionBox: null,
+    selectedPickIds:
+      typeof pickId === "string" ? [pickId] : [],
+  };
+}
+
+function nextRendererView(current, command = {}) {
+  const next = {
+    ...current.view,
+  };
+  for (const key of [
+    "clippingPlanes",
+    "hiddenRenderIds",
+    "isolateRenderIds",
+    "sectionBox",
+    "selectedPickIds",
+  ]) {
+    if (Object.hasOwn(command, key)) {
+      next[key] = command[key];
+    }
+  }
+  if (
+    Object.hasOwn(command, "isolateRenderIds") &&
+    command.isolateRenderIds !== null
+  ) {
+    next.hiddenRenderIds = [];
+  }
+  if (
+    Object.hasOwn(command, "hiddenRenderIds") &&
+    command.hiddenRenderIds.length > 0
+  ) {
+    next.isolateRenderIds = null;
+  }
+  return next;
+}
+
+function rendererViewFromReceipt(receipt) {
+  return {
+    clippingPlanes: [...receipt.clipping.planes],
+    hiddenRenderIds:
+      receipt.visibility.mode === "isolate"
+        ? []
+        : [...receipt.visibility.hiddenRenderIds],
+    isolateRenderIds:
+      receipt.visibility.mode === "isolate"
+        ? [...receipt.visibility.isolatedRenderIds]
+        : null,
+    sectionBox: receipt.clipping.sectionBox,
+    selectedPickIds: [
+      ...receipt.selection.selectedPickIds,
+    ],
+  };
+}
+
+async function renderMeshView(current, {
+  camera = current.camera,
+  command = {},
+} = {}) {
+  const view = nextRendererView(current, command);
+  const receipt = await current.host.renderView({
+    camera,
+    ...view,
+  });
+  current.camera = receipt.camera;
+  current.view = rendererViewFromReceipt(receipt);
+  updateLiveCameraReport(current);
+  return receipt;
+}
+
+function cameraInteractionReport(current) {
+  const state = current.cameraControls?.state ?? null;
+  return Object.freeze({
+    schema: "bim-explorer-product-camera-interaction/1",
+    enabled: state !== null,
+    disposed: state?.disposed ?? true,
+    orbitUpdates: state?.orbitUpdates ?? 0,
+    panUpdates: state?.panUpdates ?? 0,
+    zoomUpdates: state?.zoomUpdates ?? 0,
+    renderedUpdates: current.cameraRenderedUpdates ?? 0,
+    selectedPickIds: [...current.view.selectedPickIds],
+    visibilityMode:
+      current.view.isolateRenderIds === null
+        ? current.view.hiddenRenderIds.length === 0
+          ? "show-all"
+          : "hide"
+        : "isolate",
+    camera: current.camera,
+  });
+}
+
+function updateLiveCameraReport(current) {
+  const report = globalThis.__bimExplorerProductReport;
+  if (
+    active !== current ||
+    report?.status !== "ready"
+  ) {
+    return;
+  }
+  globalThis.__bimExplorerProductReport = Object.freeze({
+    ...report,
+    cameraInteraction: cameraInteractionReport(current),
+  });
+}
+
+function attachActiveCameraControls(current) {
+  const bounds = elements.canvas.getBoundingClientRect();
+  elements.canvas.dataset.cameraControls = "active";
+  current.cameraControls = attachCameraControls3d({
+    camera: current.camera,
+    element: elements.canvas,
+    height: Math.max(
+      1,
+      Math.round(bounds.height || elements.canvas.height),
+    ),
+    width: Math.max(
+      1,
+      Math.round(bounds.width || elements.canvas.width),
+    ),
+    async onCamera(camera) {
+      if (active !== current) {
+        return;
+      }
+      try {
+        await renderMeshView(current, { camera });
+        current.cameraRenderedUpdates += 1;
+        updateLiveCameraReport(current);
+      } catch (error) {
+        current.cameraInteractionError = error;
+        updateLiveCameraReport(current);
+      }
+    },
+  });
+  return current.cameraControls;
+}
+
+async function settleCameraControls(current) {
+  await current.cameraControls?.whenIdle();
+}
+
 async function applySelectionView() {
   if (active?.explorer.state.selection === null) {
     return null;
   }
-  const command = await active.explorer.setVisibility("show-all");
-  return active.host.renderView({
-    camera: active.camera,
-    ...command,
-  });
+  const current = active;
+  await settleCameraControls(current);
+  const command = await current.explorer.setVisibility("show-all");
+  return renderMeshView(current, { command });
 }
 
 async function selectExpressId(expressId, origin) {
@@ -785,6 +935,10 @@ async function disposeActive(reason) {
         current.client.state.workerActive === false,
     };
   }
+  const cameraControlsDisposed =
+    current.cameraControls?.dispose() ?? false;
+  delete elements.canvas.dataset.cameraControls;
+  await settleCameraControls(current);
   let explorerDisposed = false;
   let hostReceipt = null;
   let clientDisposed = false;
@@ -799,6 +953,8 @@ async function disposeActive(reason) {
   elements.diagLife.textContent = "disposed";
   return {
     clientDisposed,
+    cameraControls: cameraInteractionReport(current),
+    cameraControlsDisposed,
     explorerDisposed,
     hostReceipt,
     backend: current.backend.state,
@@ -1591,6 +1747,9 @@ async function openBytes(bytesValue, {
     active = {
       backend,
       camera: mount.renderer.backend.camera,
+      cameraControls: null,
+      cameraInteractionError: null,
+      cameraRenderedUpdates: 0,
       client: sourceClient,
       explorer,
       format,
@@ -1600,8 +1759,10 @@ async function openBytes(bytesValue, {
       origin,
       product,
       surface,
+      view: initialRendererView(explorer),
       viewerCore,
     };
+    attachActiveCameraControls(active);
     openingClient = null;
     lastFailedBytes?.fill(0);
     lastFailedBytes = null;
@@ -1703,6 +1864,7 @@ async function openBytes(bytesValue, {
             }),
       },
       viewerCore: viewerCore.state,
+      cameraInteraction: cameraInteractionReport(active),
       ...(reference
         ? {
             reference: {
@@ -2028,13 +2190,12 @@ elements.isolateResults.addEventListener("click", async () => {
   if (active === null || active.kind === "point-cloud") {
     return;
   }
-  const command = await active.explorer.setVisibility(
+  const current = active;
+  await settleCameraControls(current);
+  const command = await current.explorer.setVisibility(
     "isolate-results",
   );
-  await active.host.renderView({
-    camera: active.camera,
-    ...command,
-  });
+  await renderMeshView(current, { command });
   render();
 });
 
@@ -2154,11 +2315,10 @@ elements.showAll.addEventListener("click", async () => {
     await refinePointLod();
     return;
   }
-  const command = await active.explorer.setVisibility("show-all");
-  await active.host.renderView({
-    camera: active.camera,
-    ...command,
-  });
+  const current = active;
+  await settleCameraControls(current);
+  const command = await current.explorer.setVisibility("show-all");
+  await renderMeshView(current, { command });
 });
 
 async function pickVisible() {
@@ -2174,6 +2334,7 @@ async function pickVisible() {
     }
     return receipt;
   }
+  await settleCameraControls(active);
   const coordinates = [
     [400, 225],
     [400, 150],
