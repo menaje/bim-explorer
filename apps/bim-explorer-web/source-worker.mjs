@@ -177,16 +177,32 @@ function referenceResources(snapshot) {
         .externalResourceBytes,
     externalResources:
       snapshot.referenceMetadata.resourceBundle.externalResources,
-    ...(snapshot.referenceMetadata.resourceBundle
-      .externalImageResources === undefined
+    ...(
+      snapshot.referenceMetadata.resourceBundle
+        .externalImageResources === undefined &&
+      snapshot.referenceMetadata.resourceBundle
+        .externalBufferViewImageResources === undefined
       ? {}
       : {
           externalBufferResources:
             snapshot.referenceMetadata.resourceBundle
               .externalBufferResources,
-          externalImageResources:
-            snapshot.referenceMetadata.resourceBundle
-              .externalImageResources,
+          ...(snapshot.referenceMetadata.resourceBundle
+            .externalImageResources === undefined
+            ? {}
+            : {
+                externalImageResources:
+                  snapshot.referenceMetadata.resourceBundle
+                    .externalImageResources,
+              }),
+          ...(snapshot.referenceMetadata.resourceBundle
+            .externalBufferViewImageResources === undefined
+            ? {}
+            : {
+                externalBufferViewImageResources:
+                  snapshot.referenceMetadata.resourceBundle
+                    .externalBufferViewImageResources,
+              }),
         }),
     ...(snapshot.referenceMetadata.resourceBundle
       .embeddedImageResources === undefined

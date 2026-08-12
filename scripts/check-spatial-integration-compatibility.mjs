@@ -220,28 +220,32 @@ export function validateSpatialIntegrationCompatibility(
     manifest.schema !==
       "bim-explorer-spatial-integration-compatibility/1" ||
     manifest.status !== "experimental" ||
-    manifest.asOf !== "2026-08-04" ||
+    manifest.asOf !== "2026-08-11" ||
     !equalJson(manifest.contract, CONTRACT)
   ) {
     throw new Error(
       "Spatial integration compatibility identity is invalid",
     );
   }
-  const consumer = plainRecord(
-    manifest.consumerObservation,
-    "Spatial consumer observation",
+  const contractScope = plainRecord(
+    manifest.contractScope,
+    "Spatial integration contract scope",
   );
   if (
-    consumer.repository !== "menaje/coni-spatial" ||
-    !equalJson(consumer.trackingIssues, [8, 10, 12, 16]) ||
-    consumer.viewerCorePackageVersion !== "0.1.2" ||
-    consumer.renderProtocolPackageVersion !== "0.1.2" ||
-    consumer.spatialProtocolVersion !== "0.1.0" ||
-    consumer.status !==
-      "consumer-owned-unverified-in-this-repository"
+    contractScope.profile !==
+      "legacy-single-source-optional-bridge-v0.1" ||
+    contractScope.consumerAdmission !==
+      "not-observed-for-this-v0.1-bridge" ||
+    contractScope.federatedV02Admission !==
+      "separate-contract-line" ||
+    contractScope.federatedV02Manifest !==
+      "compatibility/federated-bim-surface.json" ||
+    contractScope.statusMeaning !==
+      "actualSpatialConsumerConformance applies only to the " +
+        "optional integration/0.1 bridge"
   ) {
     throw new Error(
-      "Spatial consumer observation overclaims conformance",
+      "Spatial integration contract scope is ambiguous",
     );
   }
   const gates = plainRecord(
@@ -290,6 +294,8 @@ export function validateSpatialIntegrationCompatibility(
     policy.allowSpatialPrivateDependency !== false ||
     policy.allowInstalledExtensionDependency !== false ||
     policy.claimExplorerProviderContract !== true ||
+    policy.consumerAdmissionScope !==
+      "legacy-single-source-optional-bridge-v0.1" ||
     policy.claimActualSpatialConsumer !== false ||
     policy.claimPublicPackage !== false ||
     policy.claimProductionIntegration !== false

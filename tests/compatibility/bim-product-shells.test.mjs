@@ -39,6 +39,7 @@ async function fixtures() {
     gltfMeshoptProducts,
     gltfTextureProducts,
     gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -148,6 +149,10 @@ async function fixtures() {
       manifest.evidence.gltfJpegTextureProducts,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfBufferViewTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -176,6 +181,7 @@ async function fixtures() {
     gltfMeshoptProducts,
     gltfTextureProducts,
     gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
     manifest,
     vscode,
   };
@@ -211,6 +217,7 @@ function validate(values) {
     values.gltfMeshoptProducts,
     values.gltfTextureProducts,
     values.gltfJpegTextureProducts,
+    values.gltfBufferViewTextureProducts,
   );
 }
 
@@ -224,10 +231,11 @@ test("product shells pin the same source and render projection", async () => {
       extMeshoptCompressionSurfaces: 3,
       baseColorTextureSurfaces: 6,
       jpegBaseColorTextureSurfaces: 3,
+      externalBufferViewTextureSurfaces: 3,
       khrMeshQuantizationSurfaces: 3,
       heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 66,
+      passedGates: 69,
       physicalGpu:
         "passed-darwin-arm64-apple-metal-representative-products",
       pointCloudPhysicalGpu:
@@ -283,6 +291,16 @@ test("product shells require exact JPEG texture evidence", async () => {
   assert.throws(
     () => validate(values),
     /glTF JPEG texture product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact external-buffer bufferView texture evidence", async () => {
+  const values = await fixtures();
+  values.gltfBufferViewTextureProducts.assertions
+    .exactExternalBufferViewProjection = false;
+  assert.throws(
+    () => validate(values),
+    /glTF external-buffer bufferView texture product evidence is invalid/u,
   );
 });
 

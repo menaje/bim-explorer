@@ -1130,9 +1130,16 @@ function createTextureResolver(
     "glTF bufferViews",
     { nonEmpty: false },
   );
+  const bufferDeclarations = collection(
+    document.buffers ?? [],
+    limits.maximumAccessors,
+    "glTF buffers",
+    { nonEmpty: false },
+  );
   const projected = [];
   const projectedByTexture = new Map();
   const usedExternalImages = new Set();
+  const usedExternalBufferViewImages = new Set();
   const usedEmbeddedImages = new Set();
   const embeddedStorageProfiles = new Set();
   let decodedBytes = 0;
@@ -1179,12 +1186,6 @@ function createTextureResolver(
       return null;
     }
     const mediaLabel = image.mimeType === "image/png" ? "PNG" : "JPEG";
-    if (format !== "glb") {
-      throw new DOMException(
-        `${mediaLabel} image bufferView projection is limited to GLB`,
-        "NotSupportedError",
-      );
-    }
     const viewIndex = arrayIndex(
       image.bufferView,
       bufferViews.length,
@@ -1209,6 +1210,35 @@ function createTextureResolver(
       buffers.length,
       `glTF bufferViews[${viewIndex}].buffer`,
     );
+    let storage;
+    if (format === "glb") {
+      storage = "glb-buffer-view";
+    } else {
+      const bufferDeclaration = plainRecord(
+        bufferDeclarations[bufferIndex],
+        `glTF buffers[${bufferIndex}]`,
+      );
+      const uri = bufferDeclaration.uri;
+      let externalUri;
+      try {
+        externalUri = externalResourceName(uri, limits);
+      } catch {
+        throw new DOMException(
+          `${mediaLabel} image bufferView requires a local external buffer`,
+          "NotSupportedError",
+        );
+      }
+      if (
+        !externalUri.endsWith(".bin") ||
+        !externalResources.has(externalUri)
+      ) {
+        throw new DOMException(
+          `${mediaLabel} image bufferView requires a local external buffer`,
+          "NotSupportedError",
+        );
+      }
+      storage = "gltf-external-buffer-view";
+    }
     const buffer = buffers[bufferIndex];
     const byteOffset = bufferView.byteOffset ?? 0;
     const byteLength = bufferView.byteLength;
@@ -1263,7 +1293,7 @@ function createTextureResolver(
       bytes: buffer.slice(byteOffset, byteOffset + byteLength),
       mediaType: image.mimeType,
       owned: true,
-      storage: "glb-buffer-view",
+      storage,
     };
   };
 
@@ -1432,6 +1462,9 @@ function createTextureResolver(
         }
         usedEmbeddedImages.add(imageIndex);
         embeddedStorageProfiles.add(sourceKind);
+        if (sourceKind === "gltf-external-buffer-view") {
+          usedExternalBufferViewImages.add(imageIndex);
+        }
       } else {
         usedExternalImages.add(uri);
       }
@@ -1468,8 +1501,7 @@ function createTextureResolver(
         (typeof image.uri === "string" &&
           /^(?:data:image\/(?:jpeg|png);base64,)/u.test(image.uri)) ||
         (image.bufferView !== undefined &&
-          ["image/png", "image/jpeg"].includes(image.mimeType) &&
-          format === "glb")
+          ["image/png", "image/jpeg"].includes(image.mimeType))
       ) {
         declaredEmbeddedImages.add(index);
         declaredEmbeddedMediaTypes.add(
@@ -1526,6 +1558,8 @@ function createTextureResolver(
         [...embeddedStorageProfiles].sort(),
       ),
       externalImageResources: usedExternalImages.size,
+      externalBufferViewImageResources:
+        usedExternalBufferViewImages.size,
       externalResourceUris: Object.freeze([...used].sort()),
       sourceBytes,
       textures: Object.freeze(projected),
@@ -2227,13 +2261,25 @@ export function parseGltfReferenceProfile(
           loadedBuffers.externalResourceBytes,
         externalResources:
           appearance.externalResourceUris.length,
-        ...(appearance.externalImageResources === 0
+        ...(
+          appearance.externalImageResources === 0 &&
+          appearance.externalBufferViewImageResources === 0
           ? {}
           : {
               externalBufferResources:
                 loadedBuffers.usedExternalResources.size,
-              externalImageResources:
-                appearance.externalImageResources,
+              ...(appearance.externalImageResources === 0
+                ? {}
+                : {
+                    externalImageResources:
+                      appearance.externalImageResources,
+                  }),
+              ...(appearance.externalBufferViewImageResources === 0
+                ? {}
+                : {
+                    externalBufferViewImageResources:
+                      appearance.externalBufferViewImageResources,
+                  }),
             }),
         ...(appearance.embeddedImageResources === 0
           ? {}

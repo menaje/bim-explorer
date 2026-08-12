@@ -37,15 +37,18 @@ Apple M2 Metal Gate를 통과했습니다. 이어 cache-only Khronos
 명시적 다중 선택, staged VS Code와 clean-installed local VSIX에서 같은 composite
 identity·projection·cleanup으로 열었습니다. 지원 범위는 최대 16개 same-folder
 `.bin`/`.png`/`.jpg`/`.jpeg`, 합산 64MiB입니다. OPAQUE PNG/JPEG
-`baseColorTexture`는 외부 image, exact glTF data URI와 GLB image bufferView에서
-각각 geometry-range v2/v3로 투영합니다. exact BoxTextured PNG 외부 bundle과
+`baseColorTexture`는 외부 image, exact glTF data URI, GLB image bufferView와
+명시적 local `.bin`의 glTF image bufferView에서 각각 geometry-range v2/v3로
+투영합니다. exact BoxTextured PNG 외부 bundle과
 embedded GLB는 각각 같은 세 Apple
 M2 Metal 제품 표면, 합계 6개 표면을 통과했습니다. exact Box-derived
 `KHR_mesh_quantization`과
 `EXT_meshopt_compression` `FILTER_NONE`도 공식 Validator/headless와 세 제품 표면을
 통과했습니다. 별도 cache-only baseline JPEG derivation도 1,756-byte v3 range와
 22,836-byte total upload를 Browser·staged VS Code·clean-installed local VSIX의
-Apple M2 Metal 3개 표면에서 재현했습니다. 임의 URI·glTF bufferView image·
+Apple M2 Metal 3개 표면에서 재현했습니다. exact GLB→`.gltf + .bin` 파생의
+PNG bufferView도 byte-identical v2 range와 같은 세 제품 표면을 통과했습니다.
+임의 URI·data URI buffer 기반 image bufferView·
 progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material mode·다른
 material texture role·Draco·다른 meshopt
 filter·그 밖의 required extension은 거부합니다.

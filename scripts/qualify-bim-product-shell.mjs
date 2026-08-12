@@ -22,6 +22,7 @@ import {
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
 import {
+  acquirePublicGltfBufferViewTextureBundle,
   acquirePublicGltfResourceBundle,
   acquirePublicGltfJpegTextureBundle,
   acquirePublicGltfTextureBundle,
@@ -731,8 +732,13 @@ async function qualificationFixture(kind) {
       }),
     });
   }
-  if (kind === "gltf-texture-public") {
-    const acquired = await acquirePublicGltfTextureBundle();
+  if ([
+    "gltf-texture-public",
+    "gltf-buffer-view-texture-public",
+  ].includes(kind)) {
+    const acquired = kind === "gltf-texture-public"
+      ? await acquirePublicGltfTextureBundle()
+      : await acquirePublicGltfBufferViewTextureBundle();
     const { manifest } = acquired;
     acquired.document.bytes.fill(0);
     for (const resource of acquired.resources) {
@@ -766,14 +772,38 @@ async function qualificationFixture(kind) {
         externalResourceBytes:
           manifest.expected.externalResourceBytes,
         externalResources: manifest.expected.externalResources,
-        externalBufferResources:
-          manifest.expected.externalBufferResources,
-        externalImageResources:
-          manifest.expected.externalImageResources,
+        ...(manifest.expected.externalBufferResources === undefined
+          ? {}
+          : {
+              externalBufferResources:
+                manifest.expected.externalBufferResources,
+            }),
+        ...(manifest.expected.externalImageResources === undefined
+          ? {}
+          : {
+              externalImageResources:
+                manifest.expected.externalImageResources,
+            }),
+        ...(manifest.expected.externalBufferViewImageResources ===
+          undefined
+          ? {}
+          : {
+              externalBufferViewImageResources:
+                manifest.expected.externalBufferViewImageResources,
+            }),
+        ...(manifest.expected.embeddedImageResources === undefined
+          ? {}
+          : {
+              embeddedImageBytes:
+                manifest.expected.embeddedImageBytes,
+              embeddedImageResources:
+                manifest.expected.embeddedImageResources,
+            }),
         networkAtRuntime: false,
       }),
       appearance: Object.freeze({
-        profile: "base-color-texture-png-opaque-v0.1",
+        profile: manifest.expected.appearanceProfile ??
+          "base-color-texture-png-opaque-v0.1",
         textureCoordinateSet:
           manifest.expected.textureCoordinateSet,
         textureSourceBytes: manifest.expected.textureSourceBytes,
@@ -781,6 +811,13 @@ async function qualificationFixture(kind) {
           manifest.expected.textureDecodedBytes,
         textures: manifest.expected.textures,
         imageMediaTypes: [manifest.expected.imageMediaType],
+        ...(manifest.expected.imageStorageProfile === undefined
+          ? {}
+          : {
+              imageStorageProfiles: [
+                manifest.expected.imageStorageProfile,
+              ],
+            }),
         colorSpace: "srgb-to-linear-webgl2",
       }),
       geometryRangeBytes: manifest.expected.geometryRangeBytes,
@@ -1161,6 +1198,7 @@ async function qualificationFixture(kind) {
     "BIM product qualification fixture must be synthetic, public, " +
       "gltf-public, gltf-product-scale, gltf-external-public, " +
       "gltf-texture-public, gltf-embedded-texture-public, " +
+      "gltf-buffer-view-texture-public, " +
       "gltf-jpeg-texture-public, " +
       "gltf-quantized-public, gltf-meshopt-public, " +
       "e57-public, " +
@@ -1597,6 +1635,7 @@ export async function qualifyBimProductShell({
 function parseArguments(values) {
   const allowedFixtures = new Set([
     "gltf-external-public",
+    "gltf-buffer-view-texture-public",
     "gltf-embedded-texture-public",
     "gltf-jpeg-texture-public",
     "gltf-texture-public",
@@ -1646,6 +1685,7 @@ function parseArguments(values) {
         "[--fixture synthetic|public|gltf-public|" +
         "gltf-product-scale|gltf-external-public|e57-public|" +
         "gltf-texture-public|gltf-embedded-texture-public|" +
+        "gltf-buffer-view-texture-public|" +
         "gltf-jpeg-texture-public|" +
         "gltf-quantized-public|gltf-meshopt-public|" +
         "e57-spherical-public|" +

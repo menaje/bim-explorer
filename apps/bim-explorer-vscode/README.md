@@ -13,10 +13,11 @@ document와 sidecar 합산
 64MiB, regular non-symlink, 읽기 전후 size/mtime을 검사하며 resource 변경도
 watch합니다. webview에는 경로가 아닌 resource name과 transferable bytes만 보내고
 누락·중복·미사용 sidecar, separator/`..`/scheme/query/fragment/percent URI와
-runtime network를 거부합니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI 또는
-GLB PNG/JPEG bufferView image는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준
-sampler에만 허용합니다. JPEG는 bounded baseline sequential profile만 허용하고
-glTF bufferView image, progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha
+runtime network를 거부합니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI,
+GLB PNG/JPEG bufferView 또는 명시적 local `.bin`의 glTF image bufferView는
+OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler에만 허용합니다. JPEG는
+bounded baseline sequential profile만 허용하고 data URI buffer 기반 image
+bufferView, progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha
 material mode와 다른 material texture role은 fail-closed입니다. required extension은 `KHR_mesh_quantization`과
 `EXT_meshopt_compression` `FILTER_NONE`만 bounded decode하며 Draco·다른 meshopt
 filter와 그 밖의 required extension은 거부합니다.

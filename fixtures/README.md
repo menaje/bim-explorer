@@ -38,6 +38,12 @@ fixture command가 임시 디렉터리에 결정적으로 생성하고 종료 �
   CompareDispersion의 749-byte baseline JPEG를 결합한 2,685-byte glTF를
   결정적으로 파생하는 cache-only manifest. 1,756-byte geometry-range v3와
   결합된 원 라이선스·표장 조건을 고정하며 원본·파생 sample은 재배포하지 않음
+- `gltf/public-khronos-box-textured-buffer-view`: exact 5,956-byte
+  `BoxTextured.glb`를 2,714-byte `.gltf`와 4,592-byte 단일 `.bin`으로
+  결정적으로 풀어 geometry와 3,750-byte PNG image bufferView를 보존하는
+  cache-only manifest. GLB와 byte-identical한 geometry-range v2와
+  Browser/VS Code/clean VSIX 제품 Gate를 검증하며 원본·파생 sample은
+  재배포하지 않음
 - `gltf/derived-khronos-box-mesh-quantization`: exact Box GLB를 normalized BYTE
   normal과 normalized SHORT position으로 결정적으로 파생한 1,632-byte
   `KHR_mesh_quantization` qualification manifest. 원본과 파생 GLB는 모두
@@ -117,5 +123,6 @@ npm run qualify:gltf:mesh-quantization-products
 npm run qualify:gltf:meshopt-products
 npm run qualify:gltf:texture-products
 npm run qualify:gltf:jpeg-texture-products
+npm run qualify:gltf:buffer-view-texture-products
 npm run qualify:federation:product-scale
 ```

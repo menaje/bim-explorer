@@ -26,10 +26,11 @@ range와 `POINTS` renderer로 분기합니다.
   meshoptimizer 1.2.0을 압축 source에서만 lazy load하고 `FILTER_NONE` bufferView를
   bounded decode합니다. Draco·다른 meshopt filter·그 밖의 required extension은
   source admission 전에 거부합니다.
-- 외부 PNG/JPEG, exact glTF PNG/JPEG data URI 또는 GLB PNG/JPEG bufferView의
-  `baseColorTexture`는 OPAQUE material, `TEXCOORD_0`과 표준 sampler만
+- 외부 PNG/JPEG, exact glTF PNG/JPEG data URI, GLB PNG/JPEG bufferView 또는
+  명시적 local `.bin`의 glTF image bufferView `baseColorTexture`는 OPAQUE
+  material, `TEXCOORD_0`과 표준 sampler만
   geometry-range v2/v3로 투영해 WebGL2 sRGB texture로 표시합니다. JPEG는
-  bounded baseline sequential profile만 허용합니다. glTF bufferView image,
+  bounded baseline sequential profile만 허용합니다. data URI buffer 기반 image bufferView,
   progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha material mode와 다른
   material texture role은 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,

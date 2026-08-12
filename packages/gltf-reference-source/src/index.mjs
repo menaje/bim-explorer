@@ -303,14 +303,30 @@ export class GltfReferenceSource {
             profile.resourceBundle.externalResourceBytes,
           externalResources:
             profile.resourceBundle.externalResources,
-          ...(profile.resourceBundle.externalImageResources ===
-            undefined
+          ...(
+            profile.resourceBundle.externalImageResources ===
+              undefined &&
+            profile.resourceBundle.externalBufferViewImageResources ===
+              undefined
             ? {}
             : {
                 externalBufferResources:
                   profile.resourceBundle.externalBufferResources,
-                externalImageResources:
-                  profile.resourceBundle.externalImageResources,
+                ...(profile.resourceBundle.externalImageResources ===
+                  undefined
+                  ? {}
+                  : {
+                      externalImageResources:
+                        profile.resourceBundle.externalImageResources,
+                    }),
+                ...(profile.resourceBundle
+                    .externalBufferViewImageResources === undefined
+                  ? {}
+                  : {
+                      externalBufferViewImageResources:
+                        profile.resourceBundle
+                          .externalBufferViewImageResources,
+                    }),
               }),
           ...(profile.resourceBundle.embeddedImageResources ===
             undefined

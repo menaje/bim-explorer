@@ -26,6 +26,10 @@ import {
   GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH,
   validateGltfJpegTextureProductsQualification,
 } from "./qualify-gltf-jpeg-texture-products.mjs";
+import {
+  GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfBufferViewTextureProductsQualification,
+} from "./qualify-gltf-buffer-view-texture-products.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
@@ -130,6 +134,10 @@ const jpegTextureProductsEvidence = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.jpegTextureProducts),
   "utf8",
 ));
+const bufferViewTextureProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.bufferViewTextureProducts),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -174,6 +182,13 @@ const jpegTextureFixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.jpegTextureFixtureManifest),
   "utf8",
 ));
+const bufferViewTextureFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.bufferViewTextureFixtureManifest,
+  ),
+  "utf8",
+));
 
 const trueGates = [
   "gltf2Container",
@@ -207,6 +222,7 @@ const trueGates = [
   "boundedBaseColorTexture",
   "boundedEmbeddedBaseColorTexture",
   "boundedJpegBaseColorTexture",
+  "externalBufferViewImage",
 ];
 const heldGates = [
   "requiredExtensions",
@@ -648,6 +664,77 @@ export function validateGltfJpegTextureAdmission(
   return report;
 }
 
+export function validateGltfBufferViewTextureAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfBufferViewTextureProductsQualification(
+      evidenceValue,
+    );
+  if (
+    manifestValue?.evidence?.bufferViewTextureProducts !==
+      GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.bufferViewTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-buffer-view/" +
+        "manifest.json" ||
+    manifestValue?.gates?.externalBufferViewImage !== true ||
+    manifestValue?.policy?.allowGltfExternalBufferViewImage !== true ||
+    manifestValue?.policy?.claimExternalBufferViewImage !== true ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.derivation?.profile !==
+      "bim-explorer-cache-only-box-textured-" +
+        "external-buffer-view/1" ||
+    fixtureValue?.derivation?.sourceEntry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.document?.name !== "BoxTexturedBufferView.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_714 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.document?.derived !== true ||
+    fixtureValue?.resources?.length !== 1 ||
+    fixtureValue.resources[0]?.name !==
+      "BoxTexturedBufferView.bin" ||
+    fixtureValue.resources[0]?.byteLength !== 4_592 ||
+    fixtureValue.resources[0]?.sha256 !==
+      evidenceValue?.fixture?.manifest?.resourceSha256 ||
+    fixtureValue.resources[0]?.derived !== true ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 7_306 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    fixtureValue?.expected?.externalResources !== 1 ||
+    fixtureValue?.expected?.externalBufferResources !== 1 ||
+    fixtureValue?.expected?.externalBufferViewImageResources !== 1 ||
+    fixtureValue?.expected?.embeddedImageBytes !== 3_750 ||
+    fixtureValue?.expected?.embeddedImageResources !== 1 ||
+    fixtureValue?.expected?.imageStorageProfile !==
+      "gltf-external-buffer-view" ||
+    fixtureValue?.expected?.geometryRangeBytes !== 4_756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.textureDecodedBytes !== 262_144 ||
+    fixtureValue?.expected?.textureGpuBytes !== 349_524 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 350_516 ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-" +
+        "external-buffer-view-texture" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 7_306 ||
+    report.decodedTextureBytes !== 262_144 ||
+    report.gpuTextureBytes !== 349_524 ||
+    report.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error(
+      "glTF external-buffer bufferView texture admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
 function exactReferenceFixture(value) {
   return (
     value?.id === fixture.fixtureId &&
@@ -802,6 +889,11 @@ validateGltfJpegTextureAdmission(
   jpegTextureProductsEvidence,
   jpegTextureFixture,
 );
+validateGltfBufferViewTextureAdmission(
+  manifest,
+  bufferViewTextureProductsEvidence,
+  bufferViewTextureFixture,
+);
 
 if (
   manifest.schema !==
@@ -825,6 +917,7 @@ if (
       "texcoord0-webgl2-srgb" ||
   manifest.policy.allowPngDataUri !== true ||
   manifest.policy.allowGlbPngBufferView !== true ||
+  manifest.policy.allowGltfExternalBufferViewImage !== true ||
   manifest.policy.allowJpegDataUri !== true ||
   manifest.policy.allowGlbJpegBufferView !== true ||
   manifest.policy.jpegProfile !==
@@ -851,6 +944,7 @@ if (
   manifest.policy.claimBoundedBaseColorTexture !== true ||
   manifest.policy.claimBoundedEmbeddedBaseColorTexture !== true ||
   manifest.policy.claimBoundedJpegBaseColorTexture !== true ||
+  manifest.policy.claimExternalBufferViewImage !== true ||
   manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
@@ -904,6 +998,11 @@ if (
     GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
   manifest.evidence.jpegTextureFixtureManifest !==
     "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json" ||
+  manifest.evidence.bufferViewTextureProducts !==
+    GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.bufferViewTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-buffer-view/" +
+      "manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -1306,6 +1405,7 @@ const serialized = JSON.stringify({
   meshoptProductsEvidence,
   textureProductsEvidence,
   jpegTextureProductsEvidence,
+  bufferViewTextureProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

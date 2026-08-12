@@ -130,8 +130,9 @@ cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII
 `.bin`/`.png`/`.jpg`/`.jpeg`와
 합산 64MiB만 허용하며 path/scheme, symlink, runtime network와
 현재 승인된 두 확장 이외 required extension은 계속 차단합니다.
-외부 PNG/JPEG는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 standard sampler만
-허용합니다. JPEG는 bounded baseline sequential profile만 허용하고
+외부 PNG/JPEG와 명시적 local `.bin`의 PNG/JPEG image bufferView는 OPAQUE
+`baseColorTexture`, `TEXCOORD_0`과 standard sampler만 허용합니다. JPEG는
+bounded baseline sequential profile만 허용하고
 progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material mode·다른 material
 texture role은 차단합니다.
 이 local bundle 증거는 single-source 제품 범위이고 immutable federated BIM
@@ -282,15 +283,17 @@ redistribution review는 계속 보류합니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 
-optional Coni Spatial bridge의 exact Viewer package pin, source-bound
+legacy optional single-source bridge v0.1의 exact Viewer package pin, source-bound
 GlobalId→Canonical mapping response, synchronized 2D/3D selection, opaque
 Context Reference, BIM base + Spatial live/diff layer와 authority-free handoff는
 [`spatial-integration.json`](spatial-integration.json)과
 [`synthetic bridge evidence`](evidence/spatial-integration-synthetic-2026-08-04.json)가
-소유합니다. Explorer provider contract는 통과했지만 실제 Spatial service
-consumer, standalone Spatial bundle과 public integration package는
-consumer package admission Gate로 계속 보류합니다. MPL-2.0 source 자체는
-Community v0.1.0 source archive에 공개돼 있습니다.
+소유합니다. Explorer provider contract는 통과했지만 이 v0.1 bridge의 actual
+consumer, standalone downstream bundle과 public integration package는 계속
+보류합니다. 이 false gate는 독립적인
+[`federated BIM Surface v0.2`](federated-bim-surface.json)의 public artifact와
+consumer admission을 무효화하지 않습니다. MPL-2.0 source 자체는 Community
+v0.1.0 source archive에 공개돼 있습니다.
 
 BCF XML 3.0 local archive, IDS 1.0 document/result와 bSDD URI의 source-bound
 read-only 탐색은
@@ -431,12 +434,14 @@ source/renderer 독립 JPEG validation과 1,756-byte geometry-range v3를 통과
 actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX의 Apple M2
 Metal 3개 표면은 각각 86,486 pixels·21,844-byte mipmap-aware GPU texture·
 22,836-byte total upload와 terminal cleanup을 재현합니다. PNG-only v2 range와
-hash는 그대로입니다. glTF manifest는 31 passed / 4 held, product shell은
-66 passed / 1 held이며 renderer manifest는 30 passed / 0 held입니다.
+hash는 그대로입니다. exact BoxTextured GLB를 `.gltf + 단일 .bin`으로 파생한
+PNG bufferView 경로도 공식 Validator issue 0개, byte-identical v2 range와 같은
+세 Apple M2 Metal 제품 표면을 통과합니다. glTF manifest는 32 passed / 4 held,
+product shell은 69 passed / 1 held이며 renderer manifest는 30 passed / 0 held입니다.
 `KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`만 required
 extension으로 허용하며 Draco·다른 meshopt filter·그 밖의 required extension,
 write·round-trip과 BIM semantic authority는 held입니다.
-임의 URI·glTF bufferView image·progressive/arithmetic/lossless JPEG·비-OPAQUE alpha mode·다중 material
+임의 URI·data URI buffer 기반 image bufferView·progressive/arithmetic/lossless JPEG·비-OPAQUE alpha mode·다중 material
 texture·Linux/Windows physical GPU와 OS-level peak memory도
 승인하지 않습니다. 공개 sample은 ignored cache에서만 사용하고 release에는
 포함하지 않습니다.

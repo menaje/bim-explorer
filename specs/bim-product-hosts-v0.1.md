@@ -109,10 +109,10 @@ VSIX에서 파생 hierarchy/LOD 전환과 exact cleanup을 비교합니다.
 
 - stable/production Viewer Core와 Marketplace conformance
 - Linux/Windows physical GPU와 cross-platform OS-level GPU/memory qualification
-- arbitrary glTF URI, glTF bufferView image, progressive/arithmetic/lossless
+- arbitrary glTF URI, data URI buffer 기반 glTF image bufferView, progressive/arithmetic/lossless
   JPEG·투명/다중 material texture, Draco와 승인되지 않은 required extension;
-  bounded same-folder `.bin`/`.png`/`.jpg`/`.jpeg`, 외부/data-URI/GLB-bufferView
-  OPAQUE PNG/baseline JPEG `baseColorTexture`,
+  bounded same-folder `.bin`/`.png`/`.jpg`/`.jpeg`, 외부/data-URI/GLB-bufferView와
+  local `.bin`-backed glTF bufferView OPAQUE PNG/baseline JPEG `baseColorTexture`,
   `KHR_mesh_quantization`, `EXT_meshopt_compression` `FILTER_NONE` 제품 Gate는
   통과
 - E57/LAS/LAZ CRS/surveyed datum, source-native hierarchy·point semantics와

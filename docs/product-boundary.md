@@ -18,10 +18,11 @@ BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
 추가했습니다. `.gltf`의 JSON-declared 동일 폴더 `.bin`, `.png`, `.jpg`, `.jpeg`도 명시적 local
 bundle로 열 수 있지만 최대 16개·합산 64MiB이고 임의 URI·network fetch는
-허용하지 않습니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI와 GLB PNG/JPEG
-bufferView는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler만
-허용합니다. JPEG는 bounded baseline sequential profile만 허용하고 glTF
-bufferView image, progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
+허용하지 않습니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI, GLB PNG/JPEG
+bufferView와 명시적으로 공급된 local `.bin`의 glTF image bufferView는 OPAQUE
+`baseColorTexture`, `TEXCOORD_0`과 표준 sampler만 허용합니다. JPEG는 bounded
+baseline sequential profile만 허용하고 data URI buffer 기반 image bufferView,
+progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
 mode·다른 material texture role은 거부합니다.
 required extension은 코덱 없는 `KHR_mesh_quantization`과
 exact meshoptimizer 1.2.0을 쓰는 `EXT_meshopt_compression` `FILTER_NONE`만 bounded

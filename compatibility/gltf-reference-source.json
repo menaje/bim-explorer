@@ -36,6 +36,7 @@
     "boundedBaseColorTexture": true,
     "boundedEmbeddedBaseColorTexture": true,
     "boundedJpegBaseColorTexture": true,
+    "externalBufferViewImage": true,
     "requiredExtensions": false,
     "write": false,
     "roundTrip": false,
@@ -58,6 +59,7 @@
     "meshoptProducts": "compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json",
     "textureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json",
     "jpegTextureProducts": "compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json",
+    "bufferViewTextureProducts": "compatibility/evidence/gltf-reference-source-external-buffer-view-texture-products-darwin-arm64-2026-08-11.json",
     "federation": "compatibility/evidence/bim-federation-synthetic-2026-08-04.json",
     "fixtureManifest": "fixtures/gltf/public-khronos-box/manifest.json",
     "productScaleFixtureManifest": "fixtures/gltf/public-khronos-a-beautiful-game/manifest.json",
@@ -66,7 +68,8 @@
     "meshoptFixtureManifest": "fixtures/gltf/derived-khronos-box-meshopt/manifest.json",
     "textureFixtureManifest": "fixtures/gltf/public-khronos-box-textured/manifest.json",
     "embeddedTextureFixtureManifest": "fixtures/gltf/public-khronos-box-textured-embedded/manifest.json",
-    "jpegTextureFixtureManifest": "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json"
+    "jpegTextureFixtureManifest": "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json",
+    "bufferViewTextureFixtureManifest": "fixtures/gltf/public-khronos-box-textured-buffer-view/manifest.json"
   },
   "blockers": [
     "required extensions other than KHR_mesh_quantization and the bounded EXT_meshopt_compression FILTER_NONE profile remain unsupported"
@@ -78,11 +81,12 @@
     "external glTF support is limited to at most 16 explicitly supplied same-folder ASCII .bin, .jpg, .jpeg or .png files under one 64MiB aggregate source cap",
     "the external resource product Gate is single-source only and does not change the immutable federated BIM Surface v0.2 runtime or .bimfed.json admission",
     "arbitrary paths, schemes, query or fragment URIs, percent-encoded names, symlinks, unused sidecars, unsupported external images and runtime network fetch remain blocked",
-    "external PNG, glTF data URI PNG and GLB bufferView PNG projection is limited to opaque core baseColorTexture using TEXCOORD_0, standard samplers, 8-bit RGB, RGBA or indexed non-interlaced PNG, 16 textures, 8MiB encoded bytes, 16MiB decoded RGBA bytes, 2048 pixels per axis and 256:1 decoded-to-source ratio",
-    "baseline sequential 8-bit single-scan JPEG with one or three components is admitted for the same OPAQUE baseColorTexture scope through external .jpg/.jpeg, exact data URI and GLB bufferView storage; progressive, arithmetic, lossless and multi-scan JPEG remain held",
-    "alpha modes, normal, metallic-roughness, occlusion or emissive textures, KHR_texture_transform, glTF JSON bufferView image projection and broader material semantics remain held",
+    "external PNG, glTF data URI PNG, GLB bufferView PNG and glTF bufferView PNG backed by an explicitly supplied local .bin are limited to opaque core baseColorTexture using TEXCOORD_0, standard samplers, 8-bit RGB, RGBA or indexed non-interlaced PNG, 16 textures, 8MiB encoded bytes, 16MiB decoded RGBA bytes, 2048 pixels per axis and 256:1 decoded-to-source ratio",
+    "baseline sequential 8-bit single-scan JPEG with one or three components is admitted for the same OPAQUE baseColorTexture scope through external .jpg/.jpeg, exact data URI, GLB bufferView and glTF bufferView backed by an explicitly supplied local .bin; progressive, arithmetic, lossless and multi-scan JPEG remain held",
+    "alpha modes, normal, metallic-roughness, occlusion or emissive textures, KHR_texture_transform, bufferView images backed by data URI buffers and broader material semantics remain held",
     "the exact cache-only BoxTextured external glTF bundle and embedded PNG GLB both pass the official Validator and actual Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX with 262144 decoded base RGBA bytes, a 349524-byte full mip chain and 350516 total logical GPU bytes; the Cesium logo license and trademark terms are recorded and neither sample is redistributed",
     "the exact 749-byte Khronos baseline JPEG and reproducible cache-only BoxTextured derivation pass the official Validator and actual Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX with geometry-range v3, 16384 decoded base RGBA bytes, a 21844-byte full mip chain and 22836 total logical GPU bytes; no upstream or derived sample is redistributed",
+    "the reproducible cache-only BoxTextured GLB derivation exposes the exact 4592-byte BIN chunk as one local .bin while preserving its 3750-byte PNG bufferView; it passes the official Validator and actual Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX with the byte-identical 4756-byte geometry-range v2; no upstream or derived sample is redistributed",
     "required KHR_mesh_quantization and EXT_meshopt_compression with FILTER_NONE are admitted; Draco, other meshopt filters and every other required extension remain blocked",
     "the cache-only Box-derived quantized fixture passes the official Validator, headless projection and Apple M2 Metal in Browser, staged VS Code and a clean-installed local VSIX",
     "KHR_mesh_quantization is not backported to the immutable federated BIM Surface v0.2 runtime and requires a later semantic-versioned surface contract before federation use",
@@ -109,6 +113,7 @@
     "baseColorTextureScope": "external-or-embedded-png-or-baseline-jpeg-opaque-texcoord0-webgl2-srgb",
     "allowPngDataUri": true,
     "allowGlbPngBufferView": true,
+    "allowGltfExternalBufferViewImage": true,
     "allowJpegDataUri": true,
     "allowGlbJpegBufferView": true,
     "jpegProfile": "baseline-sequential-8bit-single-scan-1-or-3-components",
@@ -149,6 +154,7 @@
     "claimBoundedBaseColorTexture": true,
     "claimBoundedEmbeddedBaseColorTexture": true,
     "claimBoundedJpegBaseColorTexture": true,
+    "claimExternalBufferViewImage": true,
     "claimPhysicalGpu": true,
     "claimProduction": false
   }

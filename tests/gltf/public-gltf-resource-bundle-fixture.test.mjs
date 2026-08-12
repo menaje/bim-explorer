@@ -7,8 +7,37 @@ import test from "node:test";
 
 import {
   acquirePublicGltfResourceBundle,
+  loadPublicGltfBufferViewTextureBundleManifest,
   loadPublicGltfResourceBundleManifest,
 } from "../../scripts/public-gltf-resource-bundle-fixture.mjs";
+
+function syntheticBufferViewGlb() {
+  const binaryLength = 4_592;
+  const document = {
+    asset: { generator: "COLLADA2GLTF", version: "2.0" },
+    buffers: [{ byteLength: binaryLength }],
+    images: [{ bufferView: 3, mimeType: "image/png" }],
+  };
+  const json = new TextEncoder().encode(JSON.stringify(document));
+  const jsonLength = 1_336;
+  assert.ok(json.byteLength < jsonLength);
+  const bytes = new Uint8Array(12 + 8 + jsonLength + 8 + binaryLength);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.byteLength, true);
+  view.setUint32(12, jsonLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  bytes.fill(0x20, 20, 20 + jsonLength);
+  bytes.set(json, 20);
+  const binaryHeader = 20 + jsonLength;
+  view.setUint32(binaryHeader, binaryLength, true);
+  view.setUint32(binaryHeader + 4, 0x004e4942, true);
+  for (let index = binaryHeader + 8; index < bytes.length; index += 1) {
+    bytes[index] = index & 0xff;
+  }
+  return bytes;
+}
 
 test("public external glTF bundle manifest pins both exact resources", async () => {
   const manifest = await loadPublicGltfResourceBundleManifest();
@@ -97,6 +126,81 @@ test("public external glTF bundle acquisition verifies and reuses cache", async 
     second.document.bytes.fill(0);
     second.resources[0].bytes.fill(0);
   } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("public bufferView bundle derivation preserves one exact external buffer", async () => {
+  const manifest = structuredClone(
+    await loadPublicGltfBufferViewTextureBundleManifest(),
+  );
+  const source = syntheticBufferViewGlb();
+  const digest = (bytes) =>
+    createHash("sha256").update(bytes).digest("hex");
+  manifest.derivation.sourceEntry.sha256 = digest(source);
+  const sourceDocument = JSON.parse(
+    new TextDecoder().decode(source.subarray(20, 20 + 1_336)).trimEnd(),
+  );
+  sourceDocument.buffers[0].uri = manifest.resources[0].name;
+  const documentBytes = new TextEncoder().encode(
+    `${JSON.stringify(sourceDocument, null, 2)}\n`,
+  );
+  const resourceBytes = source.slice(20 + 1_336 + 8);
+  manifest.document.byteLength = documentBytes.byteLength;
+  manifest.document.sha256 = digest(documentBytes);
+  manifest.resources[0].byteLength = resourceBytes.byteLength;
+  manifest.resources[0].sha256 = digest(resourceBytes);
+  manifest.expected.externalResourceBytes = resourceBytes.byteLength;
+  manifest.expected.aggregateSourceBytes =
+    documentBytes.byteLength + resourceBytes.byteLength;
+  let requests = 0;
+  const fixtureFetch = async (url) => {
+    requests += 1;
+    assert.equal(url, manifest.derivation.sourceEntry.rawUrl);
+    return {
+      ok: true,
+      headers: {
+        get: (name) => name.toLowerCase() === "content-length"
+          ? String(source.byteLength)
+          : null,
+      },
+      arrayBuffer: async () => source.slice().buffer,
+    };
+  };
+  const temporary = await mkdtemp(
+    path.join(tmpdir(), "bex-gltf-buffer-view-bundle-"),
+  );
+  try {
+    const manifestPath = path.join(temporary, "manifest.json");
+    const cacheRoot = path.join(temporary, "cache");
+    await writeFile(manifestPath, JSON.stringify(manifest), "utf8");
+    const first = await acquirePublicGltfResourceBundle({
+      cacheRoot,
+      fetchImpl: fixtureFetch,
+      manifestPath,
+    });
+    assert.equal(first.receipt.cacheHit, false);
+    assert.equal(requests, 1);
+    assert.deepEqual(first.document.bytes, documentBytes);
+    assert.deepEqual(first.resources[0].bytes, resourceBytes);
+    first.document.bytes.fill(0);
+    first.resources[0].bytes.fill(0);
+    const second = await acquirePublicGltfResourceBundle({
+      cacheRoot,
+      fetchImpl: async () => {
+        throw new Error("cache should prevent network access");
+      },
+      manifestPath,
+    });
+    assert.equal(second.receipt.cacheHit, true);
+    assert.deepEqual(second.document.bytes, documentBytes);
+    assert.deepEqual(second.resources[0].bytes, resourceBytes);
+    second.document.bytes.fill(0);
+    second.resources[0].bytes.fill(0);
+  } finally {
+    source.fill(0);
+    documentBytes.fill(0);
+    resourceBytes.fill(0);
     await rm(temporary, { recursive: true, force: true });
   }
 });

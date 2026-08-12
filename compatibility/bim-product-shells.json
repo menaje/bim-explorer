@@ -155,6 +155,31 @@
     "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
     "license": "(LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium) AND (CC0-1.0 AND LicenseRef-LegalMark-Khronos)"
   },
+  "externalBufferViewTexturedReferenceFixture": {
+    "id": "khronos-gltf-sample-assets-box-textured-derived-external-buffer-view-png",
+    "byteLength": 7306,
+    "documentByteLength": 2714,
+    "externalResourceBytes": 4592,
+    "externalResources": 1,
+    "externalBufferResources": 1,
+    "externalBufferViewImageResources": 1,
+    "embeddedImageBytes": 3750,
+    "embeddedImageResources": 1,
+    "textureSourceBytes": 3750,
+    "textureDecodedBytes": 262144,
+    "textureGpuBytes": 349524,
+    "textures": 1,
+    "sourceFingerprint": "aa95f4e57e2bc0cbd196c460e87081a60d92025629e9dcb164056c7e1aefd945",
+    "format": "gltf",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "artifactCommitted": false,
+    "thirdPartyContent": true,
+    "bundled": false,
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium"
+  },
   "quantizedReferenceFixture": {
     "id": "khronos-box-derived-khr-mesh-quantization",
     "byteLength": 1632,
@@ -295,6 +320,7 @@
     "extMeshoptCompressionProductSurfaces": 3,
     "baseColorTextureProductSurfaces": 6,
     "jpegBaseColorTextureProductSurfaces": 3,
+    "externalBufferViewTextureProductSurfaces": 3,
     "pointCloudProductSurfaces": 12,
     "pointCloudFormatAdmission": false,
     "simultaneousComposition": false,
@@ -348,6 +374,9 @@
     "browserBoundedJpegBaseColorTextureOpen": true,
     "vscodeBoundedJpegBaseColorTextureOpen": true,
     "cleanVsixBoundedJpegBaseColorTextureOpen": true,
+    "browserExternalBufferViewBaseColorTextureOpen": true,
+    "vscodeExternalBufferViewBaseColorTextureOpen": true,
+    "cleanVsixExternalBufferViewBaseColorTextureOpen": true,
     "browserReadonlyLasLazOpen": true,
     "vscodeReadonlyLasLazOpen": true,
     "cleanVsixLasLazOpen": true,
@@ -399,7 +428,8 @@
     "gltfMeshQuantizationProducts": "compatibility/evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json",
     "gltfMeshoptProducts": "compatibility/evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json",
     "gltfTextureProducts": "compatibility/evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json",
-    "gltfJpegTextureProducts": "compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json"
+    "gltfJpegTextureProducts": "compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json",
+    "gltfBufferViewTextureProducts": "compatibility/evidence/gltf-reference-source-external-buffer-view-texture-products-darwin-arm64-2026-08-11.json"
   },
   "blockers": [
     "marketplace release remains behind license and release gates"
@@ -422,6 +452,7 @@
     "claimBoundedBaseColorTextureOpen": true,
     "claimEmbeddedBaseColorTextureOpen": true,
     "claimBoundedJpegBaseColorTextureOpen": true,
+    "claimExternalBufferViewBaseColorTextureOpen": true,
     "boundedBaseColorTextureScope": "external-or-embedded-png-or-baseline-jpeg-opaque-texcoord0-webgl2-srgb",
     "claimArbitraryGltfUri": false,
     "claimBrowserLasLazOpen": true,

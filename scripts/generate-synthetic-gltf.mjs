@@ -548,6 +548,61 @@ export function syntheticTexturedGlbBytes({
   return bytes;
 }
 
+export function syntheticTexturedGltfExternalBufferViewBundle({
+  bufferUri = "geometry.bin",
+  imageBufferView = 4,
+  imageByteLength = null,
+  imageByteOffset = 104,
+  imageMimeType = "image/png",
+  imagePayload = null,
+  secondNodeX = 3,
+} = {}) {
+  const geometry = texturedBinaryPayload();
+  const image = imagePayload === null
+    ? imageMimeType === "image/png"
+      ? syntheticPngBytes()
+      : syntheticJpegBytes()
+    : Uint8Array.from(imagePayload);
+  const declaredImageBytes = imageByteLength ?? image.byteLength;
+  const binary = new Uint8Array(aligned(
+    Math.max(
+      geometry.byteLength,
+      imageByteOffset + image.byteLength,
+    ),
+  ));
+  binary.set(geometry, 0);
+  binary.set(image, imageByteOffset);
+  const document = texturedDocumentFor({
+    binaryUri: bufferUri,
+    imageMimeType,
+    imageUri: null,
+    secondNodeX,
+  });
+  document.asset.generator = imageMimeType === "image/png"
+    ? "BIM Explorer deterministic external-buffer PNG fixture"
+    : "BIM Explorer deterministic external-buffer JPEG fixture";
+  document.buffers[0] = {
+    byteLength: binary.byteLength,
+    uri: bufferUri,
+  };
+  document.bufferViews.push({
+    buffer: 0,
+    byteOffset: imageByteOffset,
+    byteLength: declaredImageBytes,
+  });
+  document.images = [{
+    bufferView: imageBufferView,
+    mimeType: imageMimeType,
+  }];
+  const bytes = new TextEncoder().encode(JSON.stringify(document));
+  geometry.fill(0);
+  image.fill(0);
+  return {
+    bytes,
+    resources: [{ uri: bufferUri, bytes: binary }],
+  };
+}
+
 export function syntheticTexturedGltfBufferViewBytes({
   imageByteOffset = 104,
   secondNodeX = 3,

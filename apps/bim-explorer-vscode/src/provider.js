@@ -487,6 +487,16 @@ function sanitizeReport(value) {
                       ],
                     )),
                 ...(value.source.resourceBundle
+                  ?.externalBufferViewImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "externalBufferResources",
+                        "externalBufferViewImageResources",
+                      ],
+                    )),
+                ...(value.source.resourceBundle
                   ?.embeddedImageResources === undefined
                   ? {}
                   : numericRecord(
@@ -721,6 +731,13 @@ function sanitizeReport(value) {
               : numericRecord(value.resources, [
                   "externalBufferResources",
                   "externalImageResources",
+                ])),
+            ...(value.resources
+              ?.externalBufferViewImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "externalBufferResources",
+                  "externalBufferViewImageResources",
                 ])),
             ...(value.resources?.embeddedImageResources === undefined
               ? {}

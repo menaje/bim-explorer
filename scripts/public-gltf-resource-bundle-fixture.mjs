@@ -31,6 +31,14 @@ export const PUBLIC_GLTF_JPEG_TEXTURE_BUNDLE_MANIFEST = path.join(
   "public-khronos-box-textured-jpeg",
   "manifest.json",
 );
+export const PUBLIC_GLTF_BUFFER_VIEW_TEXTURE_BUNDLE_MANIFEST =
+  path.join(
+    ROOT,
+    "fixtures",
+    "gltf",
+    "public-khronos-box-textured-buffer-view",
+    "manifest.json",
+  );
 const SHA256 = /^[0-9a-f]{64}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const RESOURCE_NAME =
@@ -71,6 +79,21 @@ function validateEntry(
   }
 }
 
+function validateDerivedEntry(entry, expectedName, expectedMediaType) {
+  if (
+    entry.name !== expectedName ||
+    entry.mediaType !== expectedMediaType ||
+    entry.derived !== true ||
+    !Number.isSafeInteger(entry.byteLength) ||
+    entry.byteLength <= 0 ||
+    entry.byteLength > 64 * 1024 * 1024 ||
+    !SHA256.test(entry.sha256 ?? "") ||
+    entry.rawUrl !== undefined
+  ) {
+    throw new Error("derived public glTF resource bundle entry is invalid");
+  }
+}
+
 function validateManifest(value) {
   const manifest = record(value, "public glTF resource bundle manifest");
   const provenance = record(manifest.provenance, "bundle provenance");
@@ -96,6 +119,7 @@ function validateManifest(value) {
       ? {
           directory: "Models/BoxTextured/glTF",
           documentName: "BoxTextured.gltf",
+          textureKind: "png-external",
           resources: [
             ["BoxTextured0.bin", "application/octet-stream"],
             ["CesiumLogoFlat.png", "image/png"],
@@ -110,10 +134,13 @@ function validateManifest(value) {
           "khronos-gltf-sample-assets-box-textured-derived-external-jpeg"
         ? {
             derived: true,
+            derivationProfile:
+              "bim-explorer-cache-only-box-textured-jpeg/1",
             directory:
               "Models/BoxTextured/glTF + " +
               "Models/CompareDispersion/glTF",
             documentName: "BoxTexturedJpeg.gltf",
+            textureKind: "jpeg-external",
             resources: [
               [
                 "BoxTextured0.bin",
@@ -133,6 +160,30 @@ function validateManifest(value) {
               "(CC0-1.0 AND LicenseRef-LegalMark-Khronos)",
             licenseUrl: null,
           }
+        : manifest.fixtureId ===
+            "khronos-gltf-sample-assets-box-textured-derived-" +
+              "external-buffer-view-png"
+          ? {
+              derived: true,
+              derivedResource: true,
+              derivationProfile:
+                "bim-explorer-cache-only-box-textured-" +
+                "external-buffer-view/1",
+              directory: "Models/BoxTextured/glTF-Binary",
+              documentName: "BoxTexturedBufferView.gltf",
+              textureKind: "png-external-buffer-view",
+              sourceName: "BoxTextured.glb",
+              resources: [[
+                "BoxTexturedBufferView.bin",
+                "application/octet-stream",
+              ]],
+              licenseSpdx:
+                "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+              licenseUrl:
+                "https://github.com/KhronosGroup/glTF-Sample-Assets/" +
+                `blob/${provenance.commit}/LICENSES/` +
+                "LicenseRef-CC-BY-TM.txt",
+            }
       : null;
   const externalResourceBytes = Array.isArray(manifest.resources)
     ? manifest.resources.reduce(
@@ -194,19 +245,31 @@ function validateManifest(value) {
       !Number.isSafeInteger(document.byteLength) ||
       document.byteLength <= 0 ||
       !SHA256.test(document.sha256 ?? "") ||
-      manifest.derivation?.profile !==
-        "bim-explorer-cache-only-box-textured-jpeg/1" ||
-      sourceDocument?.name !== "BoxTextured.gltf" ||
-      sourceDocument?.mediaType !== "model/gltf+json" ||
-      sourceDocument?.byteLength !== 3_695 ||
-      sourceDocument?.sha256 !==
-        "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef" ||
-      sourceDocument?.rawUrl !==
-        "https://raw.githubusercontent.com/KhronosGroup/" +
-        `glTF-Sample-Assets/${provenance.commit}/` +
-        "Models/BoxTextured/glTF/BoxTextured.gltf"
+      manifest.derivation?.profile !== fixture.derivationProfile
     ) {
       throw new Error("derived public glTF document manifest is invalid");
+    }
+    if (fixture.textureKind === "jpeg-external") {
+      if (
+        sourceDocument?.name !== "BoxTextured.gltf" ||
+        sourceDocument?.mediaType !== "model/gltf+json" ||
+        sourceDocument?.byteLength !== 3_695 ||
+        sourceDocument?.sha256 !==
+          "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef" ||
+        sourceDocument?.rawUrl !==
+          "https://raw.githubusercontent.com/KhronosGroup/" +
+          `glTF-Sample-Assets/${provenance.commit}/` +
+          "Models/BoxTextured/glTF/BoxTextured.gltf"
+      ) {
+        throw new Error("derived public glTF source document is invalid");
+      }
+    } else {
+      validateEntry(
+        manifest.derivation?.sourceEntry,
+        fixture.sourceName,
+        "model/gltf-binary",
+        rawBase,
+      );
     }
   } else {
     validateEntry(
@@ -217,23 +280,28 @@ function validateManifest(value) {
     );
   }
   for (let index = 0; index < fixture.resources.length; index += 1) {
-    validateEntry(
-      manifest.resources[index],
-      fixture.resources[index][0],
-      fixture.resources[index][1],
-      rawBase,
-      fixture.resources[index][2] === undefined
-        ? `${rawBase}/${fixture.resources[index][0]}`
-        : "https://raw.githubusercontent.com/KhronosGroup/" +
-          `glTF-Sample-Assets/${provenance.commit}/` +
-          fixture.resources[index][2],
-    );
+    if (fixture.derivedResource === true) {
+      validateDerivedEntry(
+        manifest.resources[index],
+        fixture.resources[index][0],
+        fixture.resources[index][1],
+      );
+    } else {
+      validateEntry(
+        manifest.resources[index],
+        fixture.resources[index][0],
+        fixture.resources[index][1],
+        rawBase,
+        fixture.resources[index][2] === undefined
+          ? `${rawBase}/${fixture.resources[index][0]}`
+          : "https://raw.githubusercontent.com/KhronosGroup/" +
+            `glTF-Sample-Assets/${provenance.commit}/` +
+            fixture.resources[index][2],
+      );
+    }
   }
   if (
-    [
-      "khronos-gltf-sample-assets-box-textured-external-png",
-      "khronos-gltf-sample-assets-box-textured-derived-external-jpeg",
-    ].includes(manifest.fixtureId) &&
+    fixture.textureKind !== undefined &&
     (
       (
         fixture.derived !== true &&
@@ -242,15 +310,28 @@ function validateManifest(value) {
           `blob/${provenance.commit}/LICENSES/LicenseRef-LegalMark-Cesium.txt`
       ) ||
       expected.externalBufferResources !== 1 ||
-      expected.externalImageResources !== 1 ||
+      (
+        fixture.textureKind === "png-external-buffer-view"
+          ? (
+              expected.externalImageResources !== undefined ||
+              expected.externalBufferViewImageResources !== 1 ||
+              expected.embeddedImageBytes !== 3_750 ||
+              expected.embeddedImageResources !== 1 ||
+              expected.imageStorageProfile !==
+                "gltf-external-buffer-view"
+            )
+          : expected.externalImageResources !== 1
+      ) ||
       expected.geometryRangeMediaType !==
-        (fixture.derived === true
+        (fixture.textureKind === "jpeg-external"
           ? "application/vnd.bim-explorer.geometry-range.v3"
           : "application/vnd.bim-explorer.geometry-range.v2") ||
       expected.imageMediaType !==
-        (fixture.derived === true ? "image/jpeg" : "image/png") ||
+        (fixture.textureKind === "jpeg-external"
+          ? "image/jpeg"
+          : "image/png") ||
       expected.appearanceProfile !==
-        (fixture.derived === true
+        (fixture.textureKind === "jpeg-external"
           ? "base-color-texture-opaque-v0.2"
           : undefined) ||
       expected.textureCoordinateSet !== 0 ||
@@ -395,6 +476,109 @@ async function deriveJpegDocument(manifest, root, source) {
   return { bytes, cacheHit: false, cachePath };
 }
 
+async function storeDerivedEntry(root, entry, bytes) {
+  const cachePath = path.join(root, entry.name);
+  const cached = await verifiedCache(cachePath, entry);
+  if (cached !== null) {
+    bytes.fill(0);
+    return { bytes: cached, cacheHit: true, cachePath };
+  }
+  if (
+    bytes.byteLength !== entry.byteLength ||
+    sha256(bytes) !== entry.sha256
+  ) {
+    bytes.fill(0);
+    throw new Error("derived public glTF entry is not reproducible");
+  }
+  await mkdir(root, { recursive: true });
+  const temporary = `${cachePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    await writeFile(temporary, bytes, { flag: "wx", mode: 0o600 });
+    await rename(temporary, cachePath);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+  return { bytes, cacheHit: false, cachePath };
+}
+
+async function deriveExternalBufferViewBundle(
+  manifest,
+  root,
+  source,
+) {
+  const view = new DataView(
+    source.buffer,
+    source.byteOffset,
+    source.byteLength,
+  );
+  if (
+    source.byteLength !== 5_956 ||
+    view.getUint32(0, true) !== 0x46546c67 ||
+    view.getUint32(4, true) !== 2 ||
+    view.getUint32(8, true) !== source.byteLength ||
+    view.getUint32(16, true) !== 0x4e4f534a
+  ) {
+    throw new Error("public glTF bufferView derivation input is invalid");
+  }
+  const jsonLength = view.getUint32(12, true);
+  const binaryHeader = 20 + jsonLength;
+  if (
+    binaryHeader + 8 > source.byteLength ||
+    view.getUint32(binaryHeader + 4, true) !== 0x004e4942
+  ) {
+    throw new Error("public glTF bufferView derivation chunks are invalid");
+  }
+  const binaryLength = view.getUint32(binaryHeader, true);
+  if (binaryHeader + 8 + binaryLength !== source.byteLength) {
+    throw new Error("public glTF bufferView binary range is invalid");
+  }
+  let documentValue;
+  try {
+    documentValue = JSON.parse(
+      new TextDecoder("utf-8", { fatal: true })
+        .decode(source.subarray(20, binaryHeader))
+        .trimEnd(),
+    );
+  } catch {
+    throw new Error("public glTF bufferView JSON chunk is invalid");
+  }
+  if (
+    documentValue?.asset?.generator !== "COLLADA2GLTF" ||
+    documentValue?.asset?.version !== "2.0" ||
+    documentValue?.buffers?.length !== 1 ||
+    documentValue.buffers[0]?.byteLength !== binaryLength ||
+    documentValue.buffers[0]?.uri !== undefined ||
+    documentValue?.images?.length !== 1 ||
+    documentValue.images[0]?.bufferView !== 3 ||
+    documentValue.images[0]?.mimeType !== "image/png"
+  ) {
+    throw new Error("public glTF bufferView derivation profile is invalid");
+  }
+  documentValue.buffers[0].uri = manifest.resources[0].name;
+  const documentBytes = new TextEncoder().encode(
+    `${JSON.stringify(documentValue, null, 2)}\n`,
+  );
+  const resourceBytes = Uint8Array.from(
+    source.subarray(binaryHeader + 8),
+  );
+  const document = await storeDerivedEntry(
+    root,
+    manifest.document,
+    documentBytes,
+  );
+  try {
+    const resource = await storeDerivedEntry(
+      root,
+      manifest.resources[0],
+      resourceBytes,
+    );
+    return { document, resources: [resource] };
+  } catch (error) {
+    document.bytes.fill(0);
+    throw error;
+  }
+}
+
 export async function acquirePublicGltfResourceBundle({
   cacheRoot,
   fetchImpl = globalThis.fetch,
@@ -407,13 +591,17 @@ export async function acquirePublicGltfResourceBundle({
   const root = cacheRoot ?? path.join(ROOT, manifest.tracking.cacheRoot);
   const bundleRoot = path.join(root, manifest.fixtureId);
   let document;
+  let derivedResources = null;
   if (manifest.derivation === undefined) {
     document = await acquireEntry(
       manifest.document,
       bundleRoot,
       fetchImpl,
     );
-  } else {
+  } else if (
+    manifest.derivation.profile ===
+      "bim-explorer-cache-only-box-textured-jpeg/1"
+  ) {
     const source = await acquireEntry(
       manifest.derivation.sourceDocument,
       bundleRoot,
@@ -428,17 +616,43 @@ export async function acquirePublicGltfResourceBundle({
     } finally {
       source.bytes.fill(0);
     }
+  } else {
+    const source = await acquireEntry(
+      manifest.derivation.sourceEntry,
+      bundleRoot,
+      fetchImpl,
+    );
+    try {
+      const derived = await deriveExternalBufferViewBundle(
+        manifest,
+        bundleRoot,
+        source.bytes,
+      );
+      document = derived.document;
+      derivedResources = derived.resources;
+    } finally {
+      source.bytes.fill(0);
+    }
   }
   const resources = [];
   try {
-    for (const entry of manifest.resources) {
-      const acquired = await acquireEntry(entry, bundleRoot, fetchImpl);
-      resources.push({
-        uri: entry.name,
-        bytes: acquired.bytes,
-        cacheHit: acquired.cacheHit,
-        cachePath: acquired.cachePath,
-      });
+    if (derivedResources === null) {
+      for (const entry of manifest.resources) {
+        const acquired = await acquireEntry(entry, bundleRoot, fetchImpl);
+        resources.push({
+          uri: entry.name,
+          bytes: acquired.bytes,
+          cacheHit: acquired.cacheHit,
+          cachePath: acquired.cachePath,
+        });
+      }
+    } else {
+      resources.push(...derivedResources.map((resource, index) => ({
+        uri: manifest.resources[index].name,
+        bytes: resource.bytes,
+        cacheHit: resource.cacheHit,
+        cachePath: resource.cachePath,
+      })));
     }
     return {
       manifest,
@@ -488,5 +702,22 @@ export async function acquirePublicGltfJpegTextureBundle(options = {}) {
     manifestPath:
       options.manifestPath ??
       PUBLIC_GLTF_JPEG_TEXTURE_BUNDLE_MANIFEST,
+  });
+}
+
+export async function loadPublicGltfBufferViewTextureBundleManifest() {
+  return await loadPublicGltfResourceBundleManifest(
+    PUBLIC_GLTF_BUFFER_VIEW_TEXTURE_BUNDLE_MANIFEST,
+  );
+}
+
+export async function acquirePublicGltfBufferViewTextureBundle(
+  options = {},
+) {
+  return await acquirePublicGltfResourceBundle({
+    ...options,
+    manifestPath:
+      options.manifestPath ??
+      PUBLIC_GLTF_BUFFER_VIEW_TEXTURE_BUNDLE_MANIFEST,
   });
 }

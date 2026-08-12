@@ -78,8 +78,9 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 > 같은 12 triangles, 86,486 pixels, 756-byte read·800-byte upload와 cleanup을
 > 재현했습니다. `FILTER_NONE`만 허용하며 Draco·다른 meshopt filter·그 밖의
 > required extension은 계속 fail-closed입니다.
-> OPAQUE PNG `baseColorTexture`는 외부 PNG, exact glTF PNG data URI와 GLB PNG
-> bufferView로 승인했습니다. source는 `TEXCOORD_0`과 표준 sampler만
+> OPAQUE PNG `baseColorTexture`는 외부 PNG, exact glTF PNG data URI, GLB PNG
+> bufferView와 명시적으로 공급된 local `.bin` 안의 glTF PNG bufferView로
+> 승인했습니다. source는 `TEXCOORD_0`과 표준 sampler만
 > geometry-range v2에 투영하고 renderer는 storage와 독립적으로 PNG를 재검증한
 > 뒤 WebGL2 `SRGB8_ALPHA8` texture로 실제 upload합니다. exact Khronos
 > BoxTextured 외부 bundle과 embedded GLB의 Browser·staged VS Code·
@@ -87,14 +88,16 @@ bounded glTF 2.0/GLB reference mesh입니다. `.gltf`는 명시적으로 함께 
 > 86,486 pixels, 4,756-byte range read, 262,144-byte decoded base RGBA,
 > 349,524-byte mipmap-aware GPU texture와 350,516-byte total upload, terminal
 > cleanup을 재현했습니다. 별도 bounded baseline sequential JPEG profile은 외부
-> `.jpg`/`.jpeg`, exact glTF JPEG data URI와 GLB JPEG bufferView를 MIME-aware
+> `.jpg`/`.jpeg`, exact glTF JPEG data URI, GLB JPEG bufferView와 명시적으로
+> 공급된 local `.bin` 안의 glTF JPEG bufferView를 MIME-aware
 > geometry-range v3로 투영합니다. exact BoxTextured geometry와 749-byte
 > CompareDispersion JPEG의 cache-only derivation은 공식 Validator issue 0개와
 > source/renderer 독립 validation을 통과했고, Browser·staged VS Code·
 > clean-installed local VSIX의 Apple M2 Metal 3개 표면에서 1,756-byte range,
 > 86,486 pixels, 21,844-byte mipmap-aware GPU texture·22,836-byte total upload와
 > terminal cleanup을 재현했습니다. PNG-only v2 bytes는 그대로 유지합니다.
-> glTF bufferView image, progressive/arithmetic/lossless JPEG, alpha mode,
+> data-URI buffer가 뒷받침하는 glTF bufferView image,
+> progressive/arithmetic/lossless JPEG, alpha mode,
 > normal/metallic-roughness/occlusion/emissive texture, `KHR_texture_transform`과
 > 임의 URI는 계속 fail-closed 또는 metadata-only입니다.
 > 이 기능은 single-source Browser/VS Code 제품 범위이며 이미 공개되고 Spatial이
@@ -293,13 +296,16 @@ GLB physical GPU Gate를 승인했습니다. 별도 local
 `.gltf + .bin/.png/.jpg/.jpeg` bundle과
 `KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`도 세 제품 표면의
 Apple M2 Metal Gate를 통과했습니다. OPAQUE PNG `baseColorTexture`는 외부 PNG,
-exact glTF PNG data URI 또는 GLB PNG bufferView에서 geometry-range v2와 실제
+exact glTF PNG data URI, GLB PNG bufferView 또는 명시적 local `.bin`의 glTF PNG
+bufferView에서 geometry-range v2와 실제
 sRGB texture로 투영합니다. cache-only Khronos BoxTextured의 외부/내장 변형은
 각각 같은 세 Apple M2 Metal 제품 표면, 합계 6개 표면을 통과했습니다. bounded
 baseline JPEG는 별도 v3 range와 세 Apple M2 Metal 제품 표면을 통과하면서
-PNG-only v2를 byte-identical하게 유지했습니다. 현재 glTF manifest는 31 passed /
-4 held, renderer는 30 passed / 0 held, product shell은 66 passed / 1 held입니다.
-Linux/Windows hardware, 임의 URI, glTF bufferView image,
+PNG-only v2를 byte-identical하게 유지했습니다. cache-only BoxTextured GLB를
+`.gltf + 단일 .bin`으로 결정적으로 파생한 PNG bufferView 경로도 byte-identical한
+v2 range와 세 Apple M2 Metal 제품 표면을 통과했습니다. 현재 glTF manifest는
+32 passed / 4 held, renderer는 30 passed / 0 held, product shell은 69 passed /
+1 held입니다. Linux/Windows hardware, 임의 URI, data-URI buffer 기반 image,
 progressive/arithmetic/lossless JPEG·투명/다중 material texture,
 Draco·다른 meshopt filter·그 밖의 required
 extension 또는 BIM semantic authority는 승인하지 않습니다. 다음 held
@@ -509,6 +515,10 @@ geometry-range v2·6-surface Apple M2 Metal 검증은 [texture evidence](compati
 고정합니다.
 bounded baseline JPEG의 geometry-range v3·3-surface Apple M2 Metal 검증은
 [JPEG texture evidence](compatibility/evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json)에
+고정합니다.
+명시적 local `.bin`의 PNG bufferView와 byte-identical geometry-range v2,
+3-surface Apple M2 Metal 검증은
+[external-buffer bufferView texture evidence](compatibility/evidence/gltf-reference-source-external-buffer-view-texture-products-darwin-arm64-2026-08-11.json)에
 고정합니다.
 BCF·IDS·bSDD 탐색 계약의 상태는
 [compatibility/openbim-explorer.json](compatibility/openbim-explorer.json)을

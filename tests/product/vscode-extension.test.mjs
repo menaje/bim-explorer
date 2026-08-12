@@ -1139,6 +1139,7 @@ test("extension diagnostics preserve bounded reference identity only", () => {
         externalResources: 2,
         externalBufferResources: 1,
         externalImageResources: 1,
+        externalBufferViewImageResources: 1,
         networkAtRuntime: false,
       },
       sourceRole: "derived-or-reference-mesh",
@@ -1166,6 +1167,7 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       textures: 1,
       externalBufferResources: 1,
       externalImageResources: 1,
+      externalBufferViewImageResources: 1,
     },
     renderer: {
       actualGpu: true,
@@ -1183,6 +1185,11 @@ test("extension diagnostics preserve bounded reference identity only", () => {
   assert.equal(report.source.semanticAuthority, false);
   assert.equal(report.source.appearance.textures, 1);
   assert.equal(report.source.resourceBundle.externalImageResources, 1);
+  assert.equal(
+    report.source.resourceBundle.externalBufferViewImageResources,
+    1,
+  );
+  assert.equal(report.resources.externalBufferViewImageResources, 1);
   assert.deepEqual(
     report.source.extensionsRequired,
     ["KHR_mesh_quantization"],

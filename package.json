@@ -108,6 +108,7 @@
     "qualify:gltf:meshopt-products": "node scripts/qualify-gltf-meshopt-products.mjs",
     "qualify:gltf:texture-products": "node scripts/qualify-gltf-texture-products.mjs",
     "qualify:gltf:jpeg-texture-products": "node scripts/qualify-gltf-jpeg-texture-products.mjs",
+    "qualify:gltf:buffer-view-texture-products": "node scripts/qualify-gltf-buffer-view-texture-products.mjs",
     "qualify:product:vscode": "node scripts/qualify-vscode-custom-editor.mjs",
     "qualify:product:vscode-install": "node scripts/qualify-vscode-vsix-install.mjs",
     "qualify:renderer:public": "node scripts/qualify-public-bim-renderer-3d.mjs",

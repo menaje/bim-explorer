@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-spatial-integration-compatibility/1",
   "status": "experimental",
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-11",
   "contract": {
     "integration": "bim-explorer-spatial-integration/0.1",
     "handoff": "bim-explorer-spatial-handoff/0.1",
@@ -14,18 +14,12 @@
     "renderProtocolId": "menaje-viewer-render-protocol/0.1.0",
     "spatialProtocolVersion": "0.1.0"
   },
-  "consumerObservation": {
-    "repository": "menaje/coni-spatial",
-    "trackingIssues": [
-      8,
-      10,
-      12,
-      16
-    ],
-    "viewerCorePackageVersion": "0.1.2",
-    "renderProtocolPackageVersion": "0.1.2",
-    "spatialProtocolVersion": "0.1.0",
-    "status": "consumer-owned-unverified-in-this-repository"
+  "contractScope": {
+    "profile": "legacy-single-source-optional-bridge-v0.1",
+    "consumerAdmission": "not-observed-for-this-v0.1-bridge",
+    "federatedV02Admission": "separate-contract-line",
+    "federatedV02Manifest": "compatibility/federated-bim-surface.json",
+    "statusMeaning": "actualSpatialConsumerConformance applies only to the optional integration/0.1 bridge"
   },
   "gates": {
     "exactViewerPackagePin": true,
@@ -47,12 +41,13 @@
     "viewerCoreRelease": "compatibility/evidence/viewer-core-release-2026-08-04.json"
   },
   "blockers": [
-    "Coni Spatial must run the bridge contract against its actual service-owned identity, Context Reference and diff implementation",
-    "standalone Spatial bundle qualification remains owned by menaje/coni-spatial#8 and #16",
-    "the MPL-2.0 source is public in Community v0.1.0, but npm publication remains disabled and actual consumer package admission is Spatial-owned"
+    "the optional integration/0.1 bridge has synthetic provider evidence only and no independently recorded v0.1 consumer conformance",
+    "standalone downstream product bundle qualification is outside this legacy bridge contract",
+    "the MPL-2.0 source is public in Community v0.1.0, but registry publication remains disabled and consumer package admission is independent"
   ],
   "limitations": [
     "the current bridge evidence uses generated IFC4 and a deterministic synthetic Spatial service",
+    "the false actualSpatialConsumerConformance gate is scoped to integration/0.1 and does not override the independent federated BIM Surface v0.2 consumer admission",
     "Context Reference authority, Canonical mapping and accept/publish remain exclusively service-owned",
     "the handoff contains no credential, arbitrary path, Workspace capability, acceptance or source-mutation grant"
   ],
@@ -62,6 +57,7 @@
     "allowSpatialPrivateDependency": false,
     "allowInstalledExtensionDependency": false,
     "claimExplorerProviderContract": true,
+    "consumerAdmissionScope": "legacy-single-source-optional-bridge-v0.1",
     "claimActualSpatialConsumer": false,
     "claimPublicPackage": false,
     "claimProductionIntegration": false

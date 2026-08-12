@@ -22,6 +22,7 @@ import {
   syntheticQuantizedGltfJsonBytes,
   syntheticQuantizedGlbBytes,
   syntheticTexturedGltfExternalBundle,
+  syntheticTexturedGltfExternalBufferViewBundle,
   syntheticTexturedGltfBufferViewBytes,
   syntheticTexturedGltfDataUriBytes,
   syntheticTexturedGlbBytes,
@@ -629,6 +630,108 @@ for (const [label, fixture, storage] of [
   });
 }
 
+for (const [label, imageMimeType, expected] of [
+  [
+    "PNG",
+    "image/png",
+    {
+      sourceBytes: 76,
+      decodedBytes: 16,
+      bufferBytes: 180,
+      mediaType: "application/vnd.bim-explorer.geometry-range.v2",
+      rangeBytes: 276,
+      rangeSha256:
+        "c404d58b4b4d431723fd273efd2d0979316c14041480db225fd9f9b74c336e32",
+    },
+  ],
+  [
+    "JPEG",
+    "image/jpeg",
+    {
+      sourceBytes: 711,
+      decodedBytes: 16,
+      bufferBytes: 816,
+      mediaType: "application/vnd.bim-explorer.geometry-range.v3",
+      rangeBytes: 912,
+      rangeSha256:
+        "17797490083f0965058074d47f16a5d308614a3e3c33f2a439175cf81a1ab5cb",
+    },
+  ],
+]) {
+  test(`external-buffer ${label} image bufferView preserves the exact range`, async () => {
+    const bundle = syntheticTexturedGltfExternalBufferViewBundle({
+      imageMimeType,
+    });
+    const originalResource = Uint8Array.from(bundle.resources[0].bytes);
+    const profile = parseGltfReferenceProfile(bundle.bytes, {
+      resources: bundle.resources,
+    });
+    assert.deepEqual(profile.externalResourceUris, ["geometry.bin"]);
+    assert.deepEqual(profile.appearance, {
+      profile: imageMimeType === "image/png"
+        ? "base-color-texture-png-opaque-v0.1"
+        : "base-color-texture-opaque-v0.2",
+      textureCoordinateSet: 0,
+      textureSourceBytes: expected.sourceBytes,
+      textureDecodedBytes: expected.decodedBytes,
+      textures: 1,
+      imageMediaTypes: [imageMimeType],
+      imageStorageProfiles: ["gltf-external-buffer-view"],
+      colorSpace: "srgb-to-linear-webgl2",
+    });
+    assert.deepEqual(profile.resourceBundle, {
+      documentBytes: bundle.bytes.byteLength,
+      externalResourceBytes: expected.bufferBytes,
+      externalResources: 1,
+      externalBufferResources: 1,
+      externalBufferViewImageResources: 1,
+      embeddedImageBytes: expected.sourceBytes,
+      embeddedImageResources: 1,
+    });
+    assert.equal(profile.textures[0].sourceKind, "gltf-external-buffer-view");
+
+    const source = await createGltfReferenceSource(bundle.bytes, {
+      resources: bundle.resources,
+      sessionReadBudgetBytes: 1024 * 1024,
+    });
+    const session = await source.open({
+      protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+    });
+    const snapshot = await session.getSnapshot();
+    assert.deepEqual(snapshot.referenceMetadata.resourceBundle, {
+      schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+      documentBytes: bundle.bytes.byteLength,
+      externalResourceBytes: expected.bufferBytes,
+      externalResources: 1,
+      externalBufferResources: 1,
+      externalBufferViewImageResources: 1,
+      embeddedImageBytes: expected.sourceBytes,
+      embeddedImageResources: 1,
+      networkAtRuntime: false,
+    });
+    const handle = snapshot.layers[0].rangeHandles[0];
+    assert.equal(handle.mediaType, expected.mediaType);
+    assert.equal(handle.byteLength, expected.rangeBytes);
+    assert.equal(handle.sha256, expected.rangeSha256);
+    const range = await session.readRange(
+      handle,
+      0,
+      handle.byteLength,
+    );
+    const decoded = decodeBimTexturedGeometryRange(range);
+    assert.equal(decoded.textures[0].mediaType, imageMimeType);
+    assert.equal(decoded.textureSourceBytes, expected.sourceBytes);
+    assert.equal(decoded.textureDecodedBytes, expected.decodedBytes);
+    assert.equal(await session.dispose(), true);
+    assert.equal(await source.dispose(), true);
+    assert.deepEqual(bundle.resources[0].bytes, originalResource);
+    range.fill(0);
+    originalResource.fill(0);
+    bundle.bytes.fill(0);
+    bundle.resources[0].bytes.fill(0);
+  });
+}
+
 for (const [label, fixture, resources, storage] of [
   [
     "external .jpg",
@@ -878,13 +981,59 @@ test("embedded image admission fails closed at MIME, range and budget boundaries
   const heldGltfBufferView = syntheticTexturedGltfBufferViewBytes();
   assert.throws(
     () => parseGltfReferenceProfile(heldGltfBufferView),
-    /bufferView projection is limited to GLB/u,
+    /bufferView requires a local external buffer/u,
+  );
+
+  const externalOutOfRange =
+    syntheticTexturedGltfExternalBufferViewBundle({
+      imageByteLength: 77,
+    });
+  assert.throws(
+    () => parseGltfReferenceProfile(externalOutOfRange.bytes, {
+      resources: externalOutOfRange.resources,
+    }),
+    /bufferView range is invalid/u,
+  );
+
+  const externalAccessorAlias =
+    syntheticTexturedGltfExternalBufferViewBundle({
+      imageBufferView: 0,
+    });
+  assert.throws(
+    () => parseGltfReferenceProfile(externalAccessorAlias.bytes, {
+      resources: externalAccessorAlias.resources,
+    }),
+    /also used by an accessor/u,
+  );
+
+  const externalInvalidView =
+    syntheticTexturedGltfExternalBufferViewBundle();
+  const externalInvalidDocument = JSON.parse(
+    new TextDecoder().decode(externalInvalidView.bytes),
+  );
+  externalInvalidDocument.bufferViews[4].target = 34962;
+  externalInvalidView.bytes = new TextEncoder().encode(
+    JSON.stringify(externalInvalidDocument),
+  );
+  assert.throws(
+    () => parseGltfReferenceProfile(externalInvalidView.bytes, {
+      resources: externalInvalidView.resources,
+    }),
+    /bufferView profile is unsupported/u,
   );
 
   outOfRange.fill(0);
   accessorAliased.fill(0);
   overBudget.fill(0);
   heldGltfBufferView.fill(0);
+  for (const bundle of [
+    externalOutOfRange,
+    externalAccessorAlias,
+    externalInvalidView,
+  ]) {
+    bundle.bytes.fill(0);
+    bundle.resources[0].bytes.fill(0);
+  }
 });
 
 test("external texture admission fails closed at image and material boundaries", () => {

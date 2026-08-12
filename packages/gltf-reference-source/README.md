@@ -14,8 +14,9 @@ glTF 2.0과 GLB를 BIM semantic authority가 아닌 read-only reference mesh로
 - required `EXT_meshopt_compression`의 `ATTRIBUTES`·`TRIANGLES`·`INDICES` mode와
   `FILTER_NONE`; exact meshoptimizer 1.2.0 decoder는 압축 source에서만 lazy load
 - material `baseColorFactor`
-- 명시적으로 공급된 동일 폴더 PNG/JPEG, exact glTF PNG/JPEG data URI 또는
-  GLB의 `mimeType: image/png`/`image/jpeg` bufferView에 든 OPAQUE
+- 명시적으로 공급된 동일 폴더 PNG/JPEG, exact glTF PNG/JPEG data URI,
+  GLB의 `mimeType: image/png`/`image/jpeg` bufferView 또는 명시적으로 공급된
+  동일 폴더 `.bin`의 glTF image bufferView에 든 OPAQUE
   `baseColorTexture`, bounded `TEXCOORD_0`과 표준 sampler
 - source-local `nativeId`와 immutable range session
 
@@ -30,7 +31,8 @@ write와 round-trip은 거부합니다. 승인된 image는 저장 방식과 무�
 8MiB encoded·16MiB decoded RGBA, 축당 2,048px·256:1 비율과 최대 16개 상한을
 적용합니다. JPEG는 SOF0 baseline sequential DCT, 8-bit, 단일 scan과 1/3개
 component만 허용하고 progressive, arithmetic, lossless, DNL, 다중 scan은
-거부합니다. glTF bufferView image, 비-OPAQUE alpha material mode,
+거부합니다. data URI buffer가 뒷받침하는 glTF bufferView image,
+비-OPAQUE alpha material mode,
 normal/metallic-roughness/occlusion/emissive texture와 `KHR_texture_transform`은
 material projection으로 지원하지 않습니다. 출력 geometry는 texture가
 없으면 `application/vnd.bim-explorer.geometry-range.v1`, PNG-only texture는

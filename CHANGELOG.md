@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- admit bounded `.gltf` PNG/JPEG image bufferViews backed by an explicitly
+  supplied same-folder local `.bin`; add exact overlap, range, MIME, missing and
+  unused-resource rejection plus synthetic PNG/JPEG coverage, and qualify a
+  reproducible cache-only Khronos GLB-to-glTF derivation across Browser, staged
+  VS Code and clean-installed local VSIX Apple M2 Metal surfaces without
+  redistributing samples or backporting immutable federated runtimes;
 - admit bounded baseline sequential JPEG OPAQUE `baseColorTexture` for external
   `.jpg`/`.jpeg`, exact glTF JPEG data URI and GLB JPEG bufferView paths; add an
   independently validated MIME-aware geometry-range v3 while preserving every
@@ -13,7 +19,7 @@
   independently validated geometry-range v2 texture payload and actual WebGL2
   sRGB upload; qualify the cache-only Khronos external and embedded
   BoxTextured variants across six Browser, staged VS Code and clean-installed
-  local VSIX Apple M2 Metal surfaces while keeping glTF bufferView images,
+  local VSIX Apple M2 Metal surfaces while keeping data-URI-buffer images,
   progressive/arithmetic/lossless JPEG, alpha blending, other material texture roles, arbitrary URI,
   federation v0.2 backport and VSIX publication held;
 - admit required `EXT_meshopt_compression` for bounded bufferView

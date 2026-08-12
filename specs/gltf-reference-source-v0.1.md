@@ -52,7 +52,9 @@ roundTripAuthority: false
 - unsigned byte, unsigned short 또는 unsigned int index
 - material `baseColorFactor`
 - OPAQUE material의 승인된 PNG/JPEG `baseColorTexture`, bounded `TEXCOORD_0`과
-  glTF core 범위의 standard sampler
+  glTF core 범위의 standard sampler. image는 명시적 동일 폴더 PNG/JPEG,
+  exact image data URI, GLB BIN chunk의 bufferView 또는 caller가 명시적으로
+  공급한 동일 폴더 `.bin`의 bufferView여야 한다.
 
 local sidecar 이름은
 `^[A-Za-z0-9][A-Za-z0-9._-]*\.(bin|png|jpg|jpeg)$` 범위이고 `..`를
@@ -73,6 +75,12 @@ JPEG는 SOF0 baseline sequential DCT, 8-bit precision, 단일 scan, 1개 graysca
 또는 3개 component와 bounded DQT/DHT만 허용합니다. progressive·arithmetic·
 lossless frame, DAC/DNL, 다중 scan, 잘못된 restart와 trailing payload는
 fail closed합니다.
+
+`.gltf` image bufferView는 해당 view의 buffer가 caller가 명시적으로 공급한
+동일 폴더 ASCII leaf-name `.bin`이어야 합니다. view는 유효한 정수 range이고
+`byteStride`, `target`, extension이 없어야 하며 어떤 accessor view와도 겹치거나
+동일 index를 공유할 수 없습니다. data URI buffer, 누락된 `.bin`, MIME 불일치,
+out-of-range·overlap 또는 미사용 sidecar는 network fallback 없이 거부합니다.
 
 ## 상한
 
@@ -155,7 +163,7 @@ GPU allocation은 source가 소유하지 않습니다.
 
 - Draco, meshopt의 OCTAHEDRAL/QUATERNION/EXPONENTIAL filter와 두 승인 확장 이외
   required extension
-- arbitrary URI, nested path, glTF bufferView image material projection과
+- arbitrary URI, nested path, data URI buffer 기반 image bufferView와
   progressive/arithmetic/lossless/DNL/multi-scan JPEG
 - alpha mode, normal/metallic-roughness/occlusion/emissive texture,
   `KHR_texture_transform`과 broader material fidelity
@@ -248,6 +256,16 @@ mipmap-aware GPU texture·22,836-byte total upload와 terminal cleanup을
 재현했습니다. 원본과 파생 sample은 cache-only이며 Git·VSIX·release에
 재배포하지 않습니다.
 
+같은 exact 5,956-byte `BoxTextured.glb`를 cache에서 결정적으로 풀어낸
+2,714-byte `BoxTexturedBufferView.gltf`와 4,592-byte
+`BoxTexturedBufferView.bin`은 geometry와 3,750-byte PNG image bufferView를 한
+external buffer에 보존합니다. 공식 Validator issue 0개이며 GLB와
+byte-identical한 4,756-byte geometry-range v2와 SHA-256 `ce04af8c…a3cd`를
+만듭니다. actual Chrome 151, staged VS Code 1.132와 clean-installed local
+VSIX의 Apple M2 Metal 3개 표면도 349,524-byte GPU texture,
+350,516-byte total upload와 terminal cleanup을 재현했습니다. 원본과 파생
+artifact는 cache-only이며 Git·VSIX·release에 재배포하지 않습니다.
+
 별도 product-scale Gate는 42,977,928-byte `A Beautiful Game` GLB를 Browser,
 staged VS Code와 clean-installed VSIX에서 열어 49개 source-native entity,
 573,952 unique triangles, 16,896,412-byte source read와 16,900,016-byte GPU
@@ -255,7 +273,7 @@ upload를 동일하게 재현합니다. 원본은 on-demand cache에만 두고 �
 포함하지 않습니다.
 
 이 제품 결과는 bounded local read-only profile만 승인합니다. arbitrary URI,
-glTF bufferView image, progressive/arithmetic/lossless JPEG·투명/다중 material
+data URI buffer 기반 image bufferView, progressive/arithmetic/lossless JPEG·투명/다중 material
 texture, Draco·다른 meshopt
 filter·그 밖의 required extension,
 broader material/geometry fidelity,

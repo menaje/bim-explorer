@@ -260,6 +260,15 @@ async function qualifyReference({
             externalImageResources:
               manifest.expected.externalImageResources,
           }),
+      ...(manifest.expected.externalBufferViewImageResources ===
+        undefined
+        ? {}
+        : {
+            externalBufferResources:
+              manifest.expected.externalBufferResources,
+            externalBufferViewImageResources:
+              manifest.expected.externalBufferViewImageResources,
+          }),
       ...(manifest.expected.embeddedImageResources === undefined
         ? {}
         : {
@@ -288,6 +297,8 @@ async function qualifyReference({
     );
     if (
       manifest.expected.externalImageResources !== undefined ||
+      manifest.expected.externalBufferViewImageResources !==
+        undefined ||
       manifest.expected.embeddedImageResources !== undefined
     ) {
       if (manifest.expected.externalImageResources !== undefined) {
@@ -298,6 +309,19 @@ async function qualifyReference({
         assert.equal(
           ready.resources.externalImageResources,
           manifest.expected.externalImageResources,
+        );
+      }
+      if (
+        manifest.expected.externalBufferViewImageResources !==
+          undefined
+      ) {
+        assert.equal(
+          ready.resources.externalBufferResources,
+          manifest.expected.externalBufferResources,
+        );
+        assert.equal(
+          ready.resources.externalBufferViewImageResources,
+          manifest.expected.externalBufferViewImageResources,
         );
       }
       if (manifest.expected.embeddedImageResources !== undefined) {

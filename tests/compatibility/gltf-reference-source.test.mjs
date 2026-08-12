@@ -9,6 +9,7 @@ import {
   validateGltfPhysicalGpuAdmission,
   validateGltfTextureAdmission,
   validateGltfJpegTextureAdmission,
+  validateGltfBufferViewTextureAdmission,
 } from "../../scripts/check-gltf-reference-source-compatibility.mjs";
 
 async function inputs() {
@@ -125,6 +126,26 @@ async function jpegTextureInputs() {
     ).then(JSON.parse),
     readFile(
       manifest.evidence.jpegTextureFixtureManifest,
+      "utf8",
+    ).then(JSON.parse),
+  ]);
+  return { evidence, fixture, manifest };
+}
+
+async function bufferViewTextureInputs() {
+  const manifest = JSON.parse(
+    await readFile(
+      "compatibility/gltf-reference-source.json",
+      "utf8",
+    ),
+  );
+  const [evidence, fixture] = await Promise.all([
+    readFile(
+      manifest.evidence.bufferViewTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.bufferViewTextureFixtureManifest,
       "utf8",
     ).then(JSON.parse),
   ]);
@@ -377,5 +398,33 @@ test("glTF JPEG admission rejects progressive-profile overclaim", async () => {
       fixture,
     ),
     /glTF JPEG texture product evidence is invalid/u,
+  );
+});
+
+test("glTF reference source admits exact external-buffer bufferView evidence", async () => {
+  const { evidence, fixture, manifest } =
+    await bufferViewTextureInputs();
+  const report = validateGltfBufferViewTextureAdmission(
+    manifest,
+    evidence,
+    fixture,
+  );
+  assert.equal(report.surfaces, 3);
+  assert.equal(report.sourceBytes, 7_306);
+  assert.equal(report.gpuUploadBytes, 350_516);
+});
+
+test("glTF external-buffer bufferView admission rejects changed image accounting", async () => {
+  const { evidence, fixture, manifest } =
+    await bufferViewTextureInputs();
+  evidence.core.source.resourceBundle
+    .externalBufferViewImageResources = 2;
+  assert.throws(
+    () => validateGltfBufferViewTextureAdmission(
+      manifest,
+      evidence,
+      fixture,
+    ),
+    /glTF external-buffer bufferView texture product evidence is invalid/u,
   );
 });

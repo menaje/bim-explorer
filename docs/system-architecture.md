@@ -327,15 +327,18 @@ macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 �
 cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
 같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
 M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 외부 PNG,
-exact glTF PNG data URI와 GLB PNG bufferView의 `baseColorTexture`는
+exact glTF PNG data URI, GLB PNG bufferView와 명시적 local `.bin`의 glTF PNG
+bufferView `baseColorTexture`는
 `TEXCOORD_0`, OPAQUE material과 표준 sampler만 geometry-range v2로
 투영합니다. renderer는 storage와 독립적으로 PNG를 재검증하고 WebGL2
 `SRGB8_ALPHA8`로 upload합니다. exact BoxTextured 외부 bundle과 embedded GLB의
 Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
 표면은 각각 86,486 pixels·349,524-byte mipmap-aware GPU texture,
-350,516-byte total upload·terminal cleanup을 재현했습니다. 임의 URI와 glTF
-bufferView image는 거부합니다. bounded baseline sequential JPEG는 외부 JPEG,
-exact glTF JPEG data URI와 GLB JPEG bufferView를 MIME-aware geometry-range v3로
+350,516-byte total upload·terminal cleanup을 재현했습니다. 별도 cache-only
+GLB→`.gltf + .bin` 파생도 같은 v2 range와 Apple M2 Metal 3개 표면을
+재현했습니다. 임의 URI와 data URI buffer 기반 image bufferView는 거부합니다.
+bounded baseline sequential JPEG는 외부 JPEG, exact glTF JPEG data URI, GLB JPEG
+bufferView와 명시적 local `.bin`의 glTF JPEG bufferView를 MIME-aware geometry-range v3로
 투영합니다. exact cache-only Khronos derivation의 Browser·staged VS Code·
 clean-installed local VSIX Apple M2 Metal 3개 표면은 각각 86,486 pixels·
 21,844-byte mipmap-aware GPU texture·22,836-byte total upload·terminal cleanup을
