@@ -239,6 +239,104 @@ function sanitizedPointLod(value) {
   };
 }
 
+function sanitizedReviewMeasurement(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (
+    value?.schema !== "bim-explorer-measurement-3d/0.1" ||
+    !["distance", "angle", "area"].includes(value.type) ||
+    value.coordinateSpace !== "source-world" ||
+    value.unit !== "source-coordinate-unit" ||
+    !Array.isArray(value.points) ||
+    value.points.length < 2 ||
+    value.points.length > 8
+  ) {
+    return null;
+  }
+  const points = value.points.map((point) =>
+    numericArray(point, 3));
+  if (points.some((point) => point === null)) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    type: value.type,
+    coordinateSpace: value.coordinateSpace,
+    unit: value.unit,
+    points,
+    value: numberOrNull(value.value),
+    degrees: numberOrNull(value.degrees),
+    radians: numberOrNull(value.radians),
+    normal: value.normal === undefined
+      ? null
+      : numericArray(value.normal, 3),
+  };
+}
+
+function sanitizedReviewTools(value) {
+  if (
+    value?.schema !== "bim-explorer-product-review-tools/1" ||
+    !["perspective", "orthographic"].includes(value.projection) ||
+    ![
+      "select",
+      "measure-distance",
+      "measure-angle",
+      "measure-area",
+    ].includes(value.tool) ||
+    !["none", "clip-x", "section-box"].includes(
+      value.sectionMode,
+    ) ||
+    !["show-all", "hide", "isolate"].includes(
+      value.visibilityMode,
+    )
+  ) {
+    return null;
+  }
+  const hiddenRenderIds = stringArray(
+    value.hiddenRenderIds,
+    64,
+  );
+  if (hiddenRenderIds === null) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    projection: value.projection,
+    tool: value.tool,
+    sectionMode: value.sectionMode,
+    visibilityMode: value.visibilityMode,
+    selectionSuppressed: value.selectionSuppressed === true,
+    standardView: value.standardView === null
+      ? null
+      : [
+          "front",
+          "back",
+          "left",
+          "right",
+          "top",
+          "bottom",
+        ].includes(value.standardView)
+        ? value.standardView
+        : null,
+    hiddenRenderIds,
+    layout: {
+      focusMode: value.layout?.focusMode === true,
+      propertiesVisible:
+        value.layout?.propertiesVisible === true,
+      treeVisible: value.layout?.treeVisible === true,
+    },
+    measurement: sanitizedReviewMeasurement(value.measurement),
+    ...numericRecord(value, [
+      "fitAllUpdates",
+      "measurementPicks",
+      "projectionUpdates",
+      "resetViewUpdates",
+      "standardViewUpdates",
+    ]),
+  };
+}
+
 function sanitizedPointHierarchy(value) {
   if (value === null || typeof value !== "object") {
     return null;
@@ -851,6 +949,7 @@ function sanitizeReport(value) {
             "gpuTextures",
           ]),
         },
+    reviewTools: sanitizedReviewTools(value.reviewTools),
     viewerCore: sanitizedViewerCore(value.viewerCore),
     semantic: numericRecord(value.semantic, [
       "selectedExpressId",

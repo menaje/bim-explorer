@@ -74,9 +74,14 @@ function pointSourceMaximumBytes(format) {
 }
 
 const elements = {
+  activeTool: document.querySelector("#active-tool"),
   cancel: document.querySelector("#cancel-open"),
   canvas: document.querySelector("#model-canvas"),
   cameraHelp: document.querySelector("#camera-help"),
+  clearMeasurement: document.querySelector("#clear-measurement"),
+  clearSection: document.querySelector("#clear-section"),
+  clearSelection: document.querySelector("#clear-selection"),
+  clipX: document.querySelector("#clip-x"),
   close: document.querySelector("#close-model"),
   diagBytes: document.querySelector("#diag-bytes"),
   diagGpu: document.querySelector("#diag-gpu"),
@@ -87,7 +92,9 @@ const elements = {
   diagnostics: document.querySelector(".diagnostics"),
   file: document.querySelector("#source-file"),
   fixture: document.querySelector("#open-fixture"),
+  fitAll: document.querySelector("#fit-all"),
   fitSelection: document.querySelector("#fit-selection"),
+  hideSelection: document.querySelector("#hide-selection"),
   inspector: document.querySelector("#inspector-content"),
   isolateResults: document.querySelector("#isolate-results"),
   moreResults: document.querySelector("#more-results"),
@@ -109,6 +116,31 @@ const elements = {
   treeTitle: document.querySelector("#tree-title"),
   treeOmission: document.querySelector("#tree-omission"),
   inspectorTitle: document.querySelector("#inspector-title"),
+  isolateSelection: document.querySelector("#isolate-selection"),
+  measureAngle: document.querySelector("#measure-angle"),
+  measureArea: document.querySelector("#measure-area"),
+  measureDistance: document.querySelector("#measure-distance"),
+  measurementResult: document.querySelector("#measurement-result"),
+  projectionState: document.querySelector("#projection-state"),
+  resetView: document.querySelector("#reset-view"),
+  reviewToolbar: document.querySelector("#review-toolbar"),
+  sectionBox: document.querySelector("#section-box"),
+  standardViews: [
+    ...document.querySelectorAll("[data-standard-view]"),
+  ],
+  toggleFocusMode: document.querySelector("#toggle-focus-mode"),
+  toggleProjection: document.querySelector("#toggle-projection"),
+  togglePropertiesPanel: document.querySelector(
+    "#toggle-properties-panel",
+  ),
+  toggleTreePanel: document.querySelector("#toggle-tree-panel"),
+  workspace: document.querySelector(".workspace"),
+};
+
+const layoutState = {
+  focusMode: false,
+  propertiesVisible: true,
+  treeVisible: true,
 };
 
 function meta(name) {
@@ -250,14 +282,195 @@ function setStatus(state, message) {
   elements.status.textContent = message;
 }
 
+function effectiveSelection(current = active) {
+  if (
+    current === null ||
+    current.kind === "point-cloud" ||
+    current.selectionSuppressed === true
+  ) {
+    return null;
+  }
+  return current.explorer.state.selection;
+}
+
+function displayedExplorerState(current) {
+  const state = current.explorer.state;
+  if (current.selectionSuppressed !== true) {
+    return state;
+  }
+  return {
+    ...state,
+    inspector: null,
+    selection: null,
+    tree: {
+      ...state.tree,
+      rows: state.tree.rows.map((row) =>
+        row.selected
+          ? {
+              ...row,
+              selected: false,
+            }
+          : row),
+    },
+  };
+}
+
+function renderLayout() {
+  elements.workspace.dataset.focusMode = String(
+    layoutState.focusMode,
+  );
+  elements.workspace.dataset.propertiesVisible = String(
+    layoutState.propertiesVisible,
+  );
+  elements.workspace.dataset.treeVisible = String(
+    layoutState.treeVisible,
+  );
+  elements.toggleFocusMode.setAttribute(
+    "aria-pressed",
+    String(layoutState.focusMode),
+  );
+  elements.togglePropertiesPanel.setAttribute(
+    "aria-pressed",
+    String(
+      layoutState.propertiesVisible && !layoutState.focusMode,
+    ),
+  );
+  elements.toggleTreePanel.setAttribute(
+    "aria-pressed",
+    String(layoutState.treeVisible && !layoutState.focusMode),
+  );
+  elements.togglePropertiesPanel.disabled = layoutState.focusMode;
+  elements.toggleTreePanel.disabled = layoutState.focusMode;
+}
+
+function measurementText(review) {
+  const measurement = review?.measurement?.measurement;
+  if (measurement === undefined) {
+    return "No measurement";
+  }
+  if (measurement.type === "angle") {
+    return `Angle ${measurement.degrees.toFixed(2)}°`;
+  }
+  const value = measurement.value.toPrecision(6);
+  return measurement.type === "area"
+    ? `Area ${value} source-coordinate units² (unqualified)`
+    : `Distance ${value} source-coordinate units (unqualified)`;
+}
+
+function reviewSectionMode(current) {
+  if (current === null || current.kind === "point-cloud") {
+    return "none";
+  }
+  if (current.view.sectionBox !== null) {
+    return "section-box";
+  }
+  return current.view.clippingPlanes.length > 0
+    ? "clip-x"
+    : "none";
+}
+
+function renderReviewControls(state) {
+  const ready = state === "ready";
+  const pointCloud = active?.kind === "point-cloud";
+  const meshReady = ready && active !== null && !pointCloud;
+  const selection = effectiveSelection();
+  const hasSelection =
+    typeof selection?.renderId === "string";
+  const review = meshReady ? active.review : null;
+  const sectionMode = meshReady
+    ? reviewSectionMode(active)
+    : "none";
+  elements.fitAll.disabled = !meshReady;
+  elements.fitSelection.disabled = !meshReady || !hasSelection;
+  elements.resetView.disabled = !meshReady;
+  elements.toggleProjection.disabled = !meshReady;
+  elements.hideSelection.disabled = !meshReady || !hasSelection;
+  elements.isolateSelection.disabled = !meshReady || !hasSelection;
+  elements.clearSelection.disabled = !meshReady || !hasSelection;
+  elements.clipX.disabled = !meshReady;
+  elements.sectionBox.disabled = !meshReady;
+  elements.clearSection.disabled =
+    !meshReady || sectionMode === "none";
+  elements.measureDistance.disabled = !meshReady;
+  elements.measureAngle.disabled = !meshReady;
+  elements.measureArea.disabled = !meshReady;
+  elements.clearMeasurement.disabled = !meshReady || (
+    review.measurement === null &&
+    review.measurementPicks.length === 0 &&
+    review.tool === "select"
+  );
+  for (const button of elements.standardViews) {
+    button.disabled = !meshReady;
+    button.setAttribute(
+      "aria-pressed",
+      String(
+        meshReady &&
+        button.dataset.standardView === review.standardView
+      ),
+    );
+  }
+  elements.clipX.setAttribute(
+    "aria-pressed",
+    String(sectionMode === "clip-x"),
+  );
+  elements.sectionBox.setAttribute(
+    "aria-pressed",
+    String(sectionMode === "section-box"),
+  );
+  for (const [button, tool] of [
+    [elements.measureDistance, "measure-distance"],
+    [elements.measureAngle, "measure-angle"],
+    [elements.measureArea, "measure-area"],
+  ]) {
+    button.setAttribute(
+      "aria-pressed",
+      String(review?.tool === tool),
+    );
+  }
+  const projection = meshReady
+    ? active.camera.projection
+    : pointCloud
+      ? "points"
+      : "inactive";
+  elements.projectionState.textContent = projection;
+  elements.toggleProjection.textContent =
+    `Projection: ${projection}`;
+  elements.toggleProjection.setAttribute(
+    "aria-pressed",
+    String(projection === "orthographic"),
+  );
+  if (review === null) {
+    elements.activeTool.textContent = pointCloud
+      ? "Tool: Point select"
+      : "Tool: Select";
+    elements.measurementResult.textContent = "No measurement";
+    delete elements.canvas.dataset.reviewTool;
+  } else {
+    const expected = review.tool === "measure-distance" ? 2 : 3;
+    elements.activeTool.textContent = review.tool === "select"
+      ? "Tool: Select"
+      : `Tool: ${review.tool.slice("measure-".length)} · ` +
+        `${review.measurementPicks.length}/${expected} points`;
+    elements.measurementResult.textContent =
+      measurementText(review);
+    elements.canvas.dataset.reviewTool = review.tool;
+    elements.cameraHelp.textContent = review.tool === "select"
+      ? "Click select · drag orbit · Shift/right/middle drag pan · " +
+        "wheel or +/- zoom · arrows orbit · Shift+arrows pan · " +
+        "F/Shift+F fit · 1–6 views · P projection · D/G/A measure"
+      : "Click visible model points to measure · Escape cancels the " +
+        "active measurement tool · source-coordinate units are not " +
+        "interpreted as an engineering unit.";
+  }
+  renderLayout();
+}
+
 function controls(state) {
   const ready = state === "ready";
   const opening = state === "opening";
   const pointCloud = active?.kind === "point-cloud";
   elements.cancel.disabled = !opening;
   elements.close.disabled = !ready;
-  elements.fitSelection.disabled = !ready || pointCloud ||
-    typeof active?.explorer.state.selection?.renderId !== "string";
   elements.pick.disabled = !ready;
   elements.showAll.disabled = !ready || (
     pointCloud && nextPointLodLevel() === null
@@ -266,6 +479,7 @@ function controls(state) {
   elements.retry.disabled =
     state !== "failed" ||
     (lastFailedBytes === null && vscodeApi === null);
+  renderReviewControls(state);
 }
 
 function nextPointLodLevel() {
@@ -553,6 +767,7 @@ function renderInspector(state) {
           if (active !== current) {
             return;
           }
+          current.selectionSuppressed = false;
           await revealExplorerItem(
             current.explorer,
             current.opened.snapshot,
@@ -698,15 +913,11 @@ function render() {
   }
   if (active.kind === "point-cloud") {
     renderPointCloud();
+    renderReviewControls(elements.status.dataset.state);
     return;
   }
-  const state = active.explorer.state;
-  elements.fitSelection.disabled =
-    typeof state.selection?.renderId !== "string";
+  const state = displayedExplorerState(active);
   elements.pick.textContent = "Pick center";
-  elements.cameraHelp.textContent =
-    "Click select · drag orbit · Shift/right/middle drag pan · " +
-    "wheel or +/- zoom · arrows orbit · Shift+arrows pan · Home reset";
   const reference = active.format !== "ifc";
   elements.showAll.textContent = "Show all";
   elements.treeTitle.textContent =
@@ -724,6 +935,7 @@ function render() {
   renderTree(state);
   renderResults(state);
   renderInspector(state);
+  renderReviewControls(elements.status.dataset.state);
 }
 
 function contextLabel(snapshot) {
@@ -918,6 +1130,32 @@ function cameraInteractionReport(current) {
   });
 }
 
+function reviewToolsReport(current) {
+  return Object.freeze({
+    schema: "bim-explorer-product-review-tools/1",
+    fitAllUpdates: current.review.fitAllUpdates,
+    hiddenRenderIds: [...current.view.hiddenRenderIds],
+    layout: Object.freeze({ ...layoutState }),
+    measurement:
+      current.review.measurement?.measurement ?? null,
+    measurementPicks: current.review.measurementPicks.length,
+    projection: current.camera.projection,
+    projectionUpdates: current.review.projectionUpdates,
+    resetViewUpdates: current.review.resetViewUpdates,
+    sectionMode: reviewSectionMode(current),
+    selectionSuppressed: current.selectionSuppressed,
+    standardView: current.review.standardView,
+    standardViewUpdates: current.review.standardViewUpdates,
+    tool: current.review.tool,
+    visibilityMode:
+      current.view.isolateRenderIds === null
+        ? current.view.hiddenRenderIds.length === 0
+          ? "show-all"
+          : "hide"
+        : "isolate",
+  });
+}
+
 function updateLiveCameraReport(current) {
   const report = globalThis.__bimExplorerProductReport;
   if (
@@ -935,6 +1173,7 @@ function updateLiveCameraReport(current) {
       misses: current.meshPickMisses,
     }),
     meshSelection: current.lastMeshPick,
+    reviewTools: reviewToolsReport(current),
   });
 }
 
@@ -979,7 +1218,7 @@ function canvasPickCoordinates({ clientX, clientY } = {}) {
 }
 
 async function selectionViewCommand(current) {
-  const selection = current.explorer.state.selection;
+  const selection = effectiveSelection(current);
   if (selection === null) {
     return { selectedPickIds: [] };
   }
@@ -993,7 +1232,11 @@ async function selectionViewCommand(current) {
     current.view.isolateRenderIds !== null &&
     !current.view.isolateRenderIds.includes(selection.renderId);
   if (hidden || outsideIsolation) {
-    return current.explorer.setVisibility("show-all");
+    const visibility = await current.explorer.setVisibility("show-all");
+    return {
+      ...visibility,
+      hiddenRenderIds: [],
+    };
   }
   return {
     selectedPickIds: [selection.pickId],
@@ -1027,6 +1270,7 @@ async function selectCanvasPointer(current, pointer) {
   if (active !== current) {
     return null;
   }
+  current.selectionSuppressed = false;
   await revealExplorerItem(
     current.explorer,
     current.opened.snapshot,
@@ -1078,18 +1322,35 @@ function attachActiveCameraControls(current) {
       try {
         await renderMeshView(current, { camera });
         current.cameraRenderedUpdates += 1;
+        if (![
+          "fit-selection",
+          "review-fit-all",
+          "review-projection",
+          "review-reset",
+          "review-standard-view",
+        ].includes(interaction.kind)) {
+          current.review.standardView = null;
+        }
         updateLiveCameraReport(current);
+        renderReviewControls(elements.status.dataset.state);
       } catch (error) {
         current.cameraInteractionError = error;
         updateLiveCameraReport(current);
-        if (interaction.kind === "fit-selection") {
+        if (
+          interaction.kind === "fit-selection" ||
+          interaction.kind.startsWith("review-")
+        ) {
           throw error;
         }
       }
     },
     async onPrimaryClick(pointer) {
       try {
-        await selectCanvasPointer(current, pointer);
+        if (current.review.tool.startsWith("measure-")) {
+          await captureMeasurementPointer(current, pointer);
+        } else {
+          await selectCanvasPointer(current, pointer);
+        }
       } catch (error) {
         current.cameraInteractionError = error;
         updateLiveCameraReport(current);
@@ -1110,7 +1371,7 @@ async function settleCameraControls(current) {
 }
 
 function selectedRenderableEntity(current) {
-  const selection = current.explorer.state.selection;
+  const selection = effectiveSelection(current);
   if (typeof selection?.renderId !== "string") {
     return null;
   }
@@ -1132,6 +1393,430 @@ function selectedFitCamera(current, entity) {
     pitch: current.camera.pitch,
     yaw: current.camera.yaw,
   });
+}
+
+function modelFitCamera(current, {
+  pitch = current.camera.pitch,
+  projection = current.camera.projection,
+  yaw = current.camera.yaw,
+} = {}) {
+  const bounds = elements.canvas.getBoundingClientRect();
+  const width = bounds.width || elements.canvas.width;
+  const height = bounds.height || elements.canvas.height;
+  const fitted = createFitCamera3d(
+    current.opened.snapshot.geometry.bounds,
+    {
+      aspect: width / height,
+      projection,
+    },
+  );
+  return validateCamera3d({
+    ...fitted,
+    pitch,
+    yaw,
+  });
+}
+
+function focusCanvas() {
+  try {
+    elements.canvas.focus({ preventScroll: true });
+  } catch {
+    elements.canvas.focus();
+  }
+}
+
+async function setReviewCamera(
+  current,
+  camera,
+  {
+    kind,
+    status,
+  },
+) {
+  await settleCameraControls(current);
+  if (active !== current || current.cameraControls === null) {
+    return null;
+  }
+  current.cameraInteractionError = null;
+  await current.cameraControls.setCamera(camera, { kind });
+  if (active !== current) {
+    return null;
+  }
+  if (current.cameraInteractionError !== null) {
+    throw current.cameraInteractionError;
+  }
+  updateLiveCameraReport(current);
+  render();
+  focusCanvas();
+  setStatus("ready", status);
+  return current.camera;
+}
+
+async function fitWholeModel() {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  const camera = modelFitCamera(current);
+  const updated = await setReviewCamera(current, camera, {
+    kind: "review-fit-all",
+    status: "Fitted the full model bounds in the 3D view.",
+  });
+  if (updated !== null) {
+    current.review.fitAllUpdates += 1;
+    current.review.standardView = null;
+    updateLiveCameraReport(current);
+  }
+  return updated;
+}
+
+async function resetReviewView() {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  const updated = await setReviewCamera(
+    current,
+    current.initialCamera,
+    {
+      kind: "review-reset",
+      status: "Reset the 3D camera to the source-open view.",
+    },
+  );
+  if (updated !== null) {
+    current.review.resetViewUpdates += 1;
+    current.review.standardView = null;
+    updateLiveCameraReport(current);
+  }
+  return updated;
+}
+
+const STANDARD_VIEWS = Object.freeze({
+  back: Object.freeze({ pitch: 0, yaw: Math.PI }),
+  bottom: Object.freeze({
+    pitch: -(Math.PI / 2 - 0.01),
+    yaw: 0,
+  }),
+  front: Object.freeze({ pitch: 0, yaw: 0 }),
+  left: Object.freeze({ pitch: 0, yaw: -Math.PI / 2 }),
+  right: Object.freeze({ pitch: 0, yaw: Math.PI / 2 }),
+  top: Object.freeze({
+    pitch: Math.PI / 2 - 0.01,
+    yaw: 0,
+  }),
+});
+
+async function setStandardView(name) {
+  const current = active;
+  const orientation = STANDARD_VIEWS[name];
+  if (
+    current === null ||
+    current.kind === "point-cloud" ||
+    orientation === undefined
+  ) {
+    return null;
+  }
+  const camera = modelFitCamera(current, orientation);
+  const updated = await setReviewCamera(current, camera, {
+    kind: "review-standard-view",
+    status: `Applied the ${name} standard view and fitted the model.`,
+  });
+  if (updated !== null) {
+    current.review.standardView = name;
+    current.review.standardViewUpdates += 1;
+    updateLiveCameraReport(current);
+    renderReviewControls("ready");
+  }
+  return updated;
+}
+
+async function toggleProjection() {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  const projection = current.camera.projection === "perspective"
+    ? "orthographic"
+    : "perspective";
+  const camera = validateCamera3d({
+    ...current.camera,
+    projection,
+  });
+  const updated = await setReviewCamera(current, camera, {
+    kind: "review-projection",
+    status: `Switched the 3D camera to ${projection} projection.`,
+  });
+  if (updated !== null) {
+    current.review.projectionUpdates += 1;
+    updateLiveCameraReport(current);
+    renderReviewControls("ready");
+  }
+  return updated;
+}
+
+async function applyReviewViewCommand(current, command, status) {
+  await settleCameraControls(current);
+  if (active !== current) {
+    return null;
+  }
+  const receipt = await renderMeshView(current, { command });
+  if (active !== current) {
+    return null;
+  }
+  updateLiveCameraReport(current);
+  render();
+  setStatus("ready", status);
+  return receipt;
+}
+
+async function clearProductSelection({ status = true } = {}) {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  current.selectionSuppressed = true;
+  current.lastMeshPick = null;
+  current.viewerCore.publishSelection(null, {
+    reason: "clear-selection",
+  });
+  return applyReviewViewCommand(
+    current,
+    { selectedPickIds: [] },
+    status
+      ? "Cleared the product selection and 3D highlight."
+      : elements.status.textContent,
+  );
+}
+
+async function hideSelectedObject() {
+  const current = active;
+  const selection = effectiveSelection(current);
+  if (
+    current === null ||
+    current.kind === "point-cloud" ||
+    typeof selection?.renderId !== "string"
+  ) {
+    return null;
+  }
+  const hiddenRenderIds = [
+    ...new Set([
+      ...current.view.hiddenRenderIds,
+      selection.renderId,
+    ]),
+  ];
+  current.selectionSuppressed = true;
+  current.lastMeshPick = null;
+  current.viewerCore.publishSelection(null, {
+    reason: "hide-selection",
+  });
+  return applyReviewViewCommand(
+    current,
+    {
+      hiddenRenderIds,
+      selectedPickIds: [],
+    },
+    "Hid the selected object and cleared its product selection.",
+  );
+}
+
+async function isolateSelectedObject() {
+  const current = active;
+  if (
+    current === null ||
+    current.kind === "point-cloud" ||
+    effectiveSelection(current) === null
+  ) {
+    return null;
+  }
+  const command = await current.explorer.setVisibility(
+    "isolate-selection",
+  );
+  return applyReviewViewCommand(
+    current,
+    command,
+    "Isolated the selected object in the 3D view.",
+  );
+}
+
+async function showAllObjects() {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  const visibility = await current.explorer.setVisibility("show-all");
+  const command = {
+    ...visibility,
+    hiddenRenderIds: [],
+    ...(current.selectionSuppressed
+      ? { selectedPickIds: [] }
+      : {}),
+  };
+  return applyReviewViewCommand(
+    current,
+    command,
+    "Restored all model objects in the 3D view.",
+  );
+}
+
+function insetSectionBox(bounds) {
+  const modelScale = Math.max(
+    0.001,
+    ...bounds.max.map(
+      (value, axis) => value - bounds.min[axis],
+    ),
+  );
+  const minimum = [];
+  const maximum = [];
+  for (let axis = 0; axis < 3; axis += 1) {
+    const extent = bounds.max[axis] - bounds.min[axis];
+    if (extent > 0) {
+      minimum.push(bounds.min[axis] + extent * 0.08);
+      maximum.push(bounds.max[axis] - extent * 0.08);
+    } else {
+      minimum.push(bounds.min[axis] - modelScale * 0.001);
+      maximum.push(bounds.max[axis] + modelScale * 0.001);
+    }
+  }
+  return {
+    min: minimum,
+    max: maximum,
+  };
+}
+
+async function applySectionMode(mode) {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  const bounds = current.opened.snapshot.geometry.bounds;
+  const centerX = (bounds.min[0] + bounds.max[0]) / 2;
+  const command = mode === "clip-x"
+    ? {
+        clippingPlanes: [{
+          constant: -centerX,
+          normal: [1, 0, 0],
+        }],
+        sectionBox: null,
+      }
+    : mode === "section-box"
+      ? {
+          clippingPlanes: [],
+          sectionBox: insetSectionBox(bounds),
+        }
+      : {
+          clippingPlanes: [],
+          sectionBox: null,
+        };
+  return applyReviewViewCommand(
+    current,
+    command,
+    mode === "clip-x"
+      ? "Applied an X-axis clipping plane through the model center."
+      : mode === "section-box"
+        ? "Applied an inset section box to the active model."
+        : "Cleared the active clipping plane or section box.",
+  );
+}
+
+function measurementExpectedPoints(tool) {
+  return tool === "measure-distance" ? 2 : 3;
+}
+
+function activateMeasurementTool(type) {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return;
+  }
+  const tool = `measure-${type}`;
+  current.review.tool = current.review.tool === tool
+    ? "select"
+    : tool;
+  current.review.measurement = null;
+  current.review.measurementPicks = [];
+  updateLiveCameraReport(current);
+  renderReviewControls("ready");
+  focusCanvas();
+  setStatus(
+    "ready",
+    current.review.tool === "select"
+      ? "Cancelled the measurement tool."
+      : `Measure ${type}: select ` +
+        `${measurementExpectedPoints(tool)} visible model points.`,
+  );
+}
+
+function clearMeasurement() {
+  const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return;
+  }
+  current.review.measurement = null;
+  current.review.measurementPicks = [];
+  current.review.tool = "select";
+  updateLiveCameraReport(current);
+  renderReviewControls("ready");
+  setStatus("ready", "Cleared the measurement and active measure tool.");
+}
+
+async function captureMeasurementPointer(current, pointer) {
+  if (active !== current || current.review.tool === "select") {
+    return null;
+  }
+  const coordinates = canvasPickCoordinates(pointer);
+  if (coordinates === null) {
+    return null;
+  }
+  const pick = await current.host.pick(coordinates);
+  if (active !== current) {
+    return null;
+  }
+  if (pick.status !== "hit") {
+    setStatus(
+      "ready",
+      "Measurement point missed visible geometry; existing points remain.",
+    );
+    return pick;
+  }
+  current.review.measurementPicks.push(pick);
+  const expected = measurementExpectedPoints(current.review.tool);
+  if (current.review.measurementPicks.length < expected) {
+    updateLiveCameraReport(current);
+    renderReviewControls("ready");
+    setStatus(
+      "ready",
+      `Measurement point ${current.review.measurementPicks.length}/` +
+        `${expected} captured in the active source revision.`,
+    );
+    return pick;
+  }
+  const type = current.review.tool.slice("measure-".length);
+  try {
+    current.review.measurement = current.renderer.measure({
+      picks: current.review.measurementPicks,
+      type,
+    });
+    current.review.measurementPicks = [];
+    current.review.tool = "select";
+    updateLiveCameraReport(current);
+    renderReviewControls("ready");
+    setStatus(
+      "ready",
+      "Measurement completed in source coordinates; unit authority " +
+        "was not interpreted.",
+    );
+  } catch (error) {
+    current.review.measurementPicks = [];
+    current.review.tool = "select";
+    updateLiveCameraReport(current);
+    renderReviewControls("ready");
+    setStatus(
+      "ready",
+      "Measurement failed closed; choose distinct valid model points.",
+    );
+    current.review.measurementError = error;
+    return null;
+  }
+  return pick;
 }
 
 async function fitSelectedObject() {
@@ -1178,7 +1863,7 @@ async function fitSelectedObject() {
 async function applySelectionView(current = active) {
   if (
     current === null ||
-    current.explorer.state.selection === null
+    effectiveSelection(current) === null
   ) {
     return null;
   }
@@ -1204,6 +1889,7 @@ async function selectExpressId(expressId, origin) {
   if (active !== current) {
     return null;
   }
+  current.selectionSuppressed = false;
   await revealExplorerItem(
     current.explorer,
     current.opened.snapshot,
@@ -2122,6 +2808,19 @@ async function openBytes(bytesValue, {
       opened,
       origin,
       product,
+      renderer,
+      initialCamera: mount.renderer.backend.camera,
+      review: {
+        fitAllUpdates: 0,
+        measurement: null,
+        measurementPicks: [],
+        projectionUpdates: 0,
+        resetViewUpdates: 0,
+        standardView: null,
+        standardViewUpdates: 0,
+        tool: "select",
+      },
+      selectionSuppressed: false,
       selectionFitUpdates: 0,
       surface,
       view: initialRendererView(explorer),
@@ -2253,6 +2952,7 @@ async function openBytes(bytesValue, {
       },
       viewerCore: viewerCore.state,
       cameraInteraction: cameraInteractionReport(active),
+      reviewTools: reviewToolsReport(active),
       meshSelection: null,
       meshPicking: {
         attempts: 0,
@@ -2586,9 +3286,15 @@ elements.isolateResults.addEventListener("click", async () => {
   }
   const current = active;
   await settleCameraControls(current);
-  const command = await current.explorer.setVisibility(
+  const visibility = await current.explorer.setVisibility(
     "isolate-results",
   );
+  const command = current.selectionSuppressed
+    ? {
+        ...visibility,
+        selectedPickIds: [],
+      }
+    : visibility;
   await renderMeshView(current, { command });
   render();
 });
@@ -2701,31 +3407,199 @@ async function refinePointLod() {
   }
 }
 
-elements.showAll.addEventListener("click", async () => {
-  if (active === null) {
-    return;
+async function runReviewAction(action, failureMessage) {
+  try {
+    return await action();
+  } catch {
+    if (active !== null) {
+      setStatus("ready", failureMessage);
+    }
+    return null;
   }
-  if (active.kind === "point-cloud") {
+}
+
+elements.showAll.addEventListener("click", async () => {
+  if (active?.kind === "point-cloud") {
     await refinePointLod();
     return;
   }
-  const current = active;
-  await settleCameraControls(current);
-  const command = await current.explorer.setVisibility("show-all");
-  await renderMeshView(current, { command });
+  await runReviewAction(
+    showAllObjects,
+    "Show all failed closed; the current view is unchanged.",
+  );
+});
+
+elements.fitAll.addEventListener("click", async () => {
+  await runReviewAction(
+    fitWholeModel,
+    "Model fit failed closed; the current view is unchanged.",
+  );
 });
 
 elements.fitSelection.addEventListener("click", async () => {
-  try {
-    await fitSelectedObject();
-  } catch {
-    if (active !== null) {
-      setStatus(
-        "ready",
-        "Selection fit failed closed; the current view is unchanged.",
-      );
-    }
+  await runReviewAction(
+    fitSelectedObject,
+    "Selection fit failed closed; the current view is unchanged.",
+  );
+});
+
+elements.resetView.addEventListener("click", async () => {
+  await runReviewAction(
+    resetReviewView,
+    "View reset failed closed; the current view is unchanged.",
+  );
+});
+
+elements.toggleProjection.addEventListener("click", async () => {
+  await runReviewAction(
+    toggleProjection,
+    "Projection change failed closed; the current view is unchanged.",
+  );
+});
+
+for (const button of elements.standardViews) {
+  button.addEventListener("click", async () => {
+    await runReviewAction(
+      () => setStandardView(button.dataset.standardView),
+      "Standard view failed closed; the current view is unchanged.",
+    );
+  });
+}
+
+elements.hideSelection.addEventListener("click", async () => {
+  await runReviewAction(
+    hideSelectedObject,
+    "Hide selected failed closed; the current view is unchanged.",
+  );
+});
+
+elements.isolateSelection.addEventListener("click", async () => {
+  await runReviewAction(
+    isolateSelectedObject,
+    "Isolate selected failed closed; the current view is unchanged.",
+  );
+});
+
+elements.clearSelection.addEventListener("click", async () => {
+  await runReviewAction(
+    clearProductSelection,
+    "Clear selection failed closed; the current view is unchanged.",
+  );
+});
+
+elements.clipX.addEventListener("click", async () => {
+  await runReviewAction(
+    () => applySectionMode(
+      reviewSectionMode(active) === "clip-x" ? "none" : "clip-x",
+    ),
+    "Clipping plane change failed closed; the view is unchanged.",
+  );
+});
+
+elements.sectionBox.addEventListener("click", async () => {
+  await runReviewAction(
+    () => applySectionMode(
+      reviewSectionMode(active) === "section-box"
+        ? "none"
+        : "section-box",
+    ),
+    "Section box change failed closed; the view is unchanged.",
+  );
+});
+
+elements.clearSection.addEventListener("click", async () => {
+  await runReviewAction(
+    () => applySectionMode("none"),
+    "Section clear failed closed; the view is unchanged.",
+  );
+});
+
+elements.measureDistance.addEventListener("click", () => {
+  activateMeasurementTool("distance");
+});
+
+elements.measureAngle.addEventListener("click", () => {
+  activateMeasurementTool("angle");
+});
+
+elements.measureArea.addEventListener("click", () => {
+  activateMeasurementTool("area");
+});
+
+elements.clearMeasurement.addEventListener("click", () => {
+  clearMeasurement();
+});
+
+elements.toggleTreePanel.addEventListener("click", () => {
+  layoutState.treeVisible = !layoutState.treeVisible;
+  renderLayout();
+  if (active !== null && active.kind !== "point-cloud") {
+    updateLiveCameraReport(active);
   }
+});
+
+elements.togglePropertiesPanel.addEventListener("click", () => {
+  layoutState.propertiesVisible = !layoutState.propertiesVisible;
+  renderLayout();
+  if (active !== null && active.kind !== "point-cloud") {
+    updateLiveCameraReport(active);
+  }
+});
+
+elements.toggleFocusMode.addEventListener("click", () => {
+  layoutState.focusMode = !layoutState.focusMode;
+  renderLayout();
+  if (active !== null && active.kind !== "point-cloud") {
+    updateLiveCameraReport(active);
+  }
+  if (layoutState.focusMode) {
+    focusCanvas();
+  }
+});
+
+elements.reviewToolbar.addEventListener("click", (event) => {
+  if (event.target.closest("button") !== null) {
+    event.target.closest("details")?.removeAttribute("open");
+  }
+});
+
+elements.canvas.addEventListener("keydown", (event) => {
+  const key = event.key.toLowerCase();
+  const standardView = ({
+    "1": "front",
+    "2": "back",
+    "3": "left",
+    "4": "right",
+    "5": "top",
+    "6": "bottom",
+  })[key];
+  let action = null;
+  if (key === "f") {
+    action = event.shiftKey ? fitSelectedObject : fitWholeModel;
+  } else if (key === "0") {
+    action = resetReviewView;
+  } else if (key === "p") {
+    action = toggleProjection;
+  } else if (standardView !== undefined) {
+    action = () => setStandardView(standardView);
+  } else if (key === "d") {
+    action = () => activateMeasurementTool("distance");
+  } else if (key === "g") {
+    action = () => activateMeasurementTool("angle");
+  } else if (key === "a") {
+    action = () => activateMeasurementTool("area");
+  } else if (key === "escape") {
+    action = clearMeasurement;
+  }
+  if (action === null) {
+    return;
+  }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  void runReviewAction(
+    action,
+    "Review shortcut failed closed; the current state is unchanged.",
+  );
 });
 
 async function pickVisible(current = active) {
@@ -2796,6 +3670,7 @@ async function selectVisible() {
   if (active !== current) {
     return null;
   }
+  current.selectionSuppressed = false;
   await revealExplorerItem(
     current.explorer,
     current.opened.snapshot,
@@ -2814,6 +3689,10 @@ async function selectVisible() {
     return null;
   }
   render();
+  setStatus(
+    "ready",
+    "Selected a visible object in the active source revision.",
+  );
   return pick;
 }
 
@@ -3016,6 +3895,7 @@ globalThis.addEventListener("pagehide", () => {
 });
 
 elements.diagHost.textContent = runtime.hostKind;
+renderLayout();
 elements.fixture.hidden =
   runtime.hostKind !== "browser" ||
   !runtime.fixtureEnabled;

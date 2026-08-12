@@ -13,6 +13,13 @@ mesh canvas의 pointer, wheel과 keyboard camera 조작은 Browser와 같은 run
 직렬화합니다. `Fit selection`은 현재 시점 방향을 유지하면서 선택 객체 bounds로
 이동하고, 같은 camera queue와 rollback 경로를 사용합니다. bounded tree 창 밖의
 3D selection은 마지막 행에 고정되어 highlight와 inspector identity를 유지합니다.
+같은 shared app의 review toolbar는 전체/선택 fit, reset, Z-up 표준 시점,
+perspective/orthographic 전환, 선택 hide/isolate/show/clear, clipping plane,
+section box, distance/angle/area measurement와 viewport focus layout을 제공합니다.
+거리와 면적은 검증되지 않은 source-coordinate units로만 표시합니다. Browser와
+VS Code에 공통인 수동 절차는
+[`docs/review-toolbar-checklist.md`](../../docs/review-toolbar-checklist.md)를
+따릅니다.
 단일-source `.gltf` Custom Editor는 JSON에 명시된 최대 16개의 동일 폴더 ASCII
 leaf-name `.bin`, `.png`, `.jpg`, `.jpeg`를 extension host에서만 해결합니다.
 document와 sidecar 합산

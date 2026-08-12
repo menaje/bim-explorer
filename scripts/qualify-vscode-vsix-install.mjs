@@ -643,6 +643,8 @@ export async function qualifyVscodeVsixInstall({
       installedViewerCoreProductEntrypoint:
         runtime.assertions
           ?.publicViewerCoreProductEntrypoint === true,
+      installedSharedReviewToolbarReady:
+        runtime.assertions?.sharedReviewToolbarReady === true,
       ...(includeFederatedSurfaceFixture
         ? {
             installedFederatedSurfaceQualified:
@@ -669,6 +671,9 @@ export async function qualifyVscodeVsixInstall({
             installedPublicViewerCoreProductEntrypoint:
               runtime.publicAssertions
                 ?.publicViewerCoreProductEntrypoint === true,
+            installedPublicSharedReviewToolbarReady:
+              runtime.publicAssertions
+                ?.publicSharedReviewToolbarReady === true,
           }
         : {}),
       installedPackageOpensReferenceFixture:
@@ -692,6 +697,9 @@ export async function qualifyVscodeVsixInstall({
       installedReferenceViewerCoreProductEntrypoint:
         runtime.referenceAssertions
           ?.referenceViewerCoreProductEntrypoint === true,
+      installedReferenceSharedReviewToolbarReady:
+        runtime.referenceAssertions
+          ?.referenceSharedReviewToolbarReady === true,
       ...(includeProductScaleFixture
         ? {
             installedPackageOpensProductScaleReference:
@@ -929,6 +937,7 @@ export async function qualifyVscodeVsixInstall({
           hostKind: runtime.observation?.hostKind,
           model: runtime.observation?.model,
           renderer: runtime.observation?.renderer,
+          reviewTools: runtime.observation?.reviewTools,
           lifecycle: runtime.observation?.lifecycle,
           viewerCore: runtime.observation?.viewerCore,
         },
@@ -945,6 +954,8 @@ export async function qualifyVscodeVsixInstall({
                   runtime.publicObservation?.resources,
                 renderer:
                   runtime.publicObservation?.renderer,
+                reviewTools:
+                  runtime.publicObservation?.reviewTools,
                 semantic:
                   runtime.publicObservation?.semantic,
                 lifecycle:
@@ -969,6 +980,8 @@ export async function qualifyVscodeVsixInstall({
             runtime.referenceObservation?.resources,
           renderer:
             runtime.referenceObservation?.renderer,
+          reviewTools:
+            runtime.referenceObservation?.reviewTools,
           reference:
             runtime.referenceObservation?.reference,
           lifecycle:

@@ -26,6 +26,7 @@ last_reviewed: 2026-08-11
 | [openBIM 탐색 경계](openbim-exploration.md) | `architecture` · `accepted` | BCF·IDS·bSDD profile, source binding과 network 경계 |
 | [Federation과 reference format](federation-and-reference-formats.md) | `architecture` · `accepted` | multi-source identity, coordinate alignment와 format admission |
 | [Reference format evidence intake](reference-format-intake.md) | `qualification` · `active` | 실제 사용자 과업, fixture·권리·좌표 evidence 접수와 privacy Gate |
+| [3D 검토 도구 수동 체크리스트](review-toolbar-checklist.md) | `qualification` · `active` | Browser·VS Code camera, 선택, 단면, 측정과 layout 수동 검토 |
 | [결정 대장](decision-register.md) | `register` · `active` | 사실, 결정과 열린 질문 |
 | [ADR-0001](adr/ADR-0001-independent-product-boundary.md) | `adr` · `accepted` | 독립 제품·저장소·release 결정 |
 | [ADR-0002](adr/ADR-0002-viewer-core-consumer-admission.md) | `adr` · `accepted` | 공용 Viewer Core artifact와 3D consumer admission |

@@ -350,6 +350,277 @@ async function dispatchPrimaryClick(client, x, y) {
   });
 }
 
+async function clickEnabledProductButton(client, selector) {
+  const clicked = await client.evaluate(`(() => {
+    const button = document.querySelector(${JSON.stringify(selector)});
+    if (!(button instanceof HTMLButtonElement) || button.disabled) {
+      return false;
+    }
+    button.click();
+    return true;
+  })()`);
+  if (!clicked) {
+    throw new Error(
+      `BIM product review button is unavailable: ${selector}`,
+    );
+  }
+}
+
+async function qualifyReviewToolbar(client) {
+  const initial = await client.evaluate(`(() => ({
+    report: JSON.parse(JSON.stringify(
+      globalThis.__bimExplorerProductReport.reviewTools
+    )),
+    toolbarRole:
+      document.querySelector("#review-toolbar")?.getAttribute("role"),
+    cameraButtons: ["#fit-all", "#fit-selection", "#reset-view"]
+      .every((selector) =>
+        document.querySelector(selector)?.disabled === false),
+    menus: ["#view-tools", "#selection-tools", "#section-tools",
+      "#measurement-tools", "#layout-tools"]
+      .every((selector) =>
+        document.querySelector(selector) instanceof HTMLDetailsElement)
+  }))()`);
+  await clickEnabledProductButton(client, "#fit-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.fitAllUpdates > ${initial.report.fitAllUpdates}`,
+  );
+  await clickEnabledProductButton(client, "#toggle-projection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.projection === "orthographic"`,
+  );
+  await clickEnabledProductButton(client, "#reset-view");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.resetViewUpdates >= 1 &&
+    globalThis.__bimExplorerProductReport.reviewTools
+      ?.projection === "perspective"`,
+  );
+  await clickEnabledProductButton(
+    client,
+    '[data-standard-view="front"]',
+  );
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.standardView === "front"`,
+  );
+
+  await clickEnabledProductButton(client, "#isolate-selection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "isolate"`,
+  );
+  await clickEnabledProductButton(client, "#show-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "show-all"`,
+  );
+  await clickEnabledProductButton(client, "#hide-selection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "hide" &&
+    globalThis.__bimExplorerProductReport.reviewTools
+      ?.selectionSuppressed === true`,
+  );
+  await clickEnabledProductButton(client, "#show-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "show-all"`,
+  );
+  await clickEnabledProductButton(client, "#pick-model");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.selectionSuppressed === false`,
+  );
+
+  await clickEnabledProductButton(client, "#clip-x");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "clip-x"`,
+  );
+  await clickEnabledProductButton(client, "#section-box");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "section-box"`,
+  );
+  await clickEnabledProductButton(client, "#clear-section");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "none"`,
+  );
+
+  for (const [selector, tool] of [
+    ["#measure-angle", "measure-angle"],
+    ["#measure-area", "measure-area"],
+  ]) {
+    await clickEnabledProductButton(client, selector);
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === ${JSON.stringify(tool)}`,
+    );
+    await clickEnabledProductButton(client, "#clear-measurement");
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === "select"`,
+    );
+  }
+
+  await client.evaluate(`new Promise((resolve) => {
+    document.querySelector("#model-canvas").scrollIntoView({
+      block: "center",
+      inline: "center",
+    });
+    requestAnimationFrame(() => resolve(true));
+  })`);
+  const canvas = await client.evaluate(`(() => {
+    const bounds = document.querySelector("#model-canvas")
+      .getBoundingClientRect();
+    return {
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height
+    };
+  })()`);
+  const measurementPairs = [
+    [[0.35, 0.5], [0.65, 0.5]],
+    [[0.5, 0.35], [0.5, 0.65]],
+    [[0.35, 0.35], [0.65, 0.65]],
+    [[0.42, 0.45], [0.58, 0.55]],
+    [[0.4, 0.5], [0.6, 0.5]],
+  ];
+  let measurement = null;
+  for (const pair of measurementPairs) {
+    await clickEnabledProductButton(client, "#measure-distance");
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === "measure-distance"`,
+    );
+    const [first, second] = pair;
+    await dispatchPrimaryClick(
+      client,
+      canvas.left + canvas.width * first[0],
+      canvas.top + canvas.height * first[1],
+    );
+    const firstCaptured = await poll(
+      client,
+      `(() => {
+        const review = globalThis.__bimExplorerProductReport.reviewTools;
+        return review?.measurementPicks === 1 ||
+          review?.tool === "select";
+      })()`,
+      { timeoutMs: 1_500 },
+    ).catch(() => false);
+    if (!firstCaptured) {
+      await clickEnabledProductButton(client, "#clear-measurement");
+      continue;
+    }
+    await dispatchPrimaryClick(
+      client,
+      canvas.left + canvas.width * second[0],
+      canvas.top + canvas.height * second[1],
+    );
+    measurement = await poll(
+      client,
+      `(() => {
+        const review = globalThis.__bimExplorerProductReport.reviewTools;
+        return review?.measurement?.type === "distance"
+          ? JSON.parse(JSON.stringify(review.measurement))
+          : review?.tool === "select"
+            ? false
+            : null;
+      })()`,
+      { timeoutMs: 1_500 },
+    ).catch(() => null);
+    if (measurement !== null) {
+      break;
+    }
+    const clearEnabled = await client.evaluate(
+      `document.querySelector("#clear-measurement").disabled === false`,
+    );
+    if (clearEnabled) {
+      await clickEnabledProductButton(client, "#clear-measurement");
+    }
+  }
+  if (measurement === null) {
+    throw new Error(
+      "BIM product distance measurement did not resolve two model points",
+    );
+  }
+
+  for (const selector of [
+    "#toggle-tree-panel",
+    "#toggle-properties-panel",
+  ]) {
+    await clickEnabledProductButton(client, selector);
+    await clickEnabledProductButton(client, selector);
+  }
+  await clickEnabledProductButton(client, "#toggle-focus-mode");
+  const focusMode = await poll(client, `(() => {
+    const workspace = document.querySelector(".workspace");
+    const tree = document.querySelector(".tree-panel");
+    const properties = document.querySelector(".right-column");
+    return workspace.dataset.focusMode === "true" &&
+      getComputedStyle(tree).display === "none" &&
+      getComputedStyle(properties).display === "none";
+  })()`);
+  await clickEnabledProductButton(client, "#toggle-focus-mode");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.layout?.focusMode === false`,
+  );
+
+  await clickEnabledProductButton(client, "#clear-selection");
+  const selectionCleared = await poll(client, `(() => {
+    const report = globalThis.__bimExplorerProductReport;
+    return report.reviewTools?.selectionSuppressed === true &&
+      report.cameraInteraction?.selectedPickIds?.length === 0 &&
+      document.querySelector("#selection-origin").textContent === "none" &&
+      !document.querySelector("#model-tree [aria-selected=true]");
+  })()`);
+  await clickEnabledProductButton(client, "#pick-model");
+  const selectionRestored = await poll(client, `(() => {
+    const report = globalThis.__bimExplorerProductReport;
+    return report.reviewTools?.selectionSuppressed === false &&
+      report.meshSelection?.status === "hit" &&
+      document.querySelector("#selection-origin").textContent === "3d";
+  })()`);
+
+  return client.evaluate(`(() => ({
+    initial: ${JSON.stringify(initial)},
+    final: JSON.parse(JSON.stringify(
+      globalThis.__bimExplorerProductReport.reviewTools
+    )),
+    focusMode: ${JSON.stringify(focusMode)},
+    measurement: ${JSON.stringify(measurement)},
+    measurementText:
+      document.querySelector("#measurement-result").textContent,
+    selectionCleared: ${JSON.stringify(selectionCleared)},
+    selectionRestored: ${JSON.stringify(selectionRestored)},
+    toolbarButtons: document.querySelectorAll(
+      "#review-toolbar button"
+    ).length
+  }))()`);
+}
+
 function assertions(
   opened,
   interaction,
@@ -546,6 +817,42 @@ function assertions(
               )
             ),
         }),
+    ...(["synthetic", "public"].includes(fixture.kind)
+      ? {
+          reviewToolbar:
+            interaction.reviewToolbar?.initial.toolbarRole ===
+              "toolbar" &&
+            interaction.reviewToolbar.initial.cameraButtons === true &&
+            interaction.reviewToolbar.initial.menus === true &&
+            interaction.reviewToolbar.toolbarButtons >= 20 &&
+            interaction.reviewToolbar.final.fitAllUpdates >= 1 &&
+            interaction.reviewToolbar.final.projectionUpdates >= 1 &&
+            interaction.reviewToolbar.final.resetViewUpdates >= 1 &&
+            interaction.reviewToolbar.final.standardViewUpdates >= 1 &&
+            interaction.reviewToolbar.final.projection ===
+              "perspective" &&
+            interaction.reviewToolbar.final.sectionMode === "none" &&
+            interaction.reviewToolbar.final.visibilityMode ===
+              "show-all" &&
+            interaction.reviewToolbar.final.tool === "select" &&
+            interaction.reviewToolbar.final.selectionSuppressed ===
+              false &&
+            interaction.reviewToolbar.final.layout.focusMode === false &&
+            interaction.reviewToolbar.final.layout.treeVisible === true &&
+            interaction.reviewToolbar.final.layout.propertiesVisible ===
+              true &&
+            interaction.reviewToolbar.focusMode === true &&
+            interaction.reviewToolbar.selectionCleared === true &&
+            interaction.reviewToolbar.selectionRestored === true &&
+            interaction.reviewToolbar.measurement.type === "distance" &&
+            interaction.reviewToolbar.measurement.value > 0 &&
+            interaction.reviewToolbar.measurement.unit ===
+              "source-coordinate-unit" &&
+            interaction.reviewToolbar.measurementText.includes(
+              "source-coordinate units (unqualified)",
+            ),
+        }
+      : {}),
     ...(fixture.kind === "public"
       ? {
           distinctCanvasObjects:
@@ -1571,6 +1878,7 @@ export async function qualifyBimProductShell({
         : null;
     const distinctMeshSelections = [];
     let selectionFit = null;
+    let reviewToolbar = null;
     if (initialPointLod !== null) {
       await client.evaluate(
         `document.querySelector("#pick-model").click(); true`,
@@ -1797,6 +2105,9 @@ export async function qualifyBimProductShell({
             );
           }
         }
+        if (["synthetic", "public"].includes(fixture.kind)) {
+          reviewToolbar = await qualifyReviewToolbar(client);
+        }
       }
     } else {
       await client.evaluate(
@@ -1887,6 +2198,7 @@ export async function qualifyBimProductShell({
     interaction.distinctMeshSelections =
       distinctMeshSelections;
     interaction.selectionFit = selectionFit;
+    interaction.reviewToolbar = reviewToolbar;
     await client.evaluate(
       `document.querySelector("#close-model").click(); true`,
     );
@@ -2018,6 +2330,9 @@ export async function qualifyBimProductShell({
                 distinctMeshSelections:
                   interaction.distinctMeshSelections,
               }),
+          ...(interaction.reviewToolbar === null
+            ? {}
+            : { reviewToolbar: interaction.reviewToolbar }),
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,

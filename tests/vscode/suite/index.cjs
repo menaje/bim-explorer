@@ -63,6 +63,25 @@ function viewerCoreQualified(ready, disposed) {
   );
 }
 
+function reviewToolsReady(ready) {
+  return (
+    ready.reviewTools?.schema ===
+      "bim-explorer-product-review-tools/1" &&
+    ready.reviewTools.projection === "perspective" &&
+    ready.reviewTools.tool === "select" &&
+    ready.reviewTools.sectionMode === "none" &&
+    ready.reviewTools.visibilityMode === "show-all" &&
+    ready.reviewTools.selectionSuppressed === false &&
+    ready.reviewTools.measurement === null &&
+    ready.reviewTools.measurementPicks === 0 &&
+    Array.isArray(ready.reviewTools.hiddenRenderIds) &&
+    ready.reviewTools.hiddenRenderIds.length === 0 &&
+    ready.reviewTools.layout?.focusMode === false &&
+    ready.reviewTools.layout?.treeVisible === true &&
+    ready.reviewTools.layout?.propertiesVisible === true
+  );
+}
+
 function physicalAppleMetalGpu(value) {
   return (
     value?.schema === "bim-explorer-webgl2-gpu-identity/1" &&
@@ -234,6 +253,7 @@ async function qualifyReference({
   assert.equal(ready.reference.selectedNativeId, nativeId);
   assert.equal(ready.renderer.actualGpu, true);
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(reviewToolsReady(ready), true);
   assert.equal(
     ready.renderer.sourceReadBytes,
     expectedReadBytes,
@@ -439,6 +459,7 @@ async function qualifyReference({
       performance: ready.performance,
       resources: ready.resources,
       renderer: ready.renderer,
+      reviewTools: ready.reviewTools,
       reference: {
         ...ready.reference,
         ...(ready.source.appearanceOmissions === undefined
@@ -506,6 +527,7 @@ async function qualifyReference({
       editorCloseObserved: disposed.status === "disposed",
       publicViewerCoreProductEntrypoint:
         viewerCoreQualified(ready, disposed),
+      sharedReviewToolbarReady: reviewToolsReady(ready),
     },
   };
 }
@@ -1257,6 +1279,7 @@ async function run() {
     assert.equal(ready.model.products, 2);
     assert.equal(ready.renderer.actualGpu, true);
     assert.ok(ready.renderer.nonBackgroundPixels > 0);
+    assert.equal(reviewToolsReady(ready), true);
     const serialized = JSON.stringify(ready);
     assert.equal(serialized.includes(sourcePath), false);
     assert.equal(serialized.includes("qualification-source"), false);
@@ -1326,6 +1349,7 @@ async function run() {
       assert.ok(
         publicReady.renderer.nonBackgroundPixels > 0,
       );
+      assert.equal(reviewToolsReady(publicReady), true);
       assert.equal(
         publicReady.renderer.sourceReadBytes,
         4_193_868,
@@ -1373,6 +1397,7 @@ async function run() {
           performance: publicReady.performance,
           resources: publicReady.resources,
           renderer: publicReady.renderer,
+          reviewTools: publicReady.reviewTools,
           semantic: publicReady.semantic,
           lifecycle: {
             opened: publicReady.status,
@@ -1397,6 +1422,8 @@ async function run() {
               publicReady,
               publicDisposed,
             ),
+          publicSharedReviewToolbarReady:
+            reviewToolsReady(publicReady),
         },
       };
     }
@@ -1429,6 +1456,8 @@ async function run() {
           referenceViewerCoreProductEntrypoint:
             qualified.assertions
               .publicViewerCoreProductEntrypoint,
+          referenceSharedReviewToolbarReady:
+            qualified.assertions.sharedReviewToolbarReady,
         },
       };
     }
@@ -1758,6 +1787,7 @@ async function run() {
         performance: ready.performance,
         resources: ready.resources,
         renderer: ready.renderer,
+        reviewTools: ready.reviewTools,
         semantic: ready.semantic,
         viewerCore: {
           opened: ready.viewerCore,
@@ -1883,6 +1913,7 @@ async function run() {
         editorCloseObserved: disposed.status === "disposed",
         publicViewerCoreProductEntrypoint:
           viewerCoreQualified(ready, disposed),
+        sharedReviewToolbarReady: reviewToolsReady(ready),
         packagedRuntimeIndependent: packagedRuntime,
         spatialIndependent: true,
         ...(rendererMode === "physical"

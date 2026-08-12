@@ -119,17 +119,162 @@
                 <p class="kicker">Same source revision</p>
                 <h2 id="viewport-title">3D model</h2>
               </div>
-              <div class="inline-actions">
+              <span id="projection-state" class="badge">perspective</span>
+            </div>
+            <div
+              id="review-toolbar"
+              class="review-toolbar"
+              role="toolbar"
+              aria-label="3D review tools"
+            >
+              <div class="tool-group" role="group" aria-label="Camera fit">
+                <button id="fit-all" type="button" disabled>
+                  Fit all
+                </button>
                 <button id="fit-selection" type="button" disabled>
                   Fit selection
                 </button>
-                <button id="pick-model" type="button" disabled>
-                  Pick center
-                </button>
-                <button id="show-all" type="button" disabled>
-                  Show all
+                <button id="reset-view" type="button" disabled>
+                  Reset
                 </button>
               </div>
+              <details id="view-tools" class="tool-menu">
+                <summary>Views</summary>
+                <div class="tool-menu-panel" role="group" aria-label="Views">
+                  <button
+                    id="toggle-projection"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Projection: perspective</button>
+                  <button type="button" data-standard-view="front" disabled>
+                    Front
+                  </button>
+                  <button type="button" data-standard-view="back" disabled>
+                    Back
+                  </button>
+                  <button type="button" data-standard-view="left" disabled>
+                    Left
+                  </button>
+                  <button type="button" data-standard-view="right" disabled>
+                    Right
+                  </button>
+                  <button type="button" data-standard-view="top" disabled>
+                    Top
+                  </button>
+                  <button type="button" data-standard-view="bottom" disabled>
+                    Bottom
+                  </button>
+                </div>
+              </details>
+              <details id="selection-tools" class="tool-menu">
+                <summary>Selection</summary>
+                <div
+                  class="tool-menu-panel"
+                  role="group"
+                  aria-label="Selection visibility"
+                >
+                  <button id="pick-model" type="button" disabled>
+                    Pick center
+                  </button>
+                  <button id="hide-selection" type="button" disabled>
+                    Hide selected
+                  </button>
+                  <button id="isolate-selection" type="button" disabled>
+                    Isolate selected
+                  </button>
+                  <button id="show-all" type="button" disabled>
+                    Show all
+                  </button>
+                  <button id="clear-selection" type="button" disabled>
+                    Clear selection
+                  </button>
+                </div>
+              </details>
+              <details id="section-tools" class="tool-menu">
+                <summary>Section</summary>
+                <div
+                  class="tool-menu-panel"
+                  role="group"
+                  aria-label="Section tools"
+                >
+                  <button
+                    id="clip-x"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Clip X</button>
+                  <button
+                    id="section-box"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Section box</button>
+                  <button id="clear-section" type="button" disabled>
+                    Clear section
+                  </button>
+                </div>
+              </details>
+              <details id="measurement-tools" class="tool-menu">
+                <summary>Measure</summary>
+                <div
+                  class="tool-menu-panel"
+                  role="group"
+                  aria-label="Measurement tools"
+                >
+                  <button
+                    id="measure-distance"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Distance</button>
+                  <button
+                    id="measure-angle"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Angle</button>
+                  <button
+                    id="measure-area"
+                    type="button"
+                    aria-pressed="false"
+                    disabled
+                  >Area</button>
+                  <button id="clear-measurement" type="button" disabled>
+                    Clear measurement
+                  </button>
+                </div>
+              </details>
+              <details id="layout-tools" class="tool-menu">
+                <summary>Layout</summary>
+                <div
+                  class="tool-menu-panel tool-menu-panel-end"
+                  role="group"
+                  aria-label="Workspace layout"
+                >
+                  <button
+                    id="toggle-tree-panel"
+                    type="button"
+                    aria-pressed="true"
+                  >Model tree</button>
+                  <button
+                    id="toggle-properties-panel"
+                    type="button"
+                    aria-pressed="true"
+                  >Properties</button>
+                  <button
+                    id="toggle-focus-mode"
+                    type="button"
+                    aria-pressed="false"
+                  >Viewport focus</button>
+                </div>
+              </details>
+            </div>
+            <div class="review-state">
+              <p id="active-tool" role="status">Tool: Select</p>
+              <p id="measurement-result" role="status">
+                No measurement
+              </p>
             </div>
             <canvas
               id="model-canvas"
@@ -137,7 +282,7 @@
               height="450"
               tabindex="0"
               aria-describedby="camera-help"
-              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home"
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home F Shift+F 0 P 1 2 3 4 5 6 D G A Escape"
               aria-label="Interactive WebGL2 BIM or reference model"
             ></canvas>
             <p id="camera-help" class="camera-help">

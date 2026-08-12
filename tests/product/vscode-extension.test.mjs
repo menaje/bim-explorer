@@ -586,6 +586,10 @@ test("webview HTML uses the shared app with strict path-free CSP", async () => {
     html,
     /Content-Security-Policy/u,
   );
+  assert.match(html, /id="review-toolbar"/u);
+  assert.match(html, /aria-label="3D review tools"/u);
+  assert.match(html, /id="measure-distance"/u);
+  assert.match(html, /id="toggle-focus-mode"/u);
   assert.match(
     html,
     /worker-src vscode-webview:\/\/test blob:/u,
@@ -1048,6 +1052,37 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
       triangles: 12,
       ranges: 1,
     },
+    reviewTools: {
+      schema: "bim-explorer-product-review-tools/1",
+      fitAllUpdates: 1,
+      hiddenRenderIds: ["render:40"],
+      layout: {
+        focusMode: false,
+        propertiesVisible: true,
+        treeVisible: true,
+        path: "/private/customer/acme.ifc",
+      },
+      measurement: {
+        schema: "bim-explorer-measurement-3d/0.1",
+        type: "distance",
+        coordinateSpace: "source-world",
+        unit: "source-coordinate-unit",
+        points: [[0, 0, 0], [1, 0, 0]],
+        value: 1,
+        path: "/private/customer/acme.ifc",
+      },
+      measurementPicks: 0,
+      projection: "orthographic",
+      projectionUpdates: 1,
+      resetViewUpdates: 0,
+      sectionMode: "clip-x",
+      selectionSuppressed: false,
+      standardView: "front",
+      standardViewUpdates: 1,
+      tool: "select",
+      visibilityMode: "hide",
+      path: "/private/customer/acme.ifc",
+    },
     viewerCore: {
       adopted: true,
       api: "menaje-viewer-core/0.1",
@@ -1099,6 +1134,10 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
   assert.equal(report.viewerCore.version, "0.1.2");
   assert.equal(report.viewerCore.source.rangeBytesRead, 256);
   assert.equal(report.viewerCore.selection.identity.expressId, 40);
+  assert.equal(report.reviewTools.projection, "orthographic");
+  assert.equal(report.reviewTools.measurement.value, 1);
+  assert.equal(report.reviewTools.measurement.path, undefined);
+  assert.equal(report.reviewTools.layout.path, undefined);
   assert.equal(report.gpu.webgl2, true);
   assert.equal(
     report.gpu.unmaskedRenderer,

@@ -26,6 +26,14 @@ range와 `POINTS` renderer로 분기합니다.
   queue를 사용하고 실패하면 이전 camera로 복귀합니다. 64-row tree 창 밖에서
   3D로 선택된 객체는 마지막 행에 source-revision-bound selection으로 고정해
   inspector와 highlight identity를 계속 확인할 수 있습니다.
+- viewport-first review toolbar는 전체/선택 fit, reset, Z-up 여섯 표준 시점,
+  perspective/orthographic 전환, 선택 hide/isolate/show/clear, X clipping plane,
+  section box와 distance/angle/area measurement를 제공합니다. active tool,
+  `aria-pressed`, disabled state와 crosshair를 표시하고 tree/properties 접기 및
+  viewport focus mode를 제공합니다. 거리·면적은 source-coordinate unit authority를
+  해석하지 않으며 각도만 degree로 표시합니다. 수동 검토 절차는
+  [`docs/review-toolbar-checklist.md`](../../docs/review-toolbar-checklist.md)를
+  따릅니다.
 - IFC와 glTF/GLB renderer range는 exact public Viewer Core session을 통과하고,
   initial/3D selection과 close cleanup은 public selection/Host lifecycle로
   투영합니다.
@@ -61,7 +69,10 @@ range와 `POINTS` renderer로 분기합니다.
 `npm run start:web`은 loopback-only local server를 실행합니다. generated
 qualification fixture는 `--fixture synthetic`을 명시한 경우에만 노출합니다.
 `npm run qualify:product:web:public`은 고정 digest의 공개 IFC를 실제 local
-file input으로 선택하며 server가 모델 bytes를 제공하지 않습니다. 공개
+file input으로 선택하며 server가 모델 bytes를 제공하지 않습니다. 이 검증은
+두 위치의 실제 canvas pick뿐 아니라 review toolbar의 camera, projection,
+visibility, clipping, distance measurement, layout, selection clear/restore를
+actual Browser WebGL2에서 실행합니다. 공개
 fixture와 실제 고객 IFC는 package에 포함하거나 Git에 추적하지 않습니다.
 `npm run qualify:gltf:product`는 고정 Khronos Box GLB를 실제 local file
 input으로 선택하고 staged VS Code와 clean-installed VSIX까지 같은 bounded

@@ -171,6 +171,28 @@ h3 {
   align-items: start;
 }
 
+.workspace[data-tree-visible="false"] {
+  grid-template-columns: minmax(480px, 1.65fr) minmax(280px, 0.86fr);
+}
+
+.workspace[data-properties-visible="false"] {
+  grid-template-columns: minmax(240px, 0.72fr) minmax(480px, 1.65fr);
+}
+
+.workspace[data-tree-visible="false"][data-properties-visible="false"],
+.workspace[data-focus-mode="true"] {
+  display: block;
+}
+
+.workspace[data-tree-visible="false"] > .tree-panel,
+.workspace[data-properties-visible="false"] > .right-column,
+.workspace[data-focus-mode="true"] > .tree-panel,
+.workspace[data-focus-mode="true"] > .right-column,
+.workspace[data-focus-mode="true"] .search,
+.workspace[data-focus-mode="true"] .results-panel {
+  display: none;
+}
+
 .panel,
 .viewport,
 .results-panel,
@@ -306,6 +328,110 @@ h3 {
   padding: 11px 11px 0;
 }
 
+.review-toolbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 11px 9px;
+  border-bottom: 1px solid #1c3344;
+}
+
+.tool-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.review-toolbar button,
+.tool-menu summary {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 0.72rem;
+}
+
+.tool-menu {
+  position: relative;
+}
+
+.tool-menu summary {
+  border: 1px solid #35536a;
+  border-radius: 8px;
+  background: #142637;
+  color: #d8e6f1;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tool-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.tool-menu summary::after {
+  margin-left: 6px;
+  color: #79a5bd;
+  content: "▾";
+}
+
+.tool-menu[open] summary,
+.tool-menu summary:focus-visible,
+.tool-menu summary:hover {
+  border-color: #69c7d4;
+  outline: none;
+}
+
+.tool-menu-panel {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  display: grid;
+  min-width: 180px;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid #35536a;
+  border-radius: 10px;
+  background: #0b1b28;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 42%);
+}
+
+.tool-menu-panel-end {
+  right: 0;
+  left: auto;
+}
+
+.tool-menu-panel button {
+  width: 100%;
+  text-align: left;
+}
+
+button[aria-pressed="true"] {
+  border-color: #58beca;
+  background: #173c48;
+  color: #f0fcff;
+}
+
+.review-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  padding: 6px 11px;
+  background: #091923;
+  color: #9bb5c7;
+  font-size: 0.68rem;
+}
+
+.review-state p {
+  margin: 0;
+}
+
+#measurement-result {
+  color: #d5b770;
+  text-align: right;
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -317,6 +443,10 @@ canvas {
 canvas[data-camera-controls="active"] {
   cursor: grab;
   touch-action: none;
+}
+
+canvas[data-review-tool^="measure-"] {
+  cursor: crosshair;
 }
 
 canvas[data-camera-controls="active"]:active {
@@ -445,5 +575,25 @@ canvas[data-camera-controls="active"]:focus-visible {
 
   #source-identity {
     text-align: left;
+  }
+
+  .review-state {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  #measurement-result {
+    text-align: left;
+  }
+
+  .tool-menu {
+    position: static;
+  }
+
+  .tool-menu-panel,
+  .tool-menu-panel-end {
+    right: 11px;
+    left: 11px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
