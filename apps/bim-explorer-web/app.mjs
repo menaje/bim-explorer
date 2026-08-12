@@ -5,7 +5,9 @@ import {
   attachCameraControls3d,
   createBimRenderer3dHost,
   createBounded3dRenderer,
+  createFitCamera3d,
   createWebGl2Backend,
+  validateCamera3d,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
   createBoundedPointCloudRenderer,
@@ -85,6 +87,7 @@ const elements = {
   diagnostics: document.querySelector(".diagnostics"),
   file: document.querySelector("#source-file"),
   fixture: document.querySelector("#open-fixture"),
+  fitSelection: document.querySelector("#fit-selection"),
   inspector: document.querySelector("#inspector-content"),
   isolateResults: document.querySelector("#isolate-results"),
   moreResults: document.querySelector("#more-results"),
@@ -253,6 +256,8 @@ function controls(state) {
   const pointCloud = active?.kind === "point-cloud";
   elements.cancel.disabled = !opening;
   elements.close.disabled = !ready;
+  elements.fitSelection.disabled = !ready || pointCloud ||
+    typeof active?.explorer.state.selection?.renderId !== "string";
   elements.pick.disabled = !ready;
   elements.showAll.disabled = !ready || (
     pointCloud && nextPointLodLevel() === null
@@ -289,16 +294,94 @@ function inspectorSection(title, items, renderItem) {
   return section;
 }
 
+function selectedTreeRow(state) {
+  const selection = state.selection;
+  if (selection === null || active === null) {
+    return null;
+  }
+  const nodes = active.opened.snapshot.tree?.nodes ?? [];
+  const node = nodes.find((item) =>
+    item.expressId === selection.expressId);
+  if (node !== undefined) {
+    let depth = 0;
+    let parentExpressId = node.parentExpressId;
+    while (parentExpressId !== null) {
+      const parent = nodes.find((item) =>
+        item.expressId === parentExpressId);
+      if (parent === undefined) {
+        break;
+      }
+      depth += 1;
+      parentExpressId = parent.parentExpressId;
+    }
+    return {
+      ...structuredClone(node),
+      depth,
+      expanded: state.tree.expandedExpressIds.includes(
+        node.expressId,
+      ),
+      pinnedSelection: true,
+      selected: true,
+    };
+  }
+  const entity = active.opened.snapshot.entities.find((item) =>
+    item.expressId === selection.expressId);
+  return entity === undefined
+    ? null
+    : {
+        ...structuredClone(entity),
+        childCount: 0,
+        depth: 0,
+        expanded: false,
+        parentRelation: "selected reference",
+        pinnedSelection: true,
+        selected: true,
+      };
+}
+
+function boundedTreeRows(state) {
+  if (
+    state.selection === null ||
+    state.tree.rows.some((row) => row.selected)
+  ) {
+    return {
+      pinned: false,
+      rows: state.tree.rows,
+    };
+  }
+  const selected = selectedTreeRow(state);
+  if (selected === null) {
+    return {
+      pinned: false,
+      rows: state.tree.rows,
+    };
+  }
+  return {
+    pinned: true,
+    rows: [
+      ...state.tree.rows.slice(
+        0,
+        Math.max(0, state.tree.maximumDomRows - 1),
+      ),
+      selected,
+    ],
+  };
+}
+
 function renderTree(state) {
   clear(elements.tree);
+  const bounded = boundedTreeRows(state);
   elements.treeCount.textContent =
-    `${state.tree.rows.length}/${state.tree.visibleLoadedRows}`;
+    `${bounded.rows.length}/${state.tree.visibleLoadedRows}`;
   elements.treeOmission.textContent =
     state.tree.omittedDomRows > 0
       ? `${state.tree.omittedDomRows} rows omitted by the ` +
-        `${state.tree.maximumDomRows}-row DOM bound.`
+        `${state.tree.maximumDomRows}-row DOM bound.` +
+        (bounded.pinned
+          ? " The selected item is pinned in the final row."
+          : "")
       : "";
-  for (const row of state.tree.rows) {
+  for (const row of bounded.rows) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.childCount = String(row.childCount);
@@ -322,7 +405,8 @@ function renderTree(state) {
     button.append(
       text(
         "span",
-        `${row.ifcClass} · ${row.parentRelation}`,
+        `${row.ifcClass} · ${row.parentRelation}` +
+          (row.pinnedSelection ? " · selected pin" : ""),
         "meta",
       ),
       text("span", row.name, "name"),
@@ -331,6 +415,9 @@ function renderTree(state) {
       await selectExpressId(row.expressId, "tree");
     });
     elements.tree.append(button);
+  }
+  if (bounded.pinned) {
+    elements.tree.scrollTop = elements.tree.scrollHeight;
   }
 }
 
@@ -455,11 +542,33 @@ function renderInspector(state) {
         button.textContent =
           `${item.kind} · ${item.target.name}`;
         button.addEventListener("click", async () => {
-          await active.explorer.selectRelation({
+          const current = active;
+          if (current === null || current.kind === "point-cloud") {
+            return;
+          }
+          await current.explorer.selectRelation({
             kind: item.kind,
             targetExpressId: item.target.expressId,
           });
-          await applySelectionView();
+          if (active !== current) {
+            return;
+          }
+          await revealExplorerItem(
+            current.explorer,
+            current.opened.snapshot,
+            item.target.expressId,
+          );
+          if (active !== current) {
+            return;
+          }
+          current.viewerCore.publishSelection(
+            current.explorer.state.selection,
+            { reason: "relation" },
+          );
+          await applySelectionView(current);
+          if (active !== current) {
+            return;
+          }
           render();
         });
         return button;
@@ -592,6 +701,8 @@ function render() {
     return;
   }
   const state = active.explorer.state;
+  elements.fitSelection.disabled =
+    typeof state.selection?.renderId !== "string";
   elements.pick.textContent = "Pick center";
   elements.cameraHelp.textContent =
     "Click select · drag orbit · Shift/right/middle drag pan · " +
@@ -791,9 +902,11 @@ function cameraInteractionReport(current) {
     keyboardUpdates: state?.keyboardUpdates ?? 0,
     orbitUpdates: state?.orbitUpdates ?? 0,
     panUpdates: state?.panUpdates ?? 0,
+    programmaticUpdates: state?.programmaticUpdates ?? 0,
     resetUpdates: state?.resetUpdates ?? 0,
     zoomUpdates: state?.zoomUpdates ?? 0,
     renderedUpdates: current.cameraRenderedUpdates ?? 0,
+    selectionFitUpdates: current.selectionFitUpdates ?? 0,
     selectedPickIds: [...current.view.selectedPickIds],
     visibilityMode:
       current.view.isolateRenderIds === null
@@ -911,14 +1024,23 @@ async function selectCanvasPointer(current, pointer) {
     return pick;
   }
   await current.explorer.selectPick(pick);
+  if (active !== current) {
+    return null;
+  }
   await revealExplorerItem(
     current.explorer,
     current.opened.snapshot,
     current.explorer.state.selection.expressId,
   );
+  if (active !== current) {
+    return null;
+  }
   current.lastMeshPick = pick;
   current.lastMeshPickStatus = "hit";
   const command = await selectionViewCommand(current);
+  if (active !== current) {
+    return null;
+  }
   await renderMeshView(current, { command });
   if (active !== current) {
     return null;
@@ -949,7 +1071,7 @@ function attachActiveCameraControls(current) {
       1,
       Math.round(bounds.width || elements.canvas.width),
     ),
-    async onCamera(camera) {
+    async onCamera(camera, interaction) {
       if (active !== current) {
         return;
       }
@@ -960,6 +1082,9 @@ function attachActiveCameraControls(current) {
       } catch (error) {
         current.cameraInteractionError = error;
         updateLiveCameraReport(current);
+        if (interaction.kind === "fit-selection") {
+          throw error;
+        }
       }
     },
     async onPrimaryClick(pointer) {
@@ -984,32 +1109,119 @@ async function settleCameraControls(current) {
   await current.cameraControls?.whenIdle();
 }
 
-async function applySelectionView() {
-  if (active?.explorer.state.selection === null) {
+function selectedRenderableEntity(current) {
+  const selection = current.explorer.state.selection;
+  if (typeof selection?.renderId !== "string") {
     return null;
   }
+  return current.opened.snapshot.entities.find((entity) =>
+    entity.expressId === selection.expressId &&
+    entity.renderId === selection.renderId) ?? null;
+}
+
+function selectedFitCamera(current, entity) {
+  const bounds = elements.canvas.getBoundingClientRect();
+  const width = bounds.width || elements.canvas.width;
+  const height = bounds.height || elements.canvas.height;
+  const fitted = createFitCamera3d(entity.bounds, {
+    aspect: width / height,
+    projection: current.camera.projection,
+  });
+  return validateCamera3d({
+    ...fitted,
+    pitch: current.camera.pitch,
+    yaw: current.camera.yaw,
+  });
+}
+
+async function fitSelectedObject() {
   const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
+  if (current.cameraControls === null) {
+    return null;
+  }
   await settleCameraControls(current);
+  if (active !== current) {
+    return null;
+  }
+  const entity = selectedRenderableEntity(current);
+  if (entity === null) {
+    return null;
+  }
+  const camera = selectedFitCamera(current, entity);
+  current.cameraInteractionError = null;
+  await current.cameraControls.setCamera(camera, {
+    kind: "fit-selection",
+  });
+  if (active !== current) {
+    return null;
+  }
+  if (current.cameraInteractionError !== null) {
+    throw current.cameraInteractionError;
+  }
+  current.selectionFitUpdates += 1;
+  updateLiveCameraReport(current);
+  try {
+    elements.canvas.focus({ preventScroll: true });
+  } catch {
+    elements.canvas.focus();
+  }
+  setStatus(
+    "ready",
+    "Fitted the active source-revision selection in the 3D view.",
+  );
+  return camera;
+}
+
+async function applySelectionView(current = active) {
+  if (
+    current === null ||
+    current.explorer.state.selection === null
+  ) {
+    return null;
+  }
+  await settleCameraControls(current);
+  if (active !== current) {
+    return null;
+  }
   const command = await selectionViewCommand(current);
+  if (active !== current) {
+    return null;
+  }
   return renderMeshView(current, { command });
 }
 
 async function selectExpressId(expressId, origin) {
   const current = active;
+  if (current === null || current.kind === "point-cloud") {
+    return null;
+  }
   await current.explorer.selectExpressId(expressId, {
     origin,
   });
+  if (active !== current) {
+    return null;
+  }
   await revealExplorerItem(
     current.explorer,
     current.opened.snapshot,
     expressId,
   );
+  if (active !== current) {
+    return null;
+  }
   current.viewerCore.publishSelection(
     current.explorer.state.selection,
     { reason: origin },
   );
-  await applySelectionView();
+  await applySelectionView(current);
+  if (active !== current) {
+    return null;
+  }
   render();
+  return current.explorer.state.selection;
 }
 
 function firstRenderable(snapshot) {
@@ -1910,6 +2122,7 @@ async function openBytes(bytesValue, {
       opened,
       origin,
       product,
+      selectionFitUpdates: 0,
       surface,
       view: initialRendererView(explorer),
       viewerCore,
@@ -2502,20 +2715,42 @@ elements.showAll.addEventListener("click", async () => {
   await renderMeshView(current, { command });
 });
 
-async function pickVisible() {
-  if (active.kind === "point-cloud") {
+elements.fitSelection.addEventListener("click", async () => {
+  try {
+    await fitSelectedObject();
+  } catch {
+    if (active !== null) {
+      setStatus(
+        "ready",
+        "Selection fit failed closed; the current view is unchanged.",
+      );
+    }
+  }
+});
+
+async function pickVisible(current = active) {
+  if (current === null) {
+    return null;
+  }
+  if (current.kind === "point-cloud") {
     const coordinates =
-      active.mount.backend.suggestedPickCoordinates;
+      current.mount.backend.suggestedPickCoordinates;
     if (coordinates === null) {
       throw new Error("no visible point was available for picking");
     }
-    const receipt = await active.renderer.pick(coordinates);
+    const receipt = await current.renderer.pick(coordinates);
+    if (active !== current) {
+      return null;
+    }
     if (receipt.status !== "hit") {
       throw new Error("the visible point pick did not resolve");
     }
     return receipt;
   }
-  await settleCameraControls(active);
+  await settleCameraControls(current);
+  if (active !== current) {
+    return null;
+  }
   const coordinates = [
     [400, 225],
     [400, 150],
@@ -2524,7 +2759,10 @@ async function pickVisible() {
     [525, 225],
   ];
   for (const [x, y] of coordinates) {
-    const receipt = await active.host.pick({ x, y });
+    const receipt = await current.host.pick({ x, y });
+    if (active !== current) {
+      return null;
+    }
     if (receipt.status === "hit") {
       return receipt;
     }
@@ -2533,35 +2771,48 @@ async function pickVisible() {
 }
 
 async function selectVisible() {
-  if (active === null) {
+  const current = active;
+  if (current === null) {
     return null;
   }
-  const pick = await pickVisible();
-  if (active.kind === "point-cloud") {
-    active.selection = pick;
+  const pick = await pickVisible(current);
+  if (pick === null || active !== current) {
+    return null;
+  }
+  if (current.kind === "point-cloud") {
+    current.selection = pick;
     render();
     setStatus(
       "ready",
       `Selected ${pick.identity.nativeId} in the active source revision.`,
     );
-    active.report = publishReport("ready", {
-      ...active.report,
+    current.report = publishReport("ready", {
+      ...current.report,
       pointSelection: pick,
     });
     return pick;
   }
-  await active.explorer.selectPick(pick);
+  await current.explorer.selectPick(pick);
+  if (active !== current) {
+    return null;
+  }
   await revealExplorerItem(
-    active.explorer,
-    active.opened.snapshot,
-    active.explorer.state.selection.expressId,
+    current.explorer,
+    current.opened.snapshot,
+    current.explorer.state.selection.expressId,
   );
-  active.lastMeshPick = pick;
-  active.viewerCore.publishSelection(
-    active.explorer.state.selection,
+  if (active !== current) {
+    return null;
+  }
+  current.lastMeshPick = pick;
+  current.viewerCore.publishSelection(
+    current.explorer.state.selection,
     { reason: "3d" },
   );
-  await applySelectionView();
+  await applySelectionView(current);
+  if (active !== current) {
+    return null;
+  }
   render();
   return pick;
 }

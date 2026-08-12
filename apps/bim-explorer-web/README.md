@@ -21,6 +21,11 @@ range와 `POINTS` renderer로 분기합니다.
   orbit, Shift+화살표는 pan, `Home`은 최초 fit camera로 복귀합니다. 모든
   keyboard update는 animation 없이 한 frame씩 직렬화되며 focus ring과
   화면 내 단축키 설명을 유지합니다.
+- 선택된 renderable 객체는 `Fit selection`으로 현재 시점 방향을 유지한 채
+  bounds에 맞출 수 있습니다. programmatic fit도 pointer/keyboard와 같은 camera
+  queue를 사용하고 실패하면 이전 camera로 복귀합니다. 64-row tree 창 밖에서
+  3D로 선택된 객체는 마지막 행에 source-revision-bound selection으로 고정해
+  inspector와 highlight identity를 계속 확인할 수 있습니다.
 - IFC와 glTF/GLB renderer range는 exact public Viewer Core session을 통과하고,
   initial/3D selection과 close cleanup은 public selection/Host lifecycle로
   투영합니다.

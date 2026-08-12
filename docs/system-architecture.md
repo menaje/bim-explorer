@@ -156,7 +156,9 @@ decomposition/containment, Wall→Type→Occurrence 왕복,
 Pset/Qto/material/classification panel, paged search와 explicit omission,
 WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
-상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
+상한을 각각 강제합니다. 제품 shell은 선택 객체가 이 상한 밖이면 기존 row를
+늘리지 않고 마지막 row에 선택 identity를 고정합니다. dispose 뒤
+query/GPU/session resource를 회수합니다.
 source가 `getPropertySetValues`를 제공하면 선택 entity의 primitive value를
 별도 bounded range에서 읽고, 구형 source는 name-only `lossy`를 유지합니다.
 host/void/fill과 connection은 `opaque`입니다.
@@ -248,7 +250,11 @@ IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. DOM
 pointer/wheel input과 focusable canvas의 arrow orbit, Shift+arrow pan,
 `+`/`-` zoom, `Home` reset은 camera update를 직렬화합니다. keyboard 경로는
 중간 animation 없이 입력마다 한 frame을 갱신해 reduced-motion 환경에서도
-별도 motion을 만들지 않습니다. single
+별도 motion을 만들지 않습니다. selected-object fit도 같은 queue에서 entity
+bounds와 현재 yaw/pitch를 결합하며, render 실패 시 interaction camera를 이전
+frame으로 rollback합니다. 대표 공개 IFC에서는 서로 다른 canvas 위치의 두
+source-bound 객체 선택, 선택 highlight와 fit, 64-row 창 밖 selection의 bounded
+tree pin을 실제 WebGL2 frame으로 검증합니다. single
 plane·six-plane section box와 GPU
 depth-backed source-world distance·area·angle도 같은 allocation에서
 검증했지만, source unit 해석은 renderer가 소유하지 않습니다.

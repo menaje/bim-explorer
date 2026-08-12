@@ -509,6 +509,17 @@ function assertions(
     ...(pointCloud || fixture.kind === "gltf-product-scale"
       ? {}
       : {
+          selectedObjectFit:
+            interaction.selectionFit?.focused === true &&
+            interaction.selectionFit?.status.includes(
+              "Fitted the active source-revision selection",
+            ) &&
+            interaction.cameraInteraction
+              ?.programmaticUpdates >= 1 &&
+            interaction.cameraInteraction
+              ?.selectionFitUpdates >= 1 &&
+            JSON.stringify(interaction.selectionFit.after) !==
+              JSON.stringify(interaction.selectionFit.before),
           directCanvasPick:
             interaction.meshSelection?.status === "hit" &&
             interaction.meshPicking?.attempts >= 1 &&
@@ -535,6 +546,21 @@ function assertions(
               )
             ),
         }),
+    ...(fixture.kind === "public"
+      ? {
+          distinctCanvasObjects:
+            interaction.distinctMeshSelections.length >= 2 &&
+            new Set(interaction.distinctMeshSelections.map(
+              (selection) => selection.identity,
+            )).size >= 2 &&
+            interaction.selectedTreePinned === true &&
+            interaction.treeRows <=
+              opened.semantic.maximumDomRows &&
+            interaction.treeOmission.includes(
+              "selected item is pinned",
+            ),
+        }
+      : {}),
     ...(
       pointCloud
         ? {}
@@ -1543,6 +1569,8 @@ export async function qualifyBimProductShell({
               opened.pointCloud.renderedRangeSha256,
           }
         : null;
+    const distinctMeshSelections = [];
+    let selectionFit = null;
     if (initialPointLod !== null) {
       await client.evaluate(
         `document.querySelector("#pick-model").click(); true`,
@@ -1607,8 +1635,30 @@ export async function qualifyBimProductShell({
           [0.5, 2 / 3],
           [0.35, 0.5],
           [0.65, 0.5],
+          [0.2, 0.2],
+          [0.35, 0.2],
+          [0.5, 0.2],
+          [0.65, 0.2],
+          [0.8, 0.2],
+          [0.2, 0.35],
+          [0.35, 0.35],
+          [0.65, 0.35],
+          [0.8, 0.35],
+          [0.2, 0.5],
+          [0.8, 0.5],
+          [0.2, 0.65],
+          [0.35, 0.65],
+          [0.65, 0.65],
+          [0.8, 0.65],
+          [0.2, 0.8],
+          [0.35, 0.8],
+          [0.5, 0.8],
+          [0.65, 0.8],
+          [0.8, 0.8],
         ];
-        let directPick = false;
+        const requiredDistinctPicks = fixture.kind === "public"
+          ? 2
+          : 1;
         for (const [xRatio, yRatio] of candidates) {
           const priorAttempts = await client.evaluate(
             `globalThis.__bimExplorerProductReport
@@ -1629,20 +1679,83 @@ export async function qualifyBimProductShell({
                     hit: report.meshPicking.lastStatus === "hit" &&
                       report.meshSelection?.status === "hit" &&
                       document.querySelector("#selection-origin")
-                        .textContent === "3d"
+                        .textContent === "3d",
+                    expressId:
+                      report.meshSelection?.identity?.expressId ?? null,
+                    nativeId:
+                      report.meshSelection?.identity?.nativeId ?? null
                   }
                 : null;
             })()`,
             { timeoutMs: 2_000 },
           ).catch(() => ({ hit: false }));
-          directPick = pickResult.hit;
-          if (directPick) {
+          if (pickResult.hit) {
+            const identity = pickResult.nativeId ??
+              pickResult.expressId;
+            if (!distinctMeshSelections.some((selection) =>
+              selection.identity === identity)) {
+              distinctMeshSelections.push({
+                identity,
+                xRatio,
+                yRatio,
+              });
+            }
+          }
+          if (
+            distinctMeshSelections.length >= requiredDistinctPicks
+          ) {
             break;
           }
         }
-        if (!directPick) {
+        if (
+          distinctMeshSelections.length < requiredDistinctPicks
+        ) {
           throw new Error(
-            "BIM product direct canvas pick did not resolve",
+            "BIM product direct canvas picks did not resolve " +
+              `${requiredDistinctPicks} distinct visible objects`,
+          );
+        }
+        const beforeFit = await client.evaluate(
+          `globalThis.__bimExplorerProductReport
+            ?.cameraInteraction?.camera ?? null`,
+        );
+        const fitEnabled = await client.evaluate(`(() => {
+          const button = document.querySelector("#fit-selection");
+          if (button.disabled) {
+            return false;
+          }
+          button.click();
+          return true;
+        })()`);
+        if (!fitEnabled) {
+          throw new Error(
+            "BIM product selected-object fit was unavailable",
+          );
+        }
+        selectionFit = await poll(
+          client,
+          `(() => {
+            const camera = globalThis.__bimExplorerProductReport
+              ?.cameraInteraction;
+            return camera?.selectionFitUpdates >= 1 &&
+              camera?.programmaticUpdates >= 1
+                ? {
+                    after: camera.camera,
+                    before: ${JSON.stringify(beforeFit)},
+                    focused:
+                      document.activeElement?.id === "model-canvas",
+                    status:
+                      document.querySelector("#status").textContent
+                  }
+                : null;
+          })()`,
+        );
+        if (
+          JSON.stringify(selectionFit.after) ===
+            JSON.stringify(selectionFit.before)
+        ) {
+          throw new Error(
+            "BIM product selected-object fit did not change camera",
           );
         }
         if (fixture.kind === "synthetic") {
@@ -1717,6 +1830,10 @@ export async function qualifyBimProductShell({
             "#model-tree [aria-selected=true]"
           )?.dataset.expressId
         ) || null,
+        selectedTreePinned:
+          document.querySelector(
+            "#model-tree [aria-selected=true] .meta"
+          )?.textContent.includes("selected pin") ?? false,
         selectedNativeId:
           report?.pointSelection?.identity?.nativeId ??
           document.querySelector(
@@ -1763,8 +1880,13 @@ export async function qualifyBimProductShell({
           document.querySelectorAll(
             "#model-tree [role=treeitem]"
           ).length,
+        treeOmission:
+          document.querySelector("#tree-omission").textContent,
       };
     })()`);
+    interaction.distinctMeshSelections =
+      distinctMeshSelections;
+    interaction.selectionFit = selectionFit;
     await client.evaluate(
       `document.querySelector("#close-model").click(); true`,
     );
@@ -1887,6 +2009,15 @@ export async function qualifyBimProductShell({
           ...(interaction.meshPicking === null
             ? {}
             : { meshPicking: interaction.meshPicking }),
+          ...(interaction.selectionFit === null
+            ? {}
+            : { selectionFit: interaction.selectionFit }),
+          ...(interaction.distinctMeshSelections.length === 0
+            ? {}
+            : {
+                distinctMeshSelections:
+                  interaction.distinctMeshSelections,
+              }),
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,
@@ -1898,8 +2029,11 @@ export async function qualifyBimProductShell({
             interaction.selectionOrigin,
           pickDisabled: interaction.pickDisabled,
           searchDisabled: interaction.searchDisabled,
+          selectedTreePinned:
+            interaction.selectedTreePinned,
           statusText: interaction.statusText,
           treeRows: interaction.treeRows,
+          treeOmission: interaction.treeOmission,
         },
         lifecycle: {
           opened: opened.status,

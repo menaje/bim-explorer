@@ -56,6 +56,7 @@ test("camera interaction maps pointer and wheel input immutably", () => {
     keyboardUpdates: 0,
     orbitUpdates: 1,
     panUpdates: 1,
+    programmaticUpdates: 0,
     resetUpdates: 0,
     zoomUpdates: 1,
     camera: zoomed,
@@ -66,6 +67,35 @@ test("camera interaction maps pointer and wheel input immutably", () => {
     () => interaction.wheel({ deltaY: 1 }),
     /disposed/u,
   );
+});
+
+test("programmatic camera updates preserve or replace Home reset", () => {
+  const interaction = createCameraInteraction3d({
+    camera,
+    height: 540,
+    width: 960,
+  });
+  const selectedFit = createFitCamera3d({
+    min: [2, 2, 1],
+    max: [4, 5, 2],
+  });
+  assert.deepEqual(
+    interaction.setCamera(selectedFit),
+    selectedFit,
+  );
+  assert.deepEqual(
+    interaction.key({ key: "Home" }).camera,
+    camera,
+  );
+  interaction.setCamera(selectedFit, {
+    resetInitial: true,
+  });
+  assert.deepEqual(
+    interaction.key({ key: "Home" }).camera,
+    selectedFit,
+  );
+  assert.equal(interaction.state.programmaticUpdates, 2);
+  assert.equal(interaction.state.resetUpdates, 2);
 });
 
 test("DOM camera controls serialize rendered camera updates", async () => {
@@ -101,6 +131,9 @@ test("DOM camera controls serialize rendered camera updates", async () => {
         interaction,
         camera: nextCamera,
       });
+      if (interaction.kind === "rejected-fit") {
+        throw new Error("rejected programmatic render");
+      }
     },
   });
   element.emit("pointerdown", {
@@ -120,14 +153,34 @@ test("DOM camera controls serialize rendered camera updates", async () => {
   element.emit("wheel", {
     deltaY: 80,
   });
+  await controls.setCamera(camera, {
+    kind: "fit-selection",
+  });
   await controls.whenIdle();
 
   assert.deepEqual(
     updates.map((update) => update.interaction.kind),
-    ["orbit", "zoom"],
+    ["orbit", "zoom", "fit-selection"],
   );
   assert.equal(controls.state.orbitUpdates, 1);
+  assert.equal(controls.state.programmaticUpdates, 1);
   assert.equal(controls.state.zoomUpdates, 1);
+  const beforeRejectedFit = controls.state.camera;
+  await assert.rejects(
+    controls.setCamera(createFitCamera3d({
+      min: [2, 2, 1],
+      max: [4, 5, 2],
+    }), {
+      kind: "rejected-fit",
+    }),
+    /rejected programmatic render/u,
+  );
+  assert.deepEqual(controls.state.camera, beforeRejectedFit);
+  element.emit("wheel", {
+    deltaY: -40,
+  });
+  await controls.whenIdle();
+  assert.equal(controls.state.zoomUpdates, 2);
   assert.equal(controls.dispose(), true);
   assert.equal(controls.dispose(), false);
   assert.equal(listeners.get("pointerdown").size, 0);
@@ -314,6 +367,7 @@ test("DOM camera controls expose bounded keyboard navigation", async () => {
   assert.equal(controls.state.keyboardUpdates, 4);
   assert.equal(controls.state.orbitUpdates, 1);
   assert.equal(controls.state.panUpdates, 1);
+  assert.equal(controls.state.programmaticUpdates, 0);
   assert.equal(controls.state.zoomUpdates, 1);
   assert.equal(controls.state.resetUpdates, 1);
   controls.dispose();

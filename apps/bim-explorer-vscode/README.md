@@ -10,7 +10,9 @@ selection과 lifecycle은 exact public Viewer Core product adapter를 통과합�
 mesh canvas의 pointer, wheel과 keyboard camera 조작은 Browser와 같은 runtime을
 사용합니다. focus된 canvas에서 화살표는 orbit, Shift+화살표는 pan,
 `+`/`-`는 zoom, `Home`은 최초 fit으로 복귀하며 animation 없이 frame을
-직렬화합니다.
+직렬화합니다. `Fit selection`은 현재 시점 방향을 유지하면서 선택 객체 bounds로
+이동하고, 같은 camera queue와 rollback 경로를 사용합니다. bounded tree 창 밖의
+3D selection은 마지막 행에 고정되어 highlight와 inspector identity를 유지합니다.
 단일-source `.gltf` Custom Editor는 JSON에 명시된 최대 16개의 동일 폴더 ASCII
 leaf-name `.bin`, `.png`, `.jpg`, `.jpeg`를 extension host에서만 해결합니다.
 document와 sidecar 합산

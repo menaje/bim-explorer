@@ -44,6 +44,7 @@ export class CameraInteraction3d {
   #keyboardUpdates = 0;
   #orbitUpdates = 0;
   #panUpdates = 0;
+  #programmaticUpdates = 0;
   #resetUpdates = 0;
   #zoomUpdates = 0;
 
@@ -77,6 +78,7 @@ export class CameraInteraction3d {
       keyboardUpdates: this.#keyboardUpdates,
       orbitUpdates: this.#orbitUpdates,
       panUpdates: this.#panUpdates,
+      programmaticUpdates: this.#programmaticUpdates,
       resetUpdates: this.#resetUpdates,
       zoomUpdates: this.#zoomUpdates,
       camera: this.#camera,
@@ -256,6 +258,27 @@ export class CameraInteraction3d {
       camera: this.#camera,
       kind,
     });
+  }
+
+  setCamera(camera, { resetInitial = false } = {}) {
+    if (this.#disposed) {
+      throw new DOMException(
+        "camera interaction is disposed",
+        "InvalidStateError",
+      );
+    }
+    if (typeof resetInitial !== "boolean") {
+      throw new TypeError(
+        "camera interaction resetInitial must be boolean",
+      );
+    }
+    this.#camera = validateCamera3d(camera);
+    if (resetInitial) {
+      this.#initialCamera = this.#camera;
+    }
+    this.#drag = null;
+    this.#programmaticUpdates += 1;
+    return this.#camera;
   }
 
   dispose() {
@@ -456,6 +479,31 @@ export function attachCameraControls3d({
       return interaction.state;
     },
     whenIdle: () => queue,
+    setCamera(nextCamera, {
+      kind = "programmatic",
+    } = {}) {
+      if (typeof kind !== "string" || kind.length === 0) {
+        throw new TypeError(
+          "camera controls programmatic kind is invalid",
+        );
+      }
+      const camera = validateCamera3d(nextCamera);
+      const operation = queue.then(async () => {
+        const previousCamera = interaction.camera;
+        const updated = interaction.setCamera(camera);
+        try {
+          await onCamera(updated, Object.freeze({ kind }));
+          return updated;
+        } catch (error) {
+          interaction.setCamera(previousCamera, {
+            resetInitial: false,
+          });
+          throw error;
+        }
+      });
+      queue = operation.catch(() => undefined);
+      return operation;
+    },
     dispose() {
       if (disposed) {
         return false;

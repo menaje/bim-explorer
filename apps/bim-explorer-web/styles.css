@@ -216,6 +216,12 @@ h3 {
   gap: 4px;
 }
 
+.tree {
+  max-height: 580px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
 .tree button,
 .results button,
 .relation-button {
