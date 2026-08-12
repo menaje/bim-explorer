@@ -148,6 +148,76 @@ function stringArray(value, maximumLength = 16) {
   return [...value];
 }
 
+function sanitizedCountRecord(
+  value,
+  pattern,
+  maximumEntries = 32,
+) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+  const entries = Object.entries(value);
+  if (
+    entries.length > maximumEntries ||
+    entries.some(([key, count]) =>
+      !pattern.test(key) ||
+      !Number.isSafeInteger(count) ||
+      count <= 0)
+  ) {
+    return null;
+  }
+  return Object.fromEntries(entries);
+}
+
+function sanitizedAppearanceOmissions(value) {
+  if (
+    value?.schema !==
+      "bim-explorer-gltf-appearance-omissions/1" ||
+    value.policy !== "bounded-omission"
+  ) {
+    return null;
+  }
+  const counts = numericRecord(value, [
+    "declaredImages",
+    "declaredTextures",
+    "projectedTextures",
+    "materialFeatures",
+    "materials",
+    "textureReferences",
+    "uniqueImages",
+    "uniqueTextures",
+    "sourceBytes",
+  ]);
+  if (
+    Object.values(counts).some((count) =>
+      !Number.isSafeInteger(count) || count < 0)
+  ) {
+    return null;
+  }
+  const reasons = sanitizedCountRecord(
+    value.reasons,
+    /^[a-z][a-z0-9-]{0,63}$/u,
+  );
+  const roles = sanitizedCountRecord(
+    value.roles,
+    /^(?:[A-Za-z][A-Za-z0-9]{0,63}|extension:KHR_[A-Za-z0-9_]{1,96})$/u,
+  );
+  if (reasons === null || roles === null) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    policy: value.policy,
+    ...counts,
+    reasons,
+    roles,
+  };
+}
+
 function sanitizedPointLod(value) {
   if (value === null || typeof value !== "object") {
     return null;
@@ -414,6 +484,9 @@ function sanitizeReport(value) {
   }
   const format = stringOrNull(value.source?.format);
   const pointSource = POINT_SOURCE_FORMATS.has(format);
+  const appearanceOmissions = sanitizedAppearanceOmissions(
+    value.source?.appearanceOmissions,
+  );
   const source = value.source === undefined
     ? null
     : {
@@ -541,6 +614,9 @@ function sanitizeReport(value) {
                 ]),
               },
             }),
+        ...(appearanceOmissions === null
+          ? {}
+          : { appearanceOmissions }),
         sourceRole: stringOrNull(
           value.source?.sourceRole,
         ),

@@ -920,6 +920,127 @@ test("bounded JPEG profiles fail closed independently", async () => {
   }
 });
 
+test("bounded omission separates optional appearance from geometry", () => {
+  const optional = syntheticTexturedGltfExternalBundle();
+  const optionalDocument = JSON.parse(
+    new TextDecoder().decode(optional.bytes),
+  );
+  optionalDocument.materials[0].normalTexture = { index: 0 };
+  optional.bytes = new TextEncoder().encode(
+    JSON.stringify(optionalDocument),
+  );
+  assert.throws(
+    () => parseGltfReferenceProfile(optional.bytes, {
+      resources: optional.resources,
+    }),
+    { name: "NotSupportedError" },
+  );
+  const projected = parseGltfReferenceProfile(optional.bytes, {
+    appearancePolicy: "bounded-omission",
+    resources: optional.resources,
+  });
+  assert.equal(projected.textures.length, 1);
+  assert.deepEqual(projected.appearanceOmissions, {
+    schema: "bim-explorer-gltf-appearance-omissions/1",
+    policy: "bounded-omission",
+    declaredImages: 1,
+    declaredTextures: 1,
+    projectedTextures: 1,
+    materialFeatures: 1,
+    materials: 1,
+    textureReferences: 1,
+    uniqueImages: 1,
+    uniqueTextures: 1,
+    sourceBytes: 76,
+    reasons: {
+      "unsupported-material-role": 1,
+    },
+    roles: { normalTexture: 1 },
+  });
+
+  const budgeted = parseGltfReferenceProfile(optional.bytes, {
+    appearancePolicy: "bounded-omission",
+    limits: { maximumProjectedTextureDecodedBytes: 8 },
+    resources: optional.resources,
+  });
+  assert.equal(budgeted.appearance, null);
+  assert.equal(budgeted.textures.length, 0);
+  assert.equal(budgeted.records[0].textureIndex, null);
+  assert.equal(budgeted.records[0].texcoords, null);
+  assert.deepEqual(budgeted.appearanceOmissions.reasons, {
+    "projection-budget": 1,
+    "unsupported-material-role": 1,
+  });
+  assert.equal(
+    budgeted.appearanceOmissions.roles.baseColorTexture,
+    1,
+  );
+
+  const alternateCoordinates =
+    syntheticTexturedGltfExternalBundle();
+  const alternateDocument = JSON.parse(
+    new TextDecoder().decode(alternateCoordinates.bytes),
+  );
+  alternateDocument.materials[0].pbrMetallicRoughness
+    .baseColorTexture.texCoord = 1;
+  alternateCoordinates.bytes = new TextEncoder().encode(
+    JSON.stringify(alternateDocument),
+  );
+  const alternate = parseGltfReferenceProfile(
+    alternateCoordinates.bytes,
+    {
+      appearancePolicy: "bounded-omission",
+      resources: alternateCoordinates.resources,
+    },
+  );
+  assert.equal(alternate.appearance, null);
+  assert.deepEqual(alternate.appearanceOmissions.reasons, {
+    "unsupported-texture-coordinate-profile": 1,
+  });
+  assert.equal(alternate.records[0].textureIndex, null);
+
+  const malformed = syntheticTexturedGltfExternalBundle();
+  const malformedDocument = JSON.parse(
+    new TextDecoder().decode(malformed.bytes),
+  );
+  delete malformedDocument.materials[0]
+    .pbrMetallicRoughness.baseColorTexture;
+  malformedDocument.materials[0].normalTexture = { index: 0 };
+  malformed.bytes = new TextEncoder().encode(
+    JSON.stringify(malformedDocument),
+  );
+  malformed.resources[1].bytes[45] ^= 0x01;
+  assert.throws(
+    () => parseGltfReferenceProfile(malformed.bytes, {
+      appearancePolicy: "bounded-omission",
+      resources: malformed.resources,
+    }),
+    /chunk CRC is invalid/u,
+  );
+
+  for (const profile of [projected, budgeted, alternate]) {
+    for (const record of profile.records) {
+      record.positions.fill(0);
+      record.normals.fill(0);
+      record.indices.fill(0);
+      record.texcoords?.fill(0);
+    }
+    for (const texture of profile.textures) {
+      texture.bytes.fill(0);
+    }
+  }
+  for (const bundle of [
+    optional,
+    alternateCoordinates,
+    malformed,
+  ]) {
+    bundle.bytes.fill(0);
+    for (const resource of bundle.resources) {
+      resource.bytes.fill(0);
+    }
+  }
+});
+
 test("embedded image admission fails closed at MIME, range and budget boundaries", () => {
   const invalidBase64 = JSON.parse(new TextDecoder().decode(
     syntheticTexturedGltfDataUriBytes(),

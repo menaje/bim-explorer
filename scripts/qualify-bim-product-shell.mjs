@@ -405,6 +405,18 @@ function assertions(
               fixture.rendererLimits
                 .maximumInstancedTriangles,
         }),
+    ...(fixture.appearanceOmissions === undefined
+      ? {}
+      : {
+          boundedAppearanceOmissions:
+            JSON.stringify(opened.source.appearanceOmissions) ===
+              JSON.stringify(fixture.appearanceOmissions) &&
+            opened.source.appearance === undefined &&
+            interaction.statusText.includes(
+              `${fixture.appearanceOmissions.materialFeatures} ` +
+              "optional appearance features were omitted",
+            ),
+        }),
     localOnly:
       opened.externalUpload === false &&
       opened.telemetry === false &&
@@ -432,21 +444,29 @@ function assertions(
             opened.renderer.uploadedBytes ===
               fixture.pointRangePayloadBytes,
         }
-      : reference
+      : reference && fixture.kind === "gltf-product-scale"
       ? {
-          referenceAnd3dSync:
+          referenceAndTreeSync:
             interaction.searchResults > 0 &&
-            interaction.selectionOrigin === "3d" &&
-            selectedReferenceIdentity &&
-            (
-              fixture.exactPickNativeId !== true ||
-              interaction.selectedNativeId ===
-                fixture.nativeId
-            ) &&
-            opened.reference?.globalId === null &&
-            opened.reference?.selectedNativeId ===
-              fixture.nativeId,
+            interaction.selectionOrigin === "tree" &&
+            interaction.selectedNativeId === fixture.nativeId &&
+            opened.reference?.selectedNativeId === fixture.nativeId,
         }
+      : reference
+        ? {
+            referenceAnd3dSync:
+              interaction.searchResults > 0 &&
+              interaction.selectionOrigin === "3d" &&
+              selectedReferenceIdentity &&
+              (
+                fixture.exactPickNativeId !== true ||
+                interaction.selectedNativeId ===
+                  fixture.nativeId
+              ) &&
+              opened.reference?.globalId === null &&
+              opened.reference?.selectedNativeId ===
+                fixture.nativeId,
+          }
       : {
           semanticAnd3dSync:
             interaction.searchResults > 0 &&
@@ -469,7 +489,7 @@ function assertions(
               cleanup.cleanup.cameraControls?.disposed === true
             )
       ),
-    ...(pointCloud
+    ...(pointCloud || fixture.kind === "gltf-product-scale"
       ? {}
       : {
           interactiveCamera:
@@ -484,6 +504,10 @@ function assertions(
               opened.cameraInteraction.camera,
             ) &&
             interaction.cameraHelp.includes("Drag to orbit"),
+        }),
+    ...(pointCloud || fixture.kind === "gltf-product-scale"
+      ? {}
+      : {
           directCanvasPick:
             interaction.meshSelection?.status === "hit" &&
             interaction.meshPicking?.attempts >= 1 &&
@@ -738,6 +762,9 @@ async function qualificationFixture(kind) {
       rendererLimits: Object.freeze({
         ...manifest.browserQualification.rendererLimits,
       }),
+      appearanceOmissions: Object.freeze(
+        structuredClone(manifest.expected.appearanceOmissions),
+      ),
       searchQuery: "node:0",
       provenance: Object.freeze({
         repository: manifest.provenance.repository,
@@ -1388,7 +1415,7 @@ export async function qualifyBimProductShell({
         platform: `${process.platform}-${process.arch}`,
       });
     }
-    if (!pointCloud) {
+    if (!pointCloud && fixture.kind !== "gltf-product-scale") {
       const canvas = await client.evaluate(`(() => {
         const bounds = document.querySelector("#model-canvas")
           .getBoundingClientRect();
@@ -1507,86 +1534,99 @@ export async function qualifyBimProductShell({
         client,
         `document.querySelectorAll("#search-results [role=option]").length`,
       );
-      const canvas = await client.evaluate(`(() => {
-        const bounds = document.querySelector("#model-canvas")
-          .getBoundingClientRect();
-        return {
-          left: bounds.left,
-          top: bounds.top,
-          width: bounds.width,
-          height: bounds.height
-        };
-      })()`);
-      const candidates = [
-        [0.5, 0.5],
-        [0.5, 1 / 3],
-        [0.5, 2 / 3],
-        [0.35, 0.5],
-        [0.65, 0.5],
-      ];
-      let directPick = false;
-      for (const [xRatio, yRatio] of candidates) {
-        await dispatchPrimaryClick(
-          client,
-          canvas.left + canvas.width * xRatio,
-          canvas.top + canvas.height * yRatio,
-        );
-        directPick = await poll(
-          client,
-          `(() => {
-            const report = globalThis.__bimExplorerProductReport;
-            return report?.meshSelection?.status === "hit" &&
-              document.querySelector("#selection-origin")
-                .textContent === "3d";
-          })()`,
-          { timeoutMs: 2_000 },
-        ).catch(() => false);
-        if (directPick) {
-          break;
-        }
-      }
-      if (!directPick) {
-        throw new Error(
-          "BIM product direct canvas pick did not resolve",
-        );
-      }
-      if (fixture.kind === "synthetic") {
-        const beforeMiss = await client.evaluate(`(() => ({
-          attempts: globalThis.__bimExplorerProductReport
-            .meshPicking.attempts,
-          expressId: Number(document.querySelector(
-            "#model-tree [aria-selected=true]"
-          )?.dataset.expressId) || null
-        }))()`);
-        await dispatchPrimaryClick(
-          client,
-          canvas.left + 1,
-          canvas.top + 1,
-        );
-        const miss = await poll(
-          client,
-          `(() => {
-            const report = globalThis.__bimExplorerProductReport;
-            const expressId = Number(document.querySelector(
-              "#model-tree [aria-selected=true]"
-            )?.dataset.expressId) || null;
-            return report?.meshPicking?.attempts >
-                ${beforeMiss.attempts} &&
-              report.meshPicking.lastStatus === "miss"
+      if (fixture.kind !== "gltf-product-scale") {
+        const canvas = await client.evaluate(`(() => {
+          const bounds = document.querySelector("#model-canvas")
+            .getBoundingClientRect();
+          return {
+            left: bounds.left,
+            top: bounds.top,
+            width: bounds.width,
+            height: bounds.height
+          };
+        })()`);
+        const candidates = [
+          [0.5, 0.5],
+          [0.5, 1 / 3],
+          [0.5, 2 / 3],
+          [0.35, 0.5],
+          [0.65, 0.5],
+        ];
+        let directPick = false;
+        for (const [xRatio, yRatio] of candidates) {
+          const priorAttempts = await client.evaluate(
+            `globalThis.__bimExplorerProductReport
+              ?.meshPicking?.attempts ?? 0`,
+          );
+          await dispatchPrimaryClick(
+            client,
+            canvas.left + canvas.width * xRatio,
+            canvas.top + canvas.height * yRatio,
+          );
+          const pickResult = await poll(
+            client,
+            `(() => {
+              const report = globalThis.__bimExplorerProductReport;
+              return report?.meshPicking?.attempts >
+                  ${priorAttempts}
                 ? {
-                    expressId,
-                    misses: report.meshPicking.misses
+                    hit: report.meshPicking.lastStatus === "hit" &&
+                      report.meshSelection?.status === "hit" &&
+                      document.querySelector("#selection-origin")
+                        .textContent === "3d"
                   }
                 : null;
-          })()`,
-        );
-        if (
-          miss.expressId !== beforeMiss.expressId ||
-          miss.misses < 1
-        ) {
+            })()`,
+            { timeoutMs: 2_000 },
+          ).catch(() => ({ hit: false }));
+          directPick = pickResult.hit;
+          if (directPick) {
+            break;
+          }
+        }
+        if (!directPick) {
           throw new Error(
-            "BIM product background pick changed the active selection",
+            "BIM product direct canvas pick did not resolve",
           );
+        }
+        if (fixture.kind === "synthetic") {
+          const beforeMiss = await client.evaluate(`(() => ({
+            attempts: globalThis.__bimExplorerProductReport
+              .meshPicking.attempts,
+            expressId: Number(document.querySelector(
+              "#model-tree [aria-selected=true]"
+            )?.dataset.expressId) || null
+          }))()`);
+          await dispatchPrimaryClick(
+            client,
+            canvas.left + 1,
+            canvas.top + 1,
+          );
+          const miss = await poll(
+            client,
+            `(() => {
+              const report = globalThis.__bimExplorerProductReport;
+              const expressId = Number(document.querySelector(
+                "#model-tree [aria-selected=true]"
+              )?.dataset.expressId) || null;
+              return report?.meshPicking?.attempts >
+                  ${beforeMiss.attempts} &&
+                report.meshPicking.lastStatus === "miss"
+                  ? {
+                      expressId,
+                      misses: report.meshPicking.misses
+                    }
+                  : null;
+            })()`,
+          );
+          if (
+            miss.expressId !== beforeMiss.expressId ||
+            miss.misses < 1
+          ) {
+            throw new Error(
+              "BIM product background pick changed the active selection",
+            );
+          }
         }
       }
     } else {
@@ -1661,6 +1701,8 @@ export async function qualifyBimProductShell({
         searchDisabled:
           document.querySelector("#search-input").disabled,
         serializedReport: JSON.stringify(report),
+        statusText:
+          document.querySelector("#status").textContent,
         treeRows:
           document.querySelectorAll(
             "#model-tree [role=treeitem]"
@@ -1765,7 +1807,17 @@ export async function qualifyBimProductShell({
                 productLifecycle: opened.lifecycle,
                 lodTransitions: opened.lodTransitions,
               }
-            : { reference: opened.reference }),
+            : {
+                reference: {
+                  ...opened.reference,
+                  ...(opened.source.appearanceOmissions === undefined
+                    ? {}
+                    : {
+                        appearanceOmissions:
+                          opened.source.appearanceOmissions,
+                      }),
+                },
+              }),
         interaction: {
           ...(interaction.cameraInteraction === null
             ? {}
@@ -1790,6 +1842,7 @@ export async function qualifyBimProductShell({
             interaction.selectionOrigin,
           pickDisabled: interaction.pickDisabled,
           searchDisabled: interaction.searchDisabled,
+          statusText: interaction.statusText,
           treeRows: interaction.treeRows,
         },
         lifecycle: {

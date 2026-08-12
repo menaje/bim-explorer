@@ -17,6 +17,10 @@ const JSON_CHUNK = 0x4e4f534a;
 const BIN_CHUNK = 0x004e4942;
 const KHR_MESH_QUANTIZATION = "KHR_mesh_quantization";
 const EXT_MESHOPT_COMPRESSION = "EXT_meshopt_compression";
+const APPEARANCE_POLICIES = new Set([
+  "strict",
+  "bounded-omission",
+]);
 export const MESHOPT_DECODER_REQUIRED_MESSAGE =
   "EXT_meshopt_compression decoder is unavailable";
 const COMPONENT_BYTES = new Map([
@@ -34,8 +38,12 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumMeshoptDecodedBytes: 64 * 1024 * 1024,
   maximumMeshoptCompressionRatio: 256,
   maximumTextures: 16,
+  maximumDeclaredTextures: 1_024,
+  maximumDeclaredImages: 1_024,
+  maximumDeclaredSamplers: 1_024,
   maximumTextureSourceBytes: 8 * 1024 * 1024,
   maximumTextureDecodedBytes: 16 * 1024 * 1024,
+  maximumProjectedTextureDecodedBytes: 8 * 1024 * 1024,
   maximumTextureDimension: 2_048,
   maximumTextureCompressionRatio: 256,
   maximumExternalResources: 16,
@@ -103,6 +111,15 @@ function validatedLimits(overrides = {}) {
     positiveInteger(limit, `glTF limits.${key}`);
   }
   return limits;
+}
+
+function validatedAppearancePolicy(value) {
+  if (!APPEARANCE_POLICIES.has(value)) {
+    throw new TypeError(
+      "glTF appearance policy must be strict or bounded-omission",
+    );
+  }
+  return value;
 }
 
 function decodeJson(bytes, maximumJsonBytes, label) {
@@ -1105,22 +1122,31 @@ function createTextureResolver(
   limits,
   externalResources,
   buffers,
+  appearancePolicy,
 ) {
+  const omissionEnabled =
+    appearancePolicy === "bounded-omission";
   const textures = collection(
     document.textures ?? [],
-    limits.maximumTextures,
+    omissionEnabled
+      ? limits.maximumDeclaredTextures
+      : limits.maximumTextures,
     "glTF textures",
     { nonEmpty: false },
   );
   const images = collection(
     document.images ?? [],
-    limits.maximumTextures,
+    omissionEnabled
+      ? limits.maximumDeclaredImages
+      : limits.maximumTextures,
     "glTF images",
     { nonEmpty: false },
   );
   const samplers = collection(
     document.samplers ?? [],
-    limits.maximumTextures,
+    omissionEnabled
+      ? limits.maximumDeclaredSamplers
+      : limits.maximumTextures,
     "glTF samplers",
     { nonEmpty: false },
   );
@@ -1138,13 +1164,48 @@ function createTextureResolver(
   );
   const projected = [];
   const projectedByTexture = new Map();
+  const omittedExternalImages = new Set();
+  const omittedImageBytes = new Map();
+  const omittedImageIndices = new Set();
+  const omittedMaterialIndices = new Set();
+  const omittedReasons = new Map();
+  const omittedRoles = new Map();
+  const omittedTextureIndices = new Set();
   const usedExternalImages = new Set();
   const usedExternalBufferViewImages = new Set();
   const usedEmbeddedImages = new Set();
   const embeddedStorageProfiles = new Set();
   let decodedBytes = 0;
   let embeddedImageBytes = 0;
+  let omittedTextureReferences = 0;
   let sourceBytes = 0;
+
+  const increment = (map, key) => {
+    map.set(key, (map.get(key) ?? 0) + 1);
+  };
+
+  const recordOmission = ({
+    imageIndex = null,
+    materialIndex,
+    reason,
+    role,
+    sourceByteLength = 0,
+    textureIndex = null,
+  }) => {
+    omittedMaterialIndices.add(materialIndex);
+    increment(omittedReasons, reason);
+    increment(omittedRoles, role);
+    if (textureIndex !== null) {
+      omittedTextureIndices.add(textureIndex);
+      omittedTextureReferences += 1;
+    }
+    if (imageIndex !== null) {
+      omittedImageIndices.add(imageIndex);
+      if (!omittedImageBytes.has(imageIndex)) {
+        omittedImageBytes.set(imageIndex, sourceByteLength);
+      }
+    }
+  };
 
   const embeddedImage = (image, imageIndex) => {
     if (typeof image.uri === "string") {
@@ -1334,14 +1395,164 @@ function createTextureResolver(
     return Object.freeze(result);
   };
 
-  const resolve = (value, label) => {
+  const omitFeature = ({ materialIndex, reason, role }) => {
+    if (!omissionEnabled) {
+      throw new DOMException(
+        "glTF material appearance profile is unsupported",
+        "NotSupportedError",
+      );
+    }
+    recordOmission({ materialIndex, reason, role });
+  };
+
+  const validateOmittedImage = (bytes, mediaType) => {
+    try {
+      (
+        mediaType === "image/png"
+          ? inspectBoundedPng
+          : inspectBoundedJpeg
+      )(bytes, {
+        maximumCompressionRatio:
+          limits.maximumTextureCompressionRatio,
+        maximumDecodedBytes: limits.maximumTextureDecodedBytes,
+        maximumDimension: limits.maximumTextureDimension,
+        maximumSourceBytes: limits.maximumTextureSourceBytes,
+      });
+    } catch (error) {
+      if (error?.name !== "NotSupportedError") {
+        throw error;
+      }
+    }
+  };
+
+  const omitTexture = (
+    value,
+    label,
+    {
+      cacheProjection = false,
+      materialIndex,
+      reason,
+      role,
+    },
+  ) => {
+    if (!omissionEnabled) {
+      throw new DOMException(
+        "glTF textured material profile is unsupported",
+        "NotSupportedError",
+      );
+    }
+    const info = plainRecord(value, `${label} texture info`);
+    const texCoord = info.texCoord ?? 0;
+    if (
+      !Number.isSafeInteger(texCoord) ||
+      texCoord < 0
+    ) {
+      throw new TypeError(`${label} texture coordinates are invalid`);
+    }
+    if (info.extensions !== undefined) {
+      plainRecord(info.extensions, `${label} texture extensions`);
+    }
+    const textureIndex = arrayIndex(
+      info.index,
+      textures.length,
+      `${label} texture`,
+    );
+    const texture = plainRecord(
+      textures[textureIndex],
+      `glTF textures[${textureIndex}]`,
+    );
+    if (texture.extensions !== undefined) {
+      plainRecord(
+        texture.extensions,
+        `glTF textures[${textureIndex}].extensions`,
+      );
+    }
+    resolveSampler(
+      texture.sampler,
+      `glTF textures[${textureIndex}]`,
+    );
+    const imageIndex = arrayIndex(
+      texture.source,
+      images.length,
+      `glTF textures[${textureIndex}].source`,
+    );
+    const image = plainRecord(
+      images[imageIndex],
+      `glTF images[${imageIndex}]`,
+    );
+    const embedded = embeddedImage(image, imageIndex);
+    let bytes = embedded?.bytes ?? null;
+    let mediaType = embedded?.mediaType ?? null;
+    let uri = null;
+    try {
+      if (bytes === null) {
+        uri = externalResourceName(image.uri, limits);
+        mediaType = uri.endsWith(".png")
+          ? "image/png"
+          : uri.endsWith(".jpg") || uri.endsWith(".jpeg")
+            ? "image/jpeg"
+            : null;
+        if (
+          format !== "gltf" ||
+          mediaType === null ||
+          (
+            image.mimeType !== undefined &&
+            image.mimeType !== mediaType
+          ) ||
+          !externalResources.has(uri)
+        ) {
+          throw new DOMException(
+            "glTF omitted image is outside the bounded image profile",
+            "NotSupportedError",
+          );
+        }
+        bytes = externalResources.get(uri);
+        omittedExternalImages.add(uri);
+      } else if (
+        embedded.storage === "gltf-external-buffer-view"
+      ) {
+        usedExternalBufferViewImages.add(imageIndex);
+      }
+      validateOmittedImage(bytes, mediaType);
+      recordOmission({
+        imageIndex,
+        materialIndex,
+        reason,
+        role,
+        sourceByteLength: bytes.byteLength,
+        textureIndex,
+      });
+      if (cacheProjection) {
+        projectedByTexture.set(textureIndex, null);
+      }
+      return null;
+    } finally {
+      if (embedded?.owned === true) {
+        embedded.bytes.fill(0);
+      }
+    }
+  };
+
+  const resolve = (value, label, {
+    materialIndex,
+    role = "baseColorTexture",
+  } = {}) => {
     const info = plainRecord(value, `${label} texture info`);
     const texCoord = info.texCoord ?? 0;
     if (
       info.extensions !== undefined ||
       !Number.isSafeInteger(texCoord) ||
-      texCoord < 0
+      texCoord < 0 ||
+      (omissionEnabled && texCoord !== 0)
     ) {
+      if (omissionEnabled) {
+        return omitTexture(value, label, {
+          cacheProjection: true,
+          materialIndex,
+          reason: "unsupported-texture-coordinate-profile",
+          role,
+        });
+      }
       throw new DOMException(
         "glTF base color texture transform is unsupported",
         "NotSupportedError",
@@ -1352,21 +1563,31 @@ function createTextureResolver(
       textures.length,
       `${label} texture`,
     );
-    const cached = projectedByTexture.get(sourceTextureIndex);
-    if (cached !== undefined) {
-      if (texCoord !== 0) {
-        throw new DOMException(
-          "only glTF TEXCOORD_0 is supported",
-          "NotSupportedError",
-        );
+    if (projectedByTexture.has(sourceTextureIndex)) {
+      const cached = projectedByTexture.get(sourceTextureIndex);
+      if (cached !== null) {
+        if (texCoord !== 0) {
+          throw new DOMException(
+            "only glTF TEXCOORD_0 is supported",
+            "NotSupportedError",
+          );
+        }
+        return cached;
       }
-      return cached;
     }
     const texture = plainRecord(
       textures[sourceTextureIndex],
       `glTF textures[${sourceTextureIndex}]`,
     );
     if (texture.extensions !== undefined) {
+      if (omissionEnabled) {
+        return omitTexture(value, label, {
+          cacheProjection: true,
+          materialIndex,
+          reason: "unsupported-texture-extension",
+          role,
+        });
+      }
       throw new DOMException(
         "glTF texture extensions are unsupported",
         "NotSupportedError",
@@ -1416,28 +1637,82 @@ function createTextureResolver(
       bytes = externalResources.get(uri);
     }
     try {
-      const imageProfile = (
-        mediaType === "image/png"
-          ? inspectBoundedPng
-          : inspectBoundedJpeg
-      )(bytes, {
-        maximumCompressionRatio:
-          limits.maximumTextureCompressionRatio,
-        maximumDecodedBytes: limits.maximumTextureDecodedBytes,
-        maximumDimension: limits.maximumTextureDimension,
-        maximumSourceBytes: limits.maximumTextureSourceBytes,
-      });
-      decodedBytes += imageProfile.decodedBytes;
-      sourceBytes += bytes.byteLength;
+      let imageProfile;
+      try {
+        imageProfile = (
+          mediaType === "image/png"
+            ? inspectBoundedPng
+            : inspectBoundedJpeg
+        )(bytes, {
+          maximumCompressionRatio:
+            limits.maximumTextureCompressionRatio,
+          maximumDecodedBytes: limits.maximumTextureDecodedBytes,
+          maximumDimension: limits.maximumTextureDimension,
+          maximumSourceBytes: limits.maximumTextureSourceBytes,
+        });
+      } catch (error) {
+        if (
+          omissionEnabled &&
+          error?.name === "NotSupportedError"
+        ) {
+          if (uri === null) {
+            if (sourceKind === "gltf-external-buffer-view") {
+              usedExternalBufferViewImages.add(imageIndex);
+            }
+          } else {
+            omittedExternalImages.add(uri);
+          }
+          recordOmission({
+            imageIndex,
+            materialIndex,
+            reason: "unsupported-image-profile",
+            role,
+            sourceByteLength: bytes.byteLength,
+            textureIndex: sourceTextureIndex,
+          });
+          projectedByTexture.set(sourceTextureIndex, null);
+          return null;
+        }
+        throw error;
+      }
+      const nextDecodedBytes =
+        decodedBytes + imageProfile.decodedBytes;
+      const nextSourceBytes = sourceBytes + bytes.byteLength;
       if (
         projected.length >= limits.maximumTextures ||
-        decodedBytes > limits.maximumTextureDecodedBytes ||
-        sourceBytes > limits.maximumTextureSourceBytes
+        nextDecodedBytes > limits.maximumTextureDecodedBytes ||
+        nextSourceBytes > limits.maximumTextureSourceBytes ||
+        (
+          omissionEnabled &&
+          nextDecodedBytes >
+            limits.maximumProjectedTextureDecodedBytes
+        )
       ) {
+        if (omissionEnabled) {
+          if (uri === null) {
+            if (sourceKind === "gltf-external-buffer-view") {
+              usedExternalBufferViewImages.add(imageIndex);
+            }
+          } else {
+            omittedExternalImages.add(uri);
+          }
+          recordOmission({
+            imageIndex,
+            materialIndex,
+            reason: "projection-budget",
+            role,
+            sourceByteLength: bytes.byteLength,
+            textureIndex: sourceTextureIndex,
+          });
+          projectedByTexture.set(sourceTextureIndex, null);
+          return null;
+        }
         throw new RangeError(
           "glTF textures exceed the bounded profile",
         );
       }
+      decodedBytes = nextDecodedBytes;
+      sourceBytes = nextSourceBytes;
       const result = Object.freeze({
         bytes: Uint8Array.from(bytes),
         decodedBytes: imageProfile.decodedBytes,
@@ -1513,10 +1788,20 @@ function createTextureResolver(
         );
       }
     }
+    const accountedExternalImages = new Set([
+      ...usedExternalImages,
+      ...omittedExternalImages,
+    ]);
+    const accountedEmbeddedImages = new Set([
+      ...usedEmbeddedImages,
+      ...[...omittedImageIndices].filter((imageIndex) =>
+        declaredEmbeddedImages.has(imageIndex)),
+    ]);
     if (
-      declaredExternalImages.size !== usedExternalImages.size ||
+      declaredExternalImages.size !==
+        accountedExternalImages.size ||
       [...declaredExternalImages].some((uri) =>
-        !usedExternalImages.has(uri))
+        !accountedExternalImages.has(uri))
     ) {
       throw new DOMException(
         "external glTF images require bounded base color projection",
@@ -1524,9 +1809,10 @@ function createTextureResolver(
       );
     }
     if (
-      declaredEmbeddedImages.size !== usedEmbeddedImages.size ||
+      declaredEmbeddedImages.size !==
+        accountedEmbeddedImages.size ||
       [...declaredEmbeddedImages].some((index) =>
-        !usedEmbeddedImages.has(index))
+        !accountedEmbeddedImages.has(index))
     ) {
       const label = declaredEmbeddedMediaTypes.size === 1 &&
           declaredEmbeddedMediaTypes.has("image/png")
@@ -1543,6 +1829,7 @@ function createTextureResolver(
     const used = new Set([
       ...usedExternalBuffers,
       ...usedExternalImages,
+      ...omittedExternalImages,
     ]);
     if (
       used.size !== externalResources.size ||
@@ -1550,17 +1837,60 @@ function createTextureResolver(
     ) {
       throw new Error("glTF bundle contains an unused external resource");
     }
+    const totalEmbeddedImageBytes = [
+      ...omittedImageBytes,
+    ].reduce(
+      (total, [imageIndex, byteLength]) =>
+        total + (
+          usedEmbeddedImages.has(imageIndex) ||
+          !declaredEmbeddedImages.has(imageIndex)
+            ? 0
+            : byteLength
+        ),
+      embeddedImageBytes,
+    );
+    const sortedCounts = (map) => Object.freeze(
+      Object.fromEntries(
+        [...map].sort(([left], [right]) =>
+          left.localeCompare(right)),
+      ),
+    );
+    const omissionCount = [...omittedRoles.values()].reduce(
+      (total, count) => total + count,
+      0,
+    );
     return Object.freeze({
       decodedBytes,
-      embeddedImageBytes,
-      embeddedImageResources: usedEmbeddedImages.size,
+      embeddedImageBytes: totalEmbeddedImageBytes,
+      embeddedImageResources: accountedEmbeddedImages.size,
       embeddedStorageProfiles: Object.freeze(
         [...embeddedStorageProfiles].sort(),
       ),
-      externalImageResources: usedExternalImages.size,
+      externalImageResources: accountedExternalImages.size,
       externalBufferViewImageResources:
         usedExternalBufferViewImages.size,
       externalResourceUris: Object.freeze([...used].sort()),
+      omissions: omissionCount === 0
+        ? null
+        : Object.freeze({
+            schema:
+              "bim-explorer-gltf-appearance-omissions/1",
+            policy: appearancePolicy,
+            declaredImages: images.length,
+            declaredTextures: textures.length,
+            projectedTextures: projected.length,
+            materialFeatures: omissionCount,
+            materials: omittedMaterialIndices.size,
+            textureReferences: omittedTextureReferences,
+            uniqueImages: omittedImageIndices.size,
+            uniqueTextures: omittedTextureIndices.size,
+            sourceBytes: [...omittedImageBytes.values()].reduce(
+              (total, byteLength) => total + byteLength,
+              0,
+            ),
+            reasons: sortedCounts(omittedReasons),
+            roles: sortedCounts(omittedRoles),
+          }),
       sourceBytes,
       textures: Object.freeze(projected),
     });
@@ -1572,10 +1902,22 @@ function createTextureResolver(
     }
   };
 
-  return Object.freeze({ dispose, finalize, resolve });
+  return Object.freeze({
+    appearancePolicy,
+    dispose,
+    finalize,
+    omitFeature,
+    omitTexture,
+    resolve,
+  });
 }
 
-function materialProjection(document, index, textureResolver) {
+function materialProjection(
+  document,
+  index,
+  textureResolver,
+  limits,
+) {
   if (index === undefined) {
     return Object.freeze({
       color: Object.freeze([1, 1, 1, 1]),
@@ -1584,7 +1926,7 @@ function materialProjection(document, index, textureResolver) {
   }
   const materials = collection(
     document.materials,
-    DEFAULT_LIMITS.maximumPrimitives,
+    limits.maximumPrimitives,
     "glTF materials",
     { nonEmpty: false },
   );
@@ -1612,14 +1954,37 @@ function materialProjection(document, index, textureResolver) {
   ) {
     throw new TypeError("glTF material baseColorFactor is invalid");
   }
-  const texture = pbr?.baseColorTexture === undefined
-    ? null
-    : textureResolver.resolve(
-        pbr.baseColorTexture,
-        "glTF material baseColorTexture",
-      );
+  const alphaProfileSupported =
+    (material.alphaMode ?? "OPAQUE") === "OPAQUE" &&
+    color[3] === 1 &&
+    material.alphaCutoff === undefined;
+  let texture = null;
+  if (pbr?.baseColorTexture !== undefined) {
+    texture =
+      textureResolver.appearancePolicy === "bounded-omission" &&
+      !alphaProfileSupported
+        ? textureResolver.omitTexture(
+            pbr.baseColorTexture,
+            "glTF material baseColorTexture",
+            {
+              cacheProjection: true,
+              materialIndex: index,
+              reason: "unsupported-alpha-profile",
+              role: "baseColorTexture",
+            },
+          )
+        : textureResolver.resolve(
+            pbr.baseColorTexture,
+            "glTF material baseColorTexture",
+            {
+              materialIndex: index,
+              role: "baseColorTexture",
+            },
+          );
+  }
   if (
     texture !== null &&
+    textureResolver.appearancePolicy === "strict" &&
     (
       (material.alphaMode ?? "OPAQUE") !== "OPAQUE" ||
       color[3] !== 1 ||
@@ -1636,6 +2001,78 @@ function materialProjection(document, index, textureResolver) {
       "glTF textured material profile is unsupported",
       "NotSupportedError",
     );
+  }
+  if (textureResolver.appearancePolicy === "bounded-omission") {
+    for (const [role, value, label] of [
+      [
+        "metallicRoughnessTexture",
+        pbr?.metallicRoughnessTexture,
+        "glTF material metallicRoughnessTexture",
+      ],
+      [
+        "normalTexture",
+        material.normalTexture,
+        "glTF material normalTexture",
+      ],
+      [
+        "occlusionTexture",
+        material.occlusionTexture,
+        "glTF material occlusionTexture",
+      ],
+      [
+        "emissiveTexture",
+        material.emissiveTexture,
+        "glTF material emissiveTexture",
+      ],
+    ]) {
+      if (value !== undefined) {
+        textureResolver.omitTexture(value, label, {
+          materialIndex: index,
+          reason: "unsupported-material-role",
+          role,
+        });
+      }
+    }
+    for (const [owner, prefix] of [
+      [material.extensions, "material"],
+      [pbr?.extensions, "pbr"],
+    ]) {
+      if (owner === undefined) {
+        continue;
+      }
+      const extensions = plainRecord(
+        owner,
+        `glTF ${prefix} extensions`,
+      );
+      for (const [name, extensionValue] of
+        Object.entries(extensions)) {
+        const extension = plainRecord(
+          extensionValue,
+          `glTF ${prefix} extension ${name}`,
+        );
+        textureResolver.omitFeature({
+          materialIndex: index,
+          reason: "unsupported-material-extension",
+          role: `extension:${name}`,
+        });
+        for (const [field, role] of [
+          ["transmissionTexture", "transmissionTexture"],
+          ["thicknessTexture", "thicknessTexture"],
+        ]) {
+          if (extension[field] !== undefined) {
+            textureResolver.omitTexture(
+              extension[field],
+              `glTF ${name}.${field}`,
+              {
+                materialIndex: index,
+                reason: "unsupported-material-extension-role",
+                role,
+              },
+            );
+          }
+        }
+      }
+    }
   }
   return Object.freeze({
     color: Object.freeze([...color]),
@@ -1733,6 +2170,7 @@ function primitiveRecord(
     document,
     primitive.material,
     textureResolver,
+    limits,
   );
   if (
     material.texture !== null &&
@@ -1971,6 +2409,7 @@ function validateAsset(document, limits) {
 export function parseGltfReferenceProfile(
   input,
   {
+    appearancePolicy: appearancePolicyValue = "strict",
     limits: limitOverrides = {},
     meshoptDecoder: decoderCapability = null,
     resources: externalResourceValues = [],
@@ -1979,6 +2418,9 @@ export function parseGltfReferenceProfile(
   if (!(input instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
   }
+  const appearancePolicy = validatedAppearancePolicy(
+    appearancePolicyValue,
+  );
   const limits = validatedLimits(limitOverrides);
   if (
     input.byteLength === 0 ||
@@ -2083,6 +2525,7 @@ export function parseGltfReferenceProfile(
       limits,
       externalResources,
       buffers,
+      appearancePolicy,
     );
     const records = new Map();
     const occurrences = [];
@@ -2317,6 +2760,7 @@ export function parseGltfReferenceProfile(
                 }),
             colorSpace: "srgb-to-linear-webgl2",
           },
+      appearanceOmissions: appearance.omissions,
       compression: compression === null
         ? null
         : {

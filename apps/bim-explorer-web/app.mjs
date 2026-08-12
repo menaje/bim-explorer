@@ -1926,7 +1926,13 @@ async function openBytes(bytesValue, {
       contextLabel(opened.snapshot);
     setStatus(
       "ready",
-      `Ready: local ${format.toUpperCase()} is open read-only.`,
+      reference &&
+        opened.snapshot.referenceMetadata
+          .appearanceOmissions !== undefined
+        ? `Ready: local ${format.toUpperCase()} geometry is open; ` +
+          `${opened.snapshot.referenceMetadata.appearanceOmissions
+            .materialFeatures} optional appearance features were omitted.`
+        : `Ready: local ${format.toUpperCase()} is open read-only.`,
     );
     controls("ready");
     const sourceReport = reference
@@ -1955,6 +1961,23 @@ async function openBytes(bytesValue, {
             : {
                 appearance: {
                   ...opened.snapshot.referenceMetadata.appearance,
+                },
+              }),
+          ...(opened.snapshot.referenceMetadata
+            .appearanceOmissions === undefined
+            ? {}
+            : {
+                appearanceOmissions: {
+                  ...opened.snapshot.referenceMetadata
+                    .appearanceOmissions,
+                  reasons: {
+                    ...opened.snapshot.referenceMetadata
+                      .appearanceOmissions.reasons,
+                  },
+                  roles: {
+                    ...opened.snapshot.referenceMetadata
+                      .appearanceOmissions.roles,
+                  },
                 },
               }),
           sourceRole:

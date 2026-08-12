@@ -1132,6 +1132,29 @@ test("extension diagnostics preserve bounded reference identity only", () => {
         imageMediaTypes: ["image/png"],
         colorSpace: "srgb-to-linear-webgl2",
       },
+      appearanceOmissions: {
+        schema: "bim-explorer-gltf-appearance-omissions/1",
+        policy: "bounded-omission",
+        declaredImages: 33,
+        declaredTextures: 38,
+        projectedTextures: 0,
+        materialFeatures: 60,
+        materials: 15,
+        textureReferences: 56,
+        uniqueImages: 33,
+        uniqueTextures: 38,
+        sourceBytes: 18_930_095,
+        reasons: {
+          "projection-budget": 9,
+          "unsupported-material-role": 43,
+        },
+        roles: {
+          baseColorTexture: 13,
+          "extension:KHR_materials_transmission": 2,
+          normalTexture: 15,
+        },
+        path: "/private/customer/acme.glb",
+      },
       resourceBundle: {
         schema: "bim-explorer-gltf-local-resource-bundle/0.1",
         documentBytes: 3695,
@@ -1184,6 +1207,14 @@ test("extension diagnostics preserve bounded reference identity only", () => {
   assert.equal(report.source.format, "glb");
   assert.equal(report.source.semanticAuthority, false);
   assert.equal(report.source.appearance.textures, 1);
+  assert.equal(
+    report.source.appearanceOmissions.materialFeatures,
+    60,
+  );
+  assert.equal(
+    report.source.appearanceOmissions.path,
+    undefined,
+  );
   assert.equal(report.source.resourceBundle.externalImageResources, 1);
   assert.equal(
     report.source.resourceBundle.externalBufferViewImageResources,

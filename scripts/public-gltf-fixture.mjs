@@ -125,6 +125,10 @@ function validateProductScaleManifest(manifest) {
     manifest.scale,
     "public product-scale glTF thresholds",
   );
+  const omissions = plainRecord(
+    expected.appearanceOmissions,
+    "public product-scale glTF appearance omissions",
+  );
   const node = plainRecord(
     manifest.nodeQualification,
     "public product-scale glTF Node budget",
@@ -164,6 +168,33 @@ function validateProductScaleManifest(manifest) {
     typeof expected.textures !== "boolean" ||
     typeof expected.skins !== "boolean" ||
     expected.animations !== 0 ||
+    JSON.stringify(omissions) !== JSON.stringify({
+      schema: "bim-explorer-gltf-appearance-omissions/1",
+      policy: "bounded-omission",
+      declaredImages: 33,
+      declaredTextures: 38,
+      projectedTextures: 0,
+      materialFeatures: 60,
+      materials: 15,
+      textureReferences: 56,
+      uniqueImages: 33,
+      uniqueTextures: 38,
+      sourceBytes: 18_930_095,
+      reasons: {
+        "projection-budget": 9,
+        "unsupported-image-profile": 4,
+        "unsupported-material-extension": 4,
+        "unsupported-material-role": 43,
+      },
+      roles: {
+        baseColorTexture: 13,
+        "extension:KHR_materials_transmission": 2,
+        "extension:KHR_materials_volume": 2,
+        metallicRoughnessTexture: 15,
+        normalTexture: 15,
+        occlusionTexture: 13,
+      },
+    }) ||
     !Array.isArray(expected.extensionsUsed) ||
     expected.extensionsUsed.some((name) =>
       typeof name !== "string" || name.length === 0) ||

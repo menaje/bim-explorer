@@ -290,6 +290,7 @@ async function openSource(request) {
         format: request.options.format,
       });
       candidateSource = await createGltfReferenceSource(bytes, {
+        appearancePolicy: "bounded-omission",
         maximumRequestBytes: 1024 * 1024,
         resources: externalResources,
       });

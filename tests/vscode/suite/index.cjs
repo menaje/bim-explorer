@@ -242,6 +242,13 @@ async function qualifyReference({
     ready.renderer.uploadedBytes,
     expectedUploadedBytes,
   );
+  if (productScale) {
+    assert.equal(ready.source.appearance, undefined);
+    assert.deepEqual(
+      ready.source.appearanceOmissions,
+      manifest.expected.appearanceOmissions,
+    );
+  }
   if (resourceBundle || embeddedTexture) {
     const documentBytes = resourceBundle
       ? manifest.document.byteLength
@@ -414,6 +421,8 @@ async function qualifyReference({
               manifest.browserQualification.classification,
             rendererLimits:
               manifest.browserQualification.rendererLimits,
+            appearanceOmissions:
+              ready.source.appearanceOmissions,
           }
         : {}),
       provenance: {
@@ -430,7 +439,15 @@ async function qualifyReference({
       performance: ready.performance,
       resources: ready.resources,
       renderer: ready.renderer,
-      reference: ready.reference,
+      reference: {
+        ...ready.reference,
+        ...(ready.source.appearanceOmissions === undefined
+          ? {}
+          : {
+              appearanceOmissions:
+                ready.source.appearanceOmissions,
+            }),
+      },
       lifecycle: {
         opened: ready.status,
         closed: disposed.status,
@@ -477,6 +494,13 @@ async function qualifyReference({
           ready.renderer.uploadedBytes <=
             manifest.browserQualification.rendererLimits
               .maximumGpuCacheBytes
+        ),
+      boundedAppearanceOmissions:
+        !productScale ||
+        (
+          ready.source.appearance === undefined &&
+          JSON.stringify(ready.source.appearanceOmissions) ===
+            JSON.stringify(manifest.expected.appearanceOmissions)
         ),
       pathFreeHostBridge: true,
       editorCloseObserved: disposed.status === "disposed",
@@ -1440,6 +1464,8 @@ async function run() {
             qualified.assertions.vscodeChromiumWebGl2,
           productScaleReferenceRendererBounded:
             qualified.assertions.boundedRenderer,
+          productScaleReferenceAppearanceOmissionsExact:
+            qualified.assertions.boundedAppearanceOmissions,
           productScaleReferencePathFreeBridge:
             qualified.assertions.pathFreeHostBridge,
           productScaleReferenceEditorCloseObserved:

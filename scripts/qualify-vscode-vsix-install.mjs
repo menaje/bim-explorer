@@ -709,6 +709,10 @@ export async function qualifyVscodeVsixInstall({
             installedProductScaleReferenceRendererBounded:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferenceRendererBounded === true,
+            installedProductScaleAppearanceOmissionsExact:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceAppearanceOmissionsExact ===
+                  true,
             installedProductScaleReferenceBridgeIsPathFree:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferencePathFreeBridge === true,

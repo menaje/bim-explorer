@@ -294,6 +294,12 @@ export class GltfReferenceSource {
         extensionsUsed: profile.extensionsUsed,
         compression: profile.compression,
         appearance: profile.appearance,
+        ...(profile.appearanceOmissions === null
+          ? {}
+          : {
+              appearanceOmissions:
+                profile.appearanceOmissions,
+            }),
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
         resourceBundle: {
@@ -408,6 +414,10 @@ export class GltfReferenceSource {
         ...(this.#snapshot.referenceMetadata.appearance === null
           ? []
           : ["bounded-base-color-texture"]),
+        ...(this.#snapshot.referenceMetadata
+          .appearanceOmissions === undefined
+          ? []
+          : ["bounded-appearance-omissions"]),
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
       sourceRole: "derived-or-reference-mesh",
@@ -545,6 +555,7 @@ export class GltfReferenceSource {
 export async function createGltfReferenceSource(
   bytes,
   {
+    appearancePolicy = "strict",
     limits,
     maximumRequestBytes,
     resources = [],
@@ -580,6 +591,7 @@ export async function createGltfReferenceSource(
   try {
     try {
       profile = parseGltfReferenceProfile(bytes, {
+        appearancePolicy,
         limits,
         resources: ownedResources,
       });
@@ -595,6 +607,7 @@ export async function createGltfReferenceSource(
       );
       const decoder = await loadMeshoptDecoder({ signal });
       profile = parseGltfReferenceProfile(bytes, {
+        appearancePolicy,
         limits,
         meshoptDecoder: decoder,
         resources: ownedResources,
