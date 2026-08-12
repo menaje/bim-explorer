@@ -594,7 +594,8 @@ function render() {
   const state = active.explorer.state;
   elements.pick.textContent = "Pick center";
   elements.cameraHelp.textContent =
-    "Click an object to select · drag to orbit · right or middle drag to pan · scroll to zoom";
+    "Click select · drag orbit · Shift/right/middle drag pan · " +
+    "wheel or +/- zoom · arrows orbit · Shift+arrows pan · Home reset";
   const reference = active.format !== "ifc";
   elements.showAll.textContent = "Show all";
   elements.treeTitle.textContent =
@@ -787,8 +788,10 @@ function cameraInteractionReport(current) {
     schema: "bim-explorer-product-camera-interaction/1",
     enabled: state !== null,
     disposed: state?.disposed ?? true,
+    keyboardUpdates: state?.keyboardUpdates ?? 0,
     orbitUpdates: state?.orbitUpdates ?? 0,
     panUpdates: state?.panUpdates ?? 0,
+    resetUpdates: state?.resetUpdates ?? 0,
     zoomUpdates: state?.zoomUpdates ?? 0,
     renderedUpdates: current.cameraRenderedUpdates ?? 0,
     selectedPickIds: [...current.view.selectedPickIds],

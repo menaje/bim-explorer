@@ -245,7 +245,10 @@ Render ID hide/show는 같은 GPU allocation에서 view revision으로
 Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
 검증했습니다. 실제 context loss 뒤 같은 revision을 remount하고 별도
 IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. DOM
-pointer/wheel input은 camera update를 직렬화합니다. single
+pointer/wheel input과 focusable canvas의 arrow orbit, Shift+arrow pan,
+`+`/`-` zoom, `Home` reset은 camera update를 직렬화합니다. keyboard 경로는
+중간 animation 없이 입력마다 한 frame을 갱신해 reduced-motion 환경에서도
+별도 motion을 만들지 않습니다. single
 plane·six-plane section box와 GPU
 depth-backed source-world distance·area·angle도 같은 allocation에서
 검증했지만, source unit 해석은 renderer가 소유하지 않습니다.

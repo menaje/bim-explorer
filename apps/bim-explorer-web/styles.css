@@ -317,6 +317,11 @@ canvas[data-camera-controls="active"]:active {
   cursor: grabbing;
 }
 
+canvas[data-camera-controls="active"]:focus-visible {
+  outline: 2px solid #66c6ff;
+  outline-offset: -2px;
+}
+
 .camera-help {
   margin: 0;
   padding: 7px 11px 9px;

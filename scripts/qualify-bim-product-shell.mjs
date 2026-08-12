@@ -496,14 +496,15 @@ function assertions(
             opened.cameraInteraction?.enabled === true &&
             opened.cameraInteraction?.disposed === false &&
             interaction.cameraInteraction?.orbitUpdates >= 1 &&
+            interaction.cameraInteraction?.keyboardUpdates >= 1 &&
             interaction.cameraInteraction?.zoomUpdates >= 1 &&
-            interaction.cameraInteraction?.renderedUpdates >= 2 &&
+            interaction.cameraInteraction?.renderedUpdates >= 3 &&
             JSON.stringify(
               interaction.cameraInteraction.camera,
             ) !== JSON.stringify(
               opened.cameraInteraction.camera,
             ) &&
-            interaction.cameraHelp.includes("Drag to orbit"),
+            interaction.cameraHelp.includes("arrows orbit"),
         }),
     ...(pointCloud || fixture.kind === "gltf-product-scale"
       ? {}
@@ -1416,6 +1417,13 @@ export async function qualifyBimProductShell({
       });
     }
     if (!pointCloud && fixture.kind !== "gltf-product-scale") {
+      await client.evaluate(`new Promise((resolve) => {
+        document.querySelector("#model-canvas").scrollIntoView({
+          block: "center",
+          inline: "center",
+        });
+        requestAnimationFrame(() => resolve(true));
+      })`);
       const canvas = await client.evaluate(`(() => {
         const bounds = document.querySelector("#model-canvas")
           .getBoundingClientRect();
@@ -1458,16 +1466,64 @@ export async function qualifyBimProductShell({
         deltaY: -120,
         pointerType: "mouse",
       });
+      const keyboardFocused = await client.evaluate(`(() => {
+        const canvas = document.querySelector("#model-canvas");
+        canvas.focus({ preventScroll: true });
+        return document.activeElement === canvas;
+      })()`);
+      if (!keyboardFocused) {
+        throw new Error(
+          "BIM product camera canvas is not keyboard focusable",
+        );
+      }
+      await client.evaluate(`(() => {
+        globalThis.__bimExplorerKeyboardProbe = null;
+        document.addEventListener("keydown", (event) => {
+          globalThis.__bimExplorerKeyboardProbe = {
+            code: event.code,
+            key: event.key,
+            targetId: event.target?.id ?? null,
+            trusted: event.isTrusted,
+          };
+        }, { capture: true, once: true });
+      })()`);
+      await client.send("Input.dispatchKeyEvent", {
+        type: "rawKeyDown",
+        key: "ArrowLeft",
+        code: "ArrowLeft",
+        windowsVirtualKeyCode: 37,
+      });
+      await client.send("Input.dispatchKeyEvent", {
+        type: "keyUp",
+        key: "ArrowLeft",
+        code: "ArrowLeft",
+        windowsVirtualKeyCode: 37,
+      });
       await poll(
         client,
         `(() => {
           const camera = globalThis.__bimExplorerProductReport
             ?.cameraInteraction;
-          return camera?.orbitUpdates >= 1 &&
+          return camera?.orbitUpdates >= 2 &&
+            camera?.keyboardUpdates >= 1 &&
             camera?.zoomUpdates >= 1 &&
-            camera?.renderedUpdates >= 2;
+            camera?.renderedUpdates >= 3;
         })()`,
       );
+      const keyboardProbe = await client.evaluate(
+        `globalThis.__bimExplorerKeyboardProbe`,
+      );
+      if (
+        keyboardProbe?.code !== "ArrowLeft" ||
+        keyboardProbe?.key !== "ArrowLeft" ||
+        keyboardProbe?.targetId !== "model-canvas" ||
+        keyboardProbe?.trusted !== true
+      ) {
+        throw new Error(
+          "BIM product keyboard input was not trusted canvas input: " +
+            JSON.stringify(keyboardProbe),
+        );
+      }
       const dragPick = await client.evaluate(
         `globalThis.__bimExplorerProductReport?.meshSelection ?? null`,
       );

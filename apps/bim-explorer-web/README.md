@@ -16,6 +16,11 @@ range와 `POINTS` renderer로 분기합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
+- mesh canvas는 click 선택, primary drag orbit, Shift-primary/right/middle
+  drag pan, wheel 또는 `+`/`-` zoom을 제공합니다. focus된 canvas의 화살표는
+  orbit, Shift+화살표는 pan, `Home`은 최초 fit camera로 복귀합니다. 모든
+  keyboard update는 animation 없이 한 frame씩 직렬화되며 focus ring과
+  화면 내 단축키 설명을 유지합니다.
 - IFC와 glTF/GLB renderer range는 exact public Viewer Core session을 통과하고,
   initial/3D selection과 close cleanup은 public selection/Host lifecycle로
   투영합니다.
@@ -30,9 +35,12 @@ range와 `POINTS` renderer로 분기합니다.
   명시적 local `.bin`의 glTF image bufferView `baseColorTexture`는 OPAQUE
   material, `TEXCOORD_0`과 표준 sampler만
   geometry-range v2/v3로 투영해 WebGL2 sRGB texture로 표시합니다. JPEG는
-  bounded baseline sequential profile만 허용합니다. data URI buffer 기반 image bufferView,
-  progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha material mode와 다른
-  material texture role은 거부합니다.
+  bounded baseline sequential profile만 허용합니다. data URI buffer 기반
+  image bufferView는 거부합니다. 제품 file-open은 progressive JPEG,
+  projection budget 밖의 base color와
+  normal/metallic-roughness/occlusion 등 선택적 appearance를 geometry와
+  분리해 생략 수·사유를 표시합니다. malformed image, unsafe URI, required
+  extension과 source/decode/GPU hard budget 위반은 계속 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때

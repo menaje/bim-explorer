@@ -40,8 +40,11 @@ export class CameraInteraction3d {
   #disposed = false;
   #drag = null;
   #events = 0;
+  #initialCamera;
+  #keyboardUpdates = 0;
   #orbitUpdates = 0;
   #panUpdates = 0;
+  #resetUpdates = 0;
   #zoomUpdates = 0;
 
   constructor({
@@ -50,6 +53,7 @@ export class CameraInteraction3d {
     width,
   } = {}) {
     this.#camera = validateCamera3d(camera);
+    this.#initialCamera = this.#camera;
     this.height = positiveDimension(
       height,
       "camera interaction height",
@@ -70,8 +74,10 @@ export class CameraInteraction3d {
       dragging: this.#drag !== null,
       dragMode: this.#drag?.mode ?? null,
       events: this.#events,
+      keyboardUpdates: this.#keyboardUpdates,
       orbitUpdates: this.#orbitUpdates,
       panUpdates: this.#panUpdates,
+      resetUpdates: this.#resetUpdates,
       zoomUpdates: this.#zoomUpdates,
       camera: this.#camera,
     });
@@ -183,6 +189,75 @@ export class CameraInteraction3d {
     return this.#camera;
   }
 
+  key({ key, shiftKey = false } = {}) {
+    if (this.#disposed) {
+      throw new DOMException(
+        "camera interaction is disposed",
+        "InvalidStateError",
+      );
+    }
+    if (typeof key !== "string" || typeof shiftKey !== "boolean") {
+      throw new TypeError("camera key input is invalid");
+    }
+    const orbitStep = Math.PI / 24;
+    const panStep = 0.05;
+    let kind = null;
+    if (["ArrowLeft", "ArrowRight"].includes(key)) {
+      if (shiftKey) {
+        this.#camera = panCamera3d(this.#camera, {
+          right: key === "ArrowLeft" ? -panStep : panStep,
+          up: 0,
+        });
+        this.#panUpdates += 1;
+        kind = "pan";
+      } else {
+        this.#camera = orbitCamera3d(this.#camera, {
+          yaw: key === "ArrowLeft" ? orbitStep : -orbitStep,
+          pitch: 0,
+        });
+        this.#orbitUpdates += 1;
+        kind = "orbit";
+      }
+    } else if (["ArrowUp", "ArrowDown"].includes(key)) {
+      if (shiftKey) {
+        this.#camera = panCamera3d(this.#camera, {
+          right: 0,
+          up: key === "ArrowUp" ? panStep : -panStep,
+        });
+        this.#panUpdates += 1;
+        kind = "pan";
+      } else {
+        this.#camera = orbitCamera3d(this.#camera, {
+          yaw: 0,
+          pitch: key === "ArrowUp" ? orbitStep : -orbitStep,
+        });
+        this.#orbitUpdates += 1;
+        kind = "orbit";
+      }
+    } else if (["+", "="].includes(key)) {
+      this.#camera = zoomCamera3d(this.#camera, 0.85);
+      this.#zoomUpdates += 1;
+      kind = "zoom";
+    } else if (["-", "_"].includes(key)) {
+      this.#camera = zoomCamera3d(this.#camera, 1.15);
+      this.#zoomUpdates += 1;
+      kind = "zoom";
+    } else if (key === "Home") {
+      this.#camera = this.#initialCamera;
+      this.#resetUpdates += 1;
+      kind = "reset";
+    }
+    if (kind === null) {
+      return null;
+    }
+    this.#events += 1;
+    this.#keyboardUpdates += 1;
+    return Object.freeze({
+      camera: this.#camera,
+      kind,
+    });
+  }
+
   dispose() {
     if (this.#disposed) {
       return false;
@@ -257,13 +332,22 @@ export function attachCameraControls3d({
       return;
     }
     event.preventDefault();
+    try {
+      element.focus?.({ preventScroll: true });
+    } catch {
+      element.focus?.();
+    }
     interaction.pointerDown({
-      button: event.button,
+      button:
+        event.button === 0 && event.shiftKey === true
+          ? 1
+          : event.button,
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
     });
-    primaryGesture = event.button === 0
+    primaryGesture =
+      event.button === 0 && event.shiftKey !== true
       ? {
           pointerId: event.pointerId,
           startX: event.clientX,
@@ -340,6 +424,24 @@ export function attachCameraControls3d({
       deltaY: event.deltaY,
     }), "zoom");
   };
+  const keydown = (event) => {
+    if (
+      event.altKey === true ||
+      event.ctrlKey === true ||
+      event.metaKey === true
+    ) {
+      return;
+    }
+    const update = interaction.key({
+      key: event.key,
+      shiftKey: event.shiftKey === true,
+    });
+    if (update === null) {
+      return;
+    }
+    event.preventDefault();
+    enqueue(update.camera, update.kind);
+  };
   element.addEventListener("pointerdown", down);
   element.addEventListener("pointermove", move);
   element.addEventListener("pointerup", up);
@@ -348,6 +450,7 @@ export function attachCameraControls3d({
   element.addEventListener("wheel", wheel, {
     passive: false,
   });
+  element.addEventListener("keydown", keydown);
   return Object.freeze({
     get state() {
       return interaction.state;
@@ -364,6 +467,7 @@ export function attachCameraControls3d({
       element.removeEventListener("pointercancel", cancel);
       element.removeEventListener("contextmenu", contextMenu);
       element.removeEventListener("wheel", wheel);
+      element.removeEventListener("keydown", keydown);
       interaction.dispose();
       return true;
     },

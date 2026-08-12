@@ -7,6 +7,10 @@ IFC는 Browser와 같은 host-neutral `bim-surface/0.1` runtime으로
 `BimModelSource`, bounded 3D host와 semantic explorer를 합성하고, glTF/GLB는
 source-native reference mesh explorer를 사용합니다. 두 경로의 renderer range,
 selection과 lifecycle은 exact public Viewer Core product adapter를 통과합니다.
+mesh canvas의 pointer, wheel과 keyboard camera 조작은 Browser와 같은 runtime을
+사용합니다. focus된 canvas에서 화살표는 orbit, Shift+화살표는 pan,
+`+`/`-`는 zoom, `Home`은 최초 fit으로 복귀하며 animation 없이 frame을
+직렬화합니다.
 단일-source `.gltf` Custom Editor는 JSON에 명시된 최대 16개의 동일 폴더 ASCII
 leaf-name `.bin`, `.png`, `.jpg`, `.jpeg`를 extension host에서만 해결합니다.
 document와 sidecar 합산
@@ -17,8 +21,10 @@ runtime network를 거부합니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data UR
 GLB PNG/JPEG bufferView 또는 명시적 local `.bin`의 glTF image bufferView는
 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler에만 허용합니다. JPEG는
 bounded baseline sequential profile만 허용하고 data URI buffer 기반 image
-bufferView, progressive/arithmetic/lossless JPEG, 비-OPAQUE alpha
-material mode와 다른 material texture role은 fail-closed입니다. required extension은 `KHR_mesh_quantization`과
+bufferView는 거부합니다. 제품 file-open에서 progressive JPEG, 비-OPAQUE
+alpha와 다른 선택적 material texture role은 geometry를 유지하면서 bounded
+omission으로 진단합니다. malformed image, unsafe URI와 hard budget 위반은
+fail-closed입니다. required extension은 `KHR_mesh_quantization`과
 `EXT_meshopt_compression` `FILTER_NONE`만 bounded decode하며 Draco·다른 meshopt
 filter와 그 밖의 required extension은 거부합니다.
 이 bundle 경로는 single-source Custom Editor에만 적용되며 immutable federated
