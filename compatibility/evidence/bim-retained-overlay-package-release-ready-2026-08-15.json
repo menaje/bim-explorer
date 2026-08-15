@@ -1,0 +1,97 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-package-qualification/2",
+  "status": "passed-retained-overlay-release-ready-artifact",
+  "asOf": "2026-08-15",
+  "package": {
+    "name": "@bim-explorer/federated-bim-surface",
+    "version": "0.3.0",
+    "contract": "bim-explorer-bim-surface/0.2",
+    "private": true,
+    "filename": "bim-explorer-federated-bim-surface-0.3.0.tgz",
+    "byteLength": 143991,
+    "unpackedSize": 725105,
+    "sha256": "532fbb5463fe3a6c4b5bba66c09b5aef31a7d9a1233fa295fd653054ab3ceefa",
+    "integrity": "sha512-K3tbM/rBcWJZqisN4P4Rd9E1IWgPdDO7NvXpGNcMm7VHbjbAbApsy6ttE9WeQRwF9/gr/9Uw790oEe3SKAvlHA==",
+    "runtimeSha256": "f223b2cc3726cee117b4063e6d043b2a5514d76c902f1f92fcd7f9dc548df9c1",
+    "files": [
+      "LICENSE",
+      "NOTICE",
+      "README.md",
+      "SOURCE_OFFER.md",
+      "package.json",
+      "runtime/index.mjs"
+    ],
+    "runtimeDependencies": 0
+  },
+  "reproducibility": {
+    "independentPackRuns": 2,
+    "byteIdentical": true,
+    "firstSha256": "532fbb5463fe3a6c4b5bba66c09b5aef31a7d9a1233fa295fd653054ab3ceefa",
+    "secondSha256": "532fbb5463fe3a6c4b5bba66c09b5aef31a7d9a1233fa295fd653054ab3ceefa"
+  },
+  "consumer": {
+    "install": "offline-local-tarball",
+    "cleanProject": true,
+    "lifecycle": {
+      "packageVersion": "0.3.0",
+      "surfaceContract": "bim-explorer-bim-surface/0.2",
+      "retainedContract": "bim-explorer-federated-retained-overlay/0.1",
+      "adapterSchema": "bim-explorer-federated-retained-overlay-adapter/0.1",
+      "packetSchema": "bim-explorer-retained-overlay-packet/0.1",
+      "exports": {
+        "count": 94,
+        "required": {
+          "BIM_FEDERATED_RETAINED_OVERLAY_ADAPTER_SCHEMA": true,
+          "BIM_FEDERATED_RETAINED_OVERLAY_CONTRACT": true,
+          "BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE": true,
+          "BIM_RETAINED_OVERLAY_PACKET_SCHEMA": true,
+          "createBimModelSource": true,
+          "createBounded3dRenderer": true,
+          "createExplicitAlignment": true,
+          "createFederatedBimSurface": true,
+          "createHeadless3dBackend": true,
+          "decodeBimRetainedOverlayPacket": true,
+          "encodeBimRetainedOverlayPacket": true,
+          "sha256BimRetainedOverlayPacket": true
+        }
+      },
+      "checks": {
+        "artifactOnlyImport": true,
+        "consumerOverlayRegistered": true,
+        "payloadReadOnce": true,
+        "preparedWithoutAdvance": true,
+        "committedAtomically": true,
+        "sourceReplayAvoided": true,
+        "checkpointed": true,
+        "adapterDisposed": true,
+        "terminalResourcesReleased": true,
+        "authorityFree": true
+      }
+    }
+  },
+  "releaseGate": {
+    "expectedTag": "bim-surface-v0.3.0",
+    "branch": "prerelease",
+    "artifactOnlyRetainedOverlay": true,
+    "publicRelease": false,
+    "publicationAuthorized": true
+  },
+  "claims": {
+    "publicRegistryPublication": false,
+    "publicSurfaceArtifact": false,
+    "publishedViewerCore013Artifact": false,
+    "crossPlatformPhysicalGpu": false,
+    "productionSupport": false
+  },
+  "authority": {
+    "workspace": false,
+    "canonicalEntityId": false,
+    "sourceMutation": false,
+    "revisionMutation": false,
+    "geometryMutation": false,
+    "constraintMutation": false,
+    "acceptance": false,
+    "publish": false,
+    "export": false
+  }
+}

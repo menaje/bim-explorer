@@ -72,7 +72,9 @@ revision에 묶고 Viewer Core 0.1.3 staged adapter를 통해 geometry/Pick/revi
 원자적으로 전환합니다. 이 display projection은 원본 source를 수정하거나
 Spatial authored geometry, Canonical identity 또는 accept/publish 권한을 얻지
 않습니다. exact upstream source commit conformance는 통과했지만 published
-Viewer Core 0.1.3 artifact와 immutable federated Surface v0.2 포함은 보류합니다.
+Viewer Core 0.1.3 artifact는 보류합니다. retained contract는 immutable v0.2를
+변경하지 않고 artifact-only conformance를 통과한 v0.3.0 candidate에
+포함됩니다.
 
 local `.gltf + .bin/.png/.jpg/.jpeg` bundle의 source fingerprint는 document SHA-256과 정렬된
 sidecar name·byte length·SHA-256 descriptor를 함께 묶습니다. Browser의 명시적

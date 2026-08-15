@@ -105,12 +105,15 @@ stage한 뒤 geometry, Pick ID와 retained revision을 하나의 synchronous com
 retained pick, selection·anchor·camera·clipping 보존, tombstone, checkpoint의 native
 range read·parse·upload 0과 terminal cleanup을 재현했습니다. Viewer Core 0.1.3은
 exact public source commit의 async prepare/synchronous commit adapter로 cancellation,
-stale ordering과 invalid digest fail-closed를 통과했습니다. 이 결과는 immutable
-Federated Surface v0.2 runtime이나 public package를 변경하지 않으며 published
-Viewer Core 0.1.3 artifact, physical GPU와 production support는 보류합니다. exact
+stale ordering과 invalid digest fail-closed를 통과했습니다. immutable Federated
+Surface v0.2 runtime은 변경하지 않았고 새 v0.3.0 package candidate의 두 번
+byte-identical pack과 offline artifact-only consumer도 통과했습니다. published
+Viewer Core 0.1.3 artifact, public v0.3.0 artifact, physical GPU와 production
+support는 보류합니다. exact
 결과는 [`Browser evidence`](evidence/bim-retained-overlay-browser-2026-08-15.json),
 [`VS Code evidence`](evidence/bim-retained-overlay-vscode-2026-08-15.json),
-[`Viewer Core source evidence`](evidence/bim-retained-overlay-viewer-core-2026-08-15.json)에
+[`Viewer Core source evidence`](evidence/bim-retained-overlay-viewer-core-2026-08-15.json),
+[`package candidate evidence`](evidence/bim-retained-overlay-package-release-ready-2026-08-15.json)에
 고정합니다.
 
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental E57/LAS/LAZ read-only

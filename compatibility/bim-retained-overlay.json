@@ -37,6 +37,7 @@
     "actualVscodeWebviewWebGl2": true,
     "viewerCoreSource013StagedAdapter": true,
     "immutablePublicV02RuntimeUnchanged": true,
+    "artifactOnlyPackageConformance": true,
     "authorityFree": true,
     "publishedViewerCore013Artifact": false,
     "publicSurfaceArtifact": false,
@@ -46,17 +47,18 @@
   "evidence": {
     "actualBrowser": "compatibility/evidence/bim-retained-overlay-browser-2026-08-15.json",
     "actualVscode": "compatibility/evidence/bim-retained-overlay-vscode-2026-08-15.json",
-    "viewerCoreSource": "compatibility/evidence/bim-retained-overlay-viewer-core-2026-08-15.json"
+    "viewerCoreSource": "compatibility/evidence/bim-retained-overlay-viewer-core-2026-08-15.json",
+    "packageCandidate": "compatibility/evidence/bim-retained-overlay-package-release-ready-2026-08-15.json"
   },
   "blockers": [
     "Viewer Core 0.1.3 is qualified from one exact public source commit; no published 0.1.3 artifact is claimed",
-    "the additive retained-overlay Surface contract is not part of the immutable public federated Surface v0.2.0 artifact",
+    "the additive retained-overlay Surface contract is qualified in a v0.3.0 package candidate but no immutable public v0.3.0 artifact is claimed yet",
     "Linux and Windows physical GPU coverage and stable production support remain unqualified"
   ],
   "limitations": [
     "Browser and VS Code evidence use generated IFC and GLB fixtures and do not contain customer data",
     "Chrome evidence uses an actual WebGL2 context but does not claim a physical GPU",
-    "VS Code evidence uses SwiftShader WebGL2 and a temporary development-source Surface bundle",
+    "VS Code evidence uses SwiftShader WebGL2; package evidence uses an offline clean-installed artifact with a headless backend",
     "retained geometry provides display and pick identity but no native source face locator or mutation authority",
     "checkpoint preserves retained state without rereading native source ranges and is not a source-authoritative revision"
   ],

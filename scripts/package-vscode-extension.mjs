@@ -16,8 +16,8 @@ import {
   checkBimSurfaceBundle,
 } from "./build-bim-surface.mjs";
 import {
-  checkFederatedBimSurfaceBundle,
-} from "./build-federated-bim-surface.mjs";
+  checkFederatedBimSurfaceV03Bundle,
+} from "./build-federated-bim-surface-v0.3.mjs";
 import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
@@ -141,7 +141,7 @@ export async function prepareVscodeExtensionStage(destination) {
   }
   await checkVscodeWorkerBundle();
   await checkBimSurfaceBundle();
-  await checkFederatedBimSurfaceBundle();
+  await checkFederatedBimSurfaceV03Bundle();
   await checkViewerCoreProductBundle();
   await mkdir(destination, {
     recursive: true,

@@ -4,7 +4,7 @@ status: accepted
 authority:
   - bim-surface-package-release
   - bim-surface-supply-chain
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # BIM Surface package release
@@ -138,6 +138,28 @@ clean-installed local VSIX가 동일한 3-source composition, 8,286 pixels,
 Linux/Windows physical GPU, 실제 고객 모델, OS-level peak GPU memory, Spatial
 VSIX BIM runtime과 production support는 계속 별도 Gate입니다.
 
+## Federated v0.3.0 retained-overlay Gate
+
+`@bim-explorer/federated-bim-surface@0.3.0`은 immutable v0.2.0 artifact를
+변경하지 않고 additive `bim-explorer-federated-retained-overlay/0.1` 계약을
+포함하는 package-only experimental prerelease입니다.
+
+```bash
+npm run build:bim-surface:v0.3
+npm run qualify:bim-surface:v0.3:package
+npm run release:bim-surface:v0.3
+```
+
+qualification은 독립 stage 두 곳에서 byte-identical tarball을 만들고 offline
+clean project에 그 tarball만 설치합니다. 설치된 consumer는 versioned packet,
+async prepare, synchronous atomic commit, source-replay 없는 checkpoint와 terminal
+cleanup을 재현합니다. package는 zero-runtime-dependency ESM 하나이며 npm
+registry와 VSIX를 게시하지 않습니다.
+
+Viewer Core 0.1.3은 exact public source commit과의 staged adapter conformance만
+확인됐습니다. published Viewer Core 0.1.3 artifact, Linux/Windows physical GPU,
+native source mutation과 production support는 별도 Gate입니다.
+
 ## Immutable v0.1 runtime after release
 
 `packages/bim-surface/runtime/index.mjs`는 공개 `bim-surface-v0.1.0` package가
@@ -150,15 +172,12 @@ post-release renderer 변경이 있으면 기존 파일을 덮어쓰지 않고 �
 
 ## Immutable v0.2 runtime after release
 
-`packages/federated-bim-surface/runtime/index.mjs`는 공개 tag와 Spatial Phase B가
-고정한 461,431 bytes, SHA-256 `22e243fa…1847`를 유지합니다. `--check`는 현재
-개발 source에서 runtime을 다시 만들지 않고 이 exact release digest를 검사합니다.
-일반 v0.2 build는 현재 source가 release tag와 같은 runtime을 만들 때만 쓸 수
-있으며, post-release source가 달라졌다면 기존 파일을 덮어쓰지 않고 새 package
-version을 시작하라는 오류로 종료합니다.
+공개 `bim-surface-v0.2.0` asset은 461,431-byte runtime, SHA-256
+`22e243fa…1847`로 불변입니다. 현재 `dev`의 generated runtime은 v0.3.0을
+소유하며 v0.2 tag나 asset을 다시 만들거나 교체하지 않습니다.
 
 따라서 single-source `.gltf + .bin/.png/.jpg/.jpeg`, PNG/JPEG texture,
 `KHR_mesh_quantization`이나 `EXT_meshopt_compression` 같은 후속 기능은
-v0.2 package에 자동 backport하지 않습니다. federated runtime/API에 포함하려면 새 semver, `dev →
-prerelease` 승격, exact package evidence와 Spatial consumer admission을 다시
+v0.2 package에 자동 backport하지 않습니다. federated runtime/API에 포함하려면
+새 semver, `dev → prerelease` 승격과 exact artifact conformance를 다시
 통과해야 합니다.

@@ -11,6 +11,9 @@ import {
 import {
   validateRetainedOverlayVscodeQualification,
 } from "./qualify-retained-overlay-vscode.mjs";
+import {
+  validateFederatedBimSurfaceV03PackageQualification,
+} from "./qualify-federated-bim-surface-v0.3-package.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const TRUE_GATES = Object.freeze([
@@ -29,6 +32,7 @@ const TRUE_GATES = Object.freeze([
   "actualVscodeWebviewWebGl2",
   "viewerCoreSource013StagedAdapter",
   "immutablePublicV02RuntimeUnchanged",
+  "artifactOnlyPackageConformance",
   "authorityFree",
 ]);
 const HELD_GATES = Object.freeze([
@@ -62,6 +66,9 @@ const EVIDENCE = Object.freeze({
   viewerCoreSource:
     "compatibility/evidence/" +
     "bim-retained-overlay-viewer-core-2026-08-15.json",
+  packageCandidate:
+    "compatibility/evidence/" +
+    "bim-retained-overlay-package-release-ready-2026-08-15.json",
 });
 
 function same(left, right) {
@@ -82,6 +89,7 @@ export function validateBimRetainedOverlayCompatibility(
   browser,
   vscode,
   viewerCore,
+  packageCandidate,
 ) {
   if (
     manifest?.schema !==
@@ -133,6 +141,14 @@ export function validateBimRetainedOverlayCompatibility(
   if (!validateRetainedOverlayViewerCoreQualification(viewerCore)) {
     throw new Error("retained overlay Viewer Core evidence is invalid");
   }
+  try {
+    validateFederatedBimSurfaceV03PackageQualification(packageCandidate);
+  } catch (error) {
+    throw new Error(
+      "retained overlay package candidate evidence is invalid",
+      { cause: error },
+    );
+  }
   return Object.freeze({
     status: manifest.status,
     passedGates: TRUE_GATES.length,
@@ -142,7 +158,8 @@ export function validateBimRetainedOverlayCompatibility(
 }
 
 async function main() {
-  const [manifest, browser, vscode, viewerCore] = await Promise.all([
+  const [manifest, browser, vscode, viewerCore, packageCandidate] =
+    await Promise.all([
     readFile(path.join(ROOT, "compatibility/bim-retained-overlay.json"),
       "utf8").then(JSON.parse),
     readFile(path.join(ROOT, EVIDENCE.actualBrowser), "utf8")
@@ -151,12 +168,15 @@ async function main() {
       .then(JSON.parse),
     readFile(path.join(ROOT, EVIDENCE.viewerCoreSource), "utf8")
       .then(JSON.parse),
+    readFile(path.join(ROOT, EVIDENCE.packageCandidate), "utf8")
+      .then(JSON.parse),
   ]);
   const result = validateBimRetainedOverlayCompatibility(
     manifest,
     browser,
     vscode,
     viewerCore,
+    packageCandidate,
   );
   process.stdout.write(
     `Retained overlay compatibility passed: ` +

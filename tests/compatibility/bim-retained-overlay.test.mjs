@@ -25,6 +25,11 @@ async function inputs() {
         "bim-retained-overlay-viewer-core-2026-08-15.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "bim-retained-overlay-package-release-ready-2026-08-15.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
 }
 
@@ -33,7 +38,7 @@ test("retained overlay pins actual Browser, VS Code, and Viewer Core source evid
     validateBimRetainedOverlayCompatibility(...await inputs()),
     {
       status: "experimental",
-      passedGates: 16,
+      passedGates: 17,
       heldGates: 4,
       blockers: 3,
     },
@@ -65,5 +70,14 @@ test("retained overlay rejects a changed Viewer Core source commit", async () =>
   assert.throws(
     () => validateBimRetainedOverlayCompatibility(...values),
     /Viewer Core evidence is invalid/u,
+  );
+});
+
+test("retained overlay rejects package evidence without artifact-only conformance", async () => {
+  const values = await inputs();
+  values[4].releaseGate.artifactOnlyRetainedOverlay = false;
+  assert.throws(
+    () => validateBimRetainedOverlayCompatibility(...values),
+    /package candidate evidence is invalid/u,
   );
 });

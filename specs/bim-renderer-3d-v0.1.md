@@ -376,8 +376,9 @@ close·engine dispose·termination evidence도 별도 qualification에서
 
 기존 결과는 내부 host contract conformance입니다. retained overlay는 별도
 actual VS Code extension webview와 upstream Viewer Core 0.1.3 exact source
-commit까지 검증했지만 published 0.1.3 artifact, immutable Surface v0.2 포함이나
-stable cross-repository compatibility를 승인하지 않습니다.
+commit까지 검증했고 artifact-only Surface v0.3.0 package candidate에도
+포함됐습니다. published Viewer Core 0.1.3 artifact, immutable public v0.3.0
+artifact나 stable cross-repository compatibility는 승인하지 않습니다.
 
 ## 현재 보류
 

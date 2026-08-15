@@ -15,9 +15,10 @@ bim-explorer-federated-retained-overlay/0.1
 bim-explorer-federated-retained-overlay-adapter/0.1
 ```
 
-이 contract는 post-release 개발선의 기능이다. 공개된 immutable
-`@bim-explorer/federated-bim-surface@0.2.0` runtime을 변경하거나 그 artifact에
-포함됐다고 주장하지 않는다.
+이 contract는 공개된 immutable
+`@bim-explorer/federated-bim-surface@0.2.0` runtime을 변경하지 않고 새
+v0.3.0 package candidate에 포함됩니다. immutable public v0.3.0 artifact는 tag
+workflow가 완료되기 전까지 주장하지 않습니다.
 
 ## Packet envelope
 

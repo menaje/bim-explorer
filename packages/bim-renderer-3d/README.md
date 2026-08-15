@@ -61,8 +61,10 @@ WebGL2 framebuffer와 Pick map을 만들고 current 화면을 보존하며 synch
 commit만 둘을 revision과 함께 전환합니다. packet 8 MiB, resident object 32,768개,
 staging 16 MiB가 기본 상한입니다. actual Chrome과 VS Code Webview에서 pixel,
 selection, tombstone, camera/clipping 보존과 terminal GPU 0을 검증했습니다.
-Viewer Core 0.1.3은 exact public source commit에서 staged adapter를 통과했지만
-published 0.1.3 artifact나 immutable Surface v0.2 포함은 주장하지 않습니다.
+Viewer Core 0.1.3은 exact public source commit에서 staged adapter를 통과했고
+retained contract는 artifact-only conformance를 통과한 Surface v0.3.0 package
+candidate에 포함됩니다. published Viewer Core 0.1.3 artifact나 immutable public
+v0.3.0 artifact는 아직 주장하지 않습니다.
 정확한 packet layout과 lifecycle은
 [`bim-retained-overlay/0.1`](../../specs/bim-retained-overlay-v0.1.md)에 있습니다.
 
