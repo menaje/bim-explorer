@@ -32,6 +32,8 @@ const LOCAL_PATH_PATTERN =
 const REPORT_STATUSES = new Set([
   "ready",
   "qualified",
+  "retained-progress",
+  "retained-qualified",
   "disposed",
   "failed",
   "editor-closed",
@@ -461,6 +463,87 @@ function sanitizeFederationReport(value) {
           value.cleanup.runtimeUrlsRevoked === true,
         repeatedDispose: value.cleanup.repeatedDispose === true,
       };
+  const retainedOverlay = value.retainedOverlay === null ||
+    typeof value.retainedOverlay !== "object"
+    ? null
+    : {
+        contract: stringOrNull(value.retainedOverlay.contract),
+        actualWebGl2: value.retainedOverlay.actualWebGl2 === true,
+        prepareMs: numberOrNull(value.retainedOverlay.prepareMs),
+        commitMs: numberOrNull(value.retainedOverlay.commitMs),
+        atomic: value.retainedOverlay.atomic === true,
+        stagedFramebufferPreserved:
+          value.retainedOverlay.stagedFramebufferPreserved === true,
+        stagedPickMapPreserved:
+          value.retainedOverlay.stagedPickMapPreserved === true,
+        payloadReads: numberOrNull(value.retainedOverlay.payloadReads),
+        committedRevisionId: stringOrNull(
+          value.retainedOverlay.committedRevisionId,
+        ),
+        selectedSource: stringOrNull(
+          value.retainedOverlay.selectedSource,
+        ),
+        selectedPickId: stringOrNull(
+          value.retainedOverlay.selectedPickId,
+        ),
+        selectionItems: numberOrNull(
+          value.retainedOverlay.selectionItems,
+        ),
+        selectionSource: stringOrNull(
+          value.retainedOverlay.selectionSource,
+        ),
+        retainedSurfaceHitCapability: stringOrNull(
+          value.retainedOverlay.retainedSurfaceHitCapability,
+        ),
+        nonBackgroundPixels: numberOrNull(
+          value.retainedOverlay.nonBackgroundPixels,
+        ),
+        tombstonePickMiss:
+          value.retainedOverlay.tombstonePickMiss === true,
+        readsBefore: Array.isArray(value.retainedOverlay.readsBefore)
+          ? value.retainedOverlay.readsBefore.slice(0, MAXIMUM_SOURCES)
+              .map(numberOrNull)
+          : [],
+        readsAfter: Array.isArray(value.retainedOverlay.readsAfter)
+          ? value.retainedOverlay.readsAfter.slice(0, MAXIMUM_SOURCES)
+              .map(numberOrNull)
+          : [],
+        externalReadsUnchanged:
+          value.retainedOverlay.externalReadsUnchanged === true,
+        activeBytesBefore: numberOrNull(
+          value.retainedOverlay.activeBytesBefore,
+        ),
+        activeBytesAfterTombstone: numberOrNull(
+          value.retainedOverlay.activeBytesAfterTombstone,
+        ),
+        baseGpuAllocationUnchanged:
+          value.retainedOverlay.baseGpuAllocationUnchanged === true,
+        cameraProjection: stringOrNull(
+          value.retainedOverlay.cameraProjection,
+        ),
+        clippingPlanes: numberOrNull(
+          value.retainedOverlay.clippingPlanes,
+        ),
+        cameraUnchanged: value.retainedOverlay.cameraUnchanged === true,
+        clippingUnchanged:
+          value.retainedOverlay.clippingUnchanged === true,
+        selectionPreserved:
+          value.retainedOverlay.selectionPreserved === true,
+        anchorsPreserved:
+          value.retainedOverlay.anchorsPreserved === true,
+        checkpointReads: numberOrNull(
+          value.retainedOverlay.checkpointReads,
+        ),
+        checkpointParses: numberOrNull(
+          value.retainedOverlay.checkpointParses,
+        ),
+        checkpointUploads: numberOrNull(
+          value.retainedOverlay.checkpointUploads,
+        ),
+        retainedObjectsAfterTombstone: numberOrNull(
+          value.retainedOverlay.retainedObjectsAfterTombstone,
+        ),
+      };
   return Object.freeze({
     schema: FEDERATION_REPORT_SCHEMA,
     status: value.status,
@@ -483,6 +566,15 @@ function sanitizeFederationReport(value) {
       : [],
     ranges,
     cleanup,
+    retainedOverlay,
+    retainedOverlayProgress:
+      value.retainedOverlayProgress === null ||
+        typeof value.retainedOverlayProgress !== "object"
+        ? null
+        : {
+            step: stringOrNull(value.retainedOverlayProgress.step),
+            at: stringOrNull(value.retainedOverlayProgress.at),
+          },
     authority: booleanAuthority(value.authority),
     diagnostic: value.diagnostic === null ||
       typeof value.diagnostic !== "object"

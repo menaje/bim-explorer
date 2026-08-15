@@ -19,6 +19,12 @@ const HEIGHT = 600;
 const MAXIMUM_SOURCES = 8;
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const MAXIMUM_AGGREGATE_SOURCE_BYTES = 64 * 1024 * 1024;
+const IDENTITY = Object.freeze([
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, 0,
+  0, 0, 0, 1,
+]);
 
 const elements = {
   canvas: document.querySelector("#model-canvas"),
@@ -61,6 +67,7 @@ let busy = false;
 let hostGeneration = 0;
 let lastReady = null;
 let lastQualified = null;
+let lastRetained = null;
 let workerRuntimePromise = null;
 const runtimeUrls = new Set();
 const bootstrapUrls = new Set();
@@ -411,6 +418,49 @@ function boundsCandidates(bounds, sourceToFederation) {
     transformPoint(sourceToFederation, point));
 }
 
+function projectedBounds(bounds, sourceToFederation) {
+  const points = [];
+  for (const x of [bounds.min[0], bounds.max[0]]) {
+    for (const y of [bounds.min[1], bounds.max[1]]) {
+      for (const z of [bounds.min[2], bounds.max[2]]) {
+        points.push(transformPoint(sourceToFederation, [x, y, z]));
+      }
+    }
+  }
+  const min = [0, 1, 2].map((axis) =>
+    Math.min(...points.map((point) => point[axis])));
+  const max = [0, 1, 2].map((axis) =>
+    Math.max(...points.map((point) => point[axis])));
+  for (let axis = 0; axis < 3; axis += 1) {
+    if (min[axis] === max[axis]) {
+      const epsilon = Math.max(1, Math.abs(min[axis])) * 1e-6;
+      min[axis] -= epsilon;
+      max[axis] += epsilon;
+    }
+  }
+  return Object.freeze({
+    min: Object.freeze(min),
+    max: Object.freeze(max),
+  });
+}
+
+function retainedGeometry(bounds) {
+  const z = (bounds.min[2] + bounds.max[2]) / 2;
+  return Object.freeze({
+    positions: Object.freeze([
+      bounds.min[0], bounds.min[1], z,
+      bounds.max[0], bounds.min[1], z,
+      (bounds.min[0] + bounds.max[0]) / 2, bounds.max[1], z,
+    ]),
+    normals: Object.freeze([
+      0, 0, 1,
+      0, 0, 1,
+      0, 0, 1,
+    ]),
+    indices: Object.freeze([0, 1, 2]),
+  });
+}
+
 function pixelCandidates(camera, points) {
   const offsets = [
     [0, 0],
@@ -636,6 +686,8 @@ async function openFederation(message) {
       records,
       renderer,
       surface,
+      qualifiedAnchors: Object.freeze([]),
+      qualifiedSelection: null,
       semantics: {
         queriedSource:
           semanticRecord?.federationSourceId ?? null,
@@ -748,6 +800,8 @@ async function verifyAnchors() {
       viewId: "view:vscode-federated-three-source-anchor",
       camera,
     });
+    active.qualifiedAnchors = Object.freeze([...anchors]);
+    active.qualifiedSelection = selection;
     const rendererState = active.renderer.state;
     const rangeSources = active.records.map((record) => ({
       sourceSlot: record.federationSourceId,
@@ -821,6 +875,332 @@ async function verifyAnchors() {
   }
 }
 
+async function verifyRetainedOverlay() {
+  if (
+    active === null || busy || lastQualified === null ||
+    lastRetained !== null
+  ) {
+    return false;
+  }
+  busy = true;
+  controls("ready");
+  setStatus("opening", "Applying an atomic retained geometry delta…");
+  let adapter = null;
+  let currentStep = "initializing";
+  const progress = (step) => {
+    currentStep = step;
+    return publish("retained-progress", {
+      ...lastQualified,
+      retainedOverlayProgress: {
+        step,
+        at: new Date().toISOString(),
+      },
+    });
+  };
+  try {
+    progress("starting");
+    if (
+      typeof active.surface.createRetainedOverlayAdapter !== "function" ||
+      typeof active.surface.checkpointRetainedOverlay !== "function"
+    ) {
+      throw new DOMException(
+        "retained overlay runtime is unavailable",
+        "NotSupportedError",
+      );
+    }
+    const {
+      BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+      encodeBimRetainedOverlayPacket,
+      sha256BimRetainedOverlayPacket,
+    } = await import(
+      "../../packages/bim-renderer-3d/src/retained-overlay.mjs"
+    );
+    progress("packet-module-loaded");
+    const record = active.records.find((candidate) =>
+      candidate.sourceRole === "consumer-overlay");
+    const entity = record?.snapshot.entities.find((candidate) =>
+      candidate.renderable === true);
+    if (record === undefined || entity === undefined) {
+      throw new Error("consumer-overlay render identity is unavailable");
+    }
+    const camera = active.opened.mount.backend.camera;
+    await active.renderer.renderView({
+      camera,
+      clippingPlanes: [{ normal: [1, 0, 0], constant: 1_000 }],
+    });
+    progress("view-preserved");
+    const bounds = projectedBounds(
+      entity.bounds,
+      record.alignment.sourceToFederation,
+    );
+    const fromRevisionId = record.snapshot.revisionId;
+    const toRevisionId = `${fromRevisionId}:retained:1`;
+    const packet = encodeBimRetainedOverlayPacket({
+      deltaId: "delta:retained-vscode:1",
+      sourceId: record.snapshot.sourceId,
+      layerId: record.snapshot.layerId,
+      fromRevisionId,
+      toRevisionId,
+      sequence: 1,
+      entries: [{
+        operationId: "operation:retained-vscode:1",
+        kind: "upsert",
+        aspect: "geometry",
+        renderId: entity.renderId,
+        pickId: `${entity.pickId}:retained:1`,
+        nativeId: entity.nativeId,
+        externalIdentityToken: entity.externalIdentityToken,
+        bounds,
+        transform: IDENTITY,
+        color: [0.12, 0.82, 0.38, 1],
+        visible: true,
+        geometry: retainedGeometry(bounds),
+      }],
+    });
+    const delta = Object.freeze({
+      protocolVersion: "0.1.0",
+      deltaId: "delta:retained-vscode:1",
+      sessionId: "session:retained-vscode",
+      sourceId: record.snapshot.sourceId,
+      baseSnapshotId: "snapshot:retained-vscode:base",
+      fromRevisionId,
+      toRevisionId,
+      sequence: 1,
+      operations: Object.freeze([{
+        operationId: "operation:retained-vscode:1",
+        kind: "upsert",
+        aspect: "geometry",
+        sourceId: record.snapshot.sourceId,
+        layerId: record.snapshot.layerId,
+        renderIds: Object.freeze([entity.renderId]),
+        affectedWorldBounds: bounds,
+        dependencyIds: Object.freeze([]),
+        externalIdentityToken: entity.externalIdentityToken,
+      }]),
+      affectedWorldBounds: bounds,
+      payload: Object.freeze({
+        protocolVersion: "0.1.0",
+        payloadId: "payload:retained-vscode:1",
+        sessionId: "session:retained-vscode",
+        sourceId: record.snapshot.sourceId,
+        fromRevisionId,
+        toRevisionId,
+        mediaType: BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+        byteLength: packet.byteLength,
+        sha256: await sha256BimRetainedOverlayPacket(packet),
+        expiresAt: null,
+        disposeWithSession: true,
+      }),
+    });
+    const readsBefore = active.records.map((candidate) =>
+      candidate.session.state.rangeReads);
+    const activeBytesBefore = active.backend.state.activeBytes;
+    const selectionBefore = active.surface.state.selection;
+    const anchorsBefore = active.surface.state.anchors.active;
+    let payloadReads = 0;
+    adapter = active.surface.createRetainedOverlayAdapter({
+      federationSourceId: record.federationSourceId,
+      async readPayload() {
+        payloadReads += 1;
+        return packet;
+      },
+    });
+    const prepareStarted = performance.now();
+    const transaction = await adapter.prepareDelta(delta);
+    const prepareMs = performance.now() - prepareStarted;
+    progress("delta-prepared");
+    const beforeCommit = Object.freeze({
+      revisionId: active.surface.state.retainedOverlays.find(
+        (overlay) =>
+          overlay.federationSourceId === record.federationSourceId,
+      )?.revisionId,
+      cameraProjection: active.backend.state.cameraProjection,
+      clippingPlanes: active.backend.state.clippingPlanes,
+      activeBytes: active.backend.state.activeBytes,
+      framebufferPreserved:
+        transaction.receipt.renderer.backend.currentFramebufferPreserved,
+      pickMapPreserved:
+        transaction.receipt.renderer.backend.currentPickMapPreserved,
+    });
+    const commitStarted = performance.now();
+    const committed = transaction.commit();
+    const commitMs = performance.now() - commitStarted;
+    progress("delta-committed");
+    const anchorEvaluations = await Promise.all(
+      active.qualifiedAnchors.map((anchor) =>
+        active.surface.evaluateAnchor(anchor)),
+    );
+    const preservedSurfaceState = active.surface.state;
+    const selectionPreserved =
+      active.qualifiedSelection !== null &&
+      selectionBefore !== null &&
+      JSON.stringify(preservedSurfaceState.selection) ===
+        JSON.stringify(selectionBefore);
+    const anchorsPreserved =
+      active.qualifiedAnchors.length > 0 &&
+      preservedSurfaceState.anchors.active === anchorsBefore &&
+      anchorEvaluations.every((evaluation) =>
+        evaluation.status === "current");
+    progress("selection-and-anchors-preserved");
+    let retained = null;
+    let coordinates = null;
+    for (const candidate of pixelCandidates(
+      camera,
+      boundsCandidates(bounds, IDENTITY),
+    )) {
+      const pick = await active.surface.pick(candidate);
+      if (
+        pick.status === "hit" &&
+        pick.federationSourceId === record.federationSourceId &&
+        pick.retainedOverlay?.sequence === 1
+      ) {
+        retained = pick;
+        coordinates = candidate;
+        break;
+      }
+    }
+    if (retained === null) {
+      throw new Error("retained overlay VS Code pick was not resolved");
+    }
+    progress("retained-pick-resolved");
+    const checkpoint = active.surface.checkpointRetainedOverlay({
+      federationSourceId: record.federationSourceId,
+      checkpointId: "checkpoint:retained-vscode:1",
+      expectedRevisionId: toRevisionId,
+    });
+    const tombstone = Object.freeze({
+      ...delta,
+      deltaId: "delta:retained-vscode:2",
+      fromRevisionId: toRevisionId,
+      toRevisionId: `${toRevisionId}:tombstone`,
+      sequence: 2,
+      operations: Object.freeze([{
+        ...delta.operations[0],
+        operationId: "operation:retained-vscode:2",
+        kind: "tombstone",
+        aspect: "entity",
+        externalIdentityToken: null,
+      }]),
+      payload: null,
+    });
+    (await adapter.prepareDelta(tombstone)).commit();
+    progress("tombstone-committed");
+    const afterDelete = await active.surface.pick(coordinates);
+    const readsAfter = active.records.map((candidate) =>
+      candidate.session.state.rangeReads);
+    const activeBytesAfterTombstone = active.backend.state.activeBytes;
+    const retainedState = active.backend.state;
+    await adapter.dispose();
+    adapter = null;
+    const retainedOverlay = Object.freeze({
+      contract: "bim-explorer-federated-retained-overlay/0.1",
+      actualWebGl2: active.opened.mount.backend.actualGpu,
+      prepareMs,
+      commitMs,
+      atomic: committed.renderer.backend.geometryPickRevisionAtomic,
+      stagedFramebufferPreserved: beforeCommit.framebufferPreserved,
+      stagedPickMapPreserved: beforeCommit.pickMapPreserved,
+      payloadReads,
+      committedRevisionId: committed.revisionId,
+      selectedSource: retained.federationSourceId,
+      selectedPickId: retained.rendererPick.identity.pickId,
+      selectionItems: retained.selection.items.length,
+      selectionSource:
+        retained.selection.items[0]?.federationSourceId ?? null,
+      retainedSurfaceHitCapability:
+        retained.rendererPick.surfaceHitCapability,
+      nonBackgroundPixels:
+        committed.renderer.backend.nonBackgroundPixels,
+      tombstonePickMiss:
+        afterDelete.status === "miss" ||
+        afterDelete.rendererPick.identity?.pickId !==
+          retained.rendererPick.identity.pickId,
+      readsBefore,
+      readsAfter,
+      externalReadsUnchanged:
+        JSON.stringify(readsBefore) === JSON.stringify(readsAfter),
+      activeBytesBefore,
+      activeBytesAfterTombstone,
+      baseGpuAllocationUnchanged:
+        activeBytesBefore === activeBytesAfterTombstone,
+      cameraProjection: retainedState.cameraProjection,
+      clippingPlanes: retainedState.clippingPlanes,
+      cameraUnchanged:
+        retainedState.cameraProjection === beforeCommit.cameraProjection,
+      clippingUnchanged:
+        retainedState.clippingPlanes === beforeCommit.clippingPlanes,
+      selectionPreserved,
+      anchorsPreserved,
+      checkpointReads: checkpoint.externalSourceRangeReads,
+      checkpointParses: checkpoint.externalSourceParses,
+      checkpointUploads: checkpoint.externalSourceRangeUploads,
+      retainedObjectsAfterTombstone: retainedState.retainedObjects,
+    });
+    const failedCheck = Object.entries({
+      actualWebGl2: retainedOverlay.actualWebGl2 === true,
+      atomic: retainedOverlay.atomic === true,
+      stagedFramebuffer:
+        retainedOverlay.stagedFramebufferPreserved === true,
+      stagedPickMap: retainedOverlay.stagedPickMapPreserved === true,
+      onePayloadRead: retainedOverlay.payloadReads === 1,
+      retainedSelection:
+        retainedOverlay.selectionItems === 1 &&
+        retainedOverlay.selectionSource ===
+          retainedOverlay.selectedSource,
+      visiblePixels: retainedOverlay.nonBackgroundPixels > 0,
+      tombstonePickMiss: retainedOverlay.tombstonePickMiss === true,
+      externalReads: retainedOverlay.externalReadsUnchanged === true,
+      baseGpu: retainedOverlay.baseGpuAllocationUnchanged === true,
+      camera: retainedOverlay.cameraUnchanged === true,
+      clipping: retainedOverlay.clippingUnchanged === true,
+      selection: retainedOverlay.selectionPreserved === true,
+      anchors: retainedOverlay.anchorsPreserved === true,
+      checkpointReads: retainedOverlay.checkpointReads === 0,
+      checkpointParses: retainedOverlay.checkpointParses === 0,
+      checkpointUploads: retainedOverlay.checkpointUploads === 0,
+      tombstoneObjects:
+        retainedOverlay.retainedObjectsAfterTombstone === 0,
+    }).find(([, passed]) => !passed)?.[0];
+    if (failedCheck !== undefined) {
+      currentStep = `assertion:${failedCheck}`;
+      throw new Error("retained overlay VS Code qualification failed");
+    }
+    lastRetained = publish("retained-qualified", {
+      ...lastQualified,
+      retainedOverlay,
+    });
+    setStatus(
+      "qualified",
+      "Qualified: retained geometry and picking committed atomically.",
+    );
+    return true;
+  } catch (error) {
+    try {
+      await adapter?.dispose();
+    } catch {
+      // The original bounded diagnostic remains authoritative.
+    }
+    publish("failed", {
+      ...(lastQualified ?? lastReady ?? {}),
+      diagnostic: {
+        code: "FEDERATED_RETAINED_OVERLAY_VERIFICATION_FAILED",
+        name: error?.name ?? "Error",
+        message: error?.message ?? "retained overlay failed",
+        operation: `retained-overlay-verification:${currentStep}`,
+        retryable: false,
+      },
+    });
+    setStatus(
+      "failed",
+      "Verification failed: FEDERATED_RETAINED_OVERLAY_VERIFICATION_FAILED",
+    );
+    return false;
+  } finally {
+    busy = false;
+    controls(elements.status.dataset.state);
+  }
+}
+
 async function disposeSurface(reason = "vscode-command") {
   if (active === null || busy) {
     return false;
@@ -838,7 +1218,7 @@ async function disposeSurface(reason = "vscode-command") {
     }
     const runtimeUrlsRevoked = revokeRuntimeUrls();
     const report = publish("disposed", {
-      ...(lastQualified ?? lastReady ?? {}),
+      ...(lastRetained ?? lastQualified ?? lastReady ?? {}),
       cleanup: {
         surfaceStatus: cleanup.status,
         rendererDisposed: cleanup.cleanup.rendererDisposed,
@@ -875,7 +1255,7 @@ async function disposeSurface(reason = "vscode-command") {
     }
     revokeRuntimeUrls();
     publish("failed", {
-      ...(lastQualified ?? lastReady ?? {}),
+      ...(lastRetained ?? lastQualified ?? lastReady ?? {}),
       diagnostic: {
         code: "FEDERATED_SURFACE_DISPOSE_FAILED",
         name: error?.name ?? "Error",
@@ -907,6 +1287,8 @@ globalThis.addEventListener("message", (event) => {
     void openFederation(message);
   } else if (message.type === "verify-anchors") {
     void verifyAnchors();
+  } else if (message.type === "verify-retained-overlay") {
+    void verifyRetainedOverlay();
   } else if (message.type === "dispose") {
     void disposeSurface("vscode-command");
   } else if (message.type === "federation-error") {

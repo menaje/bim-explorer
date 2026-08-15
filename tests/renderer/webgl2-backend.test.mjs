@@ -12,11 +12,14 @@ import {
   createGltfReferenceSource,
 } from "../../packages/gltf-reference-source/src/index.mjs";
 import {
+  BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
   createBounded3dRenderer,
   createFitCamera3d,
   createWebGl2Backend,
+  encodeBimRetainedOverlayPacket,
   orbitCamera3d,
   panCamera3d,
+  sha256BimRetainedOverlayPacket,
   zoomCamera3d,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
@@ -37,6 +40,7 @@ class FakeWebGl2Context {
   DEPTH_ATTACHMENT = 0x8d00;
   DEPTH_COMPONENT16 = 0x81a5;
   DEPTH_TEST = 0x0b71;
+  DRAW_FRAMEBUFFER = 0x8ca9;
   ELEMENT_ARRAY_BUFFER = 0x8893;
   FLOAT = 0x1406;
   FRAMEBUFFER = 0x8d40;
@@ -49,6 +53,7 @@ class FakeWebGl2Context {
   NONE = 0;
   NO_ERROR = 0;
   RENDERBUFFER = 0x8d41;
+  READ_FRAMEBUFFER = 0x8ca8;
   RGBA = 0x1908;
   SCISSOR_TEST = 0x0c11;
   STATIC_DRAW = 0x88e4;
@@ -69,6 +74,7 @@ class FakeWebGl2Context {
 
   constructor() {
     this.bufferUploads = [];
+    this.blits = 0;
     this.deletedBuffers = 0;
     this.deletedFramebuffers = 0;
     this.deletedPrograms = 0;
@@ -91,6 +97,9 @@ class FakeWebGl2Context {
   }
   bindRenderbuffer() {}
   bindTexture() {}
+  blitFramebuffer() {
+    this.blits += 1;
+  }
   bufferData(target, bytes) {
     this.bufferUploads.push({
       byteLength: bytes.byteLength,
@@ -747,6 +756,213 @@ test("WebGL2 backend uploads, draws, and releases a bounded plan", async () => {
   assert.equal(backend.state.releasedBytes, 1_120);
   assert.equal(await renderer.dispose(), true);
   assert.equal(backend.state.disposed, true);
+  assert.equal(await session.dispose(), true);
+  assert.equal(await source.dispose(), true);
+});
+
+test("WebGL2 retained overlay pre-renders offscreen and swaps frame and pick map synchronously", async () => {
+  const bytes = new TextEncoder().encode(syntheticMappedIfc());
+  const artifact = await createWebIfcSourceArtifact(bytes);
+  const source = createBimModelSource(artifact, {
+    maximumRequestBytes: 128,
+  });
+  const session = await source.open({
+    protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,
+  });
+  const snapshot = await session.getSnapshot();
+  const context = new FakeWebGl2Context();
+  const backend = createWebGl2Backend({
+    canvas: fakeCanvas(context),
+    frameScheduler(callback) {
+      callback(0);
+    },
+    height: 90,
+    width: 160,
+  });
+  const renderer = createBounded3dRenderer({ backend });
+  await renderer.mount({ session, snapshot });
+  const entity = snapshot.entities[0];
+  const primitive = entity.primitives[0];
+  const sourceRenderId = "consumer-render:webgl-wall";
+  renderer.registerRetainedOverlaySource({
+    overlayId: "overlay:webgl-consumer",
+    sourceId: "webgl-consumer",
+    layerId: "webgl-consumer-layer",
+    revisionId: "webgl-consumer-revision:1",
+    identities: [{
+      sourceRenderId,
+      sourcePickId: "consumer-pick:webgl-wall:1",
+      renderId: entity.renderId,
+      pickId: entity.pickId,
+      nativeId: entity.nativeId ?? entity.globalId,
+      externalIdentityToken: entity.externalIdentityToken,
+      bounds: entity.bounds,
+      transform: primitive.transform,
+      color: primitive.color,
+    }],
+  });
+  const packet = encodeBimRetainedOverlayPacket({
+    deltaId: "delta:webgl-retained:1",
+    sourceId: "webgl-consumer",
+    layerId: "webgl-consumer-layer",
+    fromRevisionId: "webgl-consumer-revision:1",
+    toRevisionId: "webgl-consumer-revision:2",
+    sequence: 1,
+    entries: [{
+      operationId: "operation:webgl-retained:1",
+      kind: "upsert",
+      aspect: "geometry",
+      renderId: sourceRenderId,
+      pickId: "consumer-pick:webgl-wall:2",
+      nativeId: "consumer-native:webgl-wall",
+      externalIdentityToken: "consumer-token:webgl-wall",
+      bounds: entity.bounds,
+      transform: [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+      ],
+      color: [0.1, 0.8, 0.4, 1],
+      visible: true,
+      geometry: {
+        positions: [0, 0, 0, 1, 0, 0, 0, 1, 0],
+        normals: [0, 0, 1, 0, 0, 1, 0, 0, 1],
+        indices: [0, 1, 2],
+      },
+    }],
+  });
+  const delta = Object.freeze({
+    deltaId: "delta:webgl-retained:1",
+    sourceId: "webgl-consumer",
+    fromRevisionId: "webgl-consumer-revision:1",
+    toRevisionId: "webgl-consumer-revision:2",
+    sequence: 1,
+    affectedWorldBounds: entity.bounds,
+    operations: Object.freeze([{
+      operationId: "operation:webgl-retained:1",
+      kind: "upsert",
+      aspect: "geometry",
+      sourceId: "webgl-consumer",
+      layerId: "webgl-consumer-layer",
+      renderIds: Object.freeze([sourceRenderId]),
+      affectedWorldBounds: entity.bounds,
+      externalIdentityToken: "consumer-token:webgl-wall",
+    }]),
+    payload: Object.freeze({
+      mediaType: BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+      byteLength: packet.byteLength,
+      sha256: await sha256BimRetainedOverlayPacket(packet),
+    }),
+  });
+  const beforeBytes = renderer.state.activeBackendBytes;
+  const beforeUploads = context.bufferUploads.length;
+  const transaction = await renderer.prepareRetainedOverlayDelta({
+    overlayId: "overlay:webgl-consumer",
+    delta,
+    payloadBytes: packet,
+  });
+
+  assert.equal(transaction.receipt.backend.currentFramebufferPreserved, true);
+  assert.equal(context.framebuffer, null);
+  assert.equal(context.blits, 0);
+  assert.equal(renderer.state.activeBackendBytes, beforeBytes);
+  assert.deepEqual(
+    context.bufferUploads.slice(beforeUploads).map((item) => item.byteLength),
+    [72, 12, 80],
+  );
+  const committed = transaction.commit();
+  assert.equal(context.blits, 1);
+  assert.equal(committed.backend.actualGpu, true);
+  assert.equal(committed.backend.geometryPickRevisionAtomic, true);
+  assert.equal(backend.state.retainedCommits, 1);
+  assert.equal(backend.state.retainedObjects, 1);
+  assert.equal(renderer.state.activeBackendBytes, beforeBytes + 164);
+
+  const picked = await renderer.pick({ x: 80, y: 45 });
+  assert.equal(picked.status, "hit");
+  assert.equal(
+    picked.identity.pickId,
+    committed.identities[0].pickId,
+  );
+  assert.equal(
+    committed.identities[0].retainedOverlay.sourceRenderId,
+    sourceRenderId,
+  );
+
+  const rollbackPacket = encodeBimRetainedOverlayPacket({
+    deltaId: "delta:webgl-retained:rollback",
+    sourceId: "webgl-consumer",
+    layerId: "webgl-consumer-layer",
+    fromRevisionId: "webgl-consumer-revision:2",
+    toRevisionId: "webgl-consumer-revision:3",
+    sequence: 2,
+    entries: [{
+      operationId: "operation:webgl-retained:rollback",
+      kind: "upsert",
+      aspect: "style",
+      renderId: sourceRenderId,
+      externalIdentityToken: "consumer-token:webgl-wall",
+      bounds: entity.bounds,
+      color: [0.9, 0.1, 0.2, 1],
+      visible: false,
+    }],
+  });
+  const rollbackDelta = Object.freeze({
+    deltaId: "delta:webgl-retained:rollback",
+    sourceId: "webgl-consumer",
+    fromRevisionId: "webgl-consumer-revision:2",
+    toRevisionId: "webgl-consumer-revision:3",
+    sequence: 2,
+    affectedWorldBounds: entity.bounds,
+    operations: Object.freeze([{
+      operationId: "operation:webgl-retained:rollback",
+      kind: "upsert",
+      aspect: "style",
+      sourceId: "webgl-consumer",
+      layerId: "webgl-consumer-layer",
+      renderIds: Object.freeze([sourceRenderId]),
+      affectedWorldBounds: entity.bounds,
+      externalIdentityToken: "consumer-token:webgl-wall",
+    }]),
+    payload: Object.freeze({
+      mediaType: BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+      byteLength: rollbackPacket.byteLength,
+      sha256: await sha256BimRetainedOverlayPacket(rollbackPacket),
+    }),
+  });
+  const rollbackTransaction =
+    await renderer.prepareRetainedOverlayDelta({
+      overlayId: "overlay:webgl-consumer",
+      delta: rollbackDelta,
+      payloadBytes: rollbackPacket,
+    });
+  assert.equal(context.framebuffer, null);
+  assert.equal(context.blits, 1);
+  assert.equal(
+    renderer.state.activeBackendBytes,
+    committed.activeBackendBytes,
+  );
+  assert.equal((await rollbackTransaction.rollback()).rolledBack, true);
+  assert.equal(context.blits, 1);
+  assert.equal(backend.state.retainedRollbacks, 1);
+  assert.equal(
+    renderer.retainedOverlaySnapshot({
+      overlayId: "overlay:webgl-consumer",
+    }).revisionId,
+    "webgl-consumer-revision:2",
+  );
+  const pickedAfterRollback = await renderer.pick({ x: 80, y: 45 });
+  assert.equal(pickedAfterRollback.status, "hit");
+  assert.equal(
+    pickedAfterRollback.identity.pickId,
+    committed.identities[0].pickId,
+  );
+
+  const released = await renderer.unmount();
+  assert.equal(released.releasedBytes, beforeBytes + 164);
+  assert.equal(context.deletedBuffers, 7);
+  assert.equal(await renderer.dispose(), true);
   assert.equal(await session.dispose(), true);
   assert.equal(await source.dispose(), true);
 });

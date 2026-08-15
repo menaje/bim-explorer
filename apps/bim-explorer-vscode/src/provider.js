@@ -1664,6 +1664,10 @@ function activateBimExplorerExtension(vscode, context) {
       () => federationProvider.postActive("verify-anchors"),
     ),
     vscode.commands.registerCommand(
+      "bimExplorer.verifyRetainedOverlay",
+      () => federationProvider.postActive("verify-retained-overlay"),
+    ),
+    vscode.commands.registerCommand(
       "bimExplorer.disposeFederatedSurface",
       () => federationProvider.postActive("dispose"),
     ),

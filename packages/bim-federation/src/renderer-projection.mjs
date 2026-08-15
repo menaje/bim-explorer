@@ -753,6 +753,8 @@ export async function createFederatedRendererProjection({
         compositeNativeId,
         renderId,
         pickId,
+        sourceRenderId: sourceEntity.renderId,
+        sourcePickId: sourceEntity.pickId,
         federationSourceId: entry.federationSourceId,
         sourceRevisionId: entry.snapshot.revisionId,
         sourceProjectionFingerprint:

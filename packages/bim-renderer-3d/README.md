@@ -39,6 +39,9 @@ source-neutral 3D geometry range를 bounded CPU staging과 backend lifecycle로
 - clipping plane·section box와 depth-backed world-position pick
 - active revision pick으로 묶인 distance·area·angle measurement
 - Browser/VS Code Webview 공통 host lifecycle과 editor-exit cleanup
+- `BEXOVL01` retained overlay packet의 geometry/identity/style/transform/tombstone
+  decode, bounded off-scene CPU/GPU staging과 atomic geometry/Pick/revision commit
+- retained checkpoint의 native range read·parse·upload 0과 staged rollback/dispose
 - abort, malformed bytes와 disposal의 fail-closed 처리
 
 headless backend의 frame은 실제 GPU render나 화면 표시가 아닙니다.
@@ -51,6 +54,19 @@ headless renderer를 Browser/VS Code host lifecycle로 mount하고 전량
 읽고 terminal cleanup을 통과했습니다. stable/production 호환은 별도
 Gate입니다. measurement 단위는 source-coordinate-unit이며 IFC unit 해석을
 renderer authority로 만들지 않습니다.
+
+retained overlay는 `consumer-overlay`가 이미 열린 base range를 건드리지 않고
+새 display geometry를 교체하는 additive 개발 contract입니다. prepare는 별도
+WebGL2 framebuffer와 Pick map을 만들고 current 화면을 보존하며 synchronous
+commit만 둘을 revision과 함께 전환합니다. packet 8 MiB, resident object 32,768개,
+staging 16 MiB가 기본 상한입니다. actual Chrome과 VS Code Webview에서 pixel,
+selection, tombstone, camera/clipping 보존과 terminal GPU 0을 검증했습니다.
+Viewer Core 0.1.3은 exact public source commit에서 staged adapter를 통과했고
+retained contract는 artifact-only conformance를 통과한 Surface v0.3.0 package
+candidate에 포함됩니다. published Viewer Core 0.1.3 artifact나 immutable public
+v0.3.0 artifact는 아직 주장하지 않습니다.
+정확한 packet layout과 lifecycle은
+[`bim-retained-overlay/0.1`](../../specs/bim-retained-overlay-v0.1.md)에 있습니다.
 
 reference mesh는 IFC GlobalId를 합성하지 않으며 `nativeId`로 source-local
 identity를 유지합니다.

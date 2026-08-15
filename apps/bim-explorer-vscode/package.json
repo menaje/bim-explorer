@@ -33,6 +33,7 @@
     "onCustomEditor:bimExplorer.federationEditor",
     "onCommand:bimExplorer.openFederation",
     "onCommand:bimExplorer.verifyFederatedAnchors",
+    "onCommand:bimExplorer.verifyRetainedOverlay",
     "onCommand:bimExplorer.disposeFederatedSurface"
   ],
   "main": "./extension.js",
@@ -110,6 +111,10 @@
       {
         "command": "bimExplorer.verifyFederatedAnchors",
         "title": "BIM Explorer: Verify Visible Federated Anchors"
+      },
+      {
+        "command": "bimExplorer.verifyRetainedOverlay",
+        "title": "BIM Explorer: Verify Atomic Retained Overlay"
       },
       {
         "command": "bimExplorer.disposeFederatedSurface",

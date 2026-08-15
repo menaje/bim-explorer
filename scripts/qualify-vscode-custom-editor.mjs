@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import {
   runTests,
 } from "@vscode/test-electron";
+import { build } from "esbuild";
 
 import {
   prepareVscodeExtensionStage,
@@ -58,6 +59,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
+    includeRetainedOverlayFixture: false,
     includeExternalResourceFixture: false,
     includeEmbeddedTextureFixture: false,
     includeMeshoptFixture: false,
@@ -74,6 +76,11 @@ function parseArguments(values) {
     const name = values[index];
     if (name === "--federated-surface") {
       options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
+    if (name === "--retained-overlay") {
+      options.includeFederatedSurfaceFixture = true;
+      options.includeRetainedOverlayFixture = true;
       continue;
     }
     if (name === "--external-gltf") {
@@ -130,7 +137,8 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
-        "[--federated-surface] [--product-scale] [--point-cloud] " +
+        "[--federated-surface] [--retained-overlay] " +
+        "[--product-scale] [--point-cloud] " +
         "[--external-gltf] " +
         "[--embedded-texture-gltf] " +
         "[--meshopt-gltf] " +
@@ -147,6 +155,7 @@ function parseArguments(values) {
 
 export async function qualifyVscodeCustomEditor({
   includeFederatedSurfaceFixture = false,
+  includeRetainedOverlayFixture = false,
   includeExternalResourceFixture = false,
   includeEmbeddedTextureFixture = false,
   includeMeshoptFixture = false,
@@ -161,6 +170,9 @@ export async function qualifyVscodeCustomEditor({
   vscodeRuntime = null,
 } = {}) {
   validateGpuQualificationMode(rendererMode);
+  if (includeRetainedOverlayFixture) {
+    includeFederatedSurfaceFixture = true;
+  }
   const runtime = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
   const publicManifest = includePublicFixture
@@ -235,6 +247,36 @@ export async function qualifyVscodeCustomEditor({
   );
   try {
     await prepareVscodeExtensionStage(stagedExtension);
+    if (includeRetainedOverlayFixture) {
+      await build({
+        banner: {
+          js:
+            "// Generated for retained-overlay VS Code qualification " +
+            "only. MPL-2.0.",
+        },
+        bundle: true,
+        entryPoints: [path.join(
+          ROOT,
+          "packages",
+          "federated-bim-surface",
+          "src",
+          "package-entry.mjs",
+        )],
+        format: "esm",
+        legalComments: "none",
+        minify: false,
+        outfile: path.join(
+          stagedExtension,
+          "packages",
+          "federated-bim-surface",
+          "runtime",
+          "index.mjs",
+        ),
+        platform: "neutral",
+        sourcemap: false,
+        target: ["es2022"],
+      });
+    }
     await runTests({
       vscodeExecutablePath: runtime.executable,
       extensionDevelopmentPath: stagedExtension,
@@ -259,6 +301,11 @@ export async function qualifyVscodeCustomEditor({
         ...(includeFederatedSurfaceFixture
           ? {
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
+            }
+          : {}),
+        ...(includeRetainedOverlayFixture
+          ? {
+              BIM_EXPLORER_VSCODE_RETAINED_OVERLAY: "true",
             }
           : {}),
         ...(publicFixture === null

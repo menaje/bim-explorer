@@ -6,7 +6,7 @@ authority:
   - product-responsibility
   - source-identity-boundary
   - standalone-product-invariants
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # 제품과 저장소 경계
@@ -64,6 +64,17 @@ message를 기본 integration으로 사용하지 않습니다. prerelease 소비
 제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다. Explorer의
 IFC/glTF/GLB Browser·VS Code entrypoint Gate는 통과했지만 Spatial consumer,
 stable/production과 Marketplace Gate를 대신하지 않습니다.
+
+post-release `consumer-overlay` geometry 갱신은
+[`bim-explorer-retained-overlay/0.1`](../specs/bim-retained-overlay-v0.1.md)로
+분리합니다. Explorer는 bounded packet을 source-local identity와 exact
+revision에 묶고 Viewer Core 0.1.3 staged adapter를 통해 geometry/Pick/revision을
+원자적으로 전환합니다. 이 display projection은 원본 source를 수정하거나
+Spatial authored geometry, Canonical identity 또는 accept/publish 권한을 얻지
+않습니다. exact upstream source commit conformance는 통과했지만 published
+Viewer Core 0.1.3 artifact는 보류합니다. retained contract는 immutable v0.2를
+변경하지 않고 artifact-only conformance를 통과한 v0.3.0 candidate에
+포함됩니다.
 
 local `.gltf + .bin/.png/.jpg/.jpeg` bundle의 source fingerprint는 document SHA-256과 정렬된
 sidecar name·byte length·SHA-256 descriptor를 함께 묶습니다. Browser의 명시적

@@ -16,8 +16,8 @@ import {
   checkBimSurfaceBundle,
 } from "./build-bim-surface.mjs";
 import {
-  checkFederatedBimSurfaceBundle,
-} from "./build-federated-bim-surface.mjs";
+  checkFederatedBimSurfaceV03Bundle,
+} from "./build-federated-bim-surface-v0.3.mjs";
 import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
@@ -76,6 +76,7 @@ const COPY_FILES = Object.freeze([
   ["packages/bim-renderer-3d/src/point-cloud-lod.mjs"],
   ["packages/bim-renderer-3d/src/point-cloud.mjs"],
   ["packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs"],
+  ["packages/bim-renderer-3d/src/retained-overlay.mjs"],
   ["packages/bim-renderer-3d/src/textured-geometry.mjs"],
   ["packages/bim-renderer-3d/src/webgl2-backend.mjs"],
   ["packages/bim-semantic-explorer/src/index.mjs"],
@@ -140,7 +141,7 @@ export async function prepareVscodeExtensionStage(destination) {
   }
   await checkVscodeWorkerBundle();
   await checkBimSurfaceBundle();
-  await checkFederatedBimSurfaceBundle();
+  await checkFederatedBimSurfaceV03Bundle();
   await checkViewerCoreProductBundle();
   await mkdir(destination, {
     recursive: true,

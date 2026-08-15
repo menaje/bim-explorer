@@ -15,8 +15,16 @@ generated zero-runtime-dependency ESM을 사용하며 clean VSIX가 같은 runti
   point, winding normal과 triangle-barycentric locator를 만들 수 있습니다.
 - close는 Surface, replay cache, transferred session/Worker, CPU 임시 geometry와
   GPU allocation을 순서대로 회수합니다.
+- `bimExplorer.verifyRetainedOverlay`는 active `consumer-overlay`에 generated
+  `BEXOVL01` packet을 적용해 off-screen stage, atomic pixel/Pick/revision commit,
+  checkpoint와 tombstone을 실제 Webview WebGL2에서 검증합니다.
 
 이 entrypoint는 native face, source precision, CRS/datum, Workspace, Canonical
 Entity, 편집, acceptance, publish 또는 export authority를 갖지 않습니다.
 candidate qualification은 public tag, release asset 또는 Spatial compatibility를
 발급하지 않습니다.
+
+retained overlay qualification은 immutable v0.2 bundle hash를 먼저 확인한 뒤
+일회성 staging 디렉터리의 runtime만 현재 개발 source로 교체합니다. 배포된
+v0.2 runtime이나 사용자 파일을 수정하지 않으며 SwiftShader 결과를 physical GPU
+증거로 해석하지 않습니다.

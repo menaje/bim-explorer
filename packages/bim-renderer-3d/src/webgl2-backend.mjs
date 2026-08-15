@@ -748,6 +748,7 @@ async function uploadBufferGroup(
             }
             return Object.freeze({
               buffers: sharedBuffers,
+              color: instance.color,
               geometryExpressId: instance.geometryExpressId,
               geometryRecords: sharedRecords,
               expressId: instance.expressId,
@@ -760,6 +761,7 @@ async function uploadBufferGroup(
               rangeId: instance.rangeId,
               renderId: instance.renderId,
               texture,
+              transform: instance.transform,
             });
           },
         ),
@@ -847,6 +849,168 @@ function configureInstanceAttributes(gl, instanceIndex) {
     base + 16 * Float32Array.BYTES_PER_ELEMENT,
   );
   gl.vertexAttribDivisor(6, 1);
+}
+
+function retainedInstanceBuffer(gl, entry, presentation, worldOrigin) {
+  const sourceFromStorage = finiteVector(
+    presentation.coordinateSystem?.sourceFromStorage,
+    16,
+    "WebGL2 retained sourceFromStorage",
+  );
+  const transform = multiplyTransform(
+    sourceFromStorage,
+    finiteVector(entry.transform, 16, "WebGL2 retained transform"),
+  );
+  transform[12] -= worldOrigin[0];
+  transform[13] -= worldOrigin[1];
+  transform[14] -= worldOrigin[2];
+  const values = new Float32Array(INSTANCE_FLOATS);
+  values.set(transform, 0);
+  values.set(
+    finiteVector(entry.color, 4, "WebGL2 retained color"),
+    16,
+  );
+  try {
+    return buffer(gl, gl.ARRAY_BUFFER, values);
+  } finally {
+    values.fill(0);
+    transform.fill(0);
+  }
+}
+
+function retainedGeometryInstance(
+  gl,
+  entry,
+  presentation,
+  worldOrigin,
+) {
+  const buffers = [];
+  try {
+    buffers.push(buffer(gl, gl.ARRAY_BUFFER, entry.geometry.vertices));
+    buffers.push(
+      buffer(gl, gl.ELEMENT_ARRAY_BUFFER, entry.geometry.indices),
+    );
+    buffers.push(
+      retainedInstanceBuffer(gl, entry, presentation, worldOrigin),
+    );
+    if (gl.getError() !== gl.NO_ERROR) {
+      throw new Error("WebGL2 retained geometry upload failed");
+    }
+    const rangeId = `retained:${entry.renderId}`;
+    const geometryExpressId = 0;
+    const geometryRecords = new Map([[
+      `${rangeId}:${geometryExpressId}`,
+      Object.freeze({
+        indexCount: entry.geometry.indexCount,
+        indexOffset: 0,
+        textureIndex: null,
+        texcoordByteOffset: null,
+        vertexOffset: 0,
+        vertexStrideBytes: DEFAULT_VERTEX_STRIDE_BYTES,
+      }),
+    ]]);
+    const sharedBuffers = Object.freeze([...buffers]);
+    return Object.freeze({
+      instance: Object.freeze({
+        buffers: sharedBuffers,
+        color: entry.color,
+        expressId: entry.expressId,
+        externalIdentityToken: entry.externalIdentityToken,
+        geometryExpressId,
+        geometryRecords,
+        globalId: entry.globalId,
+        localIndex: 0,
+        nativeId: entry.nativeId,
+        pickId: entry.pickId,
+        rangeId,
+        renderId: entry.renderId,
+        texture: null,
+        transform: entry.transform,
+      }),
+      geometryBytes: entry.geometry.byteLength,
+      ownedBuffers: sharedBuffers,
+      uploadedBytes: entry.geometry.byteLength + INSTANCE_BYTES,
+    });
+  } catch (error) {
+    for (const value of buffers) {
+      gl.deleteBuffer(value);
+    }
+    throw error;
+  }
+}
+
+function retainedMetadataInstance(
+  gl,
+  entry,
+  current,
+  presentation,
+  worldOrigin,
+) {
+  if (current === undefined) {
+    throw new RangeError(
+      "WebGL2 retained metadata has no current instance",
+    );
+  }
+  const visual = current.instance ?? current;
+  const identity = {
+    ...visual,
+    color: entry.color,
+    expressId: entry.expressId,
+    externalIdentityToken: entry.externalIdentityToken,
+    globalId: entry.globalId,
+    nativeId: entry.nativeId,
+    pickId: entry.pickId,
+    renderId: entry.renderId,
+    transform: entry.transform,
+  };
+  if (entry.aspect === "identity") {
+    return Object.freeze({
+      instance: Object.freeze(identity),
+      geometryBytes: current.geometryBytes ?? 0,
+      ownedBuffers: current.ownedBuffers ?? Object.freeze([]),
+      uploadedBytes: current.uploadedBytes ?? 0,
+      newBuffers: Object.freeze([]),
+    });
+  }
+  const instanceBuffer = retainedInstanceBuffer(
+    gl,
+    entry,
+    presentation,
+    worldOrigin,
+  );
+  const ownedGeometryBuffers = current.instance === undefined
+    ? []
+    : current.ownedBuffers.slice(0, 2);
+  const buffers = Object.freeze([
+    visual.buffers[0],
+    visual.buffers[1],
+    instanceBuffer,
+  ]);
+  return Object.freeze({
+    instance: Object.freeze({
+      ...identity,
+      buffers,
+      localIndex: 0,
+    }),
+    geometryBytes: current.geometryBytes ?? 0,
+    ownedBuffers: Object.freeze([
+      ...ownedGeometryBuffers,
+      instanceBuffer,
+    ]),
+    uploadedBytes:
+      (current.geometryBytes ?? 0) + INSTANCE_BYTES,
+    newBuffers: Object.freeze([instanceBuffer]),
+  });
+}
+
+function combinedRetainedInstances(state, retainedObjects, suppressed) {
+  return Object.freeze([
+    ...state.baseInstances.filter(
+      (instance) => !suppressed.has(instance.renderId),
+    ),
+    ...[...retainedObjects.values()]
+      .map((entry) => entry.instance),
+  ]);
 }
 
 function changedPixels(gl, width, height, clearColor) {
@@ -1080,6 +1244,9 @@ export class WebGl2Backend {
   #mounts = 0;
   #picks = 0;
   #releasedBytes = 0;
+  #retainedCommits = 0;
+  #retainedRollbacks = 0;
+  #retainedStages = 0;
   #unmounts = 0;
   #width;
 
@@ -1125,6 +1292,14 @@ export class WebGl2Backend {
       mounts: this.#mounts,
       picks: this.#picks,
       releasedBytes: this.#releasedBytes,
+      retainedCommits: this.#retainedCommits,
+      retainedObjects:
+        this.#active?.retainedObjects.size ?? 0,
+      retainedRollbacks: this.#retainedRollbacks,
+      retainedStages: this.#retainedStages,
+      stagedRetainedDelta:
+        this.#active?.stagedRetained !== null &&
+        this.#active?.stagedRetained !== undefined,
       unmounts: this.#unmounts,
       contextInitialized: this.#context !== null,
       contextLost: this.#context?.isContextLost?.() ?? false,
@@ -1188,6 +1363,7 @@ export class WebGl2Backend {
     signal,
     {
       affectedWorldBounds = null,
+      framebuffer = null,
       requireVisiblePixels = true,
     } = {},
   ) {
@@ -1259,7 +1435,7 @@ export class WebGl2Backend {
       this.#frameScheduler(() => {
         try {
           aborted(signal);
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
           gl.viewport(0, 0, this.#width, this.#height);
           if (redrawRect === null) {
             gl.disable(gl.SCISSOR_TEST);
@@ -1363,7 +1539,7 @@ export class WebGl2Backend {
             drawCalls += 1;
           }
           gl.bindTexture(gl.TEXTURE_2D, null);
-          if (drawCalls === 0) {
+          if (requireVisiblePixels && drawCalls === 0) {
             throw new Error(
               "WebGL2 view has no visible instances",
             );
@@ -1619,11 +1795,17 @@ export class WebGl2Backend {
       const handleId = `webgl2-mount:${mountNumber}`;
       this.#active = {
         ...drawState,
+        baseInstances: group.instances,
+        baseUploadedBytes: uploadedBytes,
         camera,
         handleId,
         hiddenRenderIds: Object.freeze([]),
         clippingPlanes: Object.freeze([]),
         selectedPickIds: Object.freeze([]),
+        retainedInvisibleRenderIds: Object.freeze([]),
+        retainedObjects: new Map(),
+        stagedRetained: null,
+        suppressedBaseRenderIds: new Set(),
         uploadedBytes,
       };
       resources = null;
@@ -1730,11 +1912,17 @@ export class WebGl2Backend {
     state.groups.push(group);
     state.resources.buffers.push(...group.buffers);
     state.resources.textures.push(...group.textures);
-    state.instances = Object.freeze([
-      ...state.instances,
+    state.baseInstances = Object.freeze([
+      ...state.baseInstances,
       ...group.instances,
     ]);
+    state.instances = combinedRetainedInstances(
+      state,
+      state.retainedObjects,
+      state.suppressedBaseRenderIds,
+    );
     state.uploadedBytes += group.uploadedBytes;
+    state.baseUploadedBytes += group.uploadedBytes;
     try {
       const frame = await this.#drawFrame(
         state,
@@ -1774,13 +1962,18 @@ export class WebGl2Backend {
       };
     } catch (error) {
       state.groups.pop();
-      state.instances = Object.freeze(
-        state.instances.slice(
-          0,
-          state.instances.length - group.instances.length,
+      state.baseInstances = Object.freeze(
+        state.baseInstances.filter(
+          (instance) => !group.instances.includes(instance),
         ),
       );
+      state.instances = combinedRetainedInstances(
+        state,
+        state.retainedObjects,
+        state.suppressedBaseRenderIds,
+      );
       state.uploadedBytes -= group.uploadedBytes;
+      state.baseUploadedBytes -= group.uploadedBytes;
       const groupBuffers = new Set(group.buffers);
       state.resources.buffers =
         state.resources.buffers.filter(
@@ -1840,10 +2033,12 @@ export class WebGl2Backend {
     }
     const group = state.groups[groupIndex];
     const priorGroups = state.groups;
+    const priorBaseInstances = state.baseInstances;
     const priorInstances = state.instances;
     const priorHiddenRenderIds = state.hiddenRenderIds;
     const priorSelectedPickIds = state.selectedPickIds;
     const priorUploadedBytes = state.uploadedBytes;
+    const priorBaseUploadedBytes = state.baseUploadedBytes;
     const removedRenderIds = new Set(
       group.instances.map((instance) => instance.renderId),
     );
@@ -1854,10 +2049,15 @@ export class WebGl2Backend {
       (_, index) => index !== groupIndex,
     );
     const groupInstances = new Set(group.instances);
-    state.instances = Object.freeze(
-      state.instances.filter(
+    state.baseInstances = Object.freeze(
+      state.baseInstances.filter(
         (instance) => !groupInstances.has(instance),
       ),
+    );
+    state.instances = combinedRetainedInstances(
+      state,
+      state.retainedObjects,
+      state.suppressedBaseRenderIds,
     );
     const knownRenderIds = new Set(
       state.instances.map((instance) => instance.renderId),
@@ -1878,6 +2078,7 @@ export class WebGl2Backend {
       ),
     );
     state.uploadedBytes -= group.uploadedBytes;
+    state.baseUploadedBytes -= group.uploadedBytes;
     try {
       const frame = await this.#drawFrame(
         state,
@@ -1930,10 +2131,306 @@ export class WebGl2Backend {
       };
     } catch (error) {
       state.groups = priorGroups;
+      state.baseInstances = priorBaseInstances;
       state.instances = priorInstances;
       state.hiddenRenderIds = priorHiddenRenderIds;
       state.selectedPickIds = priorSelectedPickIds;
       state.uploadedBytes = priorUploadedBytes;
+      state.baseUploadedBytes = priorBaseUploadedBytes;
+      throw error;
+    }
+  }
+
+  async stageRetainedOverlayDelta(
+    handleId,
+    planValue,
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("WebGL2 backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("WebGL2 mount handle is not active");
+    }
+    const state = this.#active;
+    if (state.stagedRetained !== null) {
+      throw invalidState(
+        "WebGL2 backend already owns a retained transaction",
+      );
+    }
+    if (state.contextInvalidated === true) {
+      throw invalidState(
+        "WebGL2 mount was invalidated by context loss",
+      );
+    }
+    const plan = plainRecord(
+      planValue,
+      "WebGL2 retained overlay plan",
+    );
+    if (
+      !Array.isArray(plan.entries) ||
+      !Number.isSafeInteger(plan.maximumActiveBytes) ||
+      !Number.isSafeInteger(plan.maximumStagingBytes)
+    ) {
+      throw new TypeError("WebGL2 retained overlay plan is invalid");
+    }
+    const gl = this.#getContext();
+    if (gl.isContextLost()) {
+      throw invalidState("WebGL2 context is lost");
+    }
+    const retainedObjects = new Map(state.retainedObjects);
+    const suppressed = new Set(state.suppressedBaseRenderIds);
+    const newBuffers = [];
+    let target = null;
+    try {
+      for (const entry of plan.entries) {
+        aborted(signal);
+        suppressed.add(entry.renderId);
+        if (entry.kind === "tombstone") {
+          retainedObjects.delete(entry.renderId);
+          continue;
+        }
+        const current = retainedObjects.get(entry.renderId) ??
+          state.baseInstances.find((instance) =>
+            instance.renderId === entry.renderId);
+        const stagedObject = entry.geometry === null
+          ? retainedMetadataInstance(
+            gl,
+            entry,
+            current,
+            plan.presentation,
+            state.worldOrigin,
+          )
+          : retainedGeometryInstance(
+            gl,
+            entry,
+            plan.presentation,
+            state.worldOrigin,
+          );
+        newBuffers.push(
+          ...(stagedObject.newBuffers ?? stagedObject.ownedBuffers),
+        );
+        retainedObjects.set(entry.renderId, Object.freeze({
+          ...stagedObject,
+          visible: entry.visible,
+        }));
+      }
+      const candidateActiveBytes =
+        state.baseUploadedBytes +
+        [...retainedObjects.values()].reduce(
+          (sum, entry) => sum + entry.uploadedBytes,
+          0,
+        );
+      if (candidateActiveBytes > plan.maximumActiveBytes) {
+        throw new RangeError(
+          "WebGL2 retained overlay exceeds the active GPU budget",
+        );
+      }
+      target = pickTarget(gl, this.#width, this.#height);
+      const stagedBytes = plan.metrics.stagingBytes + target.bytes;
+      if (stagedBytes > plan.maximumStagingBytes) {
+        throw new RangeError(
+          "WebGL2 retained overlay exceeds the staging budget",
+        );
+      }
+      const instances = combinedRetainedInstances(
+        state,
+        retainedObjects,
+        suppressed,
+      );
+      const priorInvisible = new Set(
+        state.retainedInvisibleRenderIds,
+      );
+      const retainedInvisibleRenderIds = Object.freeze(
+        [...retainedObjects.values()]
+          .filter((entry) => !entry.visible)
+          .map((entry) => entry.instance.renderId),
+      );
+      const knownRenderIds = new Set(
+        instances.map((instance) => instance.renderId),
+      );
+      const knownPickIds = new Set(
+        instances.map((instance) => instance.pickId),
+      );
+      const hiddenRenderIds = Object.freeze([
+        ...new Set([
+          ...state.hiddenRenderIds.filter((renderId) =>
+            !priorInvisible.has(renderId) && knownRenderIds.has(renderId)),
+          ...retainedInvisibleRenderIds,
+        ]),
+      ]);
+      const selectedPickIds = Object.freeze(
+        state.selectedPickIds.filter((pickId) =>
+          knownPickIds.has(pickId)),
+      );
+      const candidate = {
+        ...state,
+        frames: state.frames,
+        hiddenRenderIds,
+        instances,
+        retainedInvisibleRenderIds,
+        retainedObjects,
+        selectedPickIds,
+        suppressedBaseRenderIds: suppressed,
+        uploadedBytes: candidateActiveBytes,
+      };
+      const frame = await this.#drawFrame(
+        candidate,
+        state.camera,
+        hiddenRenderIds,
+        selectedPickIds,
+        state.clippingPlanes,
+        signal,
+        {
+          framebuffer: target.framebuffer,
+          requireVisiblePixels: false,
+        },
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      aborted(signal);
+      const staged = {
+        candidate,
+        frame,
+        newBuffers: Object.freeze([...new Set(newBuffers)]),
+        target,
+      };
+      state.stagedRetained = staged;
+      this.#retainedStages += 1;
+      let closed = false;
+      const releaseTarget = () => {
+        if (staged.target !== null) {
+          deletePickTarget(gl, staged.target);
+          staged.target = null;
+        }
+      };
+      const close = () => {
+        if (state.stagedRetained === staged) {
+          state.stagedRetained = null;
+        }
+        closed = true;
+      };
+      const rollback = () => {
+        if (closed) {
+          return false;
+        }
+        for (const value of staged.newBuffers) {
+          gl.deleteBuffer(value);
+        }
+        releaseTarget();
+        close();
+        this.#retainedRollbacks += 1;
+        return Object.freeze({
+          backendId: "webgl2",
+          rolledBack: true,
+          releasedStagedBytes: stagedBytes,
+          activeBytes: state.uploadedBytes,
+        });
+      };
+      staged.rollback = rollback;
+      return Object.freeze({
+        receipt: Object.freeze({
+          backendId: "webgl2",
+          staged: true,
+          stageId: `webgl2-retained-stage:${this.#retainedStages}`,
+          stagedBytes,
+          currentActiveBytes: state.uploadedBytes,
+          candidateActiveBytes,
+          retainedObjects: retainedObjects.size,
+          visibleInstances: frame.visibleInstances,
+          currentFramebufferPreserved: true,
+          currentPickMapPreserved: true,
+          glError: frame.glError,
+        }),
+        commit: () => {
+          if (closed || state.stagedRetained !== staged) {
+            throw invalidState(
+              "WebGL2 retained overlay transaction is closed",
+            );
+          }
+          gl.bindFramebuffer(gl.READ_FRAMEBUFFER, target.framebuffer);
+          gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+          gl.blitFramebuffer(
+            0,
+            0,
+            this.#width,
+            this.#height,
+            0,
+            0,
+            this.#width,
+            this.#height,
+            gl.COLOR_BUFFER_BIT,
+            gl.NEAREST,
+          );
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.finish();
+          if (gl.getError() !== gl.NO_ERROR) {
+            throw new Error("WebGL2 retained atomic frame commit failed");
+          }
+          const priorOwned = new Set(
+            [...state.retainedObjects.values()].flatMap(
+              (entry) => entry.ownedBuffers,
+            ),
+          );
+          const nextOwned = new Set(
+            [...retainedObjects.values()].flatMap(
+              (entry) => entry.ownedBuffers,
+            ),
+          );
+          const retired = new Set(
+            [...priorOwned].filter((value) => !nextOwned.has(value)),
+          );
+          state.resources.buffers = state.resources.buffers.filter(
+            (value) => !retired.has(value),
+          );
+          for (const value of retired) {
+            gl.deleteBuffer(value);
+          }
+          for (const value of staged.newBuffers) {
+            if (!state.resources.buffers.includes(value)) {
+              state.resources.buffers.push(value);
+            }
+          }
+          state.frames = candidate.frames;
+          state.hiddenRenderIds = hiddenRenderIds;
+          state.instances = instances;
+          state.retainedInvisibleRenderIds =
+            retainedInvisibleRenderIds;
+          state.retainedObjects = retainedObjects;
+          state.selectedPickIds = selectedPickIds;
+          state.suppressedBaseRenderIds = suppressed;
+          state.uploadedBytes = candidateActiveBytes;
+          releaseTarget();
+          close();
+          this.#retainedCommits += 1;
+          return Object.freeze({
+            backendId: "webgl2",
+            committed: true,
+            atomic: true,
+            actualGpu: true,
+            frameId:
+              `webgl2-retained-frame:${this.#retainedCommits}`,
+            activeBytes: candidateActiveBytes,
+            retainedObjects: retainedObjects.size,
+            visibleInstances: frame.visibleInstances,
+            nonBackgroundPixels: frame.nonBackgroundPixels,
+            geometryPickRevisionAtomic: true,
+            currentFramebufferPreserved: false,
+            glError: gl.NO_ERROR,
+          });
+        },
+        rollback: async () => rollback(),
+        dispose: async () => rollback(),
+      });
+    } catch (error) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      for (const value of new Set(newBuffers)) {
+        gl.deleteBuffer(value);
+      }
+      deletePickTarget(gl, target);
       throw error;
     }
   }
@@ -2433,6 +2930,9 @@ export class WebGl2Backend {
     }
     const active = this.#active;
     const gl = this.#getContext();
+    if (active.stagedRetained !== null) {
+      active.stagedRetained.rollback();
+    }
     if (active.contextInvalidated !== true) {
       deleteResources(gl, active.resources);
     }

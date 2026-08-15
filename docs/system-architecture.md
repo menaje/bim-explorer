@@ -6,7 +6,7 @@ authority:
   - adapter-process-boundary
   - host-runtime-boundary
   - data-lifecycle
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # 시스템 아키텍처
@@ -232,6 +232,24 @@ production은 별도 Gate입니다.
 generic 3D package는 camera, fit, picking, section, isolate, measurement와 GPU
 resource를 소유합니다. IFC parsing, product DOM, Spatial Workspace와
 accept/publish capability는 소유하지 않습니다.
+
+`consumer-overlay` geometry delta는 별도 retained path를 사용합니다.
+
+```text
+Viewer Render Delta 0.1.0 + BEXOVL01 packet
+  -> Federated Surface retained adapter
+  -> bounded CPU decode + off-scene GPU upload
+  -> off-screen color frame + candidate Pick map
+  -> synchronous geometry/Pick/revision commit
+  -> checkpoint 또는 tombstone/dispose
+```
+
+prepare 중에는 current framebuffer, Pick map, camera, clipping과 base source range
+allocation을 그대로 둡니다. abort, stale/order, digest, packet 또는 GPU allocation
+실패는 staged resource만 회수합니다. checkpoint는 native range를 재생하거나
+upload하지 않습니다. Viewer Core 0.1.3 exact public source commit과 actual
+Browser/VS Code WebGL2에서 이 lifecycle을 검증했으며 public v0.2 runtime은
+immutable hash를 유지합니다.
 
 현재 내부
 [`bim-renderer-3d/0.1`](../specs/bim-renderer-3d-v0.1.md)은 geometry range를

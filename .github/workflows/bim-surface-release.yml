@@ -53,6 +53,9 @@ jobs:
             bim-surface-v0.2.0)
               package_manifest="packages/federated-bim-surface/package.json"
               ;;
+            bim-surface-v0.3.0)
+              package_manifest="packages/federated-bim-surface/package.json"
+              ;;
             *)
               echo "Unsupported BIM Surface release tag" >&2
               exit 1
@@ -83,6 +86,9 @@ jobs:
               ;;
             bim-surface-v0.2.0)
               npm run release:bim-surface:v0.2
+              ;;
+            bim-surface-v0.3.0)
+              npm run release:bim-surface:v0.3
               ;;
           esac
 
@@ -137,7 +143,8 @@ jobs:
       - name: Compare macOS and Linux bytes
         shell: bash
         run: |
-          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ||
+                "$GITHUB_REF_NAME" == "bim-surface-v0.3.0" ]]; then
             comparator="scripts/compare-federated-bim-surface-release.mjs"
           else
             comparator="scripts/compare-bim-surface-release.mjs"
@@ -154,7 +161,8 @@ jobs:
 
       - name: Verify publication Gate
         run: |
-          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+          if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ||
+                "$GITHUB_REF_NAME" == "bim-surface-v0.3.0" ]]; then
             node --input-type=module --eval \
               'import {readFileSync} from "node:fs";
               const manifest = JSON.parse(readFileSync(
@@ -184,7 +192,8 @@ jobs:
             fi
             mkdir -p dist/published
             gh release download "$GITHUB_REF_NAME" --dir dist/published
-            if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ]]; then
+            if [[ "$GITHUB_REF_NAME" == "bim-surface-v0.2.0" ||
+                  "$GITHUB_REF_NAME" == "bim-surface-v0.3.0" ]]; then
               comparator="scripts/compare-federated-bim-surface-release.mjs"
             else
               comparator="scripts/compare-bim-surface-release.mjs"

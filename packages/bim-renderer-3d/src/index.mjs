@@ -9,6 +9,15 @@ import {
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   decodeBimTexturedGeometryRange,
 } from "./textured-geometry.mjs";
+import {
+  BIM_RETAINED_OVERLAY_CHECKPOINT_RECEIPT,
+  BIM_RETAINED_OVERLAY_DELTA_RECEIPT,
+  BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+  BIM_RETAINED_OVERLAY_PACKET_SCHEMA,
+  decodeBimRetainedOverlayPacket,
+  encodeBimRetainedOverlayPacket,
+  sha256BimRetainedOverlayPacket,
+} from "./retained-overlay.mjs";
 
 export const BIM_RENDERER_3D_CONTRACT =
   "bim-explorer-bim-renderer-3d/0.1";
@@ -46,6 +55,9 @@ const DEFAULT_LIMITS = Object.freeze({
   maximumDrawCalls: 100_000,
   maximumCpuStagingBytes: 16 * 1024 * 1024,
   maximumGpuCacheBytes: 16 * 1024 * 1024,
+  maximumRetainedOverlayPacketBytes: 8 * 1024 * 1024,
+  maximumRetainedOverlayObjects: 32_768,
+  maximumRetainedOverlayStagingBytes: 16 * 1024 * 1024,
 });
 
 function plainRecord(value, label) {
@@ -1014,6 +1026,644 @@ function validateActiveMetrics(metrics, limits) {
   }
 }
 
+function boundsContain(outer, inner) {
+  return outer.min.every((value, axis) => value <= inner.min[axis]) &&
+    outer.max.every((value, axis) => value >= inner.max[axis]);
+}
+
+function retainedIdentity(value, overlay) {
+  return Object.freeze({
+    expressId: value.expressId ?? null,
+    globalId: value.globalId ?? null,
+    nativeId: value.nativeId,
+    renderId: value.renderId,
+    pickId: value.pickId,
+    rangeId: value.rangeId ?? null,
+    externalIdentityToken: value.externalIdentityToken,
+    retainedOverlay: Object.freeze({
+      overlayId: overlay.overlayId,
+      sourceId: overlay.sourceId,
+      layerId: overlay.layerId,
+      sourceRenderId: value.sourceRenderId,
+      sourcePickId: value.sourcePickId,
+      revisionId: overlay.revisionId,
+    }),
+  });
+}
+
+function retainedSourceRegistration(value, activeInstances, limits) {
+  const input = plainRecord(
+    value,
+    "renderer retained overlay source",
+  );
+  for (const field of [
+    "overlayId",
+    "sourceId",
+    "layerId",
+    "revisionId",
+  ]) {
+    nonEmptyString(
+      input[field],
+      `renderer retained overlay source.${field}`,
+    );
+  }
+  if (
+    !Array.isArray(input.identities) ||
+    input.identities.length > limits.maximumRetainedOverlayObjects
+  ) {
+    throw new RangeError(
+      "renderer retained overlay source identities exceed their bound",
+    );
+  }
+  const activeByRenderId = new Map();
+  for (const identity of activeInstances) {
+    const values = activeByRenderId.get(identity.renderId) ?? [];
+    values.push(identity);
+    activeByRenderId.set(identity.renderId, values);
+  }
+  const objects = new Map();
+  const sourceToProjected = new Map();
+  for (const [index, identityValue] of input.identities.entries()) {
+    const identity = plainRecord(
+      identityValue,
+      `renderer retained overlay identity ${index}`,
+    );
+    for (const field of [
+      "sourceRenderId",
+      "sourcePickId",
+      "renderId",
+      "pickId",
+      "nativeId",
+      "externalIdentityToken",
+    ]) {
+      nonEmptyString(
+        identity[field],
+        `renderer retained overlay identity ${index}.${field}`,
+      );
+    }
+    const activeMatches = activeByRenderId.get(identity.renderId);
+    const active = activeMatches?.[0];
+    if (
+      active === undefined ||
+      activeMatches.some((candidate) =>
+        candidate.pickId !== identity.pickId ||
+        candidate.nativeId !== identity.nativeId ||
+        candidate.externalIdentityToken !==
+          identity.externalIdentityToken) ||
+      objects.has(identity.sourceRenderId) ||
+      sourceToProjected.has(identity.sourceRenderId)
+    ) {
+      throw new RangeError(
+        "renderer retained overlay identity is outside the active mount",
+      );
+    }
+    if (
+      identity.visible !== undefined &&
+      typeof identity.visible !== "boolean"
+    ) {
+      throw new TypeError(
+        `renderer retained overlay identity ${index}.visible must be boolean`,
+      );
+    }
+    const identityColor = finiteVector(
+      identity.color ?? active.color,
+      4,
+      `renderer retained overlay identity ${index}.color`,
+    );
+    if (identityColor.some((component) => component < 0 || component > 1)) {
+      throw new RangeError(
+        `renderer retained overlay identity ${index}.color is invalid`,
+      );
+    }
+    const record = Object.freeze({
+      ...active,
+      sourceRenderId: identity.sourceRenderId,
+      sourcePickId: identity.sourcePickId,
+      instanceCount: activeMatches.length,
+      transform: finiteVector(
+        identity.transform ?? active.transform,
+        16,
+        `renderer retained overlay identity ${index}.transform`,
+      ),
+      color: identityColor,
+      visible: identity.visible ?? true,
+      bounds: identity.bounds === undefined
+        ? null
+        : worldBounds(
+          identity.bounds,
+          `renderer retained overlay identity ${index}.bounds`,
+        ),
+    });
+    objects.set(identity.sourceRenderId, record);
+    sourceToProjected.set(identity.sourceRenderId, Object.freeze({
+      renderId: identity.renderId,
+      pickId: identity.pickId,
+    }));
+  }
+  return {
+    overlayId: input.overlayId,
+    sourceId: input.sourceId,
+    layerId: input.layerId,
+    revisionId: input.revisionId,
+    sequence: 0,
+    checkpoints: 0,
+    objects,
+    sourceToProjected,
+  };
+}
+
+function refreshRetainedOverlayIdentities(active) {
+  const claimedRenderIds = new Set();
+  for (const overlay of active.retainedOverlays.values()) {
+    for (const projected of overlay.sourceToProjected.values()) {
+      claimedRenderIds.add(projected.renderId);
+    }
+  }
+  const identities = active.baseIdentities.filter(
+    (identity) => !claimedRenderIds.has(identity.renderId),
+  );
+  for (const overlay of active.retainedOverlays.values()) {
+    for (const object of overlay.objects.values()) {
+      for (
+        let index = 0;
+        index < (object.instanceCount ?? 1);
+        index += 1
+      ) {
+        identities.push(retainedIdentity(object, overlay));
+      }
+    }
+  }
+  active.identities = Object.freeze(identities);
+  active.instanceRenderIds = Object.freeze(
+    identities.map((identity) => identity.renderId),
+  );
+  active.instancePickIds = Object.freeze(
+    identities.map((identity) => identity.pickId),
+  );
+  const knownRenderIds = new Set(active.instanceRenderIds);
+  const knownPickIds = new Set(active.instancePickIds);
+  active.retainedInvisibleRenderIds = Object.freeze(
+    [...active.retainedOverlays.values()].flatMap((overlay) =>
+      [...overlay.objects.values()]
+        .filter((object) => !object.visible)
+        .map((object) => object.renderId)),
+  );
+  active.hiddenRenderIds = Object.freeze(
+    [...new Set([
+      ...active.requestedHiddenRenderIds.filter((id) =>
+        knownRenderIds.has(id)),
+      ...active.retainedInvisibleRenderIds,
+    ])],
+  );
+  active.selectedPickIds = Object.freeze(
+    active.selectedPickIds.filter((id) => knownPickIds.has(id)),
+  );
+}
+
+async function retainedProjectedId(kind, overlayId, sourceIdentity) {
+  const bytes = new TextEncoder().encode(
+    `${kind}\u0000${overlayId}\u0000${sourceIdentity}`,
+  );
+  const value = await digest(bytes);
+  bytes.fill(0);
+  return `${kind}:retained-overlay:${value}`;
+}
+
+function retainedDeltaOperation(value, index, overlay, affectedBounds) {
+  const operation = plainRecord(
+    value,
+    `renderer retained overlay operation ${index}`,
+  );
+  nonEmptyString(
+    operation.operationId,
+    `renderer retained overlay operation ${index}.operationId`,
+  );
+  if (
+    !["upsert", "tombstone"].includes(operation.kind) ||
+    !["entity", "geometry", "identity", "style", "transform"]
+      .includes(operation.aspect) ||
+    operation.sourceId !== overlay.sourceId ||
+    operation.layerId !== overlay.layerId ||
+    !Array.isArray(operation.renderIds) ||
+    operation.renderIds.length === 0 ||
+    new Set(operation.renderIds).size !== operation.renderIds.length ||
+    operation.renderIds.some((renderId) =>
+      typeof renderId !== "string" || renderId.length === 0)
+  ) {
+    throw new TypeError(
+      `renderer retained overlay operation ${index} is invalid`,
+    );
+  }
+  if (
+    operation.kind === "tombstone" &&
+    operation.aspect !== "entity"
+  ) {
+    throw new TypeError(
+      "renderer retained overlay tombstone must target entity",
+    );
+  }
+  const operationBounds = worldBounds(
+    operation.affectedWorldBounds,
+    `renderer retained overlay operation ${index}.affectedWorldBounds`,
+  );
+  if (!boundsContain(affectedBounds, operationBounds)) {
+    throw new RangeError(
+      "renderer retained overlay operation exceeds delta bounds",
+    );
+  }
+  return Object.freeze({
+    operationId: operation.operationId,
+    kind: operation.kind,
+    aspect: operation.aspect,
+    sourceId: operation.sourceId,
+    layerId: operation.layerId,
+    renderIds: Object.freeze([...operation.renderIds]),
+    affectedWorldBounds: operationBounds,
+    externalIdentityToken:
+      operation.externalIdentityToken ?? null,
+  });
+}
+
+function retainedEntryKey(operationId, sourceRenderId) {
+  return `${operationId}\u0000${sourceRenderId}`;
+}
+
+async function buildRetainedOverlayPlan({
+  delta: deltaValue,
+  overlay,
+  payloadBytes: payloadValue,
+  limits,
+}) {
+  const delta = plainRecord(
+    deltaValue,
+    "renderer retained overlay delta",
+  );
+  for (const field of [
+    "deltaId",
+    "sourceId",
+    "fromRevisionId",
+    "toRevisionId",
+  ]) {
+    nonEmptyString(
+      delta[field],
+      `renderer retained overlay delta.${field}`,
+    );
+  }
+  if (
+    delta.sourceId !== overlay.sourceId ||
+    delta.fromRevisionId !== overlay.revisionId ||
+    delta.toRevisionId === delta.fromRevisionId
+  ) {
+    throw new RangeError(
+      "renderer retained overlay delta is outside the active revision",
+    );
+  }
+  if (
+    !Number.isSafeInteger(delta.sequence) ||
+    delta.sequence !== overlay.sequence + 1
+  ) {
+    throw new RangeError(
+      "renderer retained overlay delta sequence is stale or out of order",
+    );
+  }
+  const affectedWorldBounds = worldBounds(
+    delta.affectedWorldBounds,
+    "renderer retained overlay delta.affectedWorldBounds",
+  );
+  if (
+    !Array.isArray(delta.operations) ||
+    delta.operations.length === 0 ||
+    delta.operations.length > limits.maximumRetainedOverlayObjects
+  ) {
+    throw new RangeError(
+      "renderer retained overlay operations exceed their bound",
+    );
+  }
+  const operations = Object.freeze(
+    delta.operations.map((operation, index) =>
+      retainedDeltaOperation(
+        operation,
+        index,
+        overlay,
+        affectedWorldBounds,
+      )),
+  );
+  const changed = new Set();
+  for (const operation of operations) {
+    for (const renderId of operation.renderIds) {
+      if (changed.has(renderId)) {
+        throw new RangeError(
+          "renderer retained overlay Render ID changes more than once",
+        );
+      }
+      changed.add(renderId);
+    }
+  }
+  let packet = null;
+  let payloadBytes = null;
+  if (delta.payload === null) {
+    if (operations.some((operation) => operation.kind !== "tombstone")) {
+      throw new TypeError(
+        "renderer retained overlay upsert requires a packet payload",
+      );
+    }
+    if (payloadValue !== null && payloadValue !== undefined) {
+      throw new TypeError(
+        "renderer retained overlay tombstone cannot carry payload bytes",
+      );
+    }
+  } else {
+    const descriptor = plainRecord(
+      delta.payload,
+      "renderer retained overlay payload descriptor",
+    );
+    if (!(payloadValue instanceof Uint8Array)) {
+      throw new TypeError(
+        "renderer retained overlay payload must be a Uint8Array",
+      );
+    }
+    payloadBytes = Uint8Array.from(payloadValue);
+    if (
+      descriptor.mediaType !== BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE ||
+      descriptor.byteLength !== payloadBytes.byteLength ||
+      descriptor.byteLength > limits.maximumRetainedOverlayPacketBytes ||
+      !SHA256.test(descriptor.sha256 ?? "") ||
+      await sha256BimRetainedOverlayPacket(payloadBytes) !==
+        descriptor.sha256
+    ) {
+      payloadBytes.fill(0);
+      throw new Error(
+        "renderer retained overlay payload identity is invalid",
+      );
+    }
+    packet = decodeBimRetainedOverlayPacket(payloadBytes, {
+      maximumBytes: limits.maximumRetainedOverlayPacketBytes,
+      maximumEntries: limits.maximumRetainedOverlayObjects,
+    });
+    if (
+      packet.deltaId !== delta.deltaId ||
+      packet.sourceId !== delta.sourceId ||
+      packet.layerId !== overlay.layerId ||
+      packet.fromRevisionId !== delta.fromRevisionId ||
+      packet.toRevisionId !== delta.toRevisionId ||
+      packet.sequence !== delta.sequence
+    ) {
+      payloadBytes.fill(0);
+      throw new RangeError(
+        "renderer retained overlay packet is outside the delta",
+      );
+    }
+  }
+  const packetEntries = new Map();
+  for (const entry of packet?.entries ?? []) {
+    const key = retainedEntryKey(entry.operationId, entry.renderId);
+    if (packetEntries.has(key)) {
+      payloadBytes?.fill(0);
+      throw new RangeError(
+        "renderer retained overlay packet entry is duplicated",
+      );
+    }
+    packetEntries.set(key, entry);
+  }
+  const entries = [];
+  const nextObjects = new Map(overlay.objects);
+  const nextSourceToProjected = new Map(
+    overlay.sourceToProjected,
+  );
+  for (const operation of operations) {
+    for (const sourceRenderId of operation.renderIds) {
+      const key = retainedEntryKey(
+        operation.operationId,
+        sourceRenderId,
+      );
+      let entry = packetEntries.get(key) ?? null;
+      if (operation.kind === "tombstone" && entry === null) {
+        entry = Object.freeze({
+          operationId: operation.operationId,
+          kind: "tombstone",
+          aspect: "entity",
+          renderId: sourceRenderId,
+          bounds: operation.affectedWorldBounds,
+          pickId: null,
+          nativeId: null,
+          externalIdentityToken: null,
+          transform: null,
+          color: null,
+          visible: null,
+          geometry: null,
+        });
+      }
+      if (
+        entry === null ||
+        entry.kind !== operation.kind ||
+        entry.aspect !== operation.aspect ||
+        !equalBounds(entry.bounds, operation.affectedWorldBounds) ||
+        (
+          operation.externalIdentityToken !== null &&
+          entry.externalIdentityToken !==
+            operation.externalIdentityToken
+        )
+      ) {
+        payloadBytes?.fill(0);
+        throw new RangeError(
+          "renderer retained overlay packet does not match its operation",
+        );
+      }
+      packetEntries.delete(key);
+      const current = nextObjects.get(sourceRenderId) ?? null;
+      let projected = nextSourceToProjected.get(sourceRenderId);
+      if (projected === undefined) {
+        projected = Object.freeze({
+          renderId: await retainedProjectedId(
+            "render",
+            overlay.overlayId,
+            sourceRenderId,
+          ),
+          pickId: entry.pickId === null
+            ? null
+            : await retainedProjectedId(
+              "pick",
+              overlay.overlayId,
+              entry.pickId,
+            ),
+        });
+        nextSourceToProjected.set(sourceRenderId, projected);
+      }
+      if (entry.kind === "tombstone") {
+        if (current === null) {
+          payloadBytes?.fill(0);
+          throw new RangeError(
+            "renderer retained overlay tombstone has no current object",
+          );
+        }
+        nextObjects.delete(sourceRenderId);
+        entries.push(Object.freeze({
+          ...entry,
+          sourceRenderId,
+          renderId: projected.renderId,
+          current,
+          retainedOverlay: Object.freeze({
+            overlayId: overlay.overlayId,
+            sourceId: overlay.sourceId,
+            layerId: overlay.layerId,
+            revisionId: delta.toRevisionId,
+          }),
+        }));
+        continue;
+      }
+      if (
+        !["entity", "geometry"].includes(entry.aspect) &&
+        current === null
+      ) {
+        payloadBytes?.fill(0);
+        throw new RangeError(
+          "renderer retained overlay update has no current object",
+        );
+      }
+      if (
+        (current?.instanceCount ?? 1) > 1 &&
+        !["entity", "geometry"].includes(entry.aspect)
+      ) {
+        payloadBytes?.fill(0);
+        throw new DOMException(
+          "retained metadata update requires single-instance geometry",
+          "NotSupportedError",
+        );
+      }
+      const sourcePickId = entry.pickId ?? current?.sourcePickId;
+      const projectedPickId = entry.pickId === null
+        ? current?.pickId
+        : await retainedProjectedId(
+          "pick",
+          overlay.overlayId,
+          entry.pickId,
+        );
+      const logical = Object.freeze({
+        sourceRenderId,
+        sourcePickId,
+        renderId: projected.renderId,
+        pickId: projectedPickId,
+        nativeId: entry.nativeId ?? current?.nativeId,
+        externalIdentityToken:
+          entry.externalIdentityToken ??
+          current?.externalIdentityToken,
+        expressId: current?.expressId ?? null,
+        globalId: current?.globalId ?? null,
+        rangeId: current?.rangeId ?? null,
+        bounds: entry.bounds,
+        transform: entry.transform ?? current?.transform ?? null,
+        color: entry.color ?? current?.color ?? null,
+        visible: entry.visible ?? current?.visible ?? true,
+        instanceCount: entry.geometry === null
+          ? current?.instanceCount ?? 1
+          : 1,
+      });
+      const next = Object.freeze({
+        ...logical,
+        geometry: entry.geometry,
+        aspect: entry.aspect,
+        kind: entry.kind,
+        operationId: entry.operationId,
+        current,
+        retainedOverlay: Object.freeze({
+          overlayId: overlay.overlayId,
+          sourceId: overlay.sourceId,
+          layerId: overlay.layerId,
+          revisionId: delta.toRevisionId,
+        }),
+      });
+      for (const field of [
+        "sourcePickId",
+        "pickId",
+        "nativeId",
+        "externalIdentityToken",
+      ]) {
+        nonEmptyString(
+          next[field],
+          `renderer retained overlay entry.${field}`,
+        );
+      }
+      if (next.transform === null || next.color === null) {
+        payloadBytes?.fill(0);
+        throw new TypeError(
+          "renderer retained overlay entry has no transform or style",
+        );
+      }
+      nextObjects.set(sourceRenderId, logical);
+      nextSourceToProjected.set(sourceRenderId, Object.freeze({
+        renderId: next.renderId,
+        pickId: next.pickId,
+      }));
+      entries.push(next);
+    }
+  }
+  if (packetEntries.size !== 0) {
+    payloadBytes?.fill(0);
+    throw new RangeError(
+      "renderer retained overlay packet has unbound entries",
+    );
+  }
+  if (nextObjects.size > limits.maximumRetainedOverlayObjects) {
+    payloadBytes?.fill(0);
+    throw new RangeError(
+      "renderer retained overlay resident objects exceed their bound",
+    );
+  }
+  const pickIds = [...nextObjects.values()].map((item) => item.pickId);
+  if (new Set(pickIds).size !== pickIds.length) {
+    payloadBytes?.fill(0);
+    throw new RangeError(
+      "renderer retained overlay Pick ID is duplicated",
+    );
+  }
+  const geometryBytes = entries.reduce(
+    (sum, entry) => sum + (entry.geometry?.byteLength ?? 0),
+    0,
+  );
+  const instanceBytes = entries.filter((entry) =>
+    entry.kind === "upsert" &&
+    ["entity", "geometry", "style", "transform"]
+      .includes(entry.aspect)).length * 20 * Float32Array.BYTES_PER_ELEMENT;
+  const stagingBytes =
+    (payloadBytes?.byteLength ?? 0) + geometryBytes + instanceBytes;
+  if (stagingBytes > limits.maximumRetainedOverlayStagingBytes) {
+    payloadBytes?.fill(0);
+    throw new RangeError(
+      "renderer retained overlay staging exceeds its byte limit",
+    );
+  }
+  return {
+    schema: BIM_RETAINED_OVERLAY_PACKET_SCHEMA,
+    deltaId: delta.deltaId,
+    overlayId: overlay.overlayId,
+    sourceId: overlay.sourceId,
+    layerId: overlay.layerId,
+    fromRevisionId: delta.fromRevisionId,
+    toRevisionId: delta.toRevisionId,
+    sequence: delta.sequence,
+    affectedWorldBounds,
+    entries: Object.freeze(entries),
+    nextObjects,
+    nextSourceToProjected,
+    metrics: Object.freeze({
+      packetBytes: payloadBytes?.byteLength ?? 0,
+      geometryBytes,
+      instanceBytes,
+      stagingBytes,
+      operations: operations.length,
+      changedObjects: entries.length,
+      residentObjects: nextObjects.size,
+    }),
+    releaseCpuStaging() {
+      payloadBytes?.fill(0);
+      for (const entry of entries) {
+        entry.geometry?.vertices.fill(0);
+        entry.geometry?.indices.fill(0);
+      }
+    },
+  };
+}
+
 function validateBackend(value) {
   const backend = plainRecord(value, "renderer backend");
   for (const method of ["mount", "unmount", "dispose"]) {
@@ -1296,6 +1946,9 @@ export class Headless3dBackend {
   #disposed = false;
   #mounts = 0;
   #rangeUpdates = 0;
+  #retainedCommits = 0;
+  #retainedRollbacks = 0;
+  #retainedStages = 0;
   #unmounts = 0;
 
   get state() {
@@ -1304,9 +1957,17 @@ export class Headless3dBackend {
       mounts: this.#mounts,
       unmounts: this.#unmounts,
       rangeUpdates: this.#rangeUpdates,
+      retainedCommits: this.#retainedCommits,
+      retainedRollbacks: this.#retainedRollbacks,
+      retainedStages: this.#retainedStages,
       activeHandleId: this.#active?.handleId ?? null,
       activeBytes: this.#active?.uploadedBytes ?? 0,
       residentRanges: this.#active?.ranges.size ?? 0,
+      retainedObjects:
+        this.#active?.retainedObjects.size ?? 0,
+      stagedRetainedDelta:
+        this.#active?.staged !== null &&
+        this.#active?.staged !== undefined,
     });
   }
 
@@ -1330,6 +1991,8 @@ export class Headless3dBackend {
       metrics.instanceBytes +
       (metrics.textureGpuBytes ?? 0);
     this.#active = {
+      baseInstances: Object.freeze([...plan.instances]),
+      baseUploadedBytes: uploadedBytes,
       handleId,
       ranges: new Map(
         plan.ranges.map((range) => [
@@ -1337,6 +2000,9 @@ export class Headless3dBackend {
           uploadedBytes,
         ]),
       ),
+      retainedObjects: new Map(),
+      staged: null,
+      suppressedBaseRenderIds: new Set(),
       uploadedBytes,
     };
     return {
@@ -1390,6 +2056,11 @@ export class Headless3dBackend {
       addedBytes,
     );
     this.#active.uploadedBytes += addedBytes;
+    this.#active.baseUploadedBytes += addedBytes;
+    this.#active.baseInstances = Object.freeze([
+      ...this.#active.baseInstances,
+      ...plan.instances,
+    ]);
     this.#rangeUpdates += 1;
     return {
       receipt: {
@@ -1431,6 +2102,12 @@ export class Headless3dBackend {
     }
     this.#active.ranges.delete(rangeId);
     this.#active.uploadedBytes -= releasedBytes;
+    this.#active.baseUploadedBytes -= releasedBytes;
+    this.#active.baseInstances = Object.freeze(
+      this.#active.baseInstances.filter(
+        (instance) => instance.rangeId !== rangeId,
+      ),
+    );
     this.#rangeUpdates += 1;
     return {
       receipt: {
@@ -1443,6 +2120,150 @@ export class Headless3dBackend {
         activeBytes: this.#active.uploadedBytes,
       },
     };
+  }
+
+  async stageRetainedOverlayDelta(
+    handleId,
+    planValue,
+    { signal } = {},
+  ) {
+    aborted(signal);
+    if (this.#disposed) {
+      throw invalidState("headless 3D backend is disposed");
+    }
+    if (
+      this.#active === null ||
+      this.#active.handleId !== handleId
+    ) {
+      throw new RangeError("headless 3D mount handle is not active");
+    }
+    if (this.#active.staged !== null) {
+      throw invalidState(
+        "headless 3D backend already owns a retained transaction",
+      );
+    }
+    const plan = plainRecord(
+      planValue,
+      "headless retained overlay plan",
+    );
+    const retainedObjects = new Map(this.#active.retainedObjects);
+    const suppressed = new Set(
+      this.#active.suppressedBaseRenderIds,
+    );
+    for (const entry of plan.entries) {
+      suppressed.add(entry.renderId);
+      if (entry.kind === "tombstone") {
+        retainedObjects.delete(entry.renderId);
+        continue;
+      }
+      const current = retainedObjects.get(entry.renderId);
+      const ownedBytes = entry.geometry !== null
+        ? entry.geometry.byteLength + 80
+        : ["style", "transform"].includes(entry.aspect)
+          ? (current?.geometryBytes ?? 0) + 80
+          : current?.ownedBytes ?? 0;
+      retainedObjects.set(entry.renderId, Object.freeze({
+        renderId: entry.renderId,
+        pickId: entry.pickId,
+        visible: entry.visible,
+        geometryBytes:
+          entry.geometry?.byteLength ?? current?.geometryBytes ?? 0,
+        ownedBytes,
+      }));
+    }
+    const retainedBytes = [...retainedObjects.values()].reduce(
+      (sum, entry) => sum + entry.ownedBytes,
+      0,
+    );
+    const candidateActiveBytes =
+      this.#active.baseUploadedBytes + retainedBytes;
+    if (candidateActiveBytes > plan.maximumActiveBytes) {
+      throw new RangeError(
+        "headless retained overlay exceeds the active GPU budget",
+      );
+    }
+    const visibleInstances =
+      this.#active.baseInstances.filter((instance) =>
+        !suppressed.has(instance.renderId)).length +
+      [...retainedObjects.values()].filter((entry) => entry.visible)
+        .length;
+    const staged = {
+      id: `headless-retained-stage:${this.#retainedStages + 1}`,
+      retainedObjects,
+      suppressed,
+      candidateActiveBytes,
+      visibleInstances,
+    };
+    this.#active.staged = staged;
+    this.#retainedStages += 1;
+    let closed = false;
+    const close = () => {
+      if (this.#active?.staged === staged) {
+        this.#active.staged = null;
+      }
+      closed = true;
+    };
+    return Object.freeze({
+      receipt: Object.freeze({
+        backendId: "headless",
+        staged: true,
+        stageId: staged.id,
+        stagedBytes: plan.metrics.stagingBytes,
+        currentActiveBytes: this.#active.uploadedBytes,
+        candidateActiveBytes,
+        retainedObjects: retainedObjects.size,
+        currentFramebufferPreserved: true,
+        currentPickMapPreserved: true,
+      }),
+      commit: () => {
+        if (closed || this.#active?.staged !== staged) {
+          throw invalidState(
+            "headless retained overlay transaction is closed",
+          );
+        }
+        this.#active.retainedObjects = retainedObjects;
+        this.#active.suppressedBaseRenderIds = suppressed;
+        this.#active.uploadedBytes = candidateActiveBytes;
+        close();
+        this.#retainedCommits += 1;
+        return Object.freeze({
+          backendId: "headless",
+          committed: true,
+          atomic: true,
+          frameId:
+            `headless-retained-frame:${this.#retainedCommits}`,
+          activeBytes: candidateActiveBytes,
+          retainedObjects: retainedObjects.size,
+          visibleInstances,
+          geometryPickRevisionAtomic: true,
+          currentFramebufferPreserved: false,
+        });
+      },
+      rollback: async () => {
+        if (closed) {
+          return false;
+        }
+        close();
+        this.#retainedRollbacks += 1;
+        return Object.freeze({
+          backendId: "headless",
+          rolledBack: true,
+          releasedStagedBytes: plan.metrics.stagingBytes,
+          activeBytes: this.#active.uploadedBytes,
+        });
+      },
+      dispose: async () => {
+        if (!closed) {
+          if (this.#active?.staged !== staged) {
+            return false;
+          }
+          close();
+          this.#retainedRollbacks += 1;
+          return true;
+        }
+        return false;
+      },
+    });
   }
 
   async unmount(handleId) {
@@ -1483,6 +2304,11 @@ export class Bounded3dRenderer {
   #picks = 0;
   #rangeEvictions = 0;
   #rangeLoads = 0;
+  #retainedCheckpoints = 0;
+  #retainedCommits = 0;
+  #retainedRollbacks = 0;
+  #retainedStages = 0;
+  #stagedRetained = null;
   #unmounts = 0;
   #updating = false;
   #viewUpdates = 0;
@@ -1508,6 +2334,15 @@ export class Bounded3dRenderer {
       rangeCacheHits: this.#cacheHits,
       rangeEvictions: this.#rangeEvictions,
       rangeLoads: this.#rangeLoads,
+      retainedCheckpoints: this.#retainedCheckpoints,
+      retainedCommits: this.#retainedCommits,
+      retainedObjects: [...(this.#active?.retainedOverlays.values() ?? [])]
+        .reduce((sum, overlay) => sum + overlay.objects.size, 0),
+      retainedOverlaySources:
+        this.#active?.retainedOverlays.size ?? 0,
+      retainedRollbacks: this.#retainedRollbacks,
+      retainedStages: this.#retainedStages,
+      stagedRetainedDelta: this.#stagedRetained !== null,
       residentRangeIds: Object.freeze(
         [...(this.#active?.rangePlans.keys() ?? [])],
       ),
@@ -1554,7 +2389,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -1690,6 +2525,19 @@ export class Bounded3dRenderer {
         backend: backendMount.receipt,
         cpuRangeStagingReleased: true,
       });
+      const baseInstances = Object.freeze([...plan.instances]);
+      const baseIdentities = Object.freeze(
+        baseInstances.map((instance) => Object.freeze({
+          expressId: instance.expressId,
+          globalId: instance.globalId,
+          nativeId: instance.nativeId,
+          renderId: instance.renderId,
+          pickId: instance.pickId,
+          rangeId: instance.rangeId,
+          externalIdentityToken:
+            instance.externalIdentityToken,
+        })),
+      );
       this.#active = {
         activeBackendBytes: backendMount.receipt.uploadedBytes,
         deltaSequence: 0,
@@ -1712,27 +2560,23 @@ export class Bounded3dRenderer {
         session,
         snapshot: input.snapshot,
         presentation: plan.presentation,
+        baseInstances,
+        baseIdentities,
+        retainedOverlays: new Map(),
         instanceRenderIds: Object.freeze(
-          plan.instances.map((instance) => instance.renderId),
+          baseInstances.map((instance) => instance.renderId),
         ),
         instancePickIds: Object.freeze(
-          plan.instances.map((instance) => instance.pickId),
+          baseInstances.map((instance) => instance.pickId),
         ),
         identities: Object.freeze(
-          plan.instances.map((instance) => Object.freeze({
-            expressId: instance.expressId,
-            globalId: instance.globalId,
-            nativeId: instance.nativeId,
-            renderId: instance.renderId,
-            pickId: instance.pickId,
-            rangeId: instance.rangeId,
-            externalIdentityToken:
-              instance.externalIdentityToken,
-          })),
+          baseIdentities,
         ),
         camera: backendMount.receipt.camera ?? null,
         clipping: clippingState([], null),
         hiddenRenderIds: Object.freeze([]),
+        requestedHiddenRenderIds: Object.freeze([]),
+        retainedInvisibleRenderIds: Object.freeze([]),
         selectedPickIds: Object.freeze([]),
         viewRevision: 0,
       };
@@ -1750,7 +2594,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -1858,16 +2702,12 @@ export class Bounded3dRenderer {
         throw error;
       }
       this.#active.rangePlans.set(rangeId, plan);
-      this.#active.instanceRenderIds = Object.freeze([
-        ...this.#active.instanceRenderIds,
-        ...plan.instances.map((instance) => instance.renderId),
+      this.#active.baseInstances = Object.freeze([
+        ...this.#active.baseInstances,
+        ...plan.instances,
       ]);
-      this.#active.instancePickIds = Object.freeze([
-        ...this.#active.instancePickIds,
-        ...plan.instances.map((instance) => instance.pickId),
-      ]);
-      this.#active.identities = Object.freeze([
-        ...this.#active.identities,
+      this.#active.baseIdentities = Object.freeze([
+        ...this.#active.baseIdentities,
         ...plan.instances.map((instance) => Object.freeze({
           expressId: instance.expressId,
           globalId: instance.globalId,
@@ -1879,6 +2719,7 @@ export class Bounded3dRenderer {
             instance.externalIdentityToken,
         })),
       ]);
+      refreshRetainedOverlayIdentities(this.#active);
       this.#active.activeBackendBytes = backend.activeBytes;
       this.#rangeLoads += 1;
       return Object.freeze({
@@ -1911,7 +2752,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -1928,6 +2769,15 @@ export class Bounded3dRenderer {
     const plan = this.#active.rangePlans.get(rangeId);
     if (plan === undefined) {
       throw new RangeError("renderer range is not resident");
+    }
+    if ([...this.#active.retainedOverlays.values()].some(
+      (overlay) => [...overlay.objects.values()].some(
+        (object) => object.rangeId === rangeId,
+      ),
+    )) {
+      throw invalidState(
+        "renderer range is retained by an overlay source",
+      );
     }
     if (typeof this.#backend.evictRange !== "function") {
       throw new DOMException(
@@ -1953,35 +2803,17 @@ export class Bounded3dRenderer {
         this.#active.activeBackendBytes,
       );
       this.#active.rangePlans.delete(rangeId);
-      this.#active.identities = Object.freeze(
-        this.#active.identities.filter(
+      this.#active.baseInstances = Object.freeze(
+        this.#active.baseInstances.filter(
+          (instance) => instance.rangeId !== rangeId,
+        ),
+      );
+      this.#active.baseIdentities = Object.freeze(
+        this.#active.baseIdentities.filter(
           (identity) => identity.rangeId !== rangeId,
         ),
       );
-      this.#active.instanceRenderIds = Object.freeze(
-        this.#active.identities.map(
-          (identity) => identity.renderId,
-        ),
-      );
-      this.#active.instancePickIds = Object.freeze(
-        this.#active.identities.map(
-          (identity) => identity.pickId,
-        ),
-      );
-      const knownRenderIds = new Set(
-        this.#active.instanceRenderIds,
-      );
-      const knownPickIds = new Set(
-        this.#active.instancePickIds,
-      );
-      this.#active.hiddenRenderIds = Object.freeze(
-        this.#active.hiddenRenderIds.filter((id) =>
-          knownRenderIds.has(id)),
-      );
-      this.#active.selectedPickIds = Object.freeze(
-        this.#active.selectedPickIds.filter((id) =>
-          knownPickIds.has(id)),
-      );
+      refreshRetainedOverlayIdentities(this.#active);
       this.#active.activeBackendBytes = backend.activeBytes;
       this.#rangeEvictions += 1;
       return Object.freeze({
@@ -2008,11 +2840,366 @@ export class Bounded3dRenderer {
     }
   }
 
+  registerRetainedOverlaySource(value) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    const registration = retainedSourceRegistration(
+      value,
+      this.#active.baseInstances,
+      this.limits,
+    );
+    if (this.#active.retainedOverlays.has(registration.overlayId)) {
+      throw new RangeError(
+        "renderer retained overlay source is already registered",
+      );
+    }
+    const claimed = new Set(
+      [...this.#active.retainedOverlays.values()].flatMap(
+        (overlay) => [...overlay.sourceToProjected.values()]
+          .map((projected) => projected.renderId),
+      ),
+    );
+    if ([...registration.sourceToProjected.values()].some(
+      (projected) => claimed.has(projected.renderId),
+    )) {
+      throw new RangeError(
+        "renderer retained overlay sources overlap",
+      );
+    }
+    this.#active.retainedOverlays.set(
+      registration.overlayId,
+      registration,
+    );
+    return Object.freeze({
+      schema: "bim-explorer-retained-overlay-source-receipt/0.1",
+      status: "registered",
+      overlayId: registration.overlayId,
+      sourceId: registration.sourceId,
+      layerId: registration.layerId,
+      revisionId: registration.revisionId,
+      identities: registration.objects.size,
+      activeBackendBytes: this.#active.activeBackendBytes,
+    });
+  }
+
+  retainedOverlaySnapshot({ overlayId } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    nonEmptyString(overlayId, "renderer retained overlayId");
+    const overlay = this.#active.retainedOverlays.get(overlayId);
+    if (overlay === undefined) {
+      throw new RangeError(
+        "renderer retained overlay source is not registered",
+      );
+    }
+    return Object.freeze({
+      overlayId: overlay.overlayId,
+      sourceId: overlay.sourceId,
+      layerId: overlay.layerId,
+      revisionId: overlay.revisionId,
+      sequence: overlay.sequence,
+      checkpoints: overlay.checkpoints,
+      identities: Object.freeze(
+        [...overlay.objects.values()].map((object) =>
+          retainedIdentity(object, overlay)),
+      ),
+      activeBackendBytes: this.#active.activeBackendBytes,
+    });
+  }
+
+  async prepareRetainedOverlayDelta({
+    overlayId,
+    delta,
+    payloadBytes = null,
+    signal,
+  } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    if (typeof this.#backend.stageRetainedOverlayDelta !== "function") {
+      throw new DOMException(
+        "renderer backend does not support retained overlays",
+        "NotSupportedError",
+      );
+    }
+    nonEmptyString(overlayId, "renderer retained overlayId");
+    const active = this.#active;
+    const overlay = active.retainedOverlays.get(overlayId);
+    if (overlay === undefined) {
+      throw new RangeError(
+        "renderer retained overlay source is not registered",
+      );
+    }
+    this.#updating = true;
+    let plan = null;
+    let backendTransaction = null;
+    try {
+      aborted(signal);
+      plan = await buildRetainedOverlayPlan({
+        delta,
+        overlay,
+        payloadBytes,
+        limits: this.limits,
+      });
+      aborted(signal);
+      backendTransaction = await this.#backend.stageRetainedOverlayDelta(
+        active.handleId,
+        Object.freeze({
+          ...plan,
+          maximumActiveBytes: this.limits.maximumGpuCacheBytes,
+          maximumStagingBytes:
+            this.limits.maximumRetainedOverlayStagingBytes,
+          presentation: active.presentation,
+        }),
+        { signal },
+      );
+      aborted(signal);
+      const stageReceipt = plainRecord(
+        backendTransaction?.receipt,
+        "renderer retained overlay backend stage receipt",
+      );
+      for (const method of ["commit", "rollback", "dispose"]) {
+        if (typeof backendTransaction?.[method] !== "function") {
+          throw new TypeError(
+            `renderer retained overlay transaction.${method} must be a function`,
+          );
+        }
+      }
+      if (
+        stageReceipt.staged !== true ||
+        typeof stageReceipt.stageId !== "string" ||
+        stageReceipt.stageId.length === 0 ||
+        stageReceipt.currentActiveBytes !== active.activeBackendBytes ||
+        !Number.isSafeInteger(stageReceipt.candidateActiveBytes) ||
+        stageReceipt.candidateActiveBytes < 0 ||
+        stageReceipt.candidateActiveBytes >
+          this.limits.maximumGpuCacheBytes ||
+        stageReceipt.currentFramebufferPreserved !== true ||
+        stageReceipt.currentPickMapPreserved !== true
+      ) {
+        throw new Error(
+          "renderer retained overlay backend stage receipt is invalid",
+        );
+      }
+      const staged = {
+        active,
+        backendTransaction,
+        overlay,
+        plan,
+        stageReceipt: Object.freeze({ ...stageReceipt }),
+      };
+      this.#stagedRetained = staged;
+      this.#retainedStages += 1;
+      let status = "open";
+      const assertOpen = () => {
+        if (
+          status !== "open" ||
+          this.#stagedRetained !== staged ||
+          this.#active !== active
+        ) {
+          throw invalidState(
+            "renderer retained overlay transaction is closed",
+          );
+        }
+      };
+      const close = (nextStatus) => {
+        if (this.#stagedRetained === staged) {
+          this.#stagedRetained = null;
+        }
+        status = nextStatus;
+      };
+      return Object.freeze({
+        receipt: Object.freeze({
+          schema: BIM_RETAINED_OVERLAY_DELTA_RECEIPT,
+          status: "prepared",
+          atomic: true,
+          applied: false,
+          overlayId,
+          deltaId: plan.deltaId,
+          sequence: plan.sequence,
+          fromRevisionId: plan.fromRevisionId,
+          toRevisionId: plan.toRevisionId,
+          affectedWorldBounds: plan.affectedWorldBounds,
+          metrics: plan.metrics,
+          backend: staged.stageReceipt,
+          cpuStagingReleased: true,
+        }),
+        commit: () => {
+          assertOpen();
+          const backend = plainRecord(
+            backendTransaction.commit(),
+            "renderer retained overlay backend commit receipt",
+          );
+          if (
+            backend.committed !== true ||
+            backend.atomic !== true ||
+            backend.geometryPickRevisionAtomic !== true ||
+            backend.activeBytes !==
+              stageReceipt.candidateActiveBytes
+          ) {
+            throw new Error(
+              "renderer retained overlay backend commit receipt is invalid",
+            );
+          }
+          const nextOverlay = {
+            ...overlay,
+            revisionId: plan.toRevisionId,
+            sequence: plan.sequence,
+            objects: plan.nextObjects,
+            sourceToProjected: plan.nextSourceToProjected,
+          };
+          active.retainedOverlays.set(overlayId, nextOverlay);
+          active.activeBackendBytes = backend.activeBytes;
+          active.viewRevision += 1;
+          refreshRetainedOverlayIdentities(active);
+          close("committed");
+          this.#retainedCommits += 1;
+          return Object.freeze({
+            schema: BIM_RETAINED_OVERLAY_DELTA_RECEIPT,
+            status: "applied",
+            atomic: true,
+            applied: true,
+            overlayId,
+            sourceId: nextOverlay.sourceId,
+            layerId: nextOverlay.layerId,
+            deltaId: plan.deltaId,
+            sequence: plan.sequence,
+            fromRevisionId: plan.fromRevisionId,
+            toRevisionId: plan.toRevisionId,
+            affectedWorldBounds: plan.affectedWorldBounds,
+            identities: Object.freeze(
+              [...nextOverlay.objects.values()].map((object) =>
+                retainedIdentity(object, nextOverlay)),
+            ),
+            activeBackendBytes: backend.activeBytes,
+            viewRevision: active.viewRevision,
+            backend: Object.freeze({ ...backend }),
+          });
+        },
+        rollback: async () => {
+          if (status !== "open") {
+            return false;
+          }
+          assertOpen();
+          const result = await backendTransaction.rollback();
+          close("rolled-back");
+          this.#retainedRollbacks += 1;
+          return result;
+        },
+        dispose: async () => {
+          if (status === "open") {
+            assertOpen();
+            const result = await backendTransaction.dispose();
+            close("disposed");
+            this.#retainedRollbacks += 1;
+            return result;
+          }
+          return await backendTransaction.dispose();
+        },
+      });
+    } catch (error) {
+      if (backendTransaction !== null) {
+        const cleanupErrors = [];
+        for (const method of ["rollback", "dispose"]) {
+          try {
+            await backendTransaction[method]();
+          } catch (cleanupError) {
+            cleanupErrors.push(cleanupError);
+          }
+        }
+        if (cleanupErrors.length > 0) {
+          throw new AggregateError(
+            [error, ...cleanupErrors],
+            "renderer retained overlay preparation cleanup failed",
+            { cause: error },
+          );
+        }
+      }
+      throw error;
+    } finally {
+      plan?.releaseCpuStaging();
+      this.#updating = false;
+    }
+  }
+
+  checkpointRetainedOverlay({
+    checkpointId,
+    expectedRevisionId,
+    overlayId,
+  } = {}) {
+    if (this.#disposed) {
+      throw invalidState("bounded 3D renderer is disposed");
+    }
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
+      throw invalidState(
+        "bounded 3D renderer operation is in progress",
+      );
+    }
+    if (this.#active === null) {
+      throw invalidState("bounded 3D renderer is not mounted");
+    }
+    for (const [label, value] of Object.entries({
+      checkpointId,
+      expectedRevisionId,
+      overlayId,
+    })) {
+      nonEmptyString(value, `renderer retained checkpoint.${label}`);
+    }
+    const overlay = this.#active.retainedOverlays.get(overlayId);
+    if (
+      overlay === undefined ||
+      overlay.revisionId !== expectedRevisionId
+    ) {
+      throw new RangeError(
+        "renderer retained checkpoint is outside the active revision",
+      );
+    }
+    overlay.checkpoints += 1;
+    this.#retainedCheckpoints += 1;
+    return Object.freeze({
+      schema: BIM_RETAINED_OVERLAY_CHECKPOINT_RECEIPT,
+      status: "checkpointed",
+      overlayId,
+      checkpointId,
+      revisionId: overlay.revisionId,
+      sequence: overlay.sequence,
+      retainedObjects: overlay.objects.size,
+      activeBackendBytes: this.#active.activeBackendBytes,
+      externalSourceRangeReads: 0,
+      externalSourceParses: 0,
+      externalSourceRangeUploads: 0,
+      cameraPreserved: true,
+      clippingPreserved: true,
+      anchorPreserved: true,
+    });
+  }
+
   async applyRenderDelta({ delta: deltaValue, signal } = {}) {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2203,7 +3390,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2296,10 +3483,16 @@ export class Bounded3dRenderer {
     const isolated = isolateRenderIds === null
       ? null
       : new Set(isolateRenderIds);
-    const effectiveHiddenRenderIds = isolated === null
+    const requestedHiddenRenderIds = isolated === null
       ? [...hiddenRenderIds]
       : [...new Set(this.#active.instanceRenderIds)]
           .filter((renderId) => !isolated.has(renderId));
+    const effectiveHiddenRenderIds = [
+      ...new Set([
+        ...requestedHiddenRenderIds,
+        ...this.#active.retainedInvisibleRenderIds,
+      ]),
+    ];
     const hidden = new Set(effectiveHiddenRenderIds);
     const selected = new Set(selectedPickIds);
     const hiddenInstances =
@@ -2346,6 +3539,8 @@ export class Bounded3dRenderer {
       this.#active.clipping = clipping;
       this.#active.hiddenRenderIds =
         Object.freeze([...effectiveHiddenRenderIds]);
+      this.#active.requestedHiddenRenderIds =
+        Object.freeze([...requestedHiddenRenderIds]);
       this.#active.selectedPickIds =
         Object.freeze([...selectedPickIds]);
       this.#viewUpdates += 1;
@@ -2393,7 +3588,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2464,7 +3659,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       throw invalidState("bounded 3D renderer is disposed");
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2535,7 +3730,7 @@ export class Bounded3dRenderer {
   }
 
   async unmount() {
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2547,7 +3742,7 @@ export class Bounded3dRenderer {
     if (this.#disposed) {
       return false;
     }
-    if (this.#mounting || this.#updating) {
+    if (this.#mounting || this.#updating || this.#stagedRetained !== null) {
       throw invalidState(
         "bounded 3D renderer operation is in progress",
       );
@@ -2579,6 +3774,16 @@ export {
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
   BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   decodeBimTexturedGeometryRange,
+};
+
+export {
+  BIM_RETAINED_OVERLAY_CHECKPOINT_RECEIPT,
+  BIM_RETAINED_OVERLAY_DELTA_RECEIPT,
+  BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+  BIM_RETAINED_OVERLAY_PACKET_SCHEMA,
+  decodeBimRetainedOverlayPacket,
+  encodeBimRetainedOverlayPacket,
+  sha256BimRetainedOverlayPacket,
 };
 
 export {

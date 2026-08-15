@@ -234,6 +234,14 @@ Apple M2 Metal에서 같은 3-source composition, 8,286 pixels, surface hit 3개
 cleanup을 재현했습니다. 이는 기존 package/VSIX를 다시 게시하거나 Linux/Windows,
 실제 고객 모델 또는 production support를 승인하지 않습니다.
 
+새 federated Surface v0.3.0 package candidate는 immutable v0.2.0 asset을
+변경하지 않고 `consumer-overlay` retained geometry 계약을 포함합니다. 독립 stage
+두 곳의 byte-identical pack과 tarball-only offline clean install에서 packet
+encode/decode, async prepare, synchronous atomic commit, source-replay 없는
+checkpoint와 terminal cleanup을 재현했습니다. 공개 tag는
+`bim-surface-v0.3.0`이며 npm registry, VSIX, published Viewer Core 0.1.3 artifact,
+cross-platform physical GPU와 production support는 포함하지 않습니다.
+
 optional Spatial 연계는
 [`bim-explorer-spatial-integration/0.1`](specs/bim-spatial-integration-v0.1.md)
 bridge를 사용합니다. Explorer는 source-bound GlobalId와 viewpoint만
