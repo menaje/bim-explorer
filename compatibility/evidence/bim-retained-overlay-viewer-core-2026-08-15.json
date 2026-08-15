@@ -1,0 +1,68 @@
+{
+  "schema": "bim-explorer-retained-overlay-viewer-core-qualification/1",
+  "status": "passed-viewer-core-source-0.1.3",
+  "asOf": "2026-08-15",
+  "capturedAt": "2026-08-15T03:51:57.968Z",
+  "viewerCore": {
+    "version": "0.1.3",
+    "sourceCommit": "6702ad1439e44fa9a9835f56181614299c1fe1ff",
+    "branch": "dev",
+    "sourceCommitQualified": true,
+    "publishedArtifactQualified": false,
+    "protocolVersion": "0.1.0"
+  },
+  "transaction": {
+    "applyMs": 1.9728749999999877,
+    "atomic": true,
+    "stagedFramebufferPreserved": true,
+    "stagedPickMapPreserved": true,
+    "controllerRevisionMatchesSurface": true,
+    "cancelledSurfaceUnchanged": true,
+    "staleRejectedBeforePrepare": true,
+    "digestRejectedSurfaceUnchanged": true,
+    "tombstoneApplied": true,
+    "payloadReads": 3,
+    "prepareCalls": 4
+  },
+  "preservation": {
+    "nativeReadsBefore": 1,
+    "nativeReadsAfter": 1,
+    "externalReadsUnchanged": true,
+    "checkpointReads": 0,
+    "checkpointParses": 0,
+    "checkpointUploads": 0,
+    "baseGpuAllocationPreserved": true
+  },
+  "cleanup": {
+    "controllerDisposed": true,
+    "surfaceDisposed": true,
+    "backendDisposed": true,
+    "backendActiveBytes": 0,
+    "retainedObjects": 0
+  },
+  "sibling": {
+    "branchBefore": "dev",
+    "branchAfter": "dev",
+    "workingTreeEntriesBefore": 1,
+    "workingTreeEntriesAfter": 1,
+    "headBefore": "6702ad1439e44fa9a9835f56181614299c1fe1ff",
+    "headAfter": "6702ad1439e44fa9a9835f56181614299c1fe1ff",
+    "headUnchanged": true,
+    "workingTreeUnchanged": true,
+    "relevantSourceMatchesHead": true
+  },
+  "assertions": {
+    "upstreamSourceCommitExact": true,
+    "stagedAdapterContractAccepted": true,
+    "synchronousAtomicCommitObserved": true,
+    "cancellationPreservedCurrentSurface": true,
+    "staleOrderingRejectedBeforeAdapter": true,
+    "digestFailurePreservedCurrentSurface": true,
+    "tombstoneAndCheckpointQualified": true,
+    "checkpointAvoidedSourceParse": true,
+    "nativeSourceNotReread": true,
+    "resourcesDisposed": true,
+    "siblingRepositoryUntouched": true,
+    "publishedArtifactNotClaimed": true
+  }
+}

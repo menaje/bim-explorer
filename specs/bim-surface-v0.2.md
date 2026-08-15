@@ -5,7 +5,7 @@ authority:
   - federated-bim-surface-contract
   - multi-source-surface-lifecycle
   - source-role-composition
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # BIM Surface v0.2
@@ -60,6 +60,21 @@ consumer revision과 identity를 그대로 유지한다.
 
 서로 다른 source slot의 GlobalId, native ID, Render/Pick ID와 range handle은
 항상 namespacing한다. 같은 GlobalId를 source 사이에서 merge하지 않는다.
+
+## Post-release retained overlay extension
+
+개발선의 additive
+[`bim-explorer-federated-retained-overlay/0.1`](bim-retained-overlay-v0.1.md)은
+`consumer-overlay` slot만 native source range 재읽기 없이 geometry delta로
+갱신한다. packet digest, source/layer/revision/sequence와 operation을 exact
+binding하고 별도 CPU/GPU staging을 마친 뒤 geometry, visibility, Pick map과
+Surface revision을 synchronous commit 하나로 전환한다. stale, cancellation,
+allocation 또는 digest 실패는 current surface를 보존한다.
+
+checkpoint는 native range read/upload를 수행하지 않으며 retained geometry에는
+source-local triangle locator가 없으므로 object selection을 유지하되 anchor는
+unavailable이다. 이 extension은 immutable public v0.2.0 runtime과 tgz에 포함되지
+않으며 새 package admission 전에는 v0.2 capability로 주장하지 않는다.
 
 ## Semantic exploration과 selection
 

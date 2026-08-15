@@ -826,6 +826,21 @@ export class BimSurfaceHitRenderer {
         surfaceHitDiagnostic: null,
       });
     }
+    const sourceIdentityResident = this.#active.snapshot.entities.some(
+      (identity) =>
+        identity.renderId === pick.identity?.renderId &&
+        identity.pickId === pick.identity?.pickId,
+    );
+    if (!sourceIdentityResident) {
+      this.#surfaceMisses += 1;
+      return deepFreeze({
+        ...pick,
+        surfaceHit: null,
+        surfaceHitCapability: "unavailable-retained-overlay",
+        surfaceHitDiagnostic:
+          "retained-overlay-has-no-source-range-locator",
+      });
+    }
     try {
       const surfaceHit = await resolveBimSurfaceHit({
         camera: this.#active.camera,
@@ -863,6 +878,76 @@ export class BimSurfaceHitRenderer {
           "exact-triangle-intersection-unavailable",
       });
     }
+  }
+
+  registerRetainedOverlaySource(options = {}) {
+    if (this.#disposed) {
+      throw invalidState("surface-hit renderer is disposed");
+    }
+    if (this.#active === null) {
+      throw invalidState("surface-hit renderer is not mounted");
+    }
+    if (
+      typeof this.#renderer.registerRetainedOverlaySource !== "function"
+    ) {
+      throw unavailable(
+        "surface-hit renderer has no retained overlay capability",
+      );
+    }
+    return this.#renderer.registerRetainedOverlaySource(options);
+  }
+
+  async prepareRetainedOverlayDelta(options = {}) {
+    if (this.#disposed) {
+      throw invalidState("surface-hit renderer is disposed");
+    }
+    if (this.#active === null) {
+      throw invalidState("surface-hit renderer is not mounted");
+    }
+    if (
+      typeof this.#renderer.prepareRetainedOverlayDelta !== "function"
+    ) {
+      throw unavailable(
+        "surface-hit renderer has no retained overlay capability",
+      );
+    }
+    return await this.#renderer.prepareRetainedOverlayDelta(options);
+  }
+
+  async renderView(options = {}) {
+    if (this.#disposed) {
+      throw invalidState("surface-hit renderer is disposed");
+    }
+    if (this.#active === null) {
+      throw invalidState("surface-hit renderer is not mounted");
+    }
+    if (typeof this.#renderer.renderView !== "function") {
+      throw unavailable(
+        "surface-hit renderer has no view update capability",
+      );
+    }
+    const receipt = await this.#renderer.renderView(options);
+    if (receipt.camera !== undefined) {
+      this.#active.camera = validateCamera3d(receipt.camera);
+    }
+    return receipt;
+  }
+
+  checkpointRetainedOverlay(options = {}) {
+    if (this.#disposed) {
+      throw invalidState("surface-hit renderer is disposed");
+    }
+    if (this.#active === null) {
+      throw invalidState("surface-hit renderer is not mounted");
+    }
+    if (
+      typeof this.#renderer.checkpointRetainedOverlay !== "function"
+    ) {
+      throw unavailable(
+        "surface-hit renderer has no retained overlay capability",
+      );
+    }
+    return this.#renderer.checkpointRetainedOverlay(options);
   }
 
   async dispose() {

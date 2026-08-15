@@ -96,6 +96,23 @@ GLB–IFC–GLB를 Apple M2 Metal로 동일하게 합성해 8,286 non-background
 고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
 보존합니다.
 
+`consumer-overlay`의 source-owned 변경을 기존 base range와 분리해 반영하는
+retained geometry delta 개발선은
+[`bim-retained-overlay.json`](bim-retained-overlay.json)이 소유합니다. versioned
+binary packet의 digest·revision·sequence를 검증하고 CPU/GPU 후보를 화면 밖에
+stage한 뒤 geometry, Pick ID와 retained revision을 하나의 synchronous commit으로
+교체합니다. actual Chrome WebGL2와 staged VS Code Webview WebGL2에서 pixel,
+retained pick, selection·anchor·camera·clipping 보존, tombstone, checkpoint의 native
+range read·parse·upload 0과 terminal cleanup을 재현했습니다. Viewer Core 0.1.3은
+exact public source commit의 async prepare/synchronous commit adapter로 cancellation,
+stale ordering과 invalid digest fail-closed를 통과했습니다. 이 결과는 immutable
+Federated Surface v0.2 runtime이나 public package를 변경하지 않으며 published
+Viewer Core 0.1.3 artifact, physical GPU와 production support는 보류합니다. exact
+결과는 [`Browser evidence`](evidence/bim-retained-overlay-browser-2026-08-15.json),
+[`VS Code evidence`](evidence/bim-retained-overlay-vscode-2026-08-15.json),
+[`Viewer Core source evidence`](evidence/bim-retained-overlay-viewer-core-2026-08-15.json)에
+고정합니다.
+
 Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental E57/LAS/LAZ read-only
 Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,

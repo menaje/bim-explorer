@@ -1,0 +1,78 @@
+{
+  "schema": "bim-explorer-retained-overlay-compatibility/1",
+  "status": "experimental",
+  "asOf": "2026-08-15",
+  "contract": {
+    "packet": "bim-explorer-retained-overlay-packet/0.1",
+    "mediaType": "application/vnd.bim-explorer.retained-overlay-delta.v1",
+    "deltaReceipt": "bim-explorer-retained-overlay-delta-receipt/0.1",
+    "checkpointReceipt": "bim-explorer-retained-overlay-checkpoint-receipt/0.1",
+    "surface": "bim-explorer-federated-retained-overlay/0.1",
+    "surfaceAdapter": "bim-explorer-federated-retained-overlay-adapter/0.1",
+    "viewerRenderProtocol": "menaje-viewer-render-protocol/0.1.0",
+    "viewerCoreSourceVersion": "0.1.3",
+    "viewerCoreSourceCommit": "6702ad1439e44fa9a9835f56181614299c1fe1ff",
+    "baseSurface": "bim-explorer-bim-surface/0.2"
+  },
+  "limits": {
+    "maximumPacketBytes": 8388608,
+    "maximumResidentObjects": 32768,
+    "maximumStagingBytes": 16777216,
+    "maximumPacketEntries": 4096,
+    "maximumIdentifierLength": 512
+  },
+  "gates": {
+    "versionedBinaryPacket": true,
+    "exactDigestAndDeltaBinding": true,
+    "boundedCpuAndGpuStaging": true,
+    "atomicGeometryPickRevisionCommit": true,
+    "upsertTombstoneStyleTransformIdentity": true,
+    "rollbackCancellationAndAllocationFailure": true,
+    "staleAndOutOfOrderFailClosed": true,
+    "sourceRangeAndBaseGpuPreservation": true,
+    "cameraClippingAndAnchorPreservation": true,
+    "checkpointWithoutSourceReplay": true,
+    "deterministicDispose": true,
+    "actualBrowserWebGl2": true,
+    "actualVscodeWebviewWebGl2": true,
+    "viewerCoreSource013StagedAdapter": true,
+    "immutablePublicV02RuntimeUnchanged": true,
+    "authorityFree": true,
+    "publishedViewerCore013Artifact": false,
+    "publicSurfaceArtifact": false,
+    "crossPlatformPhysicalGpu": false,
+    "productionSupport": false
+  },
+  "evidence": {
+    "actualBrowser": "compatibility/evidence/bim-retained-overlay-browser-2026-08-15.json",
+    "actualVscode": "compatibility/evidence/bim-retained-overlay-vscode-2026-08-15.json",
+    "viewerCoreSource": "compatibility/evidence/bim-retained-overlay-viewer-core-2026-08-15.json"
+  },
+  "blockers": [
+    "Viewer Core 0.1.3 is qualified from one exact public source commit; no published 0.1.3 artifact is claimed",
+    "the additive retained-overlay Surface contract is not part of the immutable public federated Surface v0.2.0 artifact",
+    "Linux and Windows physical GPU coverage and stable production support remain unqualified"
+  ],
+  "limitations": [
+    "Browser and VS Code evidence use generated IFC and GLB fixtures and do not contain customer data",
+    "Chrome evidence uses an actual WebGL2 context but does not claim a physical GPU",
+    "VS Code evidence uses SwiftShader WebGL2 and a temporary development-source Surface bundle",
+    "retained geometry provides display and pick identity but no native source face locator or mutation authority",
+    "checkpoint preserves retained state without rereading native source ranges and is not a source-authoritative revision"
+  ],
+  "policy": {
+    "consumerOverlayOnly": true,
+    "sourceNeutral": true,
+    "readOnly": true,
+    "sourceMutation": false,
+    "workspaceAuthority": false,
+    "canonicalIdentityAuthority": false,
+    "acceptanceAuthority": false,
+    "publishAuthority": false,
+    "claimViewerCoreSourceCompatibility": true,
+    "claimPublishedViewerCore013Artifact": false,
+    "claimPublicSurfaceArtifact": false,
+    "claimPhysicalGpu": false,
+    "claimProductionSupport": false
+  }
+}

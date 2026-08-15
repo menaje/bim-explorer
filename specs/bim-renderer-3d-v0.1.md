@@ -6,7 +6,7 @@ authority:
   - geometry-staging-limits
   - point-range-staging-limits
   - renderer-resource-receipt
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # BIM renderer 3D v0.1
@@ -351,6 +351,15 @@ bounds를 검증한 뒤 affected world bounds를 framebuffer scissor로 투영�
 다시 그렸습니다. stale replay는 거부하고 지원하지 않는 geometry mutation은
 backend를 호출하지 않은 채 `remount-required`를 반환합니다.
 
+geometry mutation은 별도 additive
+[`bim-explorer-retained-overlay/0.1`](bim-retained-overlay-v0.1.md) packet으로만
+허용합니다. `BEXOVL01` packet은 position/normal/index, identity, style,
+transform, bounds와 visibility를 digest 및 exact delta revision에 묶습니다.
+prepare는 CPU decode와 GPU upload 및 off-screen frame/Pick map을 bounded staging에
+완료하고 current frame을 유지합니다. synchronous commit만 geometry, Pick map과
+revision을 함께 바꾸며 rollback/cancel/allocation 실패는 staged resource만
+회수합니다. 이 경로는 기존 presentation-only delta 의미를 바꾸지 않습니다.
+
 ## Browser와 VS Code Webview host
 
 `bim-explorer-bim-renderer-3d-host/0.1`은 Browser와 `vscode-webview`에 같은
@@ -365,14 +374,15 @@ bytes와 resident range는 0이었습니다. 실제 Browser Worker의 model
 close·engine dispose·termination evidence도 별도 qualification에서
 교차 확인합니다.
 
-이 결과는 내부 host contract conformance입니다. 실제 VS Code extension
-shell integration, upstream Viewer Core package나 cross-repository
-compatibility를 승인하지 않습니다.
+기존 결과는 내부 host contract conformance입니다. retained overlay는 별도
+actual VS Code extension webview와 upstream Viewer Core 0.1.3 exact source
+commit까지 검증했지만 published 0.1.3 artifact, immutable Surface v0.2 포함이나
+stable cross-repository compatibility를 승인하지 않습니다.
 
 ## 현재 보류
 
 - Linux/Windows physical GPU·driver와 OS-level GPU memory qualification
-- touch gesture와 실제 VS Code extension shell integration
+- touch gesture와 retained overlay의 clean-installed VSIX publication
 - 공용 Viewer Core 3D consumer conformance
 - progressive/arithmetic/lossless JPEG, alpha mode,
   normal/metallic-roughness/occlusion/emissive texture와

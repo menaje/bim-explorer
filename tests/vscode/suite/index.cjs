@@ -884,7 +884,12 @@ function translation(x) {
   ];
 }
 
-async function qualifyFederatedSurface({ api, root, temporary }) {
+async function qualifyFederatedSurface({
+  api,
+  includeRetainedOverlay = false,
+  root,
+  temporary,
+}) {
   const generatedIfc = await import(
     pathToFileURL(
       path.join(root, "scripts", "generate-synthetic-ifc.mjs"),
@@ -1068,6 +1073,65 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
     assert.equal(serialized.includes(file), false);
     assert.equal(serialized.includes(path.basename(file)), false);
   }
+  let retained = null;
+  if (includeRetainedOverlay) {
+    assert.equal(
+      await vscode.commands.executeCommand(
+        "bimExplorer.verifyRetainedOverlay",
+      ),
+      true,
+    );
+    retained = await waitFor(() => {
+      const report = api.qualificationReports().at(-1);
+      if (report?.status === "failed") {
+        throw new Error(
+          `Federated retained overlay failed: ${JSON.stringify(report)}`,
+        );
+      }
+      if (
+        report?.status === "retained-progress" &&
+        Date.now() - Date.parse(
+          report.retainedOverlayProgress?.at ?? "",
+        ) > 30_000
+      ) {
+        throw new Error(
+          `Federated retained overlay stalled: ${JSON.stringify(report)}`,
+        );
+      }
+      return report?.status === "retained-qualified"
+        ? report.retainedOverlay
+        : null;
+    }, "Federated retained overlay report", 120_000);
+    assert.equal(
+      retained.contract,
+      "bim-explorer-federated-retained-overlay/0.1",
+    );
+    assert.equal(retained.actualWebGl2, true);
+    assert.equal(retained.atomic, true);
+    assert.equal(retained.stagedFramebufferPreserved, true);
+    assert.equal(retained.stagedPickMapPreserved, true);
+    assert.equal(retained.payloadReads, 1);
+    assert.equal(retained.selectionItems, 1);
+    assert.equal(retained.selectionSource, retained.selectedSource);
+    assert.ok(retained.prepareMs >= 0);
+    assert.ok(retained.commitMs >= 0);
+    assert.ok(retained.nonBackgroundPixels > 0);
+    assert.equal(retained.tombstonePickMiss, true);
+    assert.equal(retained.externalReadsUnchanged, true);
+    assert.equal(retained.baseGpuAllocationUnchanged, true);
+    assert.equal(retained.cameraUnchanged, true);
+    assert.equal(retained.clippingUnchanged, true);
+    assert.equal(retained.selectionPreserved, true);
+    assert.equal(retained.anchorsPreserved, true);
+    assert.equal(retained.checkpointReads, 0);
+    assert.equal(retained.checkpointParses, 0);
+    assert.equal(retained.checkpointUploads, 0);
+    assert.equal(retained.retainedObjectsAfterTombstone, 0);
+    assert.equal(
+      retained.retainedSurfaceHitCapability,
+      "unavailable-retained-overlay",
+    );
+  }
   assert.equal(
     await vscode.commands.executeCommand(
       "bimExplorer.disposeFederatedSurface",
@@ -1134,10 +1198,14 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
         ranges: qualified.ranges,
         authority: qualified.authority,
       },
+      ...(retained === null ? {} : { retainedOverlay: retained }),
       cleanup: disposed.cleanup,
       lifecycle: {
         opened: ready.status,
         anchors: qualified.status,
+        ...(retained === null
+          ? {}
+          : { retainedOverlay: "retained-qualified" }),
         disposed: disposed.status,
         editorClosed: closed.editorClosed,
       },
@@ -1154,6 +1222,9 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
       pathFreeHostBridge: true,
       transferredResourcesReleased: true,
       editorCloseObserved: true,
+      ...(retained === null
+        ? {}
+        : { atomicRetainedOverlayQualified: true }),
     },
   };
 }
@@ -1197,6 +1268,8 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE;
   const includeFederatedSurface =
     process.env.BIM_EXPLORER_VSCODE_FEDERATED_SURFACE === "true";
+  const includeRetainedOverlay =
+    process.env.BIM_EXPLORER_VSCODE_RETAINED_OVERLAY === "true";
   const rendererMode =
     process.env.BIM_EXPLORER_VSCODE_RENDERER_MODE ?? "swiftshader";
   assert.ok(["physical", "swiftshader"].includes(rendererMode));
@@ -1249,6 +1322,7 @@ async function run() {
       "bimExplorer.refinePointLod",
       "bimExplorer.openFederation",
       "bimExplorer.verifyFederatedAnchors",
+      "bimExplorer.verifyRetainedOverlay",
       "bimExplorer.disposeFederatedSurface",
     ]) {
       assert.ok(commands.includes(command), command);
@@ -1740,7 +1814,12 @@ async function run() {
     const hasPointQualifications =
       Object.keys(pointQualifications).length > 0;
     const federatedSurfaceQualification = includeFederatedSurface
-      ? await qualifyFederatedSurface({ api, root, temporary })
+      ? await qualifyFederatedSurface({
+          api,
+          includeRetainedOverlay,
+          root,
+          temporary,
+        })
       : null;
     const physicalGpuCandidates = [
       ready.gpu,
