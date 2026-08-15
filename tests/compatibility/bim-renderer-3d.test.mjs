@@ -80,6 +80,18 @@ async function fixtures() {
       manifest.evidence.pointHierarchyChunkLod,
       "utf8",
     )),
+    pointPhysicalGpuQualification: JSON.parse(await readFile(
+      manifest.evidence.pointPhysicalGpuQualification,
+      "utf8",
+    )),
+    baseColorTextureProducts: JSON.parse(await readFile(
+      manifest.evidence.baseColorTextureProducts,
+      "utf8",
+    )),
+    jpegBaseColorTextureProducts: JSON.parse(await readFile(
+      manifest.evidence.jpegBaseColorTextureProducts,
+      "utf8",
+    )),
   };
   return { manifest, evidence };
 }
@@ -118,8 +130,30 @@ test("BIM renderer records headless and Browser WebGL2 mounts", async () => {
   ]);
   assert.equal(result.browserPointCount, 10_201);
   assert.equal(result.browserPointPixels, 40_471);
-  assert.equal(result.passedGates, 26);
+  assert.equal(result.baseColorTextureSurfaces, 6);
+  assert.equal(result.jpegBaseColorTextureSurfaces, 3);
+  assert.equal(result.passedGates, 30);
   assert.equal(result.heldGates, 0);
+  assert.equal(result.pointPhysicalGpuSurfaces, 12);
+});
+
+test("BIM renderer requires exact base color texture evidence", async () => {
+  const { manifest, evidence } = await fixtures();
+  evidence.baseColorTextureProducts.assertions
+    .deterministicCleanup = false;
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, evidence),
+    /glTF texture product evidence is invalid/u,
+  );
+});
+
+test("BIM renderer requires exact JPEG texture evidence", async () => {
+  const { manifest, evidence } = await fixtures();
+  evidence.jpegBaseColorTextureProducts.core.geometry.rangeBytes += 1;
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, evidence),
+    /glTF JPEG texture product evidence is invalid/u,
+  );
 });
 
 test("BIM renderer Viewer Core claim requires release evidence", async () => {
@@ -263,6 +297,18 @@ test("Browser point evidence pins one bounded primitive draw", async () => {
   assert.throws(
     () => validateBimRenderer3dCompatibility(manifest, corrupted),
     /point renderer qualification evidence is invalid/u,
+  );
+});
+
+test("point physical GPU evidence rejects software fallback", async () => {
+  const { manifest, evidence } = await fixtures();
+  evidence.pointPhysicalGpuQualification.browser.e57
+    .environment.gpu.unmaskedRenderer =
+      "ANGLE (Google, SwiftShader)";
+
+  assert.throws(
+    () => validateBimRenderer3dCompatibility(manifest, evidence),
+    /physical Browser evidence is invalid/u,
   );
 });
 

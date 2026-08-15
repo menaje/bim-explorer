@@ -58,6 +58,13 @@ federated selection key는 최소한 다음 tuple에 묶입니다.
 ownership, semantic authority나 Canonical Entity ID는 federation이
 발급하지 않습니다.
 
+`consumer-overlay` role은 caller가 명시한 composition metadata이며 자체로
+write capability를 발급하지 않습니다. additive retained overlay adapter는
+이 role의 active source slot만 등록하고 source-local Render/Pick ID와 native
+revision을 composite projected ID에 묶습니다. geometry delta commit은
+[`bim-explorer-retained-overlay/0.1`](bim-retained-overlay-v0.1.md)을 따르며 다른
+slot의 identity, base range, selection 또는 alignment를 바꾸지 않습니다.
+
 ## Per-source state
 
 각 source는 독립적으로 다음 상태와 visibility를 가집니다.
@@ -193,7 +200,8 @@ source session, Worker와 GPU lifecycle은 기존 source/renderer owner가
 - 실제 Coni Spatial consumer와 standalone Spatial bundle
 - 실제 사용자 과업의 두 format 이상 수요
 - 측량 control point와 datum transformation
-- glTF/GLB external resource bundle와 required extension; bounded 제품
+- glTF/GLB external resource bundle와 required extension의 immutable federated
+  v0.2 admission; local bundle과 `KHR_mesh_quantization` single-source 제품
   file-open은 별도 product-shell evidence에서 통과
 - point-cloud surveyed CRS/datum과 federation admission; 제품 로컬 파생
   point pick·octree/chunk LOD는 통과했지만 federation source identity 또는

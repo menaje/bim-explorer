@@ -1,0 +1,1445 @@
+{
+  "schema": "bim-explorer-gltf-texture-products-qualification/2",
+  "capturedAt": "2026-08-11T10:01:40.788Z",
+  "environment": {
+    "platform": "darwin-arm64",
+    "node": "v24.11.1",
+    "browser": "Google Chrome 151.0.7922.108",
+    "vscode": "1.132.0",
+    "rendererMode": "physical",
+    "softwareFallback": false
+  },
+  "fixture": {
+    "id": "khronos-gltf-sample-assets-box-textured-external-png",
+    "committed": false,
+    "format": "gltf",
+    "sourceBytes": 8285,
+    "fingerprint": "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "resourceBundle": {
+      "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+      "documentBytes": 3695,
+      "externalResourceBytes": 4590,
+      "externalResources": 2,
+      "externalBufferResources": 1,
+      "externalImageResources": 1,
+      "networkAtRuntime": false
+    },
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+      "cacheHit": true,
+      "bundled": false,
+      "sampleRedistributed": false
+    },
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "manifest": {
+      "documentSha256": "1e9003a4a2a8822ff60da529357bd8e4dec4a59b1a479017993e7e2ad5fcebef",
+      "resourceSha256": [
+        "2e8c0483fa6665c686ec345f89dcbb2a694a587442584d09f8a83a59633327bc",
+        "9c22b05c5b136d03c5621a8765e50a8322be6c35b9de53e9fe22685840d7f469"
+      ],
+      "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+      "artifactsTracked": false,
+      "releaseBundled": false
+    }
+  },
+  "embeddedFixture": {
+    "id": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+    "committed": false,
+    "format": "glb",
+    "sourceBytes": 5956,
+    "fingerprint": "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+    "gltfVersion": "2.0",
+    "nativeId": "node:1/mesh:0/primitive:0",
+    "resourceBundle": {
+      "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+      "documentBytes": 5956,
+      "externalResourceBytes": 0,
+      "externalResources": 0,
+      "embeddedImageBytes": 3750,
+      "embeddedImageResources": 1,
+      "networkAtRuntime": false
+    },
+    "provenance": {
+      "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+      "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+      "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+      "cacheHit": true,
+      "bundled": false,
+      "sampleRedistributed": false
+    },
+    "releaseBundled": false,
+    "sampleRedistributed": false,
+    "manifest": {
+      "entrySha256": "b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+      "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+      "artifactTracked": false,
+      "releaseBundled": false
+    }
+  },
+  "core": {
+    "validator": {
+      "package": "gltf-validator",
+      "version": "2.0.0-dev.3.10",
+      "integrity": "sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==",
+      "externalResourcesValidated": 2,
+      "issues": {
+        "errors": 0,
+        "warnings": 0,
+        "infos": 0,
+        "hints": 0,
+        "truncated": false
+      },
+      "projection": {
+        "vertices": 24,
+        "triangles": 12,
+        "textures": true,
+        "maximumUvSets": 1
+      }
+    },
+    "source": {
+      "fingerprint": "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+      "resourceBundle": {
+        "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+        "documentBytes": 3695,
+        "externalResourceBytes": 4590,
+        "externalResources": 2,
+        "externalBufferResources": 1,
+        "externalImageResources": 1,
+        "networkAtRuntime": false
+      },
+      "appearance": {
+        "profile": "base-color-texture-png-opaque-v0.1",
+        "textureCoordinateSet": 0,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "imageMediaTypes": [
+          "image/png"
+        ],
+        "colorSpace": "srgb-to-linear-webgl2"
+      },
+      "semanticAuthority": false,
+      "writeAuthority": false,
+      "roundTripAuthority": false
+    },
+    "geometry": {
+      "mediaType": "application/vnd.bim-explorer.geometry-range.v2",
+      "rangeBytes": 4756,
+      "rangeSha256": "ce04af8c146d03daf9e08e5b26f54e2f44fbe5a5203df50f0d642e459509a3cd",
+      "geometryPayloadBytes": 912,
+      "textureSourceBytes": 3750,
+      "textureDecodedBytes": 262144,
+      "textureGpuBytes": 349524,
+      "textures": 1,
+      "vertices": 24,
+      "triangles": 12
+    },
+    "renderer": {
+      "sourceReadBytes": 4756,
+      "sourceReads": 1,
+      "geometryPayloadBytes": 912,
+      "geometryRecords": 1,
+      "textureSourceBytes": 3750,
+      "textureDecodedBytes": 262144,
+      "textureGpuBytes": 349524,
+      "textures": 1,
+      "vertices": 24,
+      "indices": 36,
+      "uniqueTriangles": 12,
+      "instances": 1,
+      "instancedTriangles": 12,
+      "drawCalls": 1,
+      "instanceBytes": 80,
+      "cpuStagingBytes": 4836,
+      "uploadedBytes": 350516,
+      "textureBytes": 349524
+    },
+    "cleanup": {
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "sourceDisposed": true,
+      "activeBackendBytes": 0
+    }
+  },
+  "embeddedCore": {
+    "validator": {
+      "package": "gltf-validator",
+      "version": "2.0.0-dev.3.10",
+      "integrity": "sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==",
+      "externalResourcesValidated": 2,
+      "issues": {
+        "errors": 0,
+        "warnings": 0,
+        "infos": 0,
+        "hints": 0,
+        "truncated": false
+      },
+      "projection": {
+        "vertices": 24,
+        "triangles": 12,
+        "textures": true,
+        "maximumUvSets": 1
+      }
+    },
+    "source": {
+      "fingerprint": "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+      "resourceBundle": {
+        "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+        "documentBytes": 5956,
+        "externalResourceBytes": 0,
+        "externalResources": 0,
+        "embeddedImageBytes": 3750,
+        "embeddedImageResources": 1,
+        "networkAtRuntime": false
+      },
+      "appearance": {
+        "profile": "base-color-texture-png-opaque-v0.1",
+        "textureCoordinateSet": 0,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "imageMediaTypes": [
+          "image/png"
+        ],
+        "imageStorageProfiles": [
+          "glb-buffer-view"
+        ],
+        "colorSpace": "srgb-to-linear-webgl2"
+      },
+      "semanticAuthority": false,
+      "writeAuthority": false,
+      "roundTripAuthority": false
+    },
+    "geometry": {
+      "mediaType": "application/vnd.bim-explorer.geometry-range.v2",
+      "rangeBytes": 4756,
+      "rangeSha256": "ce04af8c146d03daf9e08e5b26f54e2f44fbe5a5203df50f0d642e459509a3cd",
+      "geometryPayloadBytes": 912,
+      "textureSourceBytes": 3750,
+      "textureDecodedBytes": 262144,
+      "textureGpuBytes": 349524,
+      "textures": 1,
+      "vertices": 24,
+      "triangles": 12
+    },
+    "renderer": {
+      "sourceReadBytes": 4756,
+      "sourceReads": 1,
+      "geometryPayloadBytes": 912,
+      "geometryRecords": 1,
+      "textureSourceBytes": 3750,
+      "textureDecodedBytes": 262144,
+      "textureGpuBytes": 349524,
+      "textures": 1,
+      "vertices": 24,
+      "indices": 36,
+      "uniqueTriangles": 12,
+      "instances": 1,
+      "instancedTriangles": 12,
+      "drawCalls": 1,
+      "instanceBytes": 80,
+      "cpuStagingBytes": 4836,
+      "uploadedBytes": 350516,
+      "textureBytes": 349524
+    },
+    "cleanup": {
+      "rendererDisposed": true,
+      "sessionDisposed": true,
+      "sourceDisposed": true,
+      "activeBackendBytes": 0
+    }
+  },
+  "surfaces": {
+    "browser": {
+      "hostKind": "browser",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "high-performance",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 8285,
+        "documentBytes": 3695,
+        "externalResourceBytes": 4590,
+        "externalResources": 2,
+        "externalBufferResources": 1,
+        "externalImageResources": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "geometryBytes": 4756,
+        "metadataBytes": 1587,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "propertyDetailBytes": 0,
+        "propertyDetailRanges": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "wasmHeapCapacityBytes": null
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textures": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed",
+        "backendDisposed": true,
+        "clientDisposed": true
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "browser",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "sessionId": "session:gltf-reference:dac1296f1fdbc45722b08a9c",
+            "sourceId": "source:gltf:dac1296f1fdbc45722b08a9c",
+            "revisionId": "source-snapshot:sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+            "snapshotId": "snapshot:gltf-reference:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8:0",
+            "sequence": 1,
+            "reason": "surface-open",
+            "selection": {
+              "expressId": 1,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:gltf:dac1296f1fdbc457:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 2,
+            "kind": "browser",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "sessionId": "session:gltf-reference:dac1296f1fdbc45722b08a9c",
+            "sourceId": "source:gltf:dac1296f1fdbc45722b08a9c",
+            "revisionId": "source-snapshot:sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+            "snapshotId": "snapshot:gltf-reference:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8:0",
+            "sequence": 2,
+            "reason": "3d",
+            "selection": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "externalOrigins": [],
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-external-png",
+        "committed": false,
+        "format": "gltf",
+        "sourceBytes": 8285,
+        "fingerprint": "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "documentBytes": 3695,
+          "externalResourceBytes": 4590,
+          "externalResources": 2,
+          "externalBufferResources": 1,
+          "externalImageResources": 1,
+          "networkAtRuntime": false
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "cacheHit": true,
+          "bundled": false,
+          "sampleRedistributed": false
+        }
+      }
+    },
+    "stagedVscode": {
+      "hostKind": "vscode-webview",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 8285,
+        "documentBytes": 3695,
+        "externalResourceBytes": 4590,
+        "externalResources": 2,
+        "geometryBytes": 4756,
+        "metadataBytes": 1587,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "wasmHeapCapacityBytes": null,
+        "externalBufferResources": 1,
+        "externalImageResources": 1
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "textures": 1,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": {
+              "expressId": 1,
+              "globalId": null,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:gltf:dac1296f1fdbc457:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-external-png",
+        "committed": false,
+        "format": "gltf",
+        "sourceBytes": 8285,
+        "fingerprint": "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "networkAtRuntime": false,
+          "documentBytes": 3695,
+          "externalResourceBytes": 4590,
+          "externalResources": 2,
+          "externalBufferResources": 1,
+          "externalImageResources": 1
+        },
+        "appearance": {
+          "profile": "base-color-texture-png-opaque-v0.1",
+          "textureCoordinateSet": 0,
+          "imageMediaTypes": [
+            "image/png"
+          ],
+          "colorSpace": "srgb-to-linear-webgl2",
+          "textureSourceBytes": 3750,
+          "textureDecodedBytes": 262144,
+          "textures": 1
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "bundled": false
+        }
+      }
+    },
+    "installedVsix": {
+      "hostKind": "vscode-webview",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 8285,
+        "documentBytes": 3695,
+        "externalResourceBytes": 4590,
+        "externalResources": 2,
+        "geometryBytes": 4756,
+        "metadataBytes": 1587,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "wasmHeapCapacityBytes": null,
+        "externalBufferResources": 1,
+        "externalImageResources": 1
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "textures": 1,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": {
+              "expressId": 1,
+              "globalId": null,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:gltf:dac1296f1fdbc457:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-external-png",
+        "committed": false,
+        "format": "gltf",
+        "sourceBytes": 8285,
+        "fingerprint": "sha256:dac1296f1fdbc45722b08a9cdf441b126822e839fd3061315d75750b960f37e8",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "networkAtRuntime": false,
+          "documentBytes": 3695,
+          "externalResourceBytes": 4590,
+          "externalResources": 2,
+          "externalBufferResources": 1,
+          "externalImageResources": 1
+        },
+        "appearance": {
+          "profile": "base-color-texture-png-opaque-v0.1",
+          "textureCoordinateSet": 0,
+          "imageMediaTypes": [
+            "image/png"
+          ],
+          "colorSpace": "srgb-to-linear-webgl2",
+          "textureSourceBytes": 3750,
+          "textureDecodedBytes": 262144,
+          "textures": 1
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "bundled": false
+        }
+      }
+    }
+  },
+  "embeddedSurfaces": {
+    "browser": {
+      "hostKind": "browser",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "high-performance",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 5956,
+        "documentBytes": 5956,
+        "externalResourceBytes": 0,
+        "externalResources": 0,
+        "embeddedImageBytes": 3750,
+        "embeddedImageResources": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "geometryBytes": 4756,
+        "metadataBytes": 1624,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "propertyDetailBytes": 0,
+        "propertyDetailRanges": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "wasmHeapCapacityBytes": null
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textures": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed",
+        "backendDisposed": true,
+        "clientDisposed": true
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "browser",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "sessionId": "session:gltf-reference:b510eca2e2ef33f62f9ed57d",
+            "sourceId": "source:glb:b510eca2e2ef33f62f9ed57d",
+            "revisionId": "source-snapshot:sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+            "snapshotId": "snapshot:gltf-reference:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4:0",
+            "sequence": 1,
+            "reason": "surface-open",
+            "selection": {
+              "expressId": 1,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:glb:b510eca2e2ef33f6:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 2,
+            "kind": "browser",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "sessionId": "session:gltf-reference:b510eca2e2ef33f62f9ed57d",
+            "sourceId": "source:glb:b510eca2e2ef33f62f9ed57d",
+            "revisionId": "source-snapshot:sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+            "snapshotId": "snapshot:gltf-reference:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4:0",
+            "sequence": 2,
+            "reason": "3d",
+            "selection": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "externalOrigins": [],
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 5956,
+        "fingerprint": "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "documentBytes": 5956,
+          "externalResourceBytes": 0,
+          "externalResources": 0,
+          "embeddedImageBytes": 3750,
+          "embeddedImageResources": 1,
+          "networkAtRuntime": false
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "cacheHit": true,
+          "bundled": false,
+          "sampleRedistributed": false
+        }
+      }
+    },
+    "stagedVscode": {
+      "hostKind": "vscode-webview",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 5956,
+        "documentBytes": 5956,
+        "externalResourceBytes": 0,
+        "externalResources": 0,
+        "geometryBytes": 4756,
+        "metadataBytes": 1624,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "wasmHeapCapacityBytes": null,
+        "embeddedImageBytes": 3750,
+        "embeddedImageResources": 1
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "textures": 1,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": {
+              "expressId": 1,
+              "globalId": null,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:glb:b510eca2e2ef33f6:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 5956,
+        "fingerprint": "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "networkAtRuntime": false,
+          "documentBytes": 5956,
+          "externalResourceBytes": 0,
+          "externalResources": 0,
+          "embeddedImageBytes": 3750,
+          "embeddedImageResources": 1
+        },
+        "appearance": {
+          "profile": "base-color-texture-png-opaque-v0.1",
+          "textureCoordinateSet": 0,
+          "imageMediaTypes": [
+            "image/png"
+          ],
+          "imageStorageProfiles": [
+            "glb-buffer-view"
+          ],
+          "colorSpace": "srgb-to-linear-webgl2",
+          "textureSourceBytes": 3750,
+          "textureDecodedBytes": 262144,
+          "textures": 1
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "bundled": false
+        }
+      }
+    },
+    "installedVsix": {
+      "hostKind": "vscode-webview",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "model": {
+        "entities": 1,
+        "geometryRecords": 1,
+        "instances": 1,
+        "triangles": 12,
+        "ranges": 1
+      },
+      "resources": {
+        "sourceBytes": 5956,
+        "documentBytes": 5956,
+        "externalResourceBytes": 0,
+        "externalResources": 0,
+        "geometryBytes": 4756,
+        "metadataBytes": 1624,
+        "detailBytes": 0,
+        "detailRanges": 0,
+        "largestDetailRangeBytes": 0,
+        "ranges": 1,
+        "products": 0,
+        "referenceEntities": 1,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textures": 1,
+        "wasmHeapCapacityBytes": null,
+        "embeddedImageBytes": 3750,
+        "embeddedImageResources": 1
+      },
+      "renderer": {
+        "actualGpu": true,
+        "nonBackgroundPixels": 86486,
+        "sourceReadBytes": 4756,
+        "uploadedBytes": 350516,
+        "textureSourceBytes": 3750,
+        "textureDecodedBytes": 262144,
+        "textureGpuBytes": 349524,
+        "textures": 1,
+        "gpuTextures": 1
+      },
+      "reference": {
+        "globalId": null,
+        "selectedNativeId": "node:1/mesh:0/primitive:0",
+        "treeRows": 1,
+        "maximumDomRows": 64
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "closed": "disposed"
+      },
+      "viewerCore": {
+        "opened": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": false,
+          "host": {
+            "disposed": false,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": false,
+            "borrowedWorkerDisposed": false,
+            "disposalStatus": "active",
+            "disposed": false
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": {
+              "expressId": 1,
+              "globalId": null,
+              "kind": "reference",
+              "nativeId": "node:1/mesh:0/primitive:0",
+              "renderId": "render:glb:b510eca2e2ef33f6:1"
+            }
+          },
+          "source": {
+            "disposed": false,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": false,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        },
+        "disposed": {
+          "adopted": true,
+          "api": "menaje-viewer-core/0.1",
+          "contract": "bim-explorer-product-viewer-core/0.1",
+          "descriptorProtocolVersion": "0.1.0",
+          "disposed": true,
+          "host": {
+            "disposed": true,
+            "eventCount": 1,
+            "kind": "vscode-webview",
+            "lastEventType": "selection.changed"
+          },
+          "presentation": {
+            "borrowedSessionDisposed": true,
+            "borrowedWorkerDisposed": true,
+            "disposalStatus": "disposed",
+            "disposed": true
+          },
+          "protocolId": "menaje-viewer-render-protocol/0.1.0",
+          "protocolVersion": "0.1.0",
+          "selection": {
+            "reason": "surface-open",
+            "sequence": 1,
+            "identity": null
+          },
+          "source": {
+            "disposed": true,
+            "rangeBytesRead": 4756,
+            "rangeReads": 1,
+            "sessionDisposed": true,
+            "sessionOpened": true
+          },
+          "version": "0.1.2"
+        }
+      },
+      "externalUpload": false,
+      "telemetry": false,
+      "fixture": {
+        "id": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+        "committed": false,
+        "format": "glb",
+        "sourceBytes": 5956,
+        "fingerprint": "sha256:b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+        "gltfVersion": "2.0",
+        "nativeId": "node:1/mesh:0/primitive:0",
+        "resourceBundle": {
+          "schema": "bim-explorer-gltf-local-resource-bundle/0.1",
+          "networkAtRuntime": false,
+          "documentBytes": 5956,
+          "externalResourceBytes": 0,
+          "externalResources": 0,
+          "embeddedImageBytes": 3750,
+          "embeddedImageResources": 1
+        },
+        "appearance": {
+          "profile": "base-color-texture-png-opaque-v0.1",
+          "textureCoordinateSet": 0,
+          "imageMediaTypes": [
+            "image/png"
+          ],
+          "imageStorageProfiles": [
+            "glb-buffer-view"
+          ],
+          "colorSpace": "srgb-to-linear-webgl2",
+          "textureSourceBytes": 3750,
+          "textureDecodedBytes": 262144,
+          "textures": 1
+        },
+        "provenance": {
+          "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+          "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+          "license": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+          "bundled": false
+        }
+      }
+    }
+  },
+  "package": {
+    "id": "menaje.bim-explorer",
+    "version": "0.1.0",
+    "byteLength": 1645172,
+    "installedRuntimeFiles": 31,
+    "workerBundleSha256": "aaf00229bcceb940c553cc94c79a918133d0253a60c07f7b482809fb3dca9f3e",
+    "pointWorkerBundleSha256": "3d9d64d03801a40ec493596822b38affda1e0d51ae5ebd2e7362797192e7e977",
+    "viewerCoreProductBundleSha256": "b3e5e2ddcc32a7d442e7f2b6cdaa4533f03bc33e63684386f3ba996be26cd587",
+    "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+    "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+  },
+  "immutableFederatedSurfaceV02": {
+    "byteLength": 461431,
+    "sha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "textureBackported": false
+  },
+  "assertions": {
+    "officialValidatorZeroIssues": true,
+    "embeddedOfficialValidatorZeroIssues": true,
+    "exactPublicInputs": true,
+    "exactCoreProjection": true,
+    "actualTextureProjection": true,
+    "exactEmbeddedCoreProjection": true,
+    "exactThreeSurfaceProjection": true,
+    "exactThreeEmbeddedSurfaceProjection": true,
+    "physicalAppleMetal": true,
+    "localOnly": true,
+    "deterministicCleanup": true,
+    "cleanVsix": true,
+    "noBimAuthority": true,
+    "sampleCacheOnly": true,
+    "embeddedSampleCacheOnly": true,
+    "immutableFederatedV02Unchanged": true
+  },
+  "held": {
+    "jpegImages": false,
+    "alphaModes": false,
+    "gltfBufferViewImageProjection": false,
+    "otherMaterialTextures": false,
+    "textureTransform": false,
+    "federatedSurfaceV02": false,
+    "crossPlatformPhysicalGpu": false,
+    "productionSupport": false
+  },
+  "decision": {
+    "boundedExternalPngBaseColorTexture": "passed-experimental",
+    "boundedEmbeddedPngBaseColorTexture": "passed-experimental",
+    "federatedSurfaceV02": "not-backported",
+    "productionClaims": false
+  }
+}

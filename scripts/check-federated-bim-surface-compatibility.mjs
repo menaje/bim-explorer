@@ -12,11 +12,21 @@ import {
   validateFederatedBimSurfacePackageQualification,
 } from "./qualify-federated-bim-surface-package.mjs";
 import {
+  FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH,
+  validateFederatedBimSurfacePhysicalGpuQualification,
+} from "./qualify-federated-bim-surface-physical-gpu.mjs";
+import {
   SPATIAL_CONSUMER_EVIDENCE_PATH,
+  SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH,
   SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH,
   validateSpatialConsumerAdmission,
+  validateSpatialPublicArtifactConsumerAdmission,
   validateSpatialReleaseReadyConsumerAdmission,
 } from "./federated-bim-surface-spatial-consumer-evidence.mjs";
+import {
+  FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH,
+  validateFederatedBimSurfaceReleaseEvidence,
+} from "./federated-bim-surface-release-evidence.mjs";
 
 const CONTRACT = Object.freeze({
   package: "@bim-explorer/federated-bim-surface",
@@ -55,13 +65,14 @@ const TRUE_GATES = Object.freeze([
   "actualBrowserSurfaceNormal",
   "actualBrowserAnchor",
   "actualVscodeSurface",
+  "physicalGpuProductQualification",
   "reproduciblePackageCandidate",
   "actualSpatialConsumer",
   "releaseReadyPackageConsumerRevalidation",
-]);
-const HELD_GATES = Object.freeze([
   "publicV02Package",
   "publicArtifactSpatialAdmission",
+]);
+const HELD_GATES = Object.freeze([
   "productionSupport",
 ]);
 const HEADLESS_HELD_GATES = Object.freeze([
@@ -679,9 +690,12 @@ export function validateFederatedBimSurfaceCompatibility(
   evidence,
   browserEvidence,
   vscodeEvidence,
+  physicalGpuEvidence,
   packageEvidence,
+  releaseEvidence,
   spatialConsumerEvidence,
   spatialReleaseReadyConsumerEvidence,
+  spatialPublicArtifactConsumerEvidence,
 ) {
   plainRecord(manifest, "federated BIM Surface manifest");
   if (
@@ -718,13 +732,19 @@ export function validateFederatedBimSurfaceCompatibility(
       BROWSER_EVIDENCE_PATH ||
     manifest.evidence.actualVscode !==
       VSCODE_EVIDENCE_PATH ||
+    manifest.evidence.physicalGpu !==
+      FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH ||
     manifest.evidence.packageCandidate !==
       PACKAGE_EVIDENCE_PATH ||
     manifest.evidence.actualSpatialConsumer !==
       SPATIAL_CONSUMER_EVIDENCE_PATH ||
     manifest.evidence.releaseReadySpatialConsumer !==
       SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH ||
-    Object.keys(manifest.evidence).length !== 6 ||
+    manifest.evidence.publicRelease !==
+      FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH ||
+    manifest.evidence.publicArtifactSpatialConsumer !==
+      SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH ||
+    Object.keys(manifest.evidence).length !== 9 ||
     !Array.isArray(manifest.blockers) ||
     manifest.blockers.length !== HELD_GATES.length ||
     !Array.isArray(manifest.limitations) ||
@@ -748,11 +768,12 @@ export function validateFederatedBimSurfaceCompatibility(
     policy.claimHeadlessFoundation !== true ||
     policy.claimBrowserAnchor !== true ||
     policy.claimVscodeSurface !== true ||
+    policy.claimPhysicalGpuProductQualification !== true ||
     policy.claimReproduciblePackageCandidate !== true ||
     policy.claimActualSpatialConsumer !== true ||
     policy.claimReleaseReadyPackageConsumerRevalidation !== true ||
-    policy.claimPublicV02Package !== false ||
-    policy.claimPublicArtifactSpatialAdmission !== false ||
+    policy.claimPublicV02Package !== true ||
+    policy.claimPublicArtifactSpatialAdmission !== true ||
     policy.claimProductionSupport !== false
   ) {
     throw new Error(
@@ -764,13 +785,23 @@ export function validateFederatedBimSurfaceCompatibility(
     validateFederatedBimSurfaceBrowserEvidence(browserEvidence);
   const vscode =
     validateFederatedBimSurfaceVscodeQualification(vscodeEvidence);
+  const physicalGpu =
+    validateFederatedBimSurfacePhysicalGpuQualification(
+      physicalGpuEvidence,
+    );
   const packageCandidate =
     validateFederatedBimSurfacePackageQualification(packageEvidence);
+  const publicRelease =
+    validateFederatedBimSurfaceReleaseEvidence(releaseEvidence);
   const spatialConsumer =
     validateSpatialConsumerAdmission(spatialConsumerEvidence);
   const spatialReleaseReadyConsumer =
     validateSpatialReleaseReadyConsumerAdmission(
       spatialReleaseReadyConsumerEvidence,
+    );
+  const spatialPublicArtifactConsumer =
+    validateSpatialPublicArtifactConsumerAdmission(
+      spatialPublicArtifactConsumerEvidence,
     );
   if (
     packageEvidence.spatialConsumer?.evidence !==
@@ -793,7 +824,24 @@ export function validateFederatedBimSurfaceCompatibility(
       spatialReleaseReadyConsumer.packageSha256 ||
     packageEvidence.releaseGate
       ?.releaseReadyPackageConsumerRevalidation !== true ||
-    packageEvidence.releaseGate.publicationAuthorized !== true
+    packageEvidence.releaseGate.publicationAuthorized !== true ||
+    publicRelease.version !== packageCandidate.version ||
+    publicRelease.packageBytes !== packageCandidate.byteLength ||
+    publicRelease.packageSha256 !== packageCandidate.sha256 ||
+    physicalGpuEvidence.contract.runtimeSha256 !==
+      packageCandidate.runtimeSha256 ||
+    physicalGpuEvidence.contract.publicPackageBytes !==
+      publicRelease.packageBytes ||
+    physicalGpuEvidence.contract.publicPackageSha256 !==
+      publicRelease.packageSha256 ||
+    spatialPublicArtifactConsumer.releaseCommit !==
+      publicRelease.commit ||
+    spatialPublicArtifactConsumer.packageBytes !==
+      publicRelease.packageBytes ||
+    spatialPublicArtifactConsumer.packageSha256 !==
+      publicRelease.packageSha256 ||
+    spatialPublicArtifactConsumer.runtimeSha256 !==
+      packageCandidate.runtimeSha256
   ) {
     throw new Error(
       "release-ready package revalidation Gate is invalid",
@@ -812,6 +860,10 @@ export function validateFederatedBimSurfaceCompatibility(
     packageBytes: packageCandidate.byteLength,
     spatialConsumer: spatialConsumer.status,
     releaseReadySpatialConsumer: spatialReleaseReadyConsumer.status,
+    publicRelease: publicRelease.status,
+    publicArtifactSpatialAdmission:
+      spatialPublicArtifactConsumer.status,
+    physicalGpu: physicalGpu.status,
   });
 }
 
@@ -821,9 +873,12 @@ async function main() {
     evidence,
     browserEvidence,
     vscodeEvidence,
+    physicalGpuEvidence,
     packageEvidence,
+    releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
+    spatialPublicArtifactConsumerEvidence,
   ] = await Promise.all([
     readFile(
       "compatibility/federated-bim-surface.json",
@@ -832,10 +887,16 @@ async function main() {
     readFile(HEADLESS_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(BROWSER_EVIDENCE_PATH, "utf8").then(JSON.parse),
     readFile(VSCODE_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(FEDERATED_BIM_SURFACE_PHYSICAL_GPU_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
     readFile(PACKAGE_EVIDENCE_PATH, "utf8").then(JSON.parse),
+    readFile(FEDERATED_BIM_SURFACE_RELEASE_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
     readFile(SPATIAL_CONSUMER_EVIDENCE_PATH, "utf8")
       .then(JSON.parse),
     readFile(SPATIAL_RELEASE_READY_CONSUMER_EVIDENCE_PATH, "utf8")
+      .then(JSON.parse),
+    readFile(SPATIAL_PUBLIC_ARTIFACT_CONSUMER_EVIDENCE_PATH, "utf8")
       .then(JSON.parse),
   ]);
   const result = validateFederatedBimSurfaceCompatibility(
@@ -843,16 +904,19 @@ async function main() {
     evidence,
     browserEvidence,
     vscodeEvidence,
+    physicalGpuEvidence,
     packageEvidence,
+    releaseEvidence,
     spatialConsumerEvidence,
     spatialReleaseReadyConsumerEvidence,
+    spatialPublicArtifactConsumerEvidence,
   );
   process.stdout.write(
     `Federated BIM Surface compatibility check passed: ` +
       `${result.status}, ${result.passedGates} passed, ` +
       `${result.heldGates} held, ${result.sourceCount} sources and ` +
       `${result.anchors} Browser / ${result.vscodeAnchors} VS Code ` +
-      `anchors, ${result.packageBytes}-byte package candidate\n`,
+      `anchors, ${result.packageBytes}-byte public package\n`,
   );
 }
 

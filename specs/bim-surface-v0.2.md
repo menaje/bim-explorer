@@ -5,7 +5,7 @@ authority:
   - federated-bim-surface-contract
   - multi-source-surface-lifecycle
   - source-role-composition
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # BIM Surface v0.2
@@ -18,9 +18,9 @@ anchor를 제공하는 host-neutral draft다.
 
 v0.2는 단일 source인 [`bim-surface/0.1`](bim-surface-v0.1.md)의 의미를
 바꾸지 않는다. private 0.2.0 package candidate, 실제 Spatial headless consumer
-composition과 release-ready tgz의 exact-byte 재검증은 통과했다. immutable
-public artifact, 그 artifact의 Spatial exact-pin admission과 production support는
-별도 Gate로 유지한다.
+composition과 release-ready tgz의 exact-byte 재검증은 통과했다. 동일 tgz는
+immutable public package prerelease로 공개됐다. 그 artifact의 Spatial Phase B
+exact-pin admission도 통과했으며 production support만 별도 Gate로 유지한다.
 
 ## Contract pin
 
@@ -60,6 +60,22 @@ consumer revision과 identity를 그대로 유지한다.
 
 서로 다른 source slot의 GlobalId, native ID, Render/Pick ID와 range handle은
 항상 namespacing한다. 같은 GlobalId를 source 사이에서 merge하지 않는다.
+
+## v0.3 retained overlay extension
+
+개발선의 additive
+[`bim-explorer-federated-retained-overlay/0.1`](bim-retained-overlay-v0.1.md)은
+`consumer-overlay` slot만 native source range 재읽기 없이 geometry delta로
+갱신한다. packet digest, source/layer/revision/sequence와 operation을 exact
+binding하고 별도 CPU/GPU staging을 마친 뒤 geometry, visibility, Pick map과
+Surface revision을 synchronous commit 하나로 전환한다. stale, cancellation,
+allocation 또는 digest 실패는 current surface를 보존한다.
+
+checkpoint는 native range read/upload를 수행하지 않으며 retained geometry에는
+source-local triangle locator가 없으므로 object selection을 유지하되 anchor는
+unavailable이다. 이 extension은 immutable public v0.2.0 runtime과 tgz에 포함되지
+않으며 artifact-only conformance를 통과한 새 v0.3.0 package candidate에만
+포함된다.
 
 ## Semantic exploration과 selection
 
@@ -139,8 +155,17 @@ headless consumer는 이전 exact candidate에서 다음 consumer 범위를 재�
 
 release-ready package는 같은 461,431-byte runtime과 contract를 유지하고
 README·source offer가 포함된 97,623-byte tgz가 됐다. Spatial은 SHA-256
-`3bdb747d…c63cb`의 최종 private candidate bytes를 다시 검증했으므로
-`prerelease` 승격과 package-only `bim-surface-v0.2.0` prerelease를 진행할 수
-있다. 공개 asset 발급 뒤에는 Spatial이 그 immutable bytes를 다시 exact-pin해야
-한다. npm registry와 새 VSIX Marketplace/Open VSX publication, stable production
-support는 승인하지 않는다.
+`3bdb747d…c63cb`의 최종 private candidate bytes를 다시 검증했다. 이 bytes는
+`prerelease` branch의 exact annotated tag와 package-only
+`bim-surface-v0.2.0` immutable GitHub prerelease로 공개됐다. Spatial은 그 public
+asset을 Explorer checkout 없이 anonymous download해 offline clean install하고
+Phase B exact-pin도 통과했다. npm registry와 새 VSIX Marketplace/Open VSX
+publication, stable production support는 승인하지 않는다.
+
+post-release 개발 기준선은 software rasterizer를 끄고 ANGLE Metal을 강제한
+actual Chrome 151 Browser 2회와 VS Code 1.132 staged/clean-installed local VSIX에서
+같은 generated GLB–IFC–GLB composition을 Apple M2 physical GPU로 재현했다.
+세 경로는 8,286 non-background pixels, 1,608-byte upload, surface hit/anchor
+3개와 exact cleanup을 공유한다. 이 Gate는 `darwin-arm64` 단일 hardware와
+generated fixture에 한정하며 Linux/Windows, 실제 고객 모델, OS-level peak GPU
+memory, Spatial VSIX BIM runtime이나 production support를 승인하지 않는다.

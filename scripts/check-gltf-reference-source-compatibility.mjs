@@ -2,6 +2,35 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH,
+  validateRepresentativeModelsPhysicalGpuQualification,
+} from "./qualify-representative-models-physical-gpu.mjs";
+import {
+  GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfResourceBundleProductsQualification,
+} from "./qualify-gltf-resource-bundle-products.mjs";
+import {
+  GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshQuantizationProductsQualification,
+} from "./qualify-gltf-mesh-quantization-products.mjs";
+import {
+  GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshoptProductsQualification,
+} from "./qualify-gltf-meshopt-products.mjs";
+import {
+  GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfTextureProductsQualification,
+} from "./qualify-gltf-texture-products.mjs";
+import {
+  GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfJpegTextureProductsQualification,
+} from "./qualify-gltf-jpeg-texture-products.mjs";
+import {
+  GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfBufferViewTextureProductsQualification,
+} from "./qualify-gltf-buffer-view-texture-products.mjs";
+
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(
   path.join(
@@ -66,6 +95,49 @@ const productScaleCleanVsixProductEvidence = JSON.parse(
     "utf8",
   ),
 );
+const representativePhysicalGpuEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.representativePhysicalGpu,
+    ),
+    "utf8",
+  ),
+);
+const externalResourceProductsEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.externalResourceProducts,
+    ),
+    "utf8",
+  ),
+);
+const meshQuantizationProductsEvidence = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      manifest.evidence.meshQuantizationProducts,
+    ),
+    "utf8",
+  ),
+);
+const meshoptProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.meshoptProducts),
+  "utf8",
+));
+const textureProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.textureProducts),
+  "utf8",
+));
+const jpegTextureProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.jpegTextureProducts),
+  "utf8",
+));
+const bufferViewTextureProductsEvidence = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.bufferViewTextureProducts),
+  "utf8",
+));
 const fixture = JSON.parse(await readFile(
   path.join(ROOT, manifest.evidence.fixtureManifest),
   "utf8",
@@ -77,11 +149,51 @@ const productScaleFixture = JSON.parse(await readFile(
   ),
   "utf8",
 ));
+const externalResourceFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.externalResourceFixtureManifest,
+  ),
+  "utf8",
+));
+const meshQuantizationFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.meshQuantizationFixtureManifest,
+  ),
+  "utf8",
+));
+const meshoptFixture = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.meshoptFixtureManifest),
+  "utf8",
+));
+const textureFixture = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.textureFixtureManifest),
+  "utf8",
+));
+const embeddedTextureFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.embeddedTextureFixtureManifest,
+  ),
+  "utf8",
+));
+const jpegTextureFixture = JSON.parse(await readFile(
+  path.join(ROOT, manifest.evidence.jpegTextureFixtureManifest),
+  "utf8",
+));
+const bufferViewTextureFixture = JSON.parse(await readFile(
+  path.join(
+    ROOT,
+    manifest.evidence.bufferViewTextureFixtureManifest,
+  ),
+  "utf8",
+));
 
 const trueGates = [
   "gltf2Container",
   "glb2Container",
-  "embeddedBufferOnly",
+  "embeddedBufferProfile",
   "boundedParser",
   "boundedRangeSession",
   "nodeHierarchyTransforms",
@@ -103,10 +215,16 @@ const trueGates = [
   "productScaleBrowserProductOpen",
   "productScaleVscodeProductOpen",
   "productScaleCleanVsixProductOpen",
-];
-const heldGates = [
   "physicalGpu",
   "externalResourceBundle",
+  "khrMeshQuantization",
+  "extMeshoptCompression",
+  "boundedBaseColorTexture",
+  "boundedEmbeddedBaseColorTexture",
+  "boundedJpegBaseColorTexture",
+  "externalBufferViewImage",
+];
+const heldGates = [
   "requiredExtensions",
   "write",
   "roundTrip",
@@ -135,6 +253,486 @@ function everyTrue(value) {
     Object.keys(value).length > 0 &&
     Object.values(value).every((item) => item === true)
   );
+}
+
+export function validateGltfPhysicalGpuAdmission(
+  manifestValue,
+  physicalEvidenceValue,
+) {
+  const report =
+    validateRepresentativeModelsPhysicalGpuQualification(
+      physicalEvidenceValue,
+    );
+  const glb = physicalEvidenceValue?.browser?.glb;
+  if (
+    manifestValue?.evidence?.representativePhysicalGpu !==
+      REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH ||
+    manifestValue?.gates?.physicalGpu !== true ||
+    manifestValue?.policy?.claimPhysicalGpu !== true ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-representative-products" ||
+    glb?.platform !== "darwin-arm64" ||
+    glb?.fixture?.format !== "glb" ||
+    glb?.fixture?.fingerprint !==
+      "sha256:bd7133b4b322aae97c589b8839dae8155ad2546acb35ae32a127e722a959d007" ||
+    glb?.product?.model?.entities !== 49 ||
+    glb?.product?.model?.triangles !== 573_952 ||
+    glb?.product?.renderer?.sourceReadBytes !== 16_896_412 ||
+    glb?.product?.renderer?.uploadedBytes !== 16_900_016 ||
+    physicalEvidenceValue?.held?.crossPlatformPhysicalGpu !==
+      false ||
+    physicalEvidenceValue?.decision?.productionClaims !== false
+  ) {
+    throw new Error(
+      "glTF physical GPU admission evidence is invalid",
+    );
+  }
+  return Object.freeze({
+    status: report.status,
+    format: "glb",
+    platform: glb.platform,
+    surfaces: 3,
+  });
+}
+
+export function validateGltfExternalResourceAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfResourceBundleProductsQualification(
+      evidenceValue,
+    );
+  if (
+    manifestValue?.evidence?.externalResourceProducts !==
+      GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.externalResourceFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-external/manifest.json" ||
+    manifestValue?.gates?.externalResourceBundle !== true ||
+    manifestValue?.policy?.allowLocalExternalResourceBundle !==
+      true ||
+    manifestValue?.policy?.externalResourceBundleScope !==
+      "single-source-browser-vscode" ||
+    manifestValue?.policy?.allowExternalUri !== false ||
+    manifestValue?.policy?.claimExternalResourceBundle !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-public-gltf-resource-bundle-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.document?.name !== "Box.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_898 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.resources?.length !== 1 ||
+    fixtureValue.resources[0]?.name !== "Box0.bin" ||
+    fixtureValue.resources[0]?.byteLength !== 648 ||
+    fixtureValue.resources[0]?.sha256 !==
+      evidenceValue?.fixture?.manifest?.resourceSha256 ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 3_546 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-local-bundle" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 3_546 ||
+    report.externalResources !== 1
+  ) {
+    throw new Error(
+      "glTF external resource admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
+export function validateGltfMeshQuantizationAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfMeshQuantizationProductsQualification(
+      evidenceValue,
+    );
+  const extension = ["KHR_mesh_quantization"];
+  const admitted = [
+    "KHR_mesh_quantization",
+    "EXT_meshopt_compression",
+  ];
+  if (
+    manifestValue?.evidence?.meshQuantizationProducts !==
+      GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.meshQuantizationFixtureManifest !==
+      "fixtures/gltf/derived-khronos-box-mesh-quantization/" +
+        "manifest.json" ||
+    manifestValue?.gates?.khrMeshQuantization !== true ||
+    manifestValue?.gates?.requiredExtensions !== false ||
+    JSON.stringify(
+      manifestValue?.policy?.allowedRequiredExtensions,
+    ) !== JSON.stringify(admitted) ||
+    manifestValue?.policy?.allowGenericRequiredExtensions !==
+      false ||
+    manifestValue?.policy?.claimKhrMeshQuantization !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-derived-gltf-quantization-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.provenance?.repository !==
+      evidenceValue?.fixture?.provenance?.repository ||
+    fixtureValue?.provenance?.commit !==
+      evidenceValue?.fixture?.provenance?.commit ||
+    fixtureValue?.provenance?.sourceByteLength !== 1_664 ||
+    fixtureValue?.provenance?.sourceSha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.extension?.name !== extension[0] ||
+    fixtureValue?.extension?.status !== "ratified" ||
+    fixtureValue?.extension?.specificationCommit !==
+      evidenceValue?.fixture?.manifest?.specificationCommit ||
+    fixtureValue?.entry?.name !== "BoxQuantized.glb" ||
+    fixtureValue?.entry?.byteLength !== report.sourceBytes ||
+    fixtureValue?.entry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.derivedSha256 ||
+    fixtureValue?.license?.spdx !== "CC-BY-4.0" ||
+    JSON.stringify(fixtureValue?.expected?.extensionsUsed) !==
+      JSON.stringify(extension) ||
+    JSON.stringify(fixtureValue?.expected?.extensionsRequired) !==
+      JSON.stringify(extension) ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint ||
+    fixtureValue?.expected?.vertices !== 24 ||
+    fixtureValue?.expected?.triangles !== 12 ||
+    fixtureValue?.expected?.geometryRangeBytes !== 756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 800 ||
+    fixtureValue?.tracking?.sourceArtifactTracked !== false ||
+    fixtureValue?.tracking?.derivedArtifactTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.extension !== extension[0] ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 1_632
+  ) {
+    throw new Error(
+      "KHR_mesh_quantization admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
+export function validateGltfMeshoptAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report = validateGltfMeshoptProductsQualification(
+    evidenceValue,
+  );
+  const extension = ["EXT_meshopt_compression"];
+  const admitted = [
+    "KHR_mesh_quantization",
+    "EXT_meshopt_compression",
+  ];
+  if (
+    manifestValue?.evidence?.meshoptProducts !==
+      GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.meshoptFixtureManifest !==
+      "fixtures/gltf/derived-khronos-box-meshopt/manifest.json" ||
+    manifestValue?.gates?.extMeshoptCompression !== true ||
+    manifestValue?.gates?.requiredExtensions !== false ||
+    JSON.stringify(
+      manifestValue?.policy?.allowedRequiredExtensions,
+    ) !== JSON.stringify(admitted) ||
+    manifestValue?.policy?.allowGenericRequiredExtensions !== false ||
+    manifestValue?.policy?.meshoptCompressionScope !==
+      "required-buffer-view-filter-none" ||
+    JSON.stringify(manifestValue?.policy?.meshoptSupportedModes) !==
+      JSON.stringify(["ATTRIBUTES", "TRIANGLES", "INDICES"]) ||
+    JSON.stringify(manifestValue?.policy?.meshoptSupportedFilters) !==
+      JSON.stringify(["NONE"]) ||
+    manifestValue?.policy?.maximumMeshoptDecodedBytes !==
+      64 * 1024 * 1024 ||
+    manifestValue?.policy?.maximumMeshoptCompressionRatio !== 256 ||
+    manifestValue?.policy?.claimExtMeshoptCompression !== true ||
+    fixtureValue?.schema !==
+      "bim-explorer-derived-gltf-meshopt-fixture/1" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.provenance?.repository !==
+      evidenceValue?.fixture?.provenance?.repository ||
+    fixtureValue?.provenance?.commit !==
+      evidenceValue?.fixture?.provenance?.commit ||
+    fixtureValue?.provenance?.sourceByteLength !== 1_664 ||
+    fixtureValue?.provenance?.sourceSha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.extension?.name !== extension[0] ||
+    fixtureValue?.extension?.status !== "ratified" ||
+    fixtureValue?.extension?.specificationCommit !==
+      evidenceValue?.fixture?.manifest?.specificationCommit ||
+    fixtureValue?.codec?.package !== "meshoptimizer" ||
+    fixtureValue?.codec?.version !== "1.2.0" ||
+    fixtureValue?.codec?.license !== "MIT" ||
+    fixtureValue?.codec?.integrity !== evidenceValue?.decoder?.integrity ||
+    fixtureValue?.entry?.name !== "BoxMeshopt.glb" ||
+    fixtureValue?.entry?.byteLength !== report.sourceBytes ||
+    fixtureValue?.entry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.derivedSha256 ||
+    fixtureValue?.license?.spdx !== "CC-BY-4.0" ||
+    JSON.stringify(fixtureValue?.expected?.extensionsUsed) !==
+      JSON.stringify(extension) ||
+    JSON.stringify(fixtureValue?.expected?.extensionsRequired) !==
+      JSON.stringify(extension) ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint ||
+    fixtureValue?.expected?.vertices !== 24 ||
+    fixtureValue?.expected?.triangles !== 12 ||
+    fixtureValue?.expected?.geometryRangeBytes !== 756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 800 ||
+    fixtureValue?.expected?.meshoptBufferViews !== 2 ||
+    fixtureValue?.expected?.meshoptCompressedBytes !== 192 ||
+    fixtureValue?.expected?.meshoptDecodedBytes !== 648 ||
+    JSON.stringify(fixtureValue?.expected?.meshoptModes) !==
+      JSON.stringify(["ATTRIBUTES", "TRIANGLES"]) ||
+    JSON.stringify(fixtureValue?.expected?.meshoptFilters) !==
+      JSON.stringify(["NONE"]) ||
+    fixtureValue?.tracking?.sourceArtifactTracked !== false ||
+    fixtureValue?.tracking?.derivedArtifactTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.extension !== extension[0] ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 1_696
+  ) {
+    throw new Error(
+      "EXT_meshopt_compression admission evidence is invalid",
+    );
+  }
+  return report;
+}
+
+export function validateGltfTextureAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+  embeddedFixtureValue,
+) {
+  const report = validateGltfTextureProductsQualification(
+    evidenceValue,
+  );
+  if (
+    manifestValue?.evidence?.textureProducts !==
+      GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.textureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured/manifest.json" ||
+    manifestValue?.evidence?.embeddedTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-embedded/" +
+        "manifest.json" ||
+    manifestValue?.gates?.boundedBaseColorTexture !== true ||
+    manifestValue?.gates?.boundedEmbeddedBaseColorTexture !== true ||
+    manifestValue?.policy?.claimBoundedBaseColorTexture !== true ||
+    manifestValue?.policy?.claimBoundedEmbeddedBaseColorTexture !== true ||
+    manifestValue?.policy?.baseColorTextureScope !==
+      "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+        "texcoord0-webgl2-srgb" ||
+    manifestValue?.policy?.allowPngDataUri !== true ||
+    manifestValue?.policy?.allowGlbPngBufferView !== true ||
+    JSON.stringify(manifestValue?.policy?.externalResourceExtensions) !==
+      JSON.stringify([".bin", ".jpg", ".jpeg", ".png"]) ||
+    manifestValue?.policy?.maximumTextures !== 16 ||
+    manifestValue?.policy?.maximumTextureSourceBytes !== 8 * 1024 * 1024 ||
+    manifestValue?.policy?.maximumTextureDecodedBytes !==
+      16 * 1024 * 1024 ||
+    manifestValue?.policy?.maximumTextureDimension !== 2_048 ||
+    manifestValue?.policy?.maximumTextureCompressionRatio !== 256 ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.document?.name !== "BoxTextured.gltf" ||
+    fixtureValue?.document?.byteLength !== 3_695 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    JSON.stringify(
+      fixtureValue?.resources?.map((item) => item.sha256),
+    ) !== JSON.stringify(
+      evidenceValue?.fixture?.manifest?.resourceSha256,
+    ) ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 8_285 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    fixtureValue?.expected?.geometryRangeBytes !== 4_756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.textureSourceBytes !== 3_750 ||
+    fixtureValue?.expected?.textureDecodedBytes !== 262_144 ||
+    fixtureValue?.expected?.textureGpuBytes !== 349_524 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 350_516 ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    embeddedFixtureValue?.fixtureId !==
+      evidenceValue?.embeddedFixture?.id ||
+    embeddedFixtureValue?.entry?.name !== "BoxTextured.glb" ||
+    embeddedFixtureValue?.entry?.byteLength !== 5_956 ||
+    `sha256:${embeddedFixtureValue?.entry?.sha256}` !==
+      evidenceValue?.embeddedFixture?.fingerprint ||
+    embeddedFixtureValue?.expected?.geometryRangeBytes !== 4_756 ||
+    embeddedFixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.embeddedCore?.geometry?.rangeSha256 ||
+    embeddedFixtureValue?.expected?.embeddedImageBytes !== 3_750 ||
+    embeddedFixtureValue?.expected?.embeddedImageResources !== 1 ||
+    embeddedFixtureValue?.expected?.imageStorageProfile !==
+      "glb-buffer-view" ||
+    embeddedFixtureValue?.expected?.textureDecodedBytes !== 262_144 ||
+    embeddedFixtureValue?.expected?.textureGpuBytes !== 349_524 ||
+    embeddedFixtureValue?.expected?.gpuUploadBytes !== 350_516 ||
+    embeddedFixtureValue?.tracking?.artifactTracked !== false ||
+    embeddedFixtureValue?.tracking?.releaseBundled !== false ||
+    embeddedFixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !== "passed-darwin-arm64-apple-metal-texture" ||
+    report.surfaces !== 6 ||
+    report.sourceBytes !== 8_285 ||
+    report.decodedTextureBytes !== 262_144 ||
+    report.gpuTextureBytes !== 349_524 ||
+    report.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error("glTF texture admission evidence is invalid");
+  }
+  return report;
+}
+
+export function validateGltfJpegTextureAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report = validateGltfJpegTextureProductsQualification(
+    evidenceValue,
+  );
+  if (
+    manifestValue?.evidence?.jpegTextureProducts !==
+      GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.jpegTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json" ||
+    manifestValue?.gates?.boundedJpegBaseColorTexture !== true ||
+    manifestValue?.policy?.claimBoundedJpegBaseColorTexture !== true ||
+    manifestValue?.policy?.allowJpegDataUri !== true ||
+    manifestValue?.policy?.allowGlbJpegBufferView !== true ||
+    manifestValue?.policy?.jpegProfile !==
+      "baseline-sequential-8bit-single-scan-1-or-3-components" ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.document?.name !== "BoxTexturedJpeg.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_685 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.document?.derived !== true ||
+    JSON.stringify(
+      fixtureValue?.resources?.map((item) => item.sha256),
+    ) !== JSON.stringify(
+      evidenceValue?.fixture?.manifest?.resourceSha256,
+    ) ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 4_274 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    fixtureValue?.expected?.geometryRangeMediaType !==
+      "application/vnd.bim-explorer.geometry-range.v3" ||
+    fixtureValue?.expected?.geometryRangeBytes !== 1_756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.textureSourceBytes !== 749 ||
+    fixtureValue?.expected?.textureDecodedBytes !== 16_384 ||
+    fixtureValue?.expected?.textureGpuBytes !== 21_844 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 22_836 ||
+    fixtureValue?.expected?.appearanceProfile !==
+      "base-color-texture-opaque-v0.2" ||
+    fixtureValue?.expected?.imageMediaType !== "image/jpeg" ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-jpeg-texture" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 4_274 ||
+    report.decodedTextureBytes !== 16_384 ||
+    report.gpuTextureBytes !== 21_844 ||
+    report.gpuUploadBytes !== 22_836
+  ) {
+    throw new Error("glTF JPEG texture admission evidence is invalid");
+  }
+  return report;
+}
+
+export function validateGltfBufferViewTextureAdmission(
+  manifestValue,
+  evidenceValue,
+  fixtureValue,
+) {
+  const report =
+    validateGltfBufferViewTextureProductsQualification(
+      evidenceValue,
+    );
+  if (
+    manifestValue?.evidence?.bufferViewTextureProducts !==
+      GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifestValue?.evidence?.bufferViewTextureFixtureManifest !==
+      "fixtures/gltf/public-khronos-box-textured-buffer-view/" +
+        "manifest.json" ||
+    manifestValue?.gates?.externalBufferViewImage !== true ||
+    manifestValue?.policy?.allowGltfExternalBufferViewImage !== true ||
+    manifestValue?.policy?.claimExternalBufferViewImage !== true ||
+    fixtureValue?.fixtureId !== evidenceValue?.fixture?.id ||
+    fixtureValue?.derivation?.profile !==
+      "bim-explorer-cache-only-box-textured-" +
+        "external-buffer-view/1" ||
+    fixtureValue?.derivation?.sourceEntry?.sha256 !==
+      evidenceValue?.fixture?.manifest?.sourceSha256 ||
+    fixtureValue?.document?.name !== "BoxTexturedBufferView.gltf" ||
+    fixtureValue?.document?.byteLength !== 2_714 ||
+    fixtureValue?.document?.sha256 !==
+      evidenceValue?.fixture?.manifest?.documentSha256 ||
+    fixtureValue?.document?.derived !== true ||
+    fixtureValue?.resources?.length !== 1 ||
+    fixtureValue.resources[0]?.name !==
+      "BoxTexturedBufferView.bin" ||
+    fixtureValue.resources[0]?.byteLength !== 4_592 ||
+    fixtureValue.resources[0]?.sha256 !==
+      evidenceValue?.fixture?.manifest?.resourceSha256 ||
+    fixtureValue.resources[0]?.derived !== true ||
+    fixtureValue?.expected?.aggregateSourceBytes !== 7_306 ||
+    fixtureValue?.expected?.sourceFingerprint !==
+      evidenceValue?.fixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    fixtureValue?.expected?.externalResources !== 1 ||
+    fixtureValue?.expected?.externalBufferResources !== 1 ||
+    fixtureValue?.expected?.externalBufferViewImageResources !== 1 ||
+    fixtureValue?.expected?.embeddedImageBytes !== 3_750 ||
+    fixtureValue?.expected?.embeddedImageResources !== 1 ||
+    fixtureValue?.expected?.imageStorageProfile !==
+      "gltf-external-buffer-view" ||
+    fixtureValue?.expected?.geometryRangeBytes !== 4_756 ||
+    fixtureValue?.expected?.geometryRangeSha256 !==
+      evidenceValue?.core?.geometry?.rangeSha256 ||
+    fixtureValue?.expected?.textureDecodedBytes !== 262_144 ||
+    fixtureValue?.expected?.textureGpuBytes !== 349_524 ||
+    fixtureValue?.expected?.gpuUploadBytes !== 350_516 ||
+    fixtureValue?.tracking?.artifactsTracked !== false ||
+    fixtureValue?.tracking?.releaseBundled !== false ||
+    fixtureValue?.tracking?.networkAtRuntime !== false ||
+    report.status !==
+      "passed-darwin-arm64-apple-metal-" +
+        "external-buffer-view-texture" ||
+    report.surfaces !== 3 ||
+    report.sourceBytes !== 7_306 ||
+    report.decodedTextureBytes !== 262_144 ||
+    report.gpuTextureBytes !== 349_524 ||
+    report.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error(
+      "glTF external-buffer bufferView texture admission evidence is invalid",
+    );
+  }
+  return report;
 }
 
 function exactReferenceFixture(value) {
@@ -261,11 +859,47 @@ function equalProductScaleProjection(left, right) {
   });
 }
 
+validateGltfPhysicalGpuAdmission(
+  manifest,
+  representativePhysicalGpuEvidence,
+);
+validateGltfExternalResourceAdmission(
+  manifest,
+  externalResourceProductsEvidence,
+  externalResourceFixture,
+);
+validateGltfMeshQuantizationAdmission(
+  manifest,
+  meshQuantizationProductsEvidence,
+  meshQuantizationFixture,
+);
+validateGltfMeshoptAdmission(
+  manifest,
+  meshoptProductsEvidence,
+  meshoptFixture,
+);
+validateGltfTextureAdmission(
+  manifest,
+  textureProductsEvidence,
+  textureFixture,
+  embeddedTextureFixture,
+);
+validateGltfJpegTextureAdmission(
+  manifest,
+  jpegTextureProductsEvidence,
+  jpegTextureFixture,
+);
+validateGltfBufferViewTextureAdmission(
+  manifest,
+  bufferViewTextureProductsEvidence,
+  bufferViewTextureFixture,
+);
+
 if (
   manifest.schema !==
     "bim-explorer-gltf-reference-source-compatibility/1" ||
   manifest.status !== "experimental" ||
-  manifest.asOf !== "2026-08-08" ||
+  manifest.asOf !== "2026-08-11" ||
   manifest.contract !==
     "bim-explorer-gltf-reference-source/0.1" ||
   trueGates.some((name) => manifest.gates[name] !== true) ||
@@ -273,6 +907,27 @@ if (
   manifest.policy.readOnly !== true ||
   manifest.policy.networkAtRuntime !== false ||
   manifest.policy.allowExternalUri !== false ||
+  manifest.policy.allowLocalExternalResourceBundle !== true ||
+  manifest.policy.externalResourceBundleScope !==
+    "single-source-browser-vscode" ||
+  JSON.stringify(manifest.policy.externalResourceExtensions) !==
+    JSON.stringify([".bin", ".jpg", ".jpeg", ".png"]) ||
+  manifest.policy.baseColorTextureScope !==
+    "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+      "texcoord0-webgl2-srgb" ||
+  manifest.policy.allowPngDataUri !== true ||
+  manifest.policy.allowGlbPngBufferView !== true ||
+  manifest.policy.allowGltfExternalBufferViewImage !== true ||
+  manifest.policy.allowJpegDataUri !== true ||
+  manifest.policy.allowGlbJpegBufferView !== true ||
+  manifest.policy.jpegProfile !==
+    "baseline-sequential-8bit-single-scan-1-or-3-components" ||
+  JSON.stringify(manifest.policy.allowedRequiredExtensions) !==
+    JSON.stringify([
+      "KHR_mesh_quantization",
+      "EXT_meshopt_compression",
+    ]) ||
+  manifest.policy.allowGenericRequiredExtensions !== false ||
   manifest.policy.inventIfcGlobalId !== false ||
   manifest.policy.allowBimSemanticAuthority !== false ||
   manifest.policy.nativeWrite !== false ||
@@ -283,10 +938,17 @@ if (
   manifest.policy.claimProductScaleBrowserProductOpen !== true ||
   manifest.policy.claimProductScaleVscodeProductOpen !== true ||
   manifest.policy.claimProductScaleCleanVsixProductOpen !== true ||
-  manifest.policy.claimPhysicalGpu !== false ||
+  manifest.policy.claimExternalResourceBundle !== true ||
+  manifest.policy.claimKhrMeshQuantization !== true ||
+  manifest.policy.claimExtMeshoptCompression !== true ||
+  manifest.policy.claimBoundedBaseColorTexture !== true ||
+  manifest.policy.claimBoundedEmbeddedBaseColorTexture !== true ||
+  manifest.policy.claimBoundedJpegBaseColorTexture !== true ||
+  manifest.policy.claimExternalBufferViewImage !== true ||
+  manifest.policy.claimPhysicalGpu !== true ||
   manifest.policy.claimProduction !== false ||
   !Array.isArray(manifest.blockers) ||
-  manifest.blockers.length !== 2 ||
+  manifest.blockers.length !== 1 ||
   manifest.evidence.browserProduct !==
     "compatibility/evidence/" +
       "gltf-reference-source-khronos-box-browser-product-2026-08-04.json" ||
@@ -311,6 +973,36 @@ if (
   manifest.evidence.productScaleCleanVsixProduct !==
     "compatibility/evidence/" +
       "gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json" ||
+  manifest.evidence.representativePhysicalGpu !==
+    REPRESENTATIVE_MODELS_PHYSICAL_GPU_EVIDENCE_PATH ||
+  manifest.evidence.externalResourceProducts !==
+    GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.externalResourceFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-external/manifest.json" ||
+  manifest.evidence.meshQuantizationProducts !==
+    GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.meshQuantizationFixtureManifest !==
+    "fixtures/gltf/derived-khronos-box-mesh-quantization/" +
+      "manifest.json" ||
+  manifest.evidence.meshoptProducts !==
+    GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.meshoptFixtureManifest !==
+    "fixtures/gltf/derived-khronos-box-meshopt/manifest.json" ||
+  manifest.evidence.textureProducts !==
+    GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.textureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured/manifest.json" ||
+  manifest.evidence.embeddedTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-embedded/manifest.json" ||
+  manifest.evidence.jpegTextureProducts !==
+    GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.jpegTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-jpeg/manifest.json" ||
+  manifest.evidence.bufferViewTextureProducts !==
+    GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+  manifest.evidence.bufferViewTextureFixtureManifest !==
+    "fixtures/gltf/public-khronos-box-textured-buffer-view/" +
+      "manifest.json" ||
   evidence.schema !==
     "bim-explorer-gltf-reference-source-qualification/1" ||
   evidence.contract !== manifest.contract ||
@@ -707,6 +1399,13 @@ const serialized = JSON.stringify({
   productScaleBrowserProductEvidence,
   productScaleCleanVsixProductEvidence,
   productScaleVscodeProductEvidence,
+  representativePhysicalGpuEvidence,
+  externalResourceProductsEvidence,
+  meshQuantizationProductsEvidence,
+  meshoptProductsEvidence,
+  textureProductsEvidence,
+  jpegTextureProductsEvidence,
+  bufferViewTextureProductsEvidence,
   vscodeInstallEvidence,
   vscodeProductEvidence,
 });

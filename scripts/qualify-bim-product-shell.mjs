@@ -18,8 +18,21 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
+import {
+  acquirePublicGltfBufferViewTextureBundle,
+  acquirePublicGltfResourceBundle,
+  acquirePublicGltfJpegTextureBundle,
+  acquirePublicGltfTextureBundle,
+} from "./public-gltf-resource-bundle-fixture.mjs";
+import {
+  acquirePublicQuantizedGltfFixture,
+} from "./public-gltf-quantized-fixture.mjs";
+import {
+  acquirePublicMeshoptGltfFixture,
+} from "./public-gltf-meshopt-fixture.mjs";
 import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
@@ -35,6 +48,34 @@ import {
 import {
   resolveChromeQualificationExecutable,
 } from "./chrome-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+  validatePhysicalGpuIdentity,
+} from "./gpu-qualification-profile.mjs";
+
+const GPU_IDENTITY_EXPRESSION = `(() => {
+  const gl = document.querySelector("#model-canvas")
+    ?.getContext("webgl2");
+  const debug = gl?.getExtension("WEBGL_debug_renderer_info");
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: Boolean(gl),
+    debugRendererInfo: Boolean(debug),
+    vendor: gl?.getParameter(gl.VENDOR) ?? null,
+    renderer: gl?.getParameter(gl.RENDERER) ?? null,
+    unmaskedVendor: debug
+      ? gl.getParameter(debug.UNMASKED_VENDOR_WEBGL)
+      : null,
+    unmaskedRenderer: debug
+      ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+      : null,
+    version: gl?.getParameter(gl.VERSION) ?? null,
+    shadingLanguageVersion:
+      gl?.getParameter(gl.SHADING_LANGUAGE_VERSION) ?? null,
+    contextAttributes: gl?.getContextAttributes() ?? null
+  };
+})()`;
 
 function timeoutError(label) {
   return new DOMException(
@@ -77,7 +118,7 @@ async function closeServer(server) {
   });
 }
 
-async function launchChrome(userDataDirectory) {
+async function launchChrome(userDataDirectory, rendererMode) {
   const chromeExecutable =
     await resolveChromeQualificationExecutable();
   const child = spawn(
@@ -94,13 +135,10 @@ async function launchChrome(userDataDirectory) {
       "--disable-domain-reliability",
       "--disable-features=MediaRouter,OptimizationHints",
       "--disable-sync",
-      "--enable-unsafe-swiftshader",
-      "--enable-webgl",
-      "--ignore-gpu-blocklist",
       "--metrics-recording-only",
       "--no-first-run",
       "--no-pings",
-      "--use-angle=swiftshader",
+      ...gpuQualificationLaunchArguments(rendererMode),
       "about:blank",
     ],
     {
@@ -291,6 +329,298 @@ async function poll(client, expression, {
   throw timeoutError(expression);
 }
 
+async function dispatchPrimaryClick(client, x, y) {
+  await client.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x,
+    y,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+  await client.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x,
+    y,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+}
+
+async function clickEnabledProductButton(client, selector) {
+  const clicked = await client.evaluate(`(() => {
+    const button = document.querySelector(${JSON.stringify(selector)});
+    if (!(button instanceof HTMLButtonElement) || button.disabled) {
+      return false;
+    }
+    button.click();
+    return true;
+  })()`);
+  if (!clicked) {
+    throw new Error(
+      `BIM product review button is unavailable: ${selector}`,
+    );
+  }
+}
+
+async function qualifyReviewToolbar(client) {
+  const initial = await client.evaluate(`(() => ({
+    report: JSON.parse(JSON.stringify(
+      globalThis.__bimExplorerProductReport.reviewTools
+    )),
+    toolbarRole:
+      document.querySelector("#review-toolbar")?.getAttribute("role"),
+    cameraButtons: ["#fit-all", "#fit-selection", "#reset-view"]
+      .every((selector) =>
+        document.querySelector(selector)?.disabled === false),
+    menus: ["#view-tools", "#selection-tools", "#section-tools",
+      "#measurement-tools", "#layout-tools"]
+      .every((selector) =>
+        document.querySelector(selector) instanceof HTMLDetailsElement)
+  }))()`);
+  await clickEnabledProductButton(client, "#fit-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.fitAllUpdates > ${initial.report.fitAllUpdates}`,
+  );
+  await clickEnabledProductButton(client, "#toggle-projection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.projection === "orthographic"`,
+  );
+  await clickEnabledProductButton(client, "#reset-view");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.resetViewUpdates >= 1 &&
+    globalThis.__bimExplorerProductReport.reviewTools
+      ?.projection === "perspective"`,
+  );
+  await clickEnabledProductButton(
+    client,
+    '[data-standard-view="front"]',
+  );
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.standardView === "front"`,
+  );
+
+  await clickEnabledProductButton(client, "#isolate-selection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "isolate"`,
+  );
+  await clickEnabledProductButton(client, "#show-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "show-all"`,
+  );
+  await clickEnabledProductButton(client, "#hide-selection");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "hide" &&
+    globalThis.__bimExplorerProductReport.reviewTools
+      ?.selectionSuppressed === true`,
+  );
+  await clickEnabledProductButton(client, "#show-all");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.visibilityMode === "show-all"`,
+  );
+  await clickEnabledProductButton(client, "#pick-model");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.selectionSuppressed === false`,
+  );
+
+  await clickEnabledProductButton(client, "#clip-x");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "clip-x"`,
+  );
+  await clickEnabledProductButton(client, "#section-box");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "section-box"`,
+  );
+  await clickEnabledProductButton(client, "#clear-section");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.sectionMode === "none"`,
+  );
+
+  for (const [selector, tool] of [
+    ["#measure-angle", "measure-angle"],
+    ["#measure-area", "measure-area"],
+  ]) {
+    await clickEnabledProductButton(client, selector);
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === ${JSON.stringify(tool)}`,
+    );
+    await clickEnabledProductButton(client, "#clear-measurement");
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === "select"`,
+    );
+  }
+
+  await client.evaluate(`new Promise((resolve) => {
+    document.querySelector("#model-canvas").scrollIntoView({
+      block: "center",
+      inline: "center",
+    });
+    requestAnimationFrame(() => resolve(true));
+  })`);
+  const canvas = await client.evaluate(`(() => {
+    const bounds = document.querySelector("#model-canvas")
+      .getBoundingClientRect();
+    return {
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height
+    };
+  })()`);
+  const measurementPairs = [
+    [[0.35, 0.5], [0.65, 0.5]],
+    [[0.5, 0.35], [0.5, 0.65]],
+    [[0.35, 0.35], [0.65, 0.65]],
+    [[0.42, 0.45], [0.58, 0.55]],
+    [[0.4, 0.5], [0.6, 0.5]],
+  ];
+  let measurement = null;
+  for (const pair of measurementPairs) {
+    await clickEnabledProductButton(client, "#measure-distance");
+    await poll(
+      client,
+      `globalThis.__bimExplorerProductReport.reviewTools
+        ?.tool === "measure-distance"`,
+    );
+    const [first, second] = pair;
+    await dispatchPrimaryClick(
+      client,
+      canvas.left + canvas.width * first[0],
+      canvas.top + canvas.height * first[1],
+    );
+    const firstCaptured = await poll(
+      client,
+      `(() => {
+        const review = globalThis.__bimExplorerProductReport.reviewTools;
+        return review?.measurementPicks === 1 ||
+          review?.tool === "select";
+      })()`,
+      { timeoutMs: 1_500 },
+    ).catch(() => false);
+    if (!firstCaptured) {
+      await clickEnabledProductButton(client, "#clear-measurement");
+      continue;
+    }
+    await dispatchPrimaryClick(
+      client,
+      canvas.left + canvas.width * second[0],
+      canvas.top + canvas.height * second[1],
+    );
+    measurement = await poll(
+      client,
+      `(() => {
+        const review = globalThis.__bimExplorerProductReport.reviewTools;
+        return review?.measurement?.type === "distance"
+          ? JSON.parse(JSON.stringify(review.measurement))
+          : review?.tool === "select"
+            ? false
+            : null;
+      })()`,
+      { timeoutMs: 1_500 },
+    ).catch(() => null);
+    if (measurement !== null) {
+      break;
+    }
+    const clearEnabled = await client.evaluate(
+      `document.querySelector("#clear-measurement").disabled === false`,
+    );
+    if (clearEnabled) {
+      await clickEnabledProductButton(client, "#clear-measurement");
+    }
+  }
+  if (measurement === null) {
+    throw new Error(
+      "BIM product distance measurement did not resolve two model points",
+    );
+  }
+
+  for (const selector of [
+    "#toggle-tree-panel",
+    "#toggle-properties-panel",
+  ]) {
+    await clickEnabledProductButton(client, selector);
+    await clickEnabledProductButton(client, selector);
+  }
+  await clickEnabledProductButton(client, "#toggle-focus-mode");
+  const focusMode = await poll(client, `(() => {
+    const workspace = document.querySelector(".workspace");
+    const tree = document.querySelector(".tree-panel");
+    const properties = document.querySelector(".right-column");
+    return workspace.dataset.focusMode === "true" &&
+      getComputedStyle(tree).display === "none" &&
+      getComputedStyle(properties).display === "none";
+  })()`);
+  await clickEnabledProductButton(client, "#toggle-focus-mode");
+  await poll(
+    client,
+    `globalThis.__bimExplorerProductReport.reviewTools
+      ?.layout?.focusMode === false`,
+  );
+
+  await clickEnabledProductButton(client, "#clear-selection");
+  const selectionCleared = await poll(client, `(() => {
+    const report = globalThis.__bimExplorerProductReport;
+    return report.reviewTools?.selectionSuppressed === true &&
+      report.cameraInteraction?.selectedPickIds?.length === 0 &&
+      document.querySelector("#selection-origin").textContent === "none" &&
+      !document.querySelector("#model-tree [aria-selected=true]");
+  })()`);
+  await clickEnabledProductButton(client, "#pick-model");
+  const selectionRestored = await poll(client, `(() => {
+    const report = globalThis.__bimExplorerProductReport;
+    return report.reviewTools?.selectionSuppressed === false &&
+      report.meshSelection?.status === "hit" &&
+      document.querySelector("#selection-origin").textContent === "3d";
+  })()`);
+
+  return client.evaluate(`(() => ({
+    initial: ${JSON.stringify(initial)},
+    final: JSON.parse(JSON.stringify(
+      globalThis.__bimExplorerProductReport.reviewTools
+    )),
+    focusMode: ${JSON.stringify(focusMode)},
+    measurement: ${JSON.stringify(measurement)},
+    measurementText:
+      document.querySelector("#measurement-result").textContent,
+    selectionCleared: ${JSON.stringify(selectionCleared)},
+    selectionRestored: ${JSON.stringify(selectionRestored)},
+    toolbarButtons: document.querySelectorAll(
+      "#review-toolbar button"
+    ).length
+  }))()`);
+}
+
 function assertions(
   opened,
   interaction,
@@ -346,6 +676,18 @@ function assertions(
               fixture.rendererLimits
                 .maximumInstancedTriangles,
         }),
+    ...(fixture.appearanceOmissions === undefined
+      ? {}
+      : {
+          boundedAppearanceOmissions:
+            JSON.stringify(opened.source.appearanceOmissions) ===
+              JSON.stringify(fixture.appearanceOmissions) &&
+            opened.source.appearance === undefined &&
+            interaction.statusText.includes(
+              `${fixture.appearanceOmissions.materialFeatures} ` +
+              "optional appearance features were omitted",
+            ),
+        }),
     localOnly:
       opened.externalUpload === false &&
       opened.telemetry === false &&
@@ -373,21 +715,29 @@ function assertions(
             opened.renderer.uploadedBytes ===
               fixture.pointRangePayloadBytes,
         }
-      : reference
+      : reference && fixture.kind === "gltf-product-scale"
       ? {
-          referenceAnd3dSync:
+          referenceAndTreeSync:
             interaction.searchResults > 0 &&
-            interaction.selectionOrigin === "3d" &&
-            selectedReferenceIdentity &&
-            (
-              fixture.exactPickNativeId !== true ||
-              interaction.selectedNativeId ===
-                fixture.nativeId
-            ) &&
-            opened.reference?.globalId === null &&
-            opened.reference?.selectedNativeId ===
-              fixture.nativeId,
+            interaction.selectionOrigin === "tree" &&
+            interaction.selectedNativeId === fixture.nativeId &&
+            opened.reference?.selectedNativeId === fixture.nativeId,
         }
+      : reference
+        ? {
+            referenceAnd3dSync:
+              interaction.searchResults > 0 &&
+              interaction.selectionOrigin === "3d" &&
+              selectedReferenceIdentity &&
+              (
+                fixture.exactPickNativeId !== true ||
+                interaction.selectedNativeId ===
+                  fixture.nativeId
+              ) &&
+              opened.reference?.globalId === null &&
+              opened.reference?.selectedNativeId ===
+                fixture.nativeId,
+          }
       : {
           semanticAnd3dSync:
             interaction.searchResults > 0 &&
@@ -399,13 +749,150 @@ function assertions(
       cleanup.cleanup?.backend?.disposed === true &&
       cleanup.cleanup?.client?.disposed === true &&
       (
-        !pointCloud ||
-        (
+        pointCloud
+          ? (
           cleanup.cleanup.rendererDisposed === true &&
           cleanup.cleanup.pointRangeCleared === true &&
           cleanup.cleanup.workerTerminatedAfterTransfer === true
-        )
+          )
+          : (
+              cleanup.cleanup.cameraControlsDisposed === true &&
+              cleanup.cleanup.cameraControls?.disposed === true
+            )
       ),
+    ...(pointCloud || fixture.kind === "gltf-product-scale"
+      ? {}
+      : {
+          interactiveCamera:
+            opened.cameraInteraction?.enabled === true &&
+            opened.cameraInteraction?.disposed === false &&
+            interaction.cameraInteraction?.orbitUpdates >= 1 &&
+            interaction.cameraInteraction?.keyboardUpdates >= 1 &&
+            interaction.cameraInteraction?.zoomUpdates >= 1 &&
+            interaction.cameraInteraction?.renderedUpdates >= 3 &&
+            JSON.stringify(
+              interaction.cameraInteraction.camera,
+            ) !== JSON.stringify(
+              opened.cameraInteraction.camera,
+            ) &&
+            interaction.cameraHelp.includes("arrows orbit"),
+        }),
+    ...(pointCloud || fixture.kind === "gltf-product-scale"
+      ? {}
+      : {
+          selectedObjectFit:
+            interaction.selectionFit?.focused === true &&
+            interaction.selectionFit?.status.includes(
+              "Fitted the active source-revision selection",
+            ) &&
+            interaction.cameraInteraction
+              ?.programmaticUpdates >= 1 &&
+            interaction.cameraInteraction
+              ?.selectionFitUpdates >= 1 &&
+            JSON.stringify(interaction.selectionFit.after) !==
+              JSON.stringify(interaction.selectionFit.before),
+          directCanvasPick:
+            interaction.meshSelection?.status === "hit" &&
+            interaction.meshPicking?.attempts >= 1 &&
+            interaction.meshSelection?.coordinates?.origin ===
+              "canvas-top-left" &&
+            Number.isSafeInteger(
+              interaction.meshSelection.coordinates.x,
+            ) &&
+            Number.isSafeInteger(
+              interaction.meshSelection.coordinates.y,
+            ) &&
+            (
+              reference
+                ? interaction.meshSelection.identity?.nativeId ===
+                    interaction.selectedNativeId
+                : interaction.meshSelection.identity?.expressId ===
+                    interaction.selectedExpressId
+            ) &&
+            (
+              fixture.kind !== "synthetic" ||
+              (
+                interaction.meshPicking?.misses >= 1 &&
+                interaction.meshPicking?.lastStatus === "miss"
+              )
+            ),
+        }),
+    ...(["synthetic", "public"].includes(fixture.kind)
+      ? {
+          reviewToolbar:
+            interaction.reviewToolbar?.initial.toolbarRole ===
+              "toolbar" &&
+            interaction.reviewToolbar.initial.cameraButtons === true &&
+            interaction.reviewToolbar.initial.menus === true &&
+            interaction.reviewToolbar.toolbarButtons >= 20 &&
+            interaction.reviewToolbar.final.fitAllUpdates >= 1 &&
+            interaction.reviewToolbar.final.projectionUpdates >= 1 &&
+            interaction.reviewToolbar.final.resetViewUpdates >= 1 &&
+            interaction.reviewToolbar.final.standardViewUpdates >= 1 &&
+            interaction.reviewToolbar.final.projection ===
+              "perspective" &&
+            interaction.reviewToolbar.final.sectionMode === "none" &&
+            interaction.reviewToolbar.final.visibilityMode ===
+              "show-all" &&
+            interaction.reviewToolbar.final.tool === "select" &&
+            interaction.reviewToolbar.final.selectionSuppressed ===
+              false &&
+            interaction.reviewToolbar.final.layout.focusMode === false &&
+            interaction.reviewToolbar.final.layout.treeVisible === true &&
+            interaction.reviewToolbar.final.layout.propertiesVisible ===
+              true &&
+            interaction.reviewToolbar.focusMode === true &&
+            interaction.reviewToolbar.selectionCleared === true &&
+            interaction.reviewToolbar.selectionRestored === true &&
+            interaction.reviewToolbar.measurement.type === "distance" &&
+            interaction.reviewToolbar.measurement.value > 0 &&
+            interaction.reviewToolbar.measurement.unit ===
+              "source-coordinate-unit" &&
+            interaction.reviewToolbar.measurementText.includes(
+              "source-coordinate units (unqualified)",
+            ),
+        }
+      : {}),
+    ...(fixture.kind === "public"
+      ? {
+          distinctCanvasObjects:
+            interaction.distinctMeshSelections.length >= 2 &&
+            new Set(interaction.distinctMeshSelections.map(
+              (selection) => selection.identity,
+            )).size >= 2 &&
+            interaction.selectedTreePinned === true &&
+            interaction.treeRows <=
+              opened.semantic.maximumDomRows &&
+            interaction.treeOmission.includes(
+              "selected item is pinned",
+            ),
+        }
+      : {}),
+    ...(
+      pointCloud
+        ? {}
+        : {
+            publicViewerCoreProductEntrypoint:
+              opened.viewerCore?.adopted === true &&
+              opened.viewerCore?.version === "0.1.2" &&
+              opened.viewerCore?.protocolId ===
+                "menaje-viewer-render-protocol/0.1.0" &&
+              opened.viewerCore?.source?.rangeReads > 0 &&
+              opened.viewerCore?.source?.rangeBytesRead ===
+                opened.renderer.sourceReadBytes &&
+              opened.viewerCore?.host?.eventCount >= 1 &&
+              cleanup.viewerCore?.disposed === true &&
+              cleanup.viewerCore?.host?.disposed === true &&
+              cleanup.viewerCore?.source?.disposed === true &&
+              cleanup.viewerCore?.source?.sessionDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.borrowedSessionDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.borrowedWorkerDisposed === true &&
+              cleanup.viewerCore?.presentation
+                ?.disposalStatus === "disposed",
+          }
+    ),
     noRuntimeErrors: errors.length === 0,
     fixtureIdentity:
       opened.source.byteLength === fixture.sourceBytes &&
@@ -454,6 +941,50 @@ function assertions(
         opened.model.triangles === fixture.triangles
       ) &&
       opened.model.ranges === fixture.ranges,
+    ...(fixture.resourceBundle === null ||
+      fixture.resourceBundle === undefined
+      ? {}
+      : {
+          exactLocalResourceBundle:
+            JSON.stringify(opened.source.resourceBundle) ===
+              JSON.stringify(fixture.resourceBundle) &&
+            opened.resources.documentBytes ===
+              fixture.resourceBundle.documentBytes &&
+            opened.resources.externalResourceBytes ===
+              fixture.resourceBundle.externalResourceBytes &&
+            opened.resources.externalResources ===
+              fixture.resourceBundle.externalResources &&
+            opened.renderer.sourceReadBytes ===
+              fixture.geometryRangeBytes &&
+            opened.renderer.uploadedBytes ===
+              fixture.gpuUploadBytes &&
+            (
+              fixture.appearance === undefined ||
+              (
+                JSON.stringify(opened.source.appearance) ===
+                  JSON.stringify(fixture.appearance) &&
+                opened.resources.textureSourceBytes ===
+                  fixture.appearance.textureSourceBytes &&
+                opened.resources.textureDecodedBytes ===
+                  fixture.appearance.textureDecodedBytes &&
+                opened.renderer.textureDecodedBytes ===
+                  fixture.appearance.textureDecodedBytes &&
+                opened.renderer.textureGpuBytes ===
+                  fixture.textureGpuBytes &&
+                opened.renderer.gpuTextures ===
+                  fixture.appearance.textures
+              )
+            ),
+        }),
+    ...(fixture.extensionsRequired === undefined
+      ? {}
+      : {
+          exactRequiredExtensions:
+            JSON.stringify(opened.source.extensionsRequired) ===
+              JSON.stringify(fixture.extensionsRequired) &&
+            JSON.stringify(opened.source.extensionsUsed) ===
+              JSON.stringify(fixture.extensionsUsed),
+        }),
   });
 }
 
@@ -565,6 +1096,9 @@ async function qualificationFixture(kind) {
       rendererLimits: Object.freeze({
         ...manifest.browserQualification.rendererLimits,
       }),
+      appearanceOmissions: Object.freeze(
+        structuredClone(manifest.expected.appearanceOmissions),
+      ),
       searchQuery: "node:0",
       provenance: Object.freeze({
         repository: manifest.provenance.repository,
@@ -572,6 +1106,371 @@ async function qualificationFixture(kind) {
         license: manifest.license.spdx,
         cacheHit: acquired.receipt.cacheHit,
         bundled: false,
+      }),
+    });
+  }
+  if (kind === "gltf-external-public") {
+    const acquired = await acquirePublicGltfResourceBundle();
+    const { manifest } = acquired;
+    acquired.document.bytes.fill(0);
+    for (const resource of acquired.resources) {
+      resource.bytes.fill(0);
+    }
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.document.cachePath,
+      inputs: [
+        acquired.document.cachePath,
+        ...acquired.resources.map((resource) => resource.cachePath),
+      ],
+      id: manifest.fixtureId,
+      committed: false,
+      format: "gltf",
+      sourceBytes: manifest.expected.aggregateSourceBytes,
+      fingerprint: `sha256:${manifest.expected.sourceFingerprint}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.document.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        networkAtRuntime: false,
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
+  if ([
+    "gltf-texture-public",
+    "gltf-buffer-view-texture-public",
+  ].includes(kind)) {
+    const acquired = kind === "gltf-texture-public"
+      ? await acquirePublicGltfTextureBundle()
+      : await acquirePublicGltfBufferViewTextureBundle();
+    const { manifest } = acquired;
+    acquired.document.bytes.fill(0);
+    for (const resource of acquired.resources) {
+      resource.bytes.fill(0);
+    }
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.document.cachePath,
+      inputs: [
+        acquired.document.cachePath,
+        ...acquired.resources.map((resource) => resource.cachePath),
+      ],
+      id: manifest.fixtureId,
+      committed: false,
+      format: "gltf",
+      sourceBytes: manifest.expected.aggregateSourceBytes,
+      fingerprint: `sha256:${manifest.expected.sourceFingerprint}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.document.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        ...(manifest.expected.externalBufferResources === undefined
+          ? {}
+          : {
+              externalBufferResources:
+                manifest.expected.externalBufferResources,
+            }),
+        ...(manifest.expected.externalImageResources === undefined
+          ? {}
+          : {
+              externalImageResources:
+                manifest.expected.externalImageResources,
+            }),
+        ...(manifest.expected.externalBufferViewImageResources ===
+          undefined
+          ? {}
+          : {
+              externalBufferViewImageResources:
+                manifest.expected.externalBufferViewImageResources,
+            }),
+        ...(manifest.expected.embeddedImageResources === undefined
+          ? {}
+          : {
+              embeddedImageBytes:
+                manifest.expected.embeddedImageBytes,
+              embeddedImageResources:
+                manifest.expected.embeddedImageResources,
+            }),
+        networkAtRuntime: false,
+      }),
+      appearance: Object.freeze({
+        profile: manifest.expected.appearanceProfile ??
+          "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes: manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        ...(manifest.expected.imageStorageProfile === undefined
+          ? {}
+          : {
+              imageStorageProfiles: [
+                manifest.expected.imageStorageProfile,
+              ],
+            }),
+        colorSpace: "srgb-to-linear-webgl2",
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      textureGpuBytes: manifest.expected.textureGpuBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
+  if (kind === "gltf-jpeg-texture-public") {
+    const acquired = await acquirePublicGltfJpegTextureBundle();
+    const { manifest } = acquired;
+    acquired.document.bytes.fill(0);
+    for (const resource of acquired.resources) {
+      resource.bytes.fill(0);
+    }
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.document.cachePath,
+      inputs: [
+        acquired.document.cachePath,
+        ...acquired.resources.map((resource) => resource.cachePath),
+      ],
+      id: manifest.fixtureId,
+      committed: false,
+      format: "gltf",
+      sourceBytes: manifest.expected.aggregateSourceBytes,
+      fingerprint: `sha256:${manifest.expected.sourceFingerprint}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.document.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        externalBufferResources:
+          manifest.expected.externalBufferResources,
+        externalImageResources:
+          manifest.expected.externalImageResources,
+        networkAtRuntime: false,
+      }),
+      appearance: Object.freeze({
+        profile: manifest.expected.appearanceProfile,
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes: manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        colorSpace: "srgb-to-linear-webgl2",
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      textureGpuBytes: manifest.expected.textureGpuBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
+  if (kind === "gltf-embedded-texture-public") {
+    const acquired = await acquirePublicGltfFixture({
+      manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+    });
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: `sha256:${manifest.entry.sha256}`,
+      gltfVersion: manifest.expected.gltfVersion,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      resourceBundle: Object.freeze({
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: manifest.entry.byteLength,
+        externalResourceBytes:
+          manifest.expected.externalResourceBytes,
+        externalResources: manifest.expected.externalResources,
+        embeddedImageBytes: manifest.expected.embeddedImageBytes,
+        embeddedImageResources:
+          manifest.expected.embeddedImageResources,
+        networkAtRuntime: false,
+      }),
+      appearance: Object.freeze({
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes: manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        imageStorageProfiles: [
+          manifest.expected.imageStorageProfile,
+        ],
+        colorSpace: "srgb-to-linear-webgl2",
+      }),
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      textureGpuBytes: manifest.expected.textureGpuBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
+  if (kind === "gltf-quantized-public") {
+    const acquired = await acquirePublicQuantizedGltfFixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: manifest.expected.sourceFingerprint,
+      gltfVersion: manifest.expected.gltfVersion,
+      extensionsRequired: manifest.expected.extensionsRequired,
+      extensionsUsed: manifest.expected.extensionsUsed,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        sourceSha256: manifest.provenance.sourceSha256,
+        extension: manifest.extension.name,
+        extensionSpecificationCommit:
+          manifest.extension.specificationCommit,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
+      }),
+    });
+  }
+  if (kind === "gltf-meshopt-public") {
+    const acquired = await acquirePublicMeshoptGltfFixture();
+    const { manifest } = acquired;
+    acquired.bytes.fill(0);
+    return Object.freeze({
+      kind,
+      serverFixture: "none",
+      input: acquired.cachePath,
+      id: manifest.fixtureId,
+      committed: false,
+      format: "glb",
+      sourceBytes: manifest.entry.byteLength,
+      fingerprint: manifest.expected.sourceFingerprint,
+      gltfVersion: manifest.expected.gltfVersion,
+      extensionsRequired: manifest.expected.extensionsRequired,
+      extensionsUsed: manifest.expected.extensionsUsed,
+      entities: manifest.expected.instances,
+      geometryRecords: manifest.expected.geometryRecords,
+      instances: manifest.expected.instances,
+      triangles: manifest.expected.triangles,
+      ranges: manifest.expected.ranges,
+      nativeId: "node:1/mesh:0/primitive:0",
+      exactPickNativeId: true,
+      rendererLimits: null,
+      geometryRangeBytes: manifest.expected.geometryRangeBytes,
+      gpuUploadBytes: manifest.expected.gpuUploadBytes,
+      searchQuery: "primitive",
+      provenance: Object.freeze({
+        repository: manifest.provenance.repository,
+        commit: manifest.provenance.commit,
+        sourceSha256: manifest.provenance.sourceSha256,
+        extension: manifest.extension.name,
+        extensionSpecificationCommit:
+          manifest.extension.specificationCommit,
+        codec: manifest.codec.package,
+        codecVersion: manifest.codec.version,
+        license: manifest.license.spdx,
+        cacheHit: acquired.receipt.cacheHit,
+        bundled: false,
+        sampleRedistributed: false,
       }),
     });
   }
@@ -724,7 +1623,12 @@ async function qualificationFixture(kind) {
   }
   throw new TypeError(
     "BIM product qualification fixture must be synthetic, public, " +
-      "gltf-public, gltf-product-scale, e57-public, " +
+      "gltf-public, gltf-product-scale, gltf-external-public, " +
+      "gltf-texture-public, gltf-embedded-texture-public, " +
+      "gltf-buffer-view-texture-public, " +
+      "gltf-jpeg-texture-public, " +
+      "gltf-quantized-public, gltf-meshopt-public, " +
+      "e57-public, " +
       "e57-spherical-public, e57-multiple-scan-public, " +
       "las-public, or laz-public",
   );
@@ -732,7 +1636,9 @@ async function qualificationFixture(kind) {
 
 export async function qualifyBimProductShell({
   fixture: fixtureKind = "synthetic",
+  rendererMode = "swiftshader",
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
   const fixture = await qualificationFixture(fixtureKind);
   const pointCloud = ["e57", "las", "laz"].includes(
     fixture.format,
@@ -747,7 +1653,7 @@ export async function qualifyBimProductShell({
   let chrome = null;
   let client = null;
   try {
-    chrome = await launchChrome(userDataDirectory);
+    chrome = await launchChrome(userDataDirectory, rendererMode);
     const endpoint = new URL(chrome.browserWebSocket);
     const newTarget = new URL(
       `http://${endpoint.host}/json/new`,
@@ -807,7 +1713,7 @@ export async function qualifyBimProductShell({
       }
       await client.send("DOM.setFileInputFiles", {
         nodeId: sourceInput.nodeId,
-        files: [fixture.input],
+        files: fixture.inputs ?? [fixture.input],
       });
     }
     let opened = await poll(
@@ -832,6 +1738,134 @@ export async function qualifyBimProductShell({
               : 30_000,
       },
     );
+    const gpu = await client.evaluate(GPU_IDENTITY_EXPRESSION);
+    if (JSON.stringify(opened.gpu) !== JSON.stringify(gpu)) {
+      throw new Error(
+        "BIM product report GPU identity differs from the active canvas",
+      );
+    }
+    if (rendererMode === "physical") {
+      validatePhysicalGpuIdentity(gpu, {
+        platform: `${process.platform}-${process.arch}`,
+      });
+    }
+    if (!pointCloud && fixture.kind !== "gltf-product-scale") {
+      await client.evaluate(`new Promise((resolve) => {
+        document.querySelector("#model-canvas").scrollIntoView({
+          block: "center",
+          inline: "center",
+        });
+        requestAnimationFrame(() => resolve(true));
+      })`);
+      const canvas = await client.evaluate(`(() => {
+        const bounds = document.querySelector("#model-canvas")
+          .getBoundingClientRect();
+        return {
+          x: bounds.left + bounds.width / 2,
+          y: bounds.top + bounds.height / 2
+        };
+      })()`);
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        x: canvas.x,
+        y: canvas.y,
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x: canvas.x + 48,
+        y: canvas.y - 24,
+        button: "left",
+        buttons: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        x: canvas.x + 48,
+        y: canvas.y - 24,
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        pointerType: "mouse",
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseWheel",
+        x: canvas.x,
+        y: canvas.y,
+        deltaX: 0,
+        deltaY: -120,
+        pointerType: "mouse",
+      });
+      const keyboardFocused = await client.evaluate(`(() => {
+        const canvas = document.querySelector("#model-canvas");
+        canvas.focus({ preventScroll: true });
+        return document.activeElement === canvas;
+      })()`);
+      if (!keyboardFocused) {
+        throw new Error(
+          "BIM product camera canvas is not keyboard focusable",
+        );
+      }
+      await client.evaluate(`(() => {
+        globalThis.__bimExplorerKeyboardProbe = null;
+        document.addEventListener("keydown", (event) => {
+          globalThis.__bimExplorerKeyboardProbe = {
+            code: event.code,
+            key: event.key,
+            targetId: event.target?.id ?? null,
+            trusted: event.isTrusted,
+          };
+        }, { capture: true, once: true });
+      })()`);
+      await client.send("Input.dispatchKeyEvent", {
+        type: "rawKeyDown",
+        key: "ArrowLeft",
+        code: "ArrowLeft",
+        windowsVirtualKeyCode: 37,
+      });
+      await client.send("Input.dispatchKeyEvent", {
+        type: "keyUp",
+        key: "ArrowLeft",
+        code: "ArrowLeft",
+        windowsVirtualKeyCode: 37,
+      });
+      await poll(
+        client,
+        `(() => {
+          const camera = globalThis.__bimExplorerProductReport
+            ?.cameraInteraction;
+          return camera?.orbitUpdates >= 2 &&
+            camera?.keyboardUpdates >= 1 &&
+            camera?.zoomUpdates >= 1 &&
+            camera?.renderedUpdates >= 3;
+        })()`,
+      );
+      const keyboardProbe = await client.evaluate(
+        `globalThis.__bimExplorerKeyboardProbe`,
+      );
+      if (
+        keyboardProbe?.code !== "ArrowLeft" ||
+        keyboardProbe?.key !== "ArrowLeft" ||
+        keyboardProbe?.targetId !== "model-canvas" ||
+        keyboardProbe?.trusted !== true
+      ) {
+        throw new Error(
+          "BIM product keyboard input was not trusted canvas input: " +
+            JSON.stringify(keyboardProbe),
+        );
+      }
+      const dragPick = await client.evaluate(
+        `globalThis.__bimExplorerProductReport?.meshSelection ?? null`,
+      );
+      if (dragPick !== null) {
+        throw new Error(
+          "BIM product camera drag was misclassified as a canvas pick",
+        );
+      }
+    }
     const initialPointLod = pointCloud &&
       opened.pointCloud?.hierarchy?.levels?.length > 1
         ? {
@@ -842,6 +1876,9 @@ export async function qualifyBimProductShell({
               opened.pointCloud.renderedRangeSha256,
           }
         : null;
+    const distinctMeshSelections = [];
+    let selectionFit = null;
+    let reviewToolbar = null;
     if (initialPointLod !== null) {
       await client.evaluate(
         `document.querySelector("#pick-model").click(); true`,
@@ -889,13 +1926,189 @@ export async function qualifyBimProductShell({
         client,
         `document.querySelectorAll("#search-results [role=option]").length`,
       );
-      await client.evaluate(
-        `document.querySelector("#pick-model").click(); true`,
-      );
-      await poll(
-        client,
-        `document.querySelector("#selection-origin").textContent === "3d"`,
-      );
+      if (fixture.kind !== "gltf-product-scale") {
+        const canvas = await client.evaluate(`(() => {
+          const bounds = document.querySelector("#model-canvas")
+            .getBoundingClientRect();
+          return {
+            left: bounds.left,
+            top: bounds.top,
+            width: bounds.width,
+            height: bounds.height
+          };
+        })()`);
+        const candidates = [
+          [0.5, 0.5],
+          [0.5, 1 / 3],
+          [0.5, 2 / 3],
+          [0.35, 0.5],
+          [0.65, 0.5],
+          [0.2, 0.2],
+          [0.35, 0.2],
+          [0.5, 0.2],
+          [0.65, 0.2],
+          [0.8, 0.2],
+          [0.2, 0.35],
+          [0.35, 0.35],
+          [0.65, 0.35],
+          [0.8, 0.35],
+          [0.2, 0.5],
+          [0.8, 0.5],
+          [0.2, 0.65],
+          [0.35, 0.65],
+          [0.65, 0.65],
+          [0.8, 0.65],
+          [0.2, 0.8],
+          [0.35, 0.8],
+          [0.5, 0.8],
+          [0.65, 0.8],
+          [0.8, 0.8],
+        ];
+        const requiredDistinctPicks = fixture.kind === "public"
+          ? 2
+          : 1;
+        for (const [xRatio, yRatio] of candidates) {
+          const priorAttempts = await client.evaluate(
+            `globalThis.__bimExplorerProductReport
+              ?.meshPicking?.attempts ?? 0`,
+          );
+          await dispatchPrimaryClick(
+            client,
+            canvas.left + canvas.width * xRatio,
+            canvas.top + canvas.height * yRatio,
+          );
+          const pickResult = await poll(
+            client,
+            `(() => {
+              const report = globalThis.__bimExplorerProductReport;
+              return report?.meshPicking?.attempts >
+                  ${priorAttempts}
+                ? {
+                    hit: report.meshPicking.lastStatus === "hit" &&
+                      report.meshSelection?.status === "hit" &&
+                      document.querySelector("#selection-origin")
+                        .textContent === "3d",
+                    expressId:
+                      report.meshSelection?.identity?.expressId ?? null,
+                    nativeId:
+                      report.meshSelection?.identity?.nativeId ?? null
+                  }
+                : null;
+            })()`,
+            { timeoutMs: 2_000 },
+          ).catch(() => ({ hit: false }));
+          if (pickResult.hit) {
+            const identity = pickResult.nativeId ??
+              pickResult.expressId;
+            if (!distinctMeshSelections.some((selection) =>
+              selection.identity === identity)) {
+              distinctMeshSelections.push({
+                identity,
+                xRatio,
+                yRatio,
+              });
+            }
+          }
+          if (
+            distinctMeshSelections.length >= requiredDistinctPicks
+          ) {
+            break;
+          }
+        }
+        if (
+          distinctMeshSelections.length < requiredDistinctPicks
+        ) {
+          throw new Error(
+            "BIM product direct canvas picks did not resolve " +
+              `${requiredDistinctPicks} distinct visible objects`,
+          );
+        }
+        const beforeFit = await client.evaluate(
+          `globalThis.__bimExplorerProductReport
+            ?.cameraInteraction?.camera ?? null`,
+        );
+        const fitEnabled = await client.evaluate(`(() => {
+          const button = document.querySelector("#fit-selection");
+          if (button.disabled) {
+            return false;
+          }
+          button.click();
+          return true;
+        })()`);
+        if (!fitEnabled) {
+          throw new Error(
+            "BIM product selected-object fit was unavailable",
+          );
+        }
+        selectionFit = await poll(
+          client,
+          `(() => {
+            const camera = globalThis.__bimExplorerProductReport
+              ?.cameraInteraction;
+            return camera?.selectionFitUpdates >= 1 &&
+              camera?.programmaticUpdates >= 1
+                ? {
+                    after: camera.camera,
+                    before: ${JSON.stringify(beforeFit)},
+                    focused:
+                      document.activeElement?.id === "model-canvas",
+                    status:
+                      document.querySelector("#status").textContent
+                  }
+                : null;
+          })()`,
+        );
+        if (
+          JSON.stringify(selectionFit.after) ===
+            JSON.stringify(selectionFit.before)
+        ) {
+          throw new Error(
+            "BIM product selected-object fit did not change camera",
+          );
+        }
+        if (fixture.kind === "synthetic") {
+          const beforeMiss = await client.evaluate(`(() => ({
+            attempts: globalThis.__bimExplorerProductReport
+              .meshPicking.attempts,
+            expressId: Number(document.querySelector(
+              "#model-tree [aria-selected=true]"
+            )?.dataset.expressId) || null
+          }))()`);
+          await dispatchPrimaryClick(
+            client,
+            canvas.left + 1,
+            canvas.top + 1,
+          );
+          const miss = await poll(
+            client,
+            `(() => {
+              const report = globalThis.__bimExplorerProductReport;
+              const expressId = Number(document.querySelector(
+                "#model-tree [aria-selected=true]"
+              )?.dataset.expressId) || null;
+              return report?.meshPicking?.attempts >
+                  ${beforeMiss.attempts} &&
+                report.meshPicking.lastStatus === "miss"
+                  ? {
+                      expressId,
+                      misses: report.meshPicking.misses
+                    }
+                  : null;
+            })()`,
+          );
+          if (
+            miss.expressId !== beforeMiss.expressId ||
+            miss.misses < 1
+          ) {
+            throw new Error(
+              "BIM product background pick changed the active selection",
+            );
+          }
+        }
+        if (["synthetic", "public"].includes(fixture.kind)) {
+          reviewToolbar = await qualifyReviewToolbar(client);
+        }
+      }
     } else {
       await client.evaluate(
         `document.querySelector("#pick-model").click(); true`,
@@ -928,6 +2141,10 @@ export async function qualifyBimProductShell({
             "#model-tree [aria-selected=true]"
           )?.dataset.expressId
         ) || null,
+        selectedTreePinned:
+          document.querySelector(
+            "#model-tree [aria-selected=true] .meta"
+          )?.textContent.includes("selected pin") ?? false,
         selectedNativeId:
           report?.pointSelection?.identity?.nativeId ??
           document.querySelector(
@@ -938,6 +2155,29 @@ export async function qualifyBimProductShell({
           report?.pointSelection === undefined
             ? null
             : JSON.parse(JSON.stringify(report.pointSelection)),
+        cameraHelp:
+          document.querySelector("#camera-help").textContent,
+        cameraInteraction:
+          report?.cameraInteraction === null ||
+          report?.cameraInteraction === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.cameraInteraction
+              )),
+        meshSelection:
+          report?.meshSelection === null ||
+          report?.meshSelection === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.meshSelection
+              )),
+        meshPicking:
+          report?.meshPicking === null ||
+          report?.meshPicking === undefined
+            ? null
+            : JSON.parse(JSON.stringify(
+                report.meshPicking
+              )),
         selectionOrigin:
           document.querySelector("#selection-origin").textContent,
         pickDisabled:
@@ -945,12 +2185,20 @@ export async function qualifyBimProductShell({
         searchDisabled:
           document.querySelector("#search-input").disabled,
         serializedReport: JSON.stringify(report),
+        statusText:
+          document.querySelector("#status").textContent,
         treeRows:
           document.querySelectorAll(
             "#model-tree [role=treeitem]"
           ).length,
+        treeOmission:
+          document.querySelector("#tree-omission").textContent,
       };
     })()`);
+    interaction.distinctMeshSelections =
+      distinctMeshSelections;
+    interaction.selectionFit = selectionFit;
+    interaction.reviewToolbar = reviewToolbar;
     await client.evaluate(
       `document.querySelector("#close-model").click(); true`,
     );
@@ -984,8 +2232,11 @@ export async function qualifyBimProductShell({
         browser: chrome.browserVersion,
         headless: true,
         platform: `${process.platform}-${process.arch}`,
-        rendererQualification:
-          "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed",
+        rendererMode,
+        rendererQualification: rendererMode === "physical"
+          ? "actual Browser WebGL2 API via physical Apple Metal"
+          : "actual Browser WebGL2 API via SwiftShader; physical GPU not claimed",
+        ...(rendererMode === "physical" ? { gpu } : {}),
       },
       fixture: {
         id: fixture.id,
@@ -1003,6 +2254,17 @@ export async function qualifyBimProductShell({
           : {
               gltfVersion: opened.source.gltfVersion,
               nativeId: fixture.nativeId,
+              ...(fixture.extensionsRequired === undefined
+                ? {}
+                : {
+                    extensionsRequired:
+                      opened.source.extensionsRequired,
+                    extensionsUsed:
+                      opened.source.extensionsUsed,
+                  }),
+              ...(fixture.resourceBundle === undefined
+                ? {}
+                : { resourceBundle: opened.source.resourceBundle }),
             }),
         ...(fixture.provenance === null
           ? {}
@@ -1018,6 +2280,7 @@ export async function qualifyBimProductShell({
           }),
       observation: {
         hostKind: opened.hostKind,
+        gpu: opened.gpu,
         model: opened.model,
         performance: opened.performance,
         resources: opened.resources,
@@ -1034,8 +2297,42 @@ export async function qualifyBimProductShell({
                 productLifecycle: opened.lifecycle,
                 lodTransitions: opened.lodTransitions,
               }
-            : { reference: opened.reference }),
+            : {
+                reference: {
+                  ...opened.reference,
+                  ...(opened.source.appearanceOmissions === undefined
+                    ? {}
+                    : {
+                        appearanceOmissions:
+                          opened.source.appearanceOmissions,
+                      }),
+                },
+              }),
         interaction: {
+          ...(interaction.cameraInteraction === null
+            ? {}
+            : {
+                cameraInteraction:
+                  interaction.cameraInteraction,
+              }),
+          ...(interaction.meshSelection === null
+            ? {}
+            : { meshSelection: interaction.meshSelection }),
+          ...(interaction.meshPicking === null
+            ? {}
+            : { meshPicking: interaction.meshPicking }),
+          ...(interaction.selectionFit === null
+            ? {}
+            : { selectionFit: interaction.selectionFit }),
+          ...(interaction.distinctMeshSelections.length === 0
+            ? {}
+            : {
+                distinctMeshSelections:
+                  interaction.distinctMeshSelections,
+              }),
+          ...(interaction.reviewToolbar === null
+            ? {}
+            : { reviewToolbar: interaction.reviewToolbar }),
           searchResults: interaction.searchResults,
           selectedExpressId:
             interaction.selectedExpressId,
@@ -1047,7 +2344,11 @@ export async function qualifyBimProductShell({
             interaction.selectionOrigin,
           pickDisabled: interaction.pickDisabled,
           searchDisabled: interaction.searchDisabled,
+          selectedTreePinned:
+            interaction.selectedTreePinned,
+          statusText: interaction.statusText,
           treeRows: interaction.treeRows,
+          treeOmission: interaction.treeOmission,
         },
         lifecycle: {
           opened: opened.status,
@@ -1067,6 +2368,16 @@ export async function qualifyBimProductShell({
               }
             : {}),
         },
+        ...(
+          pointCloud
+            ? {}
+            : {
+                viewerCore: {
+                  opened: opened.viewerCore,
+                  disposed: cleanup.viewerCore,
+                },
+              }
+        ),
         network: {
           externalOrigins: interaction.externalOrigins,
           localRequestCount: localRequests.length,
@@ -1083,8 +2394,12 @@ export async function qualifyBimProductShell({
         pointCloudProductOpen: pointCloud
           ? "passed-bounded-read-only-unqualified-coordinates"
           : "not-applicable",
-        actualPhysicalGpu: "not-claimed",
-        publicViewerCoreConformance: "held",
+        actualPhysicalGpu: rendererMode === "physical"
+          ? "passed-observed-apple-metal"
+          : "not-claimed",
+        publicViewerCoreConformance: pointCloud
+          ? "not-applicable"
+          : "passed-product-entrypoint",
         vscodeChromiumRuntime: "separate-gate",
       },
     });
@@ -1115,6 +2430,13 @@ export async function qualifyBimProductShell({
 
 function parseArguments(values) {
   const allowedFixtures = new Set([
+    "gltf-external-public",
+    "gltf-buffer-view-texture-public",
+    "gltf-embedded-texture-public",
+    "gltf-jpeg-texture-public",
+    "gltf-texture-public",
+    "gltf-meshopt-public",
+    "gltf-quantized-public",
     "gltf-product-scale",
     "gltf-public",
     "e57-public",
@@ -1127,6 +2449,7 @@ function parseArguments(values) {
   ]);
   const options = {
     fixture: "synthetic",
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
@@ -1149,11 +2472,21 @@ function parseArguments(values) {
       index += 1;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     throw new TypeError(
       "usage: node scripts/qualify-bim-product-shell.mjs " +
         "[--fixture synthetic|public|gltf-public|" +
-        "gltf-product-scale|e57-public|e57-spherical-public|" +
+        "gltf-product-scale|gltf-external-public|e57-public|" +
+        "gltf-texture-public|gltf-embedded-texture-public|" +
+        "gltf-buffer-view-texture-public|" +
+        "gltf-jpeg-texture-public|" +
+        "gltf-quantized-public|gltf-meshopt-public|" +
+        "e57-spherical-public|" +
         "e57-multiple-scan-public|las-public|laz-public] " +
+        "[--physical-gpu] " +
         "[--output path]",
     );
   }
@@ -1168,6 +2501,7 @@ if (
   const options = parseArguments(process.argv.slice(2));
   const evidence = await qualifyBimProductShell({
     fixture: options.fixture,
+    rendererMode: options.rendererMode,
   });
   if (options.output !== null) {
     await mkdir(path.dirname(options.output), {

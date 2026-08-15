@@ -6,7 +6,7 @@ authority:
   - adapter-process-boundary
   - host-runtime-boundary
   - data-lifecycle
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # 시스템 아키텍처
@@ -156,7 +156,9 @@ decomposition/containment, Wall→Type→Occurrence 왕복,
 Pset/Qto/material/classification panel, paged search와 explicit omission,
 WebGL2 pick, result isolate, source-local saved view, keyboard tree와 ARIA
 role을 검증했습니다. loaded tree, search aggregate, relation page와 DOM row
-상한을 각각 강제하며 dispose 뒤 query/GPU/session resource를 회수합니다.
+상한을 각각 강제합니다. 제품 shell은 선택 객체가 이 상한 밖이면 기존 row를
+늘리지 않고 마지막 row에 선택 identity를 고정합니다. dispose 뒤
+query/GPU/session resource를 회수합니다.
 source가 `getPropertySetValues`를 제공하면 선택 entity의 primitive value를
 별도 bounded range에서 읽고, 구형 source는 name-only `lossy`를 유지합니다.
 host/void/fill과 connection은 `opaque`입니다.
@@ -209,8 +211,12 @@ Spatial placement/constraint로 저장하거나 source refresh 뒤 자동 재부
 않습니다. Browser/VS Code product entrypoint와 private 0.2.0
 zero-runtime-dependency package candidate는 검증됐고, Spatial actual headless
 consumer는 이전 candidate와 exact 97,623-byte release-ready tgz에서 composition과
-anchor lifecycle을 통과했습니다. package-only prerelease publication은 승인됐고,
-immutable public v0.2 asset의 Spatial exact-pin은 별도 post-release Gate입니다.
+anchor lifecycle을 통과했습니다. 동일 tgz는 immutable package-only v0.2
+prerelease로 공개됐고 public asset의 Spatial Phase B exact-pin도 통과했습니다.
+Explorer의 generated 3-source Browser와 VS Code staged/clean-installed local VSIX는
+별도 post-release Gate에서 Apple M2 Metal physical GPU를 통과했습니다. Spatial
+VSIX BIM runtime과 Spatial 실제 UI/GPU, reconcile, Linux/Windows hardware와
+production은 별도 Gate입니다.
 
 ## Viewer Core와 3D presentation
 
@@ -227,6 +233,24 @@ generic 3D package는 camera, fit, picking, section, isolate, measurement와 GPU
 resource를 소유합니다. IFC parsing, product DOM, Spatial Workspace와
 accept/publish capability는 소유하지 않습니다.
 
+`consumer-overlay` geometry delta는 별도 retained path를 사용합니다.
+
+```text
+Viewer Render Delta 0.1.0 + BEXOVL01 packet
+  -> Federated Surface retained adapter
+  -> bounded CPU decode + off-scene GPU upload
+  -> off-screen color frame + candidate Pick map
+  -> synchronous geometry/Pick/revision commit
+  -> checkpoint 또는 tombstone/dispose
+```
+
+prepare 중에는 current framebuffer, Pick map, camera, clipping과 base source range
+allocation을 그대로 둡니다. abort, stale/order, digest, packet 또는 GPU allocation
+실패는 staged resource만 회수합니다. checkpoint는 native range를 재생하거나
+upload하지 않습니다. Viewer Core 0.1.3 exact public source commit과 actual
+Browser/VS Code WebGL2에서 이 lifecycle을 검증했으며 public v0.2 runtime은
+immutable hash를 유지합니다.
+
 현재 내부
 [`bim-renderer-3d/0.1`](../specs/bim-renderer-3d-v0.1.md)은 geometry range를
 독립적으로 재검사하고 첫 range만 bounded read해 primitive/record와
@@ -241,7 +265,14 @@ Render ID hide/show는 같은 GPU allocation에서 view revision으로
 Pick ID로 해결하고, 같은 allocation의 selection/highlight frame까지
 검증했습니다. 실제 context loss 뒤 같은 revision을 remount하고 별도
 IFC4 source로 교체해 이전 allocation과 session도 회수했습니다. DOM
-pointer/wheel input은 camera update를 직렬화합니다. single
+pointer/wheel input과 focusable canvas의 arrow orbit, Shift+arrow pan,
+`+`/`-` zoom, `Home` reset은 camera update를 직렬화합니다. keyboard 경로는
+중간 animation 없이 입력마다 한 frame을 갱신해 reduced-motion 환경에서도
+별도 motion을 만들지 않습니다. selected-object fit도 같은 queue에서 entity
+bounds와 현재 yaw/pitch를 결합하며, render 실패 시 interaction camera를 이전
+frame으로 rollback합니다. 대표 공개 IFC에서는 서로 다른 canvas 위치의 두
+source-bound 객체 선택, 선택 highlight와 fit, 64-row 창 밖 selection의 bounded
+tree pin을 실제 WebGL2 frame으로 검증합니다. single
 plane·six-plane section box와 GPU
 depth-backed source-world distance·area·angle도 같은 allocation에서
 검증했지만, source unit 해석은 renderer가 소유하지 않습니다.
@@ -259,16 +290,31 @@ Worker lease가 정리됐습니다. 실제 staged VS Code Custom Editor에서도
 generated source fingerprint, model/renderer projection과 WebGL2 frame을
 재현했습니다. bounded glTF/GLB는 같은 Host lifecycle에서 reference source와
 source-native explorer로 분기하며 IFC semantic authority를 사용하지
-않습니다.
+않습니다. `.gltf` local resource bundle은 document와 명시적 same-folder
+`.bin`/`.png`/`.jpg`/`.jpeg`
+sidecar를 하나의 composite fingerprint로 묶고 모든 owned copy를 terminal
+cleanup에서 지웁니다.
+이 additive path는 single-source 제품 Worker에만 연결합니다. 이미 공개된
+federated BIM Surface v0.2 runtime은 exact release digest로 동결되며 resource
+bundle, texture, mesh quantization 또는 meshopt 기능을 backport하지 않습니다.
 
 공개 `@menaje/viewer-core`와
 `@menaje/viewer-render-protocol` package 0.1.2 prerelease를 immutable release
 asset으로 고정했습니다. 실제 `BimModelSource` 3D projection과 bounded
 renderer를 upstream runtime에 연결해 Browser/VS Code host lifecycle,
 wire protocol 0.1.0 identity, stale 거부와 disposal을 통과했습니다.
-compatibility 상태는
-[`experimental`](../compatibility/viewer-core.json)이며 제품 entrypoint
-채택, stable upstream release와 production 주장은 별도 Gate입니다.
+이어 IFC와 glTF/GLB의 실제 Browser 및 VS Code 제품 entrypoint를 generated
+public RenderSource adapter로 연결했습니다. renderer range read는 공개
+session을 통과하고, initial/3D selection은 public selection controller와
+ViewerHost event로 투영됩니다. public runtime이 원본 source session과 Worker를
+소유하고 기존 BIM Surface에는 borrowed no-op lease를 전달해 close 시 정확히
+한 번 정리합니다. 같은 현재 제품 entrypoint는 software fallback을 끈 실제
+Apple M2 Metal에서 공개 IFC와 product-scale GLB의 exact range read, selection
+event 및 terminal cleanup까지 Browser, staged VS Code와 clean-installed local
+VSIX에서 재검증했습니다. point-cloud entrypoint는 별도 source/renderer 경로입니다.
+compatibility 상태는 [`experimental`](../compatibility/viewer-core.json)이며
+stable upstream release, Marketplace publication과 production 주장은 별도
+Gate입니다.
 
 ## Browser와 VS Code Host
 
@@ -276,7 +322,7 @@ Browser Host와 VS Code Host는 같은 product lifecycle을 구현합니다.
 
 | Host 책임 | Browser | VS Code |
 | --- | --- | --- |
-| source capability | File/Blob picker | Custom Editor document |
+| source capability | 명시적 File/Blob 다중 선택 | Custom Editor document + JSON-declared sibling `.bin`/`.png`/`.jpg`/`.jpeg` |
 | adapter backend | module Worker + WASM | bundled module Worker + WASM |
 | binary range | Worker-owned immutable range | webview Worker-owned range |
 | resource reveal | explicit download/view | bounded editor/reveal intent |
@@ -288,7 +334,9 @@ message나 Browser DOM event를 cross-product API로 안정화하지 않습니�
 VS Code extension host는 exact local `file:` URI를 regular non-symlink로
 검사하고 읽기 전후 size/mtime을 확인합니다. webview에는 transferable
 `ArrayBuffer`, normalized `ifc`/`gltf`/`glb`/`e57`/`las`/`laz` format,
-generation과 bounded setting만 전달하며 report는
+generation과 bounded setting만 전달합니다. `.gltf` sidecar가 있으면 검증된
+ASCII leaf-name과 transferable buffer만 별도 resource descriptor로 전달하며
+extension-host URI는 보내지 않습니다. report는
 fingerprint와 수치 allowlist로 다시 투영합니다. source path를 message나
 diagnostic에 넣지 않습니다.
 
@@ -299,6 +347,41 @@ capability로 module Worker에 주입합니다. Browser는 같은 Worker source�
 same-origin module로 직접 실행합니다. 두 Host의 IFC와 reference 결과는
 [product shell compatibility](../compatibility/bim-product-shells.json)가
 각각 같은 fingerprint와 role-specific projection으로 비교합니다.
+대표 공개 IFC와 product-scale GLB는 software rasterizer를 끈 Apple M2 Metal
+경로에서도 actual Browser, staged VS Code와 clean-installed local VSIX 간
+model/render/selection/cleanup parity를 통과했습니다. 이는 두 파일을 각각 연
+macOS arm64 제품 qualification이며, 64MiB aggregate bound를 넘는 동시 합성이나
+cross-platform·OS-level peak GPU memory·production coverage는 아닙니다.
+같은 세 제품 표면에서 exact Khronos `Box.gltf + Box0.bin` local bundle도 Apple
+M2 Metal, source-native selection과 terminal cleanup을 재현했습니다. 외부 PNG,
+exact glTF PNG data URI, GLB PNG bufferView와 명시적 local `.bin`의 glTF PNG
+bufferView `baseColorTexture`는
+`TEXCOORD_0`, OPAQUE material과 표준 sampler만 geometry-range v2로
+투영합니다. renderer는 storage와 독립적으로 PNG를 재검증하고 WebGL2
+`SRGB8_ALPHA8`로 upload합니다. exact BoxTextured 외부 bundle과 embedded GLB의
+Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
+표면은 각각 86,486 pixels·349,524-byte mipmap-aware GPU texture,
+350,516-byte total upload·terminal cleanup을 재현했습니다. 별도 cache-only
+GLB→`.gltf + .bin` 파생도 같은 v2 range와 Apple M2 Metal 3개 표면을
+재현했습니다. 임의 URI와 data URI buffer 기반 image bufferView는 거부합니다.
+bounded baseline sequential JPEG는 외부 JPEG, exact glTF JPEG data URI, GLB JPEG
+bufferView와 명시적 local `.bin`의 glTF JPEG bufferView를 MIME-aware geometry-range v3로
+투영합니다. exact cache-only Khronos derivation의 Browser·staged VS Code·
+clean-installed local VSIX Apple M2 Metal 3개 표면은 각각 86,486 pixels·
+21,844-byte mipmap-aware GPU texture·22,836-byte total upload·terminal cleanup을
+재현했습니다. progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
+mode와 다른 material texture role은 Worker admission 전에 거부합니다. ratified
+`KHR_mesh_quantization`은 required/used 양쪽의 exact 선언, integer accessor profile과
+4-byte alignment를 검증한 뒤 Worker 안에서 Float32 display range로 decode합니다.
+`EXT_meshopt_compression`은 exact meshoptimizer 1.2.0 single-thread WASM을 같은
+source Worker bundle에서 압축 source에만 lazy 초기화합니다. required bufferView의
+`ATTRIBUTES`·`TRIANGLES`·`INDICES`, `FILTER_NONE`, payload 없는 fallback placeholder,
+64MiB decoded aggregate와 256:1 ratio만 허용합니다. source switch/cancel은 Worker를
+종료해 동기 decode를 격리하고 owned compressed/decoded copy를 정리합니다.
+Draco·다른 meshopt filter·그 밖의 required extension은 fail-closed입니다.
+Box-derived cache-only GLB는 headless와 Browser·staged VS Code·clean-installed
+local VSIX의 Apple M2 Metal에서 두 승인 extension 각각 같은 projection과 cleanup을
+통과했습니다.
 
 ## openBIM exploration
 
@@ -370,7 +453,14 @@ pick과 선택 좌표 readback을 통과했습니다. 대형 E57은 같은 root 
 각 단계의 prior GPU range/map과 full-detail 이후 Worker hierarchy를 exact
 회수합니다. 이 파생 display 구조는 source-native hierarchy가 아닙니다. CRS,
 source-declared semantics와 format admission은 없으므로 federation source
-admission에는 영향을 주지 않습니다. E57도
+admission에는 영향을 주지 않습니다.
+별도 fail-closed physical GPU Gate는 LAS·LAZ·E57·다중 스캔 E57의 Browser,
+staged VS Code와 clean-installed local VSIX 12개 표면을 Apple M2 Metal에서
+통과했습니다. point canvas가 GPU identity를 직접 보고하며
+`failIfMajorPerformanceCaveat=true`와 `high-performance` preference를
+사용합니다. 이 단일 macOS hardware 결과는 CRS, format admission,
+source-native semantics, Linux/Windows 또는 production authority가 아닙니다.
+E57도
 single-scan Cartesian XYZ/optional RGB default-BitPack profile을 같은 bounded
 point Worker와 renderer로 열며, Browser·staged VS Code·clean-installed VSIX에서
 7,680-point projection과 cleanup을 통과했습니다. 같은 Worker decoder는 별도
@@ -421,9 +511,10 @@ source/revision/owner를 합치지 않습니다.
 `bim-surface-v0.1.0` public immutable package의 offline clean install,
 macOS/Linux byte identity와 attestations까지 통과했습니다. federated Surface
 0.2의 actual Spatial headless consumer는 이전 private candidate와 release-ready
-tgz를 exact-pin해 composition을 통과했습니다. 공개 artifact 발급 뒤 exact-pin과
-standalone Spatial product admission은 Spatial #22의 consumer-owned Gate가
-소유합니다.
+tgz를 exact-pin해 composition을 통과했습니다. 동일 tgz의 immutable public
+artifact가 발급됐으며 Phase B exact-pin과 standalone Spatial product admission은
+Spatial #22에서 통과했습니다. standalone Spatial product integration과 production
+admission은 계속 consumer-owned Gate가 소유합니다.
 
 외부 3D 기반 설계의 차기 경계는
 [`bim-spatial-integration/0.2`](../specs/bim-spatial-integration-v0.2.md)가

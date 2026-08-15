@@ -55,6 +55,9 @@ import {
 import {
   validatePointCloudLodProductQualification,
 } from "./qualify-point-cloud-lod-products.mjs";
+import {
+  validateRepresentativePointCloudsPhysicalGpuQualification,
+} from "./qualify-representative-point-clouds-physical-gpu.mjs";
 
 const PASSED_GATES = Object.freeze([
   "cacheOnlyPublicFixture",
@@ -93,6 +96,7 @@ const PASSED_GATES = Object.freeze([
   "browserPointIdentityPicking",
   "vscodePointIdentityPicking",
   "derivedPointHierarchyLod",
+  "pointCloudPhysicalGpuProduct",
 ]);
 const HELD_GATES = Object.freeze([
   "e57CoordinateReference",
@@ -121,6 +125,7 @@ export function validateReferenceFormatProbeCompatibility(
   pointCloudBrowserPickingEvidence,
   pointCloudVscodePickingEvidence,
   pointCloudLodProductEvidence,
+  representativePointCloudsPhysicalGpuEvidence,
 ) {
   validateE57PublicSampleProbe(e57Evidence);
   validateE57ProfileMatrixQualification(e57ProfileMatrixEvidence);
@@ -170,11 +175,15 @@ export function validateReferenceFormatProbeCompatibility(
   validatePointCloudLodProductQualification(
     pointCloudLodProductEvidence,
   );
+  const physicalGpu =
+    validateRepresentativePointCloudsPhysicalGpuQualification(
+      representativePointCloudsPhysicalGpuEvidence,
+    );
   if (
     manifest?.schema !==
       "bim-explorer-reference-format-probes-compatibility/1" ||
     manifest.status !== "pre-admission" ||
-    manifest.asOf !== "2026-08-09" ||
+    manifest.asOf !== "2026-08-11" ||
     manifest.evidence?.e57PublicSample !==
       "compatibility/evidence/" +
         "e57-public-sample-probe-2026-08-08.json" ||
@@ -228,7 +237,11 @@ export function validateReferenceFormatProbeCompatibility(
         "point-cloud-vscode-picking-2026-08-09.json" ||
     manifest.evidence?.pointCloudLodProducts !==
       "compatibility/evidence/" +
-        "point-cloud-lod-products-2026-08-09.json"
+        "point-cloud-lod-products-2026-08-09.json" ||
+    manifest.evidence?.representativePointCloudsPhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-point-clouds-" +
+        "physical-gpu-darwin-arm64-2026-08-11.json"
   ) {
     throw new Error(
       "reference format probe compatibility identity is invalid",
@@ -273,6 +286,8 @@ export function validateReferenceFormatProbeCompatibility(
       true ||
     manifest.policy.derivedPointIdentityPicking !== true ||
     manifest.policy.derivedPointHierarchyLod !== true ||
+    manifest.policy.physicalGpuProductOpen !== true ||
+    manifest.policy.crossPlatformPhysicalGpu !== false ||
     manifest.policy.sourceNativePointHierarchyLod !== false ||
     manifest.policy.pointIdentityAuthority !==
       "derived-point-range-order" ||
@@ -290,6 +305,7 @@ export function validateReferenceFormatProbeCompatibility(
     passedGates: PASSED_GATES.length,
     heldGates: HELD_GATES.length,
     sampleFormats: 3,
+    physicalGpuSurfaces: physicalGpu.surfaces,
   });
 }
 
@@ -314,6 +330,7 @@ async function main() {
     pointCloudBrowserPickingEvidence,
     pointCloudVscodePickingEvidence,
     pointCloudLodProductEvidence,
+    representativePointCloudsPhysicalGpuEvidence,
   ] = await Promise.all([
     readFile("compatibility/reference-format-probes.json", "utf8")
       .then(JSON.parse),
@@ -407,6 +424,12 @@ async function main() {
         "point-cloud-lod-products-2026-08-09.json",
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-point-clouds-" +
+        "physical-gpu-darwin-arm64-2026-08-11.json",
+      "utf8",
+    ).then(JSON.parse),
   ]);
   console.log(JSON.stringify(
     validateReferenceFormatProbeCompatibility(
@@ -429,6 +452,7 @@ async function main() {
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
       pointCloudLodProductEvidence,
+      representativePointCloudsPhysicalGpuEvidence,
     ),
   ));
 }

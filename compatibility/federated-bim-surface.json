@@ -30,33 +30,35 @@
     "actualBrowserSurfaceNormal": true,
     "actualBrowserAnchor": true,
     "actualVscodeSurface": true,
+    "physicalGpuProductQualification": true,
     "reproduciblePackageCandidate": true,
     "actualSpatialConsumer": true,
     "releaseReadyPackageConsumerRevalidation": true,
-    "publicV02Package": false,
-    "publicArtifactSpatialAdmission": false,
+    "publicV02Package": true,
+    "publicArtifactSpatialAdmission": true,
     "productionSupport": false
   },
   "evidence": {
     "headlessGenerated": "compatibility/evidence/federated-bim-surface-headless-2026-08-09.json",
     "actualBrowser": "compatibility/evidence/federated-bim-surface-browser-2026-08-09.json",
     "actualVscode": "compatibility/evidence/federated-bim-surface-vscode-2026-08-09.json",
+    "physicalGpu": "compatibility/evidence/federated-bim-surface-physical-gpu-darwin-arm64-2026-08-11.json",
     "packageCandidate": "compatibility/evidence/federated-bim-surface-package-release-ready-2026-08-11.json",
     "actualSpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-consumer-2026-08-11.json",
-    "releaseReadySpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json"
+    "releaseReadySpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json",
+    "publicRelease": "compatibility/evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json",
+    "publicArtifactSpatialConsumer": "compatibility/evidence/federated-bim-surface-spatial-public-artifact-consumer-2026-08-11.json"
   },
   "blockers": [
-    "the v0.2 package has no immutable public prerelease asset yet",
-    "the future public release asset requires a separate Spatial exact-pin admission after publication",
     "stable production support requires public multi-source adoption and support-policy evidence"
   ],
   "limitations": [
-    "the actual Browser evidence uses three generated test-only IFC4 and GLB sources under SwiftShader WebGL2 and does not claim a physical GPU",
+    "the generated three-source Browser and local staged/clean-installed VS Code products passed Apple M2 Metal qualification; Linux and Windows physical GPU coverage remains unqualified",
     "surface points, winding normals and triangle-barycentric locators are derived from exact display geometry and do not claim native source face identity",
     "alignment is explicit placement provenance and performs no qualified CRS or datum transformation",
     "the replay cache is revision-bound, bounded by renderer source-read limits and cleared on refresh or dispose",
-    "the 0.2.0 release-ready package candidate is private, zero-runtime-dependency and intentionally separate from the immutable public bim-surface v0.1.0 artifact",
-    "Spatial revalidated the exact 97,623-byte release-ready private candidate; public-artifact exact-pin admission remains a separate post-release Gate",
+    "the 0.2.0 zero-runtime-dependency package is an immutable public package-only prerelease and remains separate from the public bim-surface v0.1.0 artifact",
+    "Spatial anonymously downloaded and exact-pinned the immutable public 97,623-byte artifact on macOS arm64; hosted CI did not start and adds no cross-platform consumer evidence",
     "the actual VS Code Webview entrypoint uses a local path-free .bimfed.json host bridge and remains read-only without Spatial authority",
     "no Workspace, Canonical Entity, constraint, acceptance, publish or export authority is granted"
   ],
@@ -70,11 +72,12 @@
     "claimHeadlessFoundation": true,
     "claimBrowserAnchor": true,
     "claimVscodeSurface": true,
+    "claimPhysicalGpuProductQualification": true,
     "claimReproduciblePackageCandidate": true,
     "claimActualSpatialConsumer": true,
     "claimReleaseReadyPackageConsumerRevalidation": true,
-    "claimPublicV02Package": false,
-    "claimPublicArtifactSpatialAdmission": false,
+    "claimPublicV02Package": true,
+    "claimPublicArtifactSpatialAdmission": true,
     "claimProductionSupport": false
   }
 }

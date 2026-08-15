@@ -62,7 +62,7 @@ const ROUTES = new Map([
     type: JAVASCRIPT,
   }],
   ["/source-worker.mjs", {
-    file: path.join(APP, "source-worker.mjs"),
+    file: path.join(APP, "source-worker.bundle.mjs"),
     type: JAVASCRIPT,
   }],
   ["/worker-source-client.mjs", {
@@ -176,6 +176,13 @@ const ROUTES = new Map([
     route("packages/bim-surface/runtime/index.mjs", JAVASCRIPT),
   ],
   [
+    "/packages/viewer-core-consumer/runtime/product.mjs",
+    route(
+      "packages/viewer-core-consumer/runtime/product.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
     "/packages/bim-renderer-3d/src/camera-controls.mjs",
     route(
       "packages/bim-renderer-3d/src/camera-controls.mjs",
@@ -222,6 +229,13 @@ const ROUTES = new Map([
     "/packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
     route(
       "packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
+      JAVASCRIPT,
+    ),
+  ],
+  [
+    "/packages/bim-renderer-3d/src/textured-geometry.mjs",
+    route(
+      "packages/bim-renderer-3d/src/textured-geometry.mjs",
       JAVASCRIPT,
     ),
   ],

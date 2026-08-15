@@ -9,13 +9,17 @@ import {
   createBimModelSource,
 } from "../../packages/bim-model-source/src/index.mjs";
 import {
+  BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
   createBounded3dRenderer,
   createHeadless3dBackend,
+  encodeBimRetainedOverlayPacket,
+  sha256BimRetainedOverlayPacket,
 } from "../../packages/bim-renderer-3d/src/index.mjs";
 import {
   createExplicitAlignment,
 } from "../../packages/bim-federation/src/index.mjs";
 import {
+  BIM_FEDERATED_RETAINED_OVERLAY_ADAPTER_SCHEMA,
   BIM_FEDERATED_SURFACE_CONTRACT,
   BIM_FEDERATED_SURFACE_REFRESH_SCHEMA,
   createFederatedBimSurface,
@@ -649,5 +653,133 @@ test("single-source open failure releases only transferred resources", async () 
     assert.equal(await surface.dispose(), false);
   } finally {
     await ifc.source.dispose();
+  }
+});
+
+test("consumer-overlay adapter applies retained geometry without rereading the native source", async () => {
+  const ifc = await ifcFixture();
+  const backend = createHeadless3dBackend();
+  const surface = createFederatedBimSurface({
+    renderer: createBounded3dRenderer({ backend }),
+  });
+  try {
+    await surface.open({
+      federationId: "federation:consumer-overlay",
+      sources: [{
+        federationSourceId: "source-slot:consumer-overlay",
+        sourceRole: "consumer-overlay",
+        lifecycleOwnership: "borrowed",
+        session: ifc.session,
+        snapshot: ifc.snapshot,
+        alignment: alignment(
+          ifc.snapshot,
+          "qualification:consumer-overlay-identity",
+        ),
+      }],
+    });
+    assert.equal(surface.state.retainedOverlays.length, 1);
+    assert.equal(
+      surface.state.retainedOverlays[0].revisionId,
+      ifc.snapshot.revisionId,
+    );
+    const entity = ifc.snapshot.entities[0];
+    const packet = encodeBimRetainedOverlayPacket({
+      deltaId: "delta:surface-retained:1",
+      sourceId: ifc.snapshot.sourceId,
+      layerId: ifc.snapshot.layerId,
+      fromRevisionId: ifc.snapshot.revisionId,
+      toRevisionId: `${ifc.snapshot.revisionId}:retained:1`,
+      sequence: 1,
+      entries: [{
+        operationId: "operation:surface-retained:1",
+        kind: "upsert",
+        aspect: "geometry",
+        renderId: entity.renderId,
+        pickId: `${entity.pickId}:retained:1`,
+        nativeId: entity.nativeId ?? entity.globalId,
+        externalIdentityToken: entity.externalIdentityToken,
+        bounds: entity.bounds,
+        transform: IDENTITY,
+        color: [0.2, 0.5, 0.9, 1],
+        visible: true,
+        geometry: {
+          positions: [0, 0, 0, 1, 0, 0, 0, 1, 0],
+          normals: [0, 0, 1, 0, 0, 1, 0, 0, 1],
+          indices: [0, 1, 2],
+        },
+      }],
+    });
+    const delta = Object.freeze({
+      deltaId: "delta:surface-retained:1",
+      sourceId: ifc.snapshot.sourceId,
+      fromRevisionId: ifc.snapshot.revisionId,
+      toRevisionId: `${ifc.snapshot.revisionId}:retained:1`,
+      sequence: 1,
+      affectedWorldBounds: entity.bounds,
+      operations: Object.freeze([{
+        operationId: "operation:surface-retained:1",
+        kind: "upsert",
+        aspect: "geometry",
+        sourceId: ifc.snapshot.sourceId,
+        layerId: ifc.snapshot.layerId,
+        renderIds: Object.freeze([entity.renderId]),
+        affectedWorldBounds: entity.bounds,
+        externalIdentityToken: entity.externalIdentityToken,
+      }]),
+      payload: Object.freeze({
+        mediaType: BIM_RETAINED_OVERLAY_PACKET_MEDIA_TYPE,
+        byteLength: packet.byteLength,
+        sha256: await sha256BimRetainedOverlayPacket(packet),
+      }),
+    });
+    let payloadReads = 0;
+    const adapter = surface.createRetainedOverlayAdapter({
+      federationSourceId: "source-slot:consumer-overlay",
+      async readPayload(descriptor) {
+        payloadReads += 1;
+        assert.equal(descriptor.byteLength, packet.byteLength);
+        return packet;
+      },
+    });
+    assert.equal(
+      adapter.schema,
+      BIM_FEDERATED_RETAINED_OVERLAY_ADAPTER_SCHEMA,
+    );
+    const nativeReads = ifc.source.state.rangeReads;
+    const transaction = await adapter.prepareDelta(delta);
+    assert.equal(surface.state.stagedRetainedDelta, true);
+    assert.equal(
+      surface.state.retainedOverlays[0].revisionId,
+      ifc.snapshot.revisionId,
+    );
+    const committed = transaction.commit();
+    assert.equal(committed.status, "applied");
+    assert.equal(surface.state.stagedRetainedDelta, false);
+    assert.equal(
+      surface.state.retainedOverlays[0].revisionId,
+      delta.toRevisionId,
+    );
+    assert.equal(surface.state.retainedOverlays[0].sequence, 1);
+    assert.equal(payloadReads, 1);
+    assert.equal(ifc.source.state.rangeReads, nativeReads);
+    const checkpoint = surface.checkpointRetainedOverlay({
+      federationSourceId: "source-slot:consumer-overlay",
+      checkpointId: "checkpoint:surface-retained:1",
+      expectedRevisionId: delta.toRevisionId,
+    });
+    assert.equal(checkpoint.externalSourceRangeReads, 0);
+    assert.equal(checkpoint.externalSourceRangeUploads, 0);
+    assert.equal(ifc.source.state.rangeReads, nativeReads);
+    assert.equal(await adapter.dispose(), true);
+    assert.equal(await adapter.dispose(), false);
+
+    const disposed = await surface.dispose();
+    assert.equal(disposed.retainedOverlayAdaptersDisposed, 0);
+    assert.equal(backend.state.activeBytes, 0);
+  } finally {
+    if (surface.state.lifecycle === "ready") {
+      await surface.dispose();
+    }
+    await disposeFixture(ifc);
   }
 });

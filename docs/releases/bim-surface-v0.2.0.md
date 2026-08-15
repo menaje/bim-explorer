@@ -1,8 +1,8 @@
 ---
 type: release-notes
-status: draft
+status: published-prerelease
 authority:
-  - bim-surface-v0.2.0-release-candidate
+  - bim-surface-v0.2.0-release
 last_reviewed: 2026-08-11
 ---
 
@@ -21,11 +21,19 @@ An actual Coni Spatial headless consumer admitted both the prior candidate and
 the exact 97,623-byte release-ready package. The latter preserves the runtime
 byte identity and has SHA-256
 `3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb`.
-This authorizes the package-only prerelease. Exact-pin admission of the
-immutable public asset remains a separate Spatial-owned post-release Gate.
+This authorizes the package-only prerelease. Spatial then anonymously
+downloaded and clean-installed the immutable public asset, exact-pinned its
+release identity and repeated the actual three-source consumer lifecycle.
 
 This package grants no Workspace, Canonical Entity, mutation, constraint,
 acceptance, publish or export authority. It does not include or publish a BIM
 Explorer VSIX, Visual Studio Marketplace entry or Open VSX entry. Production
-support, physical GPU support, qualified CRS/datum transformation and native
-IFC/RVT write remain unavailable.
+support, cross-platform physical GPU support, qualified CRS/datum transformation
+and native IFC/RVT write remain unavailable.
+
+After publication, the unchanged package/runtime was exercised through the
+generated GLB–IFC–GLB product surface on an Apple M2 Metal GPU. Chrome 151 ran
+twice with software rasterization disabled, and VS Code 1.132 reproduced the
+same result from staged sources and a locally clean-installed VSIX. This is a
+macOS arm64 qualification record, not a new package or VSIX publication, and it
+does not extend support to customer models, Linux, Windows or production use.

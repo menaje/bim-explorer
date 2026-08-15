@@ -26,17 +26,26 @@ export function validateGltfProductPlatformCompatibility(
     result.projectionSha256 !==
       "6645aeeaff7e221a0bc14d999ef165bbb1805730" +
         "179337a0d403a7ba3a1d1c77" ||
-    productManifest?.asOf !== "2026-08-09" ||
+    productManifest?.asOf !== "2026-08-11" ||
     productManifest?.gates?.crossPlatformGltfProductOpen !== true ||
     productManifest?.evidence?.gltfProductPlatformMatrix !==
       EVIDENCE_PATH ||
     productManifest?.policy
       ?.claimCrossPlatformGltfProductOpen !== true ||
-    sourceManifest?.asOf !== "2026-08-08" ||
+    productManifest?.policy?.claimPhysicalGpu !== true ||
+    productManifest?.physicalGpuScope?.platform !==
+      "darwin-arm64" ||
+    productManifest?.physicalGpuScope?.crossPlatform !== false ||
+    sourceManifest?.asOf !== "2026-08-11" ||
     sourceManifest?.gates?.crossPlatformProductOpen !== true ||
     sourceManifest?.evidence?.productPlatformMatrix !==
       EVIDENCE_PATH ||
-    sourceManifest?.policy?.claimCrossPlatformProductOpen !== true
+    sourceManifest?.policy?.claimCrossPlatformProductOpen !== true ||
+    sourceManifest?.policy?.claimPhysicalGpu !== true ||
+    sourceManifest?.evidence?.representativePhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-physical-gpu-" +
+        "darwin-arm64-2026-08-11.json"
   ) {
     throw new Error(
       "glTF product platform manifests do not admit the evidence",

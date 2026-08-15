@@ -1,8 +1,12 @@
 import {
   BIM_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   encodeGltfGeometryRange,
+  encodeGltfTexturedGeometryRange,
 } from "./geometry.mjs";
 import {
+  MESHOPT_DECODER_REQUIRED_MESSAGE,
   parseGltfReferenceProfile,
 } from "./profile.mjs";
 
@@ -77,6 +81,40 @@ async function sha256(bytes) {
     .join("");
 }
 
+async function bundleSha256(bytes, resources, resourceUris) {
+  if (resourceUris.length === 0) {
+    return await sha256(bytes);
+  }
+  const resourcesByUri = new Map(
+    resources.map((resource) => [resource.uri, resource.bytes]),
+  );
+  const entries = [];
+  for (const uri of resourceUris) {
+    const resourceBytes = resourcesByUri.get(uri);
+    if (!(resourceBytes instanceof Uint8Array)) {
+      throw new Error("glTF external resource digest input is missing");
+    }
+    entries.push({
+      uri,
+      byteLength: resourceBytes.byteLength,
+      sha256: await sha256(resourceBytes),
+    });
+  }
+  const descriptor = new TextEncoder().encode(JSON.stringify({
+    schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+    document: {
+      byteLength: bytes.byteLength,
+      sha256: await sha256(bytes),
+    },
+    resources: entries,
+  }));
+  try {
+    return await sha256(descriptor);
+  } finally {
+    descriptor.fill(0);
+  }
+}
+
 export class GltfReferenceSource {
   #geometryBytes;
   #snapshot;
@@ -92,6 +130,7 @@ export class GltfReferenceSource {
     sourceDigest,
     geometryBytes,
     geometryDigest,
+    geometryMediaType,
     geometryMetadata,
     maximumRequestBytes = 1024 * 1024,
     sessionReadBudgetBytes = geometryBytes.byteLength,
@@ -155,6 +194,12 @@ export class GltfReferenceSource {
             },
             transform: occurrence.transform,
             color: occurrence.color,
+            ...([
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+              BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
+            ].includes(geometryMediaType)
+              ? { textureIndex: record.textureIndex }
+              : {}),
           }],
           provenance: {
             format: profile.format,
@@ -182,7 +227,7 @@ export class GltfReferenceSource {
     const handle = deepFreeze({
       ...baseContext,
       handleId: rangeId,
-      mediaType: BIM_GEOMETRY_MEDIA_TYPE,
+      mediaType: geometryMediaType,
       byteLength: this.#geometryBytes.byteLength,
       maximumRequestBytes: this.maximumRequestBytes,
       sha256: geometryDigest,
@@ -245,9 +290,61 @@ export class GltfReferenceSource {
       referenceMetadata: {
         schema: GLTF_REFERENCE_SOURCE_CONTRACT,
         generator: profile.asset.generator,
+        extensionsRequired: profile.extensionsRequired,
         extensionsUsed: profile.extensionsUsed,
+        compression: profile.compression,
+        appearance: profile.appearance,
+        ...(profile.appearanceOmissions === null
+          ? {}
+          : {
+              appearanceOmissions:
+                profile.appearanceOmissions,
+            }),
         nodeCount: profile.statistics.nodes,
         meshCount: profile.statistics.meshes,
+        resourceBundle: {
+          schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+          documentBytes: profile.resourceBundle.documentBytes,
+          externalResourceBytes:
+            profile.resourceBundle.externalResourceBytes,
+          externalResources:
+            profile.resourceBundle.externalResources,
+          ...(
+            profile.resourceBundle.externalImageResources ===
+              undefined &&
+            profile.resourceBundle.externalBufferViewImageResources ===
+              undefined
+            ? {}
+            : {
+                externalBufferResources:
+                  profile.resourceBundle.externalBufferResources,
+                ...(profile.resourceBundle.externalImageResources ===
+                  undefined
+                  ? {}
+                  : {
+                      externalImageResources:
+                        profile.resourceBundle.externalImageResources,
+                    }),
+                ...(profile.resourceBundle
+                    .externalBufferViewImageResources === undefined
+                  ? {}
+                  : {
+                      externalBufferViewImageResources:
+                        profile.resourceBundle
+                          .externalBufferViewImageResources,
+                    }),
+              }),
+          ...(profile.resourceBundle.embeddedImageResources ===
+            undefined
+            ? {}
+            : {
+                embeddedImageBytes:
+                  profile.resourceBundle.embeddedImageBytes,
+                embeddedImageResources:
+                  profile.resourceBundle.embeddedImageResources,
+              }),
+          networkAtRuntime: false,
+        },
         metadataQuery: "bounded-node-mesh-material-projection",
       },
     });
@@ -314,6 +411,13 @@ export class GltfReferenceSource {
         "bounded-reference-metadata",
         "source-display-geometry-separation",
         "pick-resolve",
+        ...(this.#snapshot.referenceMetadata.appearance === null
+          ? []
+          : ["bounded-base-color-texture"]),
+        ...(this.#snapshot.referenceMetadata
+          .appearanceOmissions === undefined
+          ? []
+          : ["bounded-appearance-omissions"]),
       ],
       resourceBudgetBytes: this.sessionReadBudgetBytes,
       sourceRole: "derived-or-reference-mesh",
@@ -451,8 +555,10 @@ export class GltfReferenceSource {
 export async function createGltfReferenceSource(
   bytes,
   {
+    appearancePolicy = "strict",
     limits,
     maximumRequestBytes,
+    resources = [],
     sessionReadBudgetBytes,
     signal,
   } = {},
@@ -461,14 +567,64 @@ export async function createGltfReferenceSource(
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError("glTF input must be a Uint8Array");
   }
-  const [sourceDigest, profile] = await Promise.all([
-    sha256(bytes),
-    Promise.resolve().then(() =>
-      parseGltfReferenceProfile(bytes, { limits })),
-  ]);
-  aborted(signal);
-  const encoded = encodeGltfGeometryRange(profile.records);
+  if (!Array.isArray(resources)) {
+    throw new TypeError("glTF external resources must be an array");
+  }
+  const ownedResources = [];
   try {
+    for (const resource of resources) {
+      ownedResources.push({
+        uri: resource?.uri,
+        bytes: resource?.bytes instanceof Uint8Array
+          ? Uint8Array.from(resource.bytes)
+          : resource?.bytes,
+      });
+    }
+  } catch (error) {
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
+    }
+    throw error;
+  }
+  let profile;
+  let encoded;
+  try {
+    try {
+      profile = parseGltfReferenceProfile(bytes, {
+        appearancePolicy,
+        limits,
+        resources: ownedResources,
+      });
+    } catch (error) {
+      if (
+        error?.name !== "NotSupportedError" ||
+        error.message !== MESHOPT_DECODER_REQUIRED_MESSAGE
+      ) {
+        throw error;
+      }
+      const { loadMeshoptDecoder } = await import(
+        "./meshopt-decoder.mjs"
+      );
+      const decoder = await loadMeshoptDecoder({ signal });
+      profile = parseGltfReferenceProfile(bytes, {
+        appearancePolicy,
+        limits,
+        meshoptDecoder: decoder,
+        resources: ownedResources,
+      });
+    }
+    const sourceDigest = await bundleSha256(
+      bytes,
+      ownedResources,
+      profile.externalResourceUris,
+    );
+    aborted(signal);
+    encoded = profile.textures.length === 0
+      ? encodeGltfGeometryRange(profile.records)
+      : encodeGltfTexturedGeometryRange(
+          profile.records,
+          profile.textures,
+        );
     const geometryDigest = await sha256(encoded.bytes);
     aborted(signal);
     return new GltfReferenceSource({
@@ -476,21 +632,31 @@ export async function createGltfReferenceSource(
       sourceDigest,
       geometryBytes: encoded.bytes,
       geometryDigest,
+      geometryMediaType: encoded.mediaType,
       geometryMetadata: encoded.metadata,
       maximumRequestBytes,
       sessionReadBudgetBytes,
     });
   } finally {
-    encoded.bytes.fill(0);
-    for (const record of profile.records) {
+    encoded?.bytes.fill(0);
+    for (const record of profile?.records ?? []) {
       record.positions.fill(0);
       record.normals.fill(0);
       record.indices.fill(0);
+      record.texcoords?.fill(0);
+    }
+    for (const texture of profile?.textures ?? []) {
+      texture.bytes.fill(0);
+    }
+    for (const resource of ownedResources) {
+      resource.bytes?.fill?.(0);
     }
   }
 }
 
 export {
   BIM_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE,
+  BIM_TEXTURED_GEOMETRY_MEDIA_TYPE_V3,
   parseGltfReferenceProfile,
 };

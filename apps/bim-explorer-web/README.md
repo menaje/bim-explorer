@@ -9,11 +9,51 @@ range와 `POINTS` renderer로 분기합니다.
 
 - IFC/glTF/GLB는 64 MiB, E57은 32 MiB, LAS/LAZ는 8 MiB admission limit 뒤
   Worker로 전달합니다.
+- `.gltf`가 local `.bin` buffer 또는 승인된 `.png`/`.jpg`/`.jpeg` image를 선언하면 source와
+  최대 16개 sidecar를 한
+  picker에서 함께 명시적으로 선택해야 합니다. ASCII leaf-name만 허용하고
+  document와 resource 합산 64MiB, 중복·누락·미사용 resource를 검사합니다.
 - 파일명, local path, credential을 Worker/report에 넣지 않습니다.
 - source switch와 cancel은 prior Worker를 종료해 stale result를 차단합니다.
 - tree, property, search와 3D pick은 같은 fingerprint/revision을 사용합니다.
+- mesh canvas는 click 선택, primary drag orbit, Shift-primary/right/middle
+  drag pan, wheel 또는 `+`/`-` zoom을 제공합니다. focus된 canvas의 화살표는
+  orbit, Shift+화살표는 pan, `Home`은 최초 fit camera로 복귀합니다. 모든
+  keyboard update는 animation 없이 한 frame씩 직렬화되며 focus ring과
+  화면 내 단축키 설명을 유지합니다.
+- 선택된 renderable 객체는 `Fit selection`으로 현재 시점 방향을 유지한 채
+  bounds에 맞출 수 있습니다. programmatic fit도 pointer/keyboard와 같은 camera
+  queue를 사용하고 실패하면 이전 camera로 복귀합니다. 64-row tree 창 밖에서
+  3D로 선택된 객체는 마지막 행에 source-revision-bound selection으로 고정해
+  inspector와 highlight identity를 계속 확인할 수 있습니다.
+- viewport-first review toolbar는 전체/선택 fit, reset, Z-up 여섯 표준 시점,
+  perspective/orthographic 전환, 선택 hide/isolate/show/clear, X clipping plane,
+  section box와 distance/angle/area measurement를 제공합니다. active tool,
+  `aria-pressed`, disabled state와 crosshair를 표시하고 tree/properties 접기 및
+  viewport focus mode를 제공합니다. 거리·면적은 source-coordinate unit authority를
+  해석하지 않으며 각도만 degree로 표시합니다. 수동 검토 절차는
+  [`docs/review-toolbar-checklist.md`](../../docs/review-toolbar-checklist.md)를
+  따릅니다.
+- IFC와 glTF/GLB renderer range는 exact public Viewer Core session을 통과하고,
+  initial/3D selection과 close cleanup은 public selection/Host lifecycle로
+  투영합니다.
 - glTF/GLB는 `nativeId`만 사용하고 IFC GlobalId나 BIM semantic authority를
   합성하지 않습니다.
+- required `KHR_mesh_quantization`은 bounded integer position/normal을 Worker에서
+  display range로 decode합니다. required `EXT_meshopt_compression`은 exact
+  meshoptimizer 1.2.0을 압축 source에서만 lazy load하고 `FILTER_NONE` bufferView를
+  bounded decode합니다. Draco·다른 meshopt filter·그 밖의 required extension은
+  source admission 전에 거부합니다.
+- 외부 PNG/JPEG, exact glTF PNG/JPEG data URI, GLB PNG/JPEG bufferView 또는
+  명시적 local `.bin`의 glTF image bufferView `baseColorTexture`는 OPAQUE
+  material, `TEXCOORD_0`과 표준 sampler만
+  geometry-range v2/v3로 투영해 WebGL2 sRGB texture로 표시합니다. JPEG는
+  bounded baseline sequential profile만 허용합니다. data URI buffer 기반
+  image bufferView는 거부합니다. 제품 file-open은 progressive JPEG,
+  projection budget 밖의 base color와
+  normal/metallic-roughness/occlusion 등 선택적 appearance를 geometry와
+  분리해 생략 수·사유를 표시합니다. malformed image, unsafe URI, required
+  extension과 source/decode/GPU hard budget 위반은 계속 거부합니다.
 - LAS/LAZ와 single-scan E57은 기본 8 MiB·500,000-point 한도를 유지하고,
   multiple-scan E57만 명시적 32 MiB·2,000,000-point 한도와 전용 one-shot
   Worker를 사용합니다. source/range CPU buffer와 GPU allocation을 닫을 때
@@ -29,7 +69,10 @@ range와 `POINTS` renderer로 분기합니다.
 `npm run start:web`은 loopback-only local server를 실행합니다. generated
 qualification fixture는 `--fixture synthetic`을 명시한 경우에만 노출합니다.
 `npm run qualify:product:web:public`은 고정 digest의 공개 IFC를 실제 local
-file input으로 선택하며 server가 모델 bytes를 제공하지 않습니다. 공개
+file input으로 선택하며 server가 모델 bytes를 제공하지 않습니다. 이 검증은
+두 위치의 실제 canvas pick뿐 아니라 review toolbar의 camera, projection,
+visibility, clipping, distance measurement, layout, selection clear/restore를
+actual Browser WebGL2에서 실행합니다. 공개
 fixture와 실제 고객 IFC는 package에 포함하거나 Git에 추적하지 않습니다.
 `npm run qualify:gltf:product`는 고정 Khronos Box GLB를 실제 local file
 input으로 선택하고 staged VS Code와 clean-installed VSIX까지 같은 bounded
@@ -41,6 +84,44 @@ bounded Worker/renderer, 검색·3D pick과 close cleanup을 확인합니다.
 `npm run qualify:gltf:product-scale:vscode-install`은 같은 파일을 staged
 Custom Editor와 빈 profile에 설치한 VSIX에서 열어 동일한 bounded reference
 projection과 editor cleanup을 확인합니다.
+`npm run qualify:gltf:external-resource-products`는 exact cache-only Khronos
+`Box.gltf + Box0.bin`을 Browser 다중 선택, staged VS Code와 clean-installed
+local VSIX에서 Apple M2 Metal로 열어 composite identity, local-only transport와
+cleanup을 검증합니다. sample은 Git, package 또는 release에 포함하지 않습니다.
+`npm run qualify:gltf:mesh-quantization-products`는 exact Box-derived
+`KHR_mesh_quantization` GLB를 공식 Validator와 headless renderer에 이어 Browser,
+staged VS Code와 clean-installed local VSIX의 Apple M2 Metal로 검증합니다. 원본과
+파생 fixture는 cache-only이며 runtime codec이나 federated v0.2 지원을 추가하지
+않습니다.
+`npm run qualify:gltf:meshopt-products`는 exact Box-derived
+`EXT_meshopt_compression` GLB를 공식 Validator의 고정 info 2건, headless decode,
+Browser·staged VS Code·clean-installed local VSIX의 Apple M2 Metal로 검증합니다.
+`FILTER_NONE`만 승인하며 sample과 immutable federated v0.2는 변경하지 않습니다.
+`npm run qualify:gltf:texture-products`는 exact cache-only Khronos
+`BoxTextured.gltf + BoxTextured0.bin + CesiumLogoFlat.png`와
+`BoxTextured.glb`를 공식 Validator, headless renderer 및 각각의
+Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
+표면에서 검증합니다. sample은 라이선스·표장 조건만 manifest에 기록하고
+재배포하지 않으며 immutable federated v0.2를 변경하지 않습니다.
+`npm run qualify:gltf:jpeg-texture-products`는 exact BoxTextured geometry와
+CompareDispersion의 749-byte baseline JPEG를 cache-only로 결합한 결정적 glTF를
+공식 Validator, headless renderer, Browser·staged VS Code·clean-installed local
+VSIX의 Apple M2 Metal 3개 표면에서 검증합니다. 1,756-byte geometry-range v3,
+22,836-byte total upload와 terminal cleanup을 고정하며 원본·파생 sample과
+immutable federated v0.2는 변경하거나 재배포하지 않습니다.
+`npm run qualify:product:representative:physical-gpu`는 이 product-scale GLB와
+공개 IFC를 software fallback이 비활성화된 Apple M2 Metal에서 각각 actual
+Browser, staged VS Code와 clean-installed local VSIX로 검증합니다. 현재 exact
+public Viewer Core 0.1.2 adapter의 range read, selection event와 terminal
+source/session/Worker/Host cleanup도 같은 hardware run에 포함합니다. 합산
+source bytes가 64MiB 제품 상한을 넘으므로 두 모델의 동시 합성,
+Linux/Windows, OS-level peak GPU memory와 production support는 승인하지
+않습니다.
+`npm run qualify:viewer-core:product`는 public IFC와 product-scale GLB를 실제
+Browser에서 열고 같은 entrypoint를 staged VS Code와 clean-installed local
+VSIX에서도 검증합니다. 이 명령은 exact public package, generated bundle,
+range byte accounting, 양방향 selection과 terminal cleanup을 한 증거에 묶으며
+Marketplace publication이나 production support를 수행하지 않습니다.
 `npm run qualify:las-laz:product:web`은 cache-only 공개 LAS/LAZ pair를 각각
 실제 Browser local file input으로 열어 exact point-range/visual parity,
 `laz-perf@0.0.6` Worker isolation과 source/Worker/CPU/GPU cleanup을 확인합니다.

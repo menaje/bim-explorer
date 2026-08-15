@@ -15,6 +15,8 @@ const RESPONSE_SCHEMA =
   "bim-explorer-product-source-worker-response/0.1";
 const MAXIMUM_SOURCE_BYTES = 64 * 1024 * 1024;
 const SOURCE_FORMATS = new Set(["ifc", "gltf", "glb"]);
+const EXTERNAL_RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 const OPERATIONS = new Set([
   "getEntity",
   "getEntityDetails",
@@ -79,6 +81,7 @@ async function releaseActive() {
 
 function validOpen(request) {
   const options = request?.options;
+  const resources = request?.resources;
   return (
     request?.schema === REQUEST_SCHEMA &&
     request.type === "open" &&
@@ -87,6 +90,23 @@ function validOpen(request) {
     request.bytes instanceof ArrayBuffer &&
     request.bytes.byteLength > 0 &&
     request.bytes.byteLength <= MAXIMUM_SOURCE_BYTES &&
+    Array.isArray(resources) &&
+    resources.length <= 16 &&
+    (resources.length === 0 || options?.format === "gltf") &&
+    new Set(resources.map((resource) => resource?.uri)).size ===
+      resources.length &&
+    resources.every((resource) =>
+      typeof resource?.uri === "string" &&
+      resource.uri.length <= 128 &&
+      EXTERNAL_RESOURCE_NAME.test(resource.uri) &&
+      !resource.uri.includes("..") &&
+      resource.bytes instanceof ArrayBuffer &&
+      resource.bytes.byteLength > 0 &&
+      resource.bytes.byteLength <= MAXIMUM_SOURCE_BYTES) &&
+    request.bytes.byteLength + resources.reduce(
+      (total, resource) => total + resource.bytes.byteLength,
+      0,
+    ) <= MAXIMUM_SOURCE_BYTES &&
     SOURCE_FORMATS.has(options?.format) &&
     typeof options?.webIfcModuleUrl === "string" &&
     options.webIfcModuleUrl.length > 0 &&
@@ -150,6 +170,63 @@ function referenceResources(snapshot) {
   ).byteLength;
   return {
     sourceBytes: snapshot.source.byteLength,
+    documentBytes:
+      snapshot.referenceMetadata.resourceBundle.documentBytes,
+    externalResourceBytes:
+      snapshot.referenceMetadata.resourceBundle
+        .externalResourceBytes,
+    externalResources:
+      snapshot.referenceMetadata.resourceBundle.externalResources,
+    ...(
+      snapshot.referenceMetadata.resourceBundle
+        .externalImageResources === undefined &&
+      snapshot.referenceMetadata.resourceBundle
+        .externalBufferViewImageResources === undefined
+      ? {}
+      : {
+          externalBufferResources:
+            snapshot.referenceMetadata.resourceBundle
+              .externalBufferResources,
+          ...(snapshot.referenceMetadata.resourceBundle
+            .externalImageResources === undefined
+            ? {}
+            : {
+                externalImageResources:
+                  snapshot.referenceMetadata.resourceBundle
+                    .externalImageResources,
+              }),
+          ...(snapshot.referenceMetadata.resourceBundle
+            .externalBufferViewImageResources === undefined
+            ? {}
+            : {
+                externalBufferViewImageResources:
+                  snapshot.referenceMetadata.resourceBundle
+                    .externalBufferViewImageResources,
+              }),
+        }),
+    ...(snapshot.referenceMetadata.resourceBundle
+      .embeddedImageResources === undefined
+      ? {}
+      : {
+          embeddedImageBytes:
+            snapshot.referenceMetadata.resourceBundle
+              .embeddedImageBytes,
+          embeddedImageResources:
+            snapshot.referenceMetadata.resourceBundle
+              .embeddedImageResources,
+        }),
+    ...(snapshot.referenceMetadata.appearance === null
+      ? {}
+      : {
+          textureSourceBytes:
+            snapshot.referenceMetadata.appearance
+              .textureSourceBytes,
+          textureDecodedBytes:
+            snapshot.referenceMetadata.appearance
+              .textureDecodedBytes,
+          textures:
+            snapshot.referenceMetadata.appearance.textures,
+        }),
     geometryBytes,
     metadataBytes,
     detailBytes: 0,
@@ -171,11 +248,16 @@ async function openSource(request) {
   await releaseActive();
   const started = performance.now();
   const bytes = new Uint8Array(request.bytes);
+  const externalResources = request.resources.map((resource) => ({
+    uri: resource.uri,
+    bytes: new Uint8Array(resource.bytes),
+  }));
   let artifact = null;
   let candidateSession = null;
   let candidateSource = null;
   progress(request.requestId, "source-admitted", {
     byteLength: bytes.byteLength,
+    externalResources: externalResources.length,
     format: request.options.format,
   });
   try {
@@ -208,7 +290,9 @@ async function openSource(request) {
         format: request.options.format,
       });
       candidateSource = await createGltfReferenceSource(bytes, {
+        appearancePolicy: "bounded-omission",
         maximumRequestBytes: 1024 * 1024,
+        resources: externalResources,
       });
       progress(request.requestId, "artifact-created", {
         format: request.options.format,
@@ -271,6 +355,9 @@ async function openSource(request) {
     throw error;
   } finally {
     bytes.fill(0);
+    for (const resource of externalResources) {
+      resource.bytes.fill(0);
+    }
     for (const range of artifact?.ranges ?? []) {
       range.bytes.fill(0);
     }

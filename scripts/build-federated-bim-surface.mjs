@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import {
+  copyFile,
   mkdir,
   mkdtemp,
   readFile,
@@ -25,6 +27,16 @@ const OUTPUT = path.join(
   "runtime",
   "index.mjs",
 );
+const IMMUTABLE_RELEASE_RUNTIME = Object.freeze({
+  byteLength: 461_431,
+  sha256:
+    "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+  tag: "bim-surface-v0.2.0",
+});
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
 
 async function createBundle(output) {
   await mkdir(path.dirname(output), { recursive: true });
@@ -47,26 +59,42 @@ async function createBundle(output) {
 }
 
 export async function checkFederatedBimSurfaceBundle() {
+  const runtime = await readFile(OUTPUT);
+  if (
+    runtime.byteLength !==
+      IMMUTABLE_RELEASE_RUNTIME.byteLength ||
+    sha256(runtime) !== IMMUTABLE_RELEASE_RUNTIME.sha256
+  ) {
+    throw new Error(
+      "Federated BIM surface v0.2 runtime differs from immutable " +
+        `${IMMUTABLE_RELEASE_RUNTIME.tag}`,
+    );
+  }
+  process.stdout.write(
+    `Federated BIM surface immutable release bundle check passed: ` +
+      `${runtime.byteLength} bytes\n`,
+  );
+}
+
+async function rebuildImmutableReleaseBundle() {
   const temporary = await mkdtemp(
     path.join(tmpdir(), "bim-explorer-federated-surface-"),
   );
   try {
     const generated = path.join(temporary, "index.mjs");
     await createBundle(generated);
-    const [expected, observed] = await Promise.all([
-      readFile(OUTPUT),
-      readFile(generated),
-    ]);
-    if (!expected.equals(observed)) {
+    const runtime = await readFile(generated);
+    if (
+      runtime.byteLength !==
+        IMMUTABLE_RELEASE_RUNTIME.byteLength ||
+      sha256(runtime) !== IMMUTABLE_RELEASE_RUNTIME.sha256
+    ) {
       throw new Error(
-        "Federated BIM surface bundle is stale; run " +
-          "npm run build:bim-surface:v0.2",
+        "Federated BIM surface v0.2 is immutable; rebuild from " +
+          `${IMMUTABLE_RELEASE_RUNTIME.tag} or start a new version`,
       );
     }
-    process.stdout.write(
-      `Federated BIM surface bundle check passed: ` +
-        `${expected.byteLength} bytes\n`,
-    );
+    await copyFile(generated, OUTPUT);
   } finally {
     await rm(temporary, { force: true, recursive: true });
   }
@@ -86,7 +114,7 @@ async function main() {
         "[--check]",
     );
   }
-  await createBundle(OUTPUT);
+  await rebuildImmutableReleaseBundle();
   const body = await readFile(OUTPUT);
   process.stdout.write(
     `Federated BIM surface bundle built: ${body.byteLength} bytes\n`,

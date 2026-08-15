@@ -31,6 +31,15 @@ async function fixtures() {
     pointCloudLodProducts,
     vscode,
     installation,
+    representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
+    viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
+    gltfMeshoptProducts,
+    gltfTextureProducts,
+    gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
   ] = await Promise.all([
     readFile(
       manifest.evidence.browserSynthetic,
@@ -108,6 +117,42 @@ async function fixtures() {
       manifest.evidence.vscodeCleanInstall,
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      manifest.evidence.representativePhysicalGpu,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.representativePointCloudsPhysicalGpu,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.viewerCoreProductEntrypoints,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfExternalResourceProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfMeshQuantizationProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfMeshoptProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfJpegTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      manifest.evidence.gltfBufferViewTextureProducts,
+      "utf8",
+    ).then(JSON.parse),
   ]);
   return {
     browser,
@@ -128,6 +173,15 @@ async function fixtures() {
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
     pointCloudLodProducts,
+    representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
+    viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
+    gltfMeshoptProducts,
+    gltfTextureProducts,
+    gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
     manifest,
     vscode,
   };
@@ -155,6 +209,15 @@ function validate(values) {
     values.pointCloudBrowserPicking,
     values.pointCloudVscodePicking,
     values.pointCloudLodProducts,
+    values.representativePhysicalGpu,
+    values.representativePointCloudsPhysicalGpu,
+    values.viewerCoreProductEntrypoints,
+    values.gltfExternalResourceProducts,
+    values.gltfMeshQuantizationProducts,
+    values.gltfMeshoptProducts,
+    values.gltfTextureProducts,
+    values.gltfJpegTextureProducts,
+    values.gltfBufferViewTextureProducts,
   );
 }
 
@@ -164,21 +227,90 @@ test("product shells pin the same source and render projection", async () => {
     validate(values),
     {
       fixture: "synthetic-semantic-ifc4",
-      heldGates: 3,
+      externalGltfBundleSurfaces: 3,
+      extMeshoptCompressionSurfaces: 3,
+      baseColorTextureSurfaces: 6,
+      jpegBaseColorTextureSurfaces: 3,
+      externalBufferViewTextureSurfaces: 3,
+      khrMeshQuantizationSurfaces: 3,
+      heldGates: 1,
       hosts: ["browser", "vscode-webview"],
-      passedGates: 45,
+      passedGates: 69,
+      physicalGpu:
+        "passed-darwin-arm64-apple-metal-representative-products",
+      pointCloudPhysicalGpu:
+        "passed-darwin-arm64-apple-metal-representative-point-clouds",
+      pointCloudPhysicalGpuSurfaces: 12,
       publicProducts: 3_569,
       status: "experimental",
     },
   );
 });
 
-test("product shells cannot claim unintegrated Viewer Core", async () => {
+test("product shells require exact local external glTF evidence", async () => {
   const values = await fixtures();
-  values.manifest.gates.publicViewerCoreConformance = true;
+  values.gltfExternalResourceProducts.assertions.localOnly = false;
   assert.throws(
     () => validate(values),
-    /publicViewerCoreConformance must remain held/u,
+    /glTF resource bundle product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact KHR_mesh_quantization evidence", async () => {
+  const values = await fixtures();
+  values.gltfMeshQuantizationProducts.assertions
+    .requiredExtensionIdentity = false;
+  assert.throws(
+    () => validate(values),
+    /KHR_mesh_quantization product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact EXT_meshopt_compression evidence", async () => {
+  const values = await fixtures();
+  values.gltfMeshoptProducts.assertions.decoderArtifactExact = false;
+  assert.throws(
+    () => validate(values),
+    /EXT_meshopt_compression product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact base color texture evidence", async () => {
+  const values = await fixtures();
+  values.gltfTextureProducts.assertions.actualTextureProjection = false;
+  assert.throws(
+    () => validate(values),
+    /glTF texture product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact JPEG texture evidence", async () => {
+  const values = await fixtures();
+  values.gltfJpegTextureProducts.assertions.independentJpegValidation =
+    false;
+  assert.throws(
+    () => validate(values),
+    /glTF JPEG texture product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact external-buffer bufferView texture evidence", async () => {
+  const values = await fixtures();
+  values.gltfBufferViewTextureProducts.assertions
+    .exactExternalBufferViewProjection = false;
+  assert.throws(
+    () => validate(values),
+    /glTF external-buffer bufferView texture product evidence is invalid/u,
+  );
+});
+
+test("product shells require exact Viewer Core product evidence", async () => {
+  const values = await fixtures();
+  values.viewerCoreProductEntrypoints.productBundle.sha256 =
+    "0".repeat(64);
+  assert.throws(
+    () => validate(values),
+    /Viewer Core product entrypoint evidence is incomplete/u,
   );
 });
 
@@ -285,5 +417,56 @@ test("product shells require product-scale clean install", async () => {
   assert.throws(
     () => validate(values),
     /product-scale VS Code product evidence is incomplete/u,
+  );
+});
+
+test("product shells reject a software representative renderer", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.browser.ifc.gpu
+    .unmaskedRenderer = "ANGLE (Google, SwiftShader)";
+  assert.throws(
+    () => validate(values),
+    /physical GPU (?:evidence|identity) is invalid/u,
+  );
+});
+
+test("product shells keep cross-platform physical GPU held", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.held.crossPlatformPhysicalGpu =
+    true;
+  assert.throws(
+    () => validate(values),
+    /representative model physical GPU evidence is invalid/u,
+  );
+});
+
+test("product shells reject a software point renderer", async () => {
+  const values = await fixtures();
+  values.representativePointCloudsPhysicalGpu.browser.las
+    .environment.gpu.unmaskedRenderer =
+      "ANGLE (Google, SwiftShader)";
+  assert.throws(
+    () => validate(values),
+    /physical (?:Browser|GPU) (?:evidence|identity) is invalid/u,
+  );
+});
+
+test("point-cloud physical GPU cannot admit a format", async () => {
+  const values = await fixtures();
+  values.representativePointCloudsPhysicalGpu.held.formatAdmission =
+    true;
+  assert.throws(
+    () => validate(values),
+    /point-cloud physical GPU evidence is invalid/u,
+  );
+});
+
+test("representative physical GPU evidence requires Viewer Core", async () => {
+  const values = await fixtures();
+  values.representativePhysicalGpu.browser.ifc.product
+    .viewerCore.opened.source.rangeBytesRead += 1;
+  assert.throws(
+    () => validate(values),
+    /representative model physical GPU evidence is invalid/u,
   );
 });

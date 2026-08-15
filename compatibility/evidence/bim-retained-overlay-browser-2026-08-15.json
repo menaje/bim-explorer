@@ -1,0 +1,75 @@
+{
+  "schema": "bim-explorer-retained-overlay-browser-qualification/1",
+  "status": "passed-actual-browser-webgl2",
+  "contract": "bim-explorer-federated-retained-overlay/0.1",
+  "environment": {
+    "host": "browser",
+    "actualWebGl2": true,
+    "context": "webgl2"
+  },
+  "transaction": {
+    "prepareMs": 102,
+    "commitMs": 8.799999952316284,
+    "atomic": true,
+    "payloadReads": 1,
+    "beforeCommit": {
+      "revisionId": "source-snapshot:sha256:ae27290d10091b450deef71eb4dd792d7570f53e59b7464c2fd3697800fd8216",
+      "activeBytes": 1608,
+      "clippingPlanes": 1,
+      "cameraProjection": "perspective",
+      "framebufferPreserved": true,
+      "pickMapPreserved": true
+    },
+    "committedRevisionId": "source-snapshot:sha256:ae27290d10091b450deef71eb4dd792d7570f53e59b7464c2fd3697800fd8216:retained:1",
+    "selectedSource": "source-slot:overlay",
+    "selectedPickId": "pick:retained-overlay:c518a408b755d4d857f5d89ef54a14bd919dee81b279955e14360418d9ce0c9c",
+    "selectionItems": 1,
+    "selectionSource": "source-slot:overlay",
+    "tombstonePickMiss": true
+  },
+  "pixels": {
+    "nonBackgroundAfterCommit": 8292
+  },
+  "preservation": {
+    "rangesBefore": [
+      1,
+      1,
+      1
+    ],
+    "rangesAfter": [
+      1,
+      1,
+      1
+    ],
+    "externalReadsUnchanged": true,
+    "activeBytesBefore": 1608,
+    "activeBytesAfterTombstone": 1608,
+    "unchangedBaseGpuAllocation": true,
+    "cameraProjection": "perspective",
+    "clippingPlanes": 1,
+    "cameraUnchanged": true,
+    "clippingUnchanged": true,
+    "checkpointReads": 0,
+    "checkpointParses": 0,
+    "checkpointUploads": 0
+  },
+  "cleanup": {
+    "surfaceStatus": "disposed",
+    "backendDisposed": true,
+    "backendActiveBytes": 0,
+    "retainedObjects": 0
+  },
+  "asOf": "2026-08-15",
+  "capturedAt": "2026-08-15T03:57:23.365Z",
+  "browser": {
+    "version": "Google Chrome 151.0.7922.138",
+    "platform": "darwin-arm64",
+    "headless": true,
+    "physicalGpuClaimed": false
+  },
+  "network": {
+    "externalOrigins": [],
+    "runtimeErrors": [],
+    "requestCount": 4
+  }
+}

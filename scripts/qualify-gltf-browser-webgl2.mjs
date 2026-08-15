@@ -372,20 +372,32 @@ export async function qualifyGltfBrowserWebGl2({
       requestedUrls.push(event.request?.url ?? "");
     });
     await client.send("Page.navigate", { url: origin });
-    const browserReport = await poll(
-      client,
-      `(() => {
-        const report = globalThis.__gltfBrowserProbeReport;
-        if (!report || report.status === "running") {
-          return null;
-        }
-        return report;
-      })()`,
-      {
-        timeoutMs:
-          prepared.input.qualification.timeoutMs,
-      },
-    );
+    let browserReport;
+    try {
+      browserReport = await poll(
+        client,
+        `(() => {
+          const report = globalThis.__gltfBrowserProbeReport;
+          if (!report || report.status === "running") {
+            return null;
+          }
+          return report;
+        })()`,
+        {
+          timeoutMs:
+            prepared.input.qualification.timeoutMs,
+        },
+      );
+    } catch (error) {
+      if (errors.length > 0) {
+        throw new Error(
+          `glTF Browser runtime failed before reporting: ` +
+            errors.slice(0, 3).join(" | "),
+          { cause: error },
+        );
+      }
+      throw error;
+    }
     if (browserReport.status !== "passed") {
       throw new Error(
         "glTF Browser probe failed: " +

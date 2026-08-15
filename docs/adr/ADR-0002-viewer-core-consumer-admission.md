@@ -4,7 +4,7 @@ status: accepted
 authority:
   - viewer-core-consumer-admission
   - viewer-namespace-admission
-last_reviewed: 2026-08-04
+last_reviewed: 2026-08-11
 decision_id: ADR-0002
 ---
 
@@ -56,9 +56,13 @@ protocol이 생깁니다.
 - Coni Spatial은 자신의 저장소에서 같은 artifact를 별도로 pin하고
   consumer conformance를 통과해야 합니다.
 
-현재 admission은 package/source/renderer contract의 public preview입니다.
-Browser/VS Code 제품 entrypoint 채택과 Coni Spatial integration은 이
-결정만으로 완료되지 않습니다.
+2026-08-11 후속 admission에서 실제 IFC와 glTF/GLB Browser·VS Code 제품
+entrypoint도 public Viewer Core를 통과했습니다. 내부 source/renderer protocol은
+유지하고 얇은 generated adapter가 public RenderSource descriptor와 range,
+selection event로 변환합니다. public runtime이 원본 session/Worker를 소유하며
+기존 BIM Surface에는 borrowed no-op lease를 제공해 cleanup을 정확히 한 번
+수행합니다. Coni Spatial integration과 stable/production 승격은 이 결정만으로
+완료되지 않습니다.
 
 ## 거부 이유
 
@@ -75,11 +79,12 @@ consumer가 발명해 상호운용성을 거짓으로 주장합니다.
 
 - #3은 exact artifact와 3D consumer conformance로 완료할 수 있습니다.
 - `BimModelSource`와 renderer의 Viewer Core Gate는 통과합니다.
-- Browser/VS Code 제품 entrypoint 채택은 #9 integration Gate에 남습니다.
+- Browser/VS Code IFC·glTF·GLB 제품 entrypoint adoption Gate도 통과합니다.
 - #4 IFC engine qualification은 Viewer Core source를 import하지 않는
   독립 process/fixture spike로 진행할 수 있습니다.
 - BIM Explorer의 internal source protocol과 renderer contract는 그대로
   유지하고 얇은 public Viewer Core adapter에서 변환합니다.
+- point-cloud 경로와 Spatial consumer admission은 독립 Gate로 유지합니다.
 
 ## Rollback과 revisit
 

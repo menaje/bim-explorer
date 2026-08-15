@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const REQUIRED_FILES = Object.freeze([
   "LICENSE",
   "NOTICE",
@@ -77,19 +77,20 @@ function validateManifest(manifest) {
     manifest.package.version !== VERSION ||
     manifest.package.contract !==
       "bim-explorer-bim-surface/0.2" ||
+    manifest.package.retainedOverlayContract !==
+      "bim-explorer-federated-retained-overlay/0.1" ||
     manifest.package.runtimeDependencies !== 0 ||
     manifest.package.repositoryManifestPrivate !== true ||
     manifest.source?.branch !== "prerelease" ||
     manifest.source.expectedTag !== `bim-surface-v${VERSION}` ||
     manifest.source.cleanTree !== true ||
     manifest.profile?.status !==
-      "experimental-read-only-release-ready-candidate" ||
+      "experimental-read-only-retained-overlay-release-candidate" ||
     manifest.profile.nativeWrite !== false ||
-    manifest.profile.coniSpatialAuthority !== false ||
     manifest.profile.vscodeExtensionIncluded !== false ||
     manifest.profile.marketplacePublication !== false ||
     manifest.qualification?.status !==
-      "passed-release-ready-candidate-consumer-revalidated" ||
+      "passed-retained-overlay-release-ready-artifact" ||
     manifest.qualification.byteIdentical !== true ||
     manifest.qualification.offlineCleanInstall !== true ||
     !/^[0-9a-f]{64}$/u.test(
@@ -98,12 +99,16 @@ function validateManifest(manifest) {
     !/^sha512-[A-Za-z0-9+/]+=*$/u.test(
       manifest.qualification.packageIntegrity ?? "",
     ) ||
-    manifest.releaseGate?.actualSpatialConsumer !== true ||
-    manifest.releaseGate.releaseReadyPackageConsumerRevalidation !==
+    manifest.qualification.artifactOnlyRetainedOverlay !== true ||
+    Object.values(manifest.qualification.lifecycleChecks ?? {})
+      .some((value) => value !== true) ||
+    manifest.releaseGate?.artifactOnlyPackageConformance !== true ||
+    manifest.releaseGate.retainedOverlayContractIncluded !==
       true ||
     manifest.releaseGate.publicRelease !== false ||
     manifest.releaseGate.publicationAuthorized !== true ||
-    manifest.postReleaseGate?.publicArtifactSpatialAdmission !== false ||
+    manifest.postReleaseGate?.publicArtifactAdmission !== false ||
+    manifest.postReleaseGate.publishedViewerCore013Artifact !== false ||
     manifest.postReleaseGate.productionSupport !== false ||
     Object.values(manifest.authority ?? {}).some(Boolean)
   ) {

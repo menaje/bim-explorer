@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-viewer-core-compatibility/1",
   "status": "experimental",
-  "asOf": "2026-08-04",
+  "asOf": "2026-08-11",
   "consumer": {
     "repository": "menaje/bim-explorer",
     "product": "BIM Explorer",
@@ -56,7 +56,8 @@
     "threeDimensionalRendererConformance": true,
     "browserHostLifecycle": true,
     "vscodeHostLifecycle": true,
-    "crossRepositoryCI": true
+    "crossRepositoryCI": true,
+    "productEntrypointAdoption": true
   },
   "observations": {
     "localWorkspaceProbe": {
@@ -85,11 +86,36 @@
       "browserHostDisposal": true,
       "vscodeHostDisposal": true,
       "admissionEvidence": true
+    },
+    "productEntrypointProbe": {
+      "status": "passed-browser-vscode-ifc-glb",
+      "evidence": "compatibility/evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json",
+      "browserIfc": true,
+      "browserGltfGlb": true,
+      "stagedVscodeIfc": true,
+      "stagedVscodeGltfGlb": true,
+      "cleanVsixIfc": true,
+      "cleanVsixGltfGlb": true,
+      "rangeReadThroughPublicSession": true,
+      "selectionHostLifecycle": true,
+      "terminalCleanup": true,
+      "admissionEvidence": true
+    },
+    "physicalGpuProductEntrypointProbe": {
+      "status": "passed-darwin-arm64-apple-metal-representative-products",
+      "evidence": "compatibility/evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json",
+      "browserIfc": true,
+      "browserGltfGlb": true,
+      "stagedVscodeIfcGltfGlb": true,
+      "cleanVsixIfcGltfGlb": true,
+      "softwareFallbackDisabled": true,
+      "appleMetal": true,
+      "terminalCleanup": true,
+      "admissionEvidence": true
     }
   },
   "blockers": [
     "upstream 0.1.2 remains a prerelease and automatic stable promotion is disabled",
-    "Browser and VS Code product entrypoints have not adopted the public Viewer Core package",
     "Coni Spatial must independently retain its exact consumer pin and qualification"
   ],
   "policy": {

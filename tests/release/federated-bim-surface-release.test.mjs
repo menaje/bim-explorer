@@ -30,7 +30,7 @@ test("federated BIM Surface release is package-only and gated", async () => {
       "utf8",
     ),
     readFile(
-      "docs/releases/bim-surface-v0.2.0.md",
+      "docs/releases/bim-surface-v0.3.0.md",
       "utf8",
     ),
     readFile("docs/bim-surface-release.md", "utf8"),
@@ -40,7 +40,7 @@ test("federated BIM Surface release is package-only and gated", async () => {
     packageManifest.name,
     "@bim-explorer/federated-bim-surface",
   );
-  assert.equal(packageManifest.version, "0.2.0");
+  assert.equal(packageManifest.version, "0.3.0");
   assert.equal(packageManifest.private, true);
   assert.match(workflow, /current prerelease branch HEAD/u);
   assert.match(
@@ -54,7 +54,7 @@ test("federated BIM Surface release is package-only and gated", async () => {
   assert.match(builder, /marketplacePublication: false/u);
   assert.match(comparator, /SHA256SUMS/u);
   assert.match(comparator, /byteIdentical: true/u);
-  assert.match(sourceOffer, /bim-surface-v0\.2\.0/u);
-  assert.match(releaseNotes, /does not include or publish a BIM/u);
+  assert.match(sourceOffer, /bim-surface-v0\.3\.0/u);
+  assert.match(releaseNotes, /does not publish a VSIX/u);
   assert.match(releasePolicy, /`dev` → `prerelease` → `main`/u);
 });

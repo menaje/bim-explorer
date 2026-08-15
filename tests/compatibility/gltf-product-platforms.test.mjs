@@ -69,3 +69,30 @@ test("cross-platform evidence rejects divergent rendering", async () => {
     /cross-platform evidence is incomplete/u,
   );
 });
+
+test("software platform evidence does not overclaim physical GPU coverage", async () => {
+  const values = await fixtures();
+  values.productManifest.physicalGpuScope.crossPlatform = true;
+  assert.throws(
+    () => validateGltfProductPlatformCompatibility(
+      values.matrix,
+      values.productManifest,
+      values.sourceManifest,
+    ),
+    /manifests do not admit the evidence/u,
+  );
+});
+
+test("source physical GPU admission remains separate from the software matrix", async () => {
+  const values = await fixtures();
+  values.sourceManifest.evidence.representativePhysicalGpu =
+    values.sourceManifest.evidence.productPlatformMatrix;
+  assert.throws(
+    () => validateGltfProductPlatformCompatibility(
+      values.matrix,
+      values.productManifest,
+      values.sourceManifest,
+    ),
+    /manifests do not admit the evidence/u,
+  );
+});

@@ -6,7 +6,7 @@ authority:
   - product-responsibility
   - source-identity-boundary
   - standalone-product-invariants
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # 제품과 저장소 경계
@@ -16,7 +16,18 @@ last_reviewed: 2026-08-11
 BIM Explorer는 raw BIM 모델을 local-first로 읽고 3D 형상, 공간 구조,
 속성과 관계를 탐색하는 독립 제품입니다. 첫 semantic vertical slice는
 read-only IFC이며, bounded glTF/GLB를 BIM authority 없는 reference mesh로
-추가했습니다. bounded E57/LAS/LAZ는 Browser와 VS Code에서 열 수 있는
+추가했습니다. `.gltf`의 JSON-declared 동일 폴더 `.bin`, `.png`, `.jpg`, `.jpeg`도 명시적 local
+bundle로 열 수 있지만 최대 16개·합산 64MiB이고 임의 URI·network fetch는
+허용하지 않습니다. 외부 PNG/JPEG, exact glTF PNG/JPEG data URI, GLB PNG/JPEG
+bufferView와 명시적으로 공급된 local `.bin`의 glTF image bufferView는 OPAQUE
+`baseColorTexture`, `TEXCOORD_0`과 표준 sampler만 허용합니다. JPEG는 bounded
+baseline sequential profile만 허용하고 data URI buffer 기반 image bufferView,
+progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material
+mode·다른 material texture role은 거부합니다.
+required extension은 코덱 없는 `KHR_mesh_quantization`과
+exact meshoptimizer 1.2.0을 쓰는 `EXT_meshopt_compression` `FILTER_NONE`만 bounded
+display decode하고 Draco·다른 meshopt filter·그 밖의 extension은 거부합니다. bounded
+E57/LAS/LAZ는 Browser와 VS Code에서 열 수 있는
 experimental point reference입니다. exact source revision과 root range digest
 안의 파생 point selection, octree leaf chunk와 coarse-to-full LOD는 통과했지만
 CRS/surveyed datum, source-native hierarchy·point semantics와 format/federation
@@ -50,7 +61,30 @@ admission은 아직 보류합니다.
 Viewer Core와 render protocol은 공개 `@menaje/*` 0.1 contract를 exact
 artifact로 공유합니다. 상대 제품의 설치된 extension, process 또는 private
 message를 기본 integration으로 사용하지 않습니다. prerelease 소비와 각
-제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다.
+제품 entrypoint 채택은 저장소별 compatibility Gate로 분리합니다. Explorer의
+IFC/glTF/GLB Browser·VS Code entrypoint Gate는 통과했지만 Spatial consumer,
+stable/production과 Marketplace Gate를 대신하지 않습니다.
+
+post-release `consumer-overlay` geometry 갱신은
+[`bim-explorer-retained-overlay/0.1`](../specs/bim-retained-overlay-v0.1.md)로
+분리합니다. Explorer는 bounded packet을 source-local identity와 exact
+revision에 묶고 Viewer Core 0.1.3 staged adapter를 통해 geometry/Pick/revision을
+원자적으로 전환합니다. 이 display projection은 원본 source를 수정하거나
+Spatial authored geometry, Canonical identity 또는 accept/publish 권한을 얻지
+않습니다. exact upstream source commit conformance는 통과했지만 published
+Viewer Core 0.1.3 artifact는 보류합니다. retained contract는 immutable v0.2를
+변경하지 않고 artifact-only conformance를 통과한 v0.3.0 candidate에
+포함됩니다.
+
+local `.gltf + .bin/.png/.jpg/.jpeg` bundle의 source fingerprint는 document SHA-256과 정렬된
+sidecar name·byte length·SHA-256 descriptor를 함께 묶습니다. Browser의 명시적
+다중 파일 선택과 VS Code의 sibling resolution은 같은 fingerprint를 만들지만,
+경로나 파일 이름을 public Viewer/Spatial identity로 승격하지 않습니다.
+공개된 federated BIM Surface v0.2와 `.bimfed.json`은 exact runtime/API를
+유지하므로 이 single-source bundle, 외부/내장 PNG/JPEG texture,
+`KHR_mesh_quantization` 또는 meshopt 기능을
+포함한다고 주장하지 않습니다. federation에 포함하려면 새 semver contract와 Explorer package
+qualification, Spatial consumer admission이 필요합니다.
 
 ## Identity 경계
 
@@ -89,8 +123,17 @@ selection이 authority가 되지 않습니다.
   않습니다. 내부 Browser와 path-free `.bimfed.json` VS Code entrypoint는
   private 0.2.0 candidate runtime을 사용해 검증됐고 byte-identical pack과
   offline clean install도 통과했습니다. Spatial actual headless consumer는 이전
-  candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. immutable
-  public v0.2 asset과 그 asset의 Spatial exact-pin admission은 별도 Gate입니다.
+  candidate와 exact 97,623-byte release-ready tgz를 모두 검증했습니다. 동일 tgz는
+  immutable public v0.2 package prerelease로 공개됐고 그 asset의 Spatial Phase B
+  exact-pin admission도 통과했습니다. 별도 post-release 검증에서 generated
+  3-source Browser와 VS Code staged/clean-installed local VSIX는 Apple M2 Metal
+  physical GPU를 통과했습니다. 같은 hardware profile에서 공개 46.77MB IFC와
+  42.98MB GLB도 actual Browser, staged VS Code와 clean-installed local VSIX의
+  개별 제품 세션으로 통과했습니다. LAS·LAZ·E57·다중 스캔 E57도 같은 세
+  제품 경로의 12개 표면에서 Apple M2 Metal을 통과했지만 CRS와 format
+  admission은 held입니다. 대표 sample의 동시 합성, Spatial VSIX BIM
+  runtime, Spatial 실제 BIM UI, Linux/Windows hardware, OS-level peak GPU
+  memory와 production support는 별도 Gate입니다.
 - Coni Spatial 설치, 계정, service와 license를 기본 실행에 요구하지
   않습니다.
 - Coni Spatial도 설치된 BIM Explorer extension을 호출하지 않고 호환되는

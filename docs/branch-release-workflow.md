@@ -5,7 +5,7 @@ authority:
   - development-branch
   - prerelease-promotion
   - stable-release-promotion
-last_reviewed: 2026-08-11
+last_reviewed: 2026-08-15
 ---
 
 # Branch and release workflow
@@ -62,10 +62,15 @@ Community stable release workflow도 repository variable
 draft 생성 전에 실패합니다. 이 variable은 사용자가 새 VSIX publication을
 승인한 뒤에만 설정합니다. 기존 immutable v0.1.0 release는 변경하지 않습니다.
 
-Federated BIM Surface v0.2 prerelease는 host-neutral tgz, SPDX SBOM,
+Federated BIM Surface v0.2와 v0.3 prerelease는 host-neutral tgz, SPDX SBOM,
 checksum, source offer, release manifest와 provenance만 공개합니다. 이 package
 prerelease는 standalone BIM Explorer extension release나 marketplace 지원을
 주장하지 않습니다.
+
+공개된 v0.2 runtime은 tag와 exact digest로 동결합니다. 이후 `dev`의 공용
+source가 달라져도 v0.2 asset을 다시 쓰지 않으며 retained overlay 기능은 새
+v0.3 semver와 같은 승격·artifact-only consumer Gate로 진행합니다. v0.3도 공개
+뒤에는 tag와 exact digest를 교체하지 않습니다.
 
 ## Emergency fixes
 

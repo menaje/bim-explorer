@@ -10,6 +10,10 @@ import { fileURLToPath } from "node:url";
 import {
   prepareVscodeExtensionStage,
 } from "../../scripts/package-vscode-extension.mjs";
+import {
+  syntheticGltfExternalBundle,
+  syntheticTexturedGltfExternalBundle,
+} from "../../scripts/generate-synthetic-gltf.mjs";
 
 const require = createRequire(import.meta.url);
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -71,6 +75,7 @@ function fakeWatcher() {
 }
 
 function fakeVscode({
+  resourceFiles = {},
   sourcePath = "/private/customer/acme-building.ifc",
   sourceBytes = new TextEncoder().encode(
     "ISO-10303-21;\nEND-ISO-10303-21;\n",
@@ -78,6 +83,24 @@ function fakeVscode({
   sourceType = 1,
 } = {}) {
   const sourceUri = new FakeUri(sourcePath);
+  const files = new Map([[sourceUri.fsPath, {
+    bytes: Uint8Array.from(sourceBytes),
+    mtime: 42,
+    type: sourceType,
+  }]]);
+  for (const [name, value] of Object.entries(resourceFiles)) {
+    const record = value instanceof Uint8Array
+      ? { bytes: value, mtime: 42, type: 1 }
+      : value;
+    files.set(
+      path.resolve(path.dirname(sourceUri.fsPath), name),
+      {
+        bytes: Uint8Array.from(record.bytes),
+        mtime: record.mtime ?? 42,
+        type: record.type ?? 1,
+      },
+    );
+  }
   const output = [];
   const configuration = {
     ifcProfile: "ReferenceView_V1.2",
@@ -126,15 +149,25 @@ function fakeVscode({
               await readFile(uri.fsPath),
             );
           }
-          assert.equal(uri.toString(), sourceUri.toString());
-          return Uint8Array.from(sourceBytes);
+          const record = files.get(uri.fsPath);
+          if (record === undefined) {
+            const error = new Error("missing fixture file");
+            error.code = "ENOENT";
+            throw error;
+          }
+          return Uint8Array.from(record.bytes);
         },
         async stat(uri) {
-          assert.equal(uri.toString(), sourceUri.toString());
+          const record = files.get(uri.fsPath);
+          if (record === undefined) {
+            const error = new Error("missing fixture file");
+            error.code = "ENOENT";
+            throw error;
+          }
           return {
-            type: sourceType,
-            size: sourceBytes.byteLength,
-            mtime: 42,
+            type: record.type,
+            size: record.bytes.byteLength,
+            mtime: record.mtime,
           };
         },
       },
@@ -553,6 +586,10 @@ test("webview HTML uses the shared app with strict path-free CSP", async () => {
     html,
     /Content-Security-Policy/u,
   );
+  assert.match(html, /id="review-toolbar"/u);
+  assert.match(html, /aria-label="3D review tools"/u);
+  assert.match(html, /id="measure-distance"/u);
+  assert.match(html, /id="toggle-focus-mode"/u);
   assert.match(
     html,
     /worker-src vscode-webview:\/\/test blob:/u,
@@ -648,6 +685,200 @@ test("Custom Editor sends only the normalized GLB format hint", async () => {
     JSON.stringify(sourceMessage).includes("acme-reference"),
     false,
   );
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends only declared same-folder glTF resources", async () => {
+  const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/Box.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: {
+      "Box0.bin": bundle.resources[0].bytes,
+    },
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.equal(sourceMessage.resources.length, 1);
+  assert.equal(sourceMessage.resources[0].uri, "Box0.bin");
+  assert.deepEqual(
+    [...new Uint8Array(sourceMessage.resources[0].bytes)],
+    [...bundle.resources[0].bytes],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends declared glTF buffer and PNG image resources", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle({
+    binaryUri: "BoxTextured0.bin",
+    imageUri: "BaseColor.png",
+  });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/BoxTextured.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: Object.fromEntries(
+      bundle.resources.map((resource) => [
+        resource.uri,
+        resource.bytes,
+      ]),
+    ),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.deepEqual(
+    sourceMessage.resources.map((resource) => resource.uri),
+    ["BoxTextured0.bin", "BaseColor.png"],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor sends declared glTF buffer and JPEG image resources", async () => {
+  const bundle = syntheticTexturedGltfExternalBundle({
+    binaryUri: "BoxTextured0.bin",
+    imageUri: "BaseColor.jpeg",
+  });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/BoxTextured.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: Object.fromEntries(
+      bundle.resources.map((resource) => [
+        resource.uri,
+        resource.bytes,
+      ]),
+    ),
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  const sourceMessage = host.posted.find(
+    (message) => message.type === "source-bytes",
+  );
+  assert.equal(sourceMessage.format, "gltf");
+  assert.deepEqual(
+    sourceMessage.resources.map((resource) => resource.uri),
+    ["BoxTextured0.bin", "BaseColor.jpeg"],
+  );
+  assert.equal(
+    JSON.stringify(sourceMessage).includes("/private/customer"),
+    false,
+  );
+  bundle.bytes.fill(0);
+  for (const resource of bundle.resources) {
+    resource.bytes.fill(0);
+  }
+  document.dispose();
+  provider.dispose();
+});
+
+test("Custom Editor rejects a declared glTF resource symlink", async () => {
+  const bundle = syntheticGltfExternalBundle({ uri: "Box0.bin" });
+  const { sourceUri, vscode } = fakeVscode({
+    sourcePath: "/private/customer/Box.gltf",
+    sourceBytes: bundle.bytes,
+    resourceFiles: {
+      "Box0.bin": {
+        bytes: bundle.resources[0].bytes,
+        type: 1 | 64,
+      },
+    },
+  });
+  const context = {
+    extensionUri: new FakeUri(
+      path.join(ROOT, "apps", "bim-explorer-vscode"),
+    ),
+    subscriptions: [],
+  };
+  const provider = new BimExplorerReadonlyEditorProvider(
+    vscode,
+    context,
+    { runtimeRoot: new FakeUri(ROOT) },
+  );
+  const document = await provider.openCustomDocument(sourceUri);
+  const host = fakePanel();
+  await provider.resolveCustomEditor(document, host.panel);
+  await host.receive({
+    schema: "bim-explorer-product-host-message/0.1",
+    type: "ready",
+  });
+  assert.deepEqual(host.posted.at(-1).diagnostic, {
+    code: "SOURCE_RESOURCE_SYMLINK_REJECTED",
+    retryable: false,
+  });
+  assert.equal(host.posted.at(-1).type, "source-error");
+  bundle.bytes.fill(0);
+  bundle.resources[0].bytes.fill(0);
   document.dispose();
   provider.dispose();
 });
@@ -781,6 +1012,31 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
     hostKind: "vscode-webview",
     externalUpload: false,
     telemetry: false,
+    gpu: {
+      schema: "bim-explorer-webgl2-gpu-identity/1",
+      webgl2: true,
+      debugRendererInfo: true,
+      vendor: "WebKit",
+      renderer: "WebKit WebGL",
+      unmaskedVendor: "Apple Inc.",
+      unmaskedRenderer: "ANGLE Metal Renderer: Apple M2",
+      version: "WebGL 2.0",
+      shadingLanguageVersion: "WebGL GLSL ES 3.00",
+      contextAttributes: {
+        alpha: true,
+        antialias: true,
+        depth: true,
+        desynchronized: false,
+        failIfMajorPerformanceCaveat: false,
+        powerPreference: "default",
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: false,
+        stencil: false,
+        xrCompatible: false,
+        path: "/private/customer/acme.ifc",
+      },
+      path: "/private/customer/acme.ifc",
+    },
     source: {
       fingerprint: `sha256:${"a".repeat(64)}`,
       revisionId: "revision:test",
@@ -796,6 +1052,76 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
       triangles: 12,
       ranges: 1,
     },
+    reviewTools: {
+      schema: "bim-explorer-product-review-tools/1",
+      fitAllUpdates: 1,
+      hiddenRenderIds: ["render:40"],
+      layout: {
+        focusMode: false,
+        propertiesVisible: true,
+        treeVisible: true,
+        path: "/private/customer/acme.ifc",
+      },
+      measurement: {
+        schema: "bim-explorer-measurement-3d/0.1",
+        type: "distance",
+        coordinateSpace: "source-world",
+        unit: "source-coordinate-unit",
+        points: [[0, 0, 0], [1, 0, 0]],
+        value: 1,
+        path: "/private/customer/acme.ifc",
+      },
+      measurementPicks: 0,
+      projection: "orthographic",
+      projectionUpdates: 1,
+      resetViewUpdates: 0,
+      sectionMode: "clip-x",
+      selectionSuppressed: false,
+      standardView: "front",
+      standardViewUpdates: 1,
+      tool: "select",
+      visibilityMode: "hide",
+      path: "/private/customer/acme.ifc",
+    },
+    viewerCore: {
+      adopted: true,
+      api: "menaje-viewer-core/0.1",
+      contract: "bim-explorer-product-viewer-core/0.1",
+      descriptorProtocolVersion: "0.1.0",
+      disposed: false,
+      host: {
+        disposed: false,
+        eventCount: 1,
+        kind: "vscode-webview",
+        lastEventType: "selection.changed",
+      },
+      presentation: {
+        borrowedSessionDisposed: false,
+        borrowedWorkerDisposed: false,
+        disposalStatus: "active",
+        disposed: false,
+      },
+      protocolId: "menaje-viewer-render-protocol/0.1.0",
+      protocolVersion: "0.1.0",
+      selection: {
+        reason: "surface-open",
+        sequence: 1,
+        selection: {
+          expressId: 40,
+          globalId: "3vYxProduct",
+          renderId: "render:40",
+          path: "/private/customer/acme.ifc",
+        },
+      },
+      source: {
+        disposed: false,
+        rangeBytesRead: 256,
+        rangeReads: 1,
+        sessionDisposed: false,
+        sessionOpened: true,
+      },
+      version: "0.1.2",
+    },
   });
   const serialized = JSON.stringify(report);
   assert.equal(serialized.includes("/private"), false);
@@ -803,6 +1129,19 @@ test("extension diagnostics sanitize arbitrary webview fields", () => {
   assert.equal(
     report.source.fingerprint,
     `sha256:${"a".repeat(64)}`,
+  );
+  assert.equal(report.viewerCore.adopted, true);
+  assert.equal(report.viewerCore.version, "0.1.2");
+  assert.equal(report.viewerCore.source.rangeBytesRead, 256);
+  assert.equal(report.viewerCore.selection.identity.expressId, 40);
+  assert.equal(report.reviewTools.projection, "orthographic");
+  assert.equal(report.reviewTools.measurement.value, 1);
+  assert.equal(report.reviewTools.measurement.path, undefined);
+  assert.equal(report.reviewTools.layout.path, undefined);
+  assert.equal(report.gpu.webgl2, true);
+  assert.equal(
+    report.gpu.unmaskedRenderer,
+    "ANGLE Metal Renderer: Apple M2",
   );
 });
 
@@ -820,7 +1159,51 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       byteLength: 1664,
       format: "glb",
       gltfVersion: "2.0",
+      extensionsRequired: ["KHR_mesh_quantization"],
+      extensionsUsed: ["KHR_mesh_quantization"],
       profile: "gltf-2.0-bounded-reference-mesh-v0.1",
+      appearance: {
+        profile: "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet: 0,
+        textureSourceBytes: 3750,
+        textureDecodedBytes: 262144,
+        textures: 1,
+        imageMediaTypes: ["image/png"],
+        colorSpace: "srgb-to-linear-webgl2",
+      },
+      appearanceOmissions: {
+        schema: "bim-explorer-gltf-appearance-omissions/1",
+        policy: "bounded-omission",
+        declaredImages: 33,
+        declaredTextures: 38,
+        projectedTextures: 0,
+        materialFeatures: 60,
+        materials: 15,
+        textureReferences: 56,
+        uniqueImages: 33,
+        uniqueTextures: 38,
+        sourceBytes: 18_930_095,
+        reasons: {
+          "projection-budget": 9,
+          "unsupported-material-role": 43,
+        },
+        roles: {
+          baseColorTexture: 13,
+          "extension:KHR_materials_transmission": 2,
+          normalTexture: 15,
+        },
+        path: "/private/customer/acme.glb",
+      },
+      resourceBundle: {
+        schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+        documentBytes: 3695,
+        externalResourceBytes: 4590,
+        externalResources: 2,
+        externalBufferResources: 1,
+        externalImageResources: 1,
+        externalBufferViewImageResources: 1,
+        networkAtRuntime: false,
+      },
       sourceRole: "derived-or-reference-mesh",
       semanticAuthority: false,
       path: "/private/customer/acme.glb",
@@ -838,10 +1221,53 @@ test("extension diagnostics preserve bounded reference identity only", () => {
       treeRows: 1,
       maximumDomRows: 64,
     },
+    resources: {
+      sourceBytes: 8285,
+      geometryBytes: 4756,
+      textureSourceBytes: 3750,
+      textureDecodedBytes: 262144,
+      textures: 1,
+      externalBufferResources: 1,
+      externalImageResources: 1,
+      externalBufferViewImageResources: 1,
+    },
+    renderer: {
+      actualGpu: true,
+      nonBackgroundPixels: 100,
+      sourceReadBytes: 4756,
+      uploadedBytes: 350516,
+      textureSourceBytes: 3750,
+      textureDecodedBytes: 262144,
+      textureGpuBytes: 349524,
+      textures: 1,
+      gpuTextures: 1,
+    },
   });
   assert.equal(report.source.format, "glb");
   assert.equal(report.source.semanticAuthority, false);
+  assert.equal(report.source.appearance.textures, 1);
+  assert.equal(
+    report.source.appearanceOmissions.materialFeatures,
+    60,
+  );
+  assert.equal(
+    report.source.appearanceOmissions.path,
+    undefined,
+  );
+  assert.equal(report.source.resourceBundle.externalImageResources, 1);
+  assert.equal(
+    report.source.resourceBundle.externalBufferViewImageResources,
+    1,
+  );
+  assert.equal(report.resources.externalBufferViewImageResources, 1);
+  assert.deepEqual(
+    report.source.extensionsRequired,
+    ["KHR_mesh_quantization"],
+  );
   assert.equal(report.reference.globalId, null);
+  assert.equal(report.resources.textureDecodedBytes, 262144);
+  assert.equal(report.renderer.gpuTextures, 1);
+  assert.equal(report.renderer.textureGpuBytes, 349524);
   assert.equal(
     report.reference.selectedNativeId,
     "node:1/mesh:0/primitive:0",
@@ -990,10 +1416,12 @@ test("extension staging is complete and independently path-safe", async () => {
       "packages/las-laz-point-source/src/header.mjs",
       "packages/las-laz-point-source/src/index.mjs",
       "packages/bim-surface/runtime/index.mjs",
+      "packages/viewer-core-consumer/runtime/product.mjs",
       "packages/bim-renderer-3d/src/index.mjs",
       "packages/bim-renderer-3d/src/point-cloud-lod.mjs",
       "packages/bim-renderer-3d/src/point-cloud.mjs",
       "packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
+      "packages/bim-renderer-3d/src/textured-geometry.mjs",
       "packages/bim-semantic-explorer/src/index.mjs",
       "apps/federated-bim-surface-vscode/app.mjs",
       "apps/federated-bim-surface-vscode/index.html",
@@ -1006,6 +1434,10 @@ test("extension staging is complete and independently path-safe", async () => {
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
       "node_modules/web-ifc/LICENSE.md",
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/laz-perf/package.json",
       "LICENSES/e57-rs-MIT.txt",

@@ -106,8 +106,13 @@ lifecycle을 host-neutral surface로 합성하는 draft입니다. 개발 기준�
 Browser/VS Code v0.2 entrypoint와 private 0.2.0 package candidate에 더해 actual
 Spatial headless consumer가 이전 candidate와 exact 97,623-byte release-ready
 tgz를 검증했습니다. 이는 package-only prerelease를 승인하지만 immutable public
-artifact의 Spatial exact-pin, Spatial VSIX BIM runtime 또는 production support를
-승인한다는 뜻은 아닙니다.
+artifact의 Spatial exact-pin도 별도로 통과했습니다. 다만 Spatial VSIX BIM
+runtime, Spatial 제품의 실제 BIM UI/GPU 또는 production support를 승인한다는
+뜻은 아닙니다. Explorer 제품 경로 자체는 별도 post-release Gate에서 software
+fallback을 끈 Apple M2 Metal actual Chrome 151 Browser 2회와 VS Code 1.132
+staged/clean-installed local VSIX로 같은 generated GLB–IFC–GLB composition,
+surface hit/anchor와 cleanup을 재현했습니다. 이 결과는 macOS arm64 단일
+hardware와 generated fixture에 한정합니다.
 
 ## Coordinate와 precision 경계
 
@@ -136,8 +141,16 @@ cache입니다.
 | 3D Tiles/GIS | site context reference | held |
 | RVT/DGN | native SDK reference | held |
 
-glTF/GLB admission은 embedded buffer, bounded node/mesh profile과
-source-native identity에 한정됩니다. 비 IFC reference source는 semantic
+glTF/GLB admission은 embedded buffer 또는 명시적으로 공급된 동일 폴더 `.bin`/
+`.png`/`.jpg`/`.jpeg` resource bundle, bounded node/mesh profile과 source-native identity에
+한정됩니다. local bundle은 최대 16개 ASCII leaf-name sidecar와 document 합산
+64MiB이며 임의 URI·runtime network를 허용하지 않습니다. 외부 PNG/JPEG, exact
+glTF PNG/JPEG data URI, GLB PNG/JPEG bufferView와 명시적 local `.bin`의 glTF
+image bufferView는 OPAQUE `baseColorTexture`, `TEXCOORD_0`과 표준 sampler만
+geometry-range v2/v3로 투영합니다. JPEG는 bounded baseline sequential
+profile만 허용하고 data URI buffer 기반 image bufferView,
+progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material mode·다른 material
+texture role은 거부합니다. 비 IFC reference source는 semantic
 BIM authority가 아닙니다. 모든 후보의 write와 round-trip은 별도
 Gate입니다.
 
@@ -147,16 +160,46 @@ parser/SDK license와 배포 권리, coordinate profile, first-frame/memory/clea
 [`reference format evidence intake`](reference-format-intake.md)의 공개 issue
 form과 fail-closed triage receipt를 사용하며 고객 모델·credential·absolute
 path를 받지 않습니다. intake가 완전해도 별도 codec/SDK conformance 전에는
-format을 admission하지 않습니다. glTF external resource와 required extension,
-product-scale 제품 file-open은 호스트별 Gate입니다. bounded local Browser/VS
+format을 admission하지 않습니다. glTF local external buffer bundle과 required
+extension, product-scale 제품 file-open은 호스트별 Gate입니다. bounded local Browser/VS
 Code 제품 file-open은 Khronos Box로 macOS arm64와 Linux x64 product-shell
 evidence에서 통과했습니다. 42.98MB `A Beautiful Game`은 on-demand CC BY
 4.0 product-scale reference source와 실제 Chrome SwiftShader first-frame,
 16.9MB allocation cleanup에 이어 Browser product shell의 local file input,
 검색·3D pick과 close cleanup을 통과했습니다. staged VS Code와 빈 profile에
 clean-installed VSIX도 동일한 49개 source-native entity·573,952 unique
-triangles, 16.9MB upload와 editor cleanup을 재현했습니다. physical GPU는
-승인하지 않습니다.
+triangles, 16.9MB upload와 editor cleanup을 재현했습니다. 같은 GLB와 공개
+IFC는 software fallback을 끈 actual Browser, staged VS Code 및
+clean-installed local VSIX에서 Apple M2 Metal physical GPU를 각각
+통과했습니다. Linux/Windows, OS-level peak GPU memory와 두 대표 모델의 동시
+합성은 승인하지 않습니다.
+별도 Khronos `Box.gltf + Box0.bin`은 Browser의 명시적 다중 선택, staged VS Code와
+clean-installed local VSIX에서 같은 composite source identity와 Apple M2 Metal
+projection·cleanup을 통과했습니다. `KHR_mesh_quantization`도 exact Box-derived
+cache-only GLB의 공식 Validator, headless와 같은 세 Apple M2 Metal 제품 표면에서
+통과했습니다. 별도 `EXT_meshopt_compression` Box-derived cache-only GLB도 exact
+meshoptimizer 1.2.0, 192 compressed/648 decoded bytes, `FILTER_NONE` headless decode와
+같은 세 Apple M2 Metal 제품 표면을 통과했습니다. 두 required extension만
+single-source glTF profile에 허용하며 Draco·다른 meshopt filter·그 밖의 required extension, nested/arbitrary URI,
+data URI buffer 기반 image bufferView, progressive/arithmetic/lossless JPEG·비-OPAQUE alpha mode·다중 material texture와
+Linux/Windows physical GPU는 계속 보류합니다. 별도 exact Khronos
+BoxTextured cache-only 외부 bundle과 embedded GLB는 공식 Validator issue 0개,
+byte-identical geometry-range v2의 PNG/UV projection과 각각의
+Browser·staged VS Code·clean-installed local VSIX, 합계 6개 Apple M2 Metal
+표면에서 86,486 pixels·349,524-byte mipmap-aware GPU texture·350,516-byte
+total upload·terminal cleanup을 통과했습니다. exact glTF PNG data URI는
+synthetic conformance로 보완합니다. sample은 원 라이선스와 Cesium 표장 조건을
+manifest에 고정하고 재배포하지 않습니다.
+별도 exact cache-only derivation은 749-byte Khronos baseline JPEG를 same-folder
+resource로 결합합니다. 공식 Validator issue 0개와 source/renderer 독립 JPEG
+validation, 1,756-byte geometry-range v3를 통과했고 actual Chrome 151, staged VS
+Code 1.132와 clean-installed local VSIX의 Apple M2 Metal 3개 표면에서 86,486
+pixels·22,836-byte total upload·terminal cleanup을 재현했습니다. 기존 PNG-only
+v2 range와 hash는 변경하지 않습니다.
+이 결과는 glTF source와 single-source 제품 Gate에 한정됩니다. immutable
+federated BIM Surface v0.2 package와 `.bimfed.json` host에는 backport하지 않으며,
+후속 federated bundle, texture, mesh quantization 또는 meshopt 지원은 새 version과 별도 Spatial
+consumer Gate가 필요합니다.
 cache-only LAS/LAZ pre-admission probe는 paired LAS 1.2/LAZ의 10,201개
 point-format 3 record와 압축 해제 parity를 통과했습니다. actual Chrome
 qualification Worker도 bounded input/output와 WASM heap, checkpoint cooperative
@@ -211,9 +254,11 @@ Browser, staged VS Code와 clean-installed VSIX file-open을 통과했습니다.
 재현했습니다. 별도 product-scale source/renderer probe와 Browser, staged
 VS Code, clean-installed VSIX 제품 file-open도 통과했습니다. multi-source
 composite first-frame·memory·cleanup도 generated IFC 두 개와 제품 규모 GLB
-조합으로 통과했습니다. physical GPU와 실제 사용자/Spatial/survey evidence는
-계속 held입니다. 이 결과는 v0.1.0 asset이나 broader glTF profile을 소급
-승인하지 않습니다.
+조합으로 통과했습니다. federated Surface v0.2의 generated 3-source 경로와
+개별 공개 IFC·product-scale GLB 제품 경로는 Apple M2 Metal physical GPU를
+통과했으며, 두 대표 모델의 동시 합성, 다른 포맷·Linux/Windows hardware와
+실제 사용자/Spatial/survey evidence는 계속 held입니다. 이 결과는 v0.1.0
+asset이나 broader glTF profile을 소급 승인하지 않습니다.
 
 LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 개발 evidence로 통과했습니다. 이 변경은 immutable Community v0.1.0 asset에
@@ -221,7 +266,9 @@ LAS/LAZ와 E57의 Browser, staged VS Code와 clean-installed VSIX 제품 open도
 결정하면 runtime SBOM, checksum과 release reproducibility를 다시 검증합니다.
 
 actual Spatial headless consumer는 이전 exact private candidate와 release-ready
-tgz에서 통과했습니다. immutable public artifact의 standalone Spatial exact-pin은
-Explorer 저장소가 단독으로 완료할 수 없는 consumer-owned Gate입니다. 관련
+tgz에서 통과했고 동일 tgz는 immutable public prerelease로 공개됐습니다. public
+artifact의 standalone Spatial Phase B exact-pin도 consumer-owned evidence로
+통과했습니다. hosted CI는 runner 배정 전에 종료돼 cross-platform consumer
+evidence를 추가하지 않습니다. 관련
 진행은 Explorer #9/#12와 Coni Spatial #22에 evidence URL과 exact digest로만
 게시합니다.

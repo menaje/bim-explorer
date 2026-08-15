@@ -26,6 +26,7 @@ const [
   pointCloudBrowserPickingEvidence,
   pointCloudVscodePickingEvidence,
   pointCloudLodProductEvidence,
+  representativePointCloudsPhysicalGpuEvidence,
 ] = await Promise.all([
   readFile(
     "compatibility/reference-format-probes.json",
@@ -121,6 +122,12 @@ const [
       "point-cloud-lod-products-2026-08-09.json",
     "utf8",
   ).then(JSON.parse),
+  readFile(
+    "compatibility/evidence/" +
+      "bim-product-shell-representative-point-clouds-" +
+      "physical-gpu-darwin-arm64-2026-08-11.json",
+    "utf8",
+  ).then(JSON.parse),
 ]);
 
 test("reference sample probes remain separate from format admission", () => {
@@ -145,12 +152,14 @@ test("reference sample probes remain separate from format admission", () => {
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
       pointCloudLodProductEvidence,
+      representativePointCloudsPhysicalGpuEvidence,
     ),
     {
       status: "pre-admission",
-      passedGates: 36,
+      passedGates: 37,
       heldGates: 4,
       sampleFormats: 3,
+      physicalGpuSurfaces: 12,
     },
   );
 });
@@ -179,6 +188,7 @@ test("an E57 product open cannot claim format admission", () => {
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
       pointCloudLodProductEvidence,
+      representativePointCloudsPhysicalGpuEvidence,
     ),
     /must be held/u,
   );
@@ -208,6 +218,7 @@ test("a LAS/LAZ Browser product open cannot claim format admission", () => {
       pointCloudBrowserPickingEvidence,
       pointCloudVscodePickingEvidence,
       pointCloudLodProductEvidence,
+      representativePointCloudsPhysicalGpuEvidence,
     ),
     /must be held/u,
   );

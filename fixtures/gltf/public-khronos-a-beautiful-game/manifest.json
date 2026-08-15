@@ -41,6 +41,33 @@
     "instances": 49,
     "instancedTriangles": 1499072,
     "geometryRangeBytes": 16896412,
+    "appearanceOmissions": {
+      "schema": "bim-explorer-gltf-appearance-omissions/1",
+      "policy": "bounded-omission",
+      "declaredImages": 33,
+      "declaredTextures": 38,
+      "projectedTextures": 0,
+      "materialFeatures": 60,
+      "materials": 15,
+      "textureReferences": 56,
+      "uniqueImages": 33,
+      "uniqueTextures": 38,
+      "sourceBytes": 18930095,
+      "reasons": {
+        "projection-budget": 9,
+        "unsupported-image-profile": 4,
+        "unsupported-material-extension": 4,
+        "unsupported-material-role": 43
+      },
+      "roles": {
+        "baseColorTexture": 13,
+        "extension:KHR_materials_transmission": 2,
+        "extension:KHR_materials_volume": 2,
+        "metallicRoughnessTexture": 15,
+        "normalTexture": 15,
+        "occlusionTexture": 13
+      }
+    },
     "extensionsUsed": [
       "KHR_materials_transmission",
       "KHR_materials_volume"

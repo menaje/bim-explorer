@@ -32,6 +32,8 @@ const LOCAL_PATH_PATTERN =
 const REPORT_STATUSES = new Set([
   "ready",
   "qualified",
+  "retained-progress",
+  "retained-qualified",
   "disposed",
   "failed",
   "editor-closed",
@@ -212,6 +214,53 @@ function booleanAuthority(value) {
       .slice(0, 16)
       .map(([key, item]) => [key, item === true]),
   );
+}
+
+function sanitizeGpuIdentity(value) {
+  if (
+    value?.schema !== "bim-explorer-webgl2-gpu-identity/1" ||
+    value.webgl2 !== true
+  ) {
+    return null;
+  }
+  const attributes = value.contextAttributes;
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: true,
+    debugRendererInfo: value.debugRendererInfo === true,
+    vendor: stringOrNull(value.vendor),
+    renderer: stringOrNull(value.renderer),
+    unmaskedVendor: value.unmaskedVendor === null
+      ? null
+      : stringOrNull(value.unmaskedVendor),
+    unmaskedRenderer: value.unmaskedRenderer === null
+      ? null
+      : stringOrNull(value.unmaskedRenderer),
+    version: stringOrNull(value.version),
+    shadingLanguageVersion: stringOrNull(
+      value.shadingLanguageVersion,
+    ),
+    contextAttributes: attributes === null ||
+      typeof attributes !== "object"
+      ? null
+      : {
+          alpha: attributes.alpha === true,
+          antialias: attributes.antialias === true,
+          depth: attributes.depth === true,
+          desynchronized: attributes.desynchronized === true,
+          failIfMajorPerformanceCaveat:
+            attributes.failIfMajorPerformanceCaveat === true,
+          powerPreference: stringOrNull(
+            attributes.powerPreference,
+          ),
+          premultipliedAlpha:
+            attributes.premultipliedAlpha === true,
+          preserveDrawingBuffer:
+            attributes.preserveDrawingBuffer === true,
+          stencil: attributes.stencil === true,
+          xrCompatible: attributes.xrCompatible === true,
+        },
+  };
 }
 
 function sanitizePick(value) {
@@ -414,6 +463,87 @@ function sanitizeFederationReport(value) {
           value.cleanup.runtimeUrlsRevoked === true,
         repeatedDispose: value.cleanup.repeatedDispose === true,
       };
+  const retainedOverlay = value.retainedOverlay === null ||
+    typeof value.retainedOverlay !== "object"
+    ? null
+    : {
+        contract: stringOrNull(value.retainedOverlay.contract),
+        actualWebGl2: value.retainedOverlay.actualWebGl2 === true,
+        prepareMs: numberOrNull(value.retainedOverlay.prepareMs),
+        commitMs: numberOrNull(value.retainedOverlay.commitMs),
+        atomic: value.retainedOverlay.atomic === true,
+        stagedFramebufferPreserved:
+          value.retainedOverlay.stagedFramebufferPreserved === true,
+        stagedPickMapPreserved:
+          value.retainedOverlay.stagedPickMapPreserved === true,
+        payloadReads: numberOrNull(value.retainedOverlay.payloadReads),
+        committedRevisionId: stringOrNull(
+          value.retainedOverlay.committedRevisionId,
+        ),
+        selectedSource: stringOrNull(
+          value.retainedOverlay.selectedSource,
+        ),
+        selectedPickId: stringOrNull(
+          value.retainedOverlay.selectedPickId,
+        ),
+        selectionItems: numberOrNull(
+          value.retainedOverlay.selectionItems,
+        ),
+        selectionSource: stringOrNull(
+          value.retainedOverlay.selectionSource,
+        ),
+        retainedSurfaceHitCapability: stringOrNull(
+          value.retainedOverlay.retainedSurfaceHitCapability,
+        ),
+        nonBackgroundPixels: numberOrNull(
+          value.retainedOverlay.nonBackgroundPixels,
+        ),
+        tombstonePickMiss:
+          value.retainedOverlay.tombstonePickMiss === true,
+        readsBefore: Array.isArray(value.retainedOverlay.readsBefore)
+          ? value.retainedOverlay.readsBefore.slice(0, MAXIMUM_SOURCES)
+              .map(numberOrNull)
+          : [],
+        readsAfter: Array.isArray(value.retainedOverlay.readsAfter)
+          ? value.retainedOverlay.readsAfter.slice(0, MAXIMUM_SOURCES)
+              .map(numberOrNull)
+          : [],
+        externalReadsUnchanged:
+          value.retainedOverlay.externalReadsUnchanged === true,
+        activeBytesBefore: numberOrNull(
+          value.retainedOverlay.activeBytesBefore,
+        ),
+        activeBytesAfterTombstone: numberOrNull(
+          value.retainedOverlay.activeBytesAfterTombstone,
+        ),
+        baseGpuAllocationUnchanged:
+          value.retainedOverlay.baseGpuAllocationUnchanged === true,
+        cameraProjection: stringOrNull(
+          value.retainedOverlay.cameraProjection,
+        ),
+        clippingPlanes: numberOrNull(
+          value.retainedOverlay.clippingPlanes,
+        ),
+        cameraUnchanged: value.retainedOverlay.cameraUnchanged === true,
+        clippingUnchanged:
+          value.retainedOverlay.clippingUnchanged === true,
+        selectionPreserved:
+          value.retainedOverlay.selectionPreserved === true,
+        anchorsPreserved:
+          value.retainedOverlay.anchorsPreserved === true,
+        checkpointReads: numberOrNull(
+          value.retainedOverlay.checkpointReads,
+        ),
+        checkpointParses: numberOrNull(
+          value.retainedOverlay.checkpointParses,
+        ),
+        checkpointUploads: numberOrNull(
+          value.retainedOverlay.checkpointUploads,
+        ),
+        retainedObjectsAfterTombstone: numberOrNull(
+          value.retainedOverlay.retainedObjectsAfterTombstone,
+        ),
+      };
   return Object.freeze({
     schema: FEDERATION_REPORT_SCHEMA,
     status: value.status,
@@ -424,6 +554,7 @@ function sanitizeFederationReport(value) {
     composition,
     semantics,
     selection,
+    gpu: sanitizeGpuIdentity(value.gpu),
     renderer,
     picks: Array.isArray(value.picks)
       ? value.picks.slice(0, MAXIMUM_SOURCES)
@@ -435,6 +566,15 @@ function sanitizeFederationReport(value) {
       : [],
     ranges,
     cleanup,
+    retainedOverlay,
+    retainedOverlayProgress:
+      value.retainedOverlayProgress === null ||
+        typeof value.retainedOverlayProgress !== "object"
+        ? null
+        : {
+            step: stringOrNull(value.retainedOverlayProgress.step),
+            at: stringOrNull(value.retainedOverlayProgress.at),
+          },
     authority: booleanAuthority(value.authority),
     diagnostic: value.diagnostic === null ||
       typeof value.diagnostic !== "object"

@@ -24,13 +24,21 @@ qualification 시 외부 Python environment를 주입합니다.
 version과 library license 범위를 기록합니다.
 
 Viewer contract conformance는 다음 exact MPL-2.0 source packages를 고정된
-DWG Viewer release asset에서 설치합니다. 두 package는 v0.1.0 VSIX runtime에
-포함되지 않고 source/build SBOM에만 기록됩니다.
+DWG Viewer release asset에서 설치합니다. immutable Community v0.1.0 VSIX에는
+포함되지 않았습니다. 현재 미배포 개발 VSIX는 upstream source file을 직접
+편집하지 않고 두 package와 제품 adapter에서 생성한 executable runtime을
+포함하며, exact package manifest, LICENSE와 NOTICE도 함께 stage합니다.
 
 - `@menaje/viewer-core@0.1.2`
 - `@menaje/viewer-render-protocol@0.1.2`
 - source and notices:
   <https://github.com/menaje/dwg-viewer/releases/tag/viewer-core-v0.1.2>
+
+BIM Explorer 소유 adapter source는
+[`packages/viewer-core-consumer`](packages/viewer-core-consumer)에 있고,
+generated executable transformation은 `npm run build:viewer-core-product`로
+재현합니다. 이 변경은 새 VSIX publication이나 stable/production 지원 승인이
+아닙니다.
 
 성능 qualification은
 [`buildingsmart-community/Community-Sample-Test-Files`](https://github.com/buildingsmart-community/Community-Sample-Test-Files)의
@@ -80,6 +88,24 @@ glTF reference source qualification은 Khronos Group의 공식 Validator를
 - npm integrity:
   `sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==`
 - [Apache License 2.0 full text](specs/LICENSE)
+
+Required `EXT_meshopt_compression` bufferView decode uses the exact
+`meshoptimizer` JavaScript decoder. Its single-thread WebAssembly payload is
+embedded into the generated source Worker bundle and initialized only when a
+compressed source is opened.
+
+- `meshoptimizer@1.2.0`
+- MIT
+- <https://github.com/zeux/meshoptimizer>
+- exact source commit:
+  <https://github.com/zeux/meshoptimizer/tree/9d9890c73011d75920af614485296d1e03e95448>
+- npm integrity:
+  `sha512-davRZeIJbxJrE24cwQle7ZDsxjdk/OphNOV83oX+efQinyoHY9Jcyz3MHbaoG0qySZajldGztNZ1RN/T19PZsg==`
+- [MIT license text](LICENSES/meshoptimizer-MIT.txt)
+
+Only the bounded `FILTER_NONE` profile is admitted. The Khronos Box source and
+deterministically derived meshopt GLB are cache-only qualification inputs and
+are not included in Git, VSIX or release artifacts.
 
 공개 qualification fixture는 Khronos Group
 `glTF-Sample-Assets`의 Cesium Box GLB이며 CC-BY-4.0입니다. 고정된 source,

@@ -26,8 +26,18 @@ import {
 } from "./public-ifc-fixture.mjs";
 import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
+import {
+  acquirePublicGltfResourceBundle,
+} from "./public-gltf-resource-bundle-fixture.mjs";
+import {
+  acquirePublicQuantizedGltfFixture,
+} from "./public-gltf-quantized-fixture.mjs";
+import {
+  acquirePublicMeshoptGltfFixture,
+} from "./public-gltf-meshopt-fixture.mjs";
 import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
@@ -43,6 +53,10 @@ import {
 import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+} from "./gpu-qualification-profile.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const EXTENSION_VERSION = JSON.parse(
@@ -60,17 +74,38 @@ const EXTENSION_VERSION = JSON.parse(
 function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
+    includeExternalResourceFixture: false,
+    includeEmbeddedTextureFixture: false,
+    includeMeshoptFixture: false,
+    includeQuantizedFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
     includeE57MultipleScanFixture: false,
     includePublicFixture: true,
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
     const name = values[index];
     if (name === "--federated-surface") {
       options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
+    if (name === "--external-gltf") {
+      options.includeExternalResourceFixture = true;
+      continue;
+    }
+    if (name === "--embedded-texture-gltf") {
+      options.includeEmbeddedTextureFixture = true;
+      continue;
+    }
+    if (name === "--quantized-gltf") {
+      options.includeQuantizedFixture = true;
+      continue;
+    }
+    if (name === "--meshopt-gltf") {
+      options.includeMeshoptFixture = true;
       continue;
     }
     if (name === "--product-scale") {
@@ -93,6 +128,10 @@ function parseArguments(values) {
       options.includePublicFixture = false;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     if (name === "--output") {
       const value = values[index + 1];
       if (
@@ -108,9 +147,14 @@ function parseArguments(values) {
     throw new TypeError(
       "usage: node scripts/qualify-vscode-vsix-install.mjs " +
         "[--federated-surface] [--product-scale] [--point-cloud] " +
+          "[--external-gltf] " +
+          "[--embedded-texture-gltf] " +
+          "[--meshopt-gltf] " +
+          "[--quantized-gltf] " +
           "[--e57-spherical] " +
           "[--e57-multiple-scan] " +
           "[--no-public] " +
+          "[--physical-gpu] " +
           "[--output path]",
     );
   }
@@ -151,13 +195,20 @@ async function sha256(file) {
 
 export async function qualifyVscodeVsixInstall({
   includeFederatedSurfaceFixture = false,
+  includeExternalResourceFixture = false,
+  includeEmbeddedTextureFixture = false,
+  includeMeshoptFixture = false,
+  includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
   includePublicFixture = true,
+  externalResourceManifestPath = undefined,
+  rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
   const runtimeHost = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
   const publicManifest = includePublicFixture
@@ -177,6 +228,30 @@ export async function qualifyVscodeVsixInstall({
         })
       : null;
   productScaleReferenceFixture?.bytes.fill(0);
+  const externalReferenceFixture = includeExternalResourceFixture
+    ? await acquirePublicGltfResourceBundle({
+        manifestPath: externalResourceManifestPath,
+      })
+    : null;
+  externalReferenceFixture?.document.bytes.fill(0);
+  for (const resource of externalReferenceFixture?.resources ?? []) {
+    resource.bytes.fill(0);
+  }
+  const embeddedTextureReferenceFixture =
+    includeEmbeddedTextureFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+        })
+      : null;
+  embeddedTextureReferenceFixture?.bytes.fill(0);
+  const quantizedReferenceFixture = includeQuantizedFixture
+    ? await acquirePublicQuantizedGltfFixture()
+    : null;
+  quantizedReferenceFixture?.bytes.fill(0);
+  const meshoptReferenceFixture = includeMeshoptFixture
+    ? await acquirePublicMeshoptGltfFixture()
+    : null;
+  meshoptReferenceFixture?.bytes.fill(0);
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
     : null;
@@ -276,7 +351,14 @@ export async function qualifyVscodeVsixInstall({
       "packages/bim-surface-hit/src/index.mjs",
       "packages/federated-bim-surface/src/index.mjs",
       "packages/federated-bim-surface/runtime/index.mjs",
+      "packages/viewer-core-consumer/runtime/product.mjs",
       "LICENSES/e57-rs-MIT.txt",
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-core/package.json",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/package.json",
       "node_modules/laz-perf/lib/worker/laz-perf.wasm",
       "node_modules/web-ifc/web-ifc-api.js",
       "node_modules/web-ifc/web-ifc.wasm",
@@ -303,6 +385,8 @@ export async function qualifyVscodeVsixInstall({
       sourceLazPerfJsSha256,
       installedLazPerfWasmSha256,
       sourceLazPerfWasmSha256,
+      installedViewerCoreProductSha256,
+      sourceViewerCoreProductSha256,
     ] =
       await Promise.all([
         sha256(path.join(
@@ -357,7 +441,40 @@ export async function qualifyVscodeVsixInstall({
           "worker",
           "laz-perf.wasm",
         )),
+        sha256(path.join(
+          installedRoot,
+          "packages",
+          "viewer-core-consumer",
+          "runtime",
+          "product.mjs",
+        )),
+        sha256(path.join(
+          ROOT,
+          "packages",
+          "viewer-core-consumer",
+          "runtime",
+          "product.mjs",
+        )),
       ]);
+    const viewerDisclosureFiles = [
+      "node_modules/@menaje/viewer-core/LICENSE",
+      "node_modules/@menaje/viewer-core/NOTICE",
+      "node_modules/@menaje/viewer-core/package.json",
+      "node_modules/@menaje/viewer-render-protocol/LICENSE",
+      "node_modules/@menaje/viewer-render-protocol/NOTICE",
+      "node_modules/@menaje/viewer-render-protocol/package.json",
+    ];
+    const viewerDisclosuresExact = (
+      await Promise.all(viewerDisclosureFiles.map(
+        async (relative) => {
+          const [installed, source] = await Promise.all([
+            readFile(path.join(installedRoot, relative)),
+            readFile(path.join(ROOT, relative)),
+          ]);
+          return installed.equals(source);
+        },
+      ))
+    ).every(Boolean);
     await runTests({
       vscodeExecutablePath: runtimeHost.executable,
       extensionDevelopmentPath: path.join(
@@ -377,12 +494,12 @@ export async function qualifyVscodeVsixInstall({
         `--user-data-dir=${userData}`,
         `--extensions-dir=${extensions}`,
         "--disable-telemetry",
-        "--enable-unsafe-swiftshader",
-        "--use-angle=swiftshader",
+        ...gpuQualificationLaunchArguments(rendererMode),
       ],
       extensionTestsEnv: {
         BIM_EXPLORER_PACKAGE_RUNTIME: "installed-vsix",
         BIM_EXPLORER_ROOT: ROOT,
+        BIM_EXPLORER_VSCODE_RENDERER_MODE: rendererMode,
         ...(includeFederatedSurfaceFixture
           ? {
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
@@ -424,6 +541,38 @@ export async function qualifyVscodeVsixInstall({
               BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE:
                 productScaleReferenceFixture.cachePath,
             }),
+        ...(externalReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE:
+                externalReferenceFixture.document.cachePath,
+              ...(externalResourceManifestPath === undefined
+                ? {}
+                : {
+                    BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST:
+                      externalResourceManifestPath,
+                  }),
+            }),
+        ...(embeddedTextureReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE:
+                embeddedTextureReferenceFixture.cachePath,
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST:
+                PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+            }),
+        ...(quantizedReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE:
+                quantizedReferenceFixture.cachePath,
+            }),
+        ...(meshoptReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_MESHOPT_SOURCE:
+                meshoptReferenceFixture.cachePath,
+            }),
         BIM_EXPLORER_VSCODE_EVIDENCE:
           runtimeEvidencePath,
       },
@@ -447,6 +596,10 @@ export async function qualifyVscodeVsixInstall({
       lazPerfRuntimeExact:
         installedLazPerfJsSha256 === sourceLazPerfJsSha256 &&
         installedLazPerfWasmSha256 === sourceLazPerfWasmSha256,
+      viewerCoreProductBundleExact:
+        installedViewerCoreProductSha256 ===
+          sourceViewerCoreProductSha256,
+      viewerCoreDisclosuresExact: viewerDisclosuresExact,
       noSpatialDependency:
         !Object.keys(manifest.dependencies ?? {}).some((name) =>
           /spatial/iu.test(name)),
@@ -487,6 +640,11 @@ export async function qualifyVscodeVsixInstall({
         runtime.assertions?.pathFreeHostBridge === true,
       installedPackageClosesCleanly:
         runtime.assertions?.editorCloseObserved === true,
+      installedViewerCoreProductEntrypoint:
+        runtime.assertions
+          ?.publicViewerCoreProductEntrypoint === true,
+      installedSharedReviewToolbarReady:
+        runtime.assertions?.sharedReviewToolbarReady === true,
       ...(includeFederatedSurfaceFixture
         ? {
             installedFederatedSurfaceQualified:
@@ -510,6 +668,12 @@ export async function qualifyVscodeVsixInstall({
             installedPublicFixtureClosesCleanly:
               runtime.publicAssertions
                 ?.publicEditorCloseObserved === true,
+            installedPublicViewerCoreProductEntrypoint:
+              runtime.publicAssertions
+                ?.publicViewerCoreProductEntrypoint === true,
+            installedPublicSharedReviewToolbarReady:
+              runtime.publicAssertions
+                ?.publicSharedReviewToolbarReady === true,
           }
         : {}),
       installedPackageOpensReferenceFixture:
@@ -530,6 +694,12 @@ export async function qualifyVscodeVsixInstall({
       installedReferenceClosesCleanly:
         runtime.referenceAssertions
           ?.referenceEditorCloseObserved === true,
+      installedReferenceViewerCoreProductEntrypoint:
+        runtime.referenceAssertions
+          ?.referenceViewerCoreProductEntrypoint === true,
+      installedReferenceSharedReviewToolbarReady:
+        runtime.referenceAssertions
+          ?.referenceSharedReviewToolbarReady === true,
       ...(includeProductScaleFixture
         ? {
             installedPackageOpensProductScaleReference:
@@ -547,12 +717,123 @@ export async function qualifyVscodeVsixInstall({
             installedProductScaleReferenceRendererBounded:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferenceRendererBounded === true,
+            installedProductScaleAppearanceOmissionsExact:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceAppearanceOmissionsExact ===
+                  true,
             installedProductScaleReferenceBridgeIsPathFree:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferencePathFreeBridge === true,
             installedProductScaleReferenceClosesCleanly:
               runtime.productScaleReferenceAssertions
                 ?.productScaleReferenceEditorCloseObserved === true,
+            installedProductScaleViewerCoreProductEntrypoint:
+              runtime.productScaleReferenceAssertions
+                ?.productScaleReferenceViewerCoreProductEntrypoint ===
+                  true,
+          }
+        : {}),
+      ...(includeExternalResourceFixture
+        ? {
+            installedPackageOpensExternalReference:
+              allTrue(runtime.externalReferenceAssertions),
+            installedExternalReferenceIdentityExact:
+              runtime.externalReferenceFixture?.fingerprint ===
+                "sha256:" +
+                  externalReferenceFixture.manifest.expected
+                    .sourceFingerprint,
+            installedExternalReferenceBundleExact:
+              runtime.externalReferenceObservation?.resources
+                ?.externalResources ===
+                  externalReferenceFixture.manifest.expected
+                    .externalResources &&
+              runtime.externalReferenceObservation?.resources
+                ?.externalResourceBytes ===
+                  externalReferenceFixture.manifest.expected
+                    .externalResourceBytes &&
+              runtime.externalReferenceObservation?.resources
+                ?.documentBytes ===
+                  externalReferenceFixture.manifest.document.byteLength,
+            installedExternalReferenceUsesNoNetwork:
+              runtime.externalReferenceFixture?.resourceBundle
+                ?.networkAtRuntime === false,
+          }
+        : {}),
+      ...(includeEmbeddedTextureFixture
+        ? {
+            installedPackageOpensEmbeddedTextureReference:
+              allTrue(
+                runtime.embeddedTextureReferenceAssertions,
+              ),
+            installedEmbeddedTextureIdentityExact:
+              runtime.embeddedTextureReferenceFixture?.fingerprint ===
+                `sha256:${embeddedTextureReferenceFixture.manifest
+                  .entry.sha256}`,
+            installedEmbeddedTextureBundleExact:
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.embeddedImageBytes ===
+                  embeddedTextureReferenceFixture.manifest.expected
+                    .embeddedImageBytes &&
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.embeddedImageResources ===
+                  embeddedTextureReferenceFixture.manifest.expected
+                    .embeddedImageResources &&
+              runtime.embeddedTextureReferenceObservation?.resources
+                ?.documentBytes ===
+                  embeddedTextureReferenceFixture.manifest.entry
+                    .byteLength,
+            installedEmbeddedTextureUsesNoNetwork:
+              runtime.embeddedTextureReferenceFixture?.resourceBundle
+                ?.networkAtRuntime === false,
+          }
+        : {}),
+      ...(includeQuantizedFixture
+        ? {
+            installedPackageOpensQuantizedReference:
+              allTrue(runtime.quantizedReferenceAssertions),
+            installedQuantizedReferenceIdentityExact:
+              runtime.quantizedReferenceFixture?.fingerprint ===
+                quantizedReferenceFixture.manifest.expected
+                  .sourceFingerprint,
+            installedQuantizedRequiredExtensionExact:
+              JSON.stringify(
+                runtime.quantizedReferenceFixture
+                  ?.extensionsRequired,
+              ) === JSON.stringify(
+                quantizedReferenceFixture.manifest.expected
+                  .extensionsRequired,
+              ) &&
+              JSON.stringify(
+                runtime.quantizedReferenceFixture
+                  ?.extensionsUsed,
+              ) === JSON.stringify(
+                quantizedReferenceFixture.manifest.expected
+                  .extensionsUsed,
+              ),
+          }
+        : {}),
+      ...(includeMeshoptFixture
+        ? {
+            installedPackageOpensMeshoptReference:
+              allTrue(runtime.meshoptReferenceAssertions),
+            installedMeshoptReferenceIdentityExact:
+              runtime.meshoptReferenceFixture?.fingerprint ===
+                meshoptReferenceFixture.manifest.expected
+                  .sourceFingerprint,
+            installedMeshoptRequiredExtensionExact:
+              JSON.stringify(
+                runtime.meshoptReferenceFixture
+                  ?.extensionsRequired,
+              ) === JSON.stringify(
+                meshoptReferenceFixture.manifest.expected
+                  .extensionsRequired,
+              ) &&
+              JSON.stringify(
+                runtime.meshoptReferenceFixture?.extensionsUsed,
+              ) === JSON.stringify(
+                meshoptReferenceFixture.manifest.expected
+                  .extensionsUsed,
+              ),
           }
         : {}),
       ...(includePointFixtures
@@ -640,6 +921,8 @@ export async function qualifyVscodeVsixInstall({
         workerBundleSha256: installedWorkerSha256,
         pointWorkerBundleSha256:
           installedPointWorkerSha256,
+        viewerCoreProductBundleSha256:
+          installedViewerCoreProductSha256,
         lazPerfJsSha256: installedLazPerfJsSha256,
         lazPerfWasmSha256: installedLazPerfWasmSha256,
       },
@@ -654,7 +937,9 @@ export async function qualifyVscodeVsixInstall({
           hostKind: runtime.observation?.hostKind,
           model: runtime.observation?.model,
           renderer: runtime.observation?.renderer,
+          reviewTools: runtime.observation?.reviewTools,
           lifecycle: runtime.observation?.lifecycle,
+          viewerCore: runtime.observation?.viewerCore,
         },
         ...(includePublicFixture
           ? {
@@ -669,10 +954,14 @@ export async function qualifyVscodeVsixInstall({
                   runtime.publicObservation?.resources,
                 renderer:
                   runtime.publicObservation?.renderer,
+                reviewTools:
+                  runtime.publicObservation?.reviewTools,
                 semantic:
                   runtime.publicObservation?.semantic,
                 lifecycle:
                   runtime.publicObservation?.lifecycle,
+                viewerCore:
+                  runtime.publicObservation?.viewerCore,
                 externalUpload:
                   runtime.publicObservation?.externalUpload,
                 telemetry:
@@ -691,10 +980,14 @@ export async function qualifyVscodeVsixInstall({
             runtime.referenceObservation?.resources,
           renderer:
             runtime.referenceObservation?.renderer,
+          reviewTools:
+            runtime.referenceObservation?.reviewTools,
           reference:
             runtime.referenceObservation?.reference,
           lifecycle:
             runtime.referenceObservation?.lifecycle,
+          viewerCore:
+            runtime.referenceObservation?.viewerCore,
           externalUpload:
             runtime.referenceObservation?.externalUpload,
           telemetry:
@@ -726,12 +1019,139 @@ export async function qualifyVscodeVsixInstall({
                 lifecycle:
                   runtime.productScaleReferenceObservation
                     ?.lifecycle,
+                viewerCore:
+                  runtime.productScaleReferenceObservation
+                    ?.viewerCore,
                 externalUpload:
                   runtime.productScaleReferenceObservation
                     ?.externalUpload,
                 telemetry:
                   runtime.productScaleReferenceObservation
                     ?.telemetry,
+              },
+            }
+          : {}),
+        ...(includeExternalResourceFixture
+          ? {
+              externalReferenceRuntime: {
+                fixture: runtime.externalReferenceFixture,
+                gpu: runtime.externalReferenceObservation?.gpu,
+                hostKind:
+                  runtime.externalReferenceObservation?.hostKind,
+                model:
+                  runtime.externalReferenceObservation?.model,
+                performance:
+                  runtime.externalReferenceObservation?.performance,
+                resources:
+                  runtime.externalReferenceObservation?.resources,
+                renderer:
+                  runtime.externalReferenceObservation?.renderer,
+                reference:
+                  runtime.externalReferenceObservation?.reference,
+                lifecycle:
+                  runtime.externalReferenceObservation?.lifecycle,
+                viewerCore:
+                  runtime.externalReferenceObservation?.viewerCore,
+                externalUpload:
+                  runtime.externalReferenceObservation?.externalUpload,
+                telemetry:
+                  runtime.externalReferenceObservation?.telemetry,
+              },
+            }
+          : {}),
+        ...(includeEmbeddedTextureFixture
+          ? {
+              embeddedTextureReferenceRuntime: {
+                fixture:
+                  runtime.embeddedTextureReferenceFixture,
+                gpu:
+                  runtime.embeddedTextureReferenceObservation?.gpu,
+                hostKind:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.hostKind,
+                model:
+                  runtime.embeddedTextureReferenceObservation?.model,
+                performance:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.performance,
+                resources:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.resources,
+                renderer:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.renderer,
+                reference:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.reference,
+                lifecycle:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.lifecycle,
+                viewerCore:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.viewerCore,
+                externalUpload:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.externalUpload,
+                telemetry:
+                  runtime.embeddedTextureReferenceObservation
+                    ?.telemetry,
+              },
+            }
+          : {}),
+        ...(includeQuantizedFixture
+          ? {
+              quantizedReferenceRuntime: {
+                fixture: runtime.quantizedReferenceFixture,
+                gpu: runtime.quantizedReferenceObservation?.gpu,
+                hostKind:
+                  runtime.quantizedReferenceObservation?.hostKind,
+                model:
+                  runtime.quantizedReferenceObservation?.model,
+                performance:
+                  runtime.quantizedReferenceObservation
+                    ?.performance,
+                resources:
+                  runtime.quantizedReferenceObservation?.resources,
+                renderer:
+                  runtime.quantizedReferenceObservation?.renderer,
+                reference:
+                  runtime.quantizedReferenceObservation?.reference,
+                lifecycle:
+                  runtime.quantizedReferenceObservation?.lifecycle,
+                viewerCore:
+                  runtime.quantizedReferenceObservation?.viewerCore,
+                externalUpload:
+                  runtime.quantizedReferenceObservation
+                    ?.externalUpload,
+                telemetry:
+                  runtime.quantizedReferenceObservation?.telemetry,
+              },
+            }
+          : {}),
+        ...(includeMeshoptFixture
+          ? {
+              meshoptReferenceRuntime: {
+                fixture: runtime.meshoptReferenceFixture,
+                gpu: runtime.meshoptReferenceObservation?.gpu,
+                hostKind:
+                  runtime.meshoptReferenceObservation?.hostKind,
+                model: runtime.meshoptReferenceObservation?.model,
+                performance:
+                  runtime.meshoptReferenceObservation?.performance,
+                resources:
+                  runtime.meshoptReferenceObservation?.resources,
+                renderer:
+                  runtime.meshoptReferenceObservation?.renderer,
+                reference:
+                  runtime.meshoptReferenceObservation?.reference,
+                lifecycle:
+                  runtime.meshoptReferenceObservation?.lifecycle,
+                viewerCore:
+                  runtime.meshoptReferenceObservation?.viewerCore,
+                externalUpload:
+                  runtime.meshoptReferenceObservation?.externalUpload,
+                telemetry:
+                  runtime.meshoptReferenceObservation?.telemetry,
               },
             }
           : {}),
@@ -769,6 +1189,22 @@ export async function qualifyVscodeVsixInstall({
           includeProductScaleFixture
             ? "passed-bounded-read-only"
             : "not-run",
+        externalReferenceFixtureOpen:
+          includeExternalResourceFixture
+            ? "passed-bounded-local-resource-bundle"
+            : "not-run",
+        embeddedTextureReferenceFixtureOpen:
+          includeEmbeddedTextureFixture
+            ? "passed-bounded-embedded-png"
+            : "not-run",
+        quantizedReferenceFixtureOpen:
+          includeQuantizedFixture
+            ? "passed-khr-mesh-quantization"
+            : "not-run",
+        meshoptReferenceFixtureOpen:
+          includeMeshoptFixture
+            ? "passed-ext-meshopt-compression"
+            : "not-run",
         pointFixtureOpen:
           includePointFixtures ||
           includeE57SphericalFixture ||
@@ -779,6 +1215,8 @@ export async function qualifyVscodeVsixInstall({
           includeFederatedSurfaceFixture
             ? "passed-actual-vscode-surface-anchor"
             : "not-run",
+        publicViewerCoreConformance:
+          "passed-product-entrypoint",
         marketplaceRelease: "held",
       },
     });

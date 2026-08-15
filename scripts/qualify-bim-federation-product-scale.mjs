@@ -279,6 +279,7 @@ export async function qualifyBimFederationProductScale() {
     const referenceSource = await createGltfReferenceSource(
       acquired.bytes,
       {
+        appearancePolicy: "bounded-omission",
         maximumRequestBytes:
           manifest.browserQualification.maximumRequestBytes,
         sessionReadBudgetBytes:

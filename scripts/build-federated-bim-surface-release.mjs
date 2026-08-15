@@ -15,10 +15,12 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import {
-  FEDERATED_BIM_SURFACE_PACKAGE,
+  FEDERATED_BIM_SURFACE_V03_PACKAGE,
+  qualifyFederatedBimSurfaceV03Package,
+  stageFederatedBimSurfaceV03Package,
+} from "./qualify-federated-bim-surface-v0.3-package.mjs";
+import {
   packFederatedBimSurfacePackage,
-  qualifyFederatedBimSurfacePackage,
-  stageFederatedBimSurfacePackage,
 } from "./qualify-federated-bim-surface-package.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
@@ -31,7 +33,7 @@ const RELEASE_DOCUMENTS = Object.freeze([
     "SOURCE_OFFER.md",
   ],
   [
-    "docs/releases/bim-surface-v0.2.0.md",
+    "docs/releases/bim-surface-v0.3.0.md",
     "RELEASE_NOTES.md",
   ],
 ]);
@@ -111,7 +113,7 @@ function requireCleanSource() {
 
 function createSpdx({ commit, createdAt, packageArtifact }) {
   const { name, version, publicReleaseTag } =
-    FEDERATED_BIM_SURFACE_PACKAGE;
+    FEDERATED_BIM_SURFACE_V03_PACKAGE;
   return Object.freeze({
     spdxVersion: "SPDX-2.3",
     dataLicense: "CC0-1.0",
@@ -162,13 +164,13 @@ export async function buildFederatedBimSurfaceRelease(
 ) {
   requireCleanSource();
   const output = await requireEmptyOutput(outputDirectory);
-  const qualification = await qualifyFederatedBimSurfacePackage();
+  const qualification = await qualifyFederatedBimSurfaceV03Package();
   const temporary = await mkdtemp(
     path.join(tmpdir(), "federated-bim-surface-release-"),
   );
   try {
     const stage = path.join(temporary, "stage");
-    await stageFederatedBimSurfacePackage(stage);
+    await stageFederatedBimSurfaceV03Package(stage);
     const packageArtifact = await packFederatedBimSurfacePackage(
       stage,
       path.join(temporary, "pack"),
@@ -199,7 +201,7 @@ export async function buildFederatedBimSurfaceRelease(
     ).toISOString();
     const sbomFile =
       `bim-explorer-federated-bim-surface-` +
-      `${FEDERATED_BIM_SURFACE_PACKAGE.version}.spdx.json`;
+      `${FEDERATED_BIM_SURFACE_V03_PACKAGE.version}.spdx.json`;
     await writeFile(
       path.join(output, sbomFile),
       stableJson(createSpdx({
@@ -218,9 +220,11 @@ export async function buildFederatedBimSurfaceRelease(
     const releaseManifest = {
       schema: "bim-explorer-federated-bim-surface-release/1",
       package: {
-        name: FEDERATED_BIM_SURFACE_PACKAGE.name,
-        version: FEDERATED_BIM_SURFACE_PACKAGE.version,
-        contract: FEDERATED_BIM_SURFACE_PACKAGE.contract,
+        name: FEDERATED_BIM_SURFACE_V03_PACKAGE.name,
+        version: FEDERATED_BIM_SURFACE_V03_PACKAGE.version,
+        contract: FEDERATED_BIM_SURFACE_V03_PACKAGE.contract,
+        retainedOverlayContract:
+          qualification.consumer.lifecycle.retainedContract,
         license: "MPL-2.0",
         runtimeDependencies: 0,
         repositoryManifestPrivate: true,
@@ -230,18 +234,17 @@ export async function buildFederatedBimSurfaceRelease(
         branch: "prerelease",
         commit,
         expectedTag:
-          FEDERATED_BIM_SURFACE_PACKAGE.publicReleaseTag,
+          FEDERATED_BIM_SURFACE_V03_PACKAGE.publicReleaseTag,
         createdAt,
         cleanTree: true,
       },
       profile: {
         status:
-          "experimental-read-only-release-ready-candidate",
+          "experimental-read-only-retained-overlay-release-candidate",
         hostNeutral: true,
         browserOrDomRequired: false,
         accountRequired: false,
         nativeWrite: false,
-        coniSpatialAuthority: false,
         vscodeExtensionIncluded: false,
         marketplacePublication: false,
       },
@@ -255,28 +258,22 @@ export async function buildFederatedBimSurfaceRelease(
         packageSha256: packageArtifact.sha256,
         packageIntegrity: packageArtifact.integrity,
         runtimeSha256: qualification.package.runtimeSha256,
-        spatialConsumerEvidence:
-          qualification.spatialConsumer.evidence,
-        releaseReadySpatialConsumerEvidence:
-          qualification.spatialConsumer.releaseReadyEvidence,
-        releaseReadySpatialConsumerSourceCommit:
-          qualification.spatialConsumer.releaseReadySourceCommit,
-        priorCandidatePackageSha256:
-          qualification.spatialConsumer
-            .priorCandidatePackageSha256,
+        artifactOnlyRetainedOverlay:
+          qualification.releaseGate.artifactOnlyRetainedOverlay,
+        lifecycleChecks:
+          qualification.consumer.lifecycle.checks,
       },
       releaseGate: {
-        actualSpatialConsumer:
-          qualification.releaseGate.actualSpatialConsumer,
-        releaseReadyPackageConsumerRevalidation:
-          qualification.releaseGate
-            .releaseReadyPackageConsumerRevalidation,
+        artifactOnlyPackageConformance:
+          qualification.releaseGate.artifactOnlyRetainedOverlay,
+        retainedOverlayContractIncluded: true,
         publicRelease: qualification.releaseGate.publicRelease,
         publicationAuthorized:
           qualification.releaseGate.publicationAuthorized,
       },
       postReleaseGate: {
-        publicArtifactSpatialAdmission: false,
+        publicArtifactAdmission: false,
+        publishedViewerCore013Artifact: false,
         productionSupport: false,
       },
       supplyChain: {
@@ -322,8 +319,8 @@ export async function buildFederatedBimSurfaceRelease(
 
     return Object.freeze({
       output,
-      version: FEDERATED_BIM_SURFACE_PACKAGE.version,
-      tag: FEDERATED_BIM_SURFACE_PACKAGE.publicReleaseTag,
+      version: FEDERATED_BIM_SURFACE_V03_PACKAGE.version,
+      tag: FEDERATED_BIM_SURFACE_V03_PACKAGE.publicReleaseTag,
       commit,
       artifacts: checksumFiles.length + 1,
       publicationAuthorized:

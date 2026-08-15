@@ -33,6 +33,8 @@ const SOURCE_FORMATS = new Set([
   "laz",
 ]);
 const POINT_SOURCE_FORMATS = new Set(["e57", "las", "laz"]);
+const EXTERNAL_GLTF_RESOURCE_NAME =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:bin|jpe?g|png)$/u;
 
 function pointMaximumSourceBytes(format) {
   return format === "e57"
@@ -146,6 +148,76 @@ function stringArray(value, maximumLength = 16) {
   return [...value];
 }
 
+function sanitizedCountRecord(
+  value,
+  pattern,
+  maximumEntries = 32,
+) {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+  const entries = Object.entries(value);
+  if (
+    entries.length > maximumEntries ||
+    entries.some(([key, count]) =>
+      !pattern.test(key) ||
+      !Number.isSafeInteger(count) ||
+      count <= 0)
+  ) {
+    return null;
+  }
+  return Object.fromEntries(entries);
+}
+
+function sanitizedAppearanceOmissions(value) {
+  if (
+    value?.schema !==
+      "bim-explorer-gltf-appearance-omissions/1" ||
+    value.policy !== "bounded-omission"
+  ) {
+    return null;
+  }
+  const counts = numericRecord(value, [
+    "declaredImages",
+    "declaredTextures",
+    "projectedTextures",
+    "materialFeatures",
+    "materials",
+    "textureReferences",
+    "uniqueImages",
+    "uniqueTextures",
+    "sourceBytes",
+  ]);
+  if (
+    Object.values(counts).some((count) =>
+      !Number.isSafeInteger(count) || count < 0)
+  ) {
+    return null;
+  }
+  const reasons = sanitizedCountRecord(
+    value.reasons,
+    /^[a-z][a-z0-9-]{0,63}$/u,
+  );
+  const roles = sanitizedCountRecord(
+    value.roles,
+    /^(?:[A-Za-z][A-Za-z0-9]{0,63}|extension:KHR_[A-Za-z0-9_]{1,96})$/u,
+  );
+  if (reasons === null || roles === null) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    policy: value.policy,
+    ...counts,
+    reasons,
+    roles,
+  };
+}
+
 function sanitizedPointLod(value) {
   if (value === null || typeof value !== "object") {
     return null;
@@ -163,6 +235,104 @@ function sanitizedPointLod(value) {
       "levelIndex",
       "pointCount",
       "stride",
+    ]),
+  };
+}
+
+function sanitizedReviewMeasurement(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (
+    value?.schema !== "bim-explorer-measurement-3d/0.1" ||
+    !["distance", "angle", "area"].includes(value.type) ||
+    value.coordinateSpace !== "source-world" ||
+    value.unit !== "source-coordinate-unit" ||
+    !Array.isArray(value.points) ||
+    value.points.length < 2 ||
+    value.points.length > 8
+  ) {
+    return null;
+  }
+  const points = value.points.map((point) =>
+    numericArray(point, 3));
+  if (points.some((point) => point === null)) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    type: value.type,
+    coordinateSpace: value.coordinateSpace,
+    unit: value.unit,
+    points,
+    value: numberOrNull(value.value),
+    degrees: numberOrNull(value.degrees),
+    radians: numberOrNull(value.radians),
+    normal: value.normal === undefined
+      ? null
+      : numericArray(value.normal, 3),
+  };
+}
+
+function sanitizedReviewTools(value) {
+  if (
+    value?.schema !== "bim-explorer-product-review-tools/1" ||
+    !["perspective", "orthographic"].includes(value.projection) ||
+    ![
+      "select",
+      "measure-distance",
+      "measure-angle",
+      "measure-area",
+    ].includes(value.tool) ||
+    !["none", "clip-x", "section-box"].includes(
+      value.sectionMode,
+    ) ||
+    !["show-all", "hide", "isolate"].includes(
+      value.visibilityMode,
+    )
+  ) {
+    return null;
+  }
+  const hiddenRenderIds = stringArray(
+    value.hiddenRenderIds,
+    64,
+  );
+  if (hiddenRenderIds === null) {
+    return null;
+  }
+  return {
+    schema: value.schema,
+    projection: value.projection,
+    tool: value.tool,
+    sectionMode: value.sectionMode,
+    visibilityMode: value.visibilityMode,
+    selectionSuppressed: value.selectionSuppressed === true,
+    standardView: value.standardView === null
+      ? null
+      : [
+          "front",
+          "back",
+          "left",
+          "right",
+          "top",
+          "bottom",
+        ].includes(value.standardView)
+        ? value.standardView
+        : null,
+    hiddenRenderIds,
+    layout: {
+      focusMode: value.layout?.focusMode === true,
+      propertiesVisible:
+        value.layout?.propertiesVisible === true,
+      treeVisible: value.layout?.treeVisible === true,
+    },
+    measurement: sanitizedReviewMeasurement(value.measurement),
+    ...numericRecord(value, [
+      "fitAllUpdates",
+      "measurementPicks",
+      "projectionUpdates",
+      "resetViewUpdates",
+      "standardViewUpdates",
     ]),
   };
 }
@@ -213,6 +383,114 @@ function sanitizedHierarchyCleanup(value) {
   };
 }
 
+function sanitizedViewerCore(value) {
+  if (value === null || typeof value !== "object") {
+    return null;
+  }
+  const selection = value.selection?.selection;
+  return {
+    adopted: value.adopted === true,
+    api: stringOrNull(value.api),
+    contract: stringOrNull(value.contract),
+    descriptorProtocolVersion: stringOrNull(
+      value.descriptorProtocolVersion,
+    ),
+    disposed: value.disposed === true,
+    host: {
+      disposed: value.host?.disposed === true,
+      eventCount: numberOrNull(value.host?.eventCount),
+      kind: stringOrNull(value.host?.kind),
+      lastEventType: stringOrNull(
+        value.host?.lastEventType,
+      ),
+    },
+    presentation: {
+      borrowedSessionDisposed:
+        value.presentation?.borrowedSessionDisposed === true,
+      borrowedWorkerDisposed:
+        value.presentation?.borrowedWorkerDisposed === true,
+      disposalStatus: stringOrNull(
+        value.presentation?.disposalStatus,
+      ),
+      disposed: value.presentation?.disposed === true,
+    },
+    protocolId: stringOrNull(value.protocolId),
+    protocolVersion: stringOrNull(value.protocolVersion),
+    selection: {
+      reason: stringOrNull(value.selection?.reason),
+      sequence: numberOrNull(value.selection?.sequence),
+      identity: selection === null ||
+        typeof selection !== "object"
+          ? null
+          : {
+              expressId: numberOrNull(selection.expressId),
+              globalId: stringOrNull(selection.globalId),
+              kind: stringOrNull(selection.kind),
+              nativeId: stringOrNull(selection.nativeId),
+              renderId: stringOrNull(selection.renderId),
+            },
+    },
+    source: {
+      disposed: value.source?.disposed === true,
+      rangeBytesRead: numberOrNull(
+        value.source?.rangeBytesRead,
+      ),
+      rangeReads: numberOrNull(value.source?.rangeReads),
+      sessionDisposed:
+        value.source?.sessionDisposed === true,
+      sessionOpened: value.source?.sessionOpened === true,
+    },
+    version: stringOrNull(value.version),
+  };
+}
+
+function sanitizeGpuIdentity(value) {
+  if (
+    value?.schema !== "bim-explorer-webgl2-gpu-identity/1" ||
+    value.webgl2 !== true
+  ) {
+    return null;
+  }
+  const attributes = value.contextAttributes;
+  return {
+    schema: "bim-explorer-webgl2-gpu-identity/1",
+    webgl2: true,
+    debugRendererInfo: value.debugRendererInfo === true,
+    vendor: stringOrNull(value.vendor),
+    renderer: stringOrNull(value.renderer),
+    unmaskedVendor: value.unmaskedVendor === null
+      ? null
+      : stringOrNull(value.unmaskedVendor),
+    unmaskedRenderer: value.unmaskedRenderer === null
+      ? null
+      : stringOrNull(value.unmaskedRenderer),
+    version: stringOrNull(value.version),
+    shadingLanguageVersion: stringOrNull(
+      value.shadingLanguageVersion,
+    ),
+    contextAttributes: attributes === null ||
+      typeof attributes !== "object"
+      ? null
+      : {
+          alpha: attributes.alpha === true,
+          antialias: attributes.antialias === true,
+          depth: attributes.depth === true,
+          desynchronized: attributes.desynchronized === true,
+          failIfMajorPerformanceCaveat:
+            attributes.failIfMajorPerformanceCaveat === true,
+          powerPreference: stringOrNull(
+            attributes.powerPreference,
+          ),
+          premultipliedAlpha:
+            attributes.premultipliedAlpha === true,
+          preserveDrawingBuffer:
+            attributes.preserveDrawingBuffer === true,
+          stencil: attributes.stencil === true,
+          xrCompatible: attributes.xrCompatible === true,
+        },
+  };
+}
+
 function sourceFormat(uri) {
   const extension = path.extname(uri.path)
     .slice(1)
@@ -225,6 +503,75 @@ function sourceFormat(uri) {
   return extension;
 }
 
+function externalGltfResourceNames(bytes) {
+  let document;
+  try {
+    document = JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    );
+  } catch {
+    throw stableError("SOURCE_GLTF_JSON_INVALID", false);
+  }
+  if (
+    document === null ||
+    typeof document !== "object" ||
+    Array.isArray(document) ||
+    !Array.isArray(document.buffers) ||
+    document.buffers.length === 0 ||
+    document.buffers.length > 16 ||
+    (
+      document.images !== undefined &&
+      (
+        !Array.isArray(document.images) ||
+        document.images.length > 16
+      )
+    )
+  ) {
+    throw stableError("SOURCE_GLTF_BUNDLE_INVALID", false);
+  }
+  const names = [];
+  const observed = new Set();
+  const declared = [
+    ...document.buffers.map((buffer) => ({
+      kind: "buffer",
+      value: buffer,
+    })),
+    ...(document.images ?? []).map((image) => ({
+      kind: "image",
+      value: image,
+    })),
+  ];
+  for (const resource of declared) {
+    const uri = resource.value?.uri;
+    if (
+      typeof uri !== "string" ||
+      uri.startsWith("data:")
+    ) {
+      continue;
+    }
+    if (
+      uri.length > 128 ||
+      !EXTERNAL_GLTF_RESOURCE_NAME.test(uri) ||
+      (
+        resource.kind === "buffer" &&
+        !uri.toLocaleLowerCase().endsWith(".bin")
+      ) ||
+      (
+        resource.kind === "image" &&
+        !/\.(?:jpe?g|png)$/u.test(uri.toLocaleLowerCase())
+      ) ||
+      uri.includes("..") ||
+      observed.has(uri) ||
+      names.length >= 16
+    ) {
+      throw stableError("SOURCE_GLTF_RESOURCE_URI_REJECTED", false);
+    }
+    observed.add(uri);
+    names.push(uri);
+  }
+  return names;
+}
+
 function sanitizeReport(value) {
   if (
     value?.schema !== REPORT_SCHEMA ||
@@ -235,6 +582,9 @@ function sanitizeReport(value) {
   }
   const format = stringOrNull(value.source?.format);
   const pointSource = POINT_SOURCE_FORMATS.has(format);
+  const appearanceOmissions = sanitizedAppearanceOmissions(
+    value.source?.appearanceOmissions,
+  );
   const source = value.source === undefined
     ? null
     : {
@@ -250,6 +600,22 @@ function sanitizeReport(value) {
         gltfVersion: stringOrNull(
           value.source?.gltfVersion,
         ),
+        ...(value.source?.extensionsRequired === undefined
+          ? {}
+          : {
+              extensionsRequired: stringArray(
+                value.source.extensionsRequired,
+                64,
+              ),
+            }),
+        ...(value.source?.extensionsUsed === undefined
+          ? {}
+          : {
+              extensionsUsed: stringArray(
+                value.source.extensionsUsed,
+                64,
+              ),
+            }),
         coordinateReferenceStatus: stringOrNull(
           value.source?.coordinateReferenceStatus,
         ),
@@ -261,6 +627,94 @@ function sanitizeReport(value) {
             ? numberOrNull(value.source.pointFormat)
             : stringOrNull(value.source?.pointFormat),
         profile: stringOrNull(value.source?.profile),
+        resourceBundle:
+          value.source?.resourceBundle === undefined
+            ? null
+            : {
+                schema: stringOrNull(
+                  value.source.resourceBundle?.schema,
+                ),
+                networkAtRuntime:
+                  value.source.resourceBundle?.networkAtRuntime ===
+                    false
+                    ? false
+                    : null,
+                ...numericRecord(
+                  value.source.resourceBundle,
+                  [
+                    "documentBytes",
+                    "externalResourceBytes",
+                    "externalResources",
+                  ],
+                ),
+                ...(value.source.resourceBundle
+                  ?.externalImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "externalBufferResources",
+                        "externalImageResources",
+                      ],
+                    )),
+                ...(value.source.resourceBundle
+                  ?.externalBufferViewImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "externalBufferResources",
+                        "externalBufferViewImageResources",
+                      ],
+                    )),
+                ...(value.source.resourceBundle
+                  ?.embeddedImageResources === undefined
+                  ? {}
+                  : numericRecord(
+                      value.source.resourceBundle,
+                      [
+                        "embeddedImageBytes",
+                        "embeddedImageResources",
+                      ],
+                    )),
+              },
+        ...(value.source?.appearance === undefined
+          ? {}
+          : {
+              appearance: {
+                profile: stringOrNull(
+                  value.source.appearance?.profile,
+                ),
+                textureCoordinateSet: numberOrNull(
+                  value.source.appearance?.textureCoordinateSet,
+                ),
+                imageMediaTypes: stringArray(
+                  value.source.appearance?.imageMediaTypes,
+                  8,
+                ),
+                ...(value.source.appearance
+                  ?.imageStorageProfiles === undefined
+                  ? {}
+                  : {
+                      imageStorageProfiles: stringArray(
+                        value.source.appearance
+                          .imageStorageProfiles,
+                        8,
+                      ),
+                    }),
+                colorSpace: stringOrNull(
+                  value.source.appearance?.colorSpace,
+                ),
+                ...numericRecord(value.source.appearance, [
+                  "textureSourceBytes",
+                  "textureDecodedBytes",
+                  "textures",
+                ]),
+              },
+            }),
+        ...(appearanceOmissions === null
+          ? {}
+          : { appearanceOmissions }),
         sourceRole: stringOrNull(
           value.source?.sourceRole,
         ),
@@ -371,6 +825,7 @@ function sanitizeReport(value) {
     hostKind: "vscode-webview",
     externalUpload: value.externalUpload === true,
     telemetry: value.telemetry === true,
+    gpu: sanitizeGpuIdentity(value.gpu),
     source,
     model: numericRecord(
       value.model,
@@ -425,11 +880,13 @@ function sanitizeReport(value) {
                   ],
                 ),
         }
-      : numericRecord(
-          value.resources,
-          ["gltf", "glb"].includes(format)
-            ? [
+      : ["gltf", "glb"].includes(format)
+        ? {
+            ...numericRecord(value.resources, [
                 "sourceBytes",
+                "documentBytes",
+                "externalResourceBytes",
+                "externalResources",
                 "geometryBytes",
                 "metadataBytes",
                 "detailBytes",
@@ -438,9 +895,34 @@ function sanitizeReport(value) {
                 "ranges",
                 "products",
                 "referenceEntities",
+                "textureSourceBytes",
+                "textureDecodedBytes",
+                "textures",
                 "wasmHeapCapacityBytes",
-              ]
-            : [
+              ]),
+            ...(value.resources?.externalImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "externalBufferResources",
+                  "externalImageResources",
+                ])),
+            ...(value.resources
+              ?.externalBufferViewImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "externalBufferResources",
+                  "externalBufferViewImageResources",
+                ])),
+            ...(value.resources?.embeddedImageResources === undefined
+              ? {}
+              : numericRecord(value.resources, [
+                  "embeddedImageBytes",
+                  "embeddedImageResources",
+                ])),
+          }
+        : numericRecord(
+            value.resources,
+            [
                 "sourceBytes",
                 "geometryBytes",
                 "metadataBytes",
@@ -451,7 +933,7 @@ function sanitizeReport(value) {
                 "products",
                 "wasmHeapCapacityBytes",
               ],
-        ),
+          ),
     renderer: value.renderer === undefined
       ? null
       : {
@@ -460,8 +942,15 @@ function sanitizeReport(value) {
             "nonBackgroundPixels",
             "sourceReadBytes",
             "uploadedBytes",
+            "textureSourceBytes",
+            "textureDecodedBytes",
+            "textureGpuBytes",
+            "textures",
+            "gpuTextures",
           ]),
         },
+    reviewTools: sanitizedReviewTools(value.reviewTools),
+    viewerCore: sanitizedViewerCore(value.viewerCore),
     semantic: numericRecord(value.semantic, [
       "selectedExpressId",
       "treeRows",
@@ -628,6 +1117,7 @@ class BimExplorerDocument {
   #disposables = [];
   #generation = 0;
   #panels = new Set();
+  #resourceUriKeys = new Set();
 
   constructor(uri) {
     this.uri = uri;
@@ -657,12 +1147,21 @@ class BimExplorerDocument {
     return [...this.#panels];
   }
 
+  setResourceUris(uris) {
+    this.#resourceUriKeys = new Set(uris.map(uriKey));
+  }
+
+  hasResourceUri(uri) {
+    return this.#resourceUriKeys.has(uriKey(uri));
+  }
+
   dispose() {
     if (this.#disposed) {
       return;
     }
     this.#disposed = true;
     this.#panels.clear();
+    this.#resourceUriKeys.clear();
     for (const disposable of this.#disposables.splice(0)) {
       disposable.dispose();
     }
@@ -711,7 +1210,7 @@ class BimExplorerReadonlyEditorProvider {
         "BIM Explorer only opens explicit local file URIs",
       );
     }
-    sourceFormat(uri);
+    const format = sourceFormat(uri);
     const document = new BimExplorerDocument(uri);
     const fileName = uri.path.split("/").at(-1);
     const base = this.#vscode.Uri.joinPath(uri, "..");
@@ -742,6 +1241,37 @@ class BimExplorerReadonlyEditorProvider {
         }
       }
     }));
+    if (format === "gltf") {
+      const resourceChanged = async (changedUri) => {
+        if (!document.hasResourceUri(changedUri)) {
+          return;
+        }
+        for (const panel of document.panels) {
+          await this.#sendSource(document, panel);
+        }
+      };
+      for (const pattern of [
+        "*.bin",
+        "*.jpg",
+        "*.jpeg",
+        "*.png",
+      ]) {
+        const resourceWatcher =
+          this.#vscode.workspace.createFileSystemWatcher(
+            new this.#vscode.RelativePattern(base, pattern),
+          );
+        document.addDisposable(resourceWatcher);
+        document.addDisposable(
+          resourceWatcher.onDidChange(resourceChanged),
+        );
+        document.addDisposable(
+          resourceWatcher.onDidCreate(resourceChanged),
+        );
+        document.addDisposable(
+          resourceWatcher.onDidDelete(resourceChanged),
+        );
+      }
+    }
     this.#documents.set(uriKey(uri), document);
     return document;
   }
@@ -755,46 +1285,92 @@ class BimExplorerReadonlyEditorProvider {
           pointMaximumSourceBytes(format),
         )
       : configured.maximumSourceBytes;
-    const before = await this.#vscode.workspace.fs.stat(
-      document.uri,
-    );
-    if (
-      (before.type & this.#vscode.FileType.SymbolicLink) !== 0
-    ) {
-      throw stableError("SOURCE_SYMLINK_REJECTED", false);
-    }
-    if (
-      (before.type & this.#vscode.FileType.File) === 0 ||
-      before.size <= 0 ||
-      before.size > maximumSourceBytes
-    ) {
-      throw stableError(
-        "SOURCE_FILE_LIMIT_REJECTED",
-        false,
-      );
-    }
-    const bytes = await this.#vscode.workspace.fs.readFile(
-      document.uri,
-    );
-    const after = await this.#vscode.workspace.fs.stat(
-      document.uri,
-    );
-    if (
-      bytes.byteLength !== before.size ||
-      after.size !== before.size ||
-      after.mtime !== before.mtime
-    ) {
-      bytes.fill(0);
-      throw stableError("SOURCE_FILE_CHANGED", true);
-    }
-    return {
-      bytes,
-      configured: Object.freeze({
-        ...configured,
-        maximumSourceBytes,
-      }),
-      format,
+    const readStableFile = async (uri, resource = false) => {
+      const before = await this.#vscode.workspace.fs.stat(uri);
+      if (
+        (before.type & this.#vscode.FileType.SymbolicLink) !== 0
+      ) {
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_SYMLINK_REJECTED"
+            : "SOURCE_SYMLINK_REJECTED",
+          false,
+        );
+      }
+      if (
+        (before.type & this.#vscode.FileType.File) === 0 ||
+        before.size <= 0 ||
+        before.size > maximumSourceBytes
+      ) {
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_LIMIT_REJECTED"
+            : "SOURCE_FILE_LIMIT_REJECTED",
+          false,
+        );
+      }
+      const bytes = await this.#vscode.workspace.fs.readFile(uri);
+      const after = await this.#vscode.workspace.fs.stat(uri);
+      if (
+        bytes.byteLength !== before.size ||
+        after.size !== before.size ||
+        after.mtime !== before.mtime
+      ) {
+        bytes.fill(0);
+        throw stableError(
+          resource
+            ? "SOURCE_RESOURCE_CHANGED"
+            : "SOURCE_FILE_CHANGED",
+          true,
+        );
+      }
+      return bytes;
     };
+    const bytes = await readStableFile(document.uri);
+    const resources = [];
+    try {
+      const resourceNames = format === "gltf"
+        ? externalGltfResourceNames(bytes)
+        : [];
+      const base = this.#vscode.Uri.joinPath(document.uri, "..");
+      const resourceUris = resourceNames.map((name) =>
+        this.#vscode.Uri.joinPath(base, name));
+      document.setResourceUris(resourceUris);
+      let aggregateBytes = bytes.byteLength;
+      for (let index = 0; index < resourceUris.length; index += 1) {
+        const resourceBytes = await readStableFile(
+          resourceUris[index],
+          true,
+        );
+        aggregateBytes += resourceBytes.byteLength;
+        if (aggregateBytes > maximumSourceBytes) {
+          resourceBytes.fill(0);
+          throw stableError(
+            "SOURCE_BUNDLE_LIMIT_REJECTED",
+            false,
+          );
+        }
+        resources.push({
+          uri: resourceNames[index],
+          bytes: resourceBytes,
+        });
+      }
+      return {
+        bytes,
+        configured: Object.freeze({
+          ...configured,
+          maximumSourceBytes,
+        }),
+        format,
+        resources,
+      };
+    } catch (error) {
+      bytes.fill(0);
+      for (const resource of resources) {
+        resource.bytes.fill(0);
+      }
+      throw error;
+    }
   }
 
   async #post(panel, message) {
@@ -807,14 +1383,20 @@ class BimExplorerReadonlyEditorProvider {
   async #sendSource(document, panel) {
     let admitted = null;
     let messageBytes = null;
+    let messageResources = [];
     try {
       admitted = await this.#readBounded(document);
       const generation = document.nextGeneration();
       messageBytes = admitted.bytes.slice().buffer;
+      messageResources = admitted.resources.map((resource) => ({
+        uri: resource.uri,
+        bytes: resource.bytes.slice().buffer,
+      }));
       await this.#post(panel, {
         type: "source-bytes",
         generation,
         bytes: messageBytes,
+        resources: messageResources,
         format: admitted.format,
         profile: admitted.configured.profile,
         limits: {
@@ -835,8 +1417,14 @@ class BimExplorerReadonlyEditorProvider {
       });
     } finally {
       admitted?.bytes.fill(0);
+      for (const resource of admitted?.resources ?? []) {
+        resource.bytes.fill(0);
+      }
       if (messageBytes !== null) {
         new Uint8Array(messageBytes).fill(0);
+      }
+      for (const resource of messageResources) {
+        new Uint8Array(resource.bytes).fill(0);
       }
     }
   }
@@ -1035,6 +1623,10 @@ function activateBimExplorerExtension(vscode, context) {
       () => provider.postActive("cancel"),
     ),
     vscode.commands.registerCommand(
+      "bimExplorer.closeModel",
+      () => provider.postActive("dispose"),
+    ),
+    vscode.commands.registerCommand(
       "bimExplorer.retry",
       () => provider.postActive("retry"),
     ),
@@ -1070,6 +1662,10 @@ function activateBimExplorerExtension(vscode, context) {
     vscode.commands.registerCommand(
       "bimExplorer.verifyFederatedAnchors",
       () => federationProvider.postActive("verify-anchors"),
+    ),
+    vscode.commands.registerCommand(
+      "bimExplorer.verifyRetainedOverlay",
+      () => federationProvider.postActive("verify-retained-overlay"),
     ),
     vscode.commands.registerCommand(
       "bimExplorer.disposeFederatedSurface",

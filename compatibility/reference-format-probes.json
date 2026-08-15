@@ -1,7 +1,7 @@
 {
   "schema": "bim-explorer-reference-format-probes-compatibility/1",
   "status": "pre-admission",
-  "asOf": "2026-08-09",
+  "asOf": "2026-08-11",
   "gates": {
     "cacheOnlyPublicFixture": true,
     "pinnedDigestAcquisition": true,
@@ -39,6 +39,7 @@
     "browserPointIdentityPicking": true,
     "vscodePointIdentityPicking": true,
     "derivedPointHierarchyLod": true,
+    "pointCloudPhysicalGpuProduct": true,
     "e57CoordinateReference": false,
     "e57FormatAdmission": false,
     "lasLazCoordinateReference": false,
@@ -62,7 +63,8 @@
     "lasLazVscodeProduct": "compatibility/evidence/las-laz-vscode-product-2026-08-08.json",
     "browserPointPicking": "compatibility/evidence/point-cloud-browser-picking-2026-08-09.json",
     "vscodePointPicking": "compatibility/evidence/point-cloud-vscode-picking-2026-08-09.json",
-    "pointCloudLodProducts": "compatibility/evidence/point-cloud-lod-products-2026-08-09.json"
+    "pointCloudLodProducts": "compatibility/evidence/point-cloud-lod-products-2026-08-09.json",
+    "representativePointCloudsPhysicalGpu": "compatibility/evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json"
   },
   "blockers": [
     "the E57 samples have no qualified CRS or surveyed datum authority; scan poses establish local registration only",
@@ -99,6 +101,8 @@
     "e57MultipleScanVscodeExperimentalProductOpen": true,
     "derivedPointIdentityPicking": true,
     "derivedPointHierarchyLod": true,
+    "physicalGpuProductOpen": true,
+    "crossPlatformPhysicalGpu": false,
     "sourceNativePointHierarchyLod": false,
     "pointIdentityAuthority": "derived-point-range-order",
     "pointIdentityScope": "source-revision-and-range-digest",

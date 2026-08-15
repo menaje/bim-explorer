@@ -90,6 +90,10 @@ const STATIC_ROUTES = new Map([
     file: path.join(RENDERER, "measurement.mjs"),
     type: "text/javascript; charset=utf-8",
   }],
+  ["/textured-geometry.mjs", {
+    file: path.join(RENDERER, "textured-geometry.mjs"),
+    type: "text/javascript; charset=utf-8",
+  }],
 ]);
 
 function headers(type, byteLength) {
@@ -147,7 +151,13 @@ export async function prepareGltfBrowserProbe({
   }
   const source = await createGltfReferenceSource(
     bytes,
-    { maximumRequestBytes },
+    {
+      appearancePolicy: classification ===
+        "product-scale-reference"
+        ? "bounded-omission"
+        : "strict",
+      maximumRequestBytes,
+    },
   );
   const session = await source.open({
     protocolVersion: BIM_SOURCE_PROTOCOL_VERSION,

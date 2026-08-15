@@ -1,0 +1,71 @@
+{
+  "schema": "bim-explorer-public-gltf-fixture/1",
+  "fixtureId": "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+  "purpose": "cache-only qualification of one bounded GLB bufferView PNG base color texture",
+  "provenance": {
+    "repository": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+    "commit": "2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf",
+    "committedAt": "2026-04-27T15:55:06Z",
+    "path": "Models/BoxTextured/glTF-Binary/BoxTextured.glb",
+    "modelOwner": "Cesium",
+    "modelYear": 2017
+  },
+  "entry": {
+    "name": "BoxTextured.glb",
+    "mediaType": "model/gltf-binary",
+    "byteLength": 5956,
+    "sha256": "b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+    "rawUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/Models/BoxTextured/glTF-Binary/BoxTextured.glb"
+  },
+  "license": {
+    "spdx": "LicenseRef-CC-BY-TM AND LicenseRef-LegalMark-Cesium",
+    "name": "CC BY 4.0 International with trademark limitations and Cesium legal mark terms",
+    "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/LICENSES/LicenseRef-CC-BY-TM.txt",
+    "trademarkUrl": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/2bac6f8c57bf471df0d2a1e8a8ec023c7801dddf/LICENSES/LicenseRef-LegalMark-Cesium.txt",
+    "attribution": "Box Textured © 2017 Cesium; Cesium logo © 2015 Cesium",
+    "redistribution": "cache-only test input; not tracked or release-bundled"
+  },
+  "expected": {
+    "gltfVersion": "2.0",
+    "generator": "COLLADA2GLTF",
+    "drawCalls": 1,
+    "vertices": 24,
+    "triangles": 12,
+    "materials": 1,
+    "textures": 1,
+    "skins": false,
+    "animations": 0,
+    "geometryRecords": 1,
+    "instances": 1,
+    "ranges": 1,
+    "geometryRangeMediaType": "application/vnd.bim-explorer.geometry-range.v2",
+    "geometryRangeBytes": 4756,
+    "geometryRangeSha256": "ce04af8c146d03daf9e08e5b26f54e2f44fbe5a5203df50f0d642e459509a3cd",
+    "geometryPayloadBytes": 912,
+    "externalResourceBytes": 0,
+    "externalResources": 0,
+    "embeddedImageBytes": 3750,
+    "embeddedImageResources": 1,
+    "imageStorageProfile": "glb-buffer-view",
+    "textureSourceBytes": 3750,
+    "textureDecodedBytes": 262144,
+    "textureGpuBytes": 349524,
+    "imageMediaType": "image/png",
+    "textureCoordinateSet": 0,
+    "gpuUploadBytes": 350516,
+    "networkAtRuntime": false
+  },
+  "tracking": {
+    "cacheRoot": ".gltf-cache/public-gltf",
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "networkAtRuntime": false
+  },
+  "browserQualification": {
+    "classification": "bounded-smoke",
+    "maximumRequestBytes": 256,
+    "timeoutMs": 30000,
+    "requireCenterPick": true,
+    "rendererLimits": {}
+  }
+}

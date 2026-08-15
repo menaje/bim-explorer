@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+- admit bounded `.gltf` PNG/JPEG image bufferViews backed by an explicitly
+  supplied same-folder local `.bin`; add exact overlap, range, MIME, missing and
+  unused-resource rejection plus synthetic PNG/JPEG coverage, and qualify a
+  reproducible cache-only Khronos GLB-to-glTF derivation across Browser, staged
+  VS Code and clean-installed local VSIX Apple M2 Metal surfaces without
+  redistributing samples or backporting immutable federated runtimes;
+- admit bounded baseline sequential JPEG OPAQUE `baseColorTexture` for external
+  `.jpg`/`.jpeg`, exact glTF JPEG data URI and GLB JPEG bufferView paths; add an
+  independently validated MIME-aware geometry-range v3 while preserving every
+  PNG-only v2 byte, and qualify an exact cache-only Khronos derivation across
+  Browser, staged VS Code and clean-installed local VSIX Apple M2 Metal surfaces
+  without sample redistribution, federated v0.2 backport or VSIX publication;
+- admit bounded external PNG, exact glTF PNG data URI and GLB PNG bufferView
+  `baseColorTexture` paths, including `TEXCOORD_0`, standard samplers, an
+  independently validated geometry-range v2 texture payload and actual WebGL2
+  sRGB upload; qualify the cache-only Khronos external and embedded
+  BoxTextured variants across six Browser, staged VS Code and clean-installed
+  local VSIX Apple M2 Metal surfaces while keeping data-URI-buffer images,
+  progressive/arithmetic/lossless JPEG, alpha blending, other material texture roles, arbitrary URI,
+  federation v0.2 backport and VSIX publication held;
+- admit required `EXT_meshopt_compression` for bounded bufferView
+  `ATTRIBUTES`/`TRIANGLES`/`INDICES` with `FILTER_NONE`, using exact
+  `meshoptimizer@1.2.0` single-thread WASM lazily inside the existing source
+  Worker; pin decoded-byte and compression-ratio limits, malformed corpus,
+  MIT disclosure, a deterministic cache-only Box fixture, known Validator
+  infos, headless decode and three Apple M2 Metal product surfaces without
+  backporting the immutable federated v0.2 runtime or publishing a VSIX;
+- requalify the newly adopted public Viewer Core 0.1.2 IFC/glTF/GLB product
+  entrypoints on Apple M2 Metal in actual Chrome 151, staged VS Code 1.132 and
+  a clean-installed local VSIX, including exact range reads, selection events
+  and terminal source/session/Worker/Host cleanup;
+- admit the bounded product-scale GLB physical GPU Gate from that exact Apple
+  Metal evidence while keeping external resources, required extensions,
+  cross-platform hardware, write, round-trip and BIM semantic authority held;
+- route actual Browser and VS Code IFC/glTF/GLB product entrypoints through the
+  exact public Viewer Core 0.1.2 runtime, bundle its generated adapter and exact
+  MPL disclosures in the locally qualified VSIX, and keep extension publication,
+  upstream stable promotion and production support held;
 - adopt ordered `dev` → `prerelease` → `main` promotion, require package tags
   from the exact `prerelease` HEAD and stable tags from the exact `main` HEAD,
   and keep new VSIX Marketplace/Open VSX publication on hold;
@@ -12,6 +50,19 @@
   deterministic tgz/SPDX/checksum/source-offer assets, admit Spatial's exact-byte
   revalidation of the final 97,623-byte tgz and authorize prerelease publication
   while keeping public-artifact exact-pin admission separate;
+- publish that exact tgz as the immutable package-only `bim-surface-v0.2.0`
+  GitHub prerelease with nine assets, macOS/Linux byte identity and release/build
+  attestations while preserving Community `v0.1.0` as Latest;
+- admit Spatial's anonymous public-artifact exact-pin and actual GLB + IFC +
+  Spatial overlay consumer evidence while keeping VSIX BIM runtime, BIM UI/GPU,
+  cross-platform consumer coverage and production support held;
+- qualify the generated federated GLB–IFC–GLB Surface on an Apple M2 Metal GPU
+  through two actual Chrome 151 runs plus staged and locally clean-installed
+  VS Code 1.132 paths, with software fallback disabled and no new VSIX publish;
+- qualify the pinned public IFC2X3 and product-scale GLB in separate actual
+  Chrome 151, staged VS Code 1.132 and clean-installed local VSIX sessions on
+  Apple M2 Metal, while holding simultaneous composition, cross-platform GPU,
+  OS-level peak memory, publication and production claims;
 - allow cache-only public test fixtures without requiring sample redistribution,
   while retaining implementation redistribution as a product admission Gate;
 - pin and probe a public CC0 E57 sample on demand without tracking or releasing

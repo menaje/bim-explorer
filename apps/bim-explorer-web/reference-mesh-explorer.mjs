@@ -174,6 +174,8 @@ function searchItem(entity, query) {
 
 function referenceMetadata(entity, snapshot) {
   const primitive = entity.primitives[0];
+  const omissions =
+    snapshot.referenceMetadata?.appearanceOmissions ?? null;
   const color = primitive.color
     .map((value) => Number(value.toFixed(4)))
     .join(", ");
@@ -210,6 +212,21 @@ function referenceMetadata(entity, snapshot) {
         snapshot.referenceMetadata?.generator ??
         "not declared",
     },
+    {
+      label: "Required extensions",
+      value:
+        snapshot.referenceMetadata?.extensionsRequired
+          ?.join(", ") || "none",
+    },
+    ...(omissions === null
+      ? []
+      : [{
+          label: "Appearance",
+          value:
+            `${omissions.projectedTextures}/` +
+            `${omissions.declaredTextures} textures projected · ` +
+            `${omissions.materialFeatures} optional features omitted`,
+        }]),
   ];
 }
 

@@ -25,6 +25,7 @@
     "onCustomEditor:bimExplorer.ifcEditor",
     "onCommand:bimExplorer.openWith",
     "onCommand:bimExplorer.cancel",
+    "onCommand:bimExplorer.closeModel",
     "onCommand:bimExplorer.retry",
     "onCommand:bimExplorer.showDiagnostics",
     "onCommand:bimExplorer.pickVisiblePoint",
@@ -32,6 +33,7 @@
     "onCustomEditor:bimExplorer.federationEditor",
     "onCommand:bimExplorer.openFederation",
     "onCommand:bimExplorer.verifyFederatedAnchors",
+    "onCommand:bimExplorer.verifyRetainedOverlay",
     "onCommand:bimExplorer.disposeFederatedSurface"
   ],
   "main": "./extension.js",
@@ -83,6 +85,10 @@
         "title": "BIM Explorer: Cancel Model Open"
       },
       {
+        "command": "bimExplorer.closeModel",
+        "title": "BIM Explorer: Close Model"
+      },
+      {
         "command": "bimExplorer.retry",
         "title": "BIM Explorer: Retry Model Open"
       },
@@ -105,6 +111,10 @@
       {
         "command": "bimExplorer.verifyFederatedAnchors",
         "title": "BIM Explorer: Verify Visible Federated Anchors"
+      },
+      {
+        "command": "bimExplorer.verifyRetainedOverlay",
+        "title": "BIM Explorer: Verify Atomic Retained Overlay"
       },
       {
         "command": "bimExplorer.disposeFederatedSurface",

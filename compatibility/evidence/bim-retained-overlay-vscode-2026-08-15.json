@@ -1,0 +1,98 @@
+{
+  "schema": "bim-explorer-retained-overlay-vscode-qualification/1",
+  "status": "passed-actual-vscode-webgl2",
+  "asOf": "2026-08-15",
+  "capturedAt": "2026-08-15T03:57:43.765Z",
+  "environment": {
+    "host": "vscode-webview",
+    "vscode": "1.132.1",
+    "platform": "darwin-arm64",
+    "rendererMode": "swiftshader",
+    "runtimeLayout": "staged-development-source",
+    "physicalGpuClaimed": false
+  },
+  "fixture": {
+    "id": "generated-ifc-glb-glb-vscode-surface-v0.2",
+    "sourceCount": 3,
+    "committed": false,
+    "releaseBundled": false
+  },
+  "observation": {
+    "contract": "bim-explorer-federated-retained-overlay/0.1",
+    "actualWebGl2": true,
+    "prepareMs": 177.09999990463257,
+    "commitMs": 4.799999952316284,
+    "atomic": true,
+    "stagedFramebufferPreserved": true,
+    "stagedPickMapPreserved": true,
+    "payloadReads": 1,
+    "committedRevisionId": "source-snapshot:sha256:ae27290d10091b450deef71eb4dd792d7570f53e59b7464c2fd3697800fd8216:retained:1",
+    "selectedSource": "source-slot:z-overlay",
+    "selectedPickId": "pick:retained-overlay:e9d93b5ba707bcd39441335d8df1331879f33ab7ecec3753598ab0ac5441a793",
+    "selectionItems": 1,
+    "selectionSource": "source-slot:z-overlay",
+    "retainedSurfaceHitCapability": "unavailable-retained-overlay",
+    "nonBackgroundPixels": 8292,
+    "tombstonePickMiss": true,
+    "readsBefore": [
+      1,
+      1,
+      1
+    ],
+    "readsAfter": [
+      1,
+      1,
+      1
+    ],
+    "externalReadsUnchanged": true,
+    "activeBytesBefore": 1608,
+    "activeBytesAfterTombstone": 1608,
+    "baseGpuAllocationUnchanged": true,
+    "cameraProjection": "perspective",
+    "clippingPlanes": 1,
+    "cameraUnchanged": true,
+    "clippingUnchanged": true,
+    "selectionPreserved": true,
+    "anchorsPreserved": true,
+    "checkpointReads": 0,
+    "checkpointParses": 0,
+    "checkpointUploads": 0,
+    "retainedObjectsAfterTombstone": 0
+  },
+  "cleanup": {
+    "surfaceStatus": "disposed",
+    "rendererDisposed": true,
+    "backendDisposed": true,
+    "backendActiveBytes": 0,
+    "backendResidentRanges": 0,
+    "retainedGeometryBytes": 0,
+    "projectionCachesReleased": true,
+    "transferredSessionsReleased": true,
+    "sourceSessionsDisposed": true,
+    "workersTerminated": true,
+    "clientsDisposed": true,
+    "runtimeUrlsRevoked": true,
+    "repeatedDispose": false
+  },
+  "lifecycle": {
+    "opened": "ready",
+    "anchors": "qualified",
+    "retainedOverlay": "retained-qualified",
+    "disposed": "disposed",
+    "editorClosed": true
+  },
+  "assertions": {
+    "actualVscodeWebview": true,
+    "actualWebGl2Context": true,
+    "boundedAtomicStageCommit": true,
+    "geometryPickRevisionCoherent": true,
+    "sourceReadsUnchanged": true,
+    "baseGpuAllocationPreserved": true,
+    "cameraAndClippingPreserved": true,
+    "tombstoneAndCheckpointQualified": true,
+    "resourcesDisposed": true,
+    "immutablePublicV02RuntimeUntouched": true,
+    "generatedFixtureOnly": true,
+    "physicalGpuNotClaimed": true
+  }
+}

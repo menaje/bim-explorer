@@ -35,6 +35,36 @@ import {
 import {
   validatePointCloudLodProductQualification,
 } from "./qualify-point-cloud-lod-products.mjs";
+import {
+  validateRepresentativeModelsPhysicalGpuQualification,
+} from "./qualify-representative-models-physical-gpu.mjs";
+import {
+  validateRepresentativePointCloudsPhysicalGpuQualification,
+} from "./qualify-representative-point-clouds-physical-gpu.mjs";
+import {
+  GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfResourceBundleProductsQualification,
+} from "./qualify-gltf-resource-bundle-products.mjs";
+import {
+  GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshQuantizationProductsQualification,
+} from "./qualify-gltf-mesh-quantization-products.mjs";
+import {
+  GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH,
+  validateGltfMeshoptProductsQualification,
+} from "./qualify-gltf-meshopt-products.mjs";
+import {
+  GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfTextureProductsQualification,
+} from "./qualify-gltf-texture-products.mjs";
+import {
+  GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfJpegTextureProductsQualification,
+} from "./qualify-gltf-jpeg-texture-products.mjs";
+import {
+  GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH,
+  validateGltfBufferViewTextureProductsQualification,
+} from "./qualify-gltf-buffer-view-texture-products.mjs";
 
 const PASSED_GATES = [
   "browserLocalFileAdmission",
@@ -64,6 +94,27 @@ const PASSED_GATES = [
   "browserProductScaleGltfOpen",
   "vscodeProductScaleGltfOpen",
   "cleanVsixProductScaleGltfOpen",
+  "browserLocalExternalGltfBundleOpen",
+  "vscodeLocalExternalGltfBundleOpen",
+  "cleanVsixLocalExternalGltfBundleOpen",
+  "browserKhrMeshQuantizationOpen",
+  "vscodeKhrMeshQuantizationOpen",
+  "cleanVsixKhrMeshQuantizationOpen",
+  "browserExtMeshoptCompressionOpen",
+  "vscodeExtMeshoptCompressionOpen",
+  "cleanVsixExtMeshoptCompressionOpen",
+  "browserBoundedBaseColorTextureOpen",
+  "vscodeBoundedBaseColorTextureOpen",
+  "cleanVsixBoundedBaseColorTextureOpen",
+  "browserEmbeddedBaseColorTextureOpen",
+  "vscodeEmbeddedBaseColorTextureOpen",
+  "cleanVsixEmbeddedBaseColorTextureOpen",
+  "browserBoundedJpegBaseColorTextureOpen",
+  "vscodeBoundedJpegBaseColorTextureOpen",
+  "cleanVsixBoundedJpegBaseColorTextureOpen",
+  "browserExternalBufferViewBaseColorTextureOpen",
+  "vscodeExternalBufferViewBaseColorTextureOpen",
+  "cleanVsixExternalBufferViewBaseColorTextureOpen",
   "browserReadonlyLasLazOpen",
   "vscodeReadonlyLasLazOpen",
   "cleanVsixLasLazOpen",
@@ -82,10 +133,11 @@ const PASSED_GATES = [
   "browserDerivedPointHierarchyLod",
   "vscodeDerivedPointHierarchyLod",
   "cleanVsixDerivedPointHierarchyLod",
-];
-const HELD_GATES = [
   "publicViewerCoreConformance",
   "physicalGpuQualification",
+  "pointCloudPhysicalGpuQualification",
+];
+const HELD_GATES = [
   "marketplaceRelease",
 ];
 
@@ -265,6 +317,173 @@ function exactProductScaleReferenceObservation(value) {
   );
 }
 
+function exactViewerCoreLifecycle(
+  value,
+  expectedBytes,
+  expectedHost,
+) {
+  const opened = value?.opened;
+  const disposed = value?.disposed;
+  return (
+    opened?.adopted === true &&
+    opened?.api === "menaje-viewer-core/0.1" &&
+    opened?.version === "0.1.2" &&
+    opened?.contract ===
+      "bim-explorer-product-viewer-core/0.1" &&
+    opened?.protocolId ===
+      "menaje-viewer-render-protocol/0.1.0" &&
+    opened?.descriptorProtocolVersion === "0.1.0" &&
+    opened?.source?.rangeReads > 0 &&
+    opened?.source?.rangeBytesRead === expectedBytes &&
+    opened?.host?.eventCount >= 1 &&
+    opened?.host?.kind === expectedHost &&
+    opened?.host?.lastEventType === "selection.changed" &&
+    disposed?.disposed === true &&
+    disposed?.host?.disposed === true &&
+    disposed?.host?.kind === expectedHost &&
+    disposed?.source?.disposed === true &&
+    disposed?.source?.sessionDisposed === true &&
+    disposed?.presentation?.borrowedSessionDisposed === true &&
+    disposed?.presentation?.borrowedWorkerDisposed === true &&
+    disposed?.presentation?.disposalStatus === "disposed"
+  );
+}
+
+export function validateViewerCoreProductEntrypoints(value) {
+  const evidence = plainRecord(
+    value,
+    "Viewer Core product entrypoint evidence",
+  );
+  const dependencies = evidence.publicDependencies;
+  const bundle = evidence.productBundle;
+  const staged = evidence.vscode?.staged;
+  const installed = evidence.vscode?.cleanInstalledVsix;
+  const lifecycles = [
+    [
+      evidence.browser?.publicIfc?.observation,
+      evidence.browser?.publicIfc?.observation?.renderer,
+      "browser",
+    ],
+    [
+      evidence.browser?.productScaleGlb?.observation,
+      evidence.browser?.productScaleGlb?.observation?.renderer,
+      "browser",
+    ],
+    [staged?.observation, staged?.observation?.renderer, "vscode-webview"],
+    [
+      staged?.publicObservation,
+      staged?.publicObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      staged?.referenceObservation,
+      staged?.referenceObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      staged?.productScaleReferenceObservation,
+      staged?.productScaleReferenceObservation?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.runtime,
+      installed?.observation?.runtime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.publicRuntime,
+      installed?.observation?.publicRuntime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.referenceRuntime,
+      installed?.observation?.referenceRuntime?.renderer,
+      "vscode-webview",
+    ],
+    [
+      installed?.observation?.productScaleReferenceRuntime,
+      installed?.observation?.productScaleReferenceRuntime
+        ?.renderer,
+      "vscode-webview",
+    ],
+  ];
+  if (
+    evidence.schema !==
+      "bim-explorer-viewer-core-product-entrypoints-evidence/1" ||
+    !everyTrue(evidence.assertions) ||
+    !everyTrue(evidence.browser?.publicIfc?.assertions) ||
+    !everyTrue(evidence.browser?.productScaleGlb?.assertions) ||
+    !everyTrue(staged?.assertions) ||
+    !everyTrue(installed?.assertions) ||
+    dependencies?.repository !== "menaje/dwg-viewer" ||
+    dependencies?.tag !== "viewer-core-v0.1.2" ||
+    dependencies?.viewerCore?.package !==
+      "@menaje/viewer-core" ||
+    dependencies?.viewerCore?.version !== "0.1.2" ||
+    dependencies?.viewerCore?.license !== "MPL-2.0" ||
+    dependencies?.viewerCore?.specifier !==
+      "https://github.com/menaje/dwg-viewer/releases/download/" +
+        "viewer-core-v0.1.2/menaje-viewer-core-0.1.2.tgz" ||
+    dependencies?.viewerCore?.artifactSha256 !==
+      "69bedf751ef718eb8e37bb06718d5a956f33f567225bf64468d25e42c5a82c4c" ||
+    dependencies?.renderProtocol?.package !==
+      "@menaje/viewer-render-protocol" ||
+    dependencies?.renderProtocol?.version !== "0.1.2" ||
+    dependencies?.renderProtocol?.license !== "MPL-2.0" ||
+    dependencies?.renderProtocol?.specifier !==
+      "https://github.com/menaje/dwg-viewer/releases/download/" +
+        "viewer-core-v0.1.2/" +
+        "menaje-viewer-render-protocol-0.1.2.tgz" ||
+    dependencies?.renderProtocol?.artifactSha256 !==
+      "6534ec7d021e06d3ea616ae15fb995ece57a7c3292fc37e892a28db8e2a91d42" ||
+    dependencies?.renderProtocol?.protocol !==
+      "menaje-viewer-render-protocol/0.1.0" ||
+    bundle?.contract !==
+      "bim-explorer-product-viewer-core/0.1" ||
+    !(bundle?.byteLength > 0) ||
+    !/^[0-9a-f]{64}$/u.test(bundle?.sha256 ?? "") ||
+    bundle?.generated !== true ||
+    bundle?.bundledInLocalVsix !== true ||
+    bundle?.correspondingSourceAvailable !== true ||
+    evidence.decision?.publicViewerCoreConformance !== true ||
+    evidence.decision?.productEntrypoints !==
+      "passed-browser-vscode-ifc-glb" ||
+    evidence.decision?.marketplaceRelease !== false ||
+    evidence.decision?.productionSupport !== false ||
+    evidence.decision?.vscodeExtensionPublished !== false ||
+    evidence.browser?.publicIfc?.decision
+      ?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    evidence.browser?.productScaleGlb?.decision
+      ?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    staged?.decision?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    installed?.decision?.publicViewerCoreConformance !==
+      "passed-product-entrypoint" ||
+    installed?.decision?.marketplaceRelease !== "held" ||
+    installed?.package?.installedRuntimeFiles !== 31 ||
+    installed?.package?.viewerCoreProductBundleSha256 !==
+      bundle?.sha256 ||
+    installed?.assertions?.viewerCoreProductBundleExact !==
+      true ||
+    installed?.assertions?.viewerCoreDisclosuresExact !== true ||
+    lifecycles.some(
+      ([observation, renderer, expectedHost]) =>
+        !exactViewerCoreLifecycle(
+          observation?.viewerCore,
+          renderer?.sourceReadBytes,
+          expectedHost,
+        ),
+    )
+  ) {
+    throw new Error(
+      "Viewer Core product entrypoint evidence is incomplete",
+    );
+  }
+  return evidence;
+}
+
 export function validateBimProductShellCompatibility(
   manifest,
   browser,
@@ -286,6 +505,15 @@ export function validateBimProductShellCompatibility(
   pointCloudBrowserPicking,
   pointCloudVscodePicking,
   pointCloudLodProducts,
+  representativePhysicalGpu,
+  representativePointCloudsPhysicalGpu,
+  viewerCoreProductEntrypoints,
+  gltfExternalResourceProducts,
+  gltfMeshQuantizationProducts,
+  gltfMeshoptProducts,
+  gltfTextureProducts,
+  gltfJpegTextureProducts,
+  gltfBufferViewTextureProducts,
 ) {
   plainRecord(manifest, "product shell manifest");
   plainRecord(browser, "Browser product shell evidence");
@@ -344,10 +572,45 @@ export function validateBimProductShellCompatibility(
   validatePointCloudLodProductQualification(
     pointCloudLodProducts,
   );
+  const physicalGpu =
+    validateRepresentativeModelsPhysicalGpuQualification(
+      representativePhysicalGpu,
+    );
+  const pointCloudPhysicalGpu =
+    validateRepresentativePointCloudsPhysicalGpuQualification(
+      representativePointCloudsPhysicalGpu,
+    );
+  validateViewerCoreProductEntrypoints(
+    viewerCoreProductEntrypoints,
+  );
+  const gltfExternalResourceReport =
+    validateGltfResourceBundleProductsQualification(
+      gltfExternalResourceProducts,
+    );
+  const gltfMeshQuantizationReport =
+    validateGltfMeshQuantizationProductsQualification(
+      gltfMeshQuantizationProducts,
+    );
+  const gltfMeshoptReport =
+    validateGltfMeshoptProductsQualification(
+      gltfMeshoptProducts,
+    );
+  const gltfTextureReport =
+    validateGltfTextureProductsQualification(
+      gltfTextureProducts,
+    );
+  const gltfJpegTextureReport =
+    validateGltfJpegTextureProductsQualification(
+      gltfJpegTextureProducts,
+    );
+  const gltfBufferViewTextureReport =
+    validateGltfBufferViewTextureProductsQualification(
+      gltfBufferViewTextureProducts,
+    );
   if (
     manifest.schema !==
       "bim-explorer-product-shell-compatibility/1" ||
-    manifest.asOf !== "2026-08-09" ||
+    manifest.asOf !== "2026-08-11" ||
     manifest.status !== "experimental" ||
     browser.schema !==
       "bim-explorer-product-shell-browser-evidence/1" ||
@@ -368,6 +631,100 @@ export function validateBimProductShellCompatibility(
   ) {
     throw new Error(
       "BIM product shell evidence identity is invalid",
+    );
+  }
+  const quantizedReferenceFixture =
+    manifest.quantizedReferenceFixture;
+  const quantizedEvidenceFixture =
+    gltfMeshQuantizationProducts.fixture;
+  if (
+    quantizedReferenceFixture?.id !==
+      quantizedEvidenceFixture?.id ||
+    quantizedReferenceFixture?.byteLength !== 1_632 ||
+    quantizedReferenceFixture?.sha256 !==
+      quantizedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    quantizedReferenceFixture?.sourceByteLength !== 1_664 ||
+    quantizedReferenceFixture?.sourceSha256 !==
+      quantizedEvidenceFixture?.manifest?.sourceSha256 ||
+    quantizedReferenceFixture?.format !== "glb" ||
+    quantizedReferenceFixture?.gltfVersion !== "2.0" ||
+    quantizedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    JSON.stringify(quantizedReferenceFixture?.extensionsUsed) !==
+      JSON.stringify(["KHR_mesh_quantization"]) ||
+    JSON.stringify(
+      quantizedReferenceFixture?.extensionsRequired,
+    ) !== JSON.stringify(["KHR_mesh_quantization"]) ||
+    quantizedReferenceFixture?.artifactCommitted !== false ||
+    quantizedReferenceFixture?.sourceArtifactCommitted !== false ||
+    quantizedReferenceFixture?.thirdPartyContent !== true ||
+    quantizedReferenceFixture?.bundled !== false ||
+    quantizedReferenceFixture?.repository !==
+      quantizedEvidenceFixture?.provenance?.repository ||
+    quantizedReferenceFixture?.commit !==
+      quantizedEvidenceFixture?.provenance?.commit ||
+    quantizedReferenceFixture?.license !==
+      quantizedEvidenceFixture?.provenance?.license ||
+    quantizedReferenceFixture?.extensionSpecificationCommit !==
+      quantizedEvidenceFixture?.manifest?.specificationCommit ||
+    gltfMeshQuantizationReport.status !==
+      "passed-darwin-arm64-apple-metal-khr-mesh-quantization" ||
+    gltfMeshQuantizationReport.surfaces !== 3 ||
+    gltfMeshQuantizationReport.sourceBytes !== 1_632
+  ) {
+    throw new Error(
+      "KHR_mesh_quantization product fixture policy is invalid",
+    );
+  }
+  const meshoptReferenceFixture = manifest.meshoptReferenceFixture;
+  const meshoptEvidenceFixture = gltfMeshoptProducts.fixture;
+  if (
+    meshoptReferenceFixture?.id !== meshoptEvidenceFixture?.id ||
+    meshoptReferenceFixture?.byteLength !== 1_696 ||
+    meshoptReferenceFixture?.sha256 !==
+      meshoptEvidenceFixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    meshoptReferenceFixture?.sourceByteLength !== 1_664 ||
+    meshoptReferenceFixture?.sourceSha256 !==
+      meshoptEvidenceFixture?.manifest?.sourceSha256 ||
+    meshoptReferenceFixture?.format !== "glb" ||
+    meshoptReferenceFixture?.gltfVersion !== "2.0" ||
+    meshoptReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    JSON.stringify(meshoptReferenceFixture?.extensionsUsed) !==
+      JSON.stringify(["EXT_meshopt_compression"]) ||
+    JSON.stringify(meshoptReferenceFixture?.extensionsRequired) !==
+      JSON.stringify(["EXT_meshopt_compression"]) ||
+    JSON.stringify(meshoptReferenceFixture?.meshoptModes) !==
+      JSON.stringify(["ATTRIBUTES", "TRIANGLES"]) ||
+    JSON.stringify(meshoptReferenceFixture?.meshoptFilters) !==
+      JSON.stringify(["NONE"]) ||
+    meshoptReferenceFixture?.compressedBytes !== 192 ||
+    meshoptReferenceFixture?.decodedBytes !== 648 ||
+    meshoptReferenceFixture?.artifactCommitted !== false ||
+    meshoptReferenceFixture?.sourceArtifactCommitted !== false ||
+    meshoptReferenceFixture?.thirdPartyContent !== true ||
+    meshoptReferenceFixture?.bundled !== false ||
+    meshoptReferenceFixture?.repository !==
+      meshoptEvidenceFixture?.provenance?.repository ||
+    meshoptReferenceFixture?.commit !==
+      meshoptEvidenceFixture?.provenance?.commit ||
+    meshoptReferenceFixture?.license !==
+      meshoptEvidenceFixture?.provenance?.license ||
+    meshoptReferenceFixture?.extensionSpecificationCommit !==
+      meshoptEvidenceFixture?.manifest?.specificationCommit ||
+    meshoptReferenceFixture?.codecPackage !== "meshoptimizer" ||
+    meshoptReferenceFixture?.codecVersion !== "1.2.0" ||
+    meshoptReferenceFixture?.codecLicense !== "MIT" ||
+    gltfMeshoptReport.status !==
+      "passed-darwin-arm64-apple-metal-ext-meshopt" ||
+    gltfMeshoptReport.surfaces !== 3 ||
+    gltfMeshoptReport.sourceBytes !== 1_696
+  ) {
+    throw new Error(
+      "EXT_meshopt_compression product fixture policy is invalid",
     );
   }
   const contracts = manifest.contracts;
@@ -401,7 +758,11 @@ export function validateBimProductShellCompatibility(
     contracts?.pointHierarchy !==
       "bim-explorer-derived-point-hierarchy/0.1" ||
     contracts?.pointLodRangeReceipt !==
-      "bim-explorer-derived-point-lod-range-receipt/0.1"
+      "bim-explorer-derived-point-lod-range-receipt/0.1" ||
+    contracts?.productViewerCore !==
+      "bim-explorer-product-viewer-core/0.1" ||
+    contracts?.viewerRenderProtocol !==
+      "menaje-viewer-render-protocol/0.1.0"
   ) {
     throw new Error(
       "BIM product shell contracts are invalid",
@@ -549,6 +910,232 @@ export function validateBimProductShellCompatibility(
       "reference product fixture policy is invalid",
     );
   }
+  const externalResourceReferenceFixture =
+    manifest.externalResourceReferenceFixture;
+  const externalResourceEvidenceFixture =
+    gltfExternalResourceProducts.fixture;
+  if (
+    externalResourceReferenceFixture?.id !==
+      externalResourceEvidenceFixture?.id ||
+    externalResourceReferenceFixture?.byteLength !== 3_546 ||
+    externalResourceReferenceFixture?.documentByteLength !==
+      2_898 ||
+    externalResourceReferenceFixture?.externalResourceBytes !==
+      648 ||
+    externalResourceReferenceFixture?.externalResources !== 1 ||
+    externalResourceReferenceFixture?.sourceFingerprint !==
+      externalResourceEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    externalResourceReferenceFixture?.format !== "gltf" ||
+    externalResourceReferenceFixture?.gltfVersion !== "2.0" ||
+    externalResourceReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    externalResourceReferenceFixture?.artifactCommitted !== false ||
+    externalResourceReferenceFixture?.thirdPartyContent !== true ||
+    externalResourceReferenceFixture?.bundled !== false ||
+    externalResourceReferenceFixture?.repository !==
+      externalResourceEvidenceFixture?.provenance?.repository ||
+    externalResourceReferenceFixture?.commit !==
+      externalResourceEvidenceFixture?.provenance?.commit ||
+    externalResourceReferenceFixture?.license !==
+      externalResourceEvidenceFixture?.provenance?.license ||
+    externalResourceEvidenceFixture?.sourceBytes !== 3_546 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.documentBytes !== 2_898 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.externalResourceBytes !== 648 ||
+    externalResourceEvidenceFixture?.resourceBundle
+      ?.externalResources !== 1 ||
+    gltfExternalResourceReport.status !==
+      "passed-darwin-arm64-apple-metal-local-bundle" ||
+    gltfExternalResourceReport.surfaces !== 3
+  ) {
+    throw new Error(
+      "external glTF resource product fixture policy is invalid",
+    );
+  }
+  const texturedReferenceFixture = manifest.texturedReferenceFixture;
+  const texturedEvidenceFixture = gltfTextureProducts.fixture;
+  const embeddedTexturedReferenceFixture =
+    manifest.embeddedTexturedReferenceFixture;
+  const embeddedTexturedEvidenceFixture =
+    gltfTextureProducts.embeddedFixture;
+  if (
+    texturedReferenceFixture?.id !== texturedEvidenceFixture?.id ||
+    texturedReferenceFixture?.byteLength !== 8_285 ||
+    texturedReferenceFixture?.documentByteLength !== 3_695 ||
+    texturedReferenceFixture?.externalResourceBytes !== 4_590 ||
+    texturedReferenceFixture?.externalResources !== 2 ||
+    texturedReferenceFixture?.externalBufferResources !== 1 ||
+    texturedReferenceFixture?.externalImageResources !== 1 ||
+    texturedReferenceFixture?.textureSourceBytes !== 3_750 ||
+    texturedReferenceFixture?.textureDecodedBytes !== 262_144 ||
+    texturedReferenceFixture?.textureGpuBytes !== 349_524 ||
+    texturedReferenceFixture?.textures !== 1 ||
+    texturedReferenceFixture?.sourceFingerprint !==
+      texturedEvidenceFixture?.fingerprint?.replace(/^sha256:/u, "") ||
+    texturedReferenceFixture?.format !== "gltf" ||
+    texturedReferenceFixture?.gltfVersion !== "2.0" ||
+    texturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    texturedReferenceFixture?.artifactCommitted !== false ||
+    texturedReferenceFixture?.thirdPartyContent !== true ||
+    texturedReferenceFixture?.bundled !== false ||
+    texturedReferenceFixture?.repository !==
+      texturedEvidenceFixture?.provenance?.repository ||
+    texturedReferenceFixture?.commit !==
+      texturedEvidenceFixture?.provenance?.commit ||
+    texturedReferenceFixture?.license !==
+      texturedEvidenceFixture?.provenance?.license ||
+    gltfTextureReport.status !==
+      "passed-darwin-arm64-apple-metal-texture" ||
+    embeddedTexturedReferenceFixture?.id !==
+      embeddedTexturedEvidenceFixture?.id ||
+    embeddedTexturedReferenceFixture?.byteLength !== 5_956 ||
+    embeddedTexturedReferenceFixture?.embeddedImageBytes !== 3_750 ||
+    embeddedTexturedReferenceFixture?.embeddedImageResources !== 1 ||
+    embeddedTexturedReferenceFixture?.textureSourceBytes !== 3_750 ||
+    embeddedTexturedReferenceFixture?.textureDecodedBytes !== 262_144 ||
+    embeddedTexturedReferenceFixture?.textureGpuBytes !== 349_524 ||
+    embeddedTexturedReferenceFixture?.textures !== 1 ||
+    embeddedTexturedReferenceFixture?.sourceFingerprint !==
+      embeddedTexturedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    embeddedTexturedReferenceFixture?.format !== "glb" ||
+    embeddedTexturedReferenceFixture?.gltfVersion !== "2.0" ||
+    embeddedTexturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    embeddedTexturedReferenceFixture?.artifactCommitted !== false ||
+    embeddedTexturedReferenceFixture?.thirdPartyContent !== true ||
+    embeddedTexturedReferenceFixture?.bundled !== false ||
+    embeddedTexturedReferenceFixture?.repository !==
+      embeddedTexturedEvidenceFixture?.provenance?.repository ||
+    embeddedTexturedReferenceFixture?.commit !==
+      embeddedTexturedEvidenceFixture?.provenance?.commit ||
+    embeddedTexturedReferenceFixture?.license !==
+      embeddedTexturedEvidenceFixture?.provenance?.license ||
+    gltfTextureReport.surfaces !== 6 ||
+    gltfTextureReport.sourceBytes !== 8_285 ||
+    gltfTextureReport.decodedTextureBytes !== 262_144 ||
+    gltfTextureReport.gpuTextureBytes !== 349_524 ||
+    gltfTextureReport.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error(
+      "textured glTF product fixture policy is invalid",
+    );
+  }
+  const jpegTexturedReferenceFixture =
+    manifest.jpegTexturedReferenceFixture;
+  const jpegTexturedEvidenceFixture =
+    gltfJpegTextureProducts.fixture;
+  if (
+    jpegTexturedReferenceFixture?.id !==
+      jpegTexturedEvidenceFixture?.id ||
+    jpegTexturedReferenceFixture?.byteLength !== 4_274 ||
+    jpegTexturedReferenceFixture?.documentByteLength !== 2_685 ||
+    jpegTexturedReferenceFixture?.externalResourceBytes !== 1_589 ||
+    jpegTexturedReferenceFixture?.externalResources !== 2 ||
+    jpegTexturedReferenceFixture?.externalBufferResources !== 1 ||
+    jpegTexturedReferenceFixture?.externalImageResources !== 1 ||
+    jpegTexturedReferenceFixture?.textureSourceBytes !== 749 ||
+    jpegTexturedReferenceFixture?.textureDecodedBytes !== 16_384 ||
+    jpegTexturedReferenceFixture?.textureGpuBytes !== 21_844 ||
+    jpegTexturedReferenceFixture?.textures !== 1 ||
+    jpegTexturedReferenceFixture?.sourceFingerprint !==
+      jpegTexturedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    jpegTexturedReferenceFixture?.format !== "gltf" ||
+    jpegTexturedReferenceFixture?.gltfVersion !== "2.0" ||
+    jpegTexturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    jpegTexturedReferenceFixture?.artifactCommitted !== false ||
+    jpegTexturedReferenceFixture?.thirdPartyContent !== true ||
+    jpegTexturedReferenceFixture?.bundled !== false ||
+    jpegTexturedReferenceFixture?.repository !==
+      jpegTexturedEvidenceFixture?.provenance?.repository ||
+    jpegTexturedReferenceFixture?.commit !==
+      jpegTexturedEvidenceFixture?.provenance?.commit ||
+    jpegTexturedReferenceFixture?.license !==
+      jpegTexturedEvidenceFixture?.provenance?.license ||
+    gltfJpegTextureReport.status !==
+      "passed-darwin-arm64-apple-metal-jpeg-texture" ||
+    gltfJpegTextureReport.surfaces !== 3 ||
+    gltfJpegTextureReport.sourceBytes !== 4_274 ||
+    gltfJpegTextureReport.decodedTextureBytes !== 16_384 ||
+    gltfJpegTextureReport.gpuTextureBytes !== 21_844 ||
+    gltfJpegTextureReport.gpuUploadBytes !== 22_836
+  ) {
+    throw new Error(
+      "JPEG textured glTF product fixture policy is invalid",
+    );
+  }
+  const externalBufferViewTexturedReferenceFixture =
+    manifest.externalBufferViewTexturedReferenceFixture;
+  const externalBufferViewTexturedEvidenceFixture =
+    gltfBufferViewTextureProducts.fixture;
+  if (
+    externalBufferViewTexturedReferenceFixture?.id !==
+      externalBufferViewTexturedEvidenceFixture?.id ||
+    externalBufferViewTexturedReferenceFixture?.byteLength !== 7_306 ||
+    externalBufferViewTexturedReferenceFixture?.documentByteLength !==
+      2_714 ||
+    externalBufferViewTexturedReferenceFixture?.externalResourceBytes !==
+      4_592 ||
+    externalBufferViewTexturedReferenceFixture?.externalResources !== 1 ||
+    externalBufferViewTexturedReferenceFixture
+      ?.externalBufferResources !== 1 ||
+    externalBufferViewTexturedReferenceFixture
+      ?.externalBufferViewImageResources !== 1 ||
+    externalBufferViewTexturedReferenceFixture?.embeddedImageBytes !==
+      3_750 ||
+    externalBufferViewTexturedReferenceFixture?.embeddedImageResources !==
+      1 ||
+    externalBufferViewTexturedReferenceFixture?.textureSourceBytes !==
+      3_750 ||
+    externalBufferViewTexturedReferenceFixture?.textureDecodedBytes !==
+      262_144 ||
+    externalBufferViewTexturedReferenceFixture?.textureGpuBytes !==
+      349_524 ||
+    externalBufferViewTexturedReferenceFixture?.textures !== 1 ||
+    externalBufferViewTexturedReferenceFixture?.sourceFingerprint !==
+      externalBufferViewTexturedEvidenceFixture?.fingerprint?.replace(
+        /^sha256:/u,
+        "",
+      ) ||
+    externalBufferViewTexturedReferenceFixture?.format !== "gltf" ||
+    externalBufferViewTexturedReferenceFixture?.gltfVersion !== "2.0" ||
+    externalBufferViewTexturedReferenceFixture?.nativeId !==
+      "node:1/mesh:0/primitive:0" ||
+    externalBufferViewTexturedReferenceFixture?.artifactCommitted !==
+      false ||
+    externalBufferViewTexturedReferenceFixture?.thirdPartyContent !==
+      true ||
+    externalBufferViewTexturedReferenceFixture?.bundled !== false ||
+    externalBufferViewTexturedReferenceFixture?.repository !==
+      externalBufferViewTexturedEvidenceFixture?.provenance?.repository ||
+    externalBufferViewTexturedReferenceFixture?.commit !==
+      externalBufferViewTexturedEvidenceFixture?.provenance?.commit ||
+    externalBufferViewTexturedReferenceFixture?.license !==
+      externalBufferViewTexturedEvidenceFixture?.provenance?.license ||
+    gltfBufferViewTextureReport.status !==
+      "passed-darwin-arm64-apple-metal-" +
+        "external-buffer-view-texture" ||
+    gltfBufferViewTextureReport.surfaces !== 3 ||
+    gltfBufferViewTextureReport.sourceBytes !== 7_306 ||
+    gltfBufferViewTextureReport.decodedTextureBytes !== 262_144 ||
+    gltfBufferViewTextureReport.gpuTextureBytes !== 349_524 ||
+    gltfBufferViewTextureReport.gpuUploadBytes !== 350_516
+  ) {
+    throw new Error(
+      "external-buffer bufferView textured glTF product fixture policy is invalid",
+    );
+  }
   const gates = plainRecord(
     manifest.gates,
     "product shell gates",
@@ -597,6 +1184,29 @@ export function validateBimProductShellCompatibility(
         maximumCpuStagingBytes: 33_554_432,
         maximumGpuCacheBytes: 33_554_432,
       }) ||
+    JSON.stringify(limits?.gltfExternalResourceBundle) !==
+      JSON.stringify({
+        maximumAggregateSourceBytes: 67_108_864,
+        maximumExternalResources: 16,
+        maximumResourceNameBytes: 128,
+        sameFolderOnly: true,
+        resourceExtensions: [
+          ".bin",
+          ".jpg",
+          ".jpeg",
+          ".png",
+        ],
+        textureProfile: {
+          maximumTextures: 16,
+          maximumSourceBytes: 8_388_608,
+          maximumDecodedBytes: 16_777_216,
+          maximumDimension: 2_048,
+          maximumCompressionRatio: 256,
+          scope:
+            "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+            "base-color-texcoord0",
+        },
+      }) ||
     JSON.stringify(limits?.lasLazPointSource) !==
       JSON.stringify({
         maximumSourceBytes: 8_388_608,
@@ -625,6 +1235,53 @@ export function validateBimProductShellCompatibility(
       })
   ) {
     throw new Error("BIM product shell limits are invalid");
+  }
+  if (
+    JSON.stringify(manifest.physicalGpuScope) !==
+      JSON.stringify({
+        platform: "darwin-arm64",
+        hardware: "Apple M2",
+        renderer: "ANGLE Metal",
+        representativeFormats: [
+          "ifc",
+          "gltf",
+          "glb",
+          "e57",
+          "las",
+          "laz",
+        ],
+        publicViewerCoreProductEntrypoint: true,
+        localExternalGltfBundleProductSurfaces: 3,
+        khrMeshQuantizationProductSurfaces: 3,
+        extMeshoptCompressionProductSurfaces: 3,
+        baseColorTextureProductSurfaces: 6,
+        jpegBaseColorTextureProductSurfaces: 3,
+        externalBufferViewTextureProductSurfaces: 3,
+        pointCloudProductSurfaces: 12,
+        pointCloudFormatAdmission: false,
+        simultaneousComposition: false,
+        crossPlatform: false,
+        osLevelPeakGpuMemory: false,
+        productionSupport: false,
+      }) ||
+    representativePhysicalGpu.browser?.ifc?.fixture?.id !==
+      manifest.publicFixture?.id ||
+    representativePhysicalGpu.browser?.ifc?.fixture
+      ?.sourceBytes !== manifest.publicFixture?.byteLength ||
+    representativePhysicalGpu.browser?.ifc?.fixture
+      ?.fingerprint !== `sha256:${manifest.publicFixture?.sha256}` ||
+    representativePhysicalGpu.browser?.glb?.fixture?.id !==
+      manifest.productScaleReferenceFixture?.id ||
+    representativePhysicalGpu.browser?.glb?.fixture
+      ?.sourceBytes !==
+        manifest.productScaleReferenceFixture?.byteLength ||
+    representativePhysicalGpu.browser?.glb?.fixture
+      ?.fingerprint !==
+        `sha256:${manifest.productScaleReferenceFixture?.sha256}`
+  ) {
+    throw new Error(
+      "representative physical GPU scope is invalid",
+    );
   }
   if (
     !everyTrue(browser.assertions) ||
@@ -989,6 +1646,30 @@ export function validateBimProductShellCompatibility(
     manifest.evidence?.pointCloudLodProducts !==
       "compatibility/evidence/" +
         "point-cloud-lod-products-2026-08-09.json" ||
+    manifest.evidence?.representativePhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-physical-gpu-" +
+        "darwin-arm64-2026-08-11.json" ||
+    manifest.evidence?.representativePointCloudsPhysicalGpu !==
+      "compatibility/evidence/" +
+        "bim-product-shell-representative-point-clouds-" +
+        "physical-gpu-darwin-arm64-2026-08-11.json" ||
+    manifest.evidence?.viewerCoreProductEntrypoints !==
+      "compatibility/evidence/" +
+        "bim-product-shell-viewer-core-product-entrypoints-" +
+        "2026-08-11.json" ||
+    manifest.evidence?.gltfExternalResourceProducts !==
+      GLTF_RESOURCE_BUNDLE_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfMeshQuantizationProducts !==
+      GLTF_MESH_QUANTIZATION_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfMeshoptProducts !==
+      GLTF_MESHOPT_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfTextureProducts !==
+      GLTF_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfJpegTextureProducts !==
+      GLTF_JPEG_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
+    manifest.evidence?.gltfBufferViewTextureProducts !==
+      GLTF_BUFFER_VIEW_TEXTURE_PRODUCTS_EVIDENCE_PATH ||
     manifest.policy?.readOnly !== true ||
     manifest.policy?.localOnly !== true ||
     manifest.policy?.spatialAuthority !== false ||
@@ -998,6 +1679,22 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.claimProductScaleBrowserOpen !== true ||
     manifest.policy?.claimProductScaleVscodeOpen !== true ||
     manifest.policy?.claimProductScaleCleanVsixOpen !== true ||
+    manifest.policy?.claimLocalExternalGltfBundleOpen !== true ||
+    manifest.policy?.localExternalGltfBundleScope !==
+      "single-source-product-surface" ||
+    manifest.policy?.claimKhrMeshQuantizationOpen !== true ||
+    manifest.policy?.claimExtMeshoptCompressionOpen !== true ||
+    manifest.policy?.extMeshoptCompressionScope !==
+      "required-buffer-view-filter-none" ||
+    manifest.policy?.claimBoundedBaseColorTextureOpen !== true ||
+    manifest.policy?.claimEmbeddedBaseColorTextureOpen !== true ||
+    manifest.policy?.claimBoundedJpegBaseColorTextureOpen !== true ||
+    manifest.policy?.claimExternalBufferViewBaseColorTextureOpen !==
+      true ||
+    manifest.policy?.boundedBaseColorTextureScope !==
+      "external-or-embedded-png-or-baseline-jpeg-opaque-" +
+        "texcoord0-webgl2-srgb" ||
+    manifest.policy?.claimArbitraryGltfUri !== false ||
     manifest.policy?.claimBrowserLasLazOpen !== true ||
     manifest.policy?.claimVscodeLasLazOpen !== true ||
     manifest.policy?.claimCleanVsixLasLazOpen !== true ||
@@ -1023,9 +1720,12 @@ export function validateBimProductShellCompatibility(
     manifest.policy?.pointIdentityScope !==
       "source-revision-and-range-digest" ||
     manifest.policy?.claimE57FormatAdmission !== false ||
-    manifest.policy?.claimPublicViewerCore !== false ||
+    manifest.policy?.claimPublicViewerCore !== true ||
     manifest.policy?.claimPublicScale !== true ||
-    manifest.policy?.claimPhysicalGpu !== false ||
+    manifest.policy?.claimPhysicalGpu !== true ||
+    manifest.policy?.claimPointCloudPhysicalGpu !== true ||
+    manifest.policy?.claimCrossPlatformPointCloudPhysicalGpu !==
+      false ||
     manifest.policy?.claimMarketplaceRelease !== false
   ) {
     throw new Error(
@@ -1052,6 +1752,15 @@ export function validateBimProductShellCompatibility(
         pointCloudBrowserPicking,
         pointCloudVscodePicking,
         pointCloudLodProducts,
+        representativePhysicalGpu,
+        representativePointCloudsPhysicalGpu,
+        viewerCoreProductEntrypoints,
+        gltfExternalResourceProducts,
+        gltfMeshQuantizationProducts,
+        gltfMeshoptProducts,
+        gltfTextureProducts,
+        gltfJpegTextureProducts,
+        gltfBufferViewTextureProducts,
         installation,
         manifest,
         vscode,
@@ -1070,6 +1779,19 @@ export function validateBimProductShellCompatibility(
       vscode.observation.hostKind,
     ]),
     passedGates: PASSED_GATES.length,
+    externalGltfBundleSurfaces:
+      gltfExternalResourceReport.surfaces,
+    khrMeshQuantizationSurfaces:
+      gltfMeshQuantizationReport.surfaces,
+    extMeshoptCompressionSurfaces: gltfMeshoptReport.surfaces,
+    baseColorTextureSurfaces: gltfTextureReport.surfaces,
+    jpegBaseColorTextureSurfaces: gltfJpegTextureReport.surfaces,
+    externalBufferViewTextureSurfaces:
+      gltfBufferViewTextureReport.surfaces,
+    physicalGpu: physicalGpu.status,
+    pointCloudPhysicalGpu: pointCloudPhysicalGpu.status,
+    pointCloudPhysicalGpuSurfaces:
+      pointCloudPhysicalGpu.surfaces,
     publicProducts:
       browserPublic.observation.model.products,
     status: manifest.status,
@@ -1106,6 +1828,15 @@ async function main() {
     pointCloudLodProducts,
     vscode,
     installation,
+    representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
+    viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
+    gltfMeshoptProducts,
+    gltfTextureProducts,
+    gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
   ] = await Promise.all([
     readFile(
       path.join(root, manifest.evidence.browserSynthetic),
@@ -1193,6 +1924,60 @@ async function main() {
       path.join(root, manifest.evidence.vscodeCleanInstall),
       "utf8",
     ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.representativePhysicalGpu,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.representativePointCloudsPhysicalGpu,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.viewerCoreProductEntrypoints,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.gltfExternalResourceProducts,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.gltfMeshQuantizationProducts,
+      ),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.gltfMeshoptProducts),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.gltfTextureProducts),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(root, manifest.evidence.gltfJpegTextureProducts),
+      "utf8",
+    ).then(JSON.parse),
+    readFile(
+      path.join(
+        root,
+        manifest.evidence.gltfBufferViewTextureProducts,
+      ),
+      "utf8",
+    ).then(JSON.parse),
   ]);
   const result = validateBimProductShellCompatibility(
     manifest,
@@ -1215,6 +2000,15 @@ async function main() {
     pointCloudBrowserPicking,
     pointCloudVscodePicking,
     pointCloudLodProducts,
+    representativePhysicalGpu,
+    representativePointCloudsPhysicalGpu,
+    viewerCoreProductEntrypoints,
+    gltfExternalResourceProducts,
+    gltfMeshQuantizationProducts,
+    gltfMeshoptProducts,
+    gltfTextureProducts,
+    gltfJpegTextureProducts,
+    gltfBufferViewTextureProducts,
   );
   console.log(
     `BIM product shell compatibility check passed: ` +

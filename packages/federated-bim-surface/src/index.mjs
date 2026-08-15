@@ -19,7 +19,7 @@ import {
 
 export const BIM_FEDERATED_SURFACE_CONTRACT =
   "bim-explorer-bim-surface/0.2";
-export const BIM_FEDERATED_SURFACE_PACKAGE_VERSION = "0.2.0";
+export const BIM_FEDERATED_SURFACE_PACKAGE_VERSION = "0.3.0";
 export const BIM_FEDERATED_SURFACE_RECEIPT =
   "bim-explorer-bim-surface-receipt/0.2";
 export const BIM_FEDERATED_SURFACE_SELECTION_SCHEMA =
@@ -32,6 +32,10 @@ export const BIM_FEDERATED_SURFACE_SAVED_VIEW_SCHEMA =
   "bim-explorer-bim-surface-saved-view/0.2";
 export const BIM_FEDERATED_SURFACE_REFRESH_SCHEMA =
   "bim-explorer-bim-surface-refresh/0.2";
+export const BIM_FEDERATED_RETAINED_OVERLAY_CONTRACT =
+  "bim-explorer-federated-retained-overlay/0.1";
+export const BIM_FEDERATED_RETAINED_OVERLAY_ADAPTER_SCHEMA =
+  "bim-explorer-federated-retained-overlay-adapter/0.1";
 
 export const BIM_FEDERATED_SURFACE_AUTHORITY = deepFreeze({
   workspace: false,
@@ -584,6 +588,23 @@ function finiteVector(value, length, label) {
   return [...value];
 }
 
+function retainedWorldBounds(value, label) {
+  const input = plainRecord(value, label);
+  const min = finiteVector(input.min, 3, `${label}.min`);
+  const max = finiteVector(input.max, 3, `${label}.max`);
+  if (min.some((component, axis) => component > max[axis])) {
+    throw new RangeError(`${label} is inverted`);
+  }
+  for (let axis = 0; axis < 3; axis += 1) {
+    if (min[axis] === max[axis]) {
+      const epsilon = Math.max(1, Math.abs(min[axis])) * 1e-6;
+      min[axis] -= epsilon;
+      max[axis] += epsilon;
+    }
+  }
+  return deepFreeze({ min, max });
+}
+
 function normalizedVector(value, label) {
   const vector = finiteVector(value, 3, label);
   const magnitude = Math.hypot(...vector);
@@ -753,9 +774,11 @@ export class FederatedBimSurface {
   #lastReceipt = null;
   #lifecycle = "idle";
   #maximumReplayBytes;
+  #overlayAdapters = new Set();
   #projection = null;
   #projectionFingerprints = new Map();
   #renderer;
+  #retainedOverlays = new Map();
   #savedViews = new Map();
   #selection = null;
   #semanticLimits;
@@ -764,6 +787,7 @@ export class FederatedBimSurface {
   #staleAnchors = 0;
   #staleViews = 0;
   #storage;
+  #stagedRetained = null;
 
   constructor({
     renderer,
@@ -816,6 +840,18 @@ export class FederatedBimSurface {
         stale: this.#staleViews,
       },
       renderer: this.#renderer.state ?? null,
+      retainedOverlays: [...this.#retainedOverlays.values()].map(
+        (overlay) => ({
+          federationSourceId: overlay.federationSourceId,
+          overlayId: overlay.overlayId,
+          sourceId: overlay.sourceId,
+          layerId: overlay.layerId,
+          revisionId: overlay.revisionId,
+          sequence: overlay.sequence,
+          identities: overlay.mappings.size,
+        }),
+      ),
+      stagedRetainedDelta: this.#stagedRetained !== null,
       authority: BIM_FEDERATED_SURFACE_AUTHORITY,
       lastReceipt: this.#lastReceipt,
     });
@@ -889,6 +925,110 @@ export class FederatedBimSurface {
       }
     }
     return federation;
+  }
+
+  #registerRetainedOverlaySources(slots, projection) {
+    const overlays = new Map();
+    const entities = new Map(
+      projection.snapshot.entities.map((entity) => [
+        entity.renderId,
+        entity,
+      ]),
+    );
+    for (const slot of slots.filter((candidate) =>
+      candidate.visible && candidate.sourceRole === "consumer-overlay")) {
+      if (
+        typeof this.#renderer.registerRetainedOverlaySource !== "function" ||
+        typeof this.#renderer.prepareRetainedOverlayDelta !== "function" ||
+        typeof this.#renderer.checkpointRetainedOverlay !== "function"
+      ) {
+        throw unsupported(
+          "consumer-overlay requires retained renderer support",
+        );
+      }
+      const baseMappings = projection.identityMap.filter((mapping) =>
+        mapping.federationSourceId === slot.federationSourceId);
+      if (baseMappings.length === 0) {
+        throw new RangeError(
+          "consumer-overlay has no retained render identities",
+        );
+      }
+      const overlayId = `surface-overlay:${slot.federationSourceId}`;
+      const identities = baseMappings.map((mapping, index) => {
+        const entity = entities.get(mapping.renderId);
+        const primitive = entity?.primitives?.[0];
+        if (entity === undefined || primitive === undefined) {
+          throw new RangeError(
+            `consumer-overlay identity ${index} is not renderable`,
+          );
+        }
+        return {
+          sourceRenderId: boundedString(
+            mapping.sourceRenderId,
+            `consumer-overlay identity ${index} source Render ID`,
+          ),
+          sourcePickId: boundedString(
+            mapping.sourcePickId,
+            `consumer-overlay identity ${index} source Pick ID`,
+          ),
+          renderId: mapping.renderId,
+          pickId: mapping.pickId,
+          nativeId: entity.nativeId,
+          externalIdentityToken: entity.externalIdentityToken,
+          bounds: retainedWorldBounds(
+            entity.bounds,
+            `consumer-overlay identity ${index} bounds`,
+          ),
+          transform: primitive.transform,
+          color: primitive.color,
+          visible: true,
+        };
+      });
+      this.#renderer.registerRetainedOverlaySource({
+        overlayId,
+        sourceId: slot.snapshot.sourceId,
+        layerId: slot.snapshot.layerId,
+        revisionId: slot.snapshot.revisionId,
+        identities,
+      });
+      const mappings = new Map(
+        baseMappings.map((mapping) => [
+          mapping.sourceRenderId,
+          deepFreeze({
+            ...mapping,
+            retainedOverlayRevisionId: slot.snapshot.revisionId,
+            retainedOverlaySequence: 0,
+          }),
+        ]),
+      );
+      overlays.set(slot.federationSourceId, {
+        federationSourceId: slot.federationSourceId,
+        overlayId,
+        sourceId: slot.snapshot.sourceId,
+        layerId: slot.snapshot.layerId,
+        nativeRevisionId: slot.snapshot.revisionId,
+        revisionId: slot.snapshot.revisionId,
+        sequence: 0,
+        baseMappings: new Map(
+          baseMappings.map((mapping) => [
+            mapping.sourceRenderId,
+            mapping,
+          ]),
+        ),
+        mappings,
+      });
+    }
+    return overlays;
+  }
+
+  #activeIdentityMappings() {
+    const retainedSourceIds = new Set(this.#retainedOverlays.keys());
+    return [
+      ...this.#projection.identityMap.filter((mapping) =>
+        !retainedSourceIds.has(mapping.federationSourceId)),
+      ...[...this.#retainedOverlays.values()].flatMap(
+        (overlay) => [...overlay.mappings.values()]),
+    ];
   }
 
   async #cleanup({
@@ -1035,6 +1175,7 @@ export class FederatedBimSurface {
     let federation = null;
     let projection = null;
     let explorers = new Map();
+    let retainedOverlays = new Map();
     try {
       aborted(signal);
       const id = boundedString(
@@ -1059,6 +1200,10 @@ export class FederatedBimSurface {
         snapshot: projection.snapshot,
         signal,
       });
+      retainedOverlays = this.#registerRetainedOverlaySources(
+        slots,
+        projection,
+      );
       explorers = await this.#createExplorers(slots);
       this.#federationId = id;
       this.#slots = slots;
@@ -1068,6 +1213,7 @@ export class FederatedBimSurface {
         projectionFingerprintMap(projection);
       this.#sourceDescriptors = descriptorMap(federation);
       this.#explorers = explorers;
+      this.#retainedOverlays = retainedOverlays;
       this.#lifecycle = "ready";
       this.#lastReceipt = deepFreeze({
         schema: BIM_FEDERATED_SURFACE_RECEIPT,
@@ -1097,6 +1243,7 @@ export class FederatedBimSurface {
       this.#sourceDescriptors.clear();
       this.#projectionFingerprints.clear();
       this.#explorers.clear();
+      this.#retainedOverlays.clear();
       this.#federation = null;
       this.#projection = null;
       this.#federationId = null;
@@ -1136,6 +1283,300 @@ export class FederatedBimSurface {
   search({ federationSourceId, query, ...options } = {}) {
     return this.getSemanticExplorer(federationSourceId)
       .search(query, options);
+  }
+
+  async prepareRetainedOverlayDelta({
+    federationSourceId,
+    delta,
+    payloadBytes = null,
+    signal,
+  } = {}) {
+    this.#assertReady();
+    if (this.#stagedRetained !== null) {
+      throw invalidState(
+        "federated BIM surface already owns a retained transaction",
+      );
+    }
+    const id = boundedString(
+      federationSourceId,
+      "federated retained overlay source ID",
+    );
+    const overlay = this.#retainedOverlays.get(id);
+    if (overlay === undefined) {
+      throw unsupported(
+        "source is not an active consumer-overlay",
+      );
+    }
+    const rendererTransaction =
+      await this.#renderer.prepareRetainedOverlayDelta({
+        overlayId: overlay.overlayId,
+        delta,
+        payloadBytes,
+        signal,
+      });
+    const staged = { overlay, rendererTransaction };
+    this.#stagedRetained = staged;
+    let status = "open";
+    const assertOpen = () => {
+      if (
+        status !== "open" ||
+        this.#stagedRetained !== staged ||
+        this.#retainedOverlays.get(id) !== overlay
+      ) {
+        throw invalidState(
+          "federated retained overlay transaction is closed",
+        );
+      }
+    };
+    const close = (nextStatus) => {
+      if (this.#stagedRetained === staged) {
+        this.#stagedRetained = null;
+      }
+      status = nextStatus;
+    };
+    return Object.freeze({
+      receipt: deepFreeze({
+        schema: BIM_FEDERATED_RETAINED_OVERLAY_CONTRACT,
+        status: "prepared",
+        federationSourceId: id,
+        renderer: rendererTransaction.receipt,
+      }),
+      commit: () => {
+        assertOpen();
+        const receipt = rendererTransaction.commit();
+        const mappings = new Map();
+        for (const identity of receipt.identities) {
+          const sourceRenderId =
+            identity.retainedOverlay.sourceRenderId;
+          const base = overlay.baseMappings.get(sourceRenderId);
+          const nativeIdentity = base?.nativeIdentity ?? {
+            nativeId: identity.nativeId,
+            localNumericId: null,
+            globalId: null,
+            externalIdentityToken:
+              identity.externalIdentityToken,
+          };
+          mappings.set(sourceRenderId, deepFreeze({
+            ...(base ?? {
+              compositeExpressId: null,
+              compositeNativeId: identity.nativeId,
+              federationSourceId: id,
+              sourceRevisionId: overlay.nativeRevisionId,
+              sourceProjectionFingerprint:
+                this.#projectionFingerprints.get(id),
+              nativeIdentity,
+            }),
+            renderId: identity.renderId,
+            pickId: identity.pickId,
+            sourceRenderId,
+            sourcePickId:
+              identity.retainedOverlay.sourcePickId,
+            retainedOverlayRevisionId: receipt.toRevisionId,
+            retainedOverlaySequence: receipt.sequence,
+          }));
+        }
+        overlay.mappings = mappings;
+        overlay.revisionId = receipt.toRevisionId;
+        overlay.sequence = receipt.sequence;
+        close("committed");
+        this.#lastPick = null;
+        return deepFreeze({
+          schema: BIM_FEDERATED_RETAINED_OVERLAY_CONTRACT,
+          status: "applied",
+          federationSourceId: id,
+          overlayId: overlay.overlayId,
+          revisionId: overlay.revisionId,
+          sequence: overlay.sequence,
+          identities: mappings.size,
+          renderer: receipt,
+          authority: BIM_FEDERATED_SURFACE_AUTHORITY,
+        });
+      },
+      rollback: async () => {
+        if (status !== "open") {
+          return false;
+        }
+        assertOpen();
+        const result = await rendererTransaction.rollback();
+        close("rolled-back");
+        return result;
+      },
+      dispose: async () => {
+        if (status === "open") {
+          assertOpen();
+          const result = await rendererTransaction.dispose();
+          close("disposed");
+          return result;
+        }
+        return await rendererTransaction.dispose();
+      },
+    });
+  }
+
+  checkpointRetainedOverlay({
+    checkpointId,
+    expectedRevisionId,
+    federationSourceId,
+  } = {}) {
+    this.#assertReady();
+    const id = boundedString(
+      federationSourceId,
+      "federated retained checkpoint source ID",
+    );
+    const overlay = this.#retainedOverlays.get(id);
+    if (overlay === undefined) {
+      throw unsupported(
+        "source is not an active consumer-overlay",
+      );
+    }
+    const renderer = this.#renderer.checkpointRetainedOverlay({
+      overlayId: overlay.overlayId,
+      checkpointId,
+      expectedRevisionId,
+    });
+    return deepFreeze({
+      schema: BIM_FEDERATED_RETAINED_OVERLAY_CONTRACT,
+      status: "checkpointed",
+      federationSourceId: id,
+      overlayId: overlay.overlayId,
+      revisionId: overlay.revisionId,
+      sequence: overlay.sequence,
+      renderer,
+      externalSourceRangeReads: 0,
+      externalSourceParses: 0,
+      externalSourceRangeUploads: 0,
+      authority: BIM_FEDERATED_SURFACE_AUTHORITY,
+    });
+  }
+
+  createRetainedOverlayAdapter({
+    federationSourceId,
+    readPayload,
+  } = {}) {
+    this.#assertReady();
+    const id = boundedString(
+      federationSourceId,
+      "federated retained adapter source ID",
+    );
+    if (!this.#retainedOverlays.has(id)) {
+      throw unsupported(
+        "source is not an active consumer-overlay",
+      );
+    }
+    if (typeof readPayload !== "function") {
+      throw new TypeError(
+        "federated retained adapter readPayload must be a function",
+      );
+    }
+    const surface = this;
+    let disposed = false;
+    let staged = null;
+    let prepares = 0;
+    let commits = 0;
+    let rollbacks = 0;
+    let payloadReads = 0;
+    let adapter;
+    adapter = Object.freeze({
+      schema: BIM_FEDERATED_RETAINED_OVERLAY_ADAPTER_SCHEMA,
+      get state() {
+        return deepFreeze({
+          disposed,
+          staged: staged !== null,
+          prepares,
+          commits,
+          rollbacks,
+          payloadReads,
+        });
+      },
+      async prepareDelta(delta, { signal } = {}) {
+        if (disposed) {
+          throw invalidState(
+            "federated retained overlay adapter is disposed",
+          );
+        }
+        if (staged !== null) {
+          throw invalidState(
+            "federated retained overlay adapter already owns a transaction",
+          );
+        }
+        aborted(signal);
+        let payloadBytes = null;
+        try {
+          if (delta?.payload !== null) {
+            const loaded = await readPayload(delta.payload, { signal });
+            if (!(loaded instanceof Uint8Array)) {
+              throw new TypeError(
+                "federated retained payload reader must return Uint8Array",
+              );
+            }
+            payloadBytes = Uint8Array.from(loaded);
+            payloadReads += 1;
+          }
+          aborted(signal);
+          const transaction =
+            await surface.prepareRetainedOverlayDelta({
+              federationSourceId: id,
+              delta,
+              payloadBytes,
+              signal,
+            });
+          prepares += 1;
+          let closed = false;
+          const wrapper = Object.freeze({
+            receipt: transaction.receipt,
+            commit() {
+              if (closed || staged !== wrapper) {
+                throw invalidState(
+                  "federated retained adapter transaction is closed",
+                );
+              }
+              const receipt = transaction.commit();
+              closed = true;
+              staged = null;
+              commits += 1;
+              return receipt;
+            },
+            async rollback() {
+              if (closed) {
+                return false;
+              }
+              const result = await transaction.rollback();
+              closed = true;
+              staged = null;
+              rollbacks += 1;
+              return result;
+            },
+            async dispose() {
+              const result = await transaction.dispose();
+              if (!closed) {
+                closed = true;
+                staged = null;
+                rollbacks += 1;
+              }
+              return result;
+            },
+          });
+          staged = wrapper;
+          return wrapper;
+        } finally {
+          payloadBytes?.fill(0);
+        }
+      },
+      async dispose() {
+        if (disposed) {
+          return false;
+        }
+        if (staged !== null) {
+          await staged.rollback();
+          await staged.dispose();
+        }
+        disposed = true;
+        surface.#overlayAdapters.delete(adapter);
+        return true;
+      },
+    });
+    this.#overlayAdapters.add(adapter);
+    return adapter;
   }
 
   createSelection({ items } = {}) {
@@ -1198,7 +1639,7 @@ export class FederatedBimSurface {
       });
       return this.#lastPick;
     }
-    const mappings = this.#projection.identityMap.filter((mapping) =>
+    const mappings = this.#activeIdentityMappings().filter((mapping) =>
       mapping.pickId === rendererPick.identity?.pickId);
     if (mappings.length !== 1) {
       throw new RangeError(
@@ -1238,8 +1679,18 @@ export class FederatedBimSurface {
       sourceRevisionId: mapping.sourceRevisionId,
       rendererPick,
       selection,
+      retainedOverlay: mapping.retainedOverlaySequence > 0
+        ? {
+            revisionId: mapping.retainedOverlayRevisionId,
+            sequence: mapping.retainedOverlaySequence,
+            sourceRenderId: mapping.sourceRenderId,
+            sourcePickId: mapping.sourcePickId,
+          }
+        : null,
       anchorCapability:
-        rendererPick.surfaceHit?.schema === BIM_SURFACE_HIT_SCHEMA
+        mapping.retainedOverlaySequence > 0
+          ? "unavailable-retained-overlay"
+          : rendererPick.surfaceHit?.schema === BIM_SURFACE_HIT_SCHEMA
           ? "source-local-surface-hit"
           : "requires-source-local-hit",
       authority: BIM_FEDERATED_SURFACE_AUTHORITY,
@@ -1269,6 +1720,16 @@ export class FederatedBimSurface {
       throw new RangeError(
         "federated BIM surface anchor pick is stale or incompatible",
       );
+    }
+    if (pick.retainedOverlay !== null && pick.retainedOverlay !== undefined) {
+      return deepFreeze({
+        schema: BIM_FEDERATED_SURFACE_ANCHOR_RESULT_SCHEMA,
+        status: "unsupported",
+        diagnostic: "retained-overlay-has-no-source-local-locator",
+        selection: pick.selection,
+        anchor: null,
+        authority: BIM_FEDERATED_SURFACE_AUTHORITY,
+      });
     }
     const source = this.#sourceDescriptors.get(
       pick.federationSourceId,
@@ -1461,6 +1922,11 @@ export class FederatedBimSurface {
     signal,
   } = {}) {
     this.#assertReady();
+    if (this.#stagedRetained !== null) {
+      throw invalidState(
+        "federated retained overlay transaction is in progress",
+      );
+    }
     const id = boundedString(
       federationSourceId,
       "federated BIM surface refresh source ID",
@@ -1500,6 +1966,7 @@ export class FederatedBimSurface {
     this.#lifecycle = "refreshing";
     let candidateProjection = null;
     let candidateExplorer = null;
+    let candidateRetainedOverlays = new Map();
     try {
       aborted(signal);
       const refresh = previous.format === "ifc"
@@ -1540,6 +2007,11 @@ export class FederatedBimSurface {
         snapshot: candidateProjection.snapshot,
         signal,
       });
+      candidateRetainedOverlays =
+        this.#registerRetainedOverlaySources(
+          candidateSlots,
+          candidateProjection,
+        );
       const previousExplorer = this.#explorers.get(id);
       if (previousExplorer !== undefined) {
         await previousExplorer.dispose();
@@ -1559,6 +2031,7 @@ export class FederatedBimSurface {
       this.#projection = candidateProjection;
       this.#projectionFingerprints =
         projectionFingerprintMap(candidateProjection);
+      this.#retainedOverlays = candidateRetainedOverlays;
       this.#sourceDescriptors = descriptorMap(this.#federation);
       this.#lifecycle = "ready";
       const priorSelectionItems = this.#selection?.items ?? [];
@@ -1623,6 +2096,7 @@ export class FederatedBimSurface {
       this.#sourceDescriptors.clear();
       this.#projectionFingerprints.clear();
       this.#explorers.clear();
+      this.#retainedOverlays.clear();
       this.#federation = null;
       this.#projection = null;
       this.#federationId = null;
@@ -1660,6 +2134,24 @@ export class FederatedBimSurface {
       );
     }
     boundedString(reason, "federated BIM surface dispose reason");
+    const retainedCleanupErrors = [];
+    const retainedAdapterCount = this.#overlayAdapters.size;
+    for (const adapter of [...this.#overlayAdapters]) {
+      try {
+        await adapter.dispose();
+      } catch (error) {
+        retainedCleanupErrors.push(error);
+      }
+    }
+    if (this.#stagedRetained !== null) {
+      try {
+        await this.#stagedRetained.rendererTransaction.rollback();
+        await this.#stagedRetained.rendererTransaction.dispose();
+        this.#stagedRetained = null;
+      } catch (error) {
+        retainedCleanupErrors.push(error);
+      }
+    }
     this.#lifecycle = "disposing";
     const active = {
       selectionItems: this.#selection?.items.length ?? 0,
@@ -1676,6 +2168,8 @@ export class FederatedBimSurface {
     this.#sourceDescriptors.clear();
     this.#projectionFingerprints.clear();
     this.#explorers.clear();
+    this.#retainedOverlays.clear();
+    this.#overlayAdapters.clear();
     this.#federation = null;
     this.#projection = null;
     this.#federationId = null;
@@ -1691,12 +2185,13 @@ export class FederatedBimSurface {
       reason,
       activeBeforeDispose: active,
       cleanup: cleanup.receipt,
+      retainedOverlayAdaptersDisposed: retainedAdapterCount,
       terminalState: "disposed",
       authority: BIM_FEDERATED_SURFACE_AUTHORITY,
     });
-    if (cleanup.errors.length > 0) {
+    if (cleanup.errors.length > 0 || retainedCleanupErrors.length > 0) {
       throw new AggregateError(
-        cleanup.errors,
+        [...retainedCleanupErrors, ...cleanup.errors],
         "federated BIM surface disposal failed",
       );
     }

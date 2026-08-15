@@ -1,0 +1,635 @@
+{
+  "schema": "bim-explorer-federated-bim-surface-physical-gpu-qualification/1",
+  "status": "passed-darwin-arm64-apple-metal-products",
+  "asOf": "2026-08-11",
+  "capturedAt": "2026-08-11T03:04:08.501Z",
+  "hardware": {
+    "chipset": "Apple M2",
+    "cores": 8,
+    "vendor": "Apple",
+    "metalSupport": "Metal 4"
+  },
+  "contract": {
+    "surface": "bim-explorer-bim-surface/0.2",
+    "surfaceHit": "bim-explorer-bim-surface-hit/0.1",
+    "referenceAnchor": "bim-explorer-reference-anchor/0.1",
+    "package": "@bim-explorer/federated-bim-surface@0.2.0",
+    "runtimeSha256": "22e243fa8426d0648f1f3ca70c5fa015356f656084b1b95d3fdb21bcb8187847",
+    "publicReleaseTag": "bim-surface-v0.2.0",
+    "publicPackageBytes": 97623,
+    "publicPackageSha256": "3bdb747d5eb38a45e0e753a14c8a9557b200c69a5469b416210293ac1dec63cb"
+  },
+  "launchPolicy": {
+    "angle": "metal",
+    "softwareRasterizerDisabled": true,
+    "gpuBlocklistIgnored": true,
+    "browserHeadless": true,
+    "vscodePublication": false
+  },
+  "browser": {
+    "runs": [
+      {
+        "browser": "Google Chrome 151.0.7922.108",
+        "platform": "darwin-arm64",
+        "headless": true,
+        "gpuMode": "physical",
+        "gpu": {
+          "schema": "bim-explorer-webgl2-gpu-identity/1",
+          "webgl2": true,
+          "debugRendererInfo": true,
+          "vendor": "WebKit",
+          "renderer": "WebKit WebGL",
+          "unmaskedVendor": "Google Inc. (Apple)",
+          "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+          "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+          "contextAttributes": {
+            "alpha": false,
+            "antialias": false,
+            "depth": true,
+            "desynchronized": false,
+            "failIfMajorPerformanceCaveat": true,
+            "powerPreference": "high-performance",
+            "premultipliedAlpha": false,
+            "preserveDrawingBuffer": true,
+            "stencil": false,
+            "xrCompatible": false
+          }
+        },
+        "composition": {
+          "federationId": "federation:browser-surface-v0.2",
+          "sourceCount": 3,
+          "formats": [
+            "glb",
+            "ifc",
+            "glb"
+          ],
+          "sourceRoles": [
+            "geometric-reference",
+            "semantic-base",
+            "consumer-overlay"
+          ],
+          "semanticAvailability": [
+            false,
+            true,
+            false
+          ],
+          "projectionFingerprint": "sha256:40a4f60b58d0834817db616465afc0483b391c26117a9c6a93b8946641afcc2e",
+          "sourceProjectionFingerprints": [
+            "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+            "sha256:d7926bf05e105ea8abac310c19e82b0bff7855499964d923d09863963ed1866a",
+            "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+          ],
+          "identityMerged": false
+        },
+        "renderer": {
+          "backend": "webgl2",
+          "actualGpu": true,
+          "context": "webgl2",
+          "nonBackgroundPixels": 8286,
+          "uploadedBytes": 1608,
+          "surfaceHits": 3,
+          "surfaceMisses": 0,
+          "retainedGeometryBytes": 0
+        },
+        "selection": {
+          "items": 3,
+          "sourceSlots": [
+            "source-slot:a-reference",
+            "source-slot:m-semantic",
+            "source-slot:z-overlay"
+          ],
+          "distinctKeys": 3,
+          "mergeAcrossSources": false,
+          "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+        },
+        "picks": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          }
+        ],
+        "anchors": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "format": "glb",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "format": "ifc",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "format": "glb",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          }
+        ],
+        "ranges": {
+          "sourceRangeReads": {
+            "reference": 1,
+            "semantic": 1,
+            "overlay": 1
+          },
+          "unchangedBySurfaceResolution": true
+        },
+        "cleanup": {
+          "surfaceStatus": "disposed",
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "backendActiveBytes": 0,
+          "backendResidentRanges": 0,
+          "retainedGeometryBytes": 0,
+          "projectionCachesReleased": true,
+          "transferredSessionsReleased": true,
+          "sourceSessionsDisposed": true,
+          "repeatedDispose": false
+        },
+        "network": {
+          "externalOrigins": [],
+          "runtimeErrors": [],
+          "requestCount": 4
+        }
+      },
+      {
+        "browser": "Google Chrome 151.0.7922.108",
+        "platform": "darwin-arm64",
+        "headless": true,
+        "gpuMode": "physical",
+        "gpu": {
+          "schema": "bim-explorer-webgl2-gpu-identity/1",
+          "webgl2": true,
+          "debugRendererInfo": true,
+          "vendor": "WebKit",
+          "renderer": "WebKit WebGL",
+          "unmaskedVendor": "Google Inc. (Apple)",
+          "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+          "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+          "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+          "contextAttributes": {
+            "alpha": false,
+            "antialias": false,
+            "depth": true,
+            "desynchronized": false,
+            "failIfMajorPerformanceCaveat": true,
+            "powerPreference": "high-performance",
+            "premultipliedAlpha": false,
+            "preserveDrawingBuffer": true,
+            "stencil": false,
+            "xrCompatible": false
+          }
+        },
+        "composition": {
+          "federationId": "federation:browser-surface-v0.2",
+          "sourceCount": 3,
+          "formats": [
+            "glb",
+            "ifc",
+            "glb"
+          ],
+          "sourceRoles": [
+            "geometric-reference",
+            "semantic-base",
+            "consumer-overlay"
+          ],
+          "semanticAvailability": [
+            false,
+            true,
+            false
+          ],
+          "projectionFingerprint": "sha256:40a4f60b58d0834817db616465afc0483b391c26117a9c6a93b8946641afcc2e",
+          "sourceProjectionFingerprints": [
+            "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+            "sha256:d7926bf05e105ea8abac310c19e82b0bff7855499964d923d09863963ed1866a",
+            "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+          ],
+          "identityMerged": false
+        },
+        "renderer": {
+          "backend": "webgl2",
+          "actualGpu": true,
+          "context": "webgl2",
+          "nonBackgroundPixels": 8286,
+          "uploadedBytes": 1608,
+          "surfaceHits": 3,
+          "surfaceMisses": 0,
+          "retainedGeometryBytes": 0
+        },
+        "selection": {
+          "items": 3,
+          "sourceSlots": [
+            "source-slot:a-reference",
+            "source-slot:m-semantic",
+            "source-slot:z-overlay"
+          ],
+          "distinctKeys": 3,
+          "mergeAcrossSources": false,
+          "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+        },
+        "picks": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "surfaceHitCapability": "source-local-surface-hit",
+            "locatorKind": "triangle-barycentric",
+            "actualGpuDepth": true,
+            "exactGeometryDigest": true,
+            "nearestUniqueTriangle": true,
+            "retainedGeometryBytes": 0,
+            "temporaryGeometryReleased": true
+          }
+        ],
+        "anchors": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "format": "glb",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "format": "ifc",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "format": "glb",
+            "stability": "derived",
+            "locatorKind": "triangle-barycentric"
+          }
+        ],
+        "ranges": {
+          "sourceRangeReads": {
+            "reference": 1,
+            "semantic": 1,
+            "overlay": 1
+          },
+          "unchangedBySurfaceResolution": true
+        },
+        "cleanup": {
+          "surfaceStatus": "disposed",
+          "rendererDisposed": true,
+          "backendDisposed": true,
+          "backendActiveBytes": 0,
+          "backendResidentRanges": 0,
+          "retainedGeometryBytes": 0,
+          "projectionCachesReleased": true,
+          "transferredSessionsReleased": true,
+          "sourceSessionsDisposed": true,
+          "repeatedDispose": false
+        },
+        "network": {
+          "externalOrigins": [],
+          "runtimeErrors": [],
+          "requestCount": 4
+        }
+      }
+    ]
+  },
+  "vscode": {
+    "staged": {
+      "layout": "staged",
+      "vscode": "1.132.0",
+      "platform": "darwin-arm64",
+      "rendererMode": "physical",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "composition": {
+        "federationId": "federation:vscode-surface-v0.2",
+        "sourceCount": 3,
+        "formats": [
+          "glb",
+          "ifc",
+          "glb"
+        ],
+        "sourceRoles": [
+          "geometric-reference",
+          "semantic-base",
+          "consumer-overlay"
+        ],
+        "semanticAvailability": [
+          false,
+          true,
+          false
+        ],
+        "projectionFingerprint": "sha256:0f56442c145f1cdf431c8da23af923ca6ed4ee4677aa37009304880faf819320",
+        "sourceProjectionFingerprints": [
+          "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+          "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+          "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+        ],
+        "identityMerged": false
+      },
+      "renderer": {
+        "backend": "webgl2",
+        "actualGpu": true,
+        "context": "webgl2",
+        "nonBackgroundPixels": 8286,
+        "uploadedBytes": 1608,
+        "surfaceHits": 3,
+        "surfaceMisses": 0,
+        "retainedGeometryBytes": 0
+      },
+      "selection": {
+        "items": 3,
+        "sourceSlots": [
+          "source-slot:a-reference",
+          "source-slot:m-semantic",
+          "source-slot:z-overlay"
+        ],
+        "distinctKeys": 3,
+        "mergeAcrossSources": false,
+        "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+      },
+      "pickCount": 3,
+      "anchorCount": 3,
+      "ranges": {
+        "sources": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "reads": 1,
+            "bytesRead": 120
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "reads": 1,
+            "bytesRead": 996
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "reads": 1,
+            "bytesRead": 120
+          }
+        ],
+        "unchangedBySurfaceResolution": true
+      },
+      "cleanup": {
+        "surfaceStatus": "disposed",
+        "rendererDisposed": true,
+        "backendDisposed": true,
+        "backendActiveBytes": 0,
+        "backendResidentRanges": 0,
+        "retainedGeometryBytes": 0,
+        "projectionCachesReleased": true,
+        "transferredSessionsReleased": true,
+        "sourceSessionsDisposed": true,
+        "workersTerminated": true,
+        "clientsDisposed": true,
+        "runtimeUrlsRevoked": true,
+        "repeatedDispose": false
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "anchors": "qualified",
+        "disposed": "disposed",
+        "editorClosed": true
+      }
+    },
+    "installed": {
+      "layout": "clean-installed-vsix",
+      "vscode": "1.132.0",
+      "platform": "darwin-arm64",
+      "rendererMode": "physical",
+      "gpu": {
+        "schema": "bim-explorer-webgl2-gpu-identity/1",
+        "webgl2": true,
+        "debugRendererInfo": true,
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (Apple)",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "contextAttributes": {
+          "alpha": false,
+          "antialias": false,
+          "depth": true,
+          "desynchronized": false,
+          "failIfMajorPerformanceCaveat": true,
+          "powerPreference": "low-power",
+          "premultipliedAlpha": false,
+          "preserveDrawingBuffer": true,
+          "stencil": false,
+          "xrCompatible": false
+        }
+      },
+      "composition": {
+        "federationId": "federation:vscode-surface-v0.2",
+        "sourceCount": 3,
+        "formats": [
+          "glb",
+          "ifc",
+          "glb"
+        ],
+        "sourceRoles": [
+          "geometric-reference",
+          "semantic-base",
+          "consumer-overlay"
+        ],
+        "semanticAvailability": [
+          false,
+          true,
+          false
+        ],
+        "projectionFingerprint": "sha256:0f56442c145f1cdf431c8da23af923ca6ed4ee4677aa37009304880faf819320",
+        "sourceProjectionFingerprints": [
+          "sha256:2156e28144039127b7cd20f1b1d884b78bfc60107308ce7eb20dceb57236ec5a",
+          "sha256:100acca16d0b8542603e134318bf6af207ac168f95df23436a90238525543143",
+          "sha256:ab1eeeae2b31c1d2e69f1229649170968bf39f4c03ca86b7bbf53ce389d7fc2f"
+        ],
+        "identityMerged": false
+      },
+      "renderer": {
+        "backend": "webgl2",
+        "actualGpu": true,
+        "context": "webgl2",
+        "nonBackgroundPixels": 8286,
+        "uploadedBytes": 1608,
+        "surfaceHits": 3,
+        "surfaceMisses": 0,
+        "retainedGeometryBytes": 0
+      },
+      "selection": {
+        "items": 3,
+        "sourceSlots": [
+          "source-slot:a-reference",
+          "source-slot:m-semantic",
+          "source-slot:z-overlay"
+        ],
+        "distinctKeys": 3,
+        "mergeAcrossSources": false,
+        "savedView": "bim-explorer-bim-surface-saved-view/0.2"
+      },
+      "pickCount": 3,
+      "anchorCount": 3,
+      "ranges": {
+        "sources": [
+          {
+            "sourceSlot": "source-slot:a-reference",
+            "reads": 1,
+            "bytesRead": 120
+          },
+          {
+            "sourceSlot": "source-slot:m-semantic",
+            "reads": 1,
+            "bytesRead": 996
+          },
+          {
+            "sourceSlot": "source-slot:z-overlay",
+            "reads": 1,
+            "bytesRead": 120
+          }
+        ],
+        "unchangedBySurfaceResolution": true
+      },
+      "cleanup": {
+        "surfaceStatus": "disposed",
+        "rendererDisposed": true,
+        "backendDisposed": true,
+        "backendActiveBytes": 0,
+        "backendResidentRanges": 0,
+        "retainedGeometryBytes": 0,
+        "projectionCachesReleased": true,
+        "transferredSessionsReleased": true,
+        "sourceSessionsDisposed": true,
+        "workersTerminated": true,
+        "clientsDisposed": true,
+        "runtimeUrlsRevoked": true,
+        "repeatedDispose": false
+      },
+      "lifecycle": {
+        "opened": "ready",
+        "anchors": "qualified",
+        "disposed": "disposed",
+        "editorClosed": true
+      },
+      "package": {
+        "id": "menaje.bim-explorer",
+        "version": "0.1.0",
+        "byteLength": 1568103,
+        "installedRuntimeFiles": 24,
+        "workerBundleSha256": "d7bf7bd53fb45616b986ab6ecb1b5adaa39cf63dfadd3f51c29f17faadd6e02f",
+        "pointWorkerBundleSha256": "3d9d64d03801a40ec493596822b38affda1e0d51ae5ebd2e7362797192e7e977",
+        "lazPerfJsSha256": "c13003dde28886f1986b83e7f7e23c217f6dc4ccd5835bf29b611036c985f104",
+        "lazPerfWasmSha256": "7f4eacd83856610d42ba36e1c6f4a4019d07d9750827919c0c9b91397b862260"
+      }
+    }
+  },
+  "fixturePolicy": {
+    "source": "generated-test-only",
+    "formats": [
+      "glb",
+      "ifc",
+      "glb"
+    ],
+    "artifactTracked": false,
+    "releaseBundled": false,
+    "redistributed": false,
+    "externalUpload": false,
+    "telemetry": false
+  },
+  "assertions": {
+    "browserAppleMetal": true,
+    "browserTwoRunParity": true,
+    "browserThreeSourceComposition": true,
+    "browserExactSurfaceAnchors": true,
+    "browserTerminalCleanup": true,
+    "stagedVscodeAppleMetal": true,
+    "cleanInstalledVsixAppleMetal": true,
+    "vscodeProductParity": true,
+    "softwareFallbackDisabled": true,
+    "generatedLocalOnly": true,
+    "authorityFree": true,
+    "publicPackageRuntimeUnchanged": true,
+    "noVsixPublication": true
+  },
+  "held": {
+    "crossPlatformPhysicalGpu": false,
+    "spatialVsixBundledBimRuntime": false,
+    "productionSupport": false
+  },
+  "decision": {
+    "physicalGpuProductQualification": "passed-darwin-arm64-apple-metal",
+    "newVsixPublication": false,
+    "productionClaims": false
+  },
+  "limitations": [
+    "the physical GPU qualification is local macOS arm64 Apple M2 and does not claim Linux or Windows hardware coverage",
+    "the Browser and VS Code product surfaces use generated test-only IFC4 and GLB sources rather than customer models",
+    "GPU allocation receipts are bounded API accounting and do not claim OS-level peak GPU memory telemetry",
+    "the derived display-geometry locator does not claim native source face identity, surveyed CRS or datum authority",
+    "the clean-installed VSIX is local qualification output only and was not uploaded or published",
+    "Spatial VSIX BIM runtime integration, actual adoption and production support remain separate Gates"
+  ]
+}

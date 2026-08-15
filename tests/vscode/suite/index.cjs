@@ -37,23 +37,114 @@ function waitFor(probe, label, timeoutMs = 60_000) {
   });
 }
 
+function viewerCoreQualified(ready, disposed) {
+  return (
+    ready.viewerCore?.adopted === true &&
+    ready.viewerCore?.api === "menaje-viewer-core/0.1" &&
+    ready.viewerCore?.version === "0.1.2" &&
+    ready.viewerCore?.protocolId ===
+      "menaje-viewer-render-protocol/0.1.0" &&
+    ready.viewerCore?.source?.rangeReads > 0 &&
+    ready.viewerCore?.source?.rangeBytesRead ===
+      ready.renderer?.sourceReadBytes &&
+    ready.viewerCore?.host?.eventCount >= 1 &&
+    disposed.viewerCore?.disposed === true &&
+    disposed.viewerCore?.host?.disposed === true &&
+    disposed.viewerCore?.host?.eventCount >=
+      ready.viewerCore.host.eventCount &&
+    disposed.viewerCore?.source?.disposed === true &&
+    disposed.viewerCore?.source?.sessionDisposed === true &&
+    disposed.viewerCore?.presentation
+      ?.borrowedSessionDisposed === true &&
+    disposed.viewerCore?.presentation
+      ?.borrowedWorkerDisposed === true &&
+    disposed.viewerCore?.presentation?.disposalStatus ===
+      "disposed"
+  );
+}
+
+function reviewToolsReady(ready) {
+  return (
+    ready.reviewTools?.schema ===
+      "bim-explorer-product-review-tools/1" &&
+    ready.reviewTools.projection === "perspective" &&
+    ready.reviewTools.tool === "select" &&
+    ready.reviewTools.sectionMode === "none" &&
+    ready.reviewTools.visibilityMode === "show-all" &&
+    ready.reviewTools.selectionSuppressed === false &&
+    ready.reviewTools.measurement === null &&
+    ready.reviewTools.measurementPicks === 0 &&
+    Array.isArray(ready.reviewTools.hiddenRenderIds) &&
+    ready.reviewTools.hiddenRenderIds.length === 0 &&
+    ready.reviewTools.layout?.focusMode === false &&
+    ready.reviewTools.layout?.treeVisible === true &&
+    ready.reviewTools.layout?.propertiesVisible === true
+  );
+}
+
+function physicalAppleMetalGpu(value) {
+  return (
+    value?.schema === "bim-explorer-webgl2-gpu-identity/1" &&
+    value.webgl2 === true &&
+    value.debugRendererInfo === true &&
+    /\bApple\b/u.test(value.unmaskedVendor ?? "") &&
+    /ANGLE Metal Renderer: Apple/u.test(
+      value.unmaskedRenderer ?? "",
+    ) &&
+    !/(?:swiftshader|subzero|llvmpipe|lavapipe|software)/iu.test(
+      JSON.stringify(value),
+    )
+  );
+}
+
 async function qualifyReference({
   api,
+  embeddedTexture = false,
   manifestPath = undefined,
+  meshopt = false,
   productScale = false,
+  quantized = false,
+  resourceBundle = false,
   root,
   sourcePath,
 }) {
   const fixtureModule = await import(
     pathToFileURL(
-      path.join(root, "scripts", "public-gltf-fixture.mjs"),
+      path.join(
+        root,
+        "scripts",
+        resourceBundle
+          ? "public-gltf-resource-bundle-fixture.mjs"
+          : meshopt
+            ? "public-gltf-meshopt-fixture.mjs"
+          : quantized
+            ? "public-gltf-quantized-fixture.mjs"
+          : "public-gltf-fixture.mjs",
+      ),
     ).href
   );
-  const manifest = await fixtureModule
-    .loadPublicGltfFixtureManifest(manifestPath);
+  const manifest = resourceBundle
+    ? await fixtureModule.loadPublicGltfResourceBundleManifest(
+        manifestPath,
+      )
+    : meshopt
+      ? await fixtureModule.loadPublicMeshoptGltfManifest(
+          manifestPath,
+        )
+    : quantized
+      ? await fixtureModule.loadPublicQuantizedGltfManifest(
+          manifestPath,
+        )
+    : await fixtureModule.loadPublicGltfFixtureManifest(manifestPath);
+  const entry = resourceBundle ? manifest.document : manifest.entry;
+  const timeoutMs = resourceBundle
+    ? 30_000
+    : quantized || meshopt
+      ? 30_000
+    : manifest.browserQualification.timeoutMs;
   const metadata = await stat(sourcePath);
   assert.equal(metadata.isFile(), true);
-  assert.equal(metadata.size, manifest.entry.byteLength);
+  assert.equal(metadata.size, entry.byteLength);
   if (productScale) {
     await vscode.workspace
       .getConfiguration("bimExplorer")
@@ -71,7 +162,15 @@ async function qualifyReference({
   );
   const label = productScale
     ? "product-scale reference"
-    : "reference";
+    : embeddedTexture
+      ? "embedded-texture reference"
+    : resourceBundle
+      ? "external-resource reference"
+      : meshopt
+        ? "meshopt reference"
+      : quantized
+        ? "quantized reference"
+      : "reference";
   let ready = await waitFor(
     () => {
       const report = api.qualificationReports().at(-1);
@@ -84,7 +183,7 @@ async function qualifyReference({
       return report?.status === "ready" ? report : null;
     },
     `${label} Custom Editor ready report`,
-    manifest.browserQualification.timeoutMs,
+    timeoutMs,
   );
   const nativeId = productScale
     ? "node:0/mesh:0/primitive:0"
@@ -106,22 +205,44 @@ async function qualifyReference({
       };
   const expectedReadBytes = productScale
     ? manifest.expected.geometryRangeBytes
-    : 756;
+    : resourceBundle || embeddedTexture
+      ? manifest.expected.geometryRangeBytes
+      : quantized || meshopt
+        ? manifest.expected.geometryRangeBytes
+      : 756;
   const expectedUploadedBytes = productScale
     ? 16_900_016
-    : 800;
+    : resourceBundle || embeddedTexture
+      ? manifest.expected.gpuUploadBytes
+      : quantized || meshopt
+        ? manifest.expected.gpuUploadBytes
+      : 800;
   assert.equal(ready.hostKind, "vscode-webview");
   assert.equal(ready.externalUpload, false);
   assert.equal(ready.telemetry, false);
-  assert.equal(ready.source.format, "glb");
+  assert.equal(ready.source.format, resourceBundle ? "gltf" : "glb");
   assert.equal(
     ready.source.fingerprint,
-    `sha256:${manifest.entry.sha256}`,
+    `sha256:${resourceBundle
+      ? manifest.expected.sourceFingerprint
+      : manifest.entry.sha256}`,
   );
   assert.equal(
     ready.source.byteLength,
-    manifest.entry.byteLength,
+    resourceBundle
+      ? manifest.expected.aggregateSourceBytes
+      : manifest.entry.byteLength,
   );
+  if (quantized || meshopt) {
+    assert.deepEqual(
+      ready.source.extensionsRequired,
+      manifest.expected.extensionsRequired,
+    );
+    assert.deepEqual(
+      ready.source.extensionsUsed,
+      manifest.expected.extensionsUsed,
+    );
+  }
   assert.equal(
     ready.source.sourceRole,
     "derived-or-reference-mesh",
@@ -132,6 +253,7 @@ async function qualifyReference({
   assert.equal(ready.reference.selectedNativeId, nativeId);
   assert.equal(ready.renderer.actualGpu, true);
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(reviewToolsReady(ready), true);
   assert.equal(
     ready.renderer.sourceReadBytes,
     expectedReadBytes,
@@ -140,6 +262,139 @@ async function qualifyReference({
     ready.renderer.uploadedBytes,
     expectedUploadedBytes,
   );
+  if (productScale) {
+    assert.equal(ready.source.appearance, undefined);
+    assert.deepEqual(
+      ready.source.appearanceOmissions,
+      manifest.expected.appearanceOmissions,
+    );
+  }
+  if (resourceBundle || embeddedTexture) {
+    const documentBytes = resourceBundle
+      ? manifest.document.byteLength
+      : manifest.entry.byteLength;
+    const expectedResourceBundle = {
+      schema: "bim-explorer-gltf-local-resource-bundle/0.1",
+      documentBytes,
+      externalResourceBytes:
+        manifest.expected.externalResourceBytes,
+      externalResources: manifest.expected.externalResources,
+      ...(manifest.expected.externalImageResources === undefined
+        ? {}
+        : {
+            externalBufferResources:
+              manifest.expected.externalBufferResources,
+            externalImageResources:
+              manifest.expected.externalImageResources,
+          }),
+      ...(manifest.expected.externalBufferViewImageResources ===
+        undefined
+        ? {}
+        : {
+            externalBufferResources:
+              manifest.expected.externalBufferResources,
+            externalBufferViewImageResources:
+              manifest.expected.externalBufferViewImageResources,
+          }),
+      ...(manifest.expected.embeddedImageResources === undefined
+        ? {}
+        : {
+            embeddedImageBytes:
+              manifest.expected.embeddedImageBytes,
+            embeddedImageResources:
+              manifest.expected.embeddedImageResources,
+          }),
+      networkAtRuntime: false,
+    };
+    assert.deepEqual(
+      ready.source.resourceBundle,
+      expectedResourceBundle,
+    );
+    assert.equal(
+      ready.resources.documentBytes,
+      documentBytes,
+    );
+    assert.equal(
+      ready.resources.externalResourceBytes,
+      manifest.expected.externalResourceBytes,
+    );
+    assert.equal(
+      ready.resources.externalResources,
+      manifest.expected.externalResources,
+    );
+    if (
+      manifest.expected.externalImageResources !== undefined ||
+      manifest.expected.externalBufferViewImageResources !==
+        undefined ||
+      manifest.expected.embeddedImageResources !== undefined
+    ) {
+      if (manifest.expected.externalImageResources !== undefined) {
+        assert.equal(
+          ready.resources.externalBufferResources,
+          manifest.expected.externalBufferResources,
+        );
+        assert.equal(
+          ready.resources.externalImageResources,
+          manifest.expected.externalImageResources,
+        );
+      }
+      if (
+        manifest.expected.externalBufferViewImageResources !==
+          undefined
+      ) {
+        assert.equal(
+          ready.resources.externalBufferResources,
+          manifest.expected.externalBufferResources,
+        );
+        assert.equal(
+          ready.resources.externalBufferViewImageResources,
+          manifest.expected.externalBufferViewImageResources,
+        );
+      }
+      if (manifest.expected.embeddedImageResources !== undefined) {
+        assert.equal(
+          ready.resources.embeddedImageBytes,
+          manifest.expected.embeddedImageBytes,
+        );
+        assert.equal(
+          ready.resources.embeddedImageResources,
+          manifest.expected.embeddedImageResources,
+        );
+      }
+      assert.deepEqual(ready.source.appearance, {
+        profile: manifest.expected.appearanceProfile ??
+          "base-color-texture-png-opaque-v0.1",
+        textureCoordinateSet:
+          manifest.expected.textureCoordinateSet,
+        textureSourceBytes:
+          manifest.expected.textureSourceBytes,
+        textureDecodedBytes:
+          manifest.expected.textureDecodedBytes,
+        textures: manifest.expected.textures,
+        imageMediaTypes: [manifest.expected.imageMediaType],
+        ...(manifest.expected.imageStorageProfile === undefined
+          ? {}
+          : {
+              imageStorageProfiles: [
+                manifest.expected.imageStorageProfile,
+              ],
+            }),
+        colorSpace: "srgb-to-linear-webgl2",
+      });
+      assert.equal(
+        ready.renderer.textureDecodedBytes,
+        manifest.expected.textureDecodedBytes,
+      );
+      assert.equal(
+        ready.renderer.textureGpuBytes,
+        manifest.expected.textureGpuBytes,
+      );
+      assert.equal(
+        ready.renderer.gpuTextures,
+        manifest.expected.textures,
+      );
+    }
+  }
   const serialized = JSON.stringify(ready);
   assert.equal(serialized.includes(sourcePath), false);
   assert.equal(
@@ -147,27 +402,47 @@ async function qualifyReference({
     false,
   );
   await vscode.commands.executeCommand(
-    "workbench.action.closeActiveEditor",
+    "bimExplorer.closeModel",
   );
   const disposed = await waitFor(() => {
     const report = api.qualificationReports().at(-1);
     return report?.status === "disposed" ? report : null;
   }, `${label} Custom Editor disposal`);
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
   return {
     fixture: {
       id: manifest.fixtureId,
       committed: false,
-      format: "glb",
+      format: resourceBundle ? "gltf" : "glb",
       sourceBytes: ready.source.byteLength,
       fingerprint: ready.source.fingerprint,
       gltfVersion: ready.source.gltfVersion,
       nativeId,
+      ...(resourceBundle || embeddedTexture
+        ? {
+            resourceBundle: ready.source.resourceBundle,
+            ...(ready.source.appearance === undefined
+              ? {}
+              : { appearance: ready.source.appearance }),
+          }
+        : {}),
+      ...(quantized || meshopt
+        ? {
+            extensionsRequired:
+              ready.source.extensionsRequired,
+            extensionsUsed: ready.source.extensionsUsed,
+          }
+        : {}),
       ...(productScale
         ? {
             classification:
               manifest.browserQualification.classification,
             rendererLimits:
               manifest.browserQualification.rendererLimits,
+            appearanceOmissions:
+              ready.source.appearanceOmissions,
           }
         : {}),
       provenance: {
@@ -179,14 +454,28 @@ async function qualifyReference({
     },
     observation: {
       hostKind: ready.hostKind,
+      gpu: ready.gpu,
       model: ready.model,
       performance: ready.performance,
       resources: ready.resources,
       renderer: ready.renderer,
-      reference: ready.reference,
+      reviewTools: ready.reviewTools,
+      reference: {
+        ...ready.reference,
+        ...(ready.source.appearanceOmissions === undefined
+          ? {}
+          : {
+              appearanceOmissions:
+                ready.source.appearanceOmissions,
+            }),
+      },
       lifecycle: {
         opened: ready.status,
         closed: disposed.status,
+      },
+      viewerCore: {
+        opened: ready.viewerCore,
+        disposed: disposed.viewerCore,
       },
       externalUpload: ready.externalUpload,
       telemetry: ready.telemetry,
@@ -195,6 +484,27 @@ async function qualifyReference({
       localSourceOpened: true,
       sourceIdentityExact: true,
       noBimSemanticAuthority: true,
+      exactLocalResourceBundle:
+        !(resourceBundle || embeddedTexture) ||
+        (
+          ready.resources.documentBytes ===
+            (resourceBundle
+              ? manifest.document.byteLength
+              : manifest.entry.byteLength) &&
+          ready.resources.externalResourceBytes ===
+            manifest.expected.externalResourceBytes &&
+          ready.resources.externalResources ===
+            manifest.expected.externalResources &&
+          ready.source.resourceBundle?.networkAtRuntime === false
+        ),
+      exactRequiredExtensions:
+        !(quantized || meshopt) ||
+        (
+          JSON.stringify(ready.source.extensionsRequired) ===
+            JSON.stringify(manifest.expected.extensionsRequired) &&
+          JSON.stringify(ready.source.extensionsUsed) ===
+            JSON.stringify(manifest.expected.extensionsUsed)
+        ),
       vscodeChromiumWebGl2: true,
       boundedRenderer:
         !productScale ||
@@ -206,8 +516,18 @@ async function qualifyReference({
             manifest.browserQualification.rendererLimits
               .maximumGpuCacheBytes
         ),
+      boundedAppearanceOmissions:
+        !productScale ||
+        (
+          ready.source.appearance === undefined &&
+          JSON.stringify(ready.source.appearanceOmissions) ===
+            JSON.stringify(manifest.expected.appearanceOmissions)
+        ),
       pathFreeHostBridge: true,
       editorCloseObserved: disposed.status === "disposed",
+      publicViewerCoreProductEntrypoint:
+        viewerCoreQualified(ready, disposed),
+      sharedReviewToolbarReady: reviewToolsReady(ready),
     },
   };
 }
@@ -386,6 +706,11 @@ async function qualifyPointSource({
   }
   assert.equal(ready.renderer.actualGpu, true);
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
+  assert.equal(
+    ready.gpu?.schema,
+    "bim-explorer-webgl2-gpu-identity/1",
+  );
+  assert.equal(ready.gpu.webgl2, true);
   assert.equal(ready.renderer.sourceReadBytes, pointRangeBytes);
   assert.equal(
     ready.renderer.uploadedBytes,
@@ -477,12 +802,15 @@ async function qualifyPointSource({
     false,
   );
   await vscode.commands.executeCommand(
-    "workbench.action.closeActiveEditor",
+    "bimExplorer.closeModel",
   );
   const disposed = await waitFor(() => {
     const report = api.qualificationReports().at(-1);
     return report?.status === "disposed" ? report : null;
   }, `${format.toUpperCase()} Custom Editor disposal`);
+  await vscode.commands.executeCommand(
+    "workbench.action.closeActiveEditor",
+  );
   return {
     fixture: {
       id: e57
@@ -515,6 +843,7 @@ async function qualifyPointSource({
     },
     observation: {
       hostKind: ready.hostKind,
+      gpu: ready.gpu,
       source: ready.source,
       model: ready.model,
       performance: ready.performance,
@@ -555,7 +884,12 @@ function translation(x) {
   ];
 }
 
-async function qualifyFederatedSurface({ api, root, temporary }) {
+async function qualifyFederatedSurface({
+  api,
+  includeRetainedOverlay = false,
+  root,
+  temporary,
+}) {
   const generatedIfc = await import(
     pathToFileURL(
       path.join(root, "scripts", "generate-synthetic-ifc.mjs"),
@@ -677,6 +1011,13 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
   assert.equal(ready.renderer.context, "webgl2");
   assert.ok(ready.renderer.nonBackgroundPixels > 0);
   assert.equal(
+    ready.gpu.schema,
+    "bim-explorer-webgl2-gpu-identity/1",
+  );
+  assert.equal(ready.gpu.webgl2, true);
+  assert.equal(typeof ready.gpu.renderer, "string");
+  assert.equal(typeof ready.gpu.vendor, "string");
+  assert.equal(
     await vscode.commands.executeCommand(
       "bimExplorer.verifyFederatedAnchors",
     ),
@@ -732,6 +1073,65 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
     assert.equal(serialized.includes(file), false);
     assert.equal(serialized.includes(path.basename(file)), false);
   }
+  let retained = null;
+  if (includeRetainedOverlay) {
+    assert.equal(
+      await vscode.commands.executeCommand(
+        "bimExplorer.verifyRetainedOverlay",
+      ),
+      true,
+    );
+    retained = await waitFor(() => {
+      const report = api.qualificationReports().at(-1);
+      if (report?.status === "failed") {
+        throw new Error(
+          `Federated retained overlay failed: ${JSON.stringify(report)}`,
+        );
+      }
+      if (
+        report?.status === "retained-progress" &&
+        Date.now() - Date.parse(
+          report.retainedOverlayProgress?.at ?? "",
+        ) > 30_000
+      ) {
+        throw new Error(
+          `Federated retained overlay stalled: ${JSON.stringify(report)}`,
+        );
+      }
+      return report?.status === "retained-qualified"
+        ? report.retainedOverlay
+        : null;
+    }, "Federated retained overlay report", 120_000);
+    assert.equal(
+      retained.contract,
+      "bim-explorer-federated-retained-overlay/0.1",
+    );
+    assert.equal(retained.actualWebGl2, true);
+    assert.equal(retained.atomic, true);
+    assert.equal(retained.stagedFramebufferPreserved, true);
+    assert.equal(retained.stagedPickMapPreserved, true);
+    assert.equal(retained.payloadReads, 1);
+    assert.equal(retained.selectionItems, 1);
+    assert.equal(retained.selectionSource, retained.selectedSource);
+    assert.ok(retained.prepareMs >= 0);
+    assert.ok(retained.commitMs >= 0);
+    assert.ok(retained.nonBackgroundPixels > 0);
+    assert.equal(retained.tombstonePickMiss, true);
+    assert.equal(retained.externalReadsUnchanged, true);
+    assert.equal(retained.baseGpuAllocationUnchanged, true);
+    assert.equal(retained.cameraUnchanged, true);
+    assert.equal(retained.clippingUnchanged, true);
+    assert.equal(retained.selectionPreserved, true);
+    assert.equal(retained.anchorsPreserved, true);
+    assert.equal(retained.checkpointReads, 0);
+    assert.equal(retained.checkpointParses, 0);
+    assert.equal(retained.checkpointUploads, 0);
+    assert.equal(retained.retainedObjectsAfterTombstone, 0);
+    assert.equal(
+      retained.retainedSurfaceHitCapability,
+      "unavailable-retained-overlay",
+    );
+  }
   assert.equal(
     await vscode.commands.executeCommand(
       "bimExplorer.disposeFederatedSurface",
@@ -786,6 +1186,7 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
       telemetry: ready.telemetry,
       ready: {
         composition: ready.composition,
+        gpu: ready.gpu,
         semantics: ready.semantics,
         renderer: ready.renderer,
       },
@@ -797,10 +1198,14 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
         ranges: qualified.ranges,
         authority: qualified.authority,
       },
+      ...(retained === null ? {} : { retainedOverlay: retained }),
       cleanup: disposed.cleanup,
       lifecycle: {
         opened: ready.status,
         anchors: qualified.status,
+        ...(retained === null
+          ? {}
+          : { retainedOverlay: "retained-qualified" }),
         disposed: disposed.status,
         editorClosed: closed.editorClosed,
       },
@@ -817,6 +1222,9 @@ async function qualifyFederatedSurface({ api, root, temporary }) {
       pathFreeHostBridge: true,
       transferredResourcesReleased: true,
       editorCloseObserved: true,
+      ...(retained === null
+        ? {}
+        : { atomicRetainedOverlayQualified: true }),
     },
   };
 }
@@ -834,6 +1242,20 @@ async function run() {
   const productScaleReferenceSourcePath =
     process.env
       .BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE;
+  const externalReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE;
+  const externalReferenceManifestPath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST;
+  const embeddedTextureReferenceSourcePath =
+    process.env
+      .BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE;
+  const embeddedTextureReferenceManifestPath =
+    process.env
+      .BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST;
+  const quantizedReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE;
+  const meshoptReferenceSourcePath =
+    process.env.BIM_EXPLORER_VSCODE_GLTF_MESHOPT_SOURCE;
   const lasSourcePath =
     process.env.BIM_EXPLORER_VSCODE_LAS_SOURCE;
   const lazSourcePath =
@@ -846,6 +1268,11 @@ async function run() {
     process.env.BIM_EXPLORER_VSCODE_E57_MULTIPLE_SCAN_SOURCE;
   const includeFederatedSurface =
     process.env.BIM_EXPLORER_VSCODE_FEDERATED_SURFACE === "true";
+  const includeRetainedOverlay =
+    process.env.BIM_EXPLORER_VSCODE_RETAINED_OVERLAY === "true";
+  const rendererMode =
+    process.env.BIM_EXPLORER_VSCODE_RENDERER_MODE ?? "swiftshader";
+  assert.ok(["physical", "swiftshader"].includes(rendererMode));
   const packagedRuntime = [
     "installed-vsix",
     "staged",
@@ -888,12 +1315,14 @@ async function run() {
     for (const command of [
       "bimExplorer.openWith",
       "bimExplorer.cancel",
+      "bimExplorer.closeModel",
       "bimExplorer.retry",
       "bimExplorer.showDiagnostics",
       "bimExplorer.pickVisiblePoint",
       "bimExplorer.refinePointLod",
       "bimExplorer.openFederation",
       "bimExplorer.verifyFederatedAnchors",
+      "bimExplorer.verifyRetainedOverlay",
       "bimExplorer.disposeFederatedSurface",
     ]) {
       assert.ok(commands.includes(command), command);
@@ -924,16 +1353,20 @@ async function run() {
     assert.equal(ready.model.products, 2);
     assert.equal(ready.renderer.actualGpu, true);
     assert.ok(ready.renderer.nonBackgroundPixels > 0);
+    assert.equal(reviewToolsReady(ready), true);
     const serialized = JSON.stringify(ready);
     assert.equal(serialized.includes(sourcePath), false);
     assert.equal(serialized.includes("qualification-source"), false);
     await vscode.commands.executeCommand(
-      "workbench.action.closeActiveEditor",
+      "bimExplorer.closeModel",
     );
     const disposed = await waitFor(() => {
       const report = api.qualificationReports().at(-1);
       return report?.status === "disposed" ? report : null;
     }, "Custom Editor disposal");
+    await vscode.commands.executeCommand(
+      "workbench.action.closeActiveEditor",
+    );
     let publicQualification = null;
     if (
       typeof publicSourcePath === "string" &&
@@ -990,6 +1423,7 @@ async function run() {
       assert.ok(
         publicReady.renderer.nonBackgroundPixels > 0,
       );
+      assert.equal(reviewToolsReady(publicReady), true);
       assert.equal(
         publicReady.renderer.sourceReadBytes,
         4_193_868,
@@ -1008,12 +1442,15 @@ async function run() {
         false,
       );
       await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor",
+        "bimExplorer.closeModel",
       );
       const publicDisposed = await waitFor(() => {
         const report = api.qualificationReports().at(-1);
         return report?.status === "disposed" ? report : null;
       }, "public Custom Editor disposal");
+      await vscode.commands.executeCommand(
+        "workbench.action.closeActiveEditor",
+      );
       publicQualification = {
         fixture: {
           id: manifest.fixtureId,
@@ -1034,10 +1471,15 @@ async function run() {
           performance: publicReady.performance,
           resources: publicReady.resources,
           renderer: publicReady.renderer,
+          reviewTools: publicReady.reviewTools,
           semantic: publicReady.semantic,
           lifecycle: {
             opened: publicReady.status,
             closed: publicDisposed.status,
+          },
+          viewerCore: {
+            opened: publicReady.viewerCore,
+            disposed: publicDisposed.viewerCore,
           },
           externalUpload: publicReady.externalUpload,
           telemetry: publicReady.telemetry,
@@ -1049,6 +1491,13 @@ async function run() {
           publicPathFreeHostBridge: true,
           publicEditorCloseObserved:
             publicDisposed.status === "disposed",
+          publicViewerCoreProductEntrypoint:
+            viewerCoreQualified(
+              publicReady,
+              publicDisposed,
+            ),
+          publicSharedReviewToolbarReady:
+            reviewToolsReady(publicReady),
         },
       };
     }
@@ -1078,6 +1527,11 @@ async function run() {
             qualified.assertions.pathFreeHostBridge,
           referenceEditorCloseObserved:
             qualified.assertions.editorCloseObserved,
+          referenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+          referenceSharedReviewToolbarReady:
+            qualified.assertions.sharedReviewToolbarReady,
         },
       };
     }
@@ -1113,10 +1567,157 @@ async function run() {
             qualified.assertions.vscodeChromiumWebGl2,
           productScaleReferenceRendererBounded:
             qualified.assertions.boundedRenderer,
+          productScaleReferenceAppearanceOmissionsExact:
+            qualified.assertions.boundedAppearanceOmissions,
           productScaleReferencePathFreeBridge:
             qualified.assertions.pathFreeHostBridge,
           productScaleReferenceEditorCloseObserved:
             qualified.assertions.editorCloseObserved,
+          productScaleReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
+    let externalReferenceQualification = null;
+    if (
+      typeof externalReferenceSourcePath === "string" &&
+      externalReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        manifestPath: externalReferenceManifestPath,
+        resourceBundle: true,
+        root,
+        sourcePath: externalReferenceSourcePath,
+      });
+      externalReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localExternalReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          externalReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          externalReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          externalReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          externalReferenceBundleExact:
+            qualified.assertions.exactLocalResourceBundle,
+          externalReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          externalReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          externalReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
+    let embeddedTextureReferenceQualification = null;
+    if (
+      typeof embeddedTextureReferenceSourcePath === "string" &&
+      embeddedTextureReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        embeddedTexture: true,
+        manifestPath: embeddedTextureReferenceManifestPath,
+        root,
+        sourcePath: embeddedTextureReferenceSourcePath,
+      });
+      embeddedTextureReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localEmbeddedTextureReferenceOpened:
+            qualified.assertions.localSourceOpened,
+          embeddedTextureReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          embeddedTextureReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          embeddedTextureReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          embeddedTextureReferenceBundleExact:
+            qualified.assertions.exactLocalResourceBundle,
+          embeddedTextureReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          embeddedTextureReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          embeddedTextureReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
+    let quantizedReferenceQualification = null;
+    if (
+      typeof quantizedReferenceSourcePath === "string" &&
+      quantizedReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        quantized: true,
+        root,
+        sourcePath: quantizedReferenceSourcePath,
+      });
+      quantizedReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localQuantizedReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          quantizedReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          quantizedReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          quantizedReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          quantizedRequiredExtensionExact:
+            qualified.assertions.exactRequiredExtensions,
+          quantizedReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          quantizedReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          quantizedReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
+        },
+      };
+    }
+    let meshoptReferenceQualification = null;
+    if (
+      typeof meshoptReferenceSourcePath === "string" &&
+      meshoptReferenceSourcePath.length > 0
+    ) {
+      const qualified = await qualifyReference({
+        api,
+        meshopt: true,
+        root,
+        sourcePath: meshoptReferenceSourcePath,
+      });
+      meshoptReferenceQualification = {
+        fixture: qualified.fixture,
+        observation: qualified.observation,
+        assertions: {
+          localMeshoptReferenceSourceOpened:
+            qualified.assertions.localSourceOpened,
+          meshoptReferenceIdentityExact:
+            qualified.assertions.sourceIdentityExact,
+          meshoptReferenceHasNoBimAuthority:
+            qualified.assertions.noBimSemanticAuthority,
+          meshoptReferenceVscodeWebGl2:
+            qualified.assertions.vscodeChromiumWebGl2,
+          meshoptRequiredExtensionExact:
+            qualified.assertions.exactRequiredExtensions,
+          meshoptReferencePathFreeBridge:
+            qualified.assertions.pathFreeHostBridge,
+          meshoptReferenceEditorCloseObserved:
+            qualified.assertions.editorCloseObserved,
+          meshoptReferenceViewerCoreProductEntrypoint:
+            qualified.assertions
+              .publicViewerCoreProductEntrypoint,
         },
       };
     }
@@ -1213,8 +1814,30 @@ async function run() {
     const hasPointQualifications =
       Object.keys(pointQualifications).length > 0;
     const federatedSurfaceQualification = includeFederatedSurface
-      ? await qualifyFederatedSurface({ api, root, temporary })
+      ? await qualifyFederatedSurface({
+          api,
+          includeRetainedOverlay,
+          root,
+          temporary,
+        })
       : null;
+    const physicalGpuCandidates = [
+      ready.gpu,
+      publicQualification?.observation?.gpu,
+      referenceQualification?.observation?.gpu,
+      productScaleReferenceQualification?.observation?.gpu,
+      externalReferenceQualification?.observation?.gpu,
+      embeddedTextureReferenceQualification?.observation?.gpu,
+      ...Object.values(pointQualifications).map(
+        (value) => value.observation.gpu,
+      ),
+      federatedSurfaceQualification?.observation?.ready?.gpu,
+    ].filter((value) => value !== null && value !== undefined);
+    const physicalGpuObserved = rendererMode !== "physical" || (
+      physicalGpuCandidates.length > 0 &&
+      physicalGpuCandidates.every(physicalAppleMetalGpu)
+    );
+    assert.equal(physicalGpuObserved, true);
     const evidence = {
       schema:
         "bim-explorer-vscode-custom-editor-evidence/1",
@@ -1223,7 +1846,11 @@ async function run() {
         vscode: vscode.version,
         platform: `${process.platform}-${process.arch}`,
         extensionMode: extension.extensionMode,
+        rendererMode,
         runtimeLayout,
+        ...(rendererMode === "physical"
+          ? { gpu: ready.gpu }
+          : {}),
       },
       fixture: {
         id: "synthetic-semantic-ifc4",
@@ -1234,11 +1861,17 @@ async function run() {
       },
       observation: {
         hostKind: ready.hostKind,
+        gpu: ready.gpu,
         model: ready.model,
         performance: ready.performance,
         resources: ready.resources,
         renderer: ready.renderer,
+        reviewTools: ready.reviewTools,
         semantic: ready.semantic,
+        viewerCore: {
+          opened: ready.viewerCore,
+          disposed: disposed.viewerCore,
+        },
         lifecycle: {
           opened: ready.status,
           closed: disposed.status,
@@ -1275,6 +1908,46 @@ async function run() {
               productScaleReferenceQualification.observation,
             productScaleReferenceAssertions:
               productScaleReferenceQualification.assertions,
+          }),
+      ...(externalReferenceQualification === null
+        ? {}
+        : {
+            externalReferenceFixture:
+              externalReferenceQualification.fixture,
+            externalReferenceObservation:
+              externalReferenceQualification.observation,
+            externalReferenceAssertions:
+              externalReferenceQualification.assertions,
+          }),
+      ...(embeddedTextureReferenceQualification === null
+        ? {}
+        : {
+            embeddedTextureReferenceFixture:
+              embeddedTextureReferenceQualification.fixture,
+            embeddedTextureReferenceObservation:
+              embeddedTextureReferenceQualification.observation,
+            embeddedTextureReferenceAssertions:
+              embeddedTextureReferenceQualification.assertions,
+          }),
+      ...(quantizedReferenceQualification === null
+        ? {}
+        : {
+            quantizedReferenceFixture:
+              quantizedReferenceQualification.fixture,
+            quantizedReferenceObservation:
+              quantizedReferenceQualification.observation,
+            quantizedReferenceAssertions:
+              quantizedReferenceQualification.assertions,
+          }),
+      ...(meshoptReferenceQualification === null
+        ? {}
+        : {
+            meshoptReferenceFixture:
+              meshoptReferenceQualification.fixture,
+            meshoptReferenceObservation:
+              meshoptReferenceQualification.observation,
+            meshoptReferenceAssertions:
+              meshoptReferenceQualification.assertions,
           }),
       ...(!hasPointQualifications
         ? {}
@@ -1317,17 +1990,31 @@ async function run() {
           serialized.includes("qualification-source") === false,
         commandsRegistered: true,
         editorCloseObserved: disposed.status === "disposed",
+        publicViewerCoreProductEntrypoint:
+          viewerCoreQualified(ready, disposed),
+        sharedReviewToolbarReady: reviewToolsReady(ready),
         packagedRuntimeIndependent: packagedRuntime,
         spatialIndependent: true,
+        ...(rendererMode === "physical"
+          ? { physicalGpuObserved }
+          : {}),
       },
       decision: {
         vscodeCustomEditor: "passed",
-        actualPhysicalGpu: "not-claimed",
-        publicViewerCoreConformance: "held",
+        actualPhysicalGpu: rendererMode === "physical"
+          ? "passed-observed-apple-metal"
+          : "not-claimed",
+        publicViewerCoreConformance:
+          "passed-product-entrypoint",
       },
     };
     assert.ok(
       Object.values(evidence.assertions).every(Boolean),
+      `Custom Editor assertions failed: ${JSON.stringify({
+        assertions: evidence.assertions,
+        disposedViewerCore: disposed.viewerCore,
+        readyViewerCore: ready.viewerCore,
+      })}`,
     );
     if (evidence.publicAssertions !== undefined) {
       assert.ok(
@@ -1347,6 +2034,36 @@ async function run() {
       assert.ok(
         Object.values(
           evidence.productScaleReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.externalReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.externalReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (
+      evidence.embeddedTextureReferenceAssertions !== undefined
+    ) {
+      assert.ok(
+        Object.values(
+          evidence.embeddedTextureReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.quantizedReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.quantizedReferenceAssertions,
+        ).every(Boolean),
+      );
+    }
+    if (evidence.meshoptReferenceAssertions !== undefined) {
+      assert.ok(
+        Object.values(
+          evidence.meshoptReferenceAssertions,
         ).every(Boolean),
       );
     }

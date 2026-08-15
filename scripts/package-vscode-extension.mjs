@@ -16,11 +16,14 @@ import {
   checkBimSurfaceBundle,
 } from "./build-bim-surface.mjs";
 import {
-  checkFederatedBimSurfaceBundle,
-} from "./build-federated-bim-surface.mjs";
+  checkFederatedBimSurfaceV03Bundle,
+} from "./build-federated-bim-surface-v0.3.mjs";
 import {
   checkVscodeWorkerBundle,
 } from "./build-vscode-worker.mjs";
+import {
+  checkViewerCoreProductBundle,
+} from "./build-viewer-core-product.mjs";
 import {
   unzipSync,
   zipSync,
@@ -57,12 +60,14 @@ const COPY_FILES = Object.freeze([
   ["packages/gltf-reference-source/src/geometry.mjs"],
   ["packages/gltf-reference-source/src/index.mjs"],
   ["packages/gltf-reference-source/src/math.mjs"],
+  ["packages/gltf-reference-source/src/meshopt-decoder.mjs"],
   ["packages/gltf-reference-source/src/profile.mjs"],
   ["packages/e57-point-source/src/format.mjs"],
   ["packages/e57-point-source/src/index.mjs"],
   ["packages/las-laz-point-source/src/header.mjs"],
   ["packages/las-laz-point-source/src/index.mjs"],
   ["packages/bim-surface/runtime/index.mjs"],
+  ["packages/viewer-core-consumer/runtime/product.mjs"],
   ["packages/bim-renderer-3d/src/camera-controls.mjs"],
   ["packages/bim-renderer-3d/src/camera.mjs"],
   ["packages/bim-renderer-3d/src/host-adapter.mjs"],
@@ -71,6 +76,8 @@ const COPY_FILES = Object.freeze([
   ["packages/bim-renderer-3d/src/point-cloud-lod.mjs"],
   ["packages/bim-renderer-3d/src/point-cloud.mjs"],
   ["packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs"],
+  ["packages/bim-renderer-3d/src/retained-overlay.mjs"],
+  ["packages/bim-renderer-3d/src/textured-geometry.mjs"],
   ["packages/bim-renderer-3d/src/webgl2-backend.mjs"],
   ["packages/bim-semantic-explorer/src/index.mjs"],
   ["packages/bim-federation/src/index.mjs"],
@@ -86,7 +93,14 @@ const COPY_FILES = Object.freeze([
   ["node_modules/web-ifc/package.json"],
   ["node_modules/web-ifc/web-ifc-api.js"],
   ["node_modules/web-ifc/web-ifc.wasm"],
+  ["node_modules/@menaje/viewer-core/LICENSE"],
+  ["node_modules/@menaje/viewer-core/NOTICE"],
+  ["node_modules/@menaje/viewer-core/package.json"],
+  ["node_modules/@menaje/viewer-render-protocol/LICENSE"],
+  ["node_modules/@menaje/viewer-render-protocol/NOTICE"],
+  ["node_modules/@menaje/viewer-render-protocol/package.json"],
   ["LICENSES/e57-rs-MIT.txt"],
+  ["LICENSES/meshoptimizer-MIT.txt"],
   ["specs/LICENSE"],
 ]);
 const EXTENSION_FILES = Object.freeze([
@@ -127,7 +141,8 @@ export async function prepareVscodeExtensionStage(destination) {
   }
   await checkVscodeWorkerBundle();
   await checkBimSurfaceBundle();
-  await checkFederatedBimSurfaceBundle();
+  await checkFederatedBimSurfaceV03Bundle();
+  await checkViewerCoreProductBundle();
   await mkdir(destination, {
     recursive: true,
   });

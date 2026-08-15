@@ -157,6 +157,7 @@ export async function qualifyGltfProductScaleReference() {
     source = await createGltfReferenceSource(
       acquired.bytes,
       {
+        appearancePolicy: "bounded-omission",
         maximumRequestBytes:
           manifest.browserQualification.maximumRequestBytes,
       },
@@ -229,6 +230,8 @@ export async function qualifyGltfProductScaleReference() {
         roundTripAuthority: snapshot.source.roundTripAuthority,
         extensionsUsed:
           snapshot.referenceMetadata.extensionsUsed,
+        appearanceOmissions:
+          snapshot.referenceMetadata.appearanceOmissions,
       },
       geometry: {
         ...snapshot.geometry,
@@ -329,7 +332,9 @@ export async function qualifyGltfProductScaleReference() {
       headless.geometry.vertices === expected.vertices &&
       headless.geometry.triangles === expected.triangles &&
       JSON.stringify(headless.source.extensionsUsed) ===
-        JSON.stringify(expected.extensionsUsed),
+        JSON.stringify(expected.extensionsUsed) &&
+      JSON.stringify(headless.source.appearanceOmissions) ===
+        JSON.stringify(expected.appearanceOmissions),
     sourceNativeIdentity:
       headless.identity.entities === expected.instances &&
       headless.identity.firstResolved === true &&

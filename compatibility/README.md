@@ -24,9 +24,16 @@ release URL·SHA-256·lock integrity·installed content digest, 실제 BIM
 source/renderer와 Browser/VS Code host conformance는
 [`release evidence`](evidence/viewer-core-release-2026-08-04.json)에
 기록합니다. wire protocol ID는 `menaje-viewer-render-protocol/0.1.0`으로
-유지됩니다. 상태는 `experimental`이며 stable/production을 주장하지
-않습니다. Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로
-고정했으며 실제 BIM layer composition은 integration Gate가 소유합니다.
+유지됩니다. 실제 IFC/glTF/GLB Browser·staged VS Code·clean-installed VSIX
+entrypoint 채택은
+[`product entrypoint evidence`](evidence/bim-product-shell-viewer-core-product-entrypoints-2026-08-11.json)가
+소유합니다. 같은 현재 entrypoint의 공개 IFC와 product-scale GLB도 software
+fallback을 끈 Apple M2 Metal에서 exact public range read, selection lifecycle과
+terminal cleanup을 통과했고
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)에
+고정합니다. 상태는 `experimental`이며 stable/production을 주장하지 않습니다.
+Spatial도 같은 0.1.2 artifact를 독립 consumer evidence로 고정했으며 실제 BIM
+layer composition은 integration Gate가 소유합니다.
 
 외부 product shell이 재사용할 BIM lifecycle은
 [`bim-surface.json`](bim-surface.json)이 별도로 소유합니다.
@@ -64,19 +71,52 @@ search/selection/anchor/cleanup을 재현했습니다. Spatial의 actual headles
 consumer가 이전 exact tgz를 고정해 external base + authored overlay,
 Canonical selection, durable point-only anchor, stale/no-remap과 terminal cleanup을
 통과했습니다. Spatial은 package 문서가 반영된 release-ready tgz의 exact
-97,623 bytes, SHA-256 `3bdb747d…c63cb`도 다시 검증했습니다. package-only
-prerelease publication은 승인됐지만 immutable public v0.2 asset과 그 asset의
-Spatial exact-pin admission은 아직 held입니다. exact 결과는
+97,623 bytes, SHA-256 `3bdb747d…c63cb`도 다시 검증했습니다. 같은 bytes를
+`bim-surface-v0.2.0` immutable package-only GitHub prerelease로 공개했고 9개
+asset, macOS/Linux byte identity와 attestations를 확인했습니다. public asset의
+Spatial Phase B도 anonymous download, offline clean install과 actual 3-source
+consumer composition으로 통과했습니다. Spatial hosted CI는 runner 배정 전에
+종료돼 cross-platform consumer evidence를 추가하지 않으며 production support는
+held입니다. 별도 제품 physical GPU Gate는 software rasterizer를 끈 actual Chrome
+151 Browser 2회와 VS Code 1.132 staged/clean-installed local VSIX에서 generated
+GLB–IFC–GLB를 Apple M2 Metal로 동일하게 합성해 8,286 non-background pixels,
+1,608-byte upload, source-local surface hit/anchor 3개와 terminal cleanup을
+재현했습니다. 이는 macOS arm64 단일 hardware profile이며 Linux/Windows,
+실제 고객 모델, OS-level peak GPU memory, Spatial VSIX 통합과 production을
+승인하지 않습니다. exact 결과는
 [`headless evidence`](evidence/federated-bim-surface-headless-2026-08-09.json)와
 [`Browser evidence`](evidence/federated-bim-surface-browser-2026-08-09.json),
 [`VS Code evidence`](evidence/federated-bim-surface-vscode-2026-08-09.json),
+[`physical GPU evidence`](evidence/federated-bim-surface-physical-gpu-darwin-arm64-2026-08-11.json),
 [`release-ready package evidence`](evidence/federated-bim-surface-package-release-ready-2026-08-11.json),
 [`Spatial consumer admission`](evidence/federated-bim-surface-spatial-consumer-2026-08-11.json),
-[`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json)에
+[`Spatial release-ready admission`](evidence/federated-bim-surface-spatial-release-ready-consumer-2026-08-11.json),
+[`public release evidence`](evidence/federated-bim-surface-release-v0.2.0-2026-08-11.json),
+[`Spatial public-artifact admission`](evidence/federated-bim-surface-spatial-public-artifact-consumer-2026-08-11.json)에
 고정합니다. 이전 97,293-byte candidate evidence는 immutable history로
 보존합니다.
 
-Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental LAS/LAZ read-only
+`consumer-overlay`의 source-owned 변경을 기존 base range와 분리해 반영하는
+retained geometry delta 개발선은
+[`bim-retained-overlay.json`](bim-retained-overlay.json)이 소유합니다. versioned
+binary packet의 digest·revision·sequence를 검증하고 CPU/GPU 후보를 화면 밖에
+stage한 뒤 geometry, Pick ID와 retained revision을 하나의 synchronous commit으로
+교체합니다. actual Chrome WebGL2와 staged VS Code Webview WebGL2에서 pixel,
+retained pick, selection·anchor·camera·clipping 보존, tombstone, checkpoint의 native
+range read·parse·upload 0과 terminal cleanup을 재현했습니다. Viewer Core 0.1.3은
+exact public source commit의 async prepare/synchronous commit adapter로 cancellation,
+stale ordering과 invalid digest fail-closed를 통과했습니다. immutable Federated
+Surface v0.2 runtime은 변경하지 않았고 새 v0.3.0 package candidate의 두 번
+byte-identical pack과 offline artifact-only consumer도 통과했습니다. published
+Viewer Core 0.1.3 artifact, public v0.3.0 artifact, physical GPU와 production
+support는 보류합니다. exact
+결과는 [`Browser evidence`](evidence/bim-retained-overlay-browser-2026-08-15.json),
+[`VS Code evidence`](evidence/bim-retained-overlay-vscode-2026-08-15.json),
+[`Viewer Core source evidence`](evidence/bim-retained-overlay-viewer-core-2026-08-15.json),
+[`package candidate evidence`](evidence/bim-retained-overlay-package-release-ready-2026-08-15.json)에
+고정합니다.
+
+Browser 제품 shell과 VS Code IFC/glTF/GLB 및 experimental E57/LAS/LAZ read-only
 Custom Editor의
 source-role별 projection, 실제 Chromium WebGL2, local Worker lifecycle,
 path-free host bridge와 clean VSIX install 결과는
@@ -86,6 +126,9 @@ path-free host bridge와 clean VSIX install 결과는
 [`reference Browser product evidence`](evidence/gltf-reference-source-khronos-box-browser-product-2026-08-04.json),
 [`VS Code product evidence`](evidence/bim-product-shell-vscode-synthetic-2026-08-04.json),
 [`VSIX install evidence`](evidence/bim-product-shell-vscode-vsix-install-2026-08-04.json),
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json),
+[`local glTF resource bundle evidence`](evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json),
+[`point-cloud physical GPU evidence`](evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json),
 [`LAS/LAZ VS Code evidence`](evidence/las-laz-vscode-product-2026-08-08.json),
 [`glTF product platform matrix`](evidence/gltf-product-platform-matrix-2026-08-08.json)가
 소유합니다. 두 host는 같은 generated IFC4 fingerprint, 2 products,
@@ -100,13 +143,39 @@ clean-installed VSIX에서 1 reference entity·12 triangles·86,486 pixels,
 source-native selection, `globalId: null`과 cleanup을 재현했습니다. 제품
 세 경로는 macOS arm64와 Linux x64 CI에서 고정 VS Code 1.131.0으로 같은
 model/resource/render projection과 1,168,823-byte VSIX를 재현했습니다.
+별도 cache-only Khronos `Box.gltf + Box0.bin`은 Browser의 명시적 다중 파일
+선택, staged VS Code의 JSON-declared sibling read와 clean-installed local VSIX에서
+같은 3,546-byte composite identity, 12 triangles, 86,486 pixels와 terminal
+cleanup을 Apple M2 Metal로 재현했습니다. 최대 16개 same-folder ASCII
+`.bin`/`.png`/`.jpg`/`.jpeg`와
+합산 64MiB만 허용하며 path/scheme, symlink, runtime network와
+현재 승인된 두 확장 이외 required extension은 계속 차단합니다.
+외부 PNG/JPEG와 명시적 local `.bin`의 PNG/JPEG image bufferView는 OPAQUE
+`baseColorTexture`, `TEXCOORD_0`과 standard sampler만 허용합니다. JPEG는
+bounded baseline sequential profile만 허용하고
+progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material mode·다른 material
+texture role은 차단합니다.
+이 local bundle 증거는 single-source 제품 범위이고 immutable federated BIM
+Surface v0.2 runtime이나 `.bimfed.json` 지원을 승격하지 않습니다.
 paired LAS/LAZ도 staged VS Code와 clean-installed VSIX에서 같은 10,201
 points·163,216-byte payload·36,934 pixels를 재현하고 path-free bridge,
 source/Worker/CPU/GPU/editor cleanup을 통과했습니다. VSIX는 strict-CSP용
 generated `laz-perf@0.0.6` glue와 exact WASM을 포함하되 sample은 포함하지
-않습니다.
-entrypoint의 public Viewer Core 채택, IFC2X3 profile admission, broader
-glTF profile, physical GPU와 marketplace release는 계속 보류합니다.
+않습니다. software fallback을 끈 actual Chrome 151과 VS Code 1.132
+staged/clean-installed local VSIX는 공개 IFC와 product-scale GLB를 각각 Apple
+M2 Metal로 열어 동일한 3,569 products·261,424 triangles 및 49 entities·573,952
+unique triangles, visible frame, read-only selection과 terminal cleanup을
+재현했습니다. 이 physical evidence는 현재 public Viewer Core 0.1.2 제품
+entrypoint의 exact range read, selection event와 source/session/Worker/Host
+cleanup까지 포함합니다. 두 sample은 합산 source bytes가 64MiB 상한을 넘으므로
+동시 합성하지 않았고 Git·VSIX·release에 포함하지 않습니다. IFC2X3 profile
+admission, broader glTF profile, Linux/Windows physical GPU, OS-level peak GPU
+memory, upstream stable, marketplace release와 production은 계속 보류합니다.
+같은 fail-closed WebGL2 정책으로 LAS·LAZ·7,680-point E57과 1,213,990-point
+다중 스캔 E57도 actual Chrome, staged VS Code와 clean-installed local VSIX의
+12개 제품 표면에서 Apple M2 Metal을 통과했습니다. exact point range·pick,
+3단계 LOD와 terminal cleanup을 재현했지만 CRS, format admission,
+source-native hierarchy·semantics와 production은 계속 held입니다.
 
 IFC engine 후보와 experimental profile 상태는
 [`ifc-engines.json`](ifc-engines.json)이 소유합니다. 두 후보의 base fixture
@@ -171,7 +240,8 @@ non-background pixels를 확인하고 allocation을 0으로 회수했습니다.
 hide와 orthographic show-all fit을 4 frames로 검증했습니다. 이후
 visibility 기반 first range, DOM pointer input, progressive cache와
 Browser/VS Code Webview 내부 host lifecycle도 별도 evidence로 통과했습니다.
-physical GPU qualification은 보류합니다.
+mesh backend의 범용 physical GPU claim은 보류하지만, point backend는 별도
+제품 evidence 범위의 macOS arm64 Apple M2 Metal qualification을 통과했습니다.
 별도 offscreen WebGL2 pass의 화면 중앙 pick은 active revision의 Pick ID로
 해결됐고, 선택 frame은 7,507 highlight pixels를 만들었습니다. context
 loss를 관찰·복원한 뒤 같은 revision을 다시 upload하고 별도 IFC4 source로
@@ -184,7 +254,8 @@ contract host conformance는 각각 별도 evidence에서 통과했습니다.
 payload를 사용합니다. cache-only LAS/LAZ parity sample의 10,201 points를
 actual Chrome WebGL2 단일 `POINTS` draw로 그려 40,471 pixels를 확인하고
 163,216-byte upload를 전량 회수했습니다. renderer manifest는 이 세 point
-Gate를 포함해 24 passed / 0 held입니다. 별도 Browser와 VS Code 제품
+Gate와 12-surface physical GPU Gate를 포함해 27 passed / 0 held입니다. 별도
+Browser와 VS Code 제품
 source/open은 reference-format과 product-shell manifest가 소유하며, format
 admission·CRS는 계속 분리해 held합니다.
 
@@ -232,15 +303,17 @@ redistribution review는 계속 보류합니다.
 renderer의 WebGL2 first frame은 별도 Gate이며 engine/profile 선정이나
 production GPU memory 보장을 뜻하지 않습니다.
 
-optional Coni Spatial bridge의 exact Viewer package pin, source-bound
+legacy optional single-source bridge v0.1의 exact Viewer package pin, source-bound
 GlobalId→Canonical mapping response, synchronized 2D/3D selection, opaque
 Context Reference, BIM base + Spatial live/diff layer와 authority-free handoff는
 [`spatial-integration.json`](spatial-integration.json)과
 [`synthetic bridge evidence`](evidence/spatial-integration-synthetic-2026-08-04.json)가
-소유합니다. Explorer provider contract는 통과했지만 실제 Spatial service
-consumer, standalone Spatial bundle과 public integration package는
-consumer package admission Gate로 계속 보류합니다. MPL-2.0 source 자체는
-Community v0.1.0 source archive에 공개돼 있습니다.
+소유합니다. Explorer provider contract는 통과했지만 이 v0.1 bridge의 actual
+consumer, standalone downstream bundle과 public integration package는 계속
+보류합니다. 이 false gate는 독립적인
+[`federated BIM Surface v0.2`](federated-bim-surface.json)의 public artifact와
+consumer admission을 무효화하지 않습니다. MPL-2.0 source 자체는 Community
+v0.1.0 source archive에 공개돼 있습니다.
 
 BCF XML 3.0 local archive, IDS 1.0 document/result와 bSDD URI의 source-bound
 read-only 탐색은
@@ -321,8 +394,11 @@ point runtime asset hash와 `.las`/`.laz` association을 보존했음을 기록�
 별도
 [`point hierarchy/LOD product evidence`](evidence/point-cloud-lod-products-2026-08-09.json)는
 five-scan E57의 51개 파생 chunk와 3단계 coarse-to-full 전환, root-range identity
-mapping 및 Browser/staged VS Code/clean VSIX cleanup을 기록합니다. 전체 36개
-Gate가 통과했고 E57·LAS/LAZ의 coordinate reference와 format
+mapping 및 Browser/staged VS Code/clean VSIX cleanup을 기록합니다. 기존 36개
+Gate에 더해 별도
+[`point-cloud physical GPU evidence`](evidence/bim-product-shell-representative-point-clouds-physical-gpu-darwin-arm64-2026-08-11.json)가
+Apple M2 Metal 12개 제품 표면을 고정해 전체 37개 Gate가 통과했습니다.
+E57·LAS/LAZ의 coordinate reference와 format
 admission 4개 Gate는 held입니다. 이 결과는 federation의
 `pointCloudCodec`이나
 어떤 point-cloud format admission도 바꾸지 않습니다.
@@ -343,9 +419,52 @@ allocation을 전량 회수했습니다. 같은 GLB는
 [`staged VS Code`](evidence/gltf-reference-source-a-beautiful-game-vscode-product-2026-08-08.json),
 [`clean-installed VSIX`](evidence/gltf-reference-source-a-beautiful-game-vscode-vsix-product-2026-08-08.json)에서
 49개 source-native entity, 동일한 bounded render projection과 close cleanup을
-통과했습니다. external resource, required extension과 physical GPU는 독립
-Gate로 남습니다. GLB는 ignored cache에서만 사용하고 release에는 포함하지
-않습니다.
+통과했습니다. 같은 product-scale GLB는
+[`representative physical GPU evidence`](evidence/bim-product-shell-representative-physical-gpu-darwin-arm64-2026-08-11.json)의
+actual Chrome 151, staged VS Code 1.132와 clean-installed local VSIX에서 Apple
+M2 Metal, 48,762 pixels, 16,896,412-byte public Core read와 16,900,016-byte
+upload를 재현해 `physicalGpu=true`로 admission했습니다. 이는 macOS arm64 단일
+hardware 범위입니다. 추가
+[`local resource bundle evidence`](evidence/gltf-reference-source-external-resource-products-darwin-arm64-2026-08-11.json)는
+exact Khronos `Box.gltf + Box0.bin`을 세 제품 표면에서 Apple M2 Metal로 열어
+`externalResourceBundle=true`로 admission했습니다. 추가
+[`KHR_mesh_quantization` evidence](evidence/gltf-reference-source-khr-mesh-quantization-products-darwin-arm64-2026-08-11.json)는
+exact Box-derived 1,632-byte GLB를 공식 Validator issue 0개, headless renderer와
+actual Chrome 151, staged VS Code 1.132, clean-installed local VSIX의 Apple M2
+Metal에서 검증했습니다. 세 표면은 12 triangles·86,486 pixels·756-byte read·
+800-byte upload와 terminal cleanup을 공유합니다. 추가
+[`EXT_meshopt_compression` evidence](evidence/gltf-reference-source-ext-meshopt-products-darwin-arm64-2026-08-11.json)는
+exact meshoptimizer 1.2.0으로 파생한 1,696-byte cache-only Box GLB의 192 compressed
+bytes를 648 bytes로 bounded 복원하고, 공식 Validator error·warning·hint 0개와
+알려진 info 2개, headless 및 같은 세 Apple M2 Metal 제품 표면을 고정합니다.
+추가
+[`PNG base-color texture evidence`](evidence/gltf-reference-source-base-color-texture-products-darwin-arm64-2026-08-11.json)는
+exact Khronos BoxTextured 외부 bundle과 embedded GLB의 공식 Validator issue 0개,
+동일한 3,750-byte PNG·262,144-byte decoded base RGBA·349,524-byte mipmap-aware
+GPU texture와 byte-identical 4,756-byte geometry-range v2를 고정합니다. 두
+fixture의 actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX,
+합계 6개 Apple M2 Metal 표면은 각각 86,486 pixels, 350,516-byte total GPU
+upload와 terminal cleanup을 재현합니다. exact glTF PNG data URI는 synthetic
+conformance로 같은 projection을 보완합니다. sample은 원 라이선스와 Cesium
+표장 조건을 manifest에 고정하고 cache-only로 사용합니다. 추가
+[`JPEG base-color texture evidence`](evidence/gltf-reference-source-jpeg-base-color-texture-products-darwin-arm64-2026-08-11.json)는
+exact BoxTextured geometry와 CompareDispersion의 749-byte baseline JPEG를
+결정적으로 결합한 cache-only glTF를 고정합니다. 공식 Validator issue 0개,
+source/renderer 독립 JPEG validation과 1,756-byte geometry-range v3를 통과했고,
+actual Chrome 151·staged VS Code 1.132·clean-installed local VSIX의 Apple M2
+Metal 3개 표면은 각각 86,486 pixels·21,844-byte mipmap-aware GPU texture·
+22,836-byte total upload와 terminal cleanup을 재현합니다. PNG-only v2 range와
+hash는 그대로입니다. exact BoxTextured GLB를 `.gltf + 단일 .bin`으로 파생한
+PNG bufferView 경로도 공식 Validator issue 0개, byte-identical v2 range와 같은
+세 Apple M2 Metal 제품 표면을 통과합니다. glTF manifest는 32 passed / 4 held,
+product shell은 69 passed / 1 held이며 renderer manifest는 30 passed / 0 held입니다.
+`KHR_mesh_quantization`과 `EXT_meshopt_compression` `FILTER_NONE`만 required
+extension으로 허용하며 Draco·다른 meshopt filter·그 밖의 required extension,
+write·round-trip과 BIM semantic authority는 held입니다.
+임의 URI·data URI buffer 기반 image bufferView·progressive/arithmetic/lossless JPEG·비-OPAQUE alpha mode·다중 material
+texture·Linux/Windows physical GPU와 OS-level peak memory도
+승인하지 않습니다. 공개 sample은 ignored cache에서만 사용하고 release에는
+포함하지 않습니다.
 
 Sibling checkout을 이용한 local probe는
 [`evidence/viewer-core-local-probe-2026-08-03.json`](evidence/viewer-core-local-probe-2026-08-03.json)에

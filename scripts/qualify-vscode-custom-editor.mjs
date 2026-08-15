@@ -11,14 +11,29 @@ import { fileURLToPath } from "node:url";
 import {
   runTests,
 } from "@vscode/test-electron";
+import { build } from "esbuild";
 
 import {
   prepareVscodeExtensionStage,
 } from "./package-vscode-extension.mjs";
 import {
+  ensurePublicIfcFixture,
+  loadPublicIfcFixtureManifest,
+} from "./public-ifc-fixture.mjs";
+import {
   acquirePublicGltfFixture,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "./public-gltf-fixture.mjs";
+import {
+  acquirePublicGltfResourceBundle,
+} from "./public-gltf-resource-bundle-fixture.mjs";
+import {
+  acquirePublicQuantizedGltfFixture,
+} from "./public-gltf-quantized-fixture.mjs";
+import {
+  acquirePublicMeshoptGltfFixture,
+} from "./public-gltf-meshopt-fixture.mjs";
 import {
   acquirePublicLasLazFixture,
 } from "./public-las-laz-fixture.mjs";
@@ -34,22 +49,58 @@ import {
 import {
   resolveVscodeQualificationRuntime,
 } from "./vscode-qualification-runtime.mjs";
+import {
+  gpuQualificationLaunchArguments,
+  validateGpuQualificationMode,
+} from "./gpu-qualification-profile.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
 function parseArguments(values) {
   const options = {
     includeFederatedSurfaceFixture: false,
+    includeRetainedOverlayFixture: false,
+    includeExternalResourceFixture: false,
+    includeEmbeddedTextureFixture: false,
+    includeMeshoptFixture: false,
+    includeQuantizedFixture: false,
+    includePublicFixture: false,
     includeProductScaleFixture: false,
     includePointFixtures: false,
     includeE57SphericalFixture: false,
     includeE57MultipleScanFixture: false,
+    rendererMode: "swiftshader",
     output: null,
   };
   for (let index = 0; index < values.length; index += 1) {
     const name = values[index];
     if (name === "--federated-surface") {
       options.includeFederatedSurfaceFixture = true;
+      continue;
+    }
+    if (name === "--retained-overlay") {
+      options.includeFederatedSurfaceFixture = true;
+      options.includeRetainedOverlayFixture = true;
+      continue;
+    }
+    if (name === "--external-gltf") {
+      options.includeExternalResourceFixture = true;
+      continue;
+    }
+    if (name === "--embedded-texture-gltf") {
+      options.includeEmbeddedTextureFixture = true;
+      continue;
+    }
+    if (name === "--quantized-gltf") {
+      options.includeQuantizedFixture = true;
+      continue;
+    }
+    if (name === "--meshopt-gltf") {
+      options.includeMeshoptFixture = true;
+      continue;
+    }
+    if (name === "--public") {
+      options.includePublicFixture = true;
       continue;
     }
     if (name === "--product-scale") {
@@ -68,6 +119,10 @@ function parseArguments(values) {
       options.includeE57MultipleScanFixture = true;
       continue;
     }
+    if (name === "--physical-gpu") {
+      options.rendererMode = "physical";
+      continue;
+    }
     if (name === "--output") {
       const value = values[index + 1];
       if (
@@ -82,9 +137,16 @@ function parseArguments(values) {
     }
     throw new TypeError(
       "usage: node scripts/qualify-vscode-custom-editor.mjs " +
-        "[--federated-surface] [--product-scale] [--point-cloud] " +
+        "[--federated-surface] [--retained-overlay] " +
+        "[--product-scale] [--point-cloud] " +
+        "[--external-gltf] " +
+        "[--embedded-texture-gltf] " +
+        "[--meshopt-gltf] " +
+        "[--quantized-gltf] " +
+        "[--public] " +
         "[--e57-spherical] " +
         "[--e57-multiple-scan] " +
+        "[--physical-gpu] " +
         "[--output path]",
     );
   }
@@ -93,14 +155,32 @@ function parseArguments(values) {
 
 export async function qualifyVscodeCustomEditor({
   includeFederatedSurfaceFixture = false,
+  includeRetainedOverlayFixture = false,
+  includeExternalResourceFixture = false,
+  includeEmbeddedTextureFixture = false,
+  includeMeshoptFixture = false,
+  includeQuantizedFixture = false,
   includeE57MultipleScanFixture = false,
   includeE57SphericalFixture = false,
   includePointFixtures = false,
   includeProductScaleFixture = false,
+  includePublicFixture = false,
+  externalResourceManifestPath = undefined,
+  rendererMode = "swiftshader",
   vscodeRuntime = null,
 } = {}) {
+  validateGpuQualificationMode(rendererMode);
+  if (includeRetainedOverlayFixture) {
+    includeFederatedSurfaceFixture = true;
+  }
   const runtime = vscodeRuntime ??
     await resolveVscodeQualificationRuntime();
+  const publicManifest = includePublicFixture
+    ? await loadPublicIfcFixtureManifest()
+    : null;
+  const publicFixture = includePublicFixture
+    ? await ensurePublicIfcFixture({ manifest: publicManifest })
+    : null;
   const referenceFixture = await acquirePublicGltfFixture();
   referenceFixture.bytes.fill(0);
   const productScaleReferenceFixture =
@@ -109,6 +189,30 @@ export async function qualifyVscodeCustomEditor({
           manifestPath: PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
         })
       : null;
+  const externalReferenceFixture = includeExternalResourceFixture
+    ? await acquirePublicGltfResourceBundle({
+        manifestPath: externalResourceManifestPath,
+      })
+    : null;
+  externalReferenceFixture?.document.bytes.fill(0);
+  for (const resource of externalReferenceFixture?.resources ?? []) {
+    resource.bytes.fill(0);
+  }
+  const embeddedTextureReferenceFixture =
+    includeEmbeddedTextureFixture
+      ? await acquirePublicGltfFixture({
+          manifestPath: PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+        })
+      : null;
+  embeddedTextureReferenceFixture?.bytes.fill(0);
+  const quantizedReferenceFixture = includeQuantizedFixture
+    ? await acquirePublicQuantizedGltfFixture()
+    : null;
+  quantizedReferenceFixture?.bytes.fill(0);
+  const meshoptReferenceFixture = includeMeshoptFixture
+    ? await acquirePublicMeshoptGltfFixture()
+    : null;
+  meshoptReferenceFixture?.bytes.fill(0);
   productScaleReferenceFixture?.bytes.fill(0);
   const pointFixtures = includePointFixtures
     ? await acquirePublicLasLazFixture()
@@ -143,6 +247,36 @@ export async function qualifyVscodeCustomEditor({
   );
   try {
     await prepareVscodeExtensionStage(stagedExtension);
+    if (includeRetainedOverlayFixture) {
+      await build({
+        banner: {
+          js:
+            "// Generated for retained-overlay VS Code qualification " +
+            "only. MPL-2.0.",
+        },
+        bundle: true,
+        entryPoints: [path.join(
+          ROOT,
+          "packages",
+          "federated-bim-surface",
+          "src",
+          "package-entry.mjs",
+        )],
+        format: "esm",
+        legalComments: "none",
+        minify: false,
+        outfile: path.join(
+          stagedExtension,
+          "packages",
+          "federated-bim-surface",
+          "runtime",
+          "index.mjs",
+        ),
+        platform: "neutral",
+        sourcemap: false,
+        target: ["es2022"],
+      });
+    }
     await runTests({
       vscodeExecutablePath: runtime.executable,
       extensionDevelopmentPath: stagedExtension,
@@ -158,17 +292,28 @@ export async function qualifyVscodeCustomEditor({
         `--extensions-dir=${path.join(temporary, "extensions")}`,
         "--disable-extensions",
         "--disable-telemetry",
-        "--enable-unsafe-swiftshader",
-        "--use-angle=swiftshader",
+        ...gpuQualificationLaunchArguments(rendererMode),
       ],
       extensionTestsEnv: {
         BIM_EXPLORER_ROOT: ROOT,
         BIM_EXPLORER_PACKAGE_RUNTIME: "staged",
+        BIM_EXPLORER_VSCODE_RENDERER_MODE: rendererMode,
         ...(includeFederatedSurfaceFixture
           ? {
               BIM_EXPLORER_VSCODE_FEDERATED_SURFACE: "true",
             }
           : {}),
+        ...(includeRetainedOverlayFixture
+          ? {
+              BIM_EXPLORER_VSCODE_RETAINED_OVERLAY: "true",
+            }
+          : {}),
+        ...(publicFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_PUBLIC_SOURCE:
+                publicFixture.input,
+            }),
         BIM_EXPLORER_VSCODE_GLTF_SOURCE:
           referenceFixture.cachePath,
         ...(pointFixtures === null
@@ -198,6 +343,38 @@ export async function qualifyVscodeCustomEditor({
           : {
               BIM_EXPLORER_VSCODE_GLTF_PRODUCT_SCALE_SOURCE:
                 productScaleReferenceFixture.cachePath,
+            }),
+        ...(externalReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_SOURCE:
+                externalReferenceFixture.document.cachePath,
+              ...(externalResourceManifestPath === undefined
+                ? {}
+                : {
+                    BIM_EXPLORER_VSCODE_GLTF_EXTERNAL_MANIFEST:
+                      externalResourceManifestPath,
+                  }),
+            }),
+        ...(embeddedTextureReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_SOURCE:
+                embeddedTextureReferenceFixture.cachePath,
+              BIM_EXPLORER_VSCODE_GLTF_EMBEDDED_TEXTURE_MANIFEST:
+                PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+            }),
+        ...(quantizedReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_QUANTIZED_SOURCE:
+                quantizedReferenceFixture.cachePath,
+            }),
+        ...(meshoptReferenceFixture === null
+          ? {}
+          : {
+              BIM_EXPLORER_VSCODE_GLTF_MESHOPT_SOURCE:
+                meshoptReferenceFixture.cachePath,
             }),
         BIM_EXPLORER_VSCODE_EVIDENCE: evidencePath,
       },

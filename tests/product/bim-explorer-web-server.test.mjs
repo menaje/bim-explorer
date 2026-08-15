@@ -70,9 +70,11 @@ test("product server exposes only its same-origin allowlist", async () => {
       "/packages/las-laz-point-source/src/header.mjs",
       "/packages/las-laz-point-source/src/index.mjs",
       "/packages/bim-surface/runtime/index.mjs",
+      "/packages/viewer-core-consumer/runtime/product.mjs",
       "/packages/bim-renderer-3d/src/index.mjs",
       "/packages/bim-renderer-3d/src/point-cloud.mjs",
       "/packages/bim-renderer-3d/src/point-cloud-webgl2-backend.mjs",
+      "/packages/bim-renderer-3d/src/textured-geometry.mjs",
       "/packages/bim-semantic-explorer/src/index.mjs",
     ]) {
       assert.equal(

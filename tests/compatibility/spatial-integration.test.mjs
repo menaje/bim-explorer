@@ -49,6 +49,19 @@ test("synthetic bridge cannot promote actual Spatial consumer conformance", asyn
   );
 });
 
+test("legacy bridge status cannot override federated v0.2 admission", async () => {
+  const [manifest, evidence] = await inputs();
+  manifest.contractScope.statusMeaning =
+    "actualSpatialConsumerConformance applies to every contract line";
+  assert.throws(
+    () => validateSpatialIntegrationCompatibility(
+      manifest,
+      evidence,
+    ),
+    /contract scope is ambiguous/u,
+  );
+});
+
 test("Spatial context request cannot smuggle Canonical identity", async () => {
   const [manifest, evidence] = await inputs();
   evidence.context.requestContainsCanonicalId = true;

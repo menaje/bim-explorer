@@ -14,6 +14,7 @@ import validator from "gltf-validator";
 import {
   acquirePublicGltfFixture,
   loadPublicGltfFixtureManifest,
+  PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
   PUBLIC_GLTF_PRODUCT_SCALE_MANIFEST,
 } from "../../scripts/public-gltf-fixture.mjs";
 import {
@@ -64,6 +65,32 @@ test("public product-scale GLB manifest pins scale and rights", async () => {
     manifest.browserQualification.requireCenterPick,
     false,
   );
+  assert.equal(manifest.tracking.artifactTracked, false);
+  assert.equal(manifest.tracking.releaseBundled, false);
+  assert.equal(manifest.tracking.networkAtRuntime, false);
+});
+
+test("public embedded texture GLB pins exact cache-only input", async () => {
+  const manifest = await loadPublicGltfFixtureManifest(
+    PUBLIC_GLTF_EMBEDDED_TEXTURE_MANIFEST,
+  );
+  assert.equal(
+    manifest.fixtureId,
+    "khronos-gltf-sample-assets-box-textured-embedded-png-glb",
+  );
+  assert.equal(manifest.entry.byteLength, 5_956);
+  assert.equal(
+    manifest.entry.sha256,
+    "b510eca2e2ef33f62f9ed57d6e7ce2d1" +
+      "0ebb2bdebc4a8e59d347719ba81abdf4",
+  );
+  assert.equal(manifest.expected.embeddedImageResources, 1);
+  assert.equal(manifest.expected.embeddedImageBytes, 3_750);
+  assert.equal(
+    manifest.expected.imageStorageProfile,
+    "glb-buffer-view",
+  );
+  assert.equal(manifest.expected.geometryRangeBytes, 4_756);
   assert.equal(manifest.tracking.artifactTracked, false);
   assert.equal(manifest.tracking.releaseBundled, false);
   assert.equal(manifest.tracking.networkAtRuntime, false);

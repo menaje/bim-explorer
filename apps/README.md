@@ -21,7 +21,9 @@ bridge와 close cleanup까지 재검증했습니다. public Viewer Core conforma
 별개로, 46.77MB 공개 IFC도 Browser와 clean-installed VSIX에서 같은
 3,569-product source/model projection과 첫-range WebGL2 결과로
 재현했습니다. IFC2X3 profile admission, physical GPU와 release는 이
-product-scale 결과로 승격하지 않습니다.
+product-scale software 결과만으로 승격하지 않습니다. 별도 actual Chrome
+151 및 VS Code 1.132 staged/clean-installed local VSIX 검증에서는 같은 공개
+IFC를 Apple M2 Metal로 열어 model/render/selection/cleanup을 통과했습니다.
 
 같은 두 Host는 bounded glTF/GLB를 BIM semantic source가 아닌 reference
 mesh로 분기합니다. 공개 Khronos Box GLB는 Browser local file input,
@@ -29,8 +31,29 @@ staged VS Code와 clean-installed VSIX에서 12 triangles, source-native
 selection, `globalId: null`, 실제 Chromium WebGL2, path-free bridge와
 cleanup을 재현했습니다. 42.98MB product-scale reference GLB도 세 제품
 경로에서 49개 entity·573,952 unique triangles와 동일한 bounded render
-projection·cleanup을 통과했습니다. external resource/required extension과
-physical GPU는 계속 보류합니다.
+projection·cleanup을 통과했습니다. product-scale GLB의 physical GPU도 별도
+Apple M2 Metal Gate를 통과했습니다. 이어 cache-only Khronos
+`Box.gltf + Box0.bin`을 Browser의
+명시적 다중 선택, staged VS Code와 clean-installed local VSIX에서 같은 composite
+identity·projection·cleanup으로 열었습니다. 지원 범위는 최대 16개 same-folder
+`.bin`/`.png`/`.jpg`/`.jpeg`, 합산 64MiB입니다. OPAQUE PNG/JPEG
+`baseColorTexture`는 외부 image, exact glTF data URI, GLB image bufferView와
+명시적 local `.bin`의 glTF image bufferView에서 각각 geometry-range v2/v3로
+투영합니다. exact BoxTextured PNG 외부 bundle과
+embedded GLB는 각각 같은 세 Apple
+M2 Metal 제품 표면, 합계 6개 표면을 통과했습니다. exact Box-derived
+`KHR_mesh_quantization`과
+`EXT_meshopt_compression` `FILTER_NONE`도 공식 Validator/headless와 세 제품 표면을
+통과했습니다. 별도 cache-only baseline JPEG derivation도 1,756-byte v3 range와
+22,836-byte total upload를 Browser·staged VS Code·clean-installed local VSIX의
+Apple M2 Metal 3개 표면에서 재현했습니다. exact GLB→`.gltf + .bin` 파생의
+PNG bufferView도 byte-identical v2 range와 같은 세 제품 표면을 통과했습니다.
+임의 URI·data URI buffer 기반 image bufferView·
+progressive/arithmetic/lossless JPEG·비-OPAQUE alpha material mode·다른
+material texture role·Draco·다른 meshopt
+filter·그 밖의 required extension은 거부합니다.
+Linux/Windows hardware, OS-level peak GPU memory와 공개 IFC를
+포함한 동시 합성은 계속 보류합니다.
 
 현재 [`browser-worker-probe`](browser-worker-probe/README.md)는 web-ifc
 Browser Worker의 bounded local-file admission, source-session lifecycle과
